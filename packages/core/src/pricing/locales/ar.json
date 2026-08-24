@@ -2,7 +2,7 @@
   "plans": {
     "free": {
       "name": "مجاني",
-      "tagline": "انشر المواقع الثابتة على Openship Cloud دون أي تكلفة."
+      "tagline": "انشر المواقع الثابتة على Kovalio Cloud دون أي تكلفة."
     },
     "starter": {
       "name": "البداية",
@@ -50,7 +50,7 @@
     "selfHostedUnlimited": "عمليات نشر ومشاريع وخوادم ونطاقات غير محدودة",
     "selfHostedServices": "كل الخدمات المُدارة — Postgres وRedis والبريد",
     "selfHostedClients": "CLI وواجهة ويب وتطبيق سطح مكتب — خدمة خلفية واحدة",
-    "selfHostedFreeSubdomains": "{freeSubdomains} نطاق فرعي مجاني على {freeDomainSuffix} عند الربط مع Openship Cloud"
+    "selfHostedFreeSubdomains": "{freeSubdomains} نطاق فرعي مجاني على {freeDomainSuffix} عند الربط مع Kovalio Cloud"
   },
   "selfHosted": {
     "name": "استضافة ذاتية",

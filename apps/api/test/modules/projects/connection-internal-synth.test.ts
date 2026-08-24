@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
  * inject that value VERBATIM in internal mode — never route it through
  * `toInternalUrl`, which needs a template and would return null (killing the
  * link). The co-location guard still fires first, so a cloud-hosted source — or one
- * on a genuinely different machine, since `openship-<slug>` networks are per-machine
+ * on a genuinely different machine, since `kovalio-<slug>` networks are per-machine
  * — is steered to Public even when it carries a synthesized internal value. What
  * counts as "a different machine" is the delicate part, and most of the cases below
  * are about the pairs that are NOT: every encoding of this box is one machine, and a
@@ -159,7 +159,7 @@ describe("createConnection — synthesized internal source", () => {
   });
 
   it("refuses internal when the two projects sit on DIFFERENT servers", async () => {
-    // `openship-<slug>` networks are per-host, and attachLinkedNetworks only
+    // `kovalio-<slug>` networks are per-host, and attachLinkedNetworks only
     // WARNS when the attach fails — so a cross-server internal link injected an
     // alias that resolves nowhere and still deployed green.
     h.findById.mockImplementation(async (id: string) =>
@@ -186,7 +186,7 @@ describe("createConnection — synthesized internal source", () => {
     // different machines. They are the same docker daemon — a project with no server
     // binding deploys to the host socket, and so does the isLocal row
     // (deployment-runtime `resolveTargetPlatform`) — so the same
-    // `openship-<slug>` networks are reachable and internal MUST be allowed.
+    // `kovalio-<slug>` networks are reachable and internal MUST be allowed.
     h.serverGetInOrganization.mockImplementation(async (id: string) => ({ id, isLocal: true }));
     h.findById.mockImplementation(async (id: string) =>
       id === "app-a"

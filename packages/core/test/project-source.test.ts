@@ -31,12 +31,12 @@ describe("isReleaseProvider", () => {
 describe("renderAssetName", () => {
   it("substitutes {tag}/{version}/{os}/{arch}", () => {
     expect(
-      renderAssetName("openship-{tag}-{os}-{arch}.tar.gz", {
+      renderAssetName("kovalio-{tag}-{os}-{arch}.tar.gz", {
         version: "1.2.3",
         os: "darwin",
         arch: "arm64",
       }),
-    ).toBe("openship-v1.2.3-darwin-arm64.tar.gz");
+    ).toBe("kovalio-v1.2.3-darwin-arm64.tar.gz");
   });
 
   it("defaults os→linux and arch→amd64", () => {
@@ -62,8 +62,8 @@ describe("renderAssetName", () => {
   });
 
   it("a fully-substituted name with literal braces nowhere left is fine", () => {
-    expect(renderAssetName("openship-{tag}-linux-amd64.tar.gz", { version: "0.6.1" })).toBe(
-      "openship-v0.6.1-linux-amd64.tar.gz",
+    expect(renderAssetName("kovalio-{tag}-linux-amd64.tar.gz", { version: "0.6.1" })).toBe(
+      "kovalio-v0.6.1-linux-amd64.tar.gz",
     );
   });
 });
@@ -152,7 +152,7 @@ describe("validateReleaseVersionUrl", () => {
 });
 
 describe("validateReleaseRepository", () => {
-  it.each(["oblien/openship", "Acme-Inc/api.v2", "a/x"])(
+  it.each(["oblien/kovalio", "Acme-Inc/api.v2", "a/x"])(
     "accepts a GitHub owner/repository identity: %s",
     (value) => {
       expect(validateReleaseRepository(value)).toBeNull();

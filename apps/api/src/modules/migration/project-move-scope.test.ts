@@ -52,8 +52,8 @@ describe("the scan honours the scope where it is cheap to honour", () => {
   it("narrows the container list before the ownership split and the inspect fan-out", () => {
     const listing = inspect.indexOf("const containers = scoped");
     expect(listing).toBeGreaterThan(-1);
-    // Before the split (`isOpenshipOwned`) and therefore before `inspectContainer`.
-    expect(listing).toBeLessThan(inspect.indexOf("const isOpenshipOwned"));
+    // Before the split (`isKovalioOwned`) and therefore before `inspectContainer`.
+    expect(listing).toBeLessThan(inspect.indexOf("const isKovalioOwned"));
   });
 
   it("treats an EMPTY selection as no candidates, not as 'everything'", () => {

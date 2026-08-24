@@ -70,7 +70,7 @@
       "secret": true
     },
     {
-      "key": "OPENSHIP_BUCKET",
+      "key": "KOVALIO_BUCKET",
       "service": "minio",
       "label": "First bucket",
       "help": "Created on the first deploy so an app can use this storage immediately. More can be added from the console.",
@@ -82,7 +82,7 @@
   "prepare": [
     {
       "service": "minio",
-      "command": "mc alias set local http://127.0.0.1:9000 \"$MINIO_ROOT_USER\" \"$MINIO_ROOT_PASSWORD\" > /dev/null && mc mb --ignore-existing \"local/$OPENSHIP_BUCKET\" > /dev/null && printf '%s' \"$OPENSHIP_BUCKET\"",
+      "command": "mc alias set local http://127.0.0.1:9000 \"$MINIO_ROOT_USER\" \"$MINIO_ROOT_PASSWORD\" > /dev/null && mc mb --ignore-existing \"local/$KOVALIO_BUCKET\" > /dev/null && printf '%s' \"$KOVALIO_BUCKET\"",
       "capture": "bucket",
       "phase": "post-ready",
       "readiness": {
@@ -144,7 +144,7 @@
       {
         "id": "bucket",
         "label": "Bucket",
-        "source": "env:minio:OPENSHIP_BUCKET",
+        "source": "env:minio:KOVALIO_BUCKET",
         "service": "minio",
         "envKey": "S3_BUCKET"
       }

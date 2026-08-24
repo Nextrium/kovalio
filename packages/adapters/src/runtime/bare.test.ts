@@ -11,7 +11,7 @@ import { resolveStaticOutputPath } from "./stack-output";
 // check called the helper — two entry points to one guard is how a guard
 // eventually gets bypassed, so the method was removed.
 describe("resolveStaticOutputPath confinement", () => {
-  const WORK = "/opt/openship/releases/dep_123";
+  const WORK = "/opt/kovalio/releases/dep_123";
 
   test("empty / '.' → the workDir itself", () => {
     expect(resolveStaticOutputPath(WORK, "")).toBe(WORK);

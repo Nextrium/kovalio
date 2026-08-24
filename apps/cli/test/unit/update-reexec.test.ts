@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 /**
- * `openship update` fetches the new bundle, then re-execs the freshly-fetched
+ * `kovalio update` fetches the new bundle, then re-execs the freshly-fetched
  * binary to run the reconcile (`update --apply-only`) so the NEW compose template
  * / service unit lands in the same command. These pin the two subtle bits of that
  * re-exec: the argv ordering (`--json` is a ROOT option, so it must precede the

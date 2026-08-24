@@ -105,7 +105,7 @@ export async function emitServiceCheckRun(opts: {
   const { project, dep, serviceDeploymentId, serviceName, conclusion, output } = opts;
   if (!project.gitOwner || !project.gitRepo || !dep.commitSha) return;
 
-  // Act as the org OWNER, not `members[0]`. A check run is Openship reporting on a
+  // Act as the org OWNER, not `members[0]`. A check run is Kovalio reporting on a
   // build it already ran — not a member action — but the GitHub authorization gate
   // resolves the actor's real role from the DB, so an arbitrary first member
   // (ordering is unspecified) made this feature work or silently vanish depending

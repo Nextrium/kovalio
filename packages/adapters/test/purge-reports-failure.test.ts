@@ -23,7 +23,7 @@ import { BareRuntime } from "../src/runtime/bare";
 
 const dockerSocket = { transport: "socket" } as const;
 
-const RELEASE = "/opt/openship/static/releases/dep_1";
+const RELEASE = "/opt/kovalio/static/releases/dep_1";
 
 /** Executor whose `rm -rf` runs but whose target may survive it (EACCES, ro mount). */
 function makeExecutor(opts: { survives?: boolean; execThrows?: boolean } = {}) {
@@ -40,7 +40,7 @@ function makeExecutor(opts: { survives?: boolean; execThrows?: boolean } = {}) {
 describe("BareRuntime.purge", () => {
   it("resolves when the release directory is really gone", async () => {
     const executor = makeExecutor();
-    const rt = new BareRuntime({ workDir: "/opt/openship/static", executor: executor as never });
+    const rt = new BareRuntime({ workDir: "/opt/kovalio/static", executor: executor as never });
 
     await rt.purge({ id: "dep_1", projectId: "p1", imageRef: null, containerId: RELEASE });
 
@@ -51,7 +51,7 @@ describe("BareRuntime.purge", () => {
 
   it("rejects when the release directory survives the removal", async () => {
     const executor = makeExecutor({ survives: true });
-    const rt = new BareRuntime({ workDir: "/opt/openship/static", executor: executor as never });
+    const rt = new BareRuntime({ workDir: "/opt/kovalio/static", executor: executor as never });
 
     await expect(
       rt.purge({ id: "dep_1", projectId: "p1", imageRef: null, containerId: RELEASE }),
@@ -63,7 +63,7 @@ describe("BareRuntime.purge", () => {
     // swallows every error on both executor implementations — which is what made
     // this branch incapable of reporting anything.
     const executor = makeExecutor({ survives: true });
-    const rt = new BareRuntime({ workDir: "/opt/openship/static", executor: executor as never });
+    const rt = new BareRuntime({ workDir: "/opt/kovalio/static", executor: executor as never });
 
     await expect(
       rt.purge({ id: "dep_1", projectId: "p1", imageRef: null, containerId: null }),
@@ -73,7 +73,7 @@ describe("BareRuntime.purge", () => {
 
   it("still attempts the directory when the supervisor unit cannot be destroyed, and names both", async () => {
     const executor = makeExecutor({ survives: true });
-    const rt = new BareRuntime({ workDir: "/opt/openship/static", executor: executor as never });
+    const rt = new BareRuntime({ workDir: "/opt/kovalio/static", executor: executor as never });
     // A unit-name containerId takes the supervisor branch; make it fail the way an
     // unreachable host channel does.
     (rt as unknown as { supervisor: () => Promise<unknown> }).supervisor = async () => {
@@ -81,7 +81,7 @@ describe("BareRuntime.purge", () => {
     };
 
     const err = await rt
-      .purge({ id: "dep_1", projectId: "p1", imageRef: null, containerId: "openship-dep_1" })
+      .purge({ id: "dep_1", projectId: "p1", imageRef: null, containerId: "kovalio-dep_1" })
       .then(
         () => null,
         (e: Error) => e,
@@ -91,7 +91,7 @@ describe("BareRuntime.purge", () => {
     expect(err?.message).toMatch(/still present/);
     // The disk was not held hostage by the supervisor failure.
     expect(executor.exec).toHaveBeenCalledWith(
-      `rm -rf '/opt/openship/static/releases/dep_1'`,
+      `rm -rf '/opt/kovalio/static/releases/dep_1'`,
     );
   });
 });
@@ -115,21 +115,21 @@ describe("DockerRuntime.purge", () => {
   const ref = {
     id: "dep_1",
     projectId: "p1",
-    imageRef: "openship/app:bld_1",
+    imageRef: "kovalio/app:bld_1",
     containerId: "c1",
   };
 
   it("resolves when both removals succeed", async () => {
     const { runtime, calls } = await runtimeSpy();
     await runtime.purge(ref);
-    expect(calls).toEqual({ destroyed: ["c1"], removed: ["openship/app:bld_1"] });
+    expect(calls).toEqual({ destroyed: ["c1"], removed: ["kovalio/app:bld_1"] });
   });
 
   it("rejects when the container could not be removed, and still attempts the image", async () => {
     const { runtime, calls } = await runtimeSpy({ container: true });
 
     await expect(runtime.purge(ref)).rejects.toThrow(/container is in use/);
-    expect(calls.removed).toEqual(["openship/app:bld_1"]);
+    expect(calls.removed).toEqual(["kovalio/app:bld_1"]);
   });
 
   it("rejects when the image could not be removed", async () => {

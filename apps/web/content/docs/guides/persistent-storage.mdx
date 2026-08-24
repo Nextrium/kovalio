@@ -6,7 +6,7 @@ description: Keep the files your app writes — pick the paths that survive a re
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 Every deploy replaces your app with a fresh copy. That's what makes deploys safe to repeat — and it's also
-why a file your app wrote yesterday is gone today unless you tell Openship to keep it. This page covers the
+why a file your app wrote yesterday is gone today unless you tell Kovalio to keep it. This page covers the
 two ways to do that: **persistent storage** for paths on the machine, and **object storage** for a bucket
 that lives outside your app altogether.
 
@@ -20,7 +20,7 @@ that lives outside your app altogether.
 
 ## Persistent storage (paths that survive a deploy)
 
-Openship already knows what some frameworks write. A Laravel app keeps `storage/` with no configuration at
+Kovalio already knows what some frameworks write. A Laravel app keeps `storage/` with no configuration at
 all, because that's where Laravel puts uploads, sessions, cache and its logs. Open **Configuration →
 Persistent storage** to see what your project keeps.
 
@@ -31,7 +31,7 @@ Persistent storage** to see what your project keeps.
 ### Open Configuration → Persistent storage
 
 The card lists the paths currently kept. It also tells you WHERE the list came from: *"Framework defaults for
-this stack"* means Openship chose it, *"Set for this project"* means you did.
+this stack"* means Kovalio chose it, *"Set for this project"* means you did.
 
 </Step>
 
@@ -66,11 +66,11 @@ Storage changes apply on the **next deploy** — the running container keeps the
 </Steps>
 
 To go back to the framework's own defaults, press **Use framework defaults**. To keep nothing at all, save an
-empty list — that's a real choice, and Openship won't quietly re-add the defaults.
+empty list — that's a real choice, and Kovalio won't quietly re-add the defaults.
 
 You can declare the same thing in your repo instead, so a fresh deploy of the same code gets it automatically:
 
-```json title="openship.json"
+```json title="kovalio.json"
 {
   "volumes": ["storage", "uploads:/app/public/uploads"]
 }
@@ -82,11 +82,11 @@ You can declare the same thing in your repo instead, so a fresh deploy of the sa
   skeleton, for instance) is copied in, so the app doesn't start against an empty directory.
 - **Later releases don't refresh it.** That's the point — it's your data now, not the image's. So don't list
   a path that also contains code. Laravel's `database/` directory holds migrations as well as the SQLite
-  file, which is why Openship keeps `storage/` and not `database/`.
+  file, which is why Kovalio keeps `storage/` and not `database/`.
 - **Volume names are scoped per project.** Two projects that both keep `storage` never share one volume.
 - **Multi-service projects** declare mounts per service instead — see the Services tab, or
-  `services[].volumes` in `openship.json`.
-- **Openship Cloud has no volumes.** A declared path is reported and skipped there; use object storage.
+  `services[].volumes` in `kovalio.json`.
+- **Kovalio Cloud has no volumes.** A declared path is reported and skipped there; use object storage.
 
 ## Object storage (an S3 bucket)
 
@@ -94,7 +94,7 @@ A path on the machine stops data loss, but it doesn't scale: run two copies of y
 own uploads directory, which shows up as files that exist for some visitors and 404 for others. A bucket is
 shared by every copy and outlives the machine.
 
-Openship connects a bucket to your app's own filesystem configuration, so you don't have to hunt for the
+Kovalio connects a bucket to your app's own filesystem configuration, so you don't have to hunt for the
 right variable names. A Laravel app gets `FILESYSTEM_DISK=s3` plus the `AWS_*` variables its S3 disk reads; a
 Django app gets the `AWS_STORAGE_BUCKET_NAME` / `AWS_S3_*` names django-storages reads; anything else gets
 neutral `S3_*` names.
@@ -125,7 +125,7 @@ secret.
 
 ### Press Test & connect
 
-Openship writes, reads and deletes one throwaway object before saving anything. If the bucket doesn't exist
+Kovalio writes, reads and deletes one throwaway object before saving anything. If the bucket doesn't exist
 or the keys are read-only, you find out here — not the first time a user uploads a file.
 
 </Step>

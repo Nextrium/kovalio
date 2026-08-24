@@ -42,7 +42,7 @@ end
 
 if uri == "/status" then
     local geo_available, geo_reason, geo_db = false, "geo_country module not loadable", nil
-    local geo_ok, geo = pcall(require, "openship.geo_country")
+    local geo_ok, geo = pcall(require, "kovalio.geo_country")
     if geo_ok and geo and geo.status then
         geo_available, geo_reason, geo_db = geo.status()
     end

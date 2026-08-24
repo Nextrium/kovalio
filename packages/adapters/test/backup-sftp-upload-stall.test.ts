@@ -91,7 +91,7 @@ function destination() {
     kind: "sftp",
     sshHost: "backup.example.com",
     sshPort: 22,
-    sshUser: "openship",
+    sshUser: "kovalio",
     // Values without the `enc1:` envelope decrypt verbatim, so no key needed.
     sftpPasswordEnc: "pw",
     pathPrefix: "/srv/backups",

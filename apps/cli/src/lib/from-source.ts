@@ -1,6 +1,6 @@
 /**
- * Build + run Openship from SOURCE (a branch/tag/sha or a local checkout) for
- * `openship up --from-source` — the "preview main on a remote box" flow, the
+ * Build + run Kovalio from SOURCE (a branch/tag/sha or a local checkout) for
+ * `kovalio up --from-source` — the "preview main on a remote box" flow, the
  * remote sibling of `bun dev` locally.
  *
  * It reuses the canonical `apps/api/scripts/build-release.ts` (the same script
@@ -11,7 +11,7 @@
  *
  * The result is a `{ apiDir, dashboardDir }` the caller runs through the normal
  * `up` foreground path: the API runs from raw TS via bun (dist/api), the
- * dashboard is the standalone build pointed at via OPENSHIP_DASHBOARD_DIR.
+ * dashboard is the standalone build pointed at via KOVALIO_DASHBOARD_DIR.
  *
  * This is an UNVERIFIED dev/preview build (no signed release asset, no
  * checksum) — the caller surfaces that; it must not become a production path.
@@ -23,7 +23,7 @@ import { join, resolve } from "node:path";
 import { OS_DIR } from "./paths";
 
 export { OS_DIR };
-export const DEFAULT_REPO = "https://github.com/oblien/openship.git";
+export const DEFAULT_REPO = "https://github.com/Nextrium/kovalio.git";
 
 /** The clone `--from-source` builds from, and the dist it builds into. Exported
  *  so `up --dry-run` names the same dirs this module creates. */
@@ -33,7 +33,7 @@ export const SOURCE_DIST_DIR = join(OS_DIR, "from-source-dist");
 export interface FromSourceRun {
   /** release-dist/api — the API runs here via `bun run src/index.ts`. */
   apiDir: string;
-  /** release-dist/dashboard — set as OPENSHIP_DASHBOARD_DIR (has apps/dashboard/server.js). */
+  /** release-dist/dashboard — set as KOVALIO_DASHBOARD_DIR (has apps/dashboard/server.js). */
   dashboardDir: string;
   /** Resolved branch/tag/sha, or "local" for --source. */
   ref: string;
@@ -107,7 +107,7 @@ export async function prepareFromSource(opts: {
     sourceDir = resolve(opts.source);
     if (!isMonorepo(sourceDir)) {
       throw new Error(
-        `--source ${sourceDir} doesn't look like an Openship checkout ` +
+        `--source ${sourceDir} doesn't look like an Kovalio checkout ` +
           `(missing package.json / apps/api / apps/dashboard).`,
       );
     }
@@ -150,7 +150,7 @@ export async function prepareFromSource(opts: {
     "bun",
     ["run", join(sourceDir, "apps/api/scripts/build-release.ts")],
     sourceDir,
-    { DIST_DIR: distDir, NODE_ENV: "production", CLOUD_MODE: "false", OPENSHIP_TARGET: "local" },
+    { DIST_DIR: distDir, NODE_ENV: "production", CLOUD_MODE: "false", KOVALIO_TARGET: "local" },
   );
 
   // Reproduce the runtime dependency graph from the generated frozen lockfile.

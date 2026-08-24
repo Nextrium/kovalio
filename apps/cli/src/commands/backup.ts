@@ -1,5 +1,5 @@
 /**
- * `openship backup` — policies, runs, restores, and destinations.
+ * `kovalio backup` — policies, runs, restores, and destinations.
  *
  * Grounded in apps/api/src/modules/backups/backup.routes.ts and
  * apps/api/src/modules/backup-destinations/destination.routes.ts.
@@ -205,7 +205,7 @@ policyCmd
       } else if (isJsonMode()) {
         printJson(data);
       } else {
-        info(`  Follow it with:  openship backup run get ${data.runId} --follow\n`);
+        info(`  Follow it with:  kovalio backup run get ${data.runId} --follow\n`);
       }
     }),
   );
@@ -309,7 +309,7 @@ runCmd
         ok(`\n  Restore staged: ${data.restoreId}\n`);
         info(`  Confirmation token: ${data.confirmationToken}`);
         info(
-          `  Apply it with:  openship backup restore apply ${data.restoreId} --token ${data.confirmationToken}\n`,
+          `  Apply it with:  kovalio backup restore apply ${data.restoreId} --token ${data.confirmationToken}\n`,
         );
       }
       if (opts.follow) {
@@ -371,7 +371,7 @@ restoreCmd
       } else if (data.accepted) {
         info(
           `\n  Cancellation requested: ${restoreId} (status=${data.status}).\n` +
-            `  Follow it with: openship backup restore get ${restoreId} --follow\n`,
+            `  Follow it with: kovalio backup restore get ${restoreId} --follow\n`,
         );
       } else {
         info(`\n  Restore ${restoreId} already finished (status=${data.status}) — nothing to cancel.\n`);
@@ -438,7 +438,7 @@ destinationCmd
   .description("Create a backup destination")
   // POST /api/backup-destinations
   .requiredOption("--name <name>", "Display name")
-  .requiredOption("--kind <kind>", "s3_compatible | sftp | openship_server | local")
+  .requiredOption("--kind <kind>", "s3_compatible | sftp | kovalio_server | local")
   .option("--endpoint <url>", "Endpoint URL / absolute path (local)")
   .option("--region <region>", "S3 region")
   .option("--bucket <bucket>", "S3 bucket")
@@ -446,7 +446,7 @@ destinationCmd
   .option("--ssh-host <host>", "SFTP host")
   .option("--ssh-port <port>", "SFTP port")
   .option("--ssh-user <user>", "SFTP user")
-  .option("--server <id>", "Server ID (openship_server kind)")
+  .option("--server <id>", "Server ID (kovalio_server kind)")
   .option("--access-key-id <id>", "S3 access key ID")
   .option("--secret-access-key <key>", "S3 secret access key")
   .option("--sftp-password <pw>", "SFTP password")

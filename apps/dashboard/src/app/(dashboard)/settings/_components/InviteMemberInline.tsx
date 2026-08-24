@@ -69,7 +69,7 @@ export function InviteMemberInline({
   // Can the selected transport actually deliver the invite email?
   //   - "platform" (your mail system) → the instance can send (SMTP / mail
   //     server / env). null = unknown (not yet loaded / no read access).
-  //   - "cloud" → Openship Cloud is connected to relay it (passed in as a prop).
+  //   - "cloud" → Kovalio Cloud is connected to relay it (passed in as a prop).
   const [emailDeliverable, setEmailDeliverable] = useState<boolean | null>(null);
   useEffect(() => {
     if (!selfHosted) return;
@@ -202,7 +202,7 @@ export function InviteMemberInline({
                 />
                 <SendSegment
                   icon={Cloud}
-                  label={t.settings.inviteMember.openshipCloud}
+                  label={t.settings.inviteMember.kovalioCloud}
                   statusText={cloudConnected ? t.settings.inviteMember.cloudReady : t.settings.inviteMember.cloudNotReady}
                   tone={cloudConnected ? "ok" : "warn"}
                   selected={mailSource === "cloud"}

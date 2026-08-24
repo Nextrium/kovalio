@@ -36,10 +36,10 @@ describe("parseMailUnitProbe — container flavor", () => {
   // `|| true` swallowed the code and `2>/dev/null` swallowed the words, so every
   // daemon read "missing".
   it("reports unknown with the reason when the engine container is gone", () => {
-    const state = parse("Error response from daemon: No such container: openship-mail");
+    const state = parse("Error response from daemon: No such container: kovalio-mail");
 
     expect(state.status).toBe("unknown");
-    expect(state.detail).toContain("No such container: openship-mail");
+    expect(state.detail).toContain("No such container: kovalio-mail");
   });
 
   it("reports unknown with the reason when the docker daemon is unreachable", () => {
@@ -89,7 +89,7 @@ describe("parseMailUnitProbe — container flavor", () => {
     });
 
     it("reports missing only when docker says the container is not there", () => {
-      expect(pg("Error: No such object: openship-mail-db").status).toBe("missing");
+      expect(pg("Error: No such object: kovalio-mail-db").status).toBe("missing");
     });
 
     // Previously `|| echo missing` made this identical to an uninstalled sidecar,
@@ -145,7 +145,7 @@ describe("parseMailUnitProbe — host flavor", () => {
 });
 
 /** Detection answers first; `{{.Config.Image}}` is only in that probe's format. */
-function engine(reply: (cmd: string) => string | Error, detect = "true\topenship/mail:latest") {
+function engine(reply: (cmd: string) => string | Error, detect = "true\tkovalio/mail:latest") {
   return {
     exec: vi.fn(async (cmd: string) => {
       if (cmd.includes("{{.Config.Image}}")) return detect;
@@ -167,7 +167,7 @@ describe("checkMailHealth", () => {
     const rows = await checkMailHealth(
       engine((cmd) =>
         cmd.includes("supervisorctl")
-          ? "Error response from daemon: No such container: openship-mail"
+          ? "Error response from daemon: No such container: kovalio-mail"
           : "",
       ),
     );
@@ -180,7 +180,7 @@ describe("checkMailHealth", () => {
     const rows = await checkMailHealth(
       engine((cmd) =>
         cmd.includes("supervisorctl")
-          ? new Error("Command timed out after 30000ms: docker exec openship-mail …")
+          ? new Error("Command timed out after 30000ms: docker exec kovalio-mail …")
           : "",
       ),
     );

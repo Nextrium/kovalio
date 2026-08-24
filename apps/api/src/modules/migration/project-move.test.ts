@@ -16,7 +16,7 @@ const svc = (over: Partial<DiscoveredService> = {}): DiscoveredService =>
     source: "compose",
     containerId: "c_web",
     running: true,
-    image: "openship/web:abc123",
+    image: "kovalio/web:abc123",
     ports: [],
     env: {},
     volumes: [],
@@ -38,7 +38,7 @@ const plan = (over: Partial<Parameters<typeof planProjectMove>[0]> = {}) =>
 
 describe("planProjectMove refusals", () => {
   it("refuses the control plane", () => {
-    // Openship would be stopping the API running the migration.
+    // Kovalio would be stopping the API running the migration.
     expect(() => plan({ isControlPlane: true })).toThrow(/control plane/i);
     expect(() => plan({ isControlPlane: true })).toThrow(ProjectMoveRefused);
   });
@@ -46,7 +46,7 @@ describe("planProjectMove refusals", () => {
   it("refuses a cloud project, naming Cloud", () => {
     expect(() =>
       plan({ project: { ...project, cloudWorkspaceId: "ws_1", serverId: null } }),
-    ).toThrow(/Openship Cloud/);
+    ).toThrow(/Kovalio Cloud/);
   });
 
   it("refuses a project bound to no server", () => {
@@ -145,12 +145,12 @@ describe("planProjectMove workload", () => {
     // so without a handover the target deploy tries to pull it and fails.
     const out = plan({
       discovered: [
-        svc({ name: "web", containerId: "c_web", image: "openship/web:abc" }),
+        svc({ name: "web", containerId: "c_web", image: "kovalio/web:abc" }),
         svc({ name: "db", containerId: "c_db", image: "postgres:16" }),
       ],
       ourContainerIds: ["c_web", "c_db"],
     });
-    expect(out.adopt.handover).toEqual({ web: "openship/web:abc", db: "postgres:16" });
+    expect(out.adopt.handover).toEqual({ web: "kovalio/web:abc", db: "postgres:16" });
   });
 
   it("omits a service with no image from the handover", () => {

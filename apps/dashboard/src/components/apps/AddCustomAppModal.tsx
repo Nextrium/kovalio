@@ -81,7 +81,7 @@ export function AddCustomAppModal({
         <p className="mt-0.5 text-xs text-muted-foreground">
           Upload an app definition (JSON). It&apos;s added to your catalog and marked unverified.{" "}
           <a
-            href="https://openship.io/docs/guides/add-an-app"
+            href="https://nextrium.org/docs/guides/add-an-app"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline"

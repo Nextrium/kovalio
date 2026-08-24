@@ -306,7 +306,7 @@ async function createInfraProvider(
   );
 
   // LOCAL containerized edge (compose): the api shares the routing mounts with the
-  // `openship-edge` container and reaches it over the mounted Docker socket.
+  // `kovalio-edge` container and reaches it over the mounted Docker socket.
   if (edgeContainer) {
     const nginx = await localContainerEdgeProvider(edgeContainer, config.nginx);
     return { routing: nginx, ssl: nginx };
@@ -426,8 +426,8 @@ async function createSelfHostedPlatform(config: PlatformConfig): Promise<Platfor
   // An `ssh` config is unambiguously remote and always wins; otherwise trust the
   // explicit flag, falling back to the old inference. See PlatformConfig.localHost.
   const targetIsThisMachine = !config.ssh && (config.localHost ?? !config.executor);
-  const useDockerEdge = targetIsThisMachine && process.env.OPENSHIP_EDGE_MODE === "docker";
-  const edgeContainer = process.env.OPENSHIP_EDGE_CONTAINER?.trim() || EDGE_CONTAINER_NAME;
+  const useDockerEdge = targetIsThisMachine && process.env.KOVALIO_EDGE_MODE === "docker";
+  const edgeContainer = process.env.KOVALIO_EDGE_CONTAINER?.trim() || EDGE_CONTAINER_NAME;
 
   // Executor - use injected (managed/pooled) executor, or create a fresh one
   let executor: CommandExecutor;

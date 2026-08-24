@@ -227,14 +227,14 @@ const RoutingRuleSchema = Type.Object({
 });
 
 /**
- * Openship's deploy-time readiness gate — mirrors `OpenshipReadiness` in
- * @repo/core, which is what `openship.json` declares and what the pipeline
+ * Kovalio's deploy-time readiness gate — mirrors `KovalioReadiness` in
+ * @repo/core, which is what `kovalio.json` declares and what the pipeline
  * reads. NOT the Docker HEALTHCHECK directive (that one is per compose service,
  * under `service.advanced.healthcheck`).
  *
  * Every field optional, every default off: an absent/`{}` value means the deploy
  * does no post-start waiting at all. Bounds mirror the core parser so the wizard,
- * `openship.json`, and MCP can't disagree about what's accepted.
+ * `kovalio.json`, and MCP can't disagree about what's accepted.
  */
 const ReadinessSchema = Type.Object({
   enabled: Type.Optional(Type.Boolean()),

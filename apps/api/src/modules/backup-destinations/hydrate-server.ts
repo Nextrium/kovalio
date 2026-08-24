@@ -1,5 +1,5 @@
 /**
- * Translate an `openship_server` backup_destination row into a row
+ * Translate an `kovalio_server` backup_destination row into a row
  * the SFTP adapter can consume.
  *
  * Cleanly separates concerns: the adapter doesn't know about the
@@ -31,7 +31,7 @@ import { assertLocalDestinationAllowed } from "./local-gate";
 /**
  * Take a raw backup_destination DB row and produce a BackupDestinationRow
  * suitable for `resolveDestination`. For most kinds this is a 1:1 mapping;
- * `openship_server` is the special case that needs server-table lookup.
+ * `kovalio_server` is the special case that needs server-table lookup.
  */
 export async function toAdapterRow(row: BackupDestination): Promise<BackupDestinationRow> {
   // The consumer-side gate. Every path that USES a destination funnels through here
@@ -41,10 +41,10 @@ export async function toAdapterRow(row: BackupDestination): Promise<BackupDestin
   if (row.kind === "local") {
     await assertLocalDestinationAllowed(row.endpoint);
   }
-  if (row.kind === "openship_server") {
+  if (row.kind === "kovalio_server") {
     if (!row.serverId) {
       throw new Error(
-        `Destination "${row.name}" is kind=openship_server but has no serverId — corrupted state`,
+        `Destination "${row.name}" is kind=kovalio_server but has no serverId — corrupted state`,
       );
     }
     return hydrateServerAdapterRow({
@@ -119,7 +119,7 @@ export async function hydrateServerAdapterRow(params: {
     } else {
       // Key on THIS host's filesystem. Centralised allowlist + traversal check —
       // see lib/ssh-key-path.ts. homedir() is added as an extra root so an
-      // operator's ~/.ssh/openship key works without explicit env configuration.
+      // operator's ~/.ssh/kovalio key works without explicit env configuration.
       let keyPath: string;
       try {
         keyPath = resolveSafeSshKeyPath(server.sshKeyPath!, {
@@ -157,7 +157,7 @@ export async function hydrateServerAdapterRow(params: {
     id,
     organizationId,
     name,
-    kind: "openship_server",
+    kind: "kovalio_server",
     endpoint: null,
     region: null,
     bucket: null,

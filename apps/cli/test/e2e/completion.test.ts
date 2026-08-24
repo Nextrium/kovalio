@@ -51,9 +51,9 @@ function runCli(args: string[]): Promise<{ stdout: string; stderr: string; code:
 describe("cli completion", { timeout: 40_000 }, () => {
 
     it.each([
-    { shell: "bash", marker: "complete -F __openship_complete openship" },
-    { shell: "zsh", marker: "#compdef openship" },
-    { shell: "fish", marker: "complete -c openship -e" },
+    { shell: "bash", marker: "complete -F __kovalio_complete kovalio" },
+    { shell: "zsh", marker: "#compdef kovalio" },
+    { shell: "fish", marker: "complete -c kovalio -e" },
     ])(
     "generates a valid %s completion script",
     async ({ shell, marker }) => {
@@ -87,7 +87,7 @@ describe("cli completion", { timeout: 40_000 }, () => {
 
   it("suggests flags for a known command", async () => {
     // Directly exercises the scenario named in the original issue:
-    // `openship deploy --project <TAB>`.
+    // `kovalio deploy --project <TAB>`.
     const { stdout, code } = await runCli(["complete", "--", "deploy", "--pro"]);
     expect(code).toBe(0);
     expect(stdout).toContain("--project");

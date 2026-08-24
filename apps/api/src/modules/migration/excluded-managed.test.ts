@@ -5,13 +5,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  *
  *  1. REFUSE a genuine re-import — re-adopting a live project's containers mints a
  *     duplicate project over them (`-2` services, routes on the wrong port).
- *  2. Never refuse because of OPENSHIP'S OWN containers. `linkSelfAppServices` binds
+ *  2. Never refuse because of KOVALIO'S OWN containers. `linkSelfAppServices` binds
  *     the control plane's compose stack (`api`, `dashboard`, `edge`, `postgres`,
  *     `redis`) to the control-plane project, and those containers carry no
- *     `openship.*` labels — so a name-based selection matched them and the gate
+ *     `kovalio.*` labels — so a name-based selection matched them and the gate
  *     refused the user's whole migration, unretryably (#584).
  *
- * Job 2 is why this excludes rather than throws: adopting Openship into a user
+ * Job 2 is why this excludes rather than throws: adopting Kovalio into a user
  * project is forbidden outright (`assertNotControlPlane`), so there is no decision
  * for the operator — drop it and migrate the rest.
  */
@@ -50,7 +50,7 @@ const svc = (name: string, containerId: string): DiscoveredService =>
 const ORG = "org_1";
 const USER_STACK = [svc("web", "c-web"), svc("postgres", "c-dependabot-pg")];
 /** What a NAME-only client still sends: the user's stack plus our own postgres. */
-const WITH_OURS = [...USER_STACK, svc("postgres", "c-openship-pg")];
+const WITH_OURS = [...USER_STACK, svc("postgres", "c-kovalio-pg")];
 
 /** `service_deployment`-shaped row. */
 const row = (containerId: string, deploymentId: string) => ({ containerId, deploymentId });
@@ -59,35 +59,35 @@ beforeEach(() => {
   vi.clearAllMocks();
   findByContainerIds.mockResolvedValue([]);
   findDeployment.mockImplementation(async (id: string) =>
-    id === "dep_openship"
-      ? { id, organizationId: ORG, projectId: "prj_openship" }
+    id === "dep_kovalio"
+      ? { id, organizationId: ORG, projectId: "prj_kovalio" }
       : { id, organizationId: ORG, projectId: "prj_user" },
   );
   findProject.mockImplementation(async (id: string) =>
-    id === "prj_openship"
-      ? { id, name: "Openship", appTemplateId: "openship", deletedAt: null }
+    id === "prj_kovalio"
+      ? { id, name: "Kovalio", appTemplateId: "kovalio", deletedAt: null }
       : { id, name: "dependabot", appTemplateId: null, deletedAt: null },
   );
 });
 
 describe("excludeAlreadyManaged — the control plane is not a re-import (#584)", () => {
-  it("drops Openship's own container and keeps the user's stack", async () => {
-    findByContainerIds.mockResolvedValue([row("c-openship-pg", "dep_openship")]);
+  it("drops Kovalio's own container and keeps the user's stack", async () => {
+    findByContainerIds.mockResolvedValue([row("c-kovalio-pg", "dep_kovalio")]);
     const kept = await excludeAlreadyManaged(WITH_OURS, ORG);
     expect(kept.map((s) => s.containerId)).toEqual(["c-web", "c-dependabot-pg"]);
   });
 
-  it("does not throw when only Openship's container matched", async () => {
+  it("does not throw when only Kovalio's container matched", async () => {
     // The exact #584 failure: this used to abort the whole migration.
-    findByContainerIds.mockResolvedValue([row("c-openship-pg", "dep_openship")]);
+    findByContainerIds.mockResolvedValue([row("c-kovalio-pg", "dep_kovalio")]);
     await expect(excludeAlreadyManaged(WITH_OURS, ORG)).resolves.toHaveLength(2);
   });
 
-  it("errors usefully when the selection matched NOTHING but Openship", async () => {
-    findByContainerIds.mockResolvedValue([row("c-openship-pg", "dep_openship")]);
+  it("errors usefully when the selection matched NOTHING but Kovalio", async () => {
+    findByContainerIds.mockResolvedValue([row("c-kovalio-pg", "dep_kovalio")]);
     await expect(
-      excludeAlreadyManaged([svc("postgres", "c-openship-pg")], ORG),
-    ).rejects.toThrow(/Openship manages its own runtime/);
+      excludeAlreadyManaged([svc("postgres", "c-kovalio-pg")], ORG),
+    ).rejects.toThrow(/Kovalio manages its own runtime/);
   });
 });
 
@@ -108,10 +108,10 @@ describe("excludeAlreadyManaged — a genuine re-import is still refused", () =>
     );
   });
 
-  it("refuses even when an Openship container matched in the same batch", async () => {
+  it("refuses even when an Kovalio container matched in the same batch", async () => {
     // Excluding ours must not swallow a real conflict found alongside it.
     findByContainerIds.mockResolvedValue([
-      row("c-openship-pg", "dep_openship"),
+      row("c-kovalio-pg", "dep_kovalio"),
       row("c-web", "dep_user"),
     ]);
     await expect(excludeAlreadyManaged(WITH_OURS, ORG)).rejects.toThrow(/already managed here/);
@@ -166,17 +166,17 @@ describe("excludeAlreadyManaged takes no exemption", () => {
     expect(excludeAlreadyManaged.length).toBe(2);
   });
 
-  it("still drops Openship's own containers rather than refusing over them", async () => {
+  it("still drops Kovalio's own containers rather than refusing over them", async () => {
     // Unchanged by the above: the control-plane rule was never the flag's business.
-    findByContainerIds.mockResolvedValue([row("c-openship-pg", "dep_openship")]);
+    findByContainerIds.mockResolvedValue([row("c-kovalio-pg", "dep_kovalio")]);
     const kept = await excludeAlreadyManaged(WITH_OURS, ORG);
     expect(kept.map((s) => s.containerId)).toEqual(["c-web", "c-dependabot-pg"]);
   });
 
   it("refuses when ONLY our own containers matched", async () => {
-    findByContainerIds.mockResolvedValue([row("c-openship-pg", "dep_openship")]);
+    findByContainerIds.mockResolvedValue([row("c-kovalio-pg", "dep_kovalio")]);
     await expect(
-      excludeAlreadyManaged([svc("postgres", "c-openship-pg")], ORG),
-    ).rejects.toThrow(/Openship's own containers/);
+      excludeAlreadyManaged([svc("postgres", "c-kovalio-pg")], ORG),
+    ).rejects.toThrow(/Kovalio's own containers/);
   });
 });

@@ -18,11 +18,11 @@ describe("resolveDeployImage", () => {
   it("prefers a freshly built image over everything else", () => {
     expect(
       resolveDeployImage({
-        builtImage: "openship/web:abc123",
+        builtImage: "kovalio/web:abc123",
         rowImage: "nginx:alpine",
-        previousImageRef: "openship/web:old",
+        previousImageRef: "kovalio/web:old",
       }),
-    ).toBe("openship/web:abc123");
+    ).toBe("kovalio/web:abc123");
   });
 
   it("falls back to the service row's configured (pulled/external) image", () => {
@@ -30,7 +30,7 @@ describe("resolveDeployImage", () => {
   });
 
   it("falls back to the previous deployment's image — the env-only refresh / revive case", () => {
-    expect(resolveDeployImage({ previousImageRef: "openship/api:v7" })).toBe("openship/api:v7");
+    expect(resolveDeployImage({ previousImageRef: "kovalio/api:v7" })).toBe("kovalio/api:v7");
   });
 
   it('is "" when nothing is available at all', () => {

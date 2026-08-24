@@ -185,7 +185,7 @@ describe("parseMailQueue", () => {
    * box with nothing stuck.
    */
   it.each([
-    ["a stopped engine", "Error response from daemon: Container openship-mail is not running"],
+    ["a stopped engine", "Error response from daemon: Container kovalio-mail is not running"],
     ["a missing binary", "bash: line 1: postqueue: command not found"],
     ["a permission denial", "postqueue: fatal: Queue report unavailable - mail system is down"],
     ["silence", ""],
@@ -357,7 +357,7 @@ function box(opts: {
   });
   return {
     exec: vi.fn(async (cmd: string) => {
-      if (cmd.includes("{{.Config.Image}}")) return opts.detect ?? "true\topenship/mail:latest";
+      if (cmd.includes("{{.Config.Image}}")) return opts.detect ?? "true\tkovalio/mail:latest";
       if (cmd.startsWith("cat ")) return state;
       const queue = opts.queue ?? "Mail queue is empty";
       if (queue instanceof Error) throw queue;
@@ -395,7 +395,7 @@ describe("checkMailDelivery", () => {
       .map(([cmd]) => cmd as string)
       .filter((cmd) => cmd.includes("postqueue"));
     expect(probes).toEqual([mailQueueProbeCommand("container")]);
-    expect(probes[0]).toContain("docker exec openship-mail");
+    expect(probes[0]).toContain("docker exec kovalio-mail");
   });
 
   it("probes a legacy host engine without docker", async () => {
@@ -427,7 +427,7 @@ describe("checkMailDelivery", () => {
   });
 
   it("reports unknown, and says so, when the engine container is stopped", async () => {
-    const health = await checkMailDelivery(box({ detect: "false\topenship/mail:latest" }));
+    const health = await checkMailDelivery(box({ detect: "false\tkovalio/mail:latest" }));
 
     expect(health.status).toBe("unknown");
     expect(health.detail).toContain("isn't running");
@@ -435,7 +435,7 @@ describe("checkMailDelivery", () => {
 
   it("reports unknown with the shell's own words when the probe throws", async () => {
     const health = await checkMailDelivery(
-      box({ queue: new Error("Command timed out after 30000ms: docker exec openship-mail …") }),
+      box({ queue: new Error("Command timed out after 30000ms: docker exec kovalio-mail …") }),
     );
 
     expect(health.status).toBe("unknown");
@@ -466,7 +466,7 @@ describe("checkMailDelivery", () => {
   it("falls back to direct when the state file is unreadable", async () => {
     const exec = {
       exec: vi.fn(async (cmd: string) => {
-        if (cmd.includes("{{.Config.Image}}")) return "true\topenship/mail:latest";
+        if (cmd.includes("{{.Config.Image}}")) return "true\tkovalio/mail:latest";
         if (cmd.startsWith("cat ")) throw new Error("permission denied");
         return "Mail queue is empty";
       }),

@@ -109,11 +109,11 @@ import {
 } from "./project-cleanup.service";
 
 /** A compose static sub-app's doc-root, as written into `service_deployment.image_ref`. */
-const STATIC_BUILD_DIR = "/opt/openship/static/.builds/bld_1-svc_1";
+const STATIC_BUILD_DIR = "/opt/kovalio/static/.builds/bld_1-svc_1";
 /** A single-app static release dir, as written into `deployment.container_id`. */
-const STATIC_RELEASE_DIR = "/opt/openship/static/releases/dep_1";
+const STATIC_RELEASE_DIR = "/opt/kovalio/static/releases/dep_1";
 /** A tag: slashes inside, never a LEADING one — which is exactly the test. */
-const IMAGE_TAG = "openship/app-web:bld_1";
+const IMAGE_TAG = "kovalio/app-web:bld_1";
 /** Pulled registry content belongs to the registry/daemon cache, not one deployment. */
 const FOREIGN_IMAGE = `ghcr.io/acme/release@sha256:${"a".repeat(64)}`;
 
@@ -209,7 +209,7 @@ describe("collectProjectManifest — a ref is classified by its shape", () => {
   });
 
   it("the deployment's OWN image_ref is an artifact when it holds a directory", async () => {
-    const singleAppOutput = "/opt/openship/static/.builds/bld_2";
+    const singleAppOutput = "/opt/kovalio/static/.builds/bld_2";
     h.deployments = [deployment({ imageRef: singleAppOutput })];
 
     const manifest = await collectProjectManifest(project as never);
@@ -498,7 +498,7 @@ describe("executeCleanup — the resource type selects the verb", () => {
 
 describe("collectDeploymentManifest — protectRetained covers directories too", () => {
   it("omits a doc-root a live release still serves, emits the one it doesn't", async () => {
-    const liveDocRoot = "/opt/openship/static/.builds/bld_live-svc_1";
+    const liveDocRoot = "/opt/kovalio/static/.builds/bld_live-svc_1";
     h.keep = { images: new Set([liveDocRoot]), containers: new Set<string>() };
     h.serviceRows.dep_9 = [
       serviceRow({ serviceId: "svc_1", imageRef: liveDocRoot }),

@@ -8,16 +8,16 @@
  *
  * | concern      | container                                    | host                        |
  * |--------------|----------------------------------------------|-----------------------------|
- * | vmail SQL    | `docker exec openship-mail-db psql -U postgres` | `sudo -u postgres psql`  |
+ * | vmail SQL    | `docker exec kovalio-mail-db psql -U postgres` | `sudo -u postgres psql`  |
  * | daemon state | `supervisorctl status` in the engine          | `systemctl show`            |
  * | daemon action| `supervisorctl <action>` / `docker <action>`   | `systemctl --no-block`      |
  * | daemon logs  | supervisord's per-program log / `docker logs`  | `journalctl -u`             |
- * | postfix cmds | `docker exec openship-mail <cmd>`             | the command, on the host     |
+ * | postfix cmds | `docker exec kovalio-mail <cmd>`             | the command, on the host     |
  * | config files | host bind mount ↔ in-engine path              | one path, both sides         |
  *
  * Containerization replaced the host column wholesale instead of branching, which
  * is why a legacy box currently 500s in the admin panel ("No such container:
- * openship-mail-db") and shows up as a dead "Mail engine is down" in the fleet
+ * kovalio-mail-db") and shows up as a dead "Mail engine is down" in the fleet
  * view while it is quietly delivering mail. The image is not published yet, so
  * legacy is not a tail case — it is every mail box provisioned so far.
  *
@@ -102,7 +102,7 @@ export class MailEngineUnavailableError extends AppError {
  * bootstrap fails, so the panel and the container log name the same fix.
  */
 const MAIL_DB_BOOTSTRAP_COMMAND =
-  `docker exec ${MAIL_CONTAINER} bash /opt/openship-mail/db-bootstrap.sh` +
+  `docker exec ${MAIL_CONTAINER} bash /opt/kovalio-mail/db-bootstrap.sh` +
   ` && docker restart ${MAIL_CONTAINER}`;
 
 /**
@@ -455,18 +455,18 @@ export function mailDaemonReloadCommand(flavor: MailEngineFlavor): string {
 /**
  * The path each editable config file has INSIDE the engine.
  *
- * The engine is our own Debian-based `openship-mail` image, so these are fixed — and
+ * The engine is our own Debian-based `kovalio-mail` image, so these are fixed — and
  * they are *also* correct for a legacy Debian-family host, which is where the
  * "(= on a legacy host)" this comment used to claim came from. It is NOT correct for a
  * legacy RHEL-family box, whose amavis has no `conf.d` include dir at all; that one path
  * is resolved by probing the box instead — see {@link HOST_AMAVIS_CONF_CANDIDATES}. The
  * postfix paths need no such treatment: `/etc/postfix` is postfix's config dir on every
- * family Openship supports.
+ * family Kovalio supports.
  */
 const MAIL_ENGINE_PATHS = {
   saslPasswd: "/etc/postfix/sasl_passwd",
   senderRelayhost: "/etc/postfix/sender_relayhost",
-  relayTlsPolicy: "/etc/postfix/openship_tls_policy",
+  relayTlsPolicy: "/etc/postfix/kovalio_tls_policy",
   amavisUserConf: "/etc/amavis/conf.d/50-user",
 } as const satisfies Record<keyof typeof MAIL_HOST_PATHS, string>;
 

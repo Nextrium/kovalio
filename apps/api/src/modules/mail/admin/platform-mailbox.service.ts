@@ -1,22 +1,22 @@
 /**
- * Platform mailbox — the single SMTP identity the openship API authenticates
+ * Platform mailbox — the single SMTP identity the kovalio API authenticates
  * as for transactional mail (welcome emails, alerts, future user-invite
  * sends).
  *
- * The mailbox lives at `openship@<state.domain>` (the primary install
+ * The mailbox lives at `kovalio@<state.domain>` (the primary install
  * domain). It is provisioned once by the post-install hook and reused
  * everywhere; per-tenant outbound identities are NOT minted here. iRedMail's
  * amavis DKIM config signs outbound mail based on the From-header domain,
  * NOT the SMTP-AUTH user's domain, so the single platform mailbox can still
- * send `From: openship@<any-domain>` and have DKIM align — auth identity
+ * send `From: kovalio@<any-domain>` and have DKIM align — auth identity
  * stays singular while brand identity flexes.
  *
  * The `opts.domain` parameter exists for a future per-tenant outbound
  * identity path. Today, all callers should omit it and accept the
  * install-domain default. If iRedMail's `sender_login_maps` is enabled in
- * strict mode, sending `From: openship@<additional-domain>` while authed
- * as `openship@<installDomain>` will be rejected — that's a single-line
- * config tweak (add new domains to the openship mailbox's allowed
+ * strict mode, sending `From: kovalio@<additional-domain>` while authed
+ * as `kovalio@<installDomain>` will be rejected — that's a single-line
+ * config tweak (add new domains to the kovalio mailbox's allowed
  * senders), NOT N new mailboxes.
  *
  * Idempotency contract (per the ensure* convention in apps/api/src/lib):
@@ -57,12 +57,12 @@ import {
 import { recountDomain } from "./domains.service";
 
 export const DOMAIN_RE = /^[a-z0-9][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*)+$/i;
-export const PLATFORM_LOCAL_PART = "openship";
+export const PLATFORM_LOCAL_PART = "kovalio";
 
 export class PlatformMailboxError extends Error {}
 
 export interface PlatformMailboxCreds {
-  /** `openship@<domain>` */
+  /** `kovalio@<domain>` */
   email: string;
   /** Plaintext, freshly minted on first run / rotation. */
   password: string;
@@ -71,13 +71,13 @@ export interface PlatformMailboxCreds {
   /** Implicit-TLS submission. */
   smtpPort: 465;
   secure: true;
-  /** `Openship <openship@<domain>>` */
+  /** `Kovalio <kovalio@<domain>>` */
   from: string;
   /** True if this call rotated/created creds, false if reused. */
   rotated: boolean;
 }
 
-export interface EnsureOpenshipPlatformMailboxOptions {
+export interface EnsureKovalioPlatformMailboxOptions {
   /**
    * Override the domain to provision the mailbox under. Reserved for a
    * future per-tenant outbound identity path; current callers should omit
@@ -102,9 +102,9 @@ export interface EnsureOpenshipPlatformMailboxOptions {
  * in lockstep (same rollback pattern createMailbox uses for maildir
  * failures).
  */
-export async function ensureOpenshipPlatformMailbox(
+export async function ensureKovalioPlatformMailbox(
   serverId: string,
-  opts?: EnsureOpenshipPlatformMailboxOptions,
+  opts?: EnsureKovalioPlatformMailboxOptions,
 ): Promise<PlatformMailboxCreds> {
   return sshManager.withExecutor(serverId, async (exec) => {
     const state = await readState(exec);
@@ -135,7 +135,7 @@ export async function ensureOpenshipPlatformMailbox(
         plaintext = decrypt(cached.password);
       } catch {
         console.warn(
-          `[ensureOpenshipPlatformMailbox] state.platformMailbox.password failed to decrypt — treating as legacy plaintext. It will be re-encrypted on next rotation.`,
+          `[ensureKovalioPlatformMailbox] state.platformMailbox.password failed to decrypt — treating as legacy plaintext. It will be re-encrypted on next rotation.`,
         );
         plaintext = cached.password;
       }
@@ -180,7 +180,7 @@ async function mintAndPersist(args: MintArgs): Promise<PlatformMailboxCreds> {
     buildUpsertMailboxSql({
       username: email,
       passwordHash: hash,
-      name: "Openship Platform",
+      name: "Kovalio Platform",
       domain,
       storagebasedirectory: layout.storagebasedirectory,
       storagenode: layout.storagenode,
@@ -271,7 +271,7 @@ export function buildCreds(args: {
     smtpHost: args.smtpHost,
     smtpPort: 465,
     secure: true,
-    from: `Openship <${args.email}>`,
+    from: `Kovalio <${args.email}>`,
     rotated: args.rotated,
   };
 }

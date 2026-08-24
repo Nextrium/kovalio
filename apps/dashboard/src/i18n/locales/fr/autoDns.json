@@ -1,7 +1,7 @@
 {
   "checking": "Vérification de votre fournisseur DNS…",
   "noProviderTitle": "Configurer ces enregistrements automatiquement",
-  "noProviderDesc": "Connectez un fournisseur DNS et Openship ajoutera ces enregistrements pour vous.",
+  "noProviderDesc": "Connectez un fournisseur DNS et Kovalio ajoutera ces enregistrements pour vous.",
   "connect": "Connecter un fournisseur DNS",
   "unauthorizedTitle": "Le fournisseur DNS doit être reconnecté",
   "unauthorizedDesc": "Votre jeton enregistré a été refusé. Reconnectez-le pour configurer le DNS automatiquement.",
@@ -19,7 +19,7 @@
   "actionAdopt": "Rediriger",
   "actionInSync": "En place",
   "actionConflict": "Conflit",
-  "conflictNote": "Non géré par Openship — supprimez-le ou configurez cet enregistrement manuellement.",
+  "conflictNote": "Non géré par Kovalio — supprimez-le ou configurez cet enregistrement manuellement.",
   "outcomeApplied": "Appliqué",
   "outcomeSkipped": "Ignoré",
   "outcomeFailed": "Échec",

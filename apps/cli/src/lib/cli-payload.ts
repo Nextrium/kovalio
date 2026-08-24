@@ -1,12 +1,12 @@
 /**
- * Download + verify + extract the arch-independent CLI payload for `openship
- * update` (tarball installs), and repoint ~/.openship/cli/current at it. The
+ * Download + verify + extract the arch-independent CLI payload for `kovalio
+ * update` (tarball installs), and repoint ~/.kovalio/cli/current at it. The
  * payload (dist/ + node_modules/ + package.json) is built once by
- * build/stage-cli-payload.ts and published as openship-cli-<tag>.tar.gz; the
+ * build/stage-cli-payload.ts and published as kovalio-cli-<tag>.tar.gz; the
  * launcher runs cli/current/dist/index.js under Node.
  *
  * Mirrors lib/dashboard.ts's fail-closed verify + `tar -xzf` + `.extracted`
- * marker, but installs under ~/.openship/cli/<tag>/ (a live run target, not the
+ * marker, but installs under ~/.kovalio/cli/<tag>/ (a live run target, not the
  * cache) so the current symlink can be repointed atomically on update.
  */
 import { spawnSync } from "node:child_process";
@@ -34,14 +34,14 @@ const KEEP = 2;
 
 export interface CliPayload {
   tag: string;
-  /** ~/.openship/cli/<tag> */
+  /** ~/.kovalio/cli/<tag> */
   dir: string;
   /** dist/index.js the launcher execs. */
   entry: string;
 }
 
 function assetName(tag: string): string {
-  return `openship-cli-${tag}.tar.gz`;
+  return `kovalio-cli-${tag}.tar.gz`;
 }
 
 function repoint(link: string, targetTag: string): void {
@@ -87,7 +87,7 @@ function safeMtime(p: string): number {
  * missing) and repoint cli/current at it. Fail-closed: a missing sidecar or a
  * checksum mismatch aborts and leaves the previous install intact.
  *
- * OPENSHIP_CLI_ASSET_URL overrides the download source (its `.sha256` sidecar is
+ * KOVALIO_CLI_ASSET_URL overrides the download source (its `.sha256` sidecar is
  * fetched alongside) so a staged tarball installs without a published release.
  */
 export async function ensureCliPayload(
@@ -109,7 +109,7 @@ export async function ensureCliPayload(
   mkdirSync(dir, { recursive: true });
 
   const name = assetName(resolved);
-  const override = process.env.OPENSHIP_CLI_ASSET_URL?.trim();
+  const override = process.env.KOVALIO_CLI_ASSET_URL?.trim();
   const url = override || assetUrl(resolved, name);
   const tarball = join(dir, name);
   const { sha256 } = await downloadToFile(url, tarball, onProgress);

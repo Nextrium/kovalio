@@ -17,7 +17,7 @@
  * a successful backup.
  *
  * That is the same silent-false-success class as
- * [#611](https://github.com/oblien/openship/issues/611), and the "0 bytes = failed
+ * [#611](https://github.com/Nextrium/kovalio/issues/611), and the "0 bytes = failed
  * run" backstop does NOT catch it: zstd of an empty stream is still a valid ~13-byte
  * frame, and gzip of nothing is ~20 bytes. A non-empty artifact containing no data
  * is the worst possible outcome, because it looks exactly like a small database.
@@ -213,8 +213,8 @@ export function safePipelineFragment(
     // A status we could not parse is a failure, never an implicit success.
     "case \"$d\" in ''|*[!0-9]*) d=1 ;; esac",
     "case \"$c\" in ''|*[!0-9]*) c=1 ;; esac",
-    `[ "$c" = 0 ] || { echo "openship: ${labels.right} failed with status $c" >&2; exit "$c"; }`,
-    `[ "$d" = 0 ] || { echo "openship: ${labels.left} failed with status $d" >&2; exit "$d"; }`,
+    `[ "$c" = 0 ] || { echo "kovalio: ${labels.right} failed with status $c" >&2; exit "$c"; }`,
+    `[ "$d" = 0 ] || { echo "kovalio: ${labels.left} failed with status $d" >&2; exit "$d"; }`,
   ].join("\n");
 }
 

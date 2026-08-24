@@ -65,9 +65,9 @@ const INVITE_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
  */
 // Cookie prefix - distinct per mode so desktop API (port 4000) and
 // SaaS API (port 4100) don't collide on localhost (cookies ignore port).
-export const COOKIE_PREFIX = env.CLOUD_MODE ? "openship-cloud" : "openship";
+export const COOKIE_PREFIX = env.CLOUD_MODE ? "kovalio-cloud" : "kovalio";
 
-// "Is this process the multi-tenant SaaS?" — OPENSHIP_TARGET and CLOUD_MODE are
+// "Is this process the multi-tenant SaaS?" — KOVALIO_TARGET and CLOUD_MODE are
 // independent env vars (runtime-config.ts does no cross-inference), and the SaaS
 // runs with both; keying off either avoids missing it if only one is set. Used
 // to force email verification before login on SaaS only (self-hosted/desktop
@@ -77,7 +77,7 @@ export const isSaasDeployment = runtimeTargetId === "cloud-saas" || env.CLOUD_MO
 function getSharedCookieDomain() {
   // A localhost / single-label host (dev — including the local SaaS on :4100)
   // can ONLY use host-only cookies: a browser rejects a `Domain=.foo` cookie
-  // (e.g. a leftover BETTER_AUTH_COOKIE_DOMAIN=.openship.io) on a `localhost`
+  // (e.g. a leftover BETTER_AUTH_COOKIE_DOMAIN=.nextrium.org) on a `localhost`
   // page, which silently drops the session and makes login loop. Force
   // host-only there, IGNORING any configured domain, so a local SaaS always
   // "treats itself as localhost". Real multi-label hosts fall through.
@@ -101,8 +101,8 @@ function getSharedCookieDomain() {
   for (const value of urls) {
     try {
       const hostname = new URL(value).hostname;
-      if (hostname === "openship.io" || hostname.endsWith(".openship.io")) {
-        return ".openship.io";
+      if (hostname === "nextrium.org" || hostname.endsWith(".nextrium.org")) {
+        return ".nextrium.org";
       }
     } catch {
       // Ignore invalid URLs and fall back to host-only cookies.
@@ -362,7 +362,7 @@ export const auth = betterAuth({
     // `false` — which renames the session cookie (`__Secure-` prefix, logging
     // everyone out once) and breaks the pre-TLS HTTP window. Preserve today's
     // exact behavior; secure-cookie hardening is a separate, deliberate change.
-    ...(env.OPENSHIP_PUBLIC_URL ? { useSecureCookies: false } : {}),
+    ...(env.KOVALIO_PUBLIC_URL ? { useSecureCookies: false } : {}),
     ...(sharedCookieDomain
       ? {
           crossSubDomainCookies: {
@@ -420,14 +420,14 @@ export const auth = betterAuth({
           // DEV ESCAPE HATCH, `local-saas` ONLY.
           //
           // That target is a localhost-only SaaS used for development
-          // (`OPENSHIP_TARGET=local-saas`, ports 4100/3100) and it normally has no
+          // (`KOVALIO_TARGET=local-saas`, ports 4100/3100) and it normally has no
           // mail transport at all. Because CLOUD_MODE is true there,
           // `requireEmailVerification` is forced on — so without this, signup on a
           // dev machine is a dead end: the account is created, no session is issued,
           // and the code needed to finish is inside an email nothing can send.
           //
           // Printing an auth credential to a log is only acceptable because of how
-          // narrow the gate is: `runtimeTargetId` comes from OPENSHIP_TARGET, an
+          // narrow the gate is: `runtimeTargetId` comes from KOVALIO_TARGET, an
           // explicit operator choice validated against a fixed table (an unknown
           // value throws at boot), and the `cloud-saas` row — production — cannot
           // reach this branch. It is NOT gated on NODE_ENV, which flips by accident.
@@ -471,7 +471,7 @@ export const auth = betterAuth({
               message:
                 "This instance has no email transport configured, so a reset code " +
                 "cannot be sent. Configure SMTP in Settings → Email, or reset the " +
-                "password from the server with `openship reset-admin`.",
+                "password from the server with `kovalio reset-admin`.",
             });
           }
           const tmpl = resetPasswordOtpEmail(otp, { expiresMinutes: 10 });
@@ -484,7 +484,7 @@ export const auth = betterAuth({
               message:
                 "Could not send the reset code — this instance has no working email " +
                 "transport. Configure SMTP in Settings → Email, or reset the password " +
-                "from the server with `openship reset-admin`.",
+                "from the server with `kovalio reset-admin`.",
             });
           }
         }
@@ -492,7 +492,7 @@ export const auth = betterAuth({
     }),
 
     /**
-     * MCP OAuth 2.1 authorization server. Turns Openship into a standards-
+     * MCP OAuth 2.1 authorization server. Turns Kovalio into a standards-
      * compliant remote MCP server: discovery-based clients (Claude, Cursor)
      * self-register (DCR), run the PKCE authorize flow, hit our consent page,
      * and receive an OAuth access token. That token is then bridged into the

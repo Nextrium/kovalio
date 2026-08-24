@@ -1,10 +1,10 @@
 /**
  * Link the control plane's OWN containers to its self-app project.
  *
- * `openship up` on Linux runs Openship as a compose stack (api, dashboard,
+ * `kovalio up` on Linux runs Kovalio as a compose stack (api, dashboard,
  * postgres, redis, edge). The self-app project was registered as a bare row with
  * no services, so its Apps & Services tab read "No apps or services yet" while
- * five containers of Openship were running right there — and nothing in the
+ * five containers of Kovalio were running right there — and nothing in the
  * dashboard could show their state, logs, or shell.
  *
  * This reconstructs the missing half: one `service` row per compose service, plus
@@ -57,7 +57,7 @@ export function portSpecs(c: DockerContainerSummary): string[] {
 }
 
 /**
- * Find the compose stack that IS this Openship install. Keyed off the api +
+ * Find the compose stack that IS this Kovalio install. Keyed off the api +
  * dashboard services being present under one compose project, so an unrelated
  * stack on the same host can never be adopted as the control plane.
  */

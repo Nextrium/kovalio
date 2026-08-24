@@ -101,10 +101,10 @@ const { runUsageSampleSweep, bucketMinuteFor } = await import(
 
 const container = (id: string, service: string, state = "running") => ({
   id,
-  names: [`openship-app-${service}`],
+  names: [`kovalio-app-${service}`],
   state,
   status: state === "running" ? "Up 1 hour" : "Exited (0)",
-  labels: { "openship.project": "p1", "openship.service": service },
+  labels: { "kovalio.project": "p1", "kovalio.service": service },
   ports: [],
 });
 

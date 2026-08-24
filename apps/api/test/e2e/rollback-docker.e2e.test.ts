@@ -22,7 +22,7 @@
  *
  *   3. THE MATERIALIZATION — restoring through the normal deploy primitive with
  *      the frozen snapshot's image yields a COMPLETE container: the frozen env,
- *      the pinned loopback publish, the volume bind, the openship labels and the
+ *      the pinned loopback publish, the volume bind, the kovalio labels and the
  *      resource caps — and it serves the OLD version's bytes over
  *      127.0.0.1:<hostPort>. The container the removed `makeActive` stub built
  *      had none of those, which is exactly why a "successful" rollback used to
@@ -52,8 +52,8 @@ import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 import { seedOrg, seedProject, seedDeployment, setActive } from "../helpers/seed";
 
 const BASE_IMAGE = "busybox:latest";
-const TAG_V1 = "openship/e2e-rollback:v1";
-const TAG_V2 = "openship/e2e-rollback:v2";
+const TAG_V1 = "kovalio/e2e-rollback:v1";
+const TAG_V2 = "kovalio/e2e-rollback:v2";
 const APP_PORT = 80;
 
 /** A free loopback port, the way the allocator's callers use one: bind :0, read
@@ -121,7 +121,7 @@ describeDockerE2E("rollback against a real Docker daemon", () => {
     // Two versions of a one-file HTTP server, so "which version is live?" is an
     // HTTP GET rather than an inference. Labelled the way a real build labels
     // images, so listProjectImages / the keep set see them.
-    contextDir = await mkdtemp(join(tmpdir(), "openship-rollback-e2e-"));
+    contextDir = await mkdtemp(join(tmpdir(), "kovalio-rollback-e2e-"));
     for (const [tag, version] of [
       [TAG_V1, "v1"],
       [TAG_V2, "v2"],
@@ -139,7 +139,7 @@ describeDockerE2E("rollback against a real Docker daemon", () => {
       );
       const stream = await runtime.docker.buildImage(
         { context: contextDir, src: ["Dockerfile"] },
-        { t: tag, labels: { "openship.project": project.id } },
+        { t: tag, labels: { "kovalio.project": project.id } },
       );
       await new Promise<void>((resolve, reject) => {
         runtime.docker.modem.followProgress(stream, (err: Error | null) =>
@@ -172,7 +172,7 @@ describeDockerE2E("rollback against a real Docker daemon", () => {
     }
     for (const tag of [TAG_V1, TAG_V2]) await runtime.removeImage(tag).catch(() => {});
     await runtime.docker
-      .getVolume(`openship-${project.slug}-data`)
+      .getVolume(`kovalio-${project.slug}-data`)
       .remove({ force: true } as never)
       .catch(() => {});
     await runtime.dispose?.().catch(() => {});
@@ -317,11 +317,11 @@ describeDockerE2E("rollback against a real Docker daemon", () => {
     ]);
     // …with the project-scoped volume reattached (the stub dropped binds → the
     // app came back with an empty data directory).
-    expect(info.HostConfig.Binds ?? []).toContain(`openship-${project.slug}-data:/data`);
+    expect(info.HostConfig.Binds ?? []).toContain(`kovalio-${project.slug}-data:/data`);
     // …labelled, so live state, the image-GC keep set and teardown can all find
     // it (the stub's container was invisible to every one of them).
-    expect(info.Config.Labels["openship.project"]).toBe(project.id);
-    expect(info.Config.Labels["openship.deployment"]).toBe(restore.id);
+    expect(info.Config.Labels["kovalio.project"]).toBe(project.id);
+    expect(info.Config.Labels["kovalio.deployment"]).toBe(restore.id);
     // …and with the caps this release originally had.
     expect(info.HostConfig.Memory).toBe(256 * 1024 * 1024);
   }, 180_000);

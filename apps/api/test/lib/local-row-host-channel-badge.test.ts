@@ -36,12 +36,12 @@ describe("localServerHostChannel", () => {
       reachable: false,
       code: "host_channel_blocked",
       channel: "not_configured",
-      hint: "Re-run `openship up` to provision the host channel. `openship doctor` reports whether it worked.",
+      hint: "Re-run `kovalio up` to provision the host channel. `kovalio doctor` reports whether it worked.",
     });
     expect(await localServerHostChannel("srv-local")).toEqual({
       ok: false,
       channel: "not_configured",
-      hint: expect.stringContaining("openship up"),
+      hint: expect.stringContaining("kovalio up"),
     });
   });
 
@@ -53,7 +53,7 @@ describe("localServerHostChannel", () => {
       reachable: true,
       code: "host_control_disabled",
       channel: "disabled",
-      hint: "Host control is off (OPENSHIP_HOST_CONTROL=false).",
+      hint: "Host control is off (KOVALIO_HOST_CONTROL=false).",
     });
     const health = await localServerHostChannel("srv-local");
     expect(health?.ok).toBe(false);

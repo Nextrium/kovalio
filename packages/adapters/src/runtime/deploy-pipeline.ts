@@ -236,7 +236,7 @@ export interface DeployPipelineResult {
  * unkillable, an `inspect` can wedge on daemon-side state. A `.catch()` covers a
  * REJECTION; it does nothing for a promise that never settles.
  *
- * That is openship#629: the overlap path stops the old deployment LAST, so an
+ * That is kovalio#629: the overlap path stops the old deployment LAST, so an
  * unbounded await there parked the whole deploy in `deploying` forever — routes
  * and TLS already swapped to the new container, but `activeDeploymentId`, the
  * release version, and the terminal SSE event all sit downstream of the return

@@ -88,12 +88,12 @@ const project = (over: Partial<Project> = {}) =>
   ({
     id: "proj_1",
     organizationId: "org_1",
-    name: "openship",
-    slug: "openship",
+    name: "kovalio",
+    slug: "kovalio",
     isApp: false,
     gitProvider: "github",
     gitOwner: "oblien",
-    gitRepo: "openship",
+    gitRepo: "kovalio",
     gitBranch: "main",
     appTemplateId: null,
     releaseSource: null,
@@ -186,7 +186,7 @@ describe("a project with no cached row", () => {
         projectId: "proj_1",
         kind: "commit",
         // Full sha: the read path compares it, and a display prefix can't be.
-        detail: expect.objectContaining({ latestSha: NEWER, key: "oblien/openship#main" }),
+        detail: expect.objectContaining({ latestSha: NEWER, key: "oblien/kovalio#main" }),
       }),
     );
   });
@@ -239,7 +239,7 @@ describe("when the cached row is allowed to answer", () => {
     // Row was polled for main; the project now tracks a release branch. Nothing
     // told the cache — it just stops matching the question.
     const p = project({ gitBranch: "release/0.6" });
-    setup([p], [cachedRow({ key: "oblien/openship#main", latestSha: NEWER, ageMs: MINUTE })]);
+    setup([p], [cachedRow({ key: "oblien/kovalio#main", latestSha: NEWER, ageMs: MINUTE })]);
     resolveUpstreamDrift.mockResolvedValue(upstream(p, NEWER));
 
     const items = await listOrganizationUpdates(ctx);

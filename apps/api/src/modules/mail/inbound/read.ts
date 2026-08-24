@@ -72,7 +72,7 @@ export async function readCollectorFolder(
   const script =
     `set -e; d=${shellQuote(`${folder}/new`)}; [ -d "$d" ] || exit 0; ` +
     `for f in $(ls -1 "$d" 2>/dev/null | head -n ${limit}); do ` +
-    `echo "__OPENSHIP_MSG__ $f"; head -c ${HEADER_BYTES} "$d/$f" 2>/dev/null || true; ` +
+    `echo "__KOVALIO_MSG__ $f"; head -c ${HEADER_BYTES} "$d/$f" 2>/dev/null || true; ` +
     `echo; done`;
 
   const { output } = await runMailCommand(
@@ -82,7 +82,7 @@ export async function readCollectorFolder(
   );
 
   const out: InboundMessage[] = [];
-  for (const chunk of output.split("__OPENSHIP_MSG__ ").slice(1)) {
+  for (const chunk of output.split("__KOVALIO_MSG__ ").slice(1)) {
     const nl = chunk.indexOf("\n");
     if (nl < 0) continue;
     const file = chunk.slice(0, nl).trim();
@@ -127,7 +127,7 @@ interface Matched {
 export async function runInboundForServer(opts: {
   serverId: string;
   organizationId: string;
-  openshipSenders?: readonly string[];
+  kovalioSenders?: readonly string[];
   /** Skip dispatch and deletion — powers the UI's "test this rule" button. */
   dryRun?: boolean;
 }): Promise<{ read: number; matched: number; emitted: number; dropped: number; errors: string[] }> {
@@ -169,7 +169,7 @@ export async function runInboundForServer(opts: {
       for (const message of messages) {
         handled.push(message.file);
 
-        const guard = loopGuard(message.headers, { openshipSenders: opts.openshipSenders });
+        const guard = loopGuard(message.headers, { kovalioSenders: opts.kovalioSenders });
         if (guard.drop) {
           dropped++;
           continue;
@@ -325,7 +325,7 @@ async function armedDomains(serverId: string): Promise<string[]> {
   const { queryRows, q } = await import("../admin/psql-runner");
   const rows = await queryRows<{ domain: string; bcc_address: string }>(
     serverId,
-    `SELECT domain, bcc_address FROM recipient_bcc_domain WHERE active = 1 AND bcc_address LIKE ${q("openship-hook+%")}`,
+    `SELECT domain, bcc_address FROM recipient_bcc_domain WHERE active = 1 AND bcc_address LIKE ${q("kovalio-hook+%")}`,
   );
   return rows.filter((r) => tokenFromBcc(r.bcc_address)).map((r) => r.domain);
 }

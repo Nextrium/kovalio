@@ -1,7 +1,7 @@
 // ── Containerized mail engine ────────────────────────────────────────────────
 //
 // The mail engine (Postfix/Dovecot/Amavis/ClamAV/SpamAssassin/iRedAPD/fail2ban,
-// under s6) runs as a host-networked container beside `openship-edge`, with its
+// under s6) runs as a host-networked container beside `kovalio-edge`, with its
 // vmail database in a pinned `postgres:16-alpine` SIDECAR. This mirrors the edge's
 // container model (`openresty-lua.ts` EDGE_CONTAINER_MOUNTS / EDGE_HOST_PATHS):
 // raw `docker run` over the target executor, ALL mutable state on host bind mounts
@@ -16,11 +16,11 @@
 // host firewall from inside the container.
 
 /** The mail engine container, and its Postgres sidecar. */
-export const MAIL_CONTAINER = "openship-mail";
-export const MAIL_DB_CONTAINER = "openship-mail-db";
+export const MAIL_CONTAINER = "kovalio-mail";
+export const MAIL_DB_CONTAINER = "kovalio-mail-db";
 
-/** Root for mail state on the host. Siblings the edge's /var/lib/openship/edge. */
-export const MAIL_HOST_STATE_DIR = "/var/lib/openship/mail";
+/** Root for mail state on the host. Siblings the edge's /var/lib/kovalio/edge. */
+export const MAIL_HOST_STATE_DIR = "/var/lib/kovalio/mail";
 
 /**
  * The listening ports the engine binds on the host NIC. Used to open the inbound
@@ -109,6 +109,6 @@ export const MAIL_HOST_PATHS = {
   // relay hop must be `encrypt` so SASL credentials never cross a plaintext
   // connection, while direct-to-MX delivery for the un-relayed domains stays
   // opportunistic. A GLOBAL smtp_tls_security_level can't express both.
-  relayTlsPolicy: `${MAIL_HOST_STATE_DIR}/config/postfix/openship_tls_policy`,
+  relayTlsPolicy: `${MAIL_HOST_STATE_DIR}/config/postfix/kovalio_tls_policy`,
   amavisUserConf: `${MAIL_HOST_STATE_DIR}/config/amavis/50-user`,
 } as const;

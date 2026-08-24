@@ -19,10 +19,10 @@ import type {
   DockerVolumeInfo,
   ProxyKind,
 } from "@repo/adapters";
-import { classifyProxy, isBuildHelperMarkers, OPENSHIP_LABEL } from "@repo/adapters";
+import { classifyProxy, isBuildHelperMarkers, KOVALIO_LABEL } from "@repo/adapters";
 import type { ComposeHealthcheck, ProxySettings } from "@repo/core";
 import type { ComposeService } from "../../lib/compose-parser";
-import type { ManifestProjectEntry } from "../../lib/openship-manifest";
+import type { ManifestProjectEntry } from "../../lib/kovalio-manifest";
 import type { ExistingRoute } from "./proxy-route-scan";
 
 export interface DiscoveredVolumeMount {
@@ -46,7 +46,7 @@ export function declaredKey(composeProject: string, serviceName: string): string
 export interface DiscoveredService {
   /** compose service name, or the container name for a standalone container. */
   name: string;
-  /** Where it was discovered — informs how much Openship can reconstruct. */
+  /** Where it was discovered — informs how much Kovalio can reconstruct. */
   source: "compose" | "container";
   containerId?: string;
   containerName?: string;
@@ -85,7 +85,7 @@ export interface DiscoveredService {
    *  them instead of resetting to the project default. Undefined = uncapped. */
   resources?: { cpuCores?: number; memoryMb?: number };
   /** Reverse-proxy kind when this container IS the edge proxy (image/command
-   *  matches AND it binds a host edge port). Openship's OpenResty replaces it,
+   *  matches AND it binds a host edge port). Kovalio's OpenResty replaces it,
    *  so it's dropped from import — importing it is the 80/443 conflict. */
   proxyKind?: ProxyKind;
   /** Host edge ports (80/443) this service publishes. Reserved for OpenResty:
@@ -119,15 +119,15 @@ export interface DiscoveredGroup {
 }
 
 /**
- * An OPENSHIP-owned project recovered from a server's live containers (matched by
- * the `openship.project` label) + its `.openship/manifest.json` entry. `knownHere`
+ * An KOVALIO-owned project recovered from a server's live containers (matched by
+ * the `kovalio.project` label) + its `.kovalio/manifest.json` entry. `knownHere`
  * = this project id already exists in the scanning instance's DB (genuinely
  * managed here → not re-importable, just counted). `knownHere: false` = orphaned:
- * the DB was reset (DR) or the server came from another Openship instance →
+ * the DB was reset (DR) or the server came from another Kovalio instance →
  * re-importable, preserving the original id/slug so the live containers re-attach.
  */
-export interface OpenshipProjectGroup {
-  /** Original Openship project id from the `openship.project` label. */
+export interface KovalioProjectGroup {
+  /** Original Kovalio project id from the `kovalio.project` label. */
   projectId: string;
   /** Best-effort display name (manifest name/slug → compose project → derived). */
   suggestedName: string;
@@ -167,14 +167,14 @@ export interface DiscoveredStack {
   services: DiscoveredService[];
   volumes: Array<{ name: string; driver: string; inUseBy: string[] }>;
   networks: Array<{ name: string; driver: string }>;
-  /** Stack-level notes for things Openship can't carry over 1:1. */
+  /** Stack-level notes for things Kovalio can't carry over 1:1. */
   warnings: string[];
   adoptable: boolean;
   /** Live containers already managed by a project in THIS instance's DB (count). */
   alreadyManaged: number;
-  /** Openship projects recovered from the server (see {@link OpenshipProjectGroup});
+  /** Kovalio projects recovered from the server (see {@link KovalioProjectGroup});
    *  `knownHere: false` entries are re-importable. Empty when none found. */
-  openshipProjects: OpenshipProjectGroup[];
+  kovalioProjects: KovalioProjectGroup[];
   /** Every route the foreign proxy serves, flattened (one per port+path). Lets the
    *  wizard SHOW each detected domain/path + its guessed service, so a fan-out
    *  path isn't silently dropped; unmatched ones also appear in `warnings`. */
@@ -259,7 +259,7 @@ export function splitEnvByProvenance(
 }
 
 /**
- * Container env (`Config.Env`, in order) → the config Openship imports, plus the
+ * Container env (`Config.Env`, in order) → the config Kovalio imports, plus the
  * vars it left behind because the image supplies them.
  *
  * `imageEnv` = the image's own ordered `Config.Env`. `declaredKeys` = keys the
@@ -316,7 +316,7 @@ function portsToComposeStrings(ports: DockerPortBinding[]): string[] {
   return out;
 }
 
-/** The host ports Openship's OpenResty edge owns — never re-published by an
+/** The host ports Kovalio's OpenResty edge owns — never re-published by an
  *  imported workload. */
 export const EDGE_PORTS = new Set([80, 443]);
 
@@ -408,10 +408,10 @@ function inspectHealthcheckToCompose(
  * service adopts. Priority:
  *   1. an explicit compose-file declaration (`declared.name`)
  *   2. the `com.docker.compose.service` label (a real compose stack)
- *   3. Openship's own `openship.service` label — Openship deploys compose
- *      services as plain dockerode containers (`openship-<slug>-<svc>`) that
+ *   3. Kovalio's own `kovalio.service` label — Kovalio deploys compose
+ *      services as plain dockerode containers (`kovalio-<slug>-<svc>`) that
  *      carry NO compose label, so without this step the moved service was named
- *      after the CONTAINER (`openship-openship-web`) and no longer matched its
+ *      after the CONTAINER (`kovalio-kovalio-web`) and no longer matched its
  *      git-compose definition (`web`) → the reconcile created a DUPLICATE
  *      bare-name row instead of updating the moved one in place.
  *   4. the raw container name (last resort).
@@ -420,27 +420,27 @@ export function discoveredServiceName(
   detail: { composeService?: string; labels?: Record<string, string>; name: string },
   declared: { name?: string } | undefined,
 ): string {
-  return declared?.name ?? detail.composeService ?? detail.labels?.["openship.service"] ?? detail.name;
+  return declared?.name ?? detail.composeService ?? detail.labels?.["kovalio.service"] ?? detail.name;
 }
 
 /**
- * Display-grouping key for an Openship-DEPLOYED container that carries no
- * compose label. Openship runs compose services as plain containers named
- * `openship-<slug>-<svc>` (labels `openship.project`/`openship.service`, but NO
+ * Display-grouping key for an Kovalio-DEPLOYED container that carries no
+ * compose label. Kovalio runs compose services as plain containers named
+ * `kovalio-<slug>-<svc>` (labels `kovalio.project`/`kovalio.service`, but NO
  * `com.docker.compose.project`), so without this they all collapse into the
  * single "standalone" bucket — the exact symptom in flat-docker mode where a
  * moved stack (supabase / mongodb / …) showed as N loose containers instead of
  * one group. Derive the stack SLUG from the container name minus the EXACT
- * `openship.service` suffix (using the label makes it precise even for
+ * `kovalio.service` suffix (using the label makes it precise even for
  * hyphenated service names like `mongo-express`). Returns null when the
- * container isn't an Openship compose service (→ truly standalone).
+ * container isn't an Kovalio compose service (→ truly standalone).
  */
-export function openshipStackName(
+export function kovalioStackName(
   containerName: string | undefined,
   serviceLabel: string | undefined,
 ): string | null {
   if (!containerName || !serviceLabel) return null;
-  const stripped = containerName.replace(/^openship-/, "");
+  const stripped = containerName.replace(/^kovalio-/, "");
   const suffix = `-${serviceLabel}`;
   if (!stripped.endsWith(suffix)) return null;
   return stripped.slice(0, -suffix.length) || null;
@@ -606,8 +606,8 @@ export function reconcileStack(opts: {
   /** {@link imageRefKey} → its baked-in default CMD tokens, dropped when the
    *  container only restates it (see toDiscoveredService). */
   imageCmds?: Map<string, string[]>;
-  /** Openship projects recovered from the server (computed in the IO shell). */
-  openshipProjects?: OpenshipProjectGroup[];
+  /** Kovalio projects recovered from the server (computed in the IO shell). */
+  kovalioProjects?: KovalioProjectGroup[];
   /** published host port → route the foreign proxy already serves (from the
    *  IO-shell proxy scan). Attached per-service by matching published ports. */
   proxyRoutesByPort?: Map<number, ExistingRoute[]>;
@@ -619,13 +619,13 @@ export function reconcileStack(opts: {
   ];
 
   // Build each service alongside the group it belongs to, then group. Priority:
-  // the real compose project → else the Openship stack slug (openship-deployed
+  // the real compose project → else the Kovalio stack slug (kovalio-deployed
   // services have no compose label, so this keeps a moved stack together instead
   // of flattening it into standalone) → else truly standalone (null).
   const built = details.map((d) => ({
     project:
       d.composeProject ??
-      openshipStackName(d.name, d.labels?.["openship.service"]) ??
+      kovalioStackName(d.name, d.labels?.["kovalio.service"]) ??
       null,
     service: toDiscoveredService(
       d,
@@ -664,7 +664,7 @@ export function reconcileStack(opts: {
     .filter((v) => inUse.has(v.name))
     .map((v) => ({ name: v.name, driver: v.driver, inUseBy: [...(inUse.get(v.name) ?? [])] }));
 
-  // Stack-level warnings for topology Openship flattens or can't model.
+  // Stack-level warnings for topology Kovalio flattens or can't model.
   const warnings: string[] = [];
   const customNetworks = networks
     .map((n) => n.name)
@@ -672,12 +672,12 @@ export function reconcileStack(opts: {
     .filter((name) => services.some((s) => s.networks.includes(name)));
   if (customNetworks.length > 0) {
     warnings.push(
-      `Openship runs all services on one project network; custom networks (${customNetworks.join(", ")}) will be flattened. Services still reach each other by name.`,
+      `Kovalio runs all services on one project network; custom networks (${customNetworks.join(", ")}) will be flattened. Services still reach each other by name.`,
     );
   }
   if (composeProjects.length > 0 || declared.size > 0) {
     warnings.push(
-      "Compose `configs`, `secrets`, `expose`, `depends_on` conditions, and host-level keys (`privileged`, `cap_add`, `devices`, `sysctls`) are not modeled by Openship and won't carry over. A container currently sharing another's namespace (`network_mode`/`pid`) is adopted onto the project network instead — re-declare it in the stack's compose file if it must stay shared.",
+      "Compose `configs`, `secrets`, `expose`, `depends_on` conditions, and host-level keys (`privileged`, `cap_add`, `devices`, `sysctls`) are not modeled by Kovalio and won't carry over. A container currently sharing another's namespace (`network_mode`/`pid`) is adopted onto the project network instead — re-declare it in the stack's compose file if it must stay shared.",
     );
   }
   if (services.some((s) => Object.keys(s.env).length > 0)) {
@@ -712,40 +712,40 @@ export function reconcileStack(opts: {
     warnings,
     adoptable: services.length > 0,
     alreadyManaged,
-    openshipProjects: opts.openshipProjects ?? [],
+    kovalioProjects: opts.kovalioProjects ?? [],
     proxyRoutes,
   };
 }
 
 /**
- * A TRANSIENT build-helper container — not a live app. The `openship.build`
+ * A TRANSIENT build-helper container — not a live app. The `kovalio.build`
  * label alone is NOT sufficient: it's baked into every locally-built image
- * (`openship/<app>:bld_…`) and Docker inherits image labels onto the running
+ * (`kovalio/<app>:bld_…`) and Docker inherits image labels onto the running
  * container, so real deploy containers carry it too. A genuine build helper has
- * `openship.build` but NO `openship.deployment`/`openship.service` (those are
+ * `kovalio.build` but NO `kovalio.deployment`/`kovalio.service` (those are
  * set only when a real app container is created). Used to keep transient
  * builders out of both the adopt grid and the re-import set without dropping the
  * real (locally-built) app containers.
  */
 export const isBuildHelper = (labels: Record<string, string>) =>
   isBuildHelperMarkers({
-    build: labels[OPENSHIP_LABEL.build],
-    deployment: labels[OPENSHIP_LABEL.deployment],
-    service: labels[OPENSHIP_LABEL.service],
+    build: labels[KOVALIO_LABEL.build],
+    deployment: labels[KOVALIO_LABEL.deployment],
+    service: labels[KOVALIO_LABEL.service],
   });
 
 /**
- * Reconstruct OPENSHIP-owned projects from their live containers + the server's
- * `.openship/manifest.json`. Pure — the DB cross-reference (which ids are
+ * Reconstruct KOVALIO-owned projects from their live containers + the server's
+ * `.kovalio/manifest.json`. Pure — the DB cross-reference (which ids are
  * `knownHere`) and the manifest read happen in the IO shell and are passed in.
  *
- * Containers are grouped by their `openship.project` label. Build-helper
- * containers (`openship.build`, no live app) are skipped. A single-app deploy
- * container carries only `openship.project`/`openship.deployment` (no
- * `openship.service`), so we DON'T require a service label — we recover the
- * service name from `openship.service` when present, else the container name.
+ * Containers are grouped by their `kovalio.project` label. Build-helper
+ * containers (`kovalio.build`, no live app) are skipped. A single-app deploy
+ * container carries only `kovalio.project`/`kovalio.deployment` (no
+ * `kovalio.service`), so we DON'T require a service label — we recover the
+ * service name from `kovalio.service` when present, else the container name.
  */
-export function reconcileOpenshipProjects(opts: {
+export function reconcileKovalioProjects(opts: {
   managedDetails: DockerContainerDetail[];
   /** Manifest entries keyed by project id (null when the server has no manifest). */
   manifestById: Map<string, ManifestProjectEntry> | null;
@@ -756,12 +756,12 @@ export function reconcileOpenshipProjects(opts: {
   /** {@link imageRefKey} → the image's ordered `Config.Env`. */
   imageEnv?: Map<string, string[]>;
   imageCmds?: Map<string, string[]>;
-}): OpenshipProjectGroup[] {
+}): KovalioProjectGroup[] {
   const { managedDetails, manifestById, knownHereIds, snapshotIds, imageEnv, imageCmds } = opts;
 
   const byProject = new Map<string, DockerContainerDetail[]>();
   for (const d of managedDetails) {
-    const projectId = d.labels["openship.project"];
+    const projectId = d.labels["kovalio.project"];
     if (!projectId) continue; // not project-owned (infra/network helper) — skip
     if (isBuildHelper(d.labels)) continue; // transient build container — not a service
     const list = byProject.get(projectId) ?? [];
@@ -769,16 +769,16 @@ export function reconcileOpenshipProjects(opts: {
     byProject.set(projectId, list);
   }
 
-  const out: OpenshipProjectGroup[] = [];
+  const out: KovalioProjectGroup[] = [];
   for (const [projectId, details] of byProject) {
     const entry = manifestById?.get(projectId);
     const services = details.map((d) => {
       const svc = toDiscoveredService(d, undefined, imageEnv?.get(imageRefKey(d)), imageCmds?.get(imageRefKey(d)));
-      const serviceLabel = d.labels["openship.service"];
+      const serviceLabel = d.labels["kovalio.service"];
       return serviceLabel ? { ...svc, name: serviceLabel } : svc;
     });
     const deploymentId =
-      details.find((d) => d.labels["openship.deployment"])?.labels["openship.deployment"] ??
+      details.find((d) => d.labels["kovalio.deployment"])?.labels["kovalio.deployment"] ??
       entry?.deployment?.id;
 
     out.push({
@@ -789,7 +789,7 @@ export function reconcileOpenshipProjects(opts: {
         entry?.name ||
         entry?.slug ||
         details.find((d) => d.composeProject)?.composeProject ||
-        `openship-${projectId.replace(/^proj_/, "").slice(0, 8)}`,
+        `kovalio-${projectId.replace(/^proj_/, "").slice(0, 8)}`,
       slug: entry?.slug,
       domains: entry?.domains,
       source: entry

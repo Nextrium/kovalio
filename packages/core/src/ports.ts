@@ -10,7 +10,7 @@
  * env in one pass.
  *
  * Storage lives with the caller, deliberately — the CLI remembers ports in
- * `~/.openship/ports.json` (OS_DIR) and the desktop app in Electron's `userData`.
+ * `~/.kovalio/ports.json` (OS_DIR) and the desktop app in Electron's `userData`.
  * This module takes the remembered pair as INPUT and returns the resolved pair, so
  * the algorithm is shared without either launcher inheriting the other's paths.
  *

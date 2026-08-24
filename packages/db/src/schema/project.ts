@@ -15,7 +15,7 @@ import type {
   ProjectCompositeRoute,
   ReleaseSource,
   ProjectObjectStorage,
-  OpenshipReadiness,
+  KovalioReadiness,
 } from "@repo/core";
 import { organization } from "./organization";
 import { service } from "./service";
@@ -170,7 +170,7 @@ export const project = pgTable(
      * Where this project's compose file lives, when it is NOT at the auto-detected
      * root — either the file itself (`deploy/stack.yml`, which is also how a
      * non-standard filename is deployed) or the directory holding it
-     * (`deploy/docker-compose`). Set by the user; seeded from `openship.json`'s
+     * (`deploy/docker-compose`). Set by the user; seeded from `kovalio.json`'s
      * `composePath` when they haven't set one.
      *
      * Read on every scan AND on every redeploy: the push-triggered compose-drift
@@ -246,15 +246,15 @@ export const project = pgTable(
     objectStorage: jsonb("object_storage").$type<ProjectObjectStorage | null>(),
 
     /**
-     * Deploy-time readiness gate (Openship's own, NOT the Docker HEALTHCHECK
+     * Deploy-time readiness gate (Kovalio's own, NOT the Docker HEALTHCHECK
      * directive — that one lives per compose service in `service.advanced`).
      *
      * NULL = off, which is the default for every project: an unconfigured deploy
      * does no post-start waiting at all. Only a project that explicitly opts in
      * here gets a probe that can delay or veto a deploy. Set from the wizard's
-     * Health section, seeded by `openship.json`'s `readiness`.
+     * Health section, seeded by `kovalio.json`'s `readiness`.
      */
-    readiness: jsonb("readiness").$type<OpenshipReadiness | null>(),
+    readiness: jsonb("readiness").$type<KovalioReadiness | null>(),
 
     /* ── Resources (VM-native format) ───────────────────────────────────── */
     /** JSON: { cpuCores, memoryMb } */
@@ -385,7 +385,7 @@ export const project = pgTable(
      *                  Disk + archive remain attached to the workspace;
      *                  compute paused. Rollback starts it back up.
      *   - "offload"  → Reserved for future self-hosted external-S3
-     *                  shipping. Not implemented on Openship Cloud.
+     *                  shipping. Not implemented on Kovalio Cloud.
      *
      * Bare/Docker runtimes ignore this column.
      */
@@ -429,7 +429,7 @@ export const project = pgTable(
     /**
      * User-chosen internal DNS alias for a single-app native project. Resolves
      * east-west ALONGSIDE the default `<slug>` alias on the project's
-     * `openship-<slug>` network (both point at the container) — it never
+     * `kovalio-<slug>` network (both point at the container) — it never
      * replaces the default and never changes public exposure (edge stays the
      * sole ingress). Null = no custom alias, default only. Normalized to a
      * DNS-safe label (`normalizeServiceLabel`) before it reaches Docker.

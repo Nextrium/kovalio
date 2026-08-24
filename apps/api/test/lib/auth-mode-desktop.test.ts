@@ -8,11 +8,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * `DEPLOY_MODE === "desktop" ? "none" : "local"` guess on top of a catch-all
  * default that failed OPEN (a DB error handed out zero-auth on desktop). A single
  * stale "cloud" row — written by self-app.controller when a box with no local admin
- * connects Openship Cloud — was enough to send the loopback-only desktop app to a
+ * connects Kovalio Cloud — was enough to send the loopback-only desktop app to a
  * remote sign-in screen with no way back.
  *
  * The contract these tests pin:
- *   - OPENSHIP_AUTH_MODE, when set, is the ONLY source. It outranks any stored row,
+ *   - KOVALIO_AUTH_MODE, when set, is the ONLY source. It outranks any stored row,
  *     and the DB is not read at all.
  *   - Undeclared, the stored value is the source — so self-hosted keeps its runtime
  *     upgrades (bootstrap-admin, upgrade-to-auth) with no restart.
@@ -58,28 +58,28 @@ afterEach(async () => {
   clearAuthModeCache();
 });
 
-describe("getAuthMode() — declared (OPENSHIP_AUTH_MODE)", () => {
+describe("getAuthMode() — declared (KOVALIO_AUTH_MODE)", () => {
   it.each(["none", "local", "cloud"])("returns the declared mode (%s)", async (mode) => {
-    envMock.OPENSHIP_AUTH_MODE = mode;
+    envMock.KOVALIO_AUTH_MODE = mode;
     expect(await resolve()).toBe(mode);
   });
 
   it("outranks a contradicting stored row", async () => {
     // The exact desktop bug: a stale "cloud" row must not win.
-    envMock.OPENSHIP_AUTH_MODE = "none";
+    envMock.KOVALIO_AUTH_MODE = "none";
     settings.authMode = "cloud";
     expect(await resolve()).toBe("none");
   });
 
   it("never reads the DB when declared", async () => {
-    envMock.OPENSHIP_AUTH_MODE = "none";
+    envMock.KOVALIO_AUTH_MODE = "none";
     settings.authMode = "cloud";
     await resolve();
     expect(getCalls).toBe(0);
   });
 
   it("is unaffected by an unreadable settings table", async () => {
-    envMock.OPENSHIP_AUTH_MODE = "none";
+    envMock.KOVALIO_AUTH_MODE = "none";
     getThrows = true;
     expect(await resolve()).toBe("none");
   });
@@ -88,7 +88,7 @@ describe("getAuthMode() — declared (OPENSHIP_AUTH_MODE)", () => {
     // A declared "local" on desktop stands: someone putting a password on a shared
     // machine must not be silently downgraded to zero-auth.
     envMock.DEPLOY_MODE = "desktop";
-    envMock.OPENSHIP_AUTH_MODE = "local";
+    envMock.KOVALIO_AUTH_MODE = "local";
     expect(await resolve()).toBe("local");
   });
 });
@@ -132,7 +132,7 @@ describe("getAuthMode() — undeclared (DB-backed)", () => {
 
 describe("pin helpers", () => {
   it("reports the declared mode", async () => {
-    envMock.OPENSHIP_AUTH_MODE = "none";
+    envMock.KOVALIO_AUTH_MODE = "none";
     const { isAuthModePinned, pinnedAuthMode } = await import("../../src/lib/auth-mode");
     expect(isAuthModePinned()).toBe(true);
     expect(pinnedAuthMode()).toBe("none");

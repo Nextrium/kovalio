@@ -59,7 +59,7 @@ export interface RoutingSettingsCardProps {
    * Canonical redirect: serve a 30x to another of the project's hostnames instead
    * of the app. Omit the whole prop to hide the control — the parent decides
    * whether it applies (there's nothing to redirect to with one hostname, and
-   * Openship Cloud owns routing for cloud projects, so it's refused there).
+   * Kovalio Cloud owns routing for cloud projects, so it's refused there).
    *
    * `targets` are the project's OTHER hostnames; picking "" means serve normally.
    */

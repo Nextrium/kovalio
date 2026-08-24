@@ -8,7 +8,7 @@
  * `*.opsh.io` subdomains.
  *
  * SCOPE — cloud only, and deliberately `env.CLOUD_MODE`:
- *   Self-hosted Openship is free and unmetered; that's the product promise, so
+ *   Self-hosted Kovalio is free and unmetered; that's the product promise, so
  *   every gate below returns immediately when CLOUD_MODE is false. It must NOT
  *   use `platform().target` (reads "cloud" for a self-hosted box carrying Oblien
  *   credentials) and must NOT use `requireCloud()` — that helper asserts "this
@@ -242,7 +242,7 @@ export async function assertPlanAllowsResourceTier(
 /**
  * The tier's project ceiling, or null when the plan doesn't cap them.
  *
- * Openship owns this outright — Oblien has no project concept. Returned rather
+ * Kovalio owns this outright — Oblien has no project concept. Returned rather
  * than asserted because the existing `assertProjectQuota` already counts project
  * groups and raises its own error; it just had no idea a plan existed (every
  * cloud org, free or enterprise, got the same `CLOUD_MAX_PROJECTS_PER_USER` of 2,

@@ -5,7 +5,7 @@
  * global runtime.
  *
  * scripts/install.sh is the FIRST-install provisioner (POSIX sh, no node yet);
- * this module is the Node-side twin used by `openship update` so a release that
+ * this module is the Node-side twin used by `kovalio update` so a release that
  * raises the Node floor self-heals — it re-checks the floor and fetches a fresh
  * Node 22 from nodejs.org (sha256-verified) only when neither the system node
  * nor the vendored one qualifies. The launcher text here is kept
@@ -29,16 +29,16 @@ const RUNTIME_CURRENT = join(RUNTIME_DIR, "current");
 const BIN_DIR = join(OS_DIR, "bin");
 
 /** Absolute path of the stable launcher the service's ExecStart points at. */
-export const LAUNCHER_PATH = join(BIN_DIR, "openship");
+export const LAUNCHER_PATH = join(BIN_DIR, "kovalio");
 
 /**
- * The launcher script. Location-independent (resolves ~/.openship from its own
- * path) so it works for a non-default OPENSHIP_HOME too. MUST stay identical to
+ * The launcher script. Location-independent (resolves ~/.kovalio from its own
+ * path) so it works for a non-default KOVALIO_HOME too. MUST stay identical to
  * the copy scripts/install.sh writes — both are regenerated on install/update.
  */
 export const LAUNCHER_SH = `#!/bin/sh
-# Openship CLI launcher — runs the tarball-installed CLI under Node.
-# Managed by scripts/install.sh and \`openship update\`; manual edits are overwritten.
+# Kovalio CLI launcher — runs the tarball-installed CLI under Node.
+# Managed by scripts/install.sh and \`kovalio update\`; manual edits are overwritten.
 SELF="$0"
 while [ -L "$SELF" ]; do
   _t="$(readlink "$SELF")"
@@ -54,7 +54,7 @@ if command -v node >/dev/null 2>&1 && node -e 'process.exit(+process.versions.no
 elif [ -x "$VENDORED_NODE" ]; then
   exec "$VENDORED_NODE" "$CLI" "$@"
 else
-  echo "openship: no Node >= ${NODE_MAJOR} found (system or vendored). Reinstall: curl -fsSL https://get.openship.io | sh" >&2
+  echo "kovalio: no Node >= ${NODE_MAJOR} found (system or vendored). Reinstall: curl -fsSL https://get.kovalio.nextrium.org | sh" >&2
   exit 127
 fi
 `;
@@ -90,7 +90,7 @@ function majorOf(bin: string): number | null {
   }
 }
 
-/** Write ~/.openship/bin/openship (the stable launcher) and mark it executable. */
+/** Write ~/.kovalio/bin/kovalio (the stable launcher) and mark it executable. */
 export function writeLauncher(): string {
   mkdirSync(BIN_DIR, { recursive: true });
   writeFileSync(LAUNCHER_PATH, LAUNCHER_SH);
@@ -110,7 +110,7 @@ function repoint(link: string, target: string): void {
 /** Newest v22 release on nodejs.org, preferring the LTS line. Returns "v22.x.y". */
 async function resolveLatestNode(): Promise<string> {
   const res = await fetch(`${NODE_DIST}/index.json`, {
-    headers: { "User-Agent": "openship-cli" },
+    headers: { "User-Agent": "kovalio-cli" },
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new Error(`Node dist index lookup failed: HTTP ${res.status}`);
@@ -136,7 +136,7 @@ async function fetchVendoredNode(onLog?: (m: string) => void): Promise<string> {
   const { sha256 } = await downloadToFile(`${NODE_DIST}/${ver}/${name}`, tarball);
 
   const shaRes = await fetch(`${NODE_DIST}/${ver}/SHASUMS256.txt`, {
-    headers: { "User-Agent": "openship-cli" },
+    headers: { "User-Agent": "kovalio-cli" },
     signal: AbortSignal.timeout(15_000),
   });
   if (!shaRes.ok) {

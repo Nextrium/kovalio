@@ -70,9 +70,9 @@ const API_PROXY_ENABLED =
 function sameOriginProxyOrigin(): string | null {
   if (!API_PROXY_ENABLED) return null;
   if (typeof window !== "undefined") return window.location.origin;
-  // SSR: read OPENSHIP_PUBLIC_URL or fall back to a reasonable default.
+  // SSR: read KOVALIO_PUBLIC_URL or fall back to a reasonable default.
   // The proxy is dashboard-served, so we use the dashboard's public URL.
-  const ssrOrigin = process.env.OPENSHIP_PUBLIC_URL ?? process.env.NEXT_PUBLIC_PUBLIC_URL;
+  const ssrOrigin = process.env.KOVALIO_PUBLIC_URL ?? process.env.NEXT_PUBLIC_PUBLIC_URL;
   return ssrOrigin ?? null;
 }
 
@@ -80,19 +80,19 @@ function sameOriginProxyOrigin(): string | null {
 //
 // The desktop app runs the API on a DYNAMIC free port that isn't in the static
 // runtime-target table, so origin-based resolution can't find it. Electron sets
-// `OPENSHIP_LOCAL_API_URL` on the dashboard server; the root layout mirrors it
-// into `window.__OPENSHIP_API_ORIGIN__` for the browser bundle (whose base URL
+// `KOVALIO_LOCAL_API_URL` on the dashboard server; the root layout mirrors it
+// into `window.__KOVALIO_API_ORIGIN__` for the browser bundle (whose base URL
 // is a module-load constant — a build-time NEXT_PUBLIC var can't carry it).
 
 
 function localApiOverride(): string | null {
   if (typeof window !== "undefined") {
-    const injected = (window as { __OPENSHIP_API_ORIGIN__?: string })
-      .__OPENSHIP_API_ORIGIN__;
+    const injected = (window as { __KOVALIO_API_ORIGIN__?: string })
+      .__KOVALIO_API_ORIGIN__;
     if (!injected) return null;
     return alignLoopbackOrigin(injected.replace(/\/+$/, ""), window.location.origin);
   }
-  const env = process.env.OPENSHIP_LOCAL_API_URL;
+  const env = process.env.KOVALIO_LOCAL_API_URL;
   return env ? env.replace(/\/+$/, "") : null;
 }
 
@@ -146,16 +146,16 @@ export function getCloudApiOrigin(rawUrl?: string) {
 
 /**
  * Origin of the public marketing site (apps/web), where docs and setup
- * guides live. In production: app.openship.io → openship.io. In dev:
+ * guides live. In production: kovalio.nextrium.org → nextrium.org. In dev:
  * localhost:3001/3002 → localhost:3000. SSR falls back to production.
  */
 export function getMarketingOrigin() {
-  if (typeof window === "undefined") return "https://openship.io";
+  if (typeof window === "undefined") return "https://nextrium.org";
   const { protocol, hostname, port } = window.location;
   if (hostname.startsWith("app.")) return `${protocol}//${hostname.slice(4)}`;
   if (port === String(DEFAULT_PORT.dashboard) || port === String(DEFAULT_PORT.saasDashboard)) {
     return `${protocol}//${hostname}:${DEFAULT_PORT.web}`;
   }
-  return "https://openship.io";
+  return "https://nextrium.org";
 }
 

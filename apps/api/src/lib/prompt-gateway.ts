@@ -34,7 +34,7 @@ const DEFAULT_PROMPT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
  * survive an API restart either way.
  */
 export const PROMPT_TIMEOUT_MS = (() => {
-  const raw = Number(env.OPENSHIP_PROMPT_TIMEOUT_MS);
+  const raw = Number(env.KOVALIO_PROMPT_TIMEOUT_MS);
   return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_PROMPT_TIMEOUT_MS;
 })();
 

@@ -20,7 +20,7 @@ export function describeBuildTarget(
   t: Dictionary,
 ): string {
   const dp = t.importProject.deploymentProcessing;
-  if (config.deployTarget === "cloud") return dp.targetOpenshipCloud;
+  if (config.deployTarget === "cloud") return dp.targetKovalioCloud;
   if (config.deployTarget === "server") {
     return config.serverName
       ? interpolate(dp.targetServerNamed, { name: config.serverName })

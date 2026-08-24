@@ -2,7 +2,7 @@
  * Untracked edge vhosts — the operator-facing read + the one-at-a-time cleanup.
  *
  * Edge config lives on the host and can outlive its DB rows: record-only delete
- * ("Remove from Openship only") keeps the vhost serving on purpose. That leftover
+ * ("Remove from Kovalio only") keeps the vhost serving on purpose. That leftover
  * is invisible — a dead PROXY vhost at least 502s, but a STATIC one keeps serving
  * the removed project's files with a 200, potentially on a hostname since claimed
  * by someone else. This is the surface that finds them.
@@ -17,7 +17,7 @@ import { assertInstanceAdmin } from "../../middleware/instance-admin";
 import { removeEdgeOrphan, scanEdgeOrphans } from "../../lib/edge-orphans.service";
 
 /**
- * GET /system/edge/untracked — vhosts the local edge serves that Openship doesn't track.
+ * GET /system/edge/untracked — vhosts the local edge serves that Kovalio doesn't track.
  *
  * Instance-wide READ: the diff is against every org's domains, so this is not an
  * org-scoped listing. Route-gated by requireInstanceAdmin(); asserted here too.

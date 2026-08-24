@@ -95,13 +95,13 @@ vi.mock("@repo/adapters", () => ({
 
 const { getRuntimeLogs } = await import("./project-runtime.service");
 
-/** `openship.service` carries the service NAME, not its id — see live-state's
+/** `kovalio.service` carries the service NAME, not its id — see live-state's
  *  label tier. */
 const container = (serviceName: string, id: string) => ({
   id,
-  names: [`/openship-stack-${serviceName}`],
+  names: [`/kovalio-stack-${serviceName}`],
   state: "running",
-  labels: { "openship.project": "proj_1", "openship.service": serviceName },
+  labels: { "kovalio.project": "proj_1", "kovalio.service": serviceName },
 });
 
 beforeEach(() => {

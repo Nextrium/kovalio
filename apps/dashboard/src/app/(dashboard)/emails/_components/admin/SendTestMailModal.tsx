@@ -6,7 +6,7 @@
  * Loads the list of provisioned domains for the given mail server, lets the
  * operator pick which domain to send AS, and POSTs to
  * `mail/admin/:serverId/test-email`. The backend ensures (creates if
- * missing) an `openship@<fromDomain>` mailbox and authenticates as that
+ * missing) an `kovalio@<fromDomain>` mailbox and authenticates as that
  * identity — so SMTP AUTH user == MAIL FROM and Postfix's
  * `reject_sender_login_mismatch` policy is satisfied. Subject and body
  * are hardcoded server-side; this form only collects recipient + sender
@@ -179,7 +179,7 @@ function SendTestMailContent({
       <p className="text-sm text-muted-foreground leading-relaxed -mt-1">
         {s.sendsFromBefore}
         <span className="font-mono text-[12.5px] text-foreground">
-          openship@{senderDomain || "…"}
+          kovalio@{senderDomain || "…"}
         </span>
         {s.sendsFromAfter}
       </p>

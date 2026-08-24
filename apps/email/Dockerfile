@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# ─── openship-mail ───────────────────────────────────────────────────────────
+# ─── kovalio-mail ───────────────────────────────────────────────────────────
 # The mail ENGINE as a container: the slimmed iRedMail daemon set
 # (Postfix, Dovecot, Amavis[+DKIM], ClamAV, SpamAssassin, iRedAPD, fail2ban)
 # supervised by supervisord, with the vmail database in a separate
@@ -49,7 +49,7 @@ RUN printf '#!/bin/sh\nexit 0\n' > /usr/local/sbin/systemctl \
 # The slimmed engine tree (already slimmed in-repo; see scripts/slim-engine.ts).
 COPY apps/email/engine /opt/iRedMail-engine
 # Baked build config + supervisord programs + first-boot entrypoint.
-COPY apps/email/docker/ /opt/openship-mail/
+COPY apps/email/docker/ /opt/kovalio-mail/
 
 # Run the iRedMail installer at BUILD time to lay down the Postfix/Dovecot/Amavis/
 # ClamAV/SpamAssassin/iRedAPD configs. The build config points the SQL backend at
@@ -74,7 +74,7 @@ COPY apps/email/docker/ /opt/openship-mail/
 # late service/DB steps exit non-zero even when every package installed fine. The
 # real gate is the smoke test in the next layer, which fails the build loudly if
 # any daemon binary is missing — so a binary-less image can never ship silently.
-RUN cp /opt/openship-mail/build-config /opt/iRedMail-engine/config \
+RUN cp /opt/kovalio-mail/build-config /opt/iRedMail-engine/config \
     && apt-get update \
     && apt-get install -y --no-install-recommends wget dialog dirmngr \
     && cd /opt/iRedMail-engine \
@@ -113,7 +113,7 @@ RUN set -eu; \
     done; \
     if [ -n "$missing" ]; then \
       echo "FATAL: iRedMail install left mail binaries missing:$missing" >&2; \
-      echo "The openship-mail image would ship with no mail stack (issue #493)." >&2; \
+      echo "The kovalio-mail image would ship with no mail stack (issue #493)." >&2; \
       exit 1; \
     fi; \
     doveadm pw -s SSHA512 -p build-smoke-test | grep -q '^{SSHA512}' || { \
@@ -121,7 +121,7 @@ RUN set -eu; \
       echo "Mailbox creation and the postmaster seed both depend on it (GH-562)." >&2; \
       exit 1; \
     }; \
-    echo "openship-mail: all mail daemons present ->$(echo ' postfix dovecot doveadm amavisd clamd freshclam spamd fail2ban iredapd')"
+    echo "kovalio-mail: all mail daemons present ->$(echo ' postfix dovecot doveadm amavisd clamd freshclam spamd fail2ban iredapd')"
 
 # Runtime prerequisites the installer does not leave in place under our stubbed-
 # init build (its late service/DB steps abort — see the `|| true` above):
@@ -145,11 +145,11 @@ RUN set -eu; \
 # Preserve the baked config OUTSIDE the mount paths so the entrypoint can
 # seed-if-absent into empty bind mounts on first boot (a bind mount over
 # /etc/postfix would otherwise hide the built config).
-RUN mkdir -p /opt/openship-mail/seed \
-    && cp -a /etc/postfix       /opt/openship-mail/seed/postfix      2>/dev/null || true \
-    && cp -a /etc/dovecot       /opt/openship-mail/seed/dovecot      2>/dev/null || true \
-    && cp -a /etc/amavis/conf.d /opt/openship-mail/seed/amavis-confd 2>/dev/null || true \
-    && chmod +x /opt/openship-mail/entrypoint.sh /opt/openship-mail/postfix-chroot-etc.sh
+RUN mkdir -p /opt/kovalio-mail/seed \
+    && cp -a /etc/postfix       /opt/kovalio-mail/seed/postfix      2>/dev/null || true \
+    && cp -a /etc/dovecot       /opt/kovalio-mail/seed/dovecot      2>/dev/null || true \
+    && cp -a /etc/amavis/conf.d /opt/kovalio-mail/seed/amavis-confd 2>/dev/null || true \
+    && chmod +x /opt/kovalio-mail/entrypoint.sh /opt/kovalio-mail/postfix-chroot-etc.sh
 
 # ClamAV signatures, fetched into the SEED dir (issue #565).
 #
@@ -175,24 +175,24 @@ RUN set -eu; \
       echo "FATAL: no clamav user — clamav-base did not install (issue #565)." >&2; \
       exit 1; \
     }; \
-    install -d -o clamav -g clamav /var/log/clamav /opt/openship-mail/seed/clamav; \
+    install -d -o clamav -g clamav /var/log/clamav /opt/kovalio-mail/seed/clamav; \
     for attempt in 1 2 3; do \
-      if freshclam --datadir=/opt/openship-mail/seed/clamav; then break; fi; \
-      echo "openship-mail: freshclam attempt ${attempt} failed, retrying in 30s" >&2; \
+      if freshclam --datadir=/opt/kovalio-mail/seed/clamav; then break; fi; \
+      echo "kovalio-mail: freshclam attempt ${attempt} failed, retrying in 30s" >&2; \
       sleep 30; \
     done; \
     seeded=""; \
     for db in main.cvd main.cld daily.cvd daily.cld; do \
-      [ -s "/opt/openship-mail/seed/clamav/$db" ] || continue; \
+      [ -s "/opt/kovalio-mail/seed/clamav/$db" ] || continue; \
       seeded="$seeded $db"; \
     done; \
     if [ -z "$seeded" ]; then \
-      echo "FATAL: no ClamAV signature database in /opt/openship-mail/seed/clamav." >&2; \
+      echo "FATAL: no ClamAV signature database in /opt/kovalio-mail/seed/clamav." >&2; \
       echo "freshclam fetched neither main nor daily, so the image would ship a clamd" >&2; \
       echo "that cannot start and an amavis that defers all inbound mail (issue #565)." >&2; \
       exit 1; \
     fi; \
-    echo "openship-mail: ClamAV signature seed ->$seeded"
+    echo "kovalio-mail: ClamAV signature seed ->$seeded"
 
 # Mail protocol ports (bound on the host via --network host at runtime):
 #   25 SMTP  465 SMTPS  587 submission  143 IMAP  993 IMAPS  110/995 POP3  4190 sieve
@@ -200,5 +200,5 @@ EXPOSE 25 465 587 143 993 110 995 4190
 
 STOPSIGNAL SIGTERM
 
-ENTRYPOINT ["/opt/openship-mail/entrypoint.sh"]
-CMD ["/usr/bin/supervisord", "-c", "/opt/openship-mail/supervisord.conf"]
+ENTRYPOINT ["/opt/kovalio-mail/entrypoint.sh"]
+CMD ["/usr/bin/supervisord", "-c", "/opt/kovalio-mail/supervisord.conf"]

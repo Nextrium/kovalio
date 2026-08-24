@@ -20,7 +20,7 @@ import {
  *    `docker update --restart=`, so an `always` container we were never allowed to look
  *    at came back once and then never again after a reboot, and the takeover reported
  *    clean throughout.
- * 2. It is WRITTEN as root into root-owned `/var/lib/openship` and was READ on the raw
+ * 2. It is WRITTEN as root into root-owned `/var/lib/kovalio` and was READ on the raw
  *    executor. On a box whose state dir an operator has tightened, the refused `cat`
  *    returned null, and every caller reads null as "no unfinished takeover" — so boot
  *    recovery declined, silently, to restore a proxy this machine had already stopped.
@@ -28,7 +28,7 @@ import {
 const CONTAINER_STATUS: EdgeStatus = {
   classification: "known",
   canProceedClean: false,
-  occupants: [{ port: 80, containerName: "caddy", proxy: "caddy", managedByOpenship: false }],
+  occupants: [{ port: 80, containerName: "caddy", proxy: "caddy", managedByKovalio: false }],
 };
 
 const ROOT: ProbeSpec = { osRelease: OS_RELEASE.ubuntu2404 };

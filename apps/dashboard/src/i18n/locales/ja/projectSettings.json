@@ -122,7 +122,7 @@
     },
     "statusActive": "有効",
     "statusDisabled": "無効",
-    "hostedCloud": "Openship Cloud",
+    "hostedCloud": "Kovalio Cloud",
     "hostedServer": "サーバー",
     "hostedLocal": "ローカル",
     "projectStatus": {
@@ -143,7 +143,7 @@
       "currentServer": "現在のサーバー",
       "migrate": "移行",
       "noOtherServers": "移動先にするため、2 台目のサーバーを追加してください。",
-      "cloudLater": "サーバー間の移行です。Openship Cloud との相互移行はまだ対応していません。",
+      "cloudLater": "サーバー間の移行です。Kovalio Cloud との相互移行はまだ対応していません。",
       "startFailed": "移行を開始できませんでした",
       "confirmTitle": "{project} を {server} へ移動",
       "confirmSubtitle": "移動を開始するまで、何も変更されません。",
@@ -188,7 +188,7 @@
       "anotherServer": "別のサーバー",
       "targetLocal": "ローカルマシン",
       "targetServer": "セルフホストサーバー",
-      "targetCloud": "Openship Cloud"
+      "targetCloud": "Kovalio Cloud"
     },
     "danger": {
       "title": "危険な操作",
@@ -291,7 +291,7 @@
   "build": {
     "edit": "編集",
     "webmail": {
-      "title": "openship による管理",
+      "title": "kovalio による管理",
       "description": "Webmail は固定のビルドおよび起動パイプラインを使用します。install、build、run コマンドは設定できません。アップストリームの変更を反映するには、メール概要から再デプロイしてください。"
     },
     "services": {
@@ -422,12 +422,12 @@
     },
     "appBanner": {
       "title": "GitHub App がインストールされていません",
-      "description": "アカウントまたは組織に Openship GitHub App をインストールして、クラウドプロジェクトの自動デプロイと webhook でトリガーされるデプロイを有効にします。",
+      "description": "アカウントまたは組織に Kovalio GitHub App をインストールして、クラウドプロジェクトの自動デプロイと webhook でトリガーされるデプロイを有効にします。",
       "install": "GitHub App をインストール"
     },
     "webhookBanner": {
       "title": "自動デプロイを有効にする",
-      "description": "自動デプロイには直接の webhook エンドポイントが必要です。この Openship API を公開 URL で公開するか、直接配信用の検証済み webhook ドメインを設定してください。"
+      "description": "自動デプロイには直接の webhook エンドポイントが必要です。この Kovalio API を公開 URL で公開するか、直接配信用の検証済み webhook ドメインを設定してください。"
     },
     "source": {
       "title": "ソースリポジトリ",
@@ -457,7 +457,7 @@
       "active": "アクティブ",
       "inactive": "非アクティブ",
       "descDirect": "イベントは {domain} 経由で直接配信されます",
-      "descActive": "リポジトリのイベントが Openship に届いています",
+      "descActive": "リポジトリのイベントが Kovalio に届いています",
       "descInactive": "Webhook が設定されていないか、応答していません"
     },
     "rollbackStrategy": {

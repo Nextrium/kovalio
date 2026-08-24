@@ -15,7 +15,7 @@
  * speed (a warm `mysqldump | zstd` does hundreds of MB/s) and the sink drains at
  * network speed, so the difference accumulates in the destination PassThrough's
  * write queue until the process dies. That is
- * [#633](https://github.com/oblien/openship/issues/633) — a ~110 GB MySQL dump to
+ * [#633](https://github.com/Nextrium/kovalio/issues/633) — a ~110 GB MySQL dump to
  * SFTP, `RangeError: Out of memory` inside modem's demuxer at a reproducible ~64s,
  * which is exactly how long ~100 MB/s in against ~1.7 MB/s out takes to eat the
  * heap. The dump size was never the problem; the missing `false` was.

@@ -3,7 +3,7 @@
  *
  *   POST /api/system/migration/preflight    — read-only readiness check
  *   POST /api/system/migration/start        — kick off the migration
- *   POST /api/system/migration/start-cloud  — migrate to Openship Cloud
+ *   POST /api/system/migration/start-cloud  — migrate to Kovalio Cloud
  *   POST /api/system/migration/start-tunnel — migrate behind a tunnel
  *   POST /api/system/migration/switch-back  — reverse migration
  *
@@ -47,7 +47,7 @@ import {
   TunnelProvisionFailedError,
   TunnelMustBeCloudConnectedError,
 } from "./migrate-to-tunnel.service";
-import { OpenshipReleaseDistMissingError } from "./openship-dist";
+import { KovalioReleaseDistMissingError } from "./kovalio-dist";
 import {
   MigrationAlreadyInProgressError,
   MigrationLockAcquireError,
@@ -111,7 +111,7 @@ export async function preflight(c: Context) {
  *
  * Body: { serverId, domain }
  *
- * Runs preflight, ensures the openship project row, dumps + restores
+ * Runs preflight, ensures the kovalio project row, dumps + restores
  * the DB to the remote, flips teamMode. Synchronous (not SSE) for v1;
  * the heavy lifting (deploy pipeline) is driven by the dashboard as a
  * follow-up step using the standard /api/deployments/:id/build SSE.
@@ -157,7 +157,7 @@ export async function start(c: Context) {
     if (err instanceof MigrationPreflightFailedError) {
       return c.json({ error: err.message, checks: err.checks }, 412);
     }
-    if (err instanceof OpenshipReleaseDistMissingError) {
+    if (err instanceof KovalioReleaseDistMissingError) {
       return c.json({ error: err.message, code: err.code }, 412);
     }
     if (err instanceof MigrationAlreadyInProgressError) {
@@ -175,12 +175,12 @@ export async function start(c: Context) {
 /**
  * POST /api/system/migration/start-cloud
  *
- * Path B — migrate to Openship Cloud. Body: { allowNonEmptyTarget? }.
+ * Path B — migrate to Kovalio Cloud. Body: { allowNonEmptyTarget? }.
  *
- * Dumps the local DB, uploads it to api.openship.io/api/cloud/ingest-subgraph
+ * Dumps the local DB, uploads it to api.nextrium.org/api/cloud/ingest-subgraph
  * (authenticated as the org owner via the stored cloud session token),
  * flips local teamMode to "cloud_hosted". Dashboard launcher then
- * points at app.openship.io.
+ * points at kovalio.nextrium.org.
  */
 export async function startCloud(c: Context) {
   const ctx = getRequestContext(c);

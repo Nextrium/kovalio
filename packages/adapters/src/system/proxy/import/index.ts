@@ -1,6 +1,6 @@
 /**
  * Proxy config import — read an existing reverse proxy's configuration and
- * normalize its sites so a migrate/takeover can re-register them as Openship
+ * normalize its sites so a migrate/takeover can re-register them as Kovalio
  * routes. All parsing is read-only and best-effort (warnings, never throws).
  */
 
@@ -8,7 +8,7 @@ import type { CommandExecutor } from "../../../types";
 import type { ImportedSite, ProxyKind, ProxyScanResult } from "../../types";
 import { EDGE_CONTAINER_MOUNTS } from "../../../infra/openresty-lua";
 import { sq } from "../detect";
-import { scanNginx, scanOpenshipEdge, scanOpenshipEdgeStrict, scanForeignOpenResty } from "./nginx";
+import { scanNginx, scanKovalioEdge, scanKovalioEdgeStrict, scanForeignOpenResty } from "./nginx";
 import { scanCaddy } from "./caddy";
 import { scanApache } from "./apache";
 import { scanTraefik } from "./traefik";
@@ -19,10 +19,10 @@ import { scanTraefik } from "./traefik";
  *
  * OpenResty ON THE HOST is included, and that is the point: our edge is a
  * CONTAINER now, so a host OpenResty is a proxy to migrate FROM like any other —
- * including one an older Openship installed itself. This list used to exclude
+ * including one an older Kovalio installed itself. This list used to exclude
  * `/usr/local/openresty/...` as "ours", which was true only while the bare edge WAS
  * us; the container edge's own config lives inside the image, and its host-side
- * state is the `/var/lib/openship/edge` bind mount, so a file at these paths means
+ * state is the `/var/lib/kovalio/edge` bind mount, so a file at these paths means
  * a host install, never the container.
  *
  * Checked last so a box running both (host OpenResty + a distro nginx) reports the
@@ -91,7 +91,7 @@ export async function scanImportableSites(
     case "traefik":
       return scanTraefik(executor);
     case "openresty":
-      // A host OpenResty is a MIGRATION SOURCE — a legacy bare Openship edge or a
+      // A host OpenResty is a MIGRATION SOURCE — a legacy bare Kovalio edge or a
       // hand-rolled one. Dump its fully-resolved config so vhosts are found wherever
       // the install `include`s them; the fixed-glob read missed a non-default layout
       // and the migrate offer collapsed to takeover-only (dropping every live site).
@@ -123,7 +123,7 @@ export function canImportProxy(proxy: ProxyKind | undefined): boolean {
   );
 }
 
-export { scanNginx, scanOpenshipEdge, scanOpenshipEdgeStrict, scanCaddy, scanApache, scanTraefik };
+export { scanNginx, scanKovalioEdge, scanKovalioEdgeStrict, scanCaddy, scanApache, scanTraefik };
 
 /** One adopted static site whose docroot the containerized edge cannot read. */
 export interface UnreachableStaticRoot {
@@ -142,7 +142,7 @@ export interface UnreachableStaticRoot {
  * verbatim therefore produces a vhost that answers **500** (`try_files` →
  * `/index.html` → "rewrite or internal redirection cycle"), which reads as a
  * broken site rather than a missing mount. Surfacing this BEFORE the cutover lets
- * the caller offer the real choices: copy the tree under `/opt/openship/static`
+ * the caller offer the real choices: copy the tree under `/opt/kovalio/static`
  * (already mounted), add a bind mount, or knowingly leave it.
  *
  * Returns [] for a bare-host edge, where every path is readable already.
@@ -157,8 +157,8 @@ export function unreachableStaticRoots(
   for (const site of sites) {
     if (site.target.kind !== "static") continue;
     const root = site.target.root.replace(/\/+$/, "");
-    // Prefix match on a path BOUNDARY — `/opt/openship/staticstuff` is not
-    // inside `/opt/openship/static`.
+    // Prefix match on a path BOUNDARY — `/opt/kovalio/staticstuff` is not
+    // inside `/opt/kovalio/static`.
     const reachable = visible.some((v) => root === v || root.startsWith(`${v}/`));
     if (!reachable) out.push({ host: site.serverNames[0] ?? root, root: site.target.root });
   }
@@ -172,8 +172,8 @@ export function unreachableStaticRoots(
  * the baked mounts rather than hardcoding the path in two places.
  */
 const EDGE_STATIC_MOUNT =
-  EDGE_CONTAINER_MOUNTS.find((m) => m.host === "/opt/openship/static")?.host ??
-  "/opt/openship/static";
+  EDGE_CONTAINER_MOUNTS.find((m) => m.host === "/opt/kovalio/static")?.host ??
+  "/opt/kovalio/static";
 
 /**
  * Copy an adopted static site's docroot INTO the edge's bind-mounted static dir
@@ -182,7 +182,7 @@ const EDGE_STATIC_MOUNT =
  * instead of 500ing — see {@link unreachableStaticRoots}.
  *
  * The source is a HOST path the foreign proxy served (e.g. `/home/app/dist`) that
- * the edge container cannot see; the dest `/opt/openship/static/_adopted/<host>`
+ * the edge container cannot see; the dest `/opt/kovalio/static/_adopted/<host>`
  * is inside {@link EDGE_CONTAINER_MOUNTS}, mounted at the SAME path inside the
  * container. This is a point-in-time SNAPSHOT: later changes to the original tree
  * do NOT propagate (the operator can re-copy or add a bind mount for live files).

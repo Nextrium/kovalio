@@ -7,7 +7,7 @@
  * lands in the code, ships in the release, and then applies to nothing on a box whose
  * projects are simply running. The Cloud-fronted `X-Real-IP` recovery shipped exactly that
  * way: correct generator, upgraded box, unchanged file, every free-domain visitor still
- * logged as Openship Cloud's edge.
+ * logged as Kovalio Cloud's edge.
  *
  * Converged boxes do no work (each vhost carries the generation it was written by, and a
  * current one is read and skipped), so this is safe to call on the ordinary edge-ensure

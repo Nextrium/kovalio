@@ -54,9 +54,9 @@ export const backupDestination = pgTable(
 
     /** User-supplied display name. */
     name: text("name").notNull(),
-    /** "s3_compatible" | "sftp" | "openship_server" | "local" | "http_upload" */
+    /** "s3_compatible" | "sftp" | "kovalio_server" | "local" | "http_upload" */
     kind: text("kind").notNull(),
-    /** When kind="openship_server", points at the user's existing
+    /** When kind="kovalio_server", points at the user's existing
      *  servers row so we reuse its SSH credentials. ON DELETE SET NULL
      *  so removing a server doesn't cascade-delete backup history. */
     serverId: text("server_id").references(() => servers.id, { onDelete: "set null" }),

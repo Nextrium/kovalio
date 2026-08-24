@@ -42,7 +42,7 @@ function seed(dir: string) {
 }
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), "openship-heal-"));
+  root = mkdtempSync(join(tmpdir(), "kovalio-heal-"));
   dataDir = join(root, "data");
   mkdirSync(dataDir, { recursive: true });
   seed(dataDir);
@@ -55,12 +55,12 @@ afterEach(() => {
 
 describe("resolveDataDir", () => {
   it("honors PGLITE_DATA_DIR over the default", () => {
-    process.env.PGLITE_DATA_DIR = "/tmp/custom-openship-data";
-    expect(resolveDataDir()).toBe("/tmp/custom-openship-data");
+    process.env.PGLITE_DATA_DIR = "/tmp/custom-kovalio-data";
+    expect(resolveDataDir()).toBe("/tmp/custom-kovalio-data");
   });
-  it("defaults to ~/.openship/data when unset", () => {
+  it("defaults to ~/.kovalio/data when unset", () => {
     delete process.env.PGLITE_DATA_DIR;
-    expect(resolveDataDir().endsWith(join(".openship", "data"))).toBe(true);
+    expect(resolveDataDir().endsWith(join(".kovalio", "data"))).toBe(true);
   });
 });
 

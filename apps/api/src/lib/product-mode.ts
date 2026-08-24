@@ -2,7 +2,7 @@
  * THE product-mode resolver — which product this instance presents itself as.
  *
  *   "platform" → the full deploy platform (default)
- *   "mail"     → Openship Mail: the dashboard's left rail becomes the mail
+ *   "mail"     → Kovalio Mail: the dashboard's left rail becomes the mail
  *                control plane and the platform nav is hidden
  *
  * Precedence:
@@ -10,7 +10,7 @@
  *      mount is localOnly (modules/mail/mail.routes.ts), so a mail-mode SaaS
  *      shell would render a rail of links that all 403. Not a preference.
  *   2. instance_settings.product_mode — the operator's dashboard toggle.
- *   3. OPENSHIP_PRODUCT — the launcher-declared instance default.
+ *   3. KOVALIO_PRODUCT — the launcher-declared instance default.
  *
  * NOTE the precedence is the OPPOSITE of getAuthMode() (lib/auth-mode.ts), which
  * sits next door and lets env PIN the value against the DB. That asymmetry is
@@ -51,14 +51,14 @@ export async function resolveProductMode(): Promise<ProductMode> {
 
   // Unreadable settings fall back to the env default rather than failing closed.
   // This value picks which nav to draw; there is nothing to fail closed ABOUT,
-  // and refusing to honour a declared OPENSHIP_PRODUCT=mail because one query
+  // and refusing to honour a declared KOVALIO_PRODUCT=mail because one query
   // failed would show a mail-only operator a platform UI they can't use.
   try {
     const { repos } = await import("@repo/db");
     const stored = (await repos.instanceSettings.get())?.productMode;
-    cached = isProductMode(stored) ? stored : env.OPENSHIP_PRODUCT;
+    cached = isProductMode(stored) ? stored : env.KOVALIO_PRODUCT;
   } catch {
-    cached = env.OPENSHIP_PRODUCT;
+    cached = env.KOVALIO_PRODUCT;
   }
 
   return cached;

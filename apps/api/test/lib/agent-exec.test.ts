@@ -151,7 +151,7 @@ describe("container exec", () => {
     // The wrapper always exits 0, so the code has to come back in-band.
     const ex = containerExecutor((wrapped) => {
       expect(wrapped.startsWith("exec 2>&1; ")).toBe(true);
-      return "line one\nline two\n__openship_exec_exit__:3";
+      return "line one\nline two\n__kovalio_exec_exit__:3";
     });
     const r = await execInContainer(ex, { command: "sh -c 'echo hi; exit 3'" });
     expect(r.exitCode).toBe(3);
@@ -160,7 +160,7 @@ describe("container exec", () => {
 
   it("uses the LAST sentinel, so output that mimics one cannot spoof the code", async () => {
     const ex = containerExecutor(
-      () => "__openship_exec_exit__:0 <- printed by the command\n__openship_exec_exit__:7",
+      () => "__kovalio_exec_exit__:0 <- printed by the command\n__kovalio_exec_exit__:7",
     );
     const r = await execInContainer(ex, { command: "cat spoof" });
     expect(r.exitCode).toBe(7);
@@ -175,13 +175,13 @@ describe("container exec", () => {
   });
 
   it("shell-quotes cwd inside the wrapper too", async () => {
-    const ex = containerExecutor(() => "__openship_exec_exit__:0");
+    const ex = containerExecutor(() => "__kovalio_exec_exit__:0");
     await execInContainer(ex, { command: "ls", cwd: "/app; whoami" });
     expect((ex as unknown as { calls: string[] }).calls[0]).toContain("cd '/app; whoami' && ls");
   });
 
   it("uses `exec 2>&1` rather than PIPESTATUS — these containers are often Alpine", async () => {
-    const ex = containerExecutor(() => "__openship_exec_exit__:0");
+    const ex = containerExecutor(() => "__kovalio_exec_exit__:0");
     await execInContainer(ex, { command: "ls" });
     const sent = (ex as unknown as { calls: string[] }).calls[0]!;
     expect(sent).toContain("exec 2>&1");
@@ -189,7 +189,7 @@ describe("container exec", () => {
   });
 
   it("truncates oversized output and flags it", async () => {
-    const ex = containerExecutor(() => `${"z".repeat(5000)}\n__openship_exec_exit__:0`);
+    const ex = containerExecutor(() => `${"z".repeat(5000)}\n__kovalio_exec_exit__:0`);
     const r = await execInContainer(ex, { command: "cat big", maxOutputBytes: 1024 });
     expect(r.truncated).toBe(true);
     expect(r.output.length).toBe(1024);

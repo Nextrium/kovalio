@@ -70,7 +70,7 @@ function box(opts: { queue?: string | Error; relay?: boolean; unit?: string } = 
   });
   return {
     exec: vi.fn(async (cmd: string) => {
-      if (cmd.includes("{{.Config.Image}}")) return "true\topenship/mail:latest";
+      if (cmd.includes("{{.Config.Image}}")) return "true\tkovalio/mail:latest";
       if (cmd.startsWith("cat ")) return state;
       if (cmd.includes("postqueue")) {
         const queue = opts.queue ?? "Mail queue is empty";
@@ -162,7 +162,7 @@ describe("GET /mail/health — outbound delivery", () => {
   });
 
   it("still reports the send path when the daemon probes fail", async () => {
-    use(box({ relay: true, unit: "Error response from daemon: No such container: openship-mail" }));
+    use(box({ relay: true, unit: "Error response from daemon: No such container: kovalio-mail" }));
 
     const body = await callHealth();
 

@@ -3,7 +3,7 @@
  *
  * "What is wrong across this whole installation right now, and what do I click?"
  *
- * Openship already detected every one of these conditions — it just answered the
+ * Kovalio already detected every one of these conditions — it just answered the
  * question one surface at a time. A crash loop lived on its project's Health tab,
  * an unreachable box only ever reached a notification channel, a broken cert sat on
  * a domain row, and edge/mail state made it to the home card. An operator with a
@@ -357,7 +357,7 @@ function updateIssue(row: UpdateRow): SystemIssue {
   // The control plane reports its own drift here, but it upgrades itself through
   // the CLI (`build.service` refuses to redeploy it), so it is a PLATFORM issue
   // with no in-app fix rather than a project row with a button that 403s.
-  const isSelf = row.appTemplateId === "openship";
+  const isSelf = row.appTemplateId === "kovalio";
   const version =
     row.currentLabel && row.latestLabel
       ? `${row.currentLabel} → ${row.latestLabel}`

@@ -41,7 +41,7 @@ export function ApiUnavailable() {
             icon: <RefreshCw className="size-4" />,
           },
         ]}
-        docsHref="https://openship.io/docs/getting-started/installation"
+        docsHref="https://nextrium.org/docs/getting-started/installation"
         docsLabel={c.apiDown.docs}
         githubLabel={c.errorLinks.github}
       />

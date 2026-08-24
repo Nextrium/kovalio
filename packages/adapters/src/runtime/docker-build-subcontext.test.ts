@@ -160,7 +160,7 @@ describe("remote docker build — declared build context (#634)", () => {
     expect(buildCmd).toBeDefined();
     // The context is the SERVICE dir, so `.` means `svc` and the Dockerfile path is
     // relative to it. A tree-root `cd` plus `-f svc/Dockerfile.api` is the bug.
-    expect(buildCmd).toMatch(/cd '\/tmp\/openship-build-sess-svc\/svc' &&/);
+    expect(buildCmd).toMatch(/cd '\/tmp\/kovalio-build-sess-svc\/svc' &&/);
     expect(buildCmd).toContain("-f 'Dockerfile.api'");
     expect(buildCmd).not.toContain("svc/Dockerfile.api");
     expect(buildCmd.trimEnd().endsWith(" .")).toBe(true);
@@ -170,8 +170,8 @@ describe("remote docker build — declared build context (#634)", () => {
 
     // The whole TREE still ships: one transfer is shared by every service in a batch.
     expect(transferBuildContext).toHaveBeenCalledWith(
-      expect.stringContaining("openship-docker-context-"),
-      "/tmp/openship-build-sess-svc",
+      expect.stringContaining("kovalio-docker-context-"),
+      "/tmp/kovalio-build-sess-svc",
       expect.anything(),
     );
   });
@@ -206,7 +206,7 @@ describe("remote docker build — declared build context (#634)", () => {
     );
 
     const buildCmd = commands.find((c) => /docker build\b/.test(c) && c.includes(" -t "))!;
-    expect(buildCmd).toMatch(/cd '\/tmp\/openship-build-sess-svc' &&/);
+    expect(buildCmd).toMatch(/cd '\/tmp\/kovalio-build-sess-svc' &&/);
   });
 
   async function buildCommandWithProbeOutput(probeOutput: string): Promise<string> {
@@ -232,7 +232,7 @@ describe("remote docker build — declared build context (#634)", () => {
   }
 
   it("opts into BuildKit when the host answers the probe", async () => {
-    const buildCmd = await buildCommandWithProbeOutput("OPENSHIP_BUILDKIT_OK\n");
+    const buildCmd = await buildCommandWithProbeOutput("KOVALIO_BUILDKIT_OK\n");
 
     expect(buildCmd).toContain("DOCKER_BUILDKIT=1 docker build");
     // `--progress` is a buildx flag; `--force-rm` is a legacy one. Each belongs to

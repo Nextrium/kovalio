@@ -63,7 +63,7 @@ import { restoreOrchestrator } from "../../src/modules/backups/restore.orchestra
 const HELPER_IMAGE = "alpine:3";
 /** The volume as compose declares it; the executor scopes it per project. */
 const VOLUME_SPEC = "data:/data";
-const SENTINEL = "openship-backup-roundtrip-🎯";
+const SENTINEL = "kovalio-backup-roundtrip-🎯";
 const NESTED = "nested payload, deliberately in a subdirectory";
 
 /** Files the fixture writes, as `find` reports them once restored. */

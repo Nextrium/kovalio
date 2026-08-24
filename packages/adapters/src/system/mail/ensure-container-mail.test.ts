@@ -25,7 +25,7 @@ const stateLine = (image: string, running = true) => `${running}\t${image}\n`;
 
 describe("buildMailRunCommand", () => {
   it("runs host-networked with NET_ADMIN, restart, env-file, and the load-bearing mounts", () => {
-    const cmd = buildMailRunCommand("openship-mail", "ghcr.io/x/openship-mail:1");
+    const cmd = buildMailRunCommand("kovalio-mail", "ghcr.io/x/kovalio-mail:1");
     expect(cmd).toContain("--network host");
     expect(cmd).toContain("--cap-add NET_ADMIN");
     expect(cmd).toContain("--restart unless-stopped");
@@ -35,24 +35,24 @@ describe("buildMailRunCommand", () => {
     // The cert store is shared with the edge and mounted read-only.
     expect(cmd).toContain("/etc/letsencrypt:ro,z");
     // Image is the final, shell-quoted token.
-    expect(cmd.endsWith("'ghcr.io/x/openship-mail:1'")).toBe(true);
+    expect(cmd.endsWith("'ghcr.io/x/kovalio-mail:1'")).toBe(true);
   });
 });
 
 describe("resolveMailImage", () => {
   it("prefers an explicit ref, else the injected default", () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     expect(resolveMailImage("explicit:1")).toBe("explicit:1");
-    expect(resolveMailImage()).toBe("ghcr.io/x/openship-mail:pinned");
+    expect(resolveMailImage()).toBe("ghcr.io/x/kovalio-mail:pinned");
   });
 });
 
 describe("ensureContainerMail idempotency", () => {
   it("returns updated:false without pulling when already on the pinned image", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const streamExec = vi.fn(async () => ({ code: 0, output: "" }));
     const exec = vi.fn(async (cmd: string) => {
-      if (cmd.includes(STATE_PROBE)) return stateLine("ghcr.io/x/openship-mail:pinned");
+      if (cmd.includes(STATE_PROBE)) return stateLine("ghcr.io/x/kovalio-mail:pinned");
       return "";
     });
     const executor = { exec, streamExec } as never;
@@ -64,7 +64,7 @@ describe("ensureContainerMail idempotency", () => {
     });
 
     expect(res.updated).toBe(false);
-    expect(res.image).toBe("ghcr.io/x/openship-mail:pinned");
+    expect(res.image).toBe("ghcr.io/x/kovalio-mail:pinned");
     // No pull and no docker run — the running container already matches.
     expect(streamExec).not.toHaveBeenCalled();
   });
@@ -109,7 +109,7 @@ function firstBootExecutor(opts: { imagePresent: boolean }) {
 // so it pulls `:APP_VERSION`.
 describe("ensureContainerMail image acquisition gate", () => {
   it("skips the registry pull when the image is already present locally (delivered dev tag)", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const { executor, streamExec } = firstBootExecutor({ imagePresent: true });
 
     await ensureContainerMail(executor, {
@@ -123,7 +123,7 @@ describe("ensureContainerMail image acquisition gate", () => {
   });
 
   it("pulls when the image is absent locally (prod)", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const { executor, streamExec } = firstBootExecutor({ imagePresent: false });
 
     await ensureContainerMail(executor, {
@@ -139,7 +139,7 @@ describe("ensureContainerMail image acquisition gate", () => {
   // From-source (dev) backstop: an absent unpublished tag means the control-plane
   // build/ship didn't complete. Throw a clear error rather than a 404-ing pull.
   it("throws instead of pulling an absent image when managed images are from source", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     setManagedImagesFromSource("mail", true);
     const { executor, streamExec } = firstBootExecutor({ imagePresent: false });
 
@@ -156,11 +156,11 @@ describe("ensureContainerMail swap", () => {
   it("swaps a running engine onto a new tag with no pull when that tag is already present", async () => {
     // The delivered dev tag differs from the running engine's tag (the source hash
     // moved), so it's stale — but it's already on the box, so the swap runs no pull.
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const streamExec = vi.fn(async (_cmd: string) => ({ code: 0, output: "" }));
     const exec = vi.fn(async (cmd: string) => {
       // Engine is running on an OLDER tag → stale vs the pinned ref.
-      if (cmd.includes(STATE_PROBE)) return stateLine("ghcr.io/x/openship-mail:old");
+      if (cmd.includes(STATE_PROBE)) return stateLine("ghcr.io/x/kovalio-mail:old");
       // The pinned tag is already present locally (deliver shipped it) → no pull.
       if (cmd.includes("docker image inspect")) return "sha256:present\n";
       if (cmd.includes("/proc/net/tcp")) return PROC_LISTENING;
@@ -242,7 +242,7 @@ function envWriteExecutor() {
 
 describe("engine env-file cannot be injected with extra records", () => {
   it("refuses a secret value containing a newline, and never writes it", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const { executor, writeFile, streamExec } = envWriteExecutor();
 
     await expect(
@@ -267,7 +267,7 @@ describe("engine env-file cannot be injected with extra records", () => {
   });
 
   it("refuses a carriage return too (CR alone still ends a record)", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const { executor } = envWriteExecutor();
     await expect(
       ensureContainerMail(executor, {
@@ -279,7 +279,7 @@ describe("engine env-file cannot be injected with extra records", () => {
   });
 
   it("refuses a malformed variable NAME (blocks the BASH_FUNC_x%% form)", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const { executor } = envWriteExecutor();
     await expect(
       ensureContainerMail(executor, {
@@ -291,7 +291,7 @@ describe("engine env-file cannot be injected with extra records", () => {
   });
 
   it("still writes ordinary secrets as one record per key", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const { executor, writeFile } = envWriteExecutor();
 
     await ensureContainerMail(executor, {
@@ -317,7 +317,7 @@ describe("mail database credential over a retained pgdata (GH-564)", () => {
   const RETAINED = "POSTGRES_USER=postgres\nPOSTGRES_DB=vmail\nPOSTGRES_PASSWORD=old-cluster-pw\n";
 
   it("reuses the password the existing cluster was initialised with", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const { executor, writeFile } = retainedDbExecutor({
       initialised: true,
       retainedEnv: RETAINED,
@@ -343,7 +343,7 @@ describe("mail database credential over a retained pgdata (GH-564)", () => {
   });
 
   it("uses the generated password on a genuine first install", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const { executor, writeFile, readFile } = retainedDbExecutor({
       initialised: false,
       retainedEnv: null,
@@ -364,7 +364,7 @@ describe("mail database credential over a retained pgdata (GH-564)", () => {
   });
 
   it("refuses to mint a password an existing cluster cannot have", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const { executor, writeFile } = retainedDbExecutor({ initialised: true, retainedEnv: null });
 
     // Silently generating here produces a sidecar that cannot authenticate and an error
@@ -389,7 +389,7 @@ describe("mail database credential over a retained pgdata (GH-564)", () => {
  * Every other stub in this file is a SINGLE object, so `rootOrDegrade` degrades to it and
  * the elevated-write / unelevated-launch split is structurally invisible: the bug could not
  * fail a test even while it made mail setup impossible on a whole class of hosts. These
- * model the reporter's box instead — Openship running as a non-root user that is in the
+ * model the reporter's box instead — Kovalio running as a non-root user that is in the
  * docker group AND has passwordless sudo, the one arm where `rootOrDegrade` returns a real
  * `elevatedExecutor` wrapper and the writer's identity diverges from the launcher's.
  *
@@ -472,7 +472,7 @@ function nonRootSudoBox(
         target &&
         !loginIsRoot &&
         (rootOwned.has(target) ||
-          ![`${MAIL_HOST_STATE_DIR}`, "/var/lib/openship"].every((d) => traversable.has(d)));
+          ![`${MAIL_HOST_STATE_DIR}`, "/var/lib/kovalio"].every((d) => traversable.has(d)));
       if (target && unreachable && !elevated(cmd)) {
         denied.push(target);
         return { code: 125, output: `docker: --env-file: open ${target}: permission denied\n` };
@@ -538,7 +538,7 @@ function nonRootSudoBox(
 
 describe("mail bring-up on a non-root sudo box (GH-630)", () => {
   it("hands the env-files to the account that runs docker, and keeps docker on it", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const box = nonRootSudoBox({ imagePresent: false });
 
     await ensureContainerMail(box.executor, {
@@ -547,7 +547,7 @@ describe("mail bring-up on a non-root sudo box (GH-630)", () => {
       onLog: () => {},
     });
 
-    // The bug: `docker: --env-file: open /var/lib/openship/mail/db.env: permission denied`,
+    // The bug: `docker: --env-file: open /var/lib/kovalio/mail/db.env: permission denied`,
     // reported as "the mail database container failed to become ready".
     expect(box.denied).toEqual([]);
 
@@ -575,9 +575,9 @@ describe("mail bring-up on a non-root sudo box (GH-630)", () => {
    * healthy engine is reported `mailDown` with nothing naming permissions.
    */
   it("repairs a pre-existing root-owned engine.env before an image swap", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const box = nonRootSudoBox({
-      runningImage: "ghcr.io/x/openship-mail:old",
+      runningImage: "ghcr.io/x/kovalio-mail:old",
       imagePresent: true,
       rootOwned: [ENGINE_ENV],
     });
@@ -607,7 +607,7 @@ describe("mail bring-up on a non-root sudo box (GH-630)", () => {
    * box, so a handover that only chowns leaves `denied` non-empty.
    */
   it("makes the path traversable, not just the file owned", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const box = nonRootSudoBox({ imagePresent: true });
 
     await ensureContainerMail(box.executor, {
@@ -619,7 +619,7 @@ describe("mail bring-up on a non-root sudo box (GH-630)", () => {
     expect(box.denied).toEqual([]);
     // Search on both components, granted without read so the directory stays unlistable.
     expect(box.traversable.has(MAIL_HOST_STATE_DIR)).toBe(true);
-    expect(box.traversable.has("/var/lib/openship")).toBe(true);
+    expect(box.traversable.has("/var/lib/kovalio")).toBe(true);
     const grants = box.exec.mock.calls.map(([c]) => String(c)).filter((c) => c.includes("chmod a+x"));
     expect(grants.length).toBeGreaterThan(0);
     expect(grants.every((c) => !/chmod a\+rx|chmod 0?755/.test(c))).toBe(true);
@@ -634,7 +634,7 @@ describe("mail bring-up on a non-root sudo box (GH-630)", () => {
    * mode binds the owner too.
    */
   it("leaves the handed-over env-files read-only so an unelevated rewrite still fails", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const box = nonRootSudoBox({ imagePresent: true });
 
     await ensureContainerMail(box.executor, {
@@ -653,7 +653,7 @@ describe("mail bring-up on a non-root sudo box (GH-630)", () => {
   // caller's own executor, so the file is already owned by whoever runs docker and the tree
   // is already traversable by it. Loosening either there would be a pure downgrade.
   it("touches neither ownership nor directory modes when the login is already root", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const box = nonRootSudoBox({ imagePresent: true, login: "root" });
 
     await ensureContainerMail(box.executor, {

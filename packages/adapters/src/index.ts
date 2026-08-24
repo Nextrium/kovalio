@@ -146,9 +146,9 @@ export {
 } from "./runtime/port-conflict";
 // Exported because apps/ consumes them, and only for that: the label keys and the
 // build-helper rule each existed in more than one place before, and both decide whether
-// something is treated as Openship's. The rest of the port-ownership vocabulary stays
+// something is treated as Kovalio's. The rest of the port-ownership vocabulary stays
 // internal — the two in-package consumers import it from ./system/port-owner directly.
-export { OPENSHIP_LABEL, isBuildHelperMarkers } from "./system/port-owner";
+export { KOVALIO_LABEL, isBuildHelperMarkers } from "./system/port-owner";
 export {
   allocateHostPort,
   pickHostPort,
@@ -291,7 +291,7 @@ export {
   type MailEngineFlavor,
   type MailEngineProbe,
 } from "./system/mail/detect-engine";
-export { scanImportableSites, canImportProxy, scanOpenshipEdge } from "./system/proxy/import";
+export { scanImportableSites, canImportProxy, scanKovalioEdge } from "./system/proxy/import";
 export {
   runEdgeTakeover,
   registerImportedSites,

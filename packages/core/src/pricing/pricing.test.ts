@@ -127,7 +127,7 @@ describe("pricing catalog (pricing.json)", () => {
 
   it("publishes no limit that nothing can enforce", () => {
     // The rule this encodes: every published limit must be enforceable by Oblien
-    // (resource_limits / credit quota) or by an Openship gate. `bandwidthGb` was
+    // (resource_limits / credit quota) or by an Kovalio gate. `bandwidthGb` was
     // published on all four tiers and enforced by neither — Oblien has no
     // bandwidth ceiling — so it was removed rather than left as decoration.
     const enforceable = new Set([

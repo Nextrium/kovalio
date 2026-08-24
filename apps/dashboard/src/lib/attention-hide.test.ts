@@ -77,7 +77,7 @@ describe("isHidden", () => {
   });
 
   it("treats unreadable storage as not hidden", () => {
-    store.set("openship:attentionHidden:broken", "not json");
+    store.set("kovalio:attentionHidden:broken", "not json");
     expect(isHidden("broken", ["edge:1"])).toBe(false);
   });
 });

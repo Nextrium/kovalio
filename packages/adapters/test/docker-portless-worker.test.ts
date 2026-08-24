@@ -21,7 +21,7 @@ async function captureCreate(config: Partial<DeployConfig>) {
     deploymentId: "dep_1",
     projectId: "proj_1",
     buildSessionId: "sess_1",
-    imageRef: "openship/app:sess_1",
+    imageRef: "kovalio/app:sess_1",
     environment: "production",
     port: 8000,
     envVars: {},

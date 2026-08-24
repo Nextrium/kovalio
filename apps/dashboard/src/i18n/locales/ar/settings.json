@@ -42,7 +42,7 @@
   "page": {
     "title": "الإعدادات",
     "subtitle": "إدارة تفضيلاتك وفريقك وتهيئة النسخة",
-    "cloudConnectedToast": "تم الاتصال بـ Openship Cloud"
+    "cloudConnectedToast": "تم الاتصال بـ Kovalio Cloud"
   },
   "sidebar": {
     "title": "الإعدادات",
@@ -65,7 +65,7 @@
     "noInstallations": "متصل · لا توجد عمليات تثبيت بعد",
     "connectedOne": "متصل · تثبيت واحد",
     "connectedMany": "متصل · {count} عمليات تثبيت",
-    "requiresCloud": "يتطلب Openship Cloud — التطبيق مملوك لـ openship.io",
+    "requiresCloud": "يتطلب Kovalio Cloud — التطبيق مملوك لـ nextrium.org",
     "connectPrompt": "اربط حساب GitHub الخاص بك لنشر المستودعات",
     "checkingConnection": "جارٍ التحقق من الاتصال…",
     "addAccount": "إضافة حساب",
@@ -73,10 +73,10 @@
     "manageOnGithub": "الإدارة على GitHub",
     "disconnect": "قطع الاتصال",
     "disconnectTitle": "قطع الاتصال بـ {label}",
-    "disconnectAppLabel": "تطبيق Openship على GitHub",
-    "disconnectAppBody": "يؤدي هذا إلى إزالة صف حساب OAuth الخاص بـ Openship. يبقى تثبيت تطبيق GitHub حتى تقوم بإلغاء تثبيته على GitHub.",
-    "cloudExplainer": "تطبيق Openship على GitHub مملوك لـ openship.io. اربط نسختك بـ Openship Cloud لاستخدام رموز تثبيت محدّدة النطاق لاستنساخ المستودعات الخاصة (يعمل مع عمليات النشر المحلية والبعيدة معًا).",
-    "connectCloud": "الاتصال بـ Openship Cloud",
+    "disconnectAppLabel": "تطبيق Kovalio على GitHub",
+    "disconnectAppBody": "يؤدي هذا إلى إزالة صف حساب OAuth الخاص بـ Kovalio. يبقى تثبيت تطبيق GitHub حتى تقوم بإلغاء تثبيته على GitHub.",
+    "cloudExplainer": "تطبيق Kovalio على GitHub مملوك لـ nextrium.org. اربط نسختك بـ Kovalio Cloud لاستخدام رموز تثبيت محدّدة النطاق لاستنساخ المستودعات الخاصة (يعمل مع عمليات النشر المحلية والبعيدة معًا).",
+    "connectCloud": "الاتصال بـ Kovalio Cloud",
     "noCloudTitle": "استنساخ المستودعات الخاصة بدون السحابة",
     "useSshPerServer": "مفتاح SSH لكل خادم",
     "usePat": "رمز الوصول",
@@ -95,8 +95,8 @@
       "usedForDeploys": "يُستخدم لعمليات النشر",
       "usedForDeploysTitle": "لا يوجد اتصال سحابي — gh CLI هو المصدر الأساسي لكل شيء حاليًا",
       "activeWarnStrong": "gh CLI هو المصدر النشط.",
-      "activeWarnRest": "ستُرفض عمليات النشر إلى الخوادم البعيدة — اربط تطبيق Openship أو عيّن رمز استنساخ خاصًا بالمشروع للنشر إلى الأهداف البعيدة.",
-      "primaryNotePrefix": "تطبيق Openship هو المصدر الأساسي. يتدخل gh CLI في",
+      "activeWarnRest": "ستُرفض عمليات النشر إلى الخوادم البعيدة — اربط تطبيق Kovalio أو عيّن رمز استنساخ خاصًا بالمشروع للنشر إلى الأهداف البعيدة.",
+      "primaryNotePrefix": "تطبيق Kovalio هو المصدر الأساسي. يتدخل gh CLI في",
       "primaryNoteStrong": "عمليات البناء المحلية",
       "primaryNoteSuffix": "للمستودعات خارج عمليات تثبيت تطبيقك.",
       "optionalPrefix": "اختياري. شغّل",
@@ -120,13 +120,13 @@
         "desc": "خادم SSH مهيّأ"
       },
       "cloud": {
-        "label": "Openship Cloud",
+        "label": "Kovalio Cloud",
         "desc": "بنية تحتية سحابية مُدارة"
       }
     },
     "labelFor": {
       "yourServer": "خادمك",
-      "cloud": "Openship Cloud"
+      "cloud": "Kovalio Cloud"
     },
     "toast": {
       "pickServer": "اختر خادمًا أولًا",
@@ -236,11 +236,11 @@
   },
   "mcp": {
     "title": "MCP",
-    "description": "اربط وكلاء الذكاء الاصطناعي بواجهة Openship API عبر بروتوكول Model Context Protocol.",
+    "description": "اربط وكلاء الذكاء الاصطناعي بواجهة Kovalio API عبر بروتوكول Model Context Protocol.",
     "loading": "جارٍ التحميل…",
     "connectAnother": "ربط عميل آخر",
     "bannerStrong": "الصق نقطة النهاية أدناه في عميل MCP الخاص بك",
-    "bannerRest": "(Claude، Cursor، …) — تفتح نافذة متصفّح توافق فيها على الوصول وتختار ما يمكن للعميل الوصول إليه. لا يوجد رمز لنسخه. Openship خادم MCP متوافق مع معيار OAuth 2.1.",
+    "bannerRest": "(Claude، Cursor، …) — تفتح نافذة متصفّح توافق فيها على الوصول وتختار ما يمكن للعميل الوصول إليه. لا يوجد رمز لنسخه. Kovalio خادم MCP متوافق مع معيار OAuth 2.1.",
     "addToClient": "الإضافة إلى عميلك",
     "install": "تثبيت",
     "endpoint": "نقطة النهاية",
@@ -352,7 +352,7 @@
     "grantsMany": "{count} منح",
     "sendVia": "الإرسال عبر",
     "yourMailServer": "خادم بريدك",
-    "openshipCloud": "Openship Cloud",
+    "kovalioCloud": "Kovalio Cloud",
     "pickerTitle": "وصول الموارد الأولي",
     "pickerDesc": "يبدأ الأعضاء المقيّدون بلا وصول. اختر ما تتيحه هذه الدعوة بمجرد قبولها — يمكنك منح المزيد لاحقًا من صف العضو.",
     "sendInvite": "إرسال الدعوة",
@@ -366,7 +366,7 @@
   "teamWorkspace": {
     "title": "مساحة عمل الفريق",
     "description": "انقل هذه النسخة إلى وضع تعدّد المستخدمين.",
-    "body": "هذه النسخة حاليًا أحادية المستخدم — يمكنك أنت فقط تسجيل الدخول. عندما تكون مستعدًا لإضافة زملاء، رحّل النشر إلى موقع مشترك: خادمك الخاص، أو Openship Cloud، أو اعرض هذا الجهاز عبر نفق.",
+    "body": "هذه النسخة حاليًا أحادية المستخدم — يمكنك أنت فقط تسجيل الدخول. عندما تكون مستعدًا لإضافة زملاء، رحّل النشر إلى موقع مشترك: خادمك الخاص، أو Kovalio Cloud، أو اعرض هذا الجهاز عبر نفق.",
     "currentMode": "الوضع الحالي",
     "singleUserLocal": "أحادي المستخدم (محلي)",
     "migrate": "ترحيل",
@@ -375,7 +375,7 @@
   },
   "cloud": {
     "checking": "جارٍ التحقق…",
-    "fallbackName": "Openship Cloud",
+    "fallbackName": "Kovalio Cloud",
     "connectedAccount": "حساب سحابي متصل",
     "connected": "متصل",
     "disconnect": "قطع الاتصال",
@@ -384,10 +384,10 @@
     "unlockDesktop": "أطلق العنان لعمليات النشر السحابية وشهادات SSL المُدارة وشبكة CDN العالمية.",
     "deployLocal": "انشر إلى السحابة مباشرةً من نسختك المحلية.",
     "waitingSignIn": "في انتظار تسجيل الدخول…",
-    "connectButton": "الاتصال بـ Openship Cloud",
-    "confirmDisconnect": "قطع الاتصال بـ Openship Cloud؟ ستتوقف عمليات النشر السحابية عن العمل حتى تعيد الاتصال.",
+    "connectButton": "الاتصال بـ Kovalio Cloud",
+    "confirmDisconnect": "قطع الاتصال بـ Kovalio Cloud؟ ستتوقف عمليات النشر السحابية عن العمل حتى تعيد الاتصال.",
     "toast": {
-      "disconnected": "تم قطع الاتصال بـ Openship Cloud",
+      "disconnected": "تم قطع الاتصال بـ Kovalio Cloud",
       "disconnectFailed": "تعذّر قطع الاتصال"
     }
   },
@@ -397,7 +397,7 @@
     "descCloud": "السحابة",
     "descSelfHosted": "مُستضاف ذاتيًا",
     "typeDesktop": "سطح المكتب",
-    "typeCloud": "Openship Cloud",
+    "typeCloud": "Kovalio Cloud",
     "typeSelfHosted": "مُستضاف ذاتيًا",
     "deployMode": "وضع النشر: {mode}",
     "authNone": "بلا مصادقة",
@@ -458,7 +458,7 @@
     "form": {
       "labelPlaceholder": "التسمية (مثل بريد المناوبة)",
       "emailPlaceholder": "you@example.com",
-      "webhookPlaceholder": "https://example.com/openship-hook",
+      "webhookPlaceholder": "https://example.com/kovalio-hook",
       "slackPlaceholder": "https://hooks.slack.com/services/...",
       "discordPlaceholder": "https://discord.com/api/webhooks/...",
       "msteamsPlaceholder": "https://prod-00.westus.logic.azure.com/workflows/...",
@@ -554,9 +554,9 @@
   },
   "updates": {
     "title": "التحديثات",
-    "description": "كيف يتحقق Openship من الإصدارات الجديدة ويطبّقها",
+    "description": "كيف يتحقق Kovalio من الإصدارات الجديدة ويطبّقها",
     "checking": "جارٍ التحقق من التحديثات…",
-    "available": "الإصدار {version} من Openship متاح",
+    "available": "الإصدار {version} من Kovalio متاح",
     "upToDate": "أنت على أحدث إصدار",
     "current": "الحالي: {version}",
     "rerunToUpdate": " · أعِد تشغيل التثبيت للتحديث",
@@ -569,12 +569,12 @@
     "viewChangelog": "عرض سجل التغييرات والإصدارات",
     "securityTitle": "كيف تعمل عمليات التحقق من التحديثات",
     "securityDescription": "شفافية كاملة حول ما يتواصل مع نسختك",
-    "security1": "يتحقق Openship من التحديثات والتنبيهات الأمنية",
+    "security1": "يتحقق Kovalio من التحديثات والتنبيهات الأمنية",
     "securityOnlyGithub": "من إصدارات GitHub العامة فقط",
     "security2": "للمستودع مفتوح المصدر (",
     "security3": "). وهو لا",
     "securityPulls": "يسحب",
-    "security4": "هذه البيانات إلا سحبًا — لا يمكن لأي خدمة خارجية ولا لأي خادم تُشغّله Openship دفع تحديثات أو إشارات إلى نسختك. تُثبَّت التنبيهات مع كل إصدار، لذا لا تصلك التغييرات غير المُصدَرة أبدًا. تُعرض التنبيهات الأمنية الحرجة دائمًا مرة واحدة؛ وما عدا ذلك يخضع للخيار أعلاه."
+    "security4": "هذه البيانات إلا سحبًا — لا يمكن لأي خدمة خارجية ولا لأي خادم تُشغّله Kovalio دفع تحديثات أو إشارات إلى نسختك. تُثبَّت التنبيهات مع كل إصدار، لذا لا تصلك التغييرات غير المُصدَرة أبدًا. تُعرض التنبيهات الأمنية الحرجة دائمًا مرة واحدة؛ وما عدا ذلك يخضع للخيار أعلاه."
   },
   "infrastructure": {
     "title": "مكوّنات المنصّة",
@@ -590,8 +590,8 @@
     "allHealthy": "جميع مكوّنات المنصّة محدَّثة",
     "manageLink": "الإدارة في الخوادم",
     "hostControlLabel": "النشر على هذا الجهاز",
-    "hostControlDesc": "اسمح لـ OpenShip بنشر التطبيقات على الخادم الذي يعمل عليه، إلى جانب خوادمك المتصلة. يكون مُعطّلاً إذا تم التثبيت باستخدام --no-host-control (مستوى التحكم فقط) — فعّله لإضافة هذا الجهاز كوجهة نشر.",
-    "hostControlEnvNote": "تم ضبط هذا الجهاز على وضع مستوى التحكم فقط أثناء التثبيت (--no-host-control). تفعيل هذا الخيار يتجاوز ذلك ليتمكّن OpenShip من النشر هنا.",
+    "hostControlDesc": "اسمح لـ Kovalio بنشر التطبيقات على الخادم الذي يعمل عليه، إلى جانب خوادمك المتصلة. يكون مُعطّلاً إذا تم التثبيت باستخدام --no-host-control (مستوى التحكم فقط) — فعّله لإضافة هذا الجهاز كوجهة نشر.",
+    "hostControlEnvNote": "تم ضبط هذا الجهاز على وضع مستوى التحكم فقط أثناء التثبيت (--no-host-control). تفعيل هذا الخيار يتجاوز ذلك ليتمكّن Kovalio من النشر هنا.",
     "hostControlError": "تعذّر تغيير التحكم بالمضيف — لا يمكن ذلك إلا لمالك مساحة عمل هذا الجهاز."
   },
   "dataTransfer": {
@@ -627,7 +627,7 @@
     "import": {
       "title": "استيراد البيانات",
       "description": "استعِد ملفًا مُصدَّرًا إلى هذه النسخة.",
-      "intro": "حمّل ملفًا مُصدَّرًا من نسخة Openship أخرى. أدخل عبارة المرور المستخدمة عند تصديره لاستعادة الأسرار أيضًا.",
+      "intro": "حمّل ملفًا مُصدَّرًا من نسخة Kovalio أخرى. أدخل عبارة المرور المستخدمة عند تصديره لاستعادة الأسرار أيضًا.",
       "importFromFile": "استيراد من ملف…",
       "modalTitle": "استيراد بيانات النسخة",
       "modalSubtitle": "استعِد لقطة مُصدَّرة.",
@@ -645,7 +645,7 @@
       "importing": "جارٍ الاستيراد…",
       "import": "استيراد",
       "confirmWipe": "استبدال جميع البيانات على هذه النسخة باللقطة المستوردة؟ لا يمكن التراجع عن هذا، وسيتم تسجيل خروجك.",
-      "notExport": "لا يبدو هذا كملف تصدير من Openship.",
+      "notExport": "لا يبدو هذا كملف تصدير من Kovalio.",
       "cantRead": "تعذّرت قراءة هذا الملف — هل هو تصدير صالح؟",
       "importFailed": "فشل الاستيراد.",
       "rowsRestored": "تمت استعادة {count} صفوف",
@@ -656,20 +656,20 @@
   "migrate": {
     "chooseTitle": "الانتقال إلى وضع تعدّد المستخدمين",
     "serverTitle": "الترحيل إلى خادمك",
-    "cloudTitle": "الترحيل إلى Openship Cloud",
+    "cloudTitle": "الترحيل إلى Kovalio Cloud",
     "tunnelTitle": "العرض عبر نفق",
     "completeTitle": "اكتمل الترحيل",
     "back": "رجوع",
     "chooseIntro": "هذه النسخة حاليًا أحادية المستخدم. اختر كيف تريد أن يصل زملاؤك إليها.",
     "cards": {
       "serverTitle": "الترحيل إلى خادمك",
-      "serverBody": "انشر openship عبر SSH على خادم افتراضي خاص تملكه. تنتقل البيانات إلى هناك. الأفضل للفرق التي تمتلك بنية تحتية بالفعل.",
+      "serverBody": "انشر kovalio عبر SSH على خادم افتراضي خاص تملكه. تنتقل البيانات إلى هناك. الأفضل للفرق التي تمتلك بنية تحتية بالفعل.",
       "serverMeta": "بلا اعتماد خارجي",
-      "cloudTitle": "الترحيل إلى Openship Cloud",
-      "cloudBody": "ادفع بياناتك إلى api.openship.io. نستضيف كل شيء. الأفضل للفرق التي تريد بنية تحتية معدومة.",
+      "cloudTitle": "الترحيل إلى Kovalio Cloud",
+      "cloudBody": "ادفع بياناتك إلى api.nextrium.org. نستضيف كل شيء. الأفضل للفرق التي تريد بنية تحتية معدومة.",
       "cloudMetaConnected": "الحساب السحابي متصل",
       "metaRequiresCloud": "يتطلب حسابًا سحابيًا",
-      "cloudWarn": "اتصل بـ Openship Cloud أولًا.",
+      "cloudWarn": "اتصل بـ Kovalio Cloud أولًا.",
       "tunnelTitle": "الإبقاء محليًا والعرض عبر نفق",
       "tunnelBody": "تبقى بياناتك على هذا الجهاز. نوفّر نفق Oblien الطرفي ليتمكن زملاؤك من الوصول إليك عبر الإنترنت العام — يجب أن يكون جهازك متصلًا.",
       "tunnelMetaConnected": "نفق عبر Oblien",
@@ -689,24 +689,24 @@
       "customHostPlaceholder": "team.acme.com",
       "preflight": "الفحص المسبق",
       "sshReachable": "‏SSH قابل للوصول",
-      "releaseAvailable": "إصدار Openship متاح",
+      "releaseAvailable": "إصدار Kovalio متاح",
       "domainReady": "النطاق جاهز",
       "runPreflight": "تشغيل الفحص المسبق",
       "recheck": "إعادة التحقق",
       "deploying": "جارٍ النشر...",
       "startMigration": "بدء الترحيل",
-      "successDetail": "‏openship يعمل الآن على خادمك. معرّف المشروع {projectId}.",
+      "successDetail": "‏kovalio يعمل الآن على خادمك. معرّف المشروع {projectId}.",
       "toastLoadFailed": "تعذّر تحميل الخوادم",
       "toastPreflightFailed": "فشل الفحص المسبق",
       "toastMigrationFailed": "فشل الترحيل"
     },
     "cloud": {
       "connectFirstTitle": "اتصل بحسابك السحابي أولًا",
-      "connectFirstBody": "افتح الإعدادات → السحابة وسجّل الدخول إلى api.openship.io. ثم عُد إلى هنا للترحيل.",
+      "connectFirstBody": "افتح الإعدادات → السحابة وسجّل الدخول إلى api.nextrium.org. ثم عُد إلى هنا للترحيل.",
       "whatHappens": "ما الذي يحدث عند النقر على ترحيل",
       "bullet1": "يتم استخراج قاعدة بياناتك المحلية (تُجرَّد الحقول المشفّرة — لا تغادر بيانات الاعتماد هذا الجهاز).",
-      "bullet2": "يُرفع الاستخراج إلى api.openship.io ضمن مؤسستك النشطة.",
-      "bullet3": "تصبح النسخة المحلية مُشغِّلًا يشير إلى app.openship.io.",
+      "bullet2": "يُرفع الاستخراج إلى api.nextrium.org ضمن مؤسستك النشطة.",
+      "bullet3": "تصبح النسخة المحلية مُشغِّلًا يشير إلى kovalio.nextrium.org.",
       "bullet4": "يمكنك العودة في أي وقت — تبقى بياناتك المحلية على القرص.",
       "proceedNonEmpty": "المتابعة حتى لو كانت مؤسستي السحابية تحتوي على مشاريع بالفعل (سأتعامل مع التعارضات)",
       "pushingData": "جارٍ دفع البيانات...",
@@ -717,7 +717,7 @@
     },
     "tunnel": {
       "connectFirstTitle": "اتصل بحسابك السحابي أولًا",
-      "connectFirstBody": "تُوفَّر الأنفاق عبر Openship Cloud. افتح الإعدادات → السحابة وسجّل الدخول، ثم عُد إلى هنا.",
+      "connectFirstBody": "تُوفَّر الأنفاق عبر Kovalio Cloud. افتح الإعدادات → السحابة وسجّل الدخول، ثم عُد إلى هنا.",
       "headsUp": "تنبيه",
       "bullet1": "تبقى بياناتك على هذا الجهاز. لا شيء ينتقل.",
       "bullet2": "يمكن لزملائك الوصول إليك فقط عندما يكون هذا الجهاز متصلًا.",
@@ -755,7 +755,7 @@
     "heading": "العودة إلى أحادي المستخدم",
     "intro": "أخرِج هذه النسخة من {mode} وأعِدها إلى الوضع الفردي على هذا الجهاز.",
     "modeServer": "خادمك",
-    "modeCloud": "Openship Cloud",
+    "modeCloud": "Kovalio Cloud",
     "modeTunnel": "النفق",
     "current": "الحالي",
     "noUrl": "(لم يُسجَّل عنوان URL)",
@@ -798,7 +798,7 @@
   },
   "credentials": {
     "title": "بيانات الاعتماد",
-    "description": "الرموز وبيانات الدخول التي يستخدمها Openship بالنيابة عنك — سحب الصور الخاصة، وكتابة سجلات DNS. تُخزَّن مشفّرة ولا تُعرض مرة أخرى بعد الحفظ.",
+    "description": "الرموز وبيانات الدخول التي يستخدمها Kovalio بالنيابة عنك — سحب الصور الخاصة، وكتابة سجلات DNS. تُخزَّن مشفّرة ولا تُعرض مرة أخرى بعد الحفظ.",
     "noProviders": "لا يوجد مزوّدو بيانات اعتماد متاحون في هذا المثيل.",
     "noneForProvider": "لم تُضف أي بيانات بعد.",
     "add": "إضافة",
@@ -813,7 +813,7 @@
     "namePlaceholder": "مثال: GHCR للقراءة فقط",
     "secretKeptPlaceholder": "•••••••• (محفوظ — اتركه فارغًا للإبقاء عليه)",
     "selectPlaceholder": "اختر…",
-    "verifyNote": "يتحقق Openship من بيانات الاعتماد مع المزوّد قبل حفظها.",
+    "verifyNote": "يتحقق Kovalio من بيانات الاعتماد مع المزوّد قبل حفظها.",
     "confirmDelete": "حذف \"{name}\"؟ سيتوقف كل ما يعتمد عليها عن العمل.",
     "toast": {
       "loadFailed": "تعذّر تحميل بيانات الاعتماد",

@@ -13,7 +13,7 @@ describe("resolveProjectInfo", () => {
   });
 
   it("reports a required Compose variable as a value to collect, not a load failure", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-prepare-"));
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-prepare-"));
     tempDirs.push(tempDir);
 
     await writeFile(
@@ -43,11 +43,11 @@ describe("resolveProjectInfo", () => {
   });
 
   it("interpolates required Compose variables from the configured deploy env", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-prepare-"));
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-prepare-"));
     tempDirs.push(tempDir);
 
     // #383: compose lives outside the repo root (#330) and declares a required
-    // variable. The user supplied it in the Openship deploy configuration, so
+    // variable. The user supplied it in the Kovalio deploy configuration, so
     // the scan must interpolate it instead of reporting the file as unparseable.
     await mkdir(join(tempDir, "deploy", "docker-compose"), { recursive: true });
     await writeFile(
@@ -74,7 +74,7 @@ describe("resolveProjectInfo", () => {
   });
 
   it("normalizes an undetected package manager to \"npm\" instead of the internal \"unknown\" sentinel (#415)", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-prepare-"));
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-prepare-"));
     tempDirs.push(tempDir);
 
     // A compose-only subfolder with no manifest anywhere (package.json, go.mod,
@@ -98,7 +98,7 @@ describe("resolveProjectInfo", () => {
   });
 
   it("reports invalid Compose YAML instead of returning no services", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-prepare-"));
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-prepare-"));
     tempDirs.push(tempDir);
 
     await writeFile(join(tempDir, "compose.yaml"), "services:\n  web: [unterminated\n");
@@ -109,7 +109,7 @@ describe("resolveProjectInfo", () => {
   });
 
   it("reads compose files from the selected nested root for local projects", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-prepare-"));
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-prepare-"));
     tempDirs.push(tempDir);
 
     await writeFile(
@@ -153,7 +153,7 @@ describe("resolveProjectInfo", () => {
   describe("declared composePath", () => {
     /** Repo root that detects as Next.js (NOT promotable), compose in a subpath. */
     async function nextRootWithNestedCompose(composeFileName = "docker-compose.yml") {
-      const tempDir = await mkdtemp(join(tmpdir(), "openship-compose-path-"));
+      const tempDir = await mkdtemp(join(tmpdir(), "kovalio-compose-path-"));
       tempDirs.push(tempDir);
 
       await writeFile(
@@ -291,7 +291,7 @@ describe("resolveProjectInfo", () => {
       ).rejects.toThrow(/must be inside the repository/);
     });
 
-    it("is seeded by openship.json, and an explicit value wins over it", async () => {
+    it("is seeded by kovalio.json, and an explicit value wins over it", async () => {
       const tempDir = await nextRootWithNestedCompose();
 
       // A SECOND compose file, so the two sources are distinguishable.
@@ -303,7 +303,7 @@ describe("resolveProjectInfo", () => {
       );
 
       await writeFile(
-        join(tempDir, "openship.json"),
+        join(tempDir, "kovalio.json"),
         JSON.stringify({ composePath: "deploy/docker-compose" }),
       );
 
@@ -324,7 +324,7 @@ describe("resolveProjectInfo", () => {
     });
 
     it("skips monorepo discovery — a declared compose path means one services project", async () => {
-      const tempDir = await mkdtemp(join(tmpdir(), "openship-compose-path-mono-"));
+      const tempDir = await mkdtemp(join(tmpdir(), "kovalio-compose-path-mono-"));
       tempDirs.push(tempDir);
 
       // A workspace root with two deployable sub-apps would normally detect as a
@@ -365,7 +365,7 @@ describe("resolveProjectInfo", () => {
     });
 
     it("surfaces a broken declared compose file instead of falling back", async () => {
-      const tempDir = await mkdtemp(join(tmpdir(), "openship-compose-path-bad-"));
+      const tempDir = await mkdtemp(join(tmpdir(), "kovalio-compose-path-bad-"));
       tempDirs.push(tempDir);
 
       await mkdir(join(tempDir, "deploy"), { recursive: true });
@@ -381,20 +381,20 @@ describe("resolveProjectInfo", () => {
   });
 
   /**
-   * #641: the overlay was lenient AND silent — a typo'd openship.json applied
+   * #641: the overlay was lenient AND silent — a typo'd kovalio.json applied
    * nothing (or only some fields) and said nothing anywhere, so the deploy ran on
    * heuristics and looked like the file wasn't there. Leniency stays; the silence
    * doesn't.
    */
-  describe("openship.json diagnostics (#641)", () => {
+  describe("kovalio.json diagnostics (#641)", () => {
     async function repoWithConfig(contents?: string) {
-      const tempDir = await mkdtemp(join(tmpdir(), "openship-config-diag-"));
+      const tempDir = await mkdtemp(join(tmpdir(), "kovalio-config-diag-"));
       tempDirs.push(tempDir);
       await writeFile(
         join(tempDir, "package.json"),
         JSON.stringify({ name: "x", scripts: { build: "vite build" } }),
       );
-      if (contents !== undefined) await writeFile(join(tempDir, "openship.json"), contents);
+      if (contents !== undefined) await writeFile(join(tempDir, "kovalio.json"), contents);
       return tempDir;
     }
 
@@ -422,7 +422,7 @@ describe("resolveProjectInfo", () => {
 
     it("reports an unparseable file without echoing its bytes", async () => {
       // Both V8 and JSC quote the offending token back (JSC unbounded), so
-      // forwarding the engine's message would push openship.json's `env` values
+      // forwarding the engine's message would push kovalio.json's `env` values
       // out through the metadata-tier detect endpoint. The message must be ours.
       const tempDir = await repoWithConfig('{ "env": { "DB": "P@ssw0rd-LEAK-SENTINEL-xyz" }');
       const info = await resolveProjectInfo({ source: "local", path: tempDir });
@@ -456,7 +456,7 @@ describe("resolveProjectInfo", () => {
       const esc = String.fromCharCode(27);
       const tempDir = await repoWithConfig(
         JSON.stringify({
-          [`x\n[openship.json] attacker/forged: all clean`]: 1,
+          [`x\n[kovalio.json] attacker/forged: all clean`]: 1,
           env: { [`${esc}[2K\r${esc}[32m ok applied cleanly${esc}[0m`]: 5 },
         }),
       );
@@ -482,14 +482,14 @@ describe("resolveProjectInfo", () => {
       expect(longest).toBeLessThanOrEqual(240);
     });
 
-    it("omits configDiagnostics for a clean openship.json", async () => {
+    it("omits configDiagnostics for a clean kovalio.json", async () => {
       const tempDir = await repoWithConfig('{ "framework": "vite", "port": 3000 }');
       const info = await resolveProjectInfo({ source: "local", path: tempDir });
 
       expect(info.configDiagnostics).toBeUndefined();
     });
 
-    it("omits configDiagnostics for a repo with no openship.json", async () => {
+    it("omits configDiagnostics for a repo with no kovalio.json", async () => {
       // The payload for an unaffected repo has to stay exactly what it was.
       const tempDir = await repoWithConfig();
       const info = await resolveProjectInfo({ source: "local", path: tempDir });

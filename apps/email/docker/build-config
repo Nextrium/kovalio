@@ -1,4 +1,4 @@
-# Build-time iRedMail config baked into the openship-mail image.
+# Build-time iRedMail config baked into the kovalio-mail image.
 #
 # This is consumed ONLY during `docker build` (iRedMail.sh reads ${ROOTDIR}/config)
 # to lay down the daemon configuration. Per-install values (FIRST_DOMAIN + real

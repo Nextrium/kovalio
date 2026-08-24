@@ -1,5 +1,5 @@
 /**
- * `openship edge` — install-and-manage the OpenResty edge (reverse proxy) that
+ * `kovalio edge` — install-and-manage the OpenResty edge (reverse proxy) that
  * fronts this box on :80/:443, and drive its per-route features.
  *
  * This command groups operations that ALREADY exist elsewhere in the CLI/API —
@@ -15,17 +15,17 @@
  *
  *   Control-plane (authenticated — reuses the running API via the active context):
  *     rules   list|add|rm    → /api/projects/:id/route-rules    (route-rule.controller)
- *     domains list|add|rm    → /api/domains (+ /api/projects for --port)  (see `openship domain`)
+ *     domains list|add|rm    → /api/domains (+ /api/projects for --port)  (see `kovalio domain`)
  *     traffic                → /api/analytics/overview           (requests + bandwidth)
  *     analytics              → /api/analytics/geo                (visitors, countries, paths)
  *     logs                   → /api/projects/:id/server-logs/recent
  *
  *   Install (host-side): `up`/`install` ensures the edge is serving and, with
  *     --monitoring, provisions the bundled API on embedded PGlite (the same
- *     `openship up --bare` pipeline) so analytics have a place to land. Detect-first:
- *     an existing Openship install is reused untouched.
+ *     `kovalio up --bare` pipeline) so analytics have a place to land. Detect-first:
+ *     an existing Kovalio install is reused untouched.
  *
- * The edge itself is a CONTAINER the compose stack owns (`openship up` brings it
+ * The edge itself is a CONTAINER the compose stack owns (`kovalio up` brings it
  * up on :80/:443). This command deliberately does NOT reimplement that install —
  * the containerized API is what registers sites into the edge (it holds the docker
  * socket + the shared routing volumes), which is exactly why migrate/takeover here
@@ -53,7 +53,7 @@ import {
 
 // repairEdgeConflict lives in lib/edge-preflight but is imported lazily inside the
 // actions that need it: it dynamically pulls in ./edge-import (the API import path),
-// so keeping it off the module's static graph keeps `openship edge status` cheap.
+// so keeping it off the module's static graph keeps `kovalio edge status` cheap.
 type RepairMode = "migrate" | "stop";
 type LogLevel = "info" | "warn" | "error";
 
@@ -79,7 +79,7 @@ const interactive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
 /** The containerized edge (and :80/:443 contention) is a Linux-only concept. */
 function requireLinux(): void {
   if (process.platform === "linux") return;
-  err("  The Openship edge runs as a Linux container — this command only works on the host that runs it.");
+  err("  The Kovalio edge runs as a Linux container — this command only works on the host that runs it.");
   process.exit(1);
 }
 
@@ -204,7 +204,7 @@ async function runRepair(mode: RepairMode): Promise<never> {
 
 /**
  * `up`/`repair`: ensure the edge is serving. Healthy → say so. Not installed →
- * point at `openship up` (we don't duplicate the stack installer). Otherwise pick
+ * point at `kovalio up` (we don't duplicate the stack installer). Otherwise pick
  * an action (flag, prompt, or sensible default) and run the shared repair path.
  */
 async function runUp(opts: { migrate?: boolean; takeover?: boolean }): Promise<never> {
@@ -221,8 +221,8 @@ async function runUp(opts: { migrate?: boolean; takeover?: boolean }): Promise<n
 
   if (!diag.containerExists) {
     printDiagnosis(diag);
-    err("\n  No Openship edge container on this box.");
-    info("  Install the stack first — `openship up` brings up the edge (OpenResty on :80/:443).");
+    err("\n  No Kovalio edge container on this box.");
+    info("  Install the stack first — `kovalio up` brings up the edge (OpenResty on :80/:443).");
     process.exit(1);
   }
 
@@ -272,7 +272,7 @@ async function scanSites(): Promise<void> {
     if (!isJsonMode()) info(`  Found ${proxy} with ${sites.length} site(s):`);
     printSites(sites);
     if (sites.length > 0 && !isJsonMode()) {
-      info("\n  Import them with `openship edge migrate` (takes over :80/:443, keeps them serving).");
+      info("\n  Import them with `kovalio edge migrate` (takes over :80/:443, keeps them serving).");
     }
   } catch (e) {
     sp?.fail("Scan failed");
@@ -292,9 +292,9 @@ async function runStatus(opts: { fix?: boolean; migrate?: boolean; takeover?: bo
   return runUp({ migrate: opts.migrate, takeover: opts.takeover });
 }
 
-// ─── Interactive panel (bare `openship edge`) ────────────────────────────────
+// ─── Interactive panel (bare `kovalio edge`) ────────────────────────────────
 //
-// A persistent, flat, domain-centric loop (like `openship doctor`): the edge routes
+// A persistent, flat, domain-centric loop (like `kovalio doctor`): the edge routes
 // domains → ports and doesn't care about projects, so the panel's primary axis is a
 // flat list of the domains it serves. `projectId` is resolved and carried under the
 // hood only where an endpoint still needs it (route-rules, domain removal). Every
@@ -360,7 +360,7 @@ function renderPanelError(e: unknown): void {
     // than dump a raw status — the CLI never needs a PAT on a trusted local box.
     if (e.status === 401 || e.status === 403) {
       log.warn(
-        "This instance requires authentication. Run `openship login` to paste a PAT, " +
+        "This instance requires authentication. Run `kovalio login` to paste a PAT, " +
           "or run the CLI on the box itself where loopback is trusted (zero-auth).",
       );
       return;
@@ -456,7 +456,7 @@ async function panelUp(): Promise<void> {
   }
   printDiagnosis(diag);
   if (!diag.containerExists) {
-    log.warn("No Openship edge container on this box — run `openship up` to install the stack.");
+    log.warn("No Kovalio edge container on this box — run `kovalio up` to install the stack.");
     return;
   }
   let mode: RepairMode;
@@ -504,7 +504,7 @@ async function panelSites(): Promise<void> {
 async function panelMonitoring(): Promise<void> {
   const existing = await detectExistingInstall();
   if (existing.present) {
-    ok("  ✓ Openship is already installed — monitoring is available through the running instance.");
+    ok("  ✓ Kovalio is already installed — monitoring is available through the running instance.");
     await ensureEdgeBestEffort();
     return;
   }
@@ -889,7 +889,7 @@ function edgeHeader(diag: EdgeDiagnosis | null, apiLive: boolean, domainsLabel: 
 }
 
 async function edgePanel(): Promise<void> {
-  intro(`${chalk.bgCyan(chalk.black(" Openship "))}${chalk.dim(" edge")}`);
+  intro(`${chalk.bgCyan(chalk.black(" Kovalio "))}${chalk.dim(" edge")}`);
   for (;;) {
     const diag = IS_LINUX ? await diagnoseEdge().catch(() => null) : null;
     const apiLive = await apiLivePing();
@@ -935,14 +935,14 @@ async function edgePanel(): Promise<void> {
     // absent (API down) or restricted (real auth needed).
     if (!apiLive) {
       note(
-        `The Openship API isn't answering at ${getApiUrl()}.\n` +
-          "Domains, traffic & analytics need it — start the stack with `openship up`.",
+        `The Kovalio API isn't answering at ${getApiUrl()}.\n` +
+          "Domains, traffic & analytics need it — start the stack with `kovalio up`.",
         "API offline",
       );
     } else if (needsAuth) {
       note(
         "This instance requires authentication (a server with an admin, not a zero-auth\n" +
-          "desktop box). Run `openship login` to paste a PAT, or run the CLI on the box\n" +
+          "desktop box). Run `kovalio login` to paste a PAT, or run the CLI on the box\n" +
           "itself where loopback is trusted.",
         "Auth required",
       );
@@ -1041,7 +1041,7 @@ const rulesAdd = new Command("add")
     if (Number.isFinite(opts.blockStatus)) spec.block = { status: opts.blockStatus };
 
     if (Object.keys(spec).length === 0) {
-      err("  Nothing to add — pass at least one rule flag (see `openship edge rules add --help`).");
+      err("  Nothing to add — pass at least one rule flag (see `kovalio edge rules add --help`).");
       process.exit(1);
     }
 
@@ -1114,7 +1114,7 @@ interface RecordsResult {
   records: DnsRecord[];
 }
 
-/** Render a DNS-records result: mode line + type/host/value table (mirrors `openship domain`). */
+/** Render a DNS-records result: mode line + type/host/value table (mirrors `kovalio domain`). */
 function printRecords(result: RecordsResult): void {
   if (isJsonMode()) {
     printJson(result);
@@ -1167,7 +1167,7 @@ interface DomainAddOpts {
  * Register a hostname on the edge. Two ways to say where it points:
  *   --project <id>  → attach to an existing project (its port is the target)
  *   --port <n>      → auto-create a minimal tracked project bound to 127.0.0.1:<n>
- * Exactly one is required. This is the same pipeline as `openship domain add` plus
+ * Exactly one is required. This is the same pipeline as `kovalio domain add` plus
  * an inline project-create for the port case, so the domain is analytics-eligible
  * (per-domain analytics need domain→project→server).
  */
@@ -1246,7 +1246,7 @@ async function runDomainAdd(hostname: string, opts: DomainAddOpts): Promise<void
     if (res.verified) {
       if (res.sslStatus) info(`  SSL: ${res.sslStatus}`);
     } else {
-      info(`  Add these DNS records at your registrar, then run \`openship domain verify ${res.domain.id}\`:`);
+      info(`  Add these DNS records at your registrar, then run \`kovalio domain verify ${res.domain.id}\`:`);
       if (res.records) printRecords(res.records);
     }
   } catch (e) {
@@ -1530,7 +1530,7 @@ interface InstallOpts {
 }
 
 /**
- * Is a full Openship already installed on this box? Reuses the same primitives the
+ * Is a full Kovalio already installed on this box? Reuses the same primitives the
  * rest of the CLI trusts — a bare service unit, a recorded compose install, or a
  * live API answering on the configured loopback port. Any one = "already here".
  */
@@ -1561,9 +1561,9 @@ async function ensureEdgeBestEffort(): Promise<void> {
     const diag = await diagnoseEdge();
     info(`  Edge: ${describeDiagnosis(diag)}`);
     if (!diag.containerExists) {
-      info(chalk.dim("        No edge container yet — `openship up` brings one up on :80/:443."));
+      info(chalk.dim("        No edge container yet — `kovalio up` brings one up on :80/:443."));
     } else if (!diag.healthy) {
-      info(chalk.dim("        Edge isn't serving — `openship edge up` repairs it."));
+      info(chalk.dim("        Edge isn't serving — `kovalio edge up` repairs it."));
     }
   } catch {
     // best-effort only
@@ -1573,24 +1573,24 @@ async function ensureEdgeBestEffort(): Promise<void> {
 function printMonitoringNextSteps(): void {
   info("\n  Monitoring is on — the built-in database now collects edge analytics.");
   info("  Next:");
-  info("    openship login                                  paste a PAT from the dashboard to read analytics");
-  info("    openship edge migrate                           track sites already on the edge");
-  info("    openship edge domain add <host> --port <n>      register a new domain on a port");
-  info("    openship edge traffic   -p <project>            traffic overview");
-  info("    openship edge analytics -p <project>            per-domain analytics");
+  info("    kovalio login                                  paste a PAT from the dashboard to read analytics");
+  info("    kovalio edge migrate                           track sites already on the edge");
+  info("    kovalio edge domain add <host> --port <n>      register a new domain on a port");
+  info("    kovalio edge traffic   -p <project>            traffic overview");
+  info("    kovalio edge analytics -p <project>            per-domain analytics");
 }
 
 /**
- * Stand up monitoring by installing the standard bare Openship service (embedded
- * PGlite) — the exact `openship up --bare` pipeline, no new data layer. Prompts for
+ * Stand up monitoring by installing the standard bare Kovalio service (embedded
+ * PGlite) — the exact `kovalio up --bare` pipeline, no new data layer. Prompts for
  * admin credentials on a TTY; headless requires --admin-email + a password
- * (flag or OPENSHIP_ADMIN_PASSWORD). Exits when done.
+ * (flag or KOVALIO_ADMIN_PASSWORD). Exits when done.
  */
 /**
- * Stand up monitoring by installing the standard bare Openship service (embedded
- * PGlite) — the exact `openship up --bare` pipeline, no new data layer. Prompts for
+ * Stand up monitoring by installing the standard bare Kovalio service (embedded
+ * PGlite) — the exact `kovalio up --bare` pipeline, no new data layer. Prompts for
  * admin credentials on a TTY; headless requires --admin-email + a password (flag or
- * OPENSHIP_ADMIN_PASSWORD). Returns true when installed, false when the operator
+ * KOVALIO_ADMIN_PASSWORD). Returns true when installed, false when the operator
  * cancels at a credential prompt; THROWS on a hard install failure (caller decides
  * exit vs. continue).
  */
@@ -1601,7 +1601,7 @@ async function runMonitoringInstall(opts: InstallOpts): Promise<boolean> {
   let adminEmail = opts.adminEmail;
   let adminPassword = opts.adminPassword;
 
-  const needsCreds = !adminEmail || !(adminPassword || process.env.OPENSHIP_ADMIN_PASSWORD);
+  const needsCreds = !adminEmail || !(adminPassword || process.env.KOVALIO_ADMIN_PASSWORD);
   if (needsCreds && interactive && !isJsonMode()) {
     const nm = await text({ message: "Admin name", placeholder: "Admin", initialValue: adminName });
     if (isCancel(nm)) {
@@ -1630,7 +1630,7 @@ async function runMonitoringInstall(opts: InstallOpts): Promise<boolean> {
     adminPassword = String(pw);
   }
 
-  // Same install as `openship up --bare`: PGlite, no public domain, no managed
+  // Same install as `kovalio up --bare`: PGlite, no public domain, no managed
   // edge (leaving the edge container untouched). UpOpts isn't exported — reach its
   // shape through startService's parameter type.
   const monOpts = {
@@ -1642,7 +1642,7 @@ async function runMonitoringInstall(opts: InstallOpts): Promise<boolean> {
     adminPassword,
   } as unknown as Parameters<typeof up.startService>[0];
 
-  const sp = spin("Installing the built-in Openship service (embedded database)…");
+  const sp = spin("Installing the built-in Kovalio service (embedded database)…");
   let started: { port: string; dashPort: string };
   try {
     started = await up.startService(monOpts, { quiet: true });
@@ -1670,7 +1670,7 @@ async function provisionMonitoring(opts: InstallOpts): Promise<never> {
 /**
  * `edge up`/`install`: ensure the edge is serving, and — when asked — turn on
  * monitoring by reusing the bare-install pipeline. Detect-first: if a full
- * Openship already exists, monitoring is already available and we change nothing.
+ * Kovalio already exists, monitoring is already available and we change nothing.
  */
 async function runInstall(opts: InstallOpts): Promise<never> {
   requireLinux();
@@ -1685,17 +1685,17 @@ async function runInstall(opts: InstallOpts): Promise<never> {
   if (existing.present) {
     // Interactive but monitoring wasn't requested → this is just an edge repair.
     if (!explicit) return runUp(opts);
-    // Explicit --monitoring on a box that already has Openship: nothing to provision.
-    ok("  ✓ Openship is already installed — monitoring is available through the running instance.");
+    // Explicit --monitoring on a box that already has Kovalio: nothing to provision.
+    ok("  ✓ Kovalio is already installed — monitoring is available through the running instance.");
     info(
       `    Install: ${existing.method ?? "service"}${existing.apiLive ? ", API live" : existing.running ? ", running" : ""}`,
     );
     await ensureEdgeBestEffort();
-    info("\n  Nothing to change. Read analytics with `openship edge traffic -p <project>` (run `openship login` first).");
+    info("\n  Nothing to change. Read analytics with `kovalio edge traffic -p <project>` (run `kovalio login` first).");
     process.exit(0);
   }
 
-  // No Openship yet.
+  // No Kovalio yet.
   if (explicit) {
     await ensureEdgeBestEffort();
     return provisionMonitoring(opts);
@@ -1703,7 +1703,7 @@ async function runInstall(opts: InstallOpts): Promise<never> {
   // Interactive, no flag, no install → offer monitoring.
   const yes = await confirm({
     message:
-      "Enable monitoring (traffic + per-domain analytics)? Installs the built-in Openship service with an embedded database.",
+      "Enable monitoring (traffic + per-domain analytics)? Installs the built-in Kovalio service with an embedded database.",
     initialValue: false,
   });
   if (isCancel(yes) || !yes) return runUp(opts);
@@ -1725,11 +1725,11 @@ const upCmd = new Command("up")
   .option("--takeover", "On a port conflict, stop whatever holds :80/:443 (its sites drop)")
   // Declare --monitoring BEFORE --no-monitoring so the default stays undefined
   // (tri-state): unset = decide, --monitoring = true, --no-monitoring = false.
-  .option("--monitoring", "Also enable monitoring: install the built-in Openship service + embedded DB for analytics")
+  .option("--monitoring", "Also enable monitoring: install the built-in Kovalio service + embedded DB for analytics")
   .option("--no-monitoring", "Edge only — skip the monitoring prompt (the headless default)")
   .option("--admin-name <name>", "Admin display name for a fresh monitoring install")
   .option("--admin-email <email>", "Admin email for a fresh monitoring install (required when headless)")
-  .option("--admin-password <pw>", "Admin password (prefer the OPENSHIP_ADMIN_PASSWORD env var)")
+  .option("--admin-password <pw>", "Admin password (prefer the KOVALIO_ADMIN_PASSWORD env var)")
   .action((opts) => runInstall(opts));
 
 const migrateCmd = new Command("migrate")
@@ -1766,7 +1766,7 @@ export const edgeCommand = new Command("edge")
   .addCommand(trafficCommand)
   .addCommand(analyticsCommand)
   .addCommand(logsCommand)
-  // Bare `openship edge`:
+  // Bare `kovalio edge`:
   //   • Any TTY (incl. macOS/Windows) → the looping interactive panel. Host-side ops
   //     are Linux-gated *inside* the panel; the control-plane half (domains, traffic,
   //     analytics, rules) works anywhere, so the panel is useful off-Linux too.

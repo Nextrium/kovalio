@@ -1,6 +1,6 @@
 {
   "title": "問題",
-  "subtitle": "プロジェクト・サーバー・ドメイン全体でOpenshipが検出した問題の一覧です。",
+  "subtitle": "プロジェクト・サーバー・ドメイン全体でKovalioが検出した問題の一覧です。",
   "tabs": {
     "open": "未解決",
     "resolved": "解決済み"
@@ -17,7 +17,7 @@
     "clear": "フィルターをクリア"
   },
   "scopes": {
-    "platform": "Openship",
+    "platform": "Kovalio",
     "server": "サーバー",
     "project": "プロジェクト",
     "domain": "ドメイン"

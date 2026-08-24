@@ -1,5 +1,5 @@
 /**
- * Reconciler for the Project row that represents "Openship itself,
+ * Reconciler for the Project row that represents "Kovalio itself,
  * being deployed to the operator's server."
  *
  * Fixed config (operator can't edit), deterministic slug, reconciled on
@@ -12,9 +12,9 @@
  */
 
 import { repos, type Project } from "@repo/db";
-import { resolveOpenshipDistDir } from "./openship-dist";
+import { resolveKovalioDistDir } from "./kovalio-dist";
 
-const PROJECT_NAME = "Openship";
+const PROJECT_NAME = "Kovalio";
 const DEFAULT_INTERNAL_PORT = 4000;
 
 /**
@@ -39,8 +39,8 @@ const DEFAULT_INTERNAL_PORT = 4000;
  * startCommand:   bun runs the release orchestrator that boots api +
  *                 dashboard as a single process under one supervisor.
  */
-const OPENSHIP_CONFIG = {
-  framework: "openship",
+const KOVALIO_CONFIG = {
+  framework: "kovalio",
   packageManager: "bun",
   installCommand: "bun install --production --frozen-lockfile",
   buildCommand: "",
@@ -63,11 +63,11 @@ const OPENSHIP_CONFIG = {
  * the wizard always migrates the org's data; the org id is the stable
  * identity of the migration.
  */
-function openshipDeploySlug(organizationId: string): string {
-  return `openship-instance-${organizationId}`;
+function kovalioDeploySlug(organizationId: string): string {
+  return `kovalio-instance-${organizationId}`;
 }
 
-export interface EnsureOpenshipProjectResult {
+export interface EnsureKovalioProjectResult {
   projectId: string;
   groupId: string;
   project: Project;
@@ -75,20 +75,20 @@ export interface EnsureOpenshipProjectResult {
 }
 
 /**
- * Reconcile the Project + ProjectGroup rows that represent "openship
+ * Reconcile the Project + ProjectGroup rows that represent "kovalio
  * being deployed to operator's server". Idempotent — re-running with
  * the same org returns the same row (and updates if the fixed config
  * drifted since last run).
  *
- * Throws `OpenshipReleaseDistMissingError` (from openship-dist.ts) if
+ * Throws `KovalioReleaseDistMissingError` (from kovalio-dist.ts) if
  * the release dist hasn't been built yet — the wizard's preflight
  * step catches this and surfaces a "build the release first" hint.
  */
-export async function ensureOpenshipProject(
+export async function ensureKovalioProject(
   organizationId: string,
-): Promise<EnsureOpenshipProjectResult> {
-  const releaseDistPath = await resolveOpenshipDistDir();
-  const slug = openshipDeploySlug(organizationId);
+): Promise<EnsureKovalioProjectResult> {
+  const releaseDistPath = await resolveKovalioDistDir();
+  const slug = kovalioDeploySlug(organizationId);
 
   // ProjectGroup + Project rows scoped to the migrating org. Mirror the
   // webmail pattern: find-by-slug globally, then assert org match; if
@@ -110,7 +110,7 @@ export async function ensureOpenshipProject(
     project = undefined;
   }
 
-  const fixedConfig = { ...OPENSHIP_CONFIG, localPath: releaseDistPath };
+  const fixedConfig = { ...KOVALIO_CONFIG, localPath: releaseDistPath };
 
   if (!project) {
     project = await repos.project.create({

@@ -42,7 +42,7 @@
   "page": {
     "title": "Configurações",
     "subtitle": "Gerencie suas preferências, equipe e configuração da instância",
-    "cloudConnectedToast": "Conectado ao Openship Cloud"
+    "cloudConnectedToast": "Conectado ao Kovalio Cloud"
   },
   "sidebar": {
     "title": "Configurações",
@@ -65,7 +65,7 @@
     "noInstallations": "Conectado · Nenhuma instalação ainda",
     "connectedOne": "Conectado · 1 instalação",
     "connectedMany": "Conectado · {count} instalações",
-    "requiresCloud": "Requer Openship Cloud — o App pertence a openship.io",
+    "requiresCloud": "Requer Kovalio Cloud — o App pertence a nextrium.org",
     "connectPrompt": "Conecte sua conta do GitHub para implantar repositórios",
     "checkingConnection": "Verificando conexão…",
     "addAccount": "Adicionar conta",
@@ -73,10 +73,10 @@
     "manageOnGithub": "Gerenciar no GitHub",
     "disconnect": "Desconectar",
     "disconnectTitle": "Desconectar {label}",
-    "disconnectAppLabel": "Openship GitHub App",
-    "disconnectAppBody": "Isto remove o registro da conta OAuth do Openship. A instalação do GitHub App permanece até que você a desinstale no GitHub.",
-    "cloudExplainer": "O Openship GitHub App pertence a openship.io. Conecte sua instância ao Openship Cloud para usar tokens de instalação com escopo definido para clonar repositórios privados (funciona para implantações locais E remotas).",
-    "connectCloud": "Conectar Openship Cloud",
+    "disconnectAppLabel": "Kovalio GitHub App",
+    "disconnectAppBody": "Isto remove o registro da conta OAuth do Kovalio. A instalação do GitHub App permanece até que você a desinstale no GitHub.",
+    "cloudExplainer": "O Kovalio GitHub App pertence a nextrium.org. Conecte sua instância ao Kovalio Cloud para usar tokens de instalação com escopo definido para clonar repositórios privados (funciona para implantações locais E remotas).",
+    "connectCloud": "Conectar Kovalio Cloud",
     "noCloudTitle": "Clonar repositórios privados sem a nuvem",
     "useSshPerServer": "Chave SSH por servidor",
     "usePat": "Token de acesso",
@@ -95,8 +95,8 @@
       "usedForDeploys": "Usado para implantações",
       "usedForDeploysTitle": "Sem conexão com a cloud — o gh CLI é a fonte principal para tudo neste momento",
       "activeWarnStrong": "O gh CLI é a fonte ativa.",
-      "activeWarnRest": "Implantações em servidores remotos serão recusadas — conecte o Openship App ou defina um token de clonagem por projeto para implantar em destinos remotos.",
-      "primaryNotePrefix": "O Openship App é a fonte principal. O gh CLI supre",
+      "activeWarnRest": "Implantações em servidores remotos serão recusadas — conecte o Kovalio App ou defina um token de clonagem por projeto para implantar em destinos remotos.",
+      "primaryNotePrefix": "O Kovalio App é a fonte principal. O gh CLI supre",
       "primaryNoteStrong": "builds locais",
       "primaryNoteSuffix": "para repositórios fora das suas instalações do App.",
       "optionalPrefix": "Opcional. Execute",
@@ -120,13 +120,13 @@
         "desc": "Um servidor SSH configurado"
       },
       "cloud": {
-        "label": "OpenShip Cloud",
+        "label": "Kovalio Cloud",
         "desc": "Infraestrutura em nuvem gerenciada"
       }
     },
     "labelFor": {
       "yourServer": "seu servidor",
-      "cloud": "Openship Cloud"
+      "cloud": "Kovalio Cloud"
     },
     "toast": {
       "pickServer": "Escolha um servidor primeiro",
@@ -236,11 +236,11 @@
   },
   "mcp": {
     "title": "MCP",
-    "description": "Conecte agentes de IA à sua API do Openship através do Model Context Protocol.",
+    "description": "Conecte agentes de IA à sua API do Kovalio através do Model Context Protocol.",
     "loading": "Carregando…",
     "connectAnother": "Conectar outro cliente",
     "bannerStrong": "Cole o endpoint abaixo no seu cliente MCP",
-    "bannerRest": "(Claude, Cursor, …) — ele abre uma janela do navegador onde você aprova o acesso e escolhe o que o cliente pode alcançar. Nenhum token para copiar. O Openship é um servidor MCP OAuth 2.1 compatível com os padrões.",
+    "bannerRest": "(Claude, Cursor, …) — ele abre uma janela do navegador onde você aprova o acesso e escolhe o que o cliente pode alcançar. Nenhum token para copiar. O Kovalio é um servidor MCP OAuth 2.1 compatível com os padrões.",
     "addToClient": "Adicionar ao seu cliente",
     "install": "Instalar",
     "endpoint": "Endpoint",
@@ -352,7 +352,7 @@
     "grantsMany": "{count} concessões",
     "sendVia": "Enviar via",
     "yourMailServer": "Seu servidor de e-mail",
-    "openshipCloud": "Openship Cloud",
+    "kovalioCloud": "Kovalio Cloud",
     "pickerTitle": "Acesso inicial a recursos",
     "pickerDesc": "Membros restritos começam sem acesso. Escolha o que este convite libera assim que for aceito — você pode conceder mais depois pela linha do membro.",
     "sendInvite": "Enviar convite",
@@ -366,7 +366,7 @@
   "teamWorkspace": {
     "title": "Espaço de trabalho de equipe",
     "description": "Mude esta instância para o modo multiusuário.",
-    "body": "Neste momento, esta instância é de usuário único — apenas você pode entrar. Quando estiver pronto para adicionar colegas, migre a implantação para um local compartilhado: seu próprio servidor, o Openship Cloud, ou exponha esta máquina através de um túnel.",
+    "body": "Neste momento, esta instância é de usuário único — apenas você pode entrar. Quando estiver pronto para adicionar colegas, migre a implantação para um local compartilhado: seu próprio servidor, o Kovalio Cloud, ou exponha esta máquina através de um túnel.",
     "currentMode": "Modo atual",
     "singleUserLocal": "Usuário único (local)",
     "migrate": "Migrar",
@@ -375,7 +375,7 @@
   },
   "cloud": {
     "checking": "Verificando…",
-    "fallbackName": "Openship Cloud",
+    "fallbackName": "Kovalio Cloud",
     "connectedAccount": "Conta cloud conectada",
     "connected": "Conectado",
     "disconnect": "Desconectar",
@@ -384,10 +384,10 @@
     "unlockDesktop": "Desbloqueie implantações em nuvem, SSL gerenciado e CDN global.",
     "deployLocal": "Implante na nuvem diretamente da sua instância local.",
     "waitingSignIn": "Aguardando login…",
-    "connectButton": "Conectar ao Openship Cloud",
-    "confirmDisconnect": "Desconectar do Openship Cloud? As implantações em nuvem deixarão de funcionar até que você reconecte.",
+    "connectButton": "Conectar ao Kovalio Cloud",
+    "confirmDisconnect": "Desconectar do Kovalio Cloud? As implantações em nuvem deixarão de funcionar até que você reconecte.",
     "toast": {
-      "disconnected": "Desconectado do Openship Cloud",
+      "disconnected": "Desconectado do Kovalio Cloud",
       "disconnectFailed": "Falha ao desconectar"
     }
   },
@@ -397,7 +397,7 @@
     "descCloud": "Cloud",
     "descSelfHosted": "Auto-hospedado",
     "typeDesktop": "Desktop",
-    "typeCloud": "Openship Cloud",
+    "typeCloud": "Kovalio Cloud",
     "typeSelfHosted": "Auto-Hospedado",
     "deployMode": "Modo de implantação: {mode}",
     "authNone": "Zero Auth",
@@ -458,7 +458,7 @@
     "form": {
       "labelPlaceholder": "Rótulo (ex. E-mail de plantão)",
       "emailPlaceholder": "voce@example.com",
-      "webhookPlaceholder": "https://example.com/openship-hook",
+      "webhookPlaceholder": "https://example.com/kovalio-hook",
       "slackPlaceholder": "https://hooks.slack.com/services/...",
       "discordPlaceholder": "https://discord.com/api/webhooks/...",
       "msteamsPlaceholder": "https://prod-00.westus.logic.azure.com/workflows/...",
@@ -554,9 +554,9 @@
   },
   "updates": {
     "title": "Atualizações",
-    "description": "Como o Openship verifica e aplica novas versões",
+    "description": "Como o Kovalio verifica e aplica novas versões",
     "checking": "Verificando atualizações…",
-    "available": "O Openship {version} está disponível",
+    "available": "O Kovalio {version} está disponível",
     "upToDate": "Você está na versão mais recente",
     "current": "Atual: {version}",
     "rerunToUpdate": " · execute novamente sua instalação para atualizar",
@@ -569,12 +569,12 @@
     "viewChangelog": "Ver changelog e versões",
     "securityTitle": "Como funcionam as verificações de atualização",
     "securityDescription": "Transparência total sobre o que se comunica com sua instalação",
-    "security1": "O Openship verifica atualizações e comunicados de segurança",
+    "security1": "O Kovalio verifica atualizações e comunicados de segurança",
     "securityOnlyGithub": "apenas a partir das versões públicas do GitHub",
     "security2": "do repositório de código aberto (",
     "security3": "). Ele apenas",
     "securityPulls": "puxa",
-    "security4": "esses dados — nenhum serviço de terceiros e nenhum servidor operado pelo Openship pode enviar atualizações ou sinais para sua instalação. Os comunicados são fixados a cada versão, então alterações não publicadas nunca chegam até você. Comunicados de segurança críticos são sempre exibidos uma vez; todo o resto respeita a opção acima."
+    "security4": "esses dados — nenhum serviço de terceiros e nenhum servidor operado pelo Kovalio pode enviar atualizações ou sinais para sua instalação. Os comunicados são fixados a cada versão, então alterações não publicadas nunca chegam até você. Comunicados de segurança críticos são sempre exibidos uma vez; todo o resto respeita a opção acima."
   },
   "infrastructure": {
     "title": "Componentes da plataforma",
@@ -590,8 +590,8 @@
     "allHealthy": "Todos os componentes da plataforma estão atualizados",
     "manageLink": "Gerenciar em Servidores",
     "hostControlLabel": "Implantar nesta máquina",
-    "hostControlDesc": "Permite que o OpenShip implante aplicativos no servidor em que ele é executado, junto com os seus servidores conectados. Desativado se instalado com --no-host-control (apenas plano de controle) — ative para adicionar esta máquina como destino de implantação.",
-    "hostControlEnvNote": "Esta máquina foi definida como apenas plano de controle na instalação (--no-host-control). Ativar isto substitui essa opção para que o OpenShip possa implantar aqui.",
+    "hostControlDesc": "Permite que o Kovalio implante aplicativos no servidor em que ele é executado, junto com os seus servidores conectados. Desativado se instalado com --no-host-control (apenas plano de controle) — ative para adicionar esta máquina como destino de implantação.",
+    "hostControlEnvNote": "Esta máquina foi definida como apenas plano de controle na instalação (--no-host-control). Ativar isto substitui essa opção para que o Kovalio possa implantar aqui.",
     "hostControlError": "Não foi possível alterar o controle do host — apenas o proprietário do espaço de trabalho desta máquina pode."
   },
   "dataTransfer": {
@@ -627,7 +627,7 @@
     "import": {
       "title": "Importar dados",
       "description": "Restaure um arquivo exportado nesta instância.",
-      "intro": "Carregue um arquivo exportado de outra instalação do Openship. Digite a frase-senha usada na exportação para restaurar também os segredos.",
+      "intro": "Carregue um arquivo exportado de outra instalação do Kovalio. Digite a frase-senha usada na exportação para restaurar também os segredos.",
       "importFromFile": "Importar de arquivo…",
       "modalTitle": "Importar dados da instância",
       "modalSubtitle": "Restaure um snapshot exportado.",
@@ -645,7 +645,7 @@
       "importing": "Importando…",
       "import": "Importar",
       "confirmWipe": "Substituir TODOS os dados desta instância pelo snapshot importado? Isto não pode ser desfeito, e você será desconectado.",
-      "notExport": "Isso não parece um arquivo de exportação do Openship.",
+      "notExport": "Isso não parece um arquivo de exportação do Kovalio.",
       "cantRead": "Não foi possível ler esse arquivo — é uma exportação válida?",
       "importFailed": "Falha na importação.",
       "rowsRestored": "{count} linhas restauradas",
@@ -656,20 +656,20 @@
   "migrate": {
     "chooseTitle": "Mudar para o modo multiusuário",
     "serverTitle": "Migrar para seu servidor",
-    "cloudTitle": "Migrar para o Openship Cloud",
+    "cloudTitle": "Migrar para o Kovalio Cloud",
     "tunnelTitle": "Expor via túnel",
     "completeTitle": "Migração concluída",
     "back": "Voltar",
     "chooseIntro": "Neste momento, esta instância é de usuário único. Escolha como você quer que seus colegas a acessem.",
     "cards": {
       "serverTitle": "Migrar para seu servidor",
-      "serverBody": "Implante o openship via SSH em um VPS de sua propriedade. Os dados são movidos para lá. Ideal para equipes que já têm infraestrutura.",
+      "serverBody": "Implante o kovalio via SSH em um VPS de sua propriedade. Os dados são movidos para lá. Ideal para equipes que já têm infraestrutura.",
       "serverMeta": "Sem dependência externa",
-      "cloudTitle": "Migrar para o Openship Cloud",
-      "cloudBody": "Envie seus dados para api.openship.io. Nós hospedamos tudo. Ideal para equipes que não querem infraestrutura alguma.",
+      "cloudTitle": "Migrar para o Kovalio Cloud",
+      "cloudBody": "Envie seus dados para api.nextrium.org. Nós hospedamos tudo. Ideal para equipes que não querem infraestrutura alguma.",
       "cloudMetaConnected": "Conta cloud conectada",
       "metaRequiresCloud": "Requer conta cloud",
-      "cloudWarn": "Conecte-se ao Openship Cloud primeiro.",
+      "cloudWarn": "Conecte-se ao Kovalio Cloud primeiro.",
       "tunnelTitle": "Manter local, expor via túnel",
       "tunnelBody": "Seus dados permanecem nesta máquina. Provisionamos um túnel de borda Oblien para que os colegas possam alcançá-lo pela internet pública — sua máquina precisa estar online.",
       "tunnelMetaConnected": "Túnel via Oblien",
@@ -689,24 +689,24 @@
       "customHostPlaceholder": "equipe.acme.com",
       "preflight": "Verificação prévia",
       "sshReachable": "SSH acessível",
-      "releaseAvailable": "Versão do Openship disponível",
+      "releaseAvailable": "Versão do Kovalio disponível",
       "domainReady": "Domínio pronto",
       "runPreflight": "Executar verificação prévia",
       "recheck": "Verificar novamente",
       "deploying": "Implantando...",
       "startMigration": "Iniciar migração",
-      "successDetail": "O openship agora está rodando no seu servidor. ID do projeto {projectId}.",
+      "successDetail": "O kovalio agora está rodando no seu servidor. ID do projeto {projectId}.",
       "toastLoadFailed": "Falha ao carregar os servidores",
       "toastPreflightFailed": "Verificação prévia falhou",
       "toastMigrationFailed": "Migração falhou"
     },
     "cloud": {
       "connectFirstTitle": "Conecte sua conta cloud primeiro",
-      "connectFirstBody": "Abra Configurações → Cloud e faça login em api.openship.io. Depois volte aqui para migrar.",
+      "connectFirstBody": "Abra Configurações → Cloud e faça login em api.nextrium.org. Depois volte aqui para migrar.",
       "whatHappens": "O que acontece quando você clica em migrar",
       "bullet1": "Seu banco de dados local é despejado (campos criptografados são removidos — as credenciais não saem desta máquina).",
-      "bullet2": "O despejo é enviado para api.openship.io sob sua organização ativa.",
-      "bullet3": "A instância local se torna um lançador apontando para app.openship.io.",
+      "bullet2": "O despejo é enviado para api.nextrium.org sob sua organização ativa.",
+      "bullet3": "A instância local se torna um lançador apontando para kovalio.nextrium.org.",
       "bullet4": "Você pode reverter a qualquer momento — seus dados locais permanecem no disco.",
       "proceedNonEmpty": "Prosseguir mesmo que minha organização cloud já tenha projetos (eu cuidarei dos conflitos)",
       "pushingData": "Enviando dados...",
@@ -717,7 +717,7 @@
     },
     "tunnel": {
       "connectFirstTitle": "Conecte sua conta cloud primeiro",
-      "connectFirstBody": "Os túneis são provisionados através do Openship Cloud. Abra Configurações → Cloud e faça login, depois volte aqui.",
+      "connectFirstBody": "Os túneis são provisionados através do Kovalio Cloud. Abra Configurações → Cloud e faça login, depois volte aqui.",
       "headsUp": "Atenção",
       "bullet1": "Seus dados permanecem nesta máquina. Nada é movido.",
       "bullet2": "Os colegas só podem alcançá-lo quando esta máquina está online.",
@@ -755,7 +755,7 @@
     "heading": "Reverter para usuário único",
     "intro": "Tire esta instância de {mode} e coloque-a de volta no modo solo nesta máquina.",
     "modeServer": "seu servidor",
-    "modeCloud": "Openship Cloud",
+    "modeCloud": "Kovalio Cloud",
     "modeTunnel": "o túnel",
     "current": "Atual",
     "noUrl": "(nenhuma URL registrada)",
@@ -798,7 +798,7 @@
   },
   "credentials": {
     "title": "Credenciais",
-    "description": "Tokens e logins que o Openship usa em seu nome — transferência de imagens privadas e escrita de registos DNS. Guardados cifrados e nunca mostrados de novo.",
+    "description": "Tokens e logins que o Kovalio usa em seu nome — transferência de imagens privadas e escrita de registos DNS. Guardados cifrados e nunca mostrados de novo.",
     "noProviders": "Não há fornecedores de credenciais disponíveis nesta instância.",
     "noneForProvider": "Ainda não adicionou nenhuma.",
     "add": "Adicionar",
@@ -813,7 +813,7 @@
     "namePlaceholder": "ex.: GHCR só leitura",
     "secretKeptPlaceholder": "•••••••• (guardado — deixe vazio para manter)",
     "selectPlaceholder": "Escolher…",
-    "verifyNote": "O Openship verifica a credencial com o fornecedor antes de a guardar.",
+    "verifyNote": "O Kovalio verifica a credencial com o fornecedor antes de a guardar.",
     "confirmDelete": "Eliminar \"{name}\"? Tudo o que depende dela deixa de funcionar.",
     "toast": {
       "loadFailed": "Não foi possível carregar as credenciais",

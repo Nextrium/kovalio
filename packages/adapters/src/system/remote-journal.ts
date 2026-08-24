@@ -42,7 +42,7 @@ export const OPSH_RUN_VERSION = 1;
  * elevated, so a root-anchored base is unwritable on any host we log into as a non-root
  * user — the deploy built and uploaded fine and then died on the activation commit,
  * naming a path the operator never chose. For a root login `scratchDir()` resolves to
- * `/root/.openship` anyway, so nothing moves on a host that already worked.
+ * `/root/.kovalio` anyway, so nothing moves on a host that already worked.
  */
 export const DEFAULT_JOURNAL_BASE = HOST_STATE_DIR;
 
@@ -59,7 +59,7 @@ export const REMOTE_ENV_PREFIX =
  * in this template literal — only `$VAR`, `$(...)`, `$((...))` are used.
  */
 const OPSH_RUN_SCRIPT = `#!/bin/sh
-# opsh-run — openship reliable command journal. Managed file; do not edit.
+# opsh-run — kovalio reliable command journal. Managed file; do not edit.
 VERSION=${OPSH_RUN_VERSION}
 
 BASE="$OPSH_BASE"
@@ -158,7 +158,7 @@ export interface JournalRunResult {
 }
 
 export interface RunJournaledOptions {
-  /** Remote base dir owning bin/ + ops/ (e.g. "/root/.openship"). */
+  /** Remote base dir owning bin/ + ops/ (e.g. "/root/.kovalio"). */
   baseDir: string;
   /** Seconds the wrapper blocks waiting for completion before returning
    *  "running" (the client then re-invokes). Default 25. */
@@ -168,7 +168,7 @@ export interface RunJournaledOptions {
 }
 
 /**
- * Where this host's journal lives — the login user's own `.openship`.
+ * Where this host's journal lives — the login user's own `.kovalio`.
  *
  * Degrades to the constant instead of throwing: the journal is opId-keyed scratch on a
  * 1440-minute GC, so a host we could not measure is better served by attempting the old
@@ -209,7 +209,7 @@ export async function ensureRemoteJournal(
   }
 
   if (current !== OPSH_RUN_VERSION) {
-    // Atomic deploy: write temp → chmod → mv (mirrors writeOpenshipFile).
+    // Atomic deploy: write temp → chmod → mv (mirrors writeKovalioFile).
     const tmp = `${runner}.tmp`;
     await exec.writeFile(tmp, OPSH_RUN_SCRIPT);
     await exec.exec(

@@ -64,7 +64,7 @@ function healthyBox() {
   return box([
     ["docker --version", "Docker version 29.7.1, build abc1234"],
     ["docker info", "29.7.1"],
-    ["docker ps --filter name=openship-edge", "openship-edge"],
+    ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
     ["docker inspect", "running"],
     // A kernel socket table with :80 (0x50) in LISTEN (0A) — what "serving" reads as.
     [

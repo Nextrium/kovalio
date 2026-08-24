@@ -61,7 +61,7 @@
       "title": "健康检查",
       "subtitle": "关闭 — 应用一启动，部署即完成",
       "subtitleOn": "开启 — 部署会先等待应用响应再上线",
-      "description": "Openship 在应用启动后不会等待它，因此启动缓慢绝不会拖慢或搞失败一次部署。上线后仍会检查端口并报告结果，且不会阻塞任何环节。只有当你希望部署本身拒绝转为成功时，才开启这些选项。",
+      "description": "Kovalio 在应用启动后不会等待它，因此启动缓慢绝不会拖慢或搞失败一次部署。上线后仍会检查端口并报告结果，且不会阻塞任何环节。只有当你希望部署本身拒绝转为成功时，才开启这些选项。",
       "probeLabel": "等待应用响应",
       "probeDesc": "容器启动后连接应用端口，并等待它接受连接。",
       "pathLabel": "HTTP 路径",
@@ -288,7 +288,7 @@
     "deploymentModeDesc": "{mode} · 在按应用运行时与单应用处理之间切换。"
   },
   "deploymentProcessing": {
-    "targetOpenshipCloud": "Openship Cloud",
+    "targetKovalioCloud": "Kovalio Cloud",
     "targetServerNamed": "服务器 · {name}",
     "targetServer": "服务器",
     "targetLocal": "本地机器",
@@ -300,9 +300,9 @@
       "port": "端口",
       "process": "进程",
       "unitDescription": "单元描述",
-      "openshipDeployment": "Openship 部署",
+      "kovalioDeployment": "Kovalio 部署",
       "sites": {
-        "lead": "现有代理当前提供 {count} 个站点。迁移会先将它们导入 Openship，然后接管 80/443 端口：",
+        "lead": "现有代理当前提供 {count} 个站点。迁移会先将它们导入 Kovalio，然后接管 80/443 端口：",
         "tlsBadge": "TLS",
         "staticLabel": "静态：",
         "warningsTitle": "无法自动迁移 — 请手动重新添加："
@@ -416,12 +416,12 @@
     "rowType": "类型"
   },
   "configDiagnostics": {
-    "title": "此仓库的 openship.json 有部分未生效",
+    "title": "此仓库的 kovalio.json 有部分未生效",
     "description": "下列字段被跳过，文件的其余部分已生效。本次部署将继续。",
-    "titleWholeFile": "已忽略此仓库的 openship.json",
-    "descriptionWholeFile": "文件中没有任何内容生效。本次部署将使用 Openship 自动检测到的设置继续。",
+    "titleWholeFile": "已忽略此仓库的 kovalio.json",
+    "descriptionWholeFile": "文件中没有任何内容生效。本次部署将使用 Kovalio 自动检测到的设置继续。",
     "refused": "已拒绝",
     "unrecognized": "无法识别",
-    "hint": "下次部署前，请在仓库中运行 `openship config validate` 检查该文件。"
+    "hint": "下次部署前，请在仓库中运行 `kovalio config validate` 检查该文件。"
   }
 }

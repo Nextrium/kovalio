@@ -16,8 +16,8 @@ import { realpath } from "node:fs/promises";
  * check, and the root is the sandbox the operator deliberately configured.
  *
  * Checking the ENDPOINT against this list is what broke local destinations
- * entirely — the default root (/var/lib/openship/backups) sits under
- * /var/lib/openship, so every default-config path was rejected and the
+ * entirely — the default root (/var/lib/kovalio/backups) sits under
+ * /var/lib/kovalio, so every default-config path was rejected and the
  * containment check below was unreachable.
  */
 const LOCAL_ROOT_DENY_PREFIX = [
@@ -32,11 +32,11 @@ const LOCAL_ROOT_DENY_PREFIX = [
 ];
 
 /**
- * Roots too broad to be a backup sandbox, plus Openship's own state directory.
- * Exact match only — the DEFAULT root lives *inside* /var/lib/openship, so a
+ * Roots too broad to be a backup sandbox, plus Kovalio's own state directory.
+ * Exact match only — the DEFAULT root lives *inside* /var/lib/kovalio, so a
  * prefix rule here would reject every install.
  */
-const LOCAL_ROOT_DENY_EXACT = ["/", "/var", "/var/lib", "/var/lib/openship"];
+const LOCAL_ROOT_DENY_EXACT = ["/", "/var", "/var/lib", "/var/lib/kovalio"];
 
 /**
  * Resolve symlinks as deeply as the filesystem allows. realpath() fails when

@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
  * every resource type but billing/audit. So a member could write the single
  * global instance_settings row — repoint tunnelProvider/tunnelToken, shrink
  * every org's defaultRollbackWindow, flip defaultBuildMode, and on a box with
- * OPENSHIP_ALLOW_ZERO_AUTH=true, change authMode.
+ * KOVALIO_ALLOW_ZERO_AUTH=true, change authMode.
  *
  * Unit-testing the middleware could not catch that, so this suite asserts over
  * the route MANIFEST instead: every instance-global route must have

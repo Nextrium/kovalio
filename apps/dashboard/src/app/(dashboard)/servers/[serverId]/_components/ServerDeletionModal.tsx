@@ -37,7 +37,7 @@ interface Props {
  *  1. LIST them. The preview shares one binding expression with the fleet's "N
  *     projects" chip, so what is listed here is exactly what the removal resolves.
  *  2. Make their fate a CHOICE, and default it to the reversible one — remove from
- *     Openship, leave the containers running and re-importable. Destroying them on
+ *     Kovalio, leave the containers running and re-importable. Destroying them on
  *     the machine is opt-in, unchecked, and hidden entirely when the box can't be
  *     reached (a teardown there would orphan resources GC can never reclaim once
  *     this server row is gone).

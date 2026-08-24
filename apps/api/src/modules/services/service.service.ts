@@ -359,7 +359,7 @@ async function reconcileAppServiceRow(project: Project): Promise<void> {
   // sidecar being added; only a STATIC site has no container to keep (#538-B).
   if (deploymentWorkload(project) === "static") return;
   // A catalog / self-managed app (appTemplateId set — e.g. the control plane's
-  // own "openship" project) is NOT a source-built single app: its real units are
+  // own "kovalio" project) is NOT a source-built single app: its real units are
   // the compose rows linked by the app/self-app installer, never a slug-named
   // `monorepo` row. Materializing one here seeds a PHANTOM public service that no
   // container ever matches (shows perpetually "Stopped") with an unwanted
@@ -621,7 +621,7 @@ export async function createService(
   );
 
   // Atomic gate, same rule and placement as updateService: a free (*.opsh.io)
-  // route only resolves behind the Openship Cloud edge, so refuse BEFORE the
+  // route only resolves behind the Kovalio Cloud edge, so refuse BEFORE the
   // insert. Without this a create could PERSIST a route that is dead by
   // construction — reachable through the app installer, which seeds every
   // template service's routes here.
@@ -870,7 +870,7 @@ export async function updateService(
         .map((endpoint) => publicEndpointHostname(endpoint)?.toLowerCase())
         .filter((hostname): hostname is string => !!hostname),
     );
-    // Atomic gate: a free (*.opsh.io) route only resolves behind the Openship
+    // Atomic gate: a free (*.opsh.io) route only resolves behind the Kovalio
     // Cloud edge. Refuse before the DB write so a disconnected instance can't
     // persist a dead "Pending" route. Only NET-NEW free routes gate — same rule
     // as the project path: re-validating the whole set made a service that
@@ -1110,7 +1110,7 @@ const SERVICE_TEARDOWN_TIMEOUT_MS = 20_000;
 
 export async function deleteService(ctx: RequestContext, projectId: string, serviceId: string) {
   const { project, svc } = await assertServiceAccess(ctx, projectId, serviceId);
-  // The self-app project's services ARE the Openship stack (api, dashboard, edge,
+  // The self-app project's services ARE the Kovalio stack (api, dashboard, edge,
   // postgres, redis), linked so the dashboard can show their state, logs and shell.
   // One shared policy for every mutating surface — see controller-helpers.
   assertNotControlPlane(project);
@@ -1148,8 +1148,8 @@ export async function deleteService(ctx: RequestContext, projectId: string, serv
             // repos.service.remove() below erases the imageRef record, so a later
             // teardown could never enumerate it. Best-effort; images:gc is the backstop.
             //
-            // Two shapes, and the `openship/` tag guard answers for only one: a
-            // STATIC sub-app's imageRef is a host DIRECTORY (`/opt/openship/static/…`),
+            // Two shapes, and the `kovalio/` tag guard answers for only one: a
+            // STATIC sub-app's imageRef is a host DIRECTORY (`/opt/kovalio/static/…`),
             // which fails that prefix test, so deleting a static service used to leak
             // its doc-root with nothing left in the DB to find it by (issue #640's
             // third door). The tag guard stays for the image case: a base/third-party
@@ -1462,7 +1462,7 @@ export interface LiveServiceContainer {
  * The Services panel's state, read LIVE from the host every time.
  *
  * The service ROWS are the config (DB); their state never is. Earlier this asked
- * docker for `label=openship.deployment=<active dep>` and intersected with each
+ * docker for `label=kovalio.deployment=<active dep>` and intersected with each
  * row's stored container id, which made every ADOPTED container invisible — a
  * migration attaches running containers in place and docker labels can't be
  * changed in place, so an attached container keeps the OLD deployment label and
@@ -1665,7 +1665,7 @@ const VOL_SIZE_TTL_MS = 60_000;
 const volSizeCache = new Map<string, { at: number; value: ServiceVolumeSizes }>();
 
 /** Resolve a named volume's real on-host name (it may be namespaced at deploy
- *  time as `openship-<slug>-<name>`) and `du` its mountpoint. Only used as a
+ *  time as `kovalio-<slug>-<name>`) and `du` its mountpoint. Only used as a
  *  fallback when the container isn't running to report authoritative mounts. */
 async function namedVolumeBytesByName(
   exec: CommandExecutor,

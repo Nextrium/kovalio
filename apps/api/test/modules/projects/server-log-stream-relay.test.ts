@@ -80,7 +80,7 @@ import { SSE_PRIMER } from "../../../src/lib/sse";
  */
 function edgeExecutor(chunks: Buffer[]): CommandExecutor {
   return {
-    exec: async (command: string) => (command.includes("docker ps") ? "openship-edge\n" : ""),
+    exec: async (command: string) => (command.includes("docker ps") ? "kovalio-edge\n" : ""),
     streamExec: async (_command: string, onLog: (log: LogEntry) => void) => {
       for (const chunk of chunks) {
         onLog({

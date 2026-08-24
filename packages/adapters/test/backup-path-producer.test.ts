@@ -223,7 +223,7 @@ async function runCapture(dir: string) {
 
 describe("the generated gate behaves as claimed under /bin/sh", () => {
   it("exits 66 and names the path when the folder is absent", async () => {
-    const missing = "/tmp/openship-path-definitely-absent-4f19c";
+    const missing = "/tmp/kovalio-path-definitely-absent-4f19c";
     expect(existsSync(missing)).toBe(false);
     const run = await runCapture(missing);
     expect(run.status).toBe(66);
@@ -231,7 +231,7 @@ describe("the generated gate behaves as claimed under /bin/sh", () => {
   });
 
   it("exits 67 on a folder that exists and is empty", async () => {
-    const empty = mkdtempSync("/tmp/openship-path-empty-");
+    const empty = mkdtempSync("/tmp/kovalio-path-empty-");
     const run = await runCapture(empty);
     expect(run.status).toBe(67);
     // The diagnosis, not just the refusal: an existing-but-empty directory almost
@@ -243,14 +243,14 @@ describe("the generated gate behaves as claimed under /bin/sh", () => {
     // `find -mindepth 1` counts hidden entries; `ls` would not, and a tree whose only
     // content is `.env` or `.git` is exactly the case an `ls`-based gate would have
     // called empty and refused.
-    const dotOnly = mkdtempSync("/tmp/openship-path-dot-");
+    const dotOnly = mkdtempSync("/tmp/kovalio-path-dot-");
     writeFileSync(join(dotOnly, ".env"), "SECRET=1");
     const run = await runCapture(dotOnly);
     expect(run.status, run.stderr.toString()).toBe(0);
   });
 
   it("passes a populated folder and the archive holds its contents", async () => {
-    const full = mkdtempSync("/tmp/openship-path-full-");
+    const full = mkdtempSync("/tmp/kovalio-path-full-");
     mkdirSync(join(full, "public"));
     writeFileSync(join(full, "public", "index.html"), "<h1>hi</h1>");
     const run = await runCapture(full);
@@ -372,7 +372,7 @@ async function runRestore(
 
 /** A tar whose single member is `restored.txt`. */
 function tarWithRestoredFile(): Buffer {
-  const src = mkdtempSync("/tmp/openship-path-src-");
+  const src = mkdtempSync("/tmp/kovalio-path-src-");
   writeFileSync(join(src, "restored.txt"), "from the backup");
   const made = spawnSync("/usr/bin/tar", ["-c", "-C", src, "."], { maxBuffer: 8 * 1024 * 1024 });
   expect(made.status, made.stderr?.toString()).toBe(0);
@@ -383,7 +383,7 @@ describe("the generated restore script behaves as claimed under /bin/sh", () => 
   it("creates the target when the container no longer has it", async () => {
     // The ordinary case for a rebuilt container, and the one thing that makes a path
     // artifact useful after the service was recreated from its image.
-    const parent = mkdtempSync("/tmp/openship-path-parent-");
+    const parent = mkdtempSync("/tmp/kovalio-path-parent-");
     const target = join(parent, "gone");
     const { run } = await runRestore(target, tarWithRestoredFile());
     const out = run();
@@ -392,7 +392,7 @@ describe("the generated restore script behaves as claimed under /bin/sh", () => 
   });
 
   it("merges: files the artifact never had survive", async () => {
-    const target = mkdtempSync("/tmp/openship-path-merge-");
+    const target = mkdtempSync("/tmp/kovalio-path-merge-");
     writeFileSync(join(target, "kept.txt"), "operator's own file");
     const { run } = await runRestore(target, tarWithRestoredFile());
     const out = run();
@@ -404,7 +404,7 @@ describe("the generated restore script behaves as claimed under /bin/sh", () => 
   it("clears: everything present goes, including dotfiles and subtrees", async () => {
     // `rm -rf dir/*` would leave `.hidden` behind and silently produce a hybrid of two
     // points in time. `find -mindepth 1 -maxdepth 1` does not.
-    const target = mkdtempSync("/tmp/openship-path-clear-");
+    const target = mkdtempSync("/tmp/kovalio-path-clear-");
     writeFileSync(join(target, "stale.txt"), "old");
     writeFileSync(join(target, ".hidden"), "old");
     mkdirSync(join(target, "sub"));
@@ -419,7 +419,7 @@ describe("the generated restore script behaves as claimed under /bin/sh", () => 
   });
 
   it("confines the clear to the target: a sibling directory is untouched", async () => {
-    const parent = mkdtempSync("/tmp/openship-path-confine-");
+    const parent = mkdtempSync("/tmp/kovalio-path-confine-");
     const target = join(parent, "target");
     const sibling = join(parent, "sibling");
     mkdirSync(target);
@@ -437,9 +437,9 @@ describe("the generated restore script behaves as claimed under /bin/sh", () => 
     // The whole reason the guard exists. Before it: `rm -rf` ran, `tar -x` read EOF
     // from the missing `zstd`, and the restore exited 0 having emptied the target.
     // Proven against a PATH that really has no zstd, and asserted on the DATA.
-    const target = mkdtempSync("/tmp/openship-path-nozstd-");
+    const target = mkdtempSync("/tmp/kovalio-path-nozstd-");
     writeFileSync(join(target, "precious.txt"), "the only copy");
-    const bin = mkdtempSync("/tmp/openship-path-bin-");
+    const bin = mkdtempSync("/tmp/kovalio-path-bin-");
     for (const tool of ["mkdir", "find", "rm", "tar", "sh", "cat"]) {
       const found = spawnSync("/bin/sh", ["-c", `command -v ${tool}`]).stdout.toString().trim();
       if (found) spawnSync("/bin/ln", ["-s", found, join(bin, tool)]);

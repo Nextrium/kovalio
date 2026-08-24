@@ -180,7 +180,7 @@ describeDockerE2E("logical database backup — pg_dump against a live Postgres",
     const container = await runtime.docker.createContainer({
       Image: IMAGE,
       Env: [`POSTGRES_PASSWORD=${PG_PASSWORD}`],
-      Labels: { "openship.project": projectId, "openship.service": "db" },
+      Labels: { "kovalio.project": projectId, "kovalio.service": "db" },
       HostConfig: { Binds: [`${dataVolume}:${PGDATA}`], AutoRemove: false },
     });
     await container.start();

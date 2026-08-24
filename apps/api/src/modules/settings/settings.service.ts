@@ -112,7 +112,7 @@ export async function setGithubCliDisabled(userId: string, disabled: boolean): P
  * could paste a token, see "Connected", and still get "no App/PAT token is
  * available" on the next deploy.
  *
- * Connecting a credential inside Openship (device sign-in or pasted token) is the
+ * Connecting a credential inside Kovalio (device sign-in or pasted token) is the
  * explicit act this flag exists to record, so the connect handlers set it.
  * @scope user
  */

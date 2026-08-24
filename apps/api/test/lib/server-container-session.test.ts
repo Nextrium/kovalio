@@ -36,7 +36,7 @@ describe("listContainerApplySessions", () => {
   it("carries the live step model, so a reader can render progress", () => {
     const id = serverId();
     const session = createContainerApplySession(id, "edge");
-    advanceStep(session.id, "Updating the edge to ghcr.io/oblien/openship-edge:0.5.0");
+    advanceStep(session.id, "Updating the edge to ghcr.io/oblien/kovalio-edge:0.5.0");
 
     const mine = listContainerApplySessions().find((s) => s.serverId === id)!;
     expect(mine.steps.find((s) => s.id === "pull")!.status).toBe("running");

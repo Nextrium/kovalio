@@ -21,14 +21,14 @@
   },
   "serverCta": {
     "title": "Déployez sur votre propre serveur",
-    "description": "Connectez un serveur via SSH pour exécuter des projets sur votre propre infrastructure, aux côtés d'Openship Cloud.",
+    "description": "Connectez un serveur via SSH pour exécuter des projets sur votre propre infrastructure, aux côtés d'Kovalio Cloud.",
     "button": "Connecter un serveur"
   },
   "filters": {
     "title": "Filtrer par cible",
     "subtitle": "Où les projets sont déployés",
     "allProjects": "Tous les projets",
-    "cloud": "Openship Cloud",
+    "cloud": "Kovalio Cloud",
     "local": "Local"
   },
   "card": {
@@ -106,7 +106,7 @@
     "cleanupFailedTitle": "Échec du nettoyage",
     "alreadyDeleted": "Projet déjà supprimé",
     "forceModalTitle": "Suppression impossible à la source",
-    "forceModalBody": "Le runtime était injoignable (ou a continué d'échouer), donc ce projet n'a pas été démonté. Vous pouvez tout de même le supprimer d'Openship — l'enregistrement part maintenant et les ressources restantes sont récupérées automatiquement dès que le serveur est joignable.",
+    "forceModalBody": "Le runtime était injoignable (ou a continué d'échouer), donc ce projet n'a pas été démonté. Vous pouvez tout de même le supprimer d'Kovalio — l'enregistrement part maintenant et les ressources restantes sont récupérées automatiquement dès que le serveur est joignable.",
     "forceModalConfirm": "Supprimer du stockage",
     "forceModalCancel": "Annuler",
     "unlinked": "Dissocié de {projects} — redéployez-les pour appliquer.",
@@ -192,7 +192,7 @@
     "managedImagesText": "Cette application s'exécute à partir d'images préconstruites — il n'y a pas de dépôt à connecter. Déployez simplement."
   },
   "overview": {
-    "platformCloud": "Openship Cloud",
+    "platformCloud": "Kovalio Cloud",
     "platformServer": "Auto-hébergé (Serveur)",
     "platformLocal": "Auto-hébergé (Local)",
     "modeStatic": "Site statique",
@@ -495,7 +495,7 @@
     "watchOffTitle": "La surveillance de santé des conteneurs est désactivée",
     "watchOffBody": "Aucun incident n'est enregistré et aucune alerte n'est envoyée : une liste vide ici ne signifie donc pas que tout va bien.",
     "watchOffCta": "L'activer dans Tâches",
-    "serverDownTitle": "Openship ne parvient pas à joindre le serveur de ce projet",
+    "serverDownTitle": "Kovalio ne parvient pas à joindre le serveur de ce projet",
     "serverDownBody": "Rien n'a été observé sur cette machine depuis {duration}, les incidents ci-dessous peuvent donc être obsolètes.",
     "loadFailed": "Impossible de charger les incidents.",
     "ongoing": "en cours depuis {duration}",

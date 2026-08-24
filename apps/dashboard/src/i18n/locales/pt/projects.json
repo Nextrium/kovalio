@@ -21,14 +21,14 @@
   },
   "serverCta": {
     "title": "Implementar no seu próprio servidor",
-    "description": "Ligue um servidor via SSH para executar projetos na sua própria infraestrutura, juntamente com o Openship Cloud.",
+    "description": "Ligue um servidor via SSH para executar projetos na sua própria infraestrutura, juntamente com o Kovalio Cloud.",
     "button": "Ligar um servidor"
   },
   "filters": {
     "title": "Filtrar por destino",
     "subtitle": "Onde os projetos estão implementados",
     "allProjects": "Todos os projetos",
-    "cloud": "Openship Cloud",
+    "cloud": "Kovalio Cloud",
     "local": "Local"
   },
   "card": {
@@ -106,7 +106,7 @@
     "cleanupFailedTitle": "A limpeza falhou",
     "alreadyDeleted": "O projeto já foi eliminado",
     "forceModalTitle": "Não foi possível remover na origem",
-    "forceModalBody": "Não foi possível alcançar o runtime (ou ele seguiu falhando), então este projeto não foi desmontado. Você pode excluí-lo do Openship de todo modo — o registro é removido agora e os recursos restantes são reclamados automaticamente quando o servidor estiver acessível.",
+    "forceModalBody": "Não foi possível alcançar o runtime (ou ele seguiu falhando), então este projeto não foi desmontado. Você pode excluí-lo do Kovalio de todo modo — o registro é removido agora e os recursos restantes são reclamados automaticamente quando o servidor estiver acessível.",
     "forceModalConfirm": "Excluir do armazenamento",
     "forceModalCancel": "Cancelar",
     "unlinked": "Desvinculado de {projects} — reimplante-os para aplicar.",
@@ -192,7 +192,7 @@
     "typeProject": "Projeto"
   },
   "overview": {
-    "platformCloud": "Openship Cloud",
+    "platformCloud": "Kovalio Cloud",
     "platformServer": "Auto-hospedado (Servidor)",
     "platformLocal": "Auto-hospedado (Local)",
     "modeStatic": "Site Estático",
@@ -495,7 +495,7 @@
     "watchOffTitle": "A monitoração de saúde dos contêineres está desligada",
     "watchOffBody": "Nenhum incidente é registrado e nenhum alerta é enviado, então uma lista vazia aqui não significa que está tudo bem.",
     "watchOffCta": "Ativar em Tarefas",
-    "serverDownTitle": "O Openship não consegue acessar o servidor deste projeto",
+    "serverDownTitle": "O Kovalio não consegue acessar o servidor deste projeto",
     "serverDownBody": "Nada nesta máquina foi observado há {duration}, então os incidentes abaixo podem estar desatualizados.",
     "loadFailed": "Não foi possível carregar os incidentes.",
     "ongoing": "em andamento há {duration}",

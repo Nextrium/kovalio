@@ -196,7 +196,7 @@ function psLine(opts: {
   return [
     opts.id ?? CID,
     opts.name,
-    opts.image ?? "openship/myapp:latest",
+    opts.image ?? "kovalio/myapp:latest",
     opts.project ?? "",
     opts.deployment ?? "",
     opts.service ?? "",
@@ -207,7 +207,7 @@ function psLine(opts: {
 }
 
 const OWNED_LINE = psLine({
-  name: "openship-myapp-web",
+  name: "kovalio-myapp-web",
   project: "proj_abc",
   deployment: "dep_1",
   service: "web",
@@ -254,7 +254,7 @@ function promptSpy(answer: string): PromptSpy {
 }
 
 describe("ensurePortAvailable — docker-published port (#628)", () => {
-  test("a stale Openship container is stopped by id, and the daemon is never touched", async () => {
+  test("a stale Kovalio container is stopped by id, and the daemon is never touched", async () => {
     let stopped = false;
     const host = recordingHost(() => [
       [`sport = :${PORT}`, stopped ? "" : SS_DOCKER_PROXY],
@@ -276,11 +276,11 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
 
     expect(spy.calls).toHaveLength(1);
     const prompt = spy.calls[0]!;
-    expect(prompt.actions[0]!.label).toBe("Stop Openship Container & Continue");
+    expect(prompt.actions[0]!.label).toBe("Stop Kovalio Container & Continue");
     expect(prompt.details).toMatchObject({
       stopTarget: "container",
       containerId: CID,
-      containerName: "openship-myapp-web",
+      containerName: "kovalio-myapp-web",
       ownerProjectId: "proj_abc",
       deploymentId: "dep_1",
       serviceName: "web",
@@ -307,7 +307,7 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
     await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).rejects.toThrow(/port 8080/i);
 
     expect(spy.calls[0]!.actions[0]!.label).toBe("Stop Container & Continue");
-    // A container with no openship label may still be an ADOPTED one of ours, so we
+    // A container with no kovalio label may still be an ADOPTED one of ours, so we
     // must not claim it isn't managed — `undefined` is the honest answer.
     expect(spy.calls[0]!.details!.isManagedDeployment).toBeUndefined();
     expect(forbiddenCommands(host.seen)).toEqual([]);
@@ -358,13 +358,13 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
       ["sport = :80", SS_DOCKER_PROXY.replace(`:${PORT}`, ":80")],
       [`-p ${PROXY_PID} -o args=`, PS_DOCKER_PROXY],
       [`/proc/${PROXY_PID}/cgroup`, CGROUP_DOCKER_SERVICE],
-      ["--filter publish=80", psLine({ name: "openship-edge", image: "ghcr.io/oblien/openship-edge:latest" })],
+      ["--filter publish=80", psLine({ name: "kovalio-edge", image: "ghcr.io/oblien/kovalio-edge:latest" })],
     ]);
     const { logger } = fakeLogger();
     const spy = promptSpy("free_port");
 
     await expect(ensurePortAvailable(host.executor, 80, logger, spy.promptUser)).rejects.toThrow(
-      /Openship edge proxy/,
+      /Kovalio edge proxy/,
     );
     expectRefusalPrompt(spy);
     expect(host.seen.some((c) => c.includes("docker stop"))).toBe(false);
@@ -421,14 +421,14 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
 });
 
 describe("ensurePortAvailable — systemd occupants keep working", () => {
-  test("Openship's own deployment unit is still stopped by name", async () => {
-    const UNIT = "openship-dep_Ab3xY9zQ.service";
+  test("Kovalio's own deployment unit is still stopped by name", async () => {
+    const UNIT = "kovalio-dep_Ab3xY9zQ.service";
     let stopped = false;
     const host = recordingHost(() => [
       [`sport = :${PORT}`, stopped ? "" : `LISTEN 0 511 *:${PORT} *:* users:(("node",pid=700,fd=18))`],
       ["-p 700 -o args=", "node /srv/app/server.js"],
       ["/proc/700/cgroup", `0::/system.slice/${UNIT}`],
-      ["--property=Description", "Openship deployment dep_Ab3xY9zQ"],
+      ["--property=Description", "Kovalio deployment dep_Ab3xY9zQ"],
     ]);
     const { logger } = fakeLogger();
     const spy = promptSpy("free_port");
@@ -440,7 +440,7 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
     };
 
     await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).resolves.toBeUndefined();
-    expect(spy.calls[0]!.actions[0]!.label).toBe("Stop Openship Deployment & Continue");
+    expect(spy.calls[0]!.actions[0]!.label).toBe("Stop Kovalio Deployment & Continue");
     expect(spy.calls[0]!.details).toMatchObject({
       stopTarget: "unit",
       isManagedDeployment: true,
@@ -489,12 +489,12 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
     expect(forbiddenCommands(host.seen)).toEqual([]);
   });
 
-  test("openship-dev.service is the control plane, not a deployment with id \"dev\"", async () => {
+  test("kovalio-dev.service is the control plane, not a deployment with id \"dev\"", async () => {
     const host = recordingHost(() => [
       [`sport = :${PORT}`, `LISTEN 0 511 *:${PORT} *:* users:(("bun",pid=900,fd=20))`],
       ["-p 900 -o args=", "bun run apps/api/src/index.ts"],
-      ["/proc/900/cgroup", "0::/system.slice/openship-dev.service"],
-      ["--property=Description", "Openship (dev)"],
+      ["/proc/900/cgroup", "0::/system.slice/kovalio-dev.service"],
+      ["--property=Description", "Kovalio (dev)"],
     ]);
     const { logger } = fakeLogger();
     const spy = promptSpy("free_port");
@@ -505,13 +505,13 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
   });
 
   test("a docker-less bare host: a failed docker query does not block a managed unit stop", async () => {
-    const UNIT = "openship-dep_Zz1.service";
+    const UNIT = "kovalio-dep_Zz1.service";
     let stopped = false;
     const host = recordingHost(() => [
       [`sport = :${PORT}`, stopped ? "" : `LISTEN 0 511 *:${PORT} *:* users:(("node",pid=701,fd=18))`],
       ["-p 701 -o args=", "node /srv/app/server.js"],
       ["/proc/701/cgroup", `0::/system.slice/${UNIT}`],
-      ["--property=Description", "Openship deployment"],
+      ["--property=Description", "Kovalio deployment"],
       // No docker on this box at all: "couldn't ask" must stay inert.
       [`--filter publish=${PORT}`, null],
     ]);
@@ -550,7 +550,7 @@ describe("container port-forwarder recognition", () => {
 
 describe("mayStopUnitForAppPort — the deploy's gate", () => {
   test.each([
-    ["openship-dep_Ab3xY9zQ.service", true],
+    ["kovalio-dep_Ab3xY9zQ.service", true],
     ["mysql.service", true], // a genuine third-party service is a real answer
     // A proxy fronts every routed domain on the box, so trading it for one app's port
     // is never what the operator meant — even though the takeover gate below allows it.
@@ -572,8 +572,8 @@ describe("mayStopUnitForAppPort — the deploy's gate", () => {
     ["snap.docker.dockerd.service", false],
     ["sshd.service", false],
     ["ssh.service", false],
-    ["openship.service", false], // the control plane itself
-    ["openship-dev.service", false], // NOT a deployment with id "dev"
+    ["kovalio.service", false], // the control plane itself
+    ["kovalio-dev.service", false], // NOT a deployment with id "dev"
     [undefined, false],
   ])("%s → %s", (unit, expected) => {
     expect(mayStopUnitForAppPort(unit)).toBe(expected);
@@ -591,7 +591,7 @@ describe("mayStopUnitForEdgeTakeover — proxies allowed, daemons never", () => 
     ["snap.lxd.daemon.service", false],
     ["user@1000.service", false],
     ["sshd.service", false],
-    ["openship.service", false],
+    ["kovalio.service", false],
     [undefined, false],
   ])("%s → %s", (unit, expected) => {
     expect(mayStopUnitForEdgeTakeover(unit)).toBe(expected);
@@ -605,7 +605,7 @@ describe("containerIdFromCgroup", () => {
     [`11:name=systemd:/docker/${id}`, id], // cgroup v1 / cgroupfs
     [`0::/user.slice/user-1000.slice/user@1000.service/docker-${id}.scope`, id], // rootless
     ["0::/system.slice/docker.service", null], // dockerd itself, not a container
-    ["0::/system.slice/openship-dep_x.service", null],
+    ["0::/system.slice/kovalio-dep_x.service", null],
     ["", null],
     [null, null],
   ])("%s → %s", (cgroup, expected) => {
@@ -638,9 +638,9 @@ describe("ensurePortAvailable — the fixes the adversarial review found", () =>
     expect(forbiddenCommands(host.seen)).toEqual([]);
   });
 
-  test("Openship's OWN control-plane container is never a stop target", async () => {
-    // `openship up` runs the api as a compose service on 4000. It carries no
-    // openship.project label, so without the platform check it reads as an ordinary
+  test("Kovalio's OWN control-plane container is never a stop target", async () => {
+    // `kovalio up` runs the api as a compose service on 4000. It carries no
+    // kovalio.project label, so without the platform check it reads as an ordinary
     // foreign container and a deploy on 4000 would offer to stop the API serving it.
     const host = recordingHost(() => [
       ["sport = :4000", SS_DOCKER_PROXY.replace(`:${PORT}`, ":4000")],
@@ -648,22 +648,22 @@ describe("ensurePortAvailable — the fixes the adversarial review found", () =>
       [`/proc/${PROXY_PID}/cgroup`, CGROUP_DOCKER_SERVICE],
       [
         "--filter publish=4000",
-        psLine({ name: "openship-api-1", image: "ghcr.io/oblien/openship-api:latest" }),
+        psLine({ name: "kovalio-api-1", image: "ghcr.io/oblien/kovalio-api:latest" }),
       ],
     ]);
     const { logger } = fakeLogger();
     const spy = promptSpy("free_port");
 
     await expect(ensurePortAvailable(host.executor, 4000, logger, spy.promptUser)).rejects.toThrow(
-      /Openship itself/,
+      /Kovalio itself/,
     );
     expect(host.seen.some((c) => c.includes("docker stop"))).toBe(false);
     expect(spy.calls[0]!.details).toMatchObject({ platformContainer: true, stopTarget: "none" });
     // Asserting the MESSAGE, not just the details bag: the first version of this refusal
-    // fell through to the docker-blind copy, which claimed Openship "couldn't identify"
+    // fell through to the docker-blind copy, which claimed Kovalio "couldn't identify"
     // a container it had just named and told the operator to `docker stop` it — the API
     // serving the deploy. Only a message assertion catches that.
-    expect(spy.calls[0]!.message).toContain("openship-api-1");
+    expect(spy.calls[0]!.message).toContain("kovalio-api-1");
     expect(spy.calls[0]!.message).not.toMatch(/couldn't identify/i);
     expect(spy.calls[0]!.message).not.toMatch(/docker ps --filter publish/);
   });
@@ -672,18 +672,18 @@ describe("ensurePortAvailable — the fixes the adversarial review found", () =>
     // postgres/redis run stock images under compose service names, so only the compose
     // project they share with the api marks them as the control plane's.
     const host = recordingHost(() => [
-      ["--filter publish=5432", psLine({ name: "openship-postgres-1", image: "postgres:16-alpine", composeProject: "openship" })],
+      ["--filter publish=5432", psLine({ name: "kovalio-postgres-1", image: "postgres:16-alpine", composeProject: "kovalio" })],
       [
-        "label=com.docker.compose.project='openship'",
-        `${psLine({ name: "openship-api-1", image: "ghcr.io/oblien/openship-api:latest", composeProject: "openship" })}\n` +
-          psLine({ name: "openship-postgres-1", image: "postgres:16-alpine", composeProject: "openship" }),
+        "label=com.docker.compose.project='kovalio'",
+        `${psLine({ name: "kovalio-api-1", image: "ghcr.io/oblien/kovalio-api:latest", composeProject: "kovalio" })}\n` +
+          psLine({ name: "kovalio-postgres-1", image: "postgres:16-alpine", composeProject: "kovalio" }),
       ],
     ]);
     const { logger } = fakeLogger();
     const spy = promptSpy("free_port");
 
     await expect(ensurePortAvailable(host.executor, 5432, logger, spy.promptUser)).rejects.toThrow(
-      /Openship itself/,
+      /Kovalio itself/,
     );
     expect(host.seen.some((c) => c.includes("docker stop"))).toBe(false);
     expect(spy.calls[0]!.details).toMatchObject({ platformContainer: true });

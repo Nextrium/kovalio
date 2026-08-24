@@ -36,7 +36,7 @@ export * from "./connectivity";
 export * from "./cloud-capability";
 export * from "./languages";
 export * from "./metadata";
-export * from "./openship-config";
+export * from "./kovalio-config";
 export * from "./mail-server";
 export * from "./app-templates";
 export {

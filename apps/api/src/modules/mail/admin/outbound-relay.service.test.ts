@@ -63,7 +63,7 @@ type Flavor = "container" | "host";
  */
 const SASL_MAP: Record<Flavor, { write: string; engine: string }> = {
   container: {
-    write: "/var/lib/openship/mail/config/postfix/sasl_passwd",
+    write: "/var/lib/kovalio/mail/config/postfix/sasl_passwd",
     engine: "/etc/postfix/sasl_passwd",
   },
   host: { write: "/etc/postfix/sasl_passwd", engine: "/etc/postfix/sasl_passwd" },
@@ -72,10 +72,10 @@ const SASL_MAP: Record<Flavor, { write: string; engine: string }> = {
 /** Same pair for the per-nexthop TLS policy map (selected scope only). */
 const TLS_MAP: Record<Flavor, { write: string; engine: string }> = {
   container: {
-    write: "/var/lib/openship/mail/config/postfix/openship_tls_policy",
-    engine: "/etc/postfix/openship_tls_policy",
+    write: "/var/lib/kovalio/mail/config/postfix/kovalio_tls_policy",
+    engine: "/etc/postfix/kovalio_tls_policy",
   },
-  host: { write: "/etc/postfix/openship_tls_policy", engine: "/etc/postfix/openship_tls_policy" },
+  host: { write: "/etc/postfix/kovalio_tls_policy", engine: "/etc/postfix/kovalio_tls_policy" },
 };
 
 const HOST_UNITS_ACTIVE = [
@@ -102,7 +102,7 @@ function makeExec(flavor: Flavor | "none" = "container") {
   const exec = {
     exec: async (cmd: string) => {
       if (cmd.includes("docker inspect")) {
-        return flavor === "container" ? "true\topenship/mail:test" : "";
+        return flavor === "container" ? "true\tkovalio/mail:test" : "";
       }
       if (cmd.includes("systemctl show")) {
         return flavor === "host" ? HOST_UNITS_ACTIVE : "";
@@ -165,7 +165,7 @@ describe("configureOutboundRelay", () => {
       const postfixCmds = execCalls.filter((c) => /postmap|postconf|postfix reload/.test(c));
       expect(postfixCmds.length).toBeGreaterThan(0);
       for (const cmd of postfixCmds) {
-        if (flavor === "container") expect(cmd).toContain("docker exec openship-mail ");
+        if (flavor === "container") expect(cmd).toContain("docker exec kovalio-mail ");
         // A legacy box has no engine container — a stray `docker exec` there is the
         // exact bug this split exists to prevent.
         else expect(cmd).not.toContain("docker exec");
@@ -544,7 +544,7 @@ describe("relay TLS is scoped to the hop, not the server", () => {
     };
     await configureOutboundRelay(exec, { ...base, scope: "selected", domains: ["example.com"] });
     expect(execCalls.join("\n")).toContain(
-      "smtp_tls_policy_maps=hash:/etc/postfix/operator_tls hash:/etc/postfix/openship_tls_policy",
+      "smtp_tls_policy_maps=hash:/etc/postfix/operator_tls hash:/etc/postfix/kovalio_tls_policy",
     );
   });
 
@@ -556,7 +556,7 @@ describe("relay TLS is scoped to the hop, not the server", () => {
     inner.exec = async (cmd: string) => {
       const out = await real(cmd);
       return cmd.includes("postconf -h smtp_tls_policy_maps")
-        ? "hash:/etc/postfix/operator_tls hash:/etc/postfix/openship_tls_policy"
+        ? "hash:/etc/postfix/operator_tls hash:/etc/postfix/kovalio_tls_policy"
         : out;
     };
     await disableOutboundRelay(exec);

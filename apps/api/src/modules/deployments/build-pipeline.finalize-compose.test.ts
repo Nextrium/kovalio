@@ -19,7 +19,7 @@ vi.mock("@repo/db", () => ({
 
 vi.mock("../../lib/controller-helpers", () => ({ platform: vi.fn() }));
 
-vi.mock("../../lib/openship-manifest-sync", () => ({
+vi.mock("../../lib/kovalio-manifest-sync", () => ({
   syncProjectToServerManifest: vi.fn(),
 }));
 

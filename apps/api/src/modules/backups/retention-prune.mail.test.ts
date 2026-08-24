@@ -50,9 +50,9 @@ vi.mock("@repo/db", () => ({
 }));
 
 vi.mock("@repo/adapters", () => ({
-  // Read at module scope by openship-server-store (imported transitively), so the
+  // Read at module scope by kovalio-server-store (imported transitively), so the
   // mock has to carry it or nothing under test loads. Its value is irrelevant here.
-  HOST_STATE_DIR: "/root/.openship",
+  HOST_STATE_DIR: "/root/.kovalio",
   resolveDestination: () => ({
     // Per-key outcomes, never a throw — the real contract. A mock returning
     // nothing let the prune read a refused delete as a successful one.

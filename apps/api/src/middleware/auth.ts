@@ -38,7 +38,7 @@ declare module "hono" {
  *   2. No session → consult `getAuthMode()`.
  *   3. authMode !== "none" → 401.
  *   4. authMode === "none" → loopback guardrail (CRITICAL #4):
- *        - Desktop OR `OPENSHIP_ALLOW_ZERO_AUTH=true` is required.
+ *        - Desktop OR `KOVALIO_ALLOW_ZERO_AUTH=true` is required.
  *        - The request must come from a loopback TCP peer
  *          (kernel-reported, not the Host header). Reverse-proxy
  *          misconfig spoofing Host can no longer escalate to admin.

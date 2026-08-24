@@ -2,7 +2,7 @@
  * Mail-server health checks.
  *
  * One catalog of daemons, probed over whichever engine the box runs: the
- * `openship-mail` container (supervisord programs + a pg sidecar) or a legacy
+ * `kovalio-mail` container (supervisord programs + a pg sidecar) or a legacy
  * host-native install (systemd units). The probe COMMAND and its parsing are the
  * only difference and both live in `./mail-engine.ts`; this file resolves the
  * topology once per request and stays flavor-blind. That's deliberate — the

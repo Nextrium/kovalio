@@ -1,5 +1,5 @@
 /**
- * `openship domain` — custom domains, DNS verification, and SSL.
+ * `kovalio domain` — custom domains, DNS verification, and SSL.
  *
  * Grounded in apps/api/src/modules/domains/domain.routes.ts (mounted at
  * /api/domains in app.ts). Each subcommand hits the real route:
@@ -124,7 +124,7 @@ const addCmd = new Command("add")
         printJson({ domain: res.data, records: res.records });
         return;
       }
-      info("  Add these DNS records at your registrar, then run `openship domain verify " + res.data.id + "`:");
+      info("  Add these DNS records at your registrar, then run `kovalio domain verify " + res.data.id + "`:");
       if (res.records) printRecords(res.records);
     } catch (e) {
       sp?.fail("Add failed");

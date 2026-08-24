@@ -137,7 +137,7 @@ const verifyDockerRegistry: Verifier = async ({ selector, publicFields, secrets 
 
   return {
     ok: false,
-    reason: `${registry} answered ${probe.status} and did not offer a login method Openship understands.`,
+    reason: `${registry} answered ${probe.status} and did not offer a login method Kovalio understands.`,
   };
 };
 
@@ -181,7 +181,7 @@ export async function verifyCredentialValues(
 ): Promise<VerifyResult> {
   const verifier = VERIFIERS[provider.id];
   if (!verifier) {
-    return { ok: false, reason: `Openship cannot verify ${provider.label} credentials yet.` };
+    return { ok: false, reason: `Kovalio cannot verify ${provider.label} credentials yet.` };
   }
   try {
     return await verifier(args);

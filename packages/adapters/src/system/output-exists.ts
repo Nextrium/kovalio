@@ -95,8 +95,8 @@ function buildCommand(servedPath: string, opts?: StaticProbeOptions): string {
     // means we learned nothing about the path.
     // `X-Forwarded-Proto: https` is what makes this probe exercise the SERVE path
     // instead of the redirect. On a route with a real certificate the :80 block opens
-    // with HTTPS_UPGRADE — `if ($openship_redirect_https) { return 301 … }` — and
-    // `$openship_redirect_https` is 1 unless the request claims https (FORWARD_VARS
+    // with HTTPS_UPGRADE — `if ($kovalio_redirect_https) { return 301 … }` — and
+    // `$kovalio_redirect_https` is 1 unless the request claims https (FORWARD_VARS
     // in infra/nginx.ts). So a plain `Host:`-only request was answered 301 without
     // the doc root ever being touched, `statusIsServed` mapped 3xx to served, and
     // `outputFindingIsBroken` let that override the correct `!hasIndex` verdict: a

@@ -16,7 +16,7 @@ import { describeBuildTarget } from "./deploy-target-label";
  * resolver and diverged on nothing else; one of them growing a link would be the start of "Server
  * · box-1" vs "box-1" drifting apart again.
  *
- * Only a server target links. Openship Cloud has no per-instance page to open, and `local` is the
+ * Only a server target links. Kovalio Cloud has no per-instance page to open, and `local` is the
  * box the dashboard is already running on — a link to "here" is a dead end dressed as an action.
  */
 export function DeployTargetValue({

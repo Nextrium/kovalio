@@ -14,7 +14,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
  */
 
 const h = vi.hoisted(() => ({
-  env: { CLOUD_MODE: false, OPENSHIP_PRODUCT: "platform" as string },
+  env: { CLOUD_MODE: false, KOVALIO_PRODUCT: "platform" as string },
   /** What `instanceSettings.get()` answers — or throws, when it's an Error. */
   settings: null as unknown,
 }));
@@ -35,7 +35,7 @@ import { clearProductModeCache, isProductMode, resolveProductMode } from "./prod
 
 beforeEach(() => {
   h.env.CLOUD_MODE = false;
-  h.env.OPENSHIP_PRODUCT = "platform";
+  h.env.KOVALIO_PRODUCT = "platform";
   h.settings = null;
   clearProductModeCache();
 });
@@ -46,8 +46,8 @@ describe("resolveProductMode", () => {
   });
 
   it("honours the launcher's declaration when nothing is stored", async () => {
-    // `openship up --mail` → OPENSHIP_PRODUCT=mail in the compose .env / unit argv.
-    h.env.OPENSHIP_PRODUCT = "mail";
+    // `kovalio up --mail` → KOVALIO_PRODUCT=mail in the compose .env / unit argv.
+    h.env.KOVALIO_PRODUCT = "mail";
     expect(await resolveProductMode()).toBe("mail");
   });
 
@@ -57,22 +57,22 @@ describe("resolveProductMode", () => {
 
     // And the case the dashboard toggle depends on: turning mail OFF on a box whose
     // env declares it. The toggle writes an explicit "platform" for exactly this —
-    // clearing the row would hand the decision back to OPENSHIP_PRODUCT.
+    // clearing the row would hand the decision back to KOVALIO_PRODUCT.
     clearProductModeCache();
-    h.env.OPENSHIP_PRODUCT = "mail";
+    h.env.KOVALIO_PRODUCT = "mail";
     h.settings = { productMode: "platform" };
     expect(await resolveProductMode()).toBe("platform");
   });
 
   it("ignores a stored value that isn't a mode", async () => {
-    h.env.OPENSHIP_PRODUCT = "mail";
+    h.env.KOVALIO_PRODUCT = "mail";
     h.settings = { productMode: "webmail" };
     expect(await resolveProductMode()).toBe("mail");
   });
 
   it("forces the platform in cloud mode, whatever env or the DB say", async () => {
     h.env.CLOUD_MODE = true;
-    h.env.OPENSHIP_PRODUCT = "mail";
+    h.env.KOVALIO_PRODUCT = "mail";
     h.settings = { productMode: "mail" };
     expect(await resolveProductMode()).toBe("platform");
   });
@@ -89,7 +89,7 @@ describe("resolveProductMode", () => {
   });
 
   it("falls back to the declaration when the settings read fails", async () => {
-    h.env.OPENSHIP_PRODUCT = "mail";
+    h.env.KOVALIO_PRODUCT = "mail";
     h.settings = new Error("no database");
     expect(await resolveProductMode()).toBe("mail");
   });

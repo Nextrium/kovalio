@@ -155,7 +155,7 @@ class RedisRdbProducerImpl implements BackupProducer {
       `}`,
       `lastsave`,
       `[ -n "$TS" ] || {`,
-      `  echo "openship: could not read Redis LASTSAVE, so a captured dump.rdb could not be` +
+      `  echo "kovalio: could not read Redis LASTSAVE, so a captured dump.rdb could not be` +
         ` proven fresh — refusing to archive a possibly stale one. redis-cli said: $RAW" >&2`,
       `  exit 91`,
       `}`,
@@ -176,7 +176,7 @@ class RedisRdbProducerImpl implements BackupProducer {
       `  *ERR*) BGFAIL=1 ;;`,
       `esac`,
       `[ -z "$BGFAIL" ] || {`,
-      `  echo "openship: Redis would not start a background save, so /data/dump.rdb is` +
+      `  echo "kovalio: Redis would not start a background save, so /data/dump.rdb is` +
         ` whatever an earlier save left there — refusing to archive it as this backup.` +
         ` redis-cli said: $BG" >&2`,
       `  exit 92`,
@@ -185,7 +185,7 @@ class RedisRdbProducerImpl implements BackupProducer {
       `while [ "$i" -lt ${waitSeconds} ]; do`,
       `  lastsave`,
       `  [ -n "$TS" ] || {`,
-      `    echo "openship: lost contact with Redis while waiting for BGSAVE to finish.` +
+      `    echo "kovalio: lost contact with Redis while waiting for BGSAVE to finish.` +
         ` redis-cli said: $RAW" >&2`,
       `    exit 91`,
       `  }`,
@@ -199,7 +199,7 @@ class RedisRdbProducerImpl implements BackupProducer {
       `  INFO=$(${cli} INFO persistence 2>/dev/null | tr -d '\\r')`,
       `  case "$INFO" in *rdb_bgsave_in_progress:0*)`,
       `    case "$INFO" in *rdb_last_bgsave_status:err*)`,
-      `      echo "openship: Redis reported its background save FAILED` +
+      `      echo "kovalio: Redis reported its background save FAILED` +
         ` (rdb_last_bgsave_status:err) — usually no free space where /data lives. Nothing` +
         ` fresh was written, so refusing to archive the previous save." >&2`,
       `      exit 93 ;;`,
@@ -208,7 +208,7 @@ class RedisRdbProducerImpl implements BackupProducer {
       `  i=$((i+1)); sleep 1`,
       `done`,
       `[ "$SAVED" = 1 ] || {`,
-      `  echo "openship: Redis BGSAVE did not finish within ${waitSeconds}s — LASTSAVE never` +
+      `  echo "kovalio: Redis BGSAVE did not finish within ${waitSeconds}s — LASTSAVE never` +
         ` advanced, so /data/dump.rdb is still the PREVIOUS save. Refusing to archive it as` +
         ` this backup; use a volume payload for a dataset this large, or retry." >&2`,
       `  exit 94`,

@@ -2,7 +2,7 @@
  * The two silent-success holes on the producer side, and the key layout that made a
  * real backup impossible to find.
  *
- * All three are the same class as [#611](https://github.com/oblien/openship/issues/611):
+ * All three are the same class as [#611](https://github.com/Nextrium/kovalio/issues/611):
  * the run said it worked.
  *
  *  1. `<dump> | zstd` exits with ZSTD's status, so a failed dump was reported as a
@@ -184,16 +184,16 @@ describe("the codec recorded at capture is the one restore uses", () => {
 });
 
 describe("keys are relative to the destination's own root", () => {
-  const parts = { projectSlug: "openship", serviceName: "postgres", runId: "bkr_1" };
+  const parts = { projectSlug: "kovalio", serviceName: "postgres", runId: "bkr_1" };
 
   it("does not carry a destination pathPrefix", () => {
     // The destination applies its own on every put/get/delete. Carrying it here too
     // stored each artifact one level deeper than the key the run recorded, so a
     // bucket listing at `objectKeyPrefix` returned nothing — not even manifest.json.
-    expect(runPrefix(parts)).toBe("openship/openship/postgres/bkr_1");
-    expect(manifestKey(parts)).toBe("openship/openship/postgres/bkr_1/manifest.json");
+    expect(runPrefix(parts)).toBe("kovalio/kovalio/postgres/bkr_1");
+    expect(manifestKey(parts)).toBe("kovalio/kovalio/postgres/bkr_1/manifest.json");
     expect(artifactKey(parts, "pg-dump.dump")).toBe(
-      "openship/openship/postgres/bkr_1/pg-dump.dump",
+      "kovalio/kovalio/postgres/bkr_1/pg-dump.dump",
     );
   });
 

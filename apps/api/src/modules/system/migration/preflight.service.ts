@@ -7,7 +7,7 @@
  *   1. SSH connectivity — can we actually log into the chosen server?
  *      (server row exists, sshManager opens an executor, simple
  *      `echo ok` round-trip succeeds.)
- *   2. Release dist exists locally — see resolveOpenshipDistDirOrNull;
+ *   2. Release dist exists locally — see resolveKovalioDistDirOrNull;
  *      if missing the wizard offers a "build it first" hint instead
  *      of letting the operator click Deploy and then fail mid-stream.
  *   3. Domain readiness:
@@ -24,7 +24,7 @@
 
 import { repos } from "@repo/db";
 import { sshManager } from "../../../lib/ssh-manager";
-import { resolveOpenshipDistDirOrNull } from "./openship-dist";
+import { resolveKovalioDistDirOrNull } from "./kovalio-dist";
 
 export type DomainChoice =
   | { kind: "custom"; hostname: string }
@@ -86,15 +86,15 @@ async function checkSshReachable(
 }
 
 function checkReleaseDistPresent(): { ok: boolean; detail: string } {
-  const path = resolveOpenshipDistDirOrNull();
+  const path = resolveKovalioDistDirOrNull();
   if (path) {
     return { ok: true, detail: `Release dist found at ${path}.` };
   }
   return {
     ok: false,
     detail:
-      "Openship release dist not built. Run `bun run --cwd apps/api build-release` " +
-      "before starting the migration (or set OPENSHIP_RELEASE_DIST_PATH).",
+      "Kovalio release dist not built. Run `bun run --cwd apps/api build-release` " +
+      "before starting the migration (or set KOVALIO_RELEASE_DIST_PATH).",
   };
 }
 

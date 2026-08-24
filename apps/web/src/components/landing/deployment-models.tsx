@@ -16,7 +16,7 @@ const MODELS = [
   {
     n: "01",
     tag: "Managed",
-    title: "Openship Cloud",
+    title: "Kovalio Cloud",
     lead:
       "Sign up, point at a repository, ship. Zero infrastructure decisions. Multi-region by default. Auto-scaling per service.",
     points: [
@@ -113,7 +113,7 @@ export function DeploymentModels() {
           </div>
           <p className="dm-migrate-body">
             Your apps are plain containers and your services are standard images.
-            Move workloads between Openship Cloud and your own servers without
+            Move workloads between Kovalio Cloud and your own servers without
             rebuilding, rewriting, or paying an exit tax. Click, confirm, done.
           </p>
         </div>

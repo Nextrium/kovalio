@@ -232,7 +232,7 @@ describe("withContainerEnv — the env the DB never recorded", () => {
       env: {},
       volumes: [],
       containerId: "c_pg",
-      projectSlug: "openship",
+      projectSlug: "kovalio",
       namespaceVolumes: false,
       ...over,
     }) as Awaited<ReturnType<typeof serviceHandleFor>>;
@@ -243,10 +243,10 @@ describe("withContainerEnv — the env the DB never recorded", () => {
     // which read as "not a database" and sent the run to the volume fallback.
     const out = await withContainerEnv(
       handle(),
-      executorWith({ POSTGRES_USER: "openship", POSTGRES_DB: "openship" }),
+      executorWith({ POSTGRES_USER: "kovalio", POSTGRES_DB: "kovalio" }),
     );
 
-    expect(out.env).toEqual({ POSTGRES_USER: "openship", POSTGRES_DB: "openship" });
+    expect(out.env).toEqual({ POSTGRES_USER: "kovalio", POSTGRES_DB: "kovalio" });
   });
 
   it("lets the DB-resolved env WIN over the running container's", async () => {
@@ -255,12 +255,12 @@ describe("withContainerEnv — the env the DB never recorded", () => {
     // container happens to have been started with.
     const out = await withContainerEnv(
       handle({ env: { POSTGRES_DB: "intended" } }),
-      executorWith({ POSTGRES_DB: "stale-from-container", POSTGRES_USER: "openship" }),
+      executorWith({ POSTGRES_DB: "stale-from-container", POSTGRES_USER: "kovalio" }),
     );
 
     expect(out.env.POSTGRES_DB).toBe("intended");
     // ...while still gaining what the DB said nothing about.
-    expect(out.env.POSTGRES_USER).toBe("openship");
+    expect(out.env.POSTGRES_USER).toBe("kovalio");
   });
 
   it("returns the handle untouched when the executor cannot inspect", async () => {

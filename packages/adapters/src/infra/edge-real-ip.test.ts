@@ -10,7 +10,7 @@ import {
 import { CLOUDFLARE_IPV4, CLOUDFLARE_IPV6 } from "./cloudflare-ips.generated";
 import { bakedEdgeNginxConf } from "./edge-baked-conf";
 
-const ENV_KEYS = ["OPENSHIP_EDGE_REAL_IP_HEADER", "OPENSHIP_EDGE_TRUSTED_PROXIES"] as const;
+const ENV_KEYS = ["KOVALIO_EDGE_REAL_IP_HEADER", "KOVALIO_EDGE_TRUSTED_PROXIES"] as const;
 
 afterEach(() => {
   for (const k of ENV_KEYS) delete process.env[k];
@@ -26,7 +26,7 @@ describe("which header names the client", () => {
   });
 
   it("lets an operator name their own proxy's header", () => {
-    process.env.OPENSHIP_EDGE_REAL_IP_HEADER = "X-Forwarded-For";
+    process.env.KOVALIO_EDGE_REAL_IP_HEADER = "X-Forwarded-For";
     expect(edgeRealIpHeader()).toBe("X-Forwarded-For");
   });
 
@@ -40,7 +40,7 @@ describe("which header names the client", () => {
       "a".repeat(200),
       "",
     ]) {
-      process.env.OPENSHIP_EDGE_REAL_IP_HEADER = attack;
+      process.env.KOVALIO_EDGE_REAL_IP_HEADER = attack;
       expect(edgeRealIpHeader()).toBe("CF-Connecting-IP");
     }
   });
@@ -52,14 +52,14 @@ describe("the trusted-proxy list", () => {
   });
 
   it("accepts comma- or whitespace-separated v4 and v6 CIDRs", () => {
-    process.env.OPENSHIP_EDGE_TRUSTED_PROXIES = "10.0.0.0/8, 192.168.1.1\n2001:db8::/32";
+    process.env.KOVALIO_EDGE_TRUSTED_PROXIES = "10.0.0.0/8, 192.168.1.1\n2001:db8::/32";
     expect(edgeTrustedProxies()).toEqual(["10.0.0.0/8", "192.168.1.1", "2001:db8::/32"]);
   });
 
   it("drops a malformed entry rather than emitting it", () => {
     // A bad token fails `nginx -t`, and a failed test means the reload is REFUSED — so one
     // typo in an env var would wedge every route on the box, not just misconfigure trust.
-    process.env.OPENSHIP_EDGE_TRUSTED_PROXIES = "10.0.0.0/8, not-an-ip, ; rm -rf /, 1.2.3.4";
+    process.env.KOVALIO_EDGE_TRUSTED_PROXIES = "10.0.0.0/8, not-an-ip, ; rm -rf /, 1.2.3.4";
     expect(edgeTrustedProxies()).toEqual(["10.0.0.0/8", "1.2.3.4"]);
   });
 });
@@ -75,7 +75,7 @@ describe("the emitted config", () => {
   });
 
   it("never trusts a catch-all", () => {
-    process.env.OPENSHIP_EDGE_TRUSTED_PROXIES = "0.0.0.0/0";
+    process.env.KOVALIO_EDGE_TRUSTED_PROXIES = "0.0.0.0/0";
     // 0.0.0.0/0 is a valid CIDR, so the validator passes it — but it would mean "believe
     // this header from anyone", i.e. hand every visitor a free choice of source address.
     // If we ever want to allow that it must be a deliberate, separate decision.
@@ -97,7 +97,7 @@ describe("the emitted config", () => {
   });
 });
 
-describe("a host fronted by Openship Cloud's edge", () => {
+describe("a host fronted by Kovalio Cloud's edge", () => {
   it("recognizes a free <slug>.opsh.io host and nothing else", () => {
     expect(isCloudFrontedHost("myapp.opsh.io")).toBe(true);
     expect(isCloudFrontedHost("MyApp-Web.OPSH.IO.")).toBe(true);
@@ -111,7 +111,7 @@ describe("a host fronted by Openship Cloud's edge", () => {
   });
 
   it("reads X-Real-IP, because that is the header that front overwrites", () => {
-    // CF-Connecting-IP is what the http-scope block reads, and Openship Cloud's edge
+    // CF-Connecting-IP is what the http-scope block reads, and Kovalio Cloud's edge
     // does not send it — inheriting that scope is why every free-domain visitor read as
     // the edge: one rate-limit bucket for the planet, bans that ban the edge, and one
     // country for everyone.
@@ -148,10 +148,10 @@ describe("a host fronted by Openship Cloud's edge", () => {
   });
 
   it("ignores the operator's header override — this front is never their proxy", () => {
-    // OPENSHIP_EDGE_REAL_IP_HEADER describes what the OPERATOR put in front of the box.
+    // KOVALIO_EDGE_REAL_IP_HEADER describes what the OPERATOR put in front of the box.
     // A *.opsh.io host is served by Cloud's edge whatever else is installed, so honouring
     // that value here would read a header nothing sets.
-    process.env.OPENSHIP_EDGE_REAL_IP_HEADER = "True-Client-IP";
+    process.env.KOVALIO_EDGE_REAL_IP_HEADER = "True-Client-IP";
     expect(cloudEdgeRealIpConf()).toContain("real_ip_header X-Real-IP;");
   });
 

@@ -36,7 +36,7 @@ export async function runInboundWatch(): Promise<InboundWatchResult> {
   // The addresses this instance sends its OWN mail from. Passed into the loop guard so a
   // notification email that lands back inside a watched domain is recognised as ours and
   // cannot feed itself.
-  const openshipSenders = await getInstanceSmtpSenders().catch(() => []);
+  const kovalioSenders = await getInstanceSmtpSenders().catch(() => []);
 
   const byServer = new Map<string, string>();
   for (const rule of rules) byServer.set(rule.serverId, rule.organizationId);
@@ -44,7 +44,7 @@ export async function runInboundWatch(): Promise<InboundWatchResult> {
   for (const [serverId, organizationId] of byServer) {
     result.servers++;
     try {
-      const r = await runInboundForServer({ serverId, organizationId, openshipSenders });
+      const r = await runInboundForServer({ serverId, organizationId, kovalioSenders });
       result.read += r.read;
       result.emitted += r.emitted;
       result.dropped += r.dropped;

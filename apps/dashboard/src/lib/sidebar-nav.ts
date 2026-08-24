@@ -4,7 +4,7 @@
  *
  * Two products share one shell:
  *   - `getNavSections()`     → the full deploy platform.
- *   - `getMailNavSections()` → Openship Mail: /emails' ten admin tabs promoted
+ *   - `getMailNavSections()` → Kovalio Mail: /emails' ten admin tabs promoted
  *                              to rail entries across three headings, plus the
  *                              host and settings rows an operator still needs.
  *
@@ -64,7 +64,7 @@ export interface NavItem {
   tab?: string;
   /**
    * Extra pathnames this item also owns, for the active highlight only — `href`
-   * stays the canonical link. Openship Mail renders the mail console at `/` as
+   * stays the canonical link. Kovalio Mail renders the mail console at `/` as
    * well as /emails (`(dashboard)/page.tsx`), and `/` is where login lands; with
    * no entry claiming it the operator arrives on a rail highlighting nothing.
    */
@@ -135,7 +135,7 @@ export function getNavSections(isSaaS: boolean, selfHosted: boolean): NavSection
 }
 
 /* ------------------------------------------------------------------ */
-/*  Openship Mail                                                      */
+/*  Kovalio Mail                                                      */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -220,7 +220,7 @@ export function mailTabHref(serverId: string | null, tab: string): string {
 /**
  * Webmail's rail entry — the one mail item that is NOT a `?tab=` link.
  *
- * Webmail (Zero) ships as an ordinary openship project, so it's managed in the
+ * Webmail (Zero) ships as an ordinary kovalio project, so it's managed in the
  * projects UI rather than in a panel of its own. /emails/webmail is the stable
  * address that resolves which of those it is: the project when one exists, an
  * install offer when it doesn't. The rail can therefore link somewhere real

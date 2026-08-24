@@ -224,7 +224,7 @@ function buildSingleAppEndpoints(
 }
 
 function buildPreparedOptions(response: PrepareProjectResponse): DeploymentConfig["options"] {
-  // An explicit declared workload (openship.json `workload`, #538) wins over
+  // An explicit declared workload (kovalio.json `workload`, #538) wins over
   // everything and is the ONLY way to reach a worker. Otherwise fall back to the
   // legacy collapse: productionMode "static" is serverless, "host"/"standalone"
   // run a server, and an absent mode derives from the detected start command.
@@ -256,7 +256,7 @@ function buildPreparedOptions(response: PrepareProjectResponse): DeploymentConfi
 }
 
 /**
- * Map a declared `resources` block (openship.json) to the deploy config's cloud
+ * Map a declared `resources` block (kovalio.json) to the deploy config's cloud
  * tier fields. A named tier maps straight through; explicit cpu/mem/disk becomes
  * the "custom" tier (missing values fall back to low-tier defaults). Returns an
  * empty object when nothing is declared, so the config keeps its default tier.
@@ -481,7 +481,7 @@ function resolvePreparedRoutingState(
     };
   }
 
-  // Declared domains (openship.json) seed the single-app endpoints, unless the
+  // Declared domains (kovalio.json) seed the single-app endpoints, unless the
   // project was already saved with its own (a config edit shouldn't be clobbered).
   if (response.publicEndpoints?.length && !mapStoredPublicEndpoints(project)?.length) {
     return {
@@ -743,7 +743,7 @@ export function useDeploymentConfig() {
         uploadSessionId,
         projectName: project?.name || repoName,
         // The scan echoes back the compose path it actually used (request value or
-        // the one openship.json declared), so the field shows what's in effect and
+        // the one kovalio.json declared), so the field shows what's in effect and
         // the value survives into the project row on save.
         composePath: response.composePath ?? (project?.composePath as string | undefined),
         projectType: preparedContext.projectType,
@@ -762,7 +762,7 @@ export function useDeploymentConfig() {
         // Readiness gate. Same hydration rule as framework/runtimeMode: an
         // EXISTING project keeps its SAVED value so a config-save can't silently
         // clear a gate the operator turned on; a brand-new deploy honours what
-        // openship.json declared. Neither present ⇒ undefined ⇒ off.
+        // kovalio.json declared. Neither present ⇒ undefined ⇒ off.
         readiness: projectId
           ? (project?.readiness ?? undefined)
           : (response.readiness ?? undefined),
@@ -796,7 +796,7 @@ export function useDeploymentConfig() {
             ? project.runtimeMode
             : projectId
               ? "docker"
-              // Brand-new deploy: honor a declared runtime (openship.json) for a
+              // Brand-new deploy: honor a declared runtime (kovalio.json) for a
               // single app; services/docker stay pinned to "docker" by normalize.
               : response.runtimeMode &&
                   preparedContext.projectType !== "services" &&
@@ -813,7 +813,7 @@ export function useDeploymentConfig() {
         productionPortTouched: routingState.hasStoredPort,
         lastAutoDetectedEnvPort: null,
         options: runtimeConfig.options,
-        // Declared cloud sizing (openship.json). Absent → keep the default tier.
+        // Declared cloud sizing (kovalio.json). Absent → keep the default tier.
         ...resolveCloudResources(response.resources),
       }, resolvePreparedSingleModeDefaults(
         preparedContext,
@@ -1091,7 +1091,7 @@ export function useDeploymentConfig() {
             productionPaths: scan.productionPaths,
             port: scan.port,
             services: scan.services,
-            // The upload scan reads the tarball's openship.json too, so a refused
+            // The upload scan reads the tarball's kovalio.json too, so a refused
             // field has to reach the wizard from here as well (#641).
             configDiagnostics: scan.configDiagnostics,
           } as unknown as PrepareProjectResponse;

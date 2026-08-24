@@ -1,5 +1,5 @@
 /**
- * Make a box ABLE to answer Openship Cloud's edge-target challenge, before any
+ * Make a box ABLE to answer Kovalio Cloud's edge-target challenge, before any
  * challenge exists.
  *
  * Oblien will only route `<slug>.opsh.io` to a target that has proven control, and it
@@ -68,7 +68,7 @@ export async function ensureEdgeChallengeReady(
     const result = await routing.serveEdgeChallenge({ host, ...(tokens.length ? { tokens } : {}) });
     if (!result.served) {
       opts.onLog?.(
-        `Note: ${host} can't answer Openship Cloud's target check yet — ${result.reason ?? "unknown reason"}\n`,
+        `Note: ${host} can't answer Kovalio Cloud's target check yet — ${result.reason ?? "unknown reason"}\n`,
       );
       return { ready: false, host, reason: result.reason };
     }

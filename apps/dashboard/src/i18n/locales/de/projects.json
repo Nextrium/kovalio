@@ -21,14 +21,14 @@
   },
   "serverCta": {
     "title": "Auf eigenem Server bereitstellen",
-    "description": "Verbinde einen Server über SSH, um Projekte auf deiner eigenen Infrastruktur neben Openship Cloud auszuführen.",
+    "description": "Verbinde einen Server über SSH, um Projekte auf deiner eigenen Infrastruktur neben Kovalio Cloud auszuführen.",
     "button": "Server verbinden"
   },
   "filters": {
     "title": "Nach Ziel filtern",
     "subtitle": "Wo Projekte bereitgestellt werden",
     "allProjects": "Alle Projekte",
-    "cloud": "Openship Cloud",
+    "cloud": "Kovalio Cloud",
     "local": "Lokal"
   },
   "card": {
@@ -106,7 +106,7 @@
     "cleanupFailedTitle": "Bereinigung fehlgeschlagen",
     "alreadyDeleted": "Projekt bereits gelöscht",
     "forceModalTitle": "Entfernen an der Quelle fehlgeschlagen",
-    "forceModalBody": "Die Runtime war nicht erreichbar (oder schlug weiter fehl), daher wurde dieses Projekt nicht abgebaut. Du kannst es trotzdem aus Openship löschen — der Datensatz verschwindet jetzt, und übrige Ressourcen werden automatisch zurückgeholt, sobald der Server erreichbar ist.",
+    "forceModalBody": "Die Runtime war nicht erreichbar (oder schlug weiter fehl), daher wurde dieses Projekt nicht abgebaut. Du kannst es trotzdem aus Kovalio löschen — der Datensatz verschwindet jetzt, und übrige Ressourcen werden automatisch zurückgeholt, sobald der Server erreichbar ist.",
     "forceModalConfirm": "Aus dem Speicher löschen",
     "forceModalCancel": "Abbrechen",
     "unlinked": "Verknüpfung zu {projects} entfernt – dort neu deployen, um es anzuwenden.",
@@ -192,7 +192,7 @@
     "typeProject": "Projekt"
   },
   "overview": {
-    "platformCloud": "Openship Cloud",
+    "platformCloud": "Kovalio Cloud",
     "platformServer": "Selbst gehostet (Server)",
     "platformLocal": "Selbst gehostet (Lokal)",
     "modeStatic": "Statische Website",
@@ -495,7 +495,7 @@
     "watchOffTitle": "Die Container-Zustandsüberwachung ist aus",
     "watchOffBody": "Es werden keine Vorfälle erfasst und keine Benachrichtigungen gesendet – eine leere Liste bedeutet hier also nicht, dass alles in Ordnung ist.",
     "watchOffCta": "Unter Jobs einschalten",
-    "serverDownTitle": "Openship erreicht den Server dieses Projekts nicht",
+    "serverDownTitle": "Kovalio erreicht den Server dieses Projekts nicht",
     "serverDownBody": "Auf dieser Maschine wurde seit {duration} nichts beobachtet, die Vorfälle unten können also veraltet sein.",
     "loadFailed": "Vorfälle konnten nicht geladen werden.",
     "ongoing": "läuft seit {duration}",

@@ -8,20 +8,20 @@
  * same-named container on the host.
  *
  * That is not hypothetical, and it is not limited to the user's own stacks: the
- * Openship control plane runs as a compose stack whose services are literally
+ * Kovalio control plane runs as a compose stack whose services are literally
  * `api`, `dashboard`, `edge`, `postgres`, `redis` (apps/cli/src/lib/compose.ts,
- * docker/docker-compose.yml). Those containers carry no `openship.*` labels, so
- * the scan's `isOpenshipOwned` split leaves them in the generic candidate pool.
+ * docker/docker-compose.yml). Those containers carry no `kovalio.*` labels, so
+ * the scan's `isKovalioOwned` split leaves them in the generic candidate pool.
  * Migrating ANY foreign stack with a service named `postgres` therefore matched a
- * seventh container — Openship's own database — which `linkSelfAppServices` has
+ * seventh container — Kovalio's own database — which `linkSelfAppServices` has
  * already bound to the control-plane project. The idempotency gate then refused
- * the whole migration with "already managed here by project \"Openship\"", and
+ * the whole migration with "already managed here by project \"Kovalio\"", and
  * every retry failed identically because nothing about that state changes (#584).
  *
  * Had the gate not caught it, the outcome was worse than a failed migration:
  * `buildAdoptedServiceRows` de-duplicates by suffixing, so the control plane's
  * postgres would have been adopted into the user's project as `postgres-2` — a
- * redeploy away from replacing Openship's own database container.
+ * redeploy away from replacing Kovalio's own database container.
  *
  * The wizard has always HELD the unique identity (`svcUid` = containerId, which is
  * how it keys per-service env/route/volume state) and threw it away at the request

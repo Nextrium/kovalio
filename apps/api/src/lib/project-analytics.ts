@@ -109,7 +109,7 @@ export async function resolveProjectTracking(projectId: string): Promise<Project
 
 /**
  * Map a fixed list of tracked domains to their traffic sources — the shared core
- * of the single/plural resolvers below. SaaS/OpenShip Cloud deploys observe
+ * of the single/plural resolvers below. SaaS/Kovalio Cloud deploys observe
  * traffic at the Oblien edge; self-hosted deploys observe it via the target
  * server's OpenResty management API. Empty domain list (or no resolvable server)
  * → no sources.
@@ -469,7 +469,7 @@ export function streamChunkBytes(log: LogEntry): Buffer {
 async function execMgmtStream(serverId: string, path: string) {
   const executor = await sshManager.acquire(serverId);
   const container = await resolveOurEdgeContainer(executor);
-  if (!container) throw new Error("No Openship edge container on this server");
+  if (!container) throw new Error("No Kovalio edge container on this server");
 
   const { PassThrough } = await import("node:stream");
   const stream = new PassThrough();
@@ -527,9 +527,9 @@ async function execMgmtStream(serverId: string, path: string) {
       if (!torndown && !forwarded && !ended) {
         const detail = errParts.join("").trim() || (result?.output || "").trim();
         const reason =
-          `Couldn't reach the Openship edge's log service on this server` +
+          `Couldn't reach the Kovalio edge's log service on this server` +
           `${detail ? `: ${detail}` : ""}. Make sure the edge is running ` +
-          "(`docker ps` should show openship-edge) and redeploy the routing if it isn't.";
+          "(`docker ps` should show kovalio-edge) and redeploy the routing if it isn't.";
         stream.write(`event: error\ndata: ${JSON.stringify({ error: reason })}\n\n`);
       }
       finish();

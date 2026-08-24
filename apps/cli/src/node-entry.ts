@@ -1,7 +1,7 @@
 // node-entry.ts — thin wrapper with a #!/usr/bin/env node shebang.
 //
 // npm reads the shebang of the `bin` file to generate the Windows launchers
-// (openship.cmd / openship.ps1). dist/index.js uses #!/usr/bin/env sh — an
+// (kovalio.cmd / kovalio.ps1). dist/index.js uses #!/usr/bin/env sh — an
 // intentional sh/JS polyglot that lets the official Bun-based installer run
 // the CLI on Bun-only Unix boxes with no Node. On Windows, npm turns that `sh`
 // into `sh.exe` calls, which don't exist on a standard install (#460).
@@ -14,7 +14,7 @@
 //
 // ── It is also the Node-version gate, and that is why the import is dynamic ──
 //
-// `npm i -g openship` is the ONE install path that runs on the user's own Node.
+// `npm i -g kovalio` is the ONE install path that runs on the user's own Node.
 // The curl installer resolves this itself (scripts/install.sh: system Node >= 22
 // or it vendors an official Node 22), so it can never land on an old runtime —
 // but npm/pnpm/yarn/bun installs land on whatever is there, and `engines` is only
@@ -41,7 +41,7 @@ const HARD_FLOOR = 20;
 /** Supported floor (package.json engines, scripts/install.sh, .node-version). */
 const SUPPORTED = 22;
 
-const INSTALLER = "curl -fsSL https://get.openship.io | sh";
+const INSTALLER = "curl -fsSL https://get.kovalio.nextrium.org | sh";
 
 const CLI_PATH = fileURLToPath(new URL("./index.js", import.meta.url));
 const log = (msg: string) => process.stderr.write(`${msg}\n`);
@@ -53,12 +53,12 @@ const runningBun = typeof process.versions.bun === "string";
 const major = Number.parseInt(process.versions.node?.split(".")[0] ?? "", 10);
 // A child re-exec'd onto a good Node must never re-enter recovery — that is what
 // stops a runtime which still fails the floor from re-execing itself forever.
-const reexeced = process.env.OPENSHIP_NODE_REEXEC === "1";
+const reexeced = process.env.KOVALIO_NODE_REEXEC === "1";
 const tooOld = !runningBun && !reexeced && Number.isFinite(major) && major < SUPPORTED;
 
 if (tooOld) {
   // Recovery: reuse a Node this box already vendored, or offer to fetch one — the
-  // same ensureNodeRuntime() `openship update` uses, so there is one implementation
+  // same ensureNodeRuntime() `kovalio update` uses, so there is one implementation
   // of "get a Node that satisfies the floor", not two.
   //
   // Loaded dynamically inside a try/catch on purpose. If anything in its import
@@ -81,15 +81,15 @@ if (tooOld) {
 
   if (major < HARD_FLOOR) {
     process.stderr.write(
-      `\nOpenship needs Node ${SUPPORTED} or newer — this is Node v${process.versions.node}.\n\n` +
+      `\nKovalio needs Node ${SUPPORTED} or newer — this is Node v${process.versions.node}.\n\n` +
         `  Install Node ${SUPPORTED}+ and re-run, or use the official installer, which\n` +
         `  brings its own Node and doesn't touch the one you have:\n\n` +
         `    ${INSTALLER}\n\n` +
-        `  Non-interactive (CI, a service)? Set OPENSHIP_VENDOR_NODE=1 and Openship\n` +
+        `  Non-interactive (CI, a service)? Set KOVALIO_VENDOR_NODE=1 and Kovalio\n` +
         `  fetches its own Node ${SUPPORTED} without asking.\n\n` +
         `If you upgrade Node with a version manager (nvm, fnm, volta), global packages\n` +
         `live per Node version — reinstall the CLI afterwards or the command will go\n` +
-        `missing: npm i -g openship\n\n`,
+        `missing: npm i -g kovalio\n\n`,
     );
     process.exit(1);
   }
@@ -98,7 +98,7 @@ if (tooOld) {
   // an install that works today to enforce a number we only just started publishing
   // would be a worse bug than the one this gate exists to fix.
   process.stderr.write(
-    `Warning: Node v${process.versions.node} is below Openship's supported floor ` +
+    `Warning: Node v${process.versions.node} is below Kovalio's supported floor ` +
       `(Node ${SUPPORTED}+). It may work; it isn't tested. Upgrade, or install with:\n` +
       `  ${INSTALLER}\n`,
   );

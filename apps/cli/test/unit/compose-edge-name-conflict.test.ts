@@ -2,9 +2,9 @@ import { describe, it, expect, vi } from "vitest";
 
 /**
  * The edge is the one compose service pinned to a fixed `container_name`
- * (`openship-edge`) — the api reaches it by that name, and "ours" detection greps
+ * (`kovalio-edge`) — the api reaches it by that name, and "ours" detection greps
  * it. A fixed name is also a collision: `compose up` only recreates a container it
- * LABELS as its own, so an `openship-edge` left by any other owner aborts the whole
+ * LABELS as its own, so an `kovalio-edge` left by any other owner aborts the whole
  * stack with "the container name is already in use". `removeOrphanedStack` can't
  * clear it (it matches our exact config_files label), so these pin the extra guard:
  * reclaim the name from anything this project doesn't own, leave our own edge alone.
@@ -42,20 +42,20 @@ vi.mock("@repo/adapters", async () => {
 import { edgeNameNeedsReclaim, composePaths } from "../../src/lib/compose";
 
 const OURS = composePaths.file; // the compose file this project labels its containers with
-const PROJECT = "openship";
+const PROJECT = "kovalio";
 /** name\tproject\tconfig_files, one container per line — the sweep's own format. */
 const rows = (...lines: string[]) => lines.join("\n");
 const edge = (project: string, configFiles: string) =>
-  `openship-edge\t${project}\t${configFiles}`;
+  `kovalio-edge\t${project}\t${configFiles}`;
 
 describe("edgeNameNeedsReclaim", () => {
   it("leaves our own edge alone (same project + our compose file)", () => {
     expect(edgeNameNeedsReclaim(edge(PROJECT, OURS), PROJECT)).toBe(false);
   });
 
-  it("does nothing when there is no openship-edge at all", () => {
+  it("does nothing when there is no kovalio-edge at all", () => {
     const out = rows(
-      `openship-postgres-1\t${PROJECT}\t${OURS}`,
+      `kovalio-postgres-1\t${PROJECT}\t${OURS}`,
       `some-other-app\tother\t/srv/other/docker-compose.yml`,
     );
     expect(edgeNameNeedsReclaim(out, PROJECT)).toBe(false);
@@ -68,19 +68,19 @@ describe("edgeNameNeedsReclaim", () => {
   it("reclaims an edge from a previous project name (even on our compose file)", () => {
     // Different project → not ours. removeOrphanedStack also catches this shape, but
     // the reclaim must agree, or a race where one skips leaves the name held.
-    expect(edgeNameNeedsReclaim(edge("openship-old", OURS), PROJECT)).toBe(true);
+    expect(edgeNameNeedsReclaim(edge("kovalio-old", OURS), PROJECT)).toBe(true);
   });
 
   it("reclaims a from-source edge (our project name, a DIFFERENT compose file)", () => {
     expect(
-      edgeNameNeedsReclaim(edge(PROJECT, "/root/openship/docker/docker-compose.yml"), PROJECT),
+      edgeNameNeedsReclaim(edge(PROJECT, "/root/kovalio/docker/docker-compose.yml"), PROJECT),
     ).toBe(true);
   });
 
   it("finds our edge among many containers and still leaves it", () => {
     const out = rows(
-      `openship-postgres-1\t${PROJECT}\t${OURS}`,
-      `openship-redis-1\t${PROJECT}\t${OURS}`,
+      `kovalio-postgres-1\t${PROJECT}\t${OURS}`,
+      `kovalio-redis-1\t${PROJECT}\t${OURS}`,
       edge(PROJECT, OURS),
       `unrelated\tother\t/srv/other/docker-compose.yml`,
     );

@@ -2,12 +2,12 @@
  * Which mail engine a box actually runs — the ONE mail topology probe.
  *
  * Two topologies exist in the field:
- *   - `container` — the supported one: the `openship-mail` engine + its
- *     `openship-mail-db` sidecar (see ensure-container-mail.ts).
+ *   - `container` — the supported one: the `kovalio-mail` engine + its
+ *     `kovalio-mail-db` sidecar (see ensure-container-mail.ts).
  *   - `host` — a LEGACY pre-containerization install: iRedMail straight onto the
  *     box, Postfix/Dovecot as systemd units, vmail in the host PostgreSQL.
  *
- * The legacy shape is not a rounding error: the `openship-mail` image is not
+ * The legacy shape is not a rounding error: the `kovalio-mail` image is not
  * published yet, so every mail box provisioned before containerization is still
  * host-native and cannot be migrated by pulling. Until it can, every mail code
  * path has to answer "which topology am I talking to" — and it has to get the
@@ -29,7 +29,7 @@ import { detectMailContainer, verifyMailEngine } from "./ensure-container-mail";
 import type { SystemLog } from "../types";
 
 /**
- * `container` = the openship-mail engine; `host` = legacy systemd iRedMail;
+ * `container` = the kovalio-mail engine; `host` = legacy systemd iRedMail;
  * `none` = no mail engine on this box at all.
  */
 export type MailEngineFlavor = "container" | "host" | "none";

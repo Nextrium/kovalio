@@ -40,7 +40,7 @@ export function makeTestCert(
   const hit = cache.get(key);
   if (hit) return hit;
 
-  const dir = mkdtempSync(join(tmpdir(), "openship-cert-"));
+  const dir = mkdtempSync(join(tmpdir(), "kovalio-cert-"));
   try {
     const subjectParts = [opts.issuerO ? `/O=${opts.issuerO}` : "", `/CN=${opts.issuerCN ?? names[0]}`];
     execFileSync(

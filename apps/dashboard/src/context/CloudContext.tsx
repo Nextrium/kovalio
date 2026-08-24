@@ -37,7 +37,7 @@ interface CloudUser {
 }
 
 interface CloudState {
-  /** Whether connected to Openship Cloud */
+  /** Whether connected to Kovalio Cloud */
   connected: boolean;
   /** Cloud user info (available when connected) */
   cloudUser: CloudUser | null;
@@ -193,7 +193,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const isConnected = hasNativeCloudAccess || connected;
 
   // GitHub `cloud-app` mode is backed by the cloud session: connecting or
-  // disconnecting Openship Cloud changes which GitHub auth mode resolves
+  // disconnecting Kovalio Cloud changes which GitHub auth mode resolves
   // and whether a token is available. So whenever the cloud connection
   // TRANSITIONS, re-resolve GitHub state — this is the single wiring point
   // that keeps the GitHub card honest across every connect/disconnect path
@@ -362,7 +362,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         // served over private-LAN HTTP, where browser security APIs differ
         // from HTTPS. Keep the window open with an actionable local error if
         // setup still fails after the PKCE fallback.
-        console.error("Unable to prepare Openship Cloud sign-in", error);
+        console.error("Unable to prepare Kovalio Cloud sign-in", error);
         handle.navigate(`${window.location.origin}/cloud-connect-callback?setup_error=pkce`);
       });
     handle.onClose(() => checkStatus());
@@ -418,7 +418,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
 
             {/* Title */}
             <h2 className="text-lg font-semibold text-foreground">
-              Connect Openship Cloud
+              Connect Kovalio Cloud
             </h2>
             {modalFeature.description ? (
               <div className="mt-1 space-y-1.5 text-sm leading-relaxed">
@@ -428,7 +428,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
             ) : (
               <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
                 <strong className="text-foreground">{modalFeature.feature}</strong> requires
-                an Openship Cloud connection. Connect your account to unlock:
+                an Kovalio Cloud connection. Connect your account to unlock:
               </p>
             )}
 
@@ -467,7 +467,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
                 ) : (
                   <ExternalLink className="size-4" />
                 )}
-                {connecting ? "Waiting for sign in…" : (modalFeature.ctaLabel ?? "Connect to Openship Cloud")}
+                {connecting ? "Waiting for sign in…" : (modalFeature.ctaLabel ?? "Connect to Kovalio Cloud")}
               </Button>
               <Button
                 variant="ghost"

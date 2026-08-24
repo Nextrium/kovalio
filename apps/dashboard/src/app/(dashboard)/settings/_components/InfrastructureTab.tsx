@@ -44,7 +44,7 @@ export function InfrastructureTab() {
   const [autoUpdateInfra, setAutoUpdateInfra] = useState(false);
   const [autoScanInfra, setAutoScanInfra] = useState(true);
   /** Whether this box is a deploy target for itself (#527). `fromEnv` is set when
-   *  nothing is stored and the OPENSHIP_HOST_CONTROL env is what's holding it off,
+   *  nothing is stored and the KOVALIO_HOST_CONTROL env is what's holding it off,
    *  so the note can explain that toggling on pins an override. */
   const [hostControlOn, setHostControlOn] = useState(false);
   const [hostControlFromEnv, setHostControlFromEnv] = useState(false);
@@ -143,7 +143,7 @@ export function InfrastructureTab() {
   return (
     <SettingsSection icon={Boxes} title={copy.title} description={copy.description}>
       <div className="space-y-5">
-        {/* #527: let OpenShip deploy to the machine it runs on. Server-host (VPS)
+        {/* #527: let Kovalio deploy to the machine it runs on. Server-host (VPS)
             only — desktop derives "here" without a row and the SaaS control plane
             is never its own target, so the toggle would be meaningless there. */}
         {isServerHost && (

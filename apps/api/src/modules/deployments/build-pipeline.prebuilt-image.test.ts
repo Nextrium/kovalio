@@ -78,7 +78,7 @@ vi.mock("@repo/adapters", () => {
     BareRuntime: class BareRuntime {},
     DockerRuntime: class DockerRuntime {},
     CloudRuntime: class CloudRuntime {},
-    STATIC_RELEASE_BASE: "/opt/openship/static/releases",
+    STATIC_RELEASE_BASE: "/opt/kovalio/static/releases",
     sharedMountExecutor: vi.fn(async () => null),
     resolveStaticOutputPath: (id: string) => id,
     ensurePortAvailable: vi.fn(async () => undefined),
@@ -181,7 +181,7 @@ vi.mock("../../lib/routing-domains", () => ({
   withEnsuredDomainRecord: vi.fn((route) => route),
 }));
 
-vi.mock("../../lib/openship-manifest-sync", () => ({
+vi.mock("../../lib/kovalio-manifest-sync", () => ({
   syncProjectToServerManifest: vi.fn(async () => undefined),
 }));
 vi.mock("./attach-linked-networks", () => ({ attachLinkedNetworks: vi.fn(async () => undefined) }));
@@ -538,7 +538,7 @@ describe("single-app prebuilt release-image pipeline", () => {
       {
         id: "hpc_quarantine_20000",
         targetKey: "local",
-        projectId: "__openship_host_port_quarantine__",
+        projectId: "__kovalio_host_port_quarantine__",
         serviceId: null,
         containerPort: null,
         port: 20_000,

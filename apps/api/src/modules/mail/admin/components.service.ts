@@ -211,7 +211,7 @@ export interface ComponentLogs {
   /** Newest-last log lines. */
   lines: string[];
   /**
-   * The read we performed, in display form: `docker exec openship-mail tail -n 300
+   * The read we performed, in display form: `docker exec kovalio-mail tail -n 300
    * /var/log/supervisor/clamav-daemon.log` on the container engine, `journalctl -u …`
    * only on a legacy host.
    *

@@ -10,7 +10,7 @@ import type { BillingState } from "@/lib/api/billing";
  *
  * Client component because the surrounding BillingLayout is an async server
  * component and locale is a client-runtime concern. Every figure here is
- * MEASURED — read from Oblien (billing/state + billing/usage) or openship-derived
+ * MEASURED — read from Oblien (billing/state + billing/usage) or kovalio-derived
  * for build time, which Oblien has no meter for. We never manage resource actions
  * here; this is display only.
  *

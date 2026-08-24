@@ -25,7 +25,7 @@ import { HelpMenu } from "@/components/HelpMenu";
 // present in the catalog are shown.
 const CATEGORY_ORDER = ["backend", "database", "cms", "analytics", "automation", "mail", "other"] as const;
 
-/** Not installable right now: coming-soon OR needs a newer Openship. */
+/** Not installable right now: coming-soon OR needs a newer Kovalio. */
 const isLocked = (a: AppCatalogEntry) => !!a.comingSoon || !!a.requiresUpdate;
 
 export default function NewAppPage() {
@@ -73,7 +73,7 @@ export default function NewAppPage() {
         return `${a.name} ${a.description} ${(a.tags ?? []).join(" ")}`.toLowerCase().includes(q);
       })
       // Installable apps lead (grouped up front); locked ones (coming-soon or
-      // needs-newer-Openship) after — a stable sort keeps order within a group.
+      // needs-newer-Kovalio) after — a stable sort keeps order within a group.
       .sort((a, b) => Number(isLocked(a)) - Number(isLocked(b)));
   }, [catalog, category, query]);
 
@@ -153,7 +153,7 @@ export default function NewAppPage() {
                 icon: <BookOpen className="size-4" />,
                 onClick: () =>
                   window.open(
-                    "https://github.com/oblien/openship/tree/main/packages/core/src/apps",
+                    "https://github.com/Nextrium/kovalio/tree/main/packages/core/src/apps",
                     "_blank",
                     "noopener,noreferrer",
                   ),
@@ -255,7 +255,7 @@ export default function NewAppPage() {
                     </div>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                       {needsUpdate
-                        ? "Update your Openship instance to install this app."
+                        ? "Update your Kovalio instance to install this app."
                         : app.description}
                     </p>
                   </div>

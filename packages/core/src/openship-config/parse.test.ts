@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { parseOpenshipConfig, parseOpenshipConfigJson } from "./parse";
+import { parseKovalioConfig, parseKovalioConfigJson } from "./parse";
 
-describe("parseOpenshipConfig", () => {
+describe("parseKovalioConfig", () => {
   it("accepts a full, valid config and strips undefined fields", () => {
-    const { config, errors, warnings } = parseOpenshipConfig({
+    const { config, errors, warnings } = parseKovalioConfig({
       framework: "nextjs",
       packageManager: "pnpm",
       installCommand: "pnpm install",
@@ -37,13 +37,13 @@ describe("parseOpenshipConfig", () => {
   });
 
   it("rejects an unknown framework and out-of-range port", () => {
-    const { errors } = parseOpenshipConfig({ framework: "coldfusion", port: 99999 });
+    const { errors } = parseKovalioConfig({ framework: "coldfusion", port: 99999 });
     expect(errors.some((e) => e.startsWith("framework:"))).toBe(true);
     expect(errors.some((e) => e.startsWith("port:"))).toBe(true);
   });
 
   it("rejects a bad enum (runtime) and bad resource range", () => {
-    const { errors } = parseOpenshipConfig({ runtime: "vm", resources: { cpuCores: 99999 } });
+    const { errors } = parseKovalioConfig({ runtime: "vm", resources: { cpuCores: 99999 } });
     expect(errors.some((e) => e.startsWith("runtime:"))).toBe(true);
     expect(errors.some((e) => e.includes("resources.cpuCores"))).toBe(true);
   });
@@ -52,7 +52,7 @@ describe("parseOpenshipConfig", () => {
   // machine's probed capacity, enforced server-side. A flat 4-core / 8192 MB max
   // used to make a large self-hosted box impossible to describe.
   it("accepts resource values a big self-hosted box can actually back", () => {
-    const { errors, config } = parseOpenshipConfig({
+    const { errors, config } = parseKovalioConfig({
       resources: { cpuCores: 32, memoryMb: 131072 },
     });
     expect(errors.filter((e) => e.includes("resources"))).toEqual([]);
@@ -60,7 +60,7 @@ describe("parseOpenshipConfig", () => {
   });
 
   it("accepts 0 (no limit) and the unlimited tier", () => {
-    const { errors, config } = parseOpenshipConfig({
+    const { errors, config } = parseKovalioConfig({
       resources: { tier: "unlimited", cpuCores: 0, memoryMb: 0 },
     });
     expect(errors.filter((e) => e.includes("resources"))).toEqual([]);
@@ -68,7 +68,7 @@ describe("parseOpenshipConfig", () => {
   });
 
   it("parses per-service resources (parity with compose mem_limit)", () => {
-    const { errors, config } = parseOpenshipConfig({
+    const { errors, config } = parseKovalioConfig({
       services: [{ name: "api", image: "x", resources: { memoryMb: 4096 } }],
     });
     expect(errors).toEqual([]);
@@ -76,43 +76,43 @@ describe("parseOpenshipConfig", () => {
   });
 
   it("coerces a string port and validates env value shape", () => {
-    const ok = parseOpenshipConfig({ port: "8080", env: { A: "1" } });
+    const ok = parseKovalioConfig({ port: "8080", env: { A: "1" } });
     expect(ok.errors).toEqual([]);
     expect(ok.config?.port).toBe(8080);
-    const bad = parseOpenshipConfig({ env: { A: { secret: true } } }); // missing value
+    const bad = parseKovalioConfig({ env: { A: { secret: true } } }); // missing value
     expect(bad.errors.some((e) => e.includes("env.A.value"))).toBe(true);
   });
 
   it("validates a service and requires its name", () => {
-    const ok = parseOpenshipConfig({
+    const ok = parseKovalioConfig({
       services: [{ name: "db", image: "postgres:17", ports: ["5432"], restart: "unless-stopped" }],
     });
     expect(ok.errors).toEqual([]);
     expect(ok.config?.services?.[0]).toMatchObject({ name: "db", restart: "unless-stopped" });
-    const noName = parseOpenshipConfig({ services: [{ image: "x" }] });
+    const noName = parseKovalioConfig({ services: [{ image: "x" }] });
     expect(noName.errors.some((e) => e.includes("requires a `name`"))).toBe(true);
-    const badRestart = parseOpenshipConfig({ services: [{ name: "x", restart: "sometimes" }] });
+    const badRestart = parseKovalioConfig({ services: [{ name: "x", restart: "sometimes" }] });
     expect(badRestart.errors.some((e) => e.includes("restart"))).toBe(true);
   });
 
   it("warns on unknown top-level keys but does not error", () => {
-    const { errors, warnings, config } = parseOpenshipConfig({ framework: "vite", nope: 1 });
+    const { errors, warnings, config } = parseKovalioConfig({ framework: "vite", nope: 1 });
     expect(errors).toEqual([]);
     expect(warnings.some((w) => w.includes("nope"))).toBe(true);
     expect(config?.framework).toBe("vite");
   });
 
   it("reports invalid JSON and non-object roots", () => {
-    expect(parseOpenshipConfigJson("{ not json").errors[0]).toMatch(/invalid JSON/);
-    expect(parseOpenshipConfig([]).config).toBeNull();
-    expect(parseOpenshipConfig("x").errors[0]).toMatch(/must be a JSON object/);
+    expect(parseKovalioConfigJson("{ not json").errors[0]).toMatch(/invalid JSON/);
+    expect(parseKovalioConfig([]).config).toBeNull();
+    expect(parseKovalioConfig("x").errors[0]).toMatch(/must be a JSON object/);
   });
 
   // #641 read this the other way round — that one bad enum nulls the config and
   // discards its valid siblings. It doesn't, and the reporting fix's severity
   // split (whole-file vs field) depends on which of the two actually happens.
   it("keeps the valid fields when one field fails validation", () => {
-    const { config, errors } = parseOpenshipConfig({ framework: "nextjs ", port: 8080 });
+    const { config, errors } = parseKovalioConfig({ framework: "nextjs ", port: 8080 });
     expect(config).not.toBeNull();
     expect(config?.port).toBe(8080);
     expect(config?.framework).toBeUndefined();
@@ -120,15 +120,15 @@ describe("parseOpenshipConfig", () => {
   });
 
   it("nulls the config ONLY for a syntax error or a non-object root", () => {
-    expect(parseOpenshipConfigJson("{ not json").config).toBeNull();
-    expect(parseOpenshipConfigJson("null").config).toBeNull();
-    expect(parseOpenshipConfigJson("[]").config).toBeNull();
+    expect(parseKovalioConfigJson("{ not json").config).toBeNull();
+    expect(parseKovalioConfigJson("null").config).toBeNull();
+    expect(parseKovalioConfigJson("[]").config).toBeNull();
     // An object root always yields a config, however many fields it refused.
-    expect(parseOpenshipConfigJson('{"framework":"coldfusion"}').config).toEqual({});
+    expect(parseKovalioConfigJson('{"framework":"coldfusion"}').config).toEqual({});
   });
 
   // The examples printed in the docs/skill must validate cleanly, or the docs
-  // are lying. Keep these in sync with reference/openship-json.mdx.
+  // are lying. Keep these in sync with reference/kovalio-json.mdx.
   it("accepts every documented example with no errors", () => {
     const examples = [
       { $schema: "x", framework: "vite", buildCommand: "pnpm build", outputDirectory: "dist", productionMode: "static" },
@@ -158,7 +158,7 @@ describe("parseOpenshipConfig", () => {
       { composePath: "deploy/docker-compose/docker-compose.yml" },
     ];
     for (const ex of examples) {
-      const { errors } = parseOpenshipConfig(ex);
+      const { errors } = parseKovalioConfig(ex);
       expect(errors, JSON.stringify(ex)).toEqual([]);
     }
   });
@@ -166,7 +166,7 @@ describe("parseOpenshipConfig", () => {
   describe("composePath", () => {
     it("round-trips a file path and a directory path", () => {
       for (const composePath of ["deploy/docker-compose/docker-compose.yml", "deploy/docker-compose"]) {
-        const { config, errors, warnings } = parseOpenshipConfig({ composePath });
+        const { config, errors, warnings } = parseKovalioConfig({ composePath });
         expect(errors).toEqual([]);
         expect(warnings).toEqual([]);
         expect(config?.composePath).toBe(composePath);
@@ -174,12 +174,12 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("rejects a non-string", () => {
-      const { errors } = parseOpenshipConfig({ composePath: 42 });
+      const { errors } = parseKovalioConfig({ composePath: 42 });
       expect(errors).toEqual(["composePath: must be a string"]);
     });
 
     it("is absent (not undefined-valued) when undeclared", () => {
-      const { config } = parseOpenshipConfig({ framework: "nextjs" });
+      const { config } = parseKovalioConfig({ framework: "nextjs" });
       expect(config && "composePath" in config).toBe(false);
     });
   });
@@ -195,7 +195,7 @@ describe("parseOpenshipConfig", () => {
         stabilizationSeconds: 30,
         onFailure: "fail" as const,
       };
-      const { config, errors, warnings } = parseOpenshipConfig({ readiness });
+      const { config, errors, warnings } = parseKovalioConfig({ readiness });
       expect(errors).toEqual([]);
       expect(warnings).toEqual([]);
       expect(config?.readiness).toEqual(readiness);
@@ -204,12 +204,12 @@ describe("parseOpenshipConfig", () => {
     // The whole feature is opt-in, so "undeclared" has to stay distinguishable
     // from "declared off" all the way down to the persisted column.
     it("is absent (not undefined-valued) when undeclared", () => {
-      const { config } = parseOpenshipConfig({ framework: "nextjs" });
+      const { config } = parseKovalioConfig({ framework: "nextjs" });
       expect(config && "readiness" in config).toBe(false);
     });
 
     it("accepts an empty object as a legal no-op", () => {
-      const { config, errors } = parseOpenshipConfig({ readiness: {} });
+      const { config, errors } = parseKovalioConfig({ readiness: {} });
       expect(errors).toEqual([]);
       expect(config?.readiness).toEqual({
         enabled: undefined,
@@ -223,18 +223,18 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("rejects a non-object", () => {
-      const { errors } = parseOpenshipConfig({ readiness: true });
+      const { errors } = parseKovalioConfig({ readiness: true });
       expect(errors).toEqual(["readiness: must be an object"]);
     });
 
     it("rejects an unknown onFailure action", () => {
-      const { errors } = parseOpenshipConfig({ readiness: { onFailure: "destroy" } });
+      const { errors } = parseKovalioConfig({ readiness: { onFailure: "destroy" } });
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.join(" ")).toContain("readiness.onFailure");
     });
 
     it("rejects out-of-range timeouts rather than silently clamping", () => {
-      const { errors } = parseOpenshipConfig({
+      const { errors } = parseKovalioConfig({
         readiness: { timeoutSeconds: 0, stabilizationSeconds: 9999 },
       });
       expect(errors.join(" ")).toContain("readiness.timeoutSeconds");
@@ -242,7 +242,7 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("parses a PER-SERVICE readiness gate alongside the docker healthcheck", () => {
-      const { config, errors } = parseOpenshipConfig({
+      const { config, errors } = parseKovalioConfig({
         readiness: { stabilization: true },
         services: [
           {
@@ -266,7 +266,7 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("validates a per-service readiness gate with the same rules", () => {
-      const { errors } = parseOpenshipConfig({
+      const { errors } = parseKovalioConfig({
         services: [{ name: "api", image: "x", readiness: { onFailure: "destroy" } }],
       });
       expect(errors.join(" ")).toContain("services[0].readiness.onFailure");
@@ -274,8 +274,8 @@ describe("parseOpenshipConfig", () => {
 
     it("is not confused with a compose service's docker healthcheck", () => {
       // Different layers, similar names: `services[].healthcheck` is the Docker
-      // HEALTHCHECK directive; top-level `readiness` is Openship's deploy gate.
-      const { config, errors } = parseOpenshipConfig({
+      // HEALTHCHECK directive; top-level `readiness` is Kovalio's deploy gate.
+      const { config, errors } = parseKovalioConfig({
         readiness: { enabled: true },
         services: [{ name: "db", image: "postgres:16", healthcheck: { test: "pg_isready" } }],
       });

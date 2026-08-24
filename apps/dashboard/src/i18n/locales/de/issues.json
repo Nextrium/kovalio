@@ -1,6 +1,6 @@
 {
   "title": "Probleme",
-  "subtitle": "Alles, was Openship in deinen Projekten, Servern und Domains gefunden hat.",
+  "subtitle": "Alles, was Kovalio in deinen Projekten, Servern und Domains gefunden hat.",
   "tabs": {
     "open": "Offen",
     "resolved": "Behoben"
@@ -17,7 +17,7 @@
     "clear": "Filter zurücksetzen"
   },
   "scopes": {
-    "platform": "Openship",
+    "platform": "Kovalio",
     "server": "Server",
     "project": "Projekte",
     "domain": "Domains"

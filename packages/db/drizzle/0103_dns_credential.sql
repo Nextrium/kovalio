@@ -1,7 +1,7 @@
--- DNS provider credentials — the token that lets Openship write a domain's records.
+-- DNS provider credentials — the token that lets Kovalio write a domain's records.
 --
--- Adding a custom domain has always ended the same way: Openship computes the exact
--- A/CNAME + `_openship-challenge` TXT records and then asks the operator to go paste
+-- Adding a custom domain has always ended the same way: Kovalio computes the exact
+-- A/CNAME + `_kovalio-challenge` TXT records and then asks the operator to go paste
 -- them somewhere else. Every minute between "added" and "pasted" is a domain that
 -- doesn't resolve, can't pass ACME, and looks broken. With a scoped provider token we
 -- write those records ourselves and the domain verifies on its own.

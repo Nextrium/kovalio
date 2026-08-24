@@ -16,7 +16,7 @@ const DEFAULT_CLOUD_DOMAIN = "opsh.io";
 interface PlatformContextValue {
   selfHosted: boolean;
   deployMode: string;
-  /** OpenShip runs ON a server (self-hosted, non-desktop): the host is itself a
+  /** Kovalio runs ON a server (self-hosted, non-desktop): the host is itself a
    *  deployable target, auto-registered as the isLocal "This Server". */
   isServerHost: boolean;
   /** Whether the box is a deploy target for ITSELF right now (#527 runtime

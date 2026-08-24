@@ -5,7 +5,7 @@ import type { CommandExecutor } from "../types";
 
 /**
  * The reload command's FAILURE path, which is where it could take a whole box
- * offline (#292: "opening project logs causes openship-edge to crash/restart").
+ * offline (#292: "opening project logs causes kovalio-edge to crash/restart").
  *
  * The old fallback was `pkill -f '[o]penresty'`. Inside the edge container that
  * pattern matches the container's own master — which is pid 1 — so a single failed
@@ -74,14 +74,14 @@ describe("the container-edge builders opt in", () => {
   const exec = { exec: async () => "" } as unknown as CommandExecutor;
 
   it("containerEdgeProvider produces a kill-free reload", async () => {
-    const provider = await containerEdgeProvider(exec, "openship-edge");
+    const provider = await containerEdgeProvider(exec, "kovalio-edge");
     const cmd = (provider as unknown as { reloadCommand: string }).reloadCommand;
     expect(cmd).not.toMatch(/pkill/);
     expect(cmd).toContain("-s reload");
   });
 
   it("localContainerEdgeProvider produces a kill-free reload", async () => {
-    const provider = await localContainerEdgeProvider("openship-edge");
+    const provider = await localContainerEdgeProvider("kovalio-edge");
     const cmd = (provider as unknown as { reloadCommand: string }).reloadCommand;
     expect(cmd).not.toMatch(/pkill/);
     expect(cmd).toContain("-s reload");

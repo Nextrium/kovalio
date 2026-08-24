@@ -161,7 +161,7 @@ export const PromptDetails: React.FC<{ details?: Record<string, unknown> }> = ({
     { label: "Container", value: typeof details.containerName === "string" ? details.containerName : null },
     { label: "Systemd Unit", value: typeof details.systemdUnit === "string" ? details.systemdUnit : null },
     { label: dp.promptDetails.unitDescription, value: typeof details.systemdDescription === "string" ? details.systemdDescription : null },
-    { label: dp.promptDetails.openshipDeployment, value: typeof details.deploymentId === "string" ? details.deploymentId : null },
+    { label: dp.promptDetails.kovalioDeployment, value: typeof details.deploymentId === "string" ? details.deploymentId : null },
   ].filter((row): row is { label: string; value: string } => Boolean(row.value));
 
   if (rows.length === 0) return null;

@@ -11,9 +11,9 @@ import { repos } from "@repo/db";
 // ─── Targets discovery ──────────────────────────────────────────────────────
 
 export interface WebmailTargetOption {
-  /** "mail" → the mail server itself. "server" → another openship server. "opshcloud" → reserved. */
+  /** "mail" → the mail server itself. "server" → another kovalio server. "opshcloud" → reserved. */
   kind: "mail" | "server" | "opshcloud";
-  /** openship serverId. For "opshcloud" this is empty and disabled in UI. */
+  /** kovalio serverId. For "opshcloud" this is empty and disabled in UI. */
   serverId: string;
   label: string;
   description?: string;
@@ -23,7 +23,7 @@ export interface WebmailTargetOption {
 
 /**
  * Build the list of places the webmail can be deployed to. The mail
- * server itself is always option #1; every other openship-managed
+ * server itself is always option #1; every other kovalio-managed
  * server follows. Opshcloud is listed as a coming-soon placeholder.
  */
 export async function listWebmailTargets(

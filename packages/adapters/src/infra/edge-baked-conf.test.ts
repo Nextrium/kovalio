@@ -108,7 +108,7 @@ describe("baked edge nginx.conf", () => {
   });
 
   test("the catch-alls answer 404, never 200", () => {
-    // A 200 would make an unrouted hostname look HEALTHY: Openship Cloud's
+    // A 200 would make an unrouted hostname look HEALTHY: Kovalio Cloud's
     // edge-target probe, any uptime monitor, and a browser's own error handling all
     // read the status, not the text. The page explains; the status is the answer.
     expect(conf).not.toMatch(/location \/ \{[\s\S]{0,200}return\s+200/);
@@ -172,7 +172,7 @@ describe("baked edge nginx.conf", () => {
     expect(conf).toContain(`proxy_pass http://127.0.0.1:${ACME_HTTP01_PORT};`);
   });
 
-  test("serves the Openship Cloud edge-target challenge on the catch-all", () => {
+  test("serves the Kovalio Cloud edge-target challenge on the catch-all", () => {
     expect(conf).toContain(`location ^~ ${EDGE_CHALLENGE_URL_PREFIX} {`);
     expect(conf).toContain(`root ${EDGE_CHALLENGE_ROOT};`);
   });

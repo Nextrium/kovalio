@@ -83,7 +83,7 @@ interface BasicProjectData {
    * WHY the routes didn't sync, in the server's own words (`routeIssuesWarning`), or null.
    *
    * The routing banner carried ONE hardcoded sentence — about a free `.opsh.io` URL failing to
-   * route through Openship Cloud's edge — and showed it for every cause, including custom
+   * route through Kovalio Cloud's edge — and showed it for every cause, including custom
    * domains merely waiting on a certificate. The accurate sentence was already computed
    * server-side and written to the deployment meta; it just had no way through to the UI.
    */

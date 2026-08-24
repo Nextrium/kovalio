@@ -344,7 +344,7 @@ export const MonitoringView: React.FC<MonitoringViewProps> = ({
       <CollapsibleCard
         title={m.trafficTitle}
         summary={trafficSummary}
-        storageKey="openship.monitoring.trafficOpen"
+        storageKey="kovalio.monitoring.trafficOpen"
       >
         {trafficChart}
       </CollapsibleCard>

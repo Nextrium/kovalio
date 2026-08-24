@@ -269,11 +269,11 @@ describe("applyReleaseSourceToSnapshot", () => {
   });
 
   it("keeps legacy archive releases on the extracted-directory path", async () => {
-    const previousDataDir = process.env.OPENSHIP_DATA_DIR;
-    const dataDir = mkdtempSync(join(tmpdir(), "openship-release-archive-"));
+    const previousDataDir = process.env.KOVALIO_DATA_DIR;
+    const dataDir = mkdtempSync(join(tmpdir(), "kovalio-release-archive-"));
     const extracted = join(dataDir, "my-stack-dist", "v2.4.0");
     mkdirSync(extracted, { recursive: true });
-    process.env.OPENSHIP_DATA_DIR = dataDir;
+    process.env.KOVALIO_DATA_DIR = dataDir;
 
     try {
       const source: ReleaseSource = {
@@ -305,8 +305,8 @@ describe("applyReleaseSourceToSnapshot", () => {
       expect(snapshot.releaseImageRef).toBeUndefined();
       expect(snapshot.buildImage).toBe("node:22-custom-builder");
     } finally {
-      if (previousDataDir === undefined) delete process.env.OPENSHIP_DATA_DIR;
-      else process.env.OPENSHIP_DATA_DIR = previousDataDir;
+      if (previousDataDir === undefined) delete process.env.KOVALIO_DATA_DIR;
+      else process.env.KOVALIO_DATA_DIR = previousDataDir;
       rmSync(dataDir, { recursive: true, force: true });
     }
   });
@@ -635,7 +635,7 @@ describe("triggerDeployment", () => {
     ]);
     resolveProjectInfo.mockRejectedValueOnce(
       new ComposeConfigurationError(
-        "The Docker Compose file declares options Openship can't deploy faithfully: build.target",
+        "The Docker Compose file declares options Kovalio can't deploy faithfully: build.target",
       ),
     );
 
@@ -658,7 +658,7 @@ describe("triggerDeployment", () => {
   });
 
   /**
-   * `commitSha` is a free string on the wire (`openship deploy --commit 1eeaf76`,
+   * `commitSha` is a free string on the wire (`kovalio deploy --commit 1eeaf76`,
    * the MCP deploy tool, a CI script) and git checks out an abbreviation happily —
    * so the deploy is right while the row records a name no value comparison can
    * match. That row is what the drift banner reads, which is how a project
@@ -800,7 +800,7 @@ describe("triggerDeployment", () => {
     );
     repos.deployment.findById.mockResolvedValue({
       id: "dep-live",
-      imageRef: "openship/app:bld_live",
+      imageRef: "kovalio/app:bld_live",
       commitSha: "abc123",
       commitMessage: "live commit",
       createdAt: new Date("2026-08-23T00:00:00Z"),
@@ -824,7 +824,7 @@ describe("triggerDeployment", () => {
         forceAll: false,
         meta: expect.objectContaining({
           refreshAppDeploymentId: "dep-live",
-          handoverAppImage: "openship/app:bld_live",
+          handoverAppImage: "kovalio/app:bld_live",
         }),
       }),
     );
@@ -985,7 +985,7 @@ describe("requestBuildAccess — folder-upload compose services", () => {
       mode: "api-relay",
       createdAt: Date.now(),
       expiresAt: Date.now() + 60_000,
-      stagingDir: "/tmp/openship-upload-x",
+      stagingDir: "/tmp/kovalio-upload-x",
       uploadTicket: "ticket",
       uploaded: true,
       services: scannedServices as any,

@@ -1,6 +1,6 @@
 ---
 title: Billing API
-description: Read published plans without auth, then manage a subscription, usage, credit top-ups, and the Stripe portal on Openship Cloud. Self-hosted Openship has no billing.
+description: Read published plans without auth, then manage a subscription, usage, credit top-ups, and the Stripe portal on Kovalio Cloud. Self-hosted Kovalio has no billing.
 ---
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
@@ -8,7 +8,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 The Billing API has two halves. `GET /api/billing/plans` is **public and present
 on every instance** — it serves the published plan catalog, prices included, so a
 pricing page or signup flow can read it before anyone has a session. Everything
-else is **Openship Cloud only**: Stripe-backed subscriptions, metered usage,
+else is **Kovalio Cloud only**: Stripe-backed subscriptions, metered usage,
 credit top-ups, and the customer portal.
 
 <Callout title="Base path & auth">
@@ -16,7 +16,7 @@ All paths are relative to your instance, under **`/api`** — e.g.
 `https://your-host/api/billing/plans`. `GET /plans` needs no credentials. The
 rest take a personal access token as a bearer header
 (`Authorization: Bearer <token>`), created with
-[`openship token create`](/docs/cli/access); the dashboard uses your session
+[`kovalio token create`](/docs/cli/access); the dashboard uses your session
 cookie instead. See the [API overview](/docs/api) for the full auth model.
 </Callout>
 

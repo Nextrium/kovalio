@@ -10,7 +10,7 @@
  * cache that the attention dot + issue list read from.
  */
 
-const KEY = "openship:infraAutoScanAt";
+const KEY = "kovalio:infraAutoScanAt";
 /** Re-scan at most this often per browser, across all surfaces. */
 const STALE_MS = 30 * 60 * 1000;
 

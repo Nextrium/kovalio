@@ -239,7 +239,7 @@ export function planLimits(planId: string | null | undefined): PlanLimits {
  * Milli-credits burned by one compute minute — one minute of a `low` machine.
  *
  * Lives here, not beside `MILLI_PER_CREDIT` in the API's `billing-credit-units.ts`:
- * that file is deliberately import-free and owns a different boundary (openship
+ * that file is deliberately import-free and owns a different boundary (kovalio
  * milli ↔ Oblien whole credits). This is a CATALOG unit, and `packages/core`
  * cannot import from `apps/api` anyway. One compute minute ≡ one credit, so the
  * two constants agree by construction; the pricing test asserts it.
@@ -321,7 +321,7 @@ export function planAllowsServices(planId: string | null | undefined): boolean {
  * per-workspace ceiling to the whole namespace and cannot tell a build workspace
  * from a runtime one, so it physically cannot both fit a build and cap a
  * service. Oblien is therefore the coarse BACKSTOP; the per-service size cap
- * (`maxResourceTier`) is enforced Openship-side by `assertPlanAllowsResourceTier`
+ * (`maxResourceTier`) is enforced Kovalio-side by `assertPlanAllowsResourceTier`
  * where the machine is actually chosen. Do not read equal ceilings as a bug.
  */
 function toOblienLimits(limits: PlanLimits): OblienLimits | null {

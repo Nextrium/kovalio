@@ -22,7 +22,7 @@ import { getApiErrorMessage, projectsApi } from "@/lib/api";
  * only make sense self-hosted:
  *
  *   - "No limits" is a real, DEFAULT option. The operator owns the box, so the
- *     machine is the ceiling. Openship used to silently apply the cloud free
+ *     machine is the ceiling. Kovalio used to silently apply the cloud free
  *     tier (0.5 vCPU · 512 MB) to every self-hosted container, which OOM-killed
  *     memory-hungry images while the deploy still reported ready.
  *   - Custom is bounded by the TARGET MACHINE's probed capacity, shown inline,

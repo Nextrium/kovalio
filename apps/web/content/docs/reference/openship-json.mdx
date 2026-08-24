@@ -1,18 +1,18 @@
 ---
-title: openship.json
-description: The declarative deploy config for Openship — like vercel.json or railway.toml. Declare framework, build, runtime, env, domains, routes, resources, services and monorepo layout, and Openship deploys the same way every time.
+title: kovalio.json
+description: The declarative deploy config for Kovalio — like vercel.json or railway.toml. Declare framework, build, runtime, env, domains, routes, resources, services and monorepo layout, and Kovalio deploys the same way every time.
 ---
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-`openship.json` is a repo-root file that tells Openship how to build, run, route, and scale a
+`kovalio.json` is a repo-root file that tells Kovalio how to build, run, route, and scale a
 project. It mirrors what you'd otherwise set in the [deploy wizard](/docs/guides/deploy-from-github),
-so a repo becomes "ready to ship on Openship" and [auto-deploy on push](/docs/guides/auto-deploy)
-and `openship deploy` become deterministic — no wizard needed.
+so a repo becomes "ready to ship on Kovalio" and [auto-deploy on push](/docs/guides/auto-deploy)
+and `kovalio deploy` become deterministic — no wizard needed.
 
 <Callout title="Authoritative overlay">
-Openship **auto-detects** your stack first, then applies every field present in `openship.json`
-on top. Fields you omit keep their detected value. So a good `openship.json` is **small** —
+Kovalio **auto-detects** your stack first, then applies every field present in `kovalio.json`
+on top. Fields you omit keep their detected value. So a good `kovalio.json` is **small** —
 declare only what you want to override or pin, not the whole detected config.
 </Callout>
 
@@ -20,7 +20,7 @@ Add the `$schema` line for editor autocomplete and inline validation:
 
 ```json
 {
-  "$schema": "https://openship.io/openship.schema.json",
+  "$schema": "https://nextrium.org/kovalio.schema.json",
   "framework": "nextjs",
   "port": 3000
 }
@@ -29,8 +29,8 @@ Add the `$schema` line for editor autocomplete and inline validation:
 Validate it any time with the CLI:
 
 ```bash
-openship config init       # scaffold a starter openship.json
-openship config validate   # check it against the schema
+kovalio config init       # scaffold a starter kovalio.json
+kovalio config validate   # check it against the schema
 ```
 
 It's **JSON, not JSONC** — no comments, no trailing commas.
@@ -83,7 +83,7 @@ different from omitting it.
 
 Named volumes are scoped per project, so two projects that both declare `storage` never
 share one. On a bare (non-container) deploy the same paths are kept outside the release
-directory and symlinked in. Openship Cloud has no volume primitive: a declared mount is
+directory and symlinked in. Kovalio Cloud has no volume primitive: a declared mount is
 reported and skipped there, so use object storage for uploads instead.
 
 Compose services declare their own mounts under [`services[].volumes`](#services).
@@ -145,7 +145,7 @@ your hardware. Set a tier or explicit values only when you deliberately want to 
 A non-zero value is validated against the **target machine's real capacity**, so a 64 GB box can
 hand a container 64 GB.
 
-On Openship Cloud a workspace is metered and must be sized, so `unlimited` isn't available there and
+On Kovalio Cloud a workspace is metered and must be sized, so `unlimited` isn't available there and
 an omitted value falls back to the `low` tier.
 </Callout>
 
@@ -208,13 +208,13 @@ re-read on every deploy, and `build:` contexts resolve relative to it, exactly a
   }}
 />
 
-A compose file's own limits are honored too — Openship reads `mem_limit` / `cpus` and
+A compose file's own limits are honored too — Kovalio reads `mem_limit` / `cpus` and
 `deploy.resources.limits.{memory,cpus}` off each service and applies them over the project-wide
 setting.
 
 ## Monorepo
 
-`monorepo` overrides Openship's detected sub-apps. Entries in `apps[]` are matched to detected
+`monorepo` overrides Kovalio's detected sub-apps. Entries in `apps[]` are matched to detected
 sub-apps by `rootDirectory` and override their build settings — they don't declare apps from
 scratch (the detector finds the apps).
 
@@ -248,7 +248,7 @@ dashboard for now.
 
 ## How it maps
 
-| `openship.json` | Deploy wizard / API |
+| `kovalio.json` | Deploy wizard / API |
 |---|---|
 | `framework`, `packageManager`, `*Command`, `outputDirectory`, `buildImage`, `productionPaths`, `rootDirectory` | Build settings |
 | `port`, `productionMode`, `runtime` | Runtime settings (`hasServer`, runtime isolation) |
@@ -262,5 +262,5 @@ dashboard for now.
 
 ## See also
 
-- [Guide: deploy with openship.json](/docs/guides/openship-json)
+- [Guide: deploy with kovalio.json](/docs/guides/kovalio-json)
 - [Deploy from GitHub](/docs/guides/deploy-from-github) · [Auto-deploy on push](/docs/guides/auto-deploy)

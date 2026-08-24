@@ -86,7 +86,7 @@ export async function pushProjectAnalyticsConfig(
  *   full restart           → the zone is EMPTY. Absent means off, so path collection
  *                            silently stops.
  *
- * A reboot, a `docker restart openship-edge`, or an image upgrade therefore turns
+ * A reboot, a `docker restart kovalio-edge`, or an image upgrade therefore turns
  * collection off on a box while the database still says it is on — and the dashboard reads
  * the database, so it would go on claiming "on" while nothing accumulated. Before this, the
  * only thing that corrected it was the next route apply, which for a stable project can be

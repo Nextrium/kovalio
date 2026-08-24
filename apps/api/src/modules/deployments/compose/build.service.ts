@@ -128,7 +128,7 @@ async function materializeInlineBuildContexts(buildable: Service[]): Promise<Inl
     );
   }
 
-  const root = await mkdtemp(join(tmpdir(), "openship-catalog-build-"));
+  const root = await mkdtemp(join(tmpdir(), "kovalio-catalog-build-"));
   const cleanup = () => rm(root, { recursive: true, force: true }).catch(() => {});
 
   try {

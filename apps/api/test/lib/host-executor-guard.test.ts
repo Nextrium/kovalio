@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 /**
  * Host-control paths must run through the HOST channel — LocalExecutor when bare,
- * SSH→host.docker.internal when containerized (OPENSHIP_HOST_SSH_*). A no-arg
+ * SSH→host.docker.internal when containerized (KOVALIO_HOST_SSH_*). A no-arg
  * createExecutor() is ALWAYS LocalExecutor, which in Docker-deployed mode silently
  * probes the api container's own netns instead of the host (the "single switchable
  * executor" fix). This guards against regressing to it.

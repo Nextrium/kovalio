@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * `ensureManagedEdgeProxy` is THE one funnel for wiring a free `<slug>.opsh.io`
- * route, and the verify-and-retry lives here for a reason: Openship Cloud refuses to
+ * route, and the verify-and-retry lives here for a reason: Kovalio Cloud refuses to
  * route to a target whose control hasn't been proven, so `403 target_unverified` is
  * not a failure — it is the signal to prove it. A second copy of this call anywhere
  * (the setup wizard used to have one) is a path that never verifies and dies on that
@@ -113,12 +113,12 @@ describe("ensureManagedEdgeProxy", () => {
       expect(sync).not.toHaveBeenCalled();
     });
 
-    it("409 when no member has linked Openship Cloud — a setup step", async () => {
+    it("409 when no member has linked Kovalio Cloud — a setup step", async () => {
       sync.mockResolvedValue(null);
 
       await expect(ensureManagedEdgeProxy("org-1", "myapp")).rejects.toMatchObject({
         status: 409,
-        message: expect.stringContaining("linked Openship Cloud"),
+        message: expect.stringContaining("linked Kovalio Cloud"),
       });
     });
 

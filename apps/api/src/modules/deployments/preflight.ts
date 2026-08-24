@@ -231,7 +231,7 @@ async function checkGitHubAppInstallation(
     status: "fail",
     code: PREFLIGHT_ERROR_CODES.GITHUB_APP_INSTALLATION_REQUIRED,
     message:
-      `The Openship GitHub App is not installed on "${owner}". ` +
+      `The Kovalio GitHub App is not installed on "${owner}". ` +
       `Deploys need it to mint a scoped token for cloning the repo. ` +
       `Install it at ${getInstallUrl()} and deploy again.`,
   };
@@ -321,7 +321,7 @@ async function checkRemoteBuildTokenLeak(
       code: PREFLIGHT_ERROR_CODES.GITHUB_CLI_REMOTE_BUILD_REJECTED,
       message:
         `gh CLI auth only works for local builds. ` +
-        `Connect the Openship App in Settings → GitHub, or set a per-project ` +
+        `Connect the Kovalio App in Settings → GitHub, or set a per-project ` +
         `clone token, then deploy again.`,
     };
   }
@@ -400,7 +400,7 @@ async function checkRemoteCloneToken(
     code: PREFLIGHT_ERROR_CODES.GITHUB_REMOTE_TOKEN_REQUIRED,
     message:
       `No GitHub credential available to clone "${owner}" onto the build worker. ` +
-      `Install the Openship App on this owner, add a per-project clone token, ` +
+      `Install the Kovalio App on this owner, add a per-project clone token, ` +
       `or switch to "Build on this machine" so the credential stays on the API host.`,
   };
 }
@@ -459,12 +459,12 @@ async function checkCloneOnServerCredential(
     ...baseCheck,
     status: "warn",
     message:
-      `"Clone on the server" is selected, but Openship holds no GitHub credential for the build host. ` +
+      `"Clone on the server" is selected, but Kovalio holds no GitHub credential for the build host. ` +
       `The deploy will check whether the server already reaches this repo with its own git credentials ` +
       `(a \`gh\` login, a credential helper, or its ssh key) and clone there if it does — otherwise it ` +
       `falls back to cloning on the API host and transferring the context. To make the on-server clone ` +
       `deterministic, connect the server under Servers → GitHub (a read-only per-repo deploy key is the ` +
-      `narrowest option), install the Openship App on "${owner}", or add a per-project clone token.`,
+      `narrowest option), install the Kovalio App on "${owner}", or add a per-project clone token.`,
   };
 }
 
@@ -803,7 +803,7 @@ async function resolveCloudPreflight(
   const effectiveTarget = resolveEffectiveTarget(plat.target, snapshot);
 
   // Managed routing = "the deploy lands on the operator's own server,
-  // but the public hostname is a free .openship.io slug served by
+  // but the public hostname is a free .nextrium.org slug served by
   // cloud edge". That's the only reason a server-target deploy needs
   // to ping cloud preflight. Cloud-target deploys obviously need it
   // too (cloud IS doing the deploy). Single authority shared with the pipeline.
@@ -1154,7 +1154,7 @@ async function checkSlug(slug: string, cloud: CloudPreflightData | null): Promis
   return { id: "slug-available", label: "Subdomain availability", status: "pass" };
 }
 
-const CLOUD_EDGE_CNAME = "edge.openship.io";
+const CLOUD_EDGE_CNAME = "edge.nextrium.org";
 const DOMAIN_CHECK_TIMEOUT_MS = 4_000;
 
 /**
@@ -1328,11 +1328,11 @@ async function checkCloudRuntime(
     if (connected) {
       return {
         id: "runtime",
-        label: requirement === "cloud-runtime" ? "Openship Cloud" : "Free domain routing",
+        label: requirement === "cloud-runtime" ? "Kovalio Cloud" : "Free domain routing",
         status: "fail",
         code: PREFLIGHT_ERROR_CODES.CLOUD_UNREACHABLE,
         message:
-          "Openship Cloud is connected, but the cloud API didn't respond just now. This is usually transient — retry the deploy in a moment.",
+          "Kovalio Cloud is connected, but the cloud API didn't respond just now. This is usually transient — retry the deploy in a moment.",
       };
     }
 
@@ -1342,7 +1342,7 @@ async function checkCloudRuntime(
         label: "Free domain routing",
         status: "fail",
         code: PREFLIGHT_ERROR_CODES.CLOUD_REQUIRED_MANAGED_PROJECT_DOMAIN,
-        message: `Free .${getRoutingBaseDomain()} domains require Openship Cloud for routing. To deploy to your own server, either connect Openship Cloud or switch this project to a custom domain.`,
+        message: `Free .${getRoutingBaseDomain()} domains require Kovalio Cloud for routing. To deploy to your own server, either connect Kovalio Cloud or switch this project to a custom domain.`,
       };
     }
 
@@ -1352,31 +1352,31 @@ async function checkCloudRuntime(
         label: "Free domain routing",
         status: "fail",
         code: PREFLIGHT_ERROR_CODES.CLOUD_REQUIRED_MANAGED_COMPOSE_DOMAINS,
-        message: `One or more exposed services use free .${getRoutingBaseDomain()} domains. Connect Openship Cloud or switch those services to custom domains before deploying to your own server.`,
+        message: `One or more exposed services use free .${getRoutingBaseDomain()} domains. Connect Kovalio Cloud or switch those services to custom domains before deploying to your own server.`,
       };
     }
 
     return {
       id: "runtime",
-      label: "Openship Cloud",
+      label: "Kovalio Cloud",
       status: "fail",
       code: PREFLIGHT_ERROR_CODES.CLOUD_REQUIRED_TARGET,
       message:
-        "This deployment target runs on Openship Cloud, but no cloud account is connected. Connect your account first.",
+        "This deployment target runs on Kovalio Cloud, but no cloud account is connected. Connect your account first.",
     };
   }
 
   if (cloud.runtime.ok) {
     return {
       id: "runtime",
-      label: requirement === "cloud-runtime" ? "Openship Cloud" : "Free domain routing",
+      label: requirement === "cloud-runtime" ? "Kovalio Cloud" : "Free domain routing",
       status: "pass",
     };
   }
 
   return {
     id: "runtime",
-    label: requirement === "cloud-runtime" ? "Openship Cloud" : "Free domain routing",
+    label: requirement === "cloud-runtime" ? "Kovalio Cloud" : "Free domain routing",
     status: "fail",
     message: cloud.runtime.message,
   };
@@ -1675,7 +1675,7 @@ export async function runPreflightChecks(
       label: "Public URL",
       status: "warn",
       message:
-        "This deploy has no public domain attached. It will build and start but nothing will route to it. Add a custom domain on the Domains tab or connect Openship Cloud to get a free .opsh.io subdomain.",
+        "This deploy has no public domain attached. It will build and start but nothing will route to it. Add a custom domain on the Domains tab or connect Kovalio Cloud to get a free .opsh.io subdomain.",
     });
   }
 

@@ -173,7 +173,7 @@ describe("GET /servers/:id/deletion-preview", () => {
   });
 
   it("marks the control plane, which teardown refuses, instead of promising its removal", async () => {
-    h.workloads = [project("p1", { appTemplateId: "openship" })];
+    h.workloads = [project("p1", { appTemplateId: "kovalio" })];
     const { c, sent } = context("srv1");
     await serverDeletionPreview(c);
     const w = (sent.body as { preview: { workloads: { isControlPlane: boolean }[] } }).preview
@@ -328,7 +328,7 @@ describe("DELETE /servers/:id resolves every workload", () => {
   });
 
   it("reports the control plane as refused instead of attempting it", async () => {
-    h.workloads = [project("p1", { appTemplateId: "openship" })];
+    h.workloads = [project("p1", { appTemplateId: "kovalio" })];
     const { c, sent } = context("srv1");
     await deleteServer(c);
     expect(h.teardown).not.toHaveBeenCalled();

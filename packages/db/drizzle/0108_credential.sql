@@ -1,6 +1,6 @@
 -- Third-party credentials, in one place.
 --
--- Openship needs other people's secrets for unrelated jobs — write a DNS record, pull a
+-- Kovalio needs other people's secrets for unrelated jobs — write a DNS record, pull a
 -- private image, later push a backup — and each job grew its own storage: a single token
 -- column on `dns_credential`, FIVE encrypted columns inlined on a backup destination, a
 -- channel's own on notifications. Same `enc1:` envelope in each, three shapes, three

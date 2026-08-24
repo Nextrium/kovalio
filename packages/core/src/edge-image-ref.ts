@@ -4,13 +4,13 @@ import { buildImageRef } from "./image-ref";
  * THE single precedence for the edge container image reference, shared by
  * `pinnedEdgeImage` (apps/api) and `resolveEdgeImage` (packages/adapters) so the
  * two can never drift — they previously disagreed (only one read
- * `OPENSHIP_EDGE_TAG`), which meant the same box could compute two different edge
+ * `KOVALIO_EDGE_TAG`), which meant the same box could compute two different edge
  * tags depending on which door the install came through. Order:
  *
- *   explicit → OPENSHIP_EDGE_IMAGE → injectedDefault → `<registry>/openship-edge:<tag>`
+ *   explicit → KOVALIO_EDGE_IMAGE → injectedDefault → `<registry>/kovalio-edge:<tag>`
  *
- * where `registry = OPENSHIP_IMAGE_REGISTRY || DEFAULT_IMAGE_REGISTRY` and
- *       `tag      = OPENSHIP_EDGE_TAG || OPENSHIP_VERSION || fallbackTag || "latest"`.
+ * where `registry = KOVALIO_IMAGE_REGISTRY || DEFAULT_IMAGE_REGISTRY` and
+ *       `tag      = KOVALIO_EDGE_TAG || KOVALIO_VERSION || fallbackTag || "latest"`.
  *
  * `fallbackTag` is the ONLY intentional per-layer difference: apps/api pins its
  * `APP_VERSION` (the Lua + nginx.conf baked into the edge must match the API
@@ -27,8 +27,8 @@ export function buildEdgeImageRef(opts?: {
   fallbackTag?: string;
 }): string {
   return buildImageRef(opts, {
-    name: "openship-edge",
-    imageOverride: process.env.OPENSHIP_EDGE_IMAGE,
-    tagOverride: process.env.OPENSHIP_EDGE_TAG,
+    name: "kovalio-edge",
+    imageOverride: process.env.KOVALIO_EDGE_IMAGE,
+    tagOverride: process.env.KOVALIO_EDGE_TAG,
   });
 }

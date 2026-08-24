@@ -255,7 +255,7 @@ export default function AppInstallPage() {
   // Desktop mode → the "open on localhost / forward the port" hints are relevant
   // (a VPS is already public; a local app is already localhost).
   const isDesktop = deployMode === "desktop";
-  // Free .opsh.io routing needs Openship Cloud; when it's not connected we
+  // Free .opsh.io routing needs Kovalio Cloud; when it's not connected we
   // default the install to a port-only (no-domain) deploy instead of letting
   // preflight hard-fail. Forced true on SaaS/native (CloudContext).
   const { connected: cloudConnected, requireCloud } = useCloud();
@@ -452,7 +452,7 @@ export default function AppInstallPage() {
     };
   }, [declaresResources, template?.id, destination]);
 
-  // Project name shown in Openship. Editable for a fresh install (a second
+  // Project name shown in Kovalio. Editable for a fresh install (a second
   // install of the same app auto-suffixes server-side, e.g. "Convex 2"); hidden
   // when reopening an existing draft, which already has its name.
   const [appName, setAppName] = useState(() => template?.name ?? "");
@@ -872,7 +872,7 @@ export default function AppInstallPage() {
 
   /** The routing choice, gated exactly as the server gates it — a custom endpoint
    *  needs its hostname AND that hostname has to be a hostname, and a free one
-   *  needs Openship Cloud (requireCloud pops the same connect modal the deploy
+   *  needs Kovalio Cloud (requireCloud pops the same connect modal the deploy
    *  wizard uses). Null = don't proceed.
    *
    *  The shape gate is not decoration: `myhost` / `host:8443` / `host/path` used to
@@ -922,7 +922,7 @@ export default function AppInstallPage() {
       );
       return;
     }
-    // Installing TO Openship Cloud needs a cloud connection — the same hard gate
+    // Installing TO Kovalio Cloud needs a cloud connection — the same hard gate
     // the deploy wizard applies at Continue. Without it the pick was a dead end:
     // the install failed deep in preflight with no way to act on it.
     if (destination?.deployTarget === "cloud" && !cloudConnected) {
@@ -1315,7 +1315,7 @@ export default function AppInstallPage() {
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
           {/* LEFT — business settings + public URL */}
           <div className="min-w-0 space-y-5">
-            {/* Name — how the app appears in Openship. A fresh install can name
+            {/* Name — how the app appears in Kovalio. A fresh install can name
                 it (a 2nd install of the same type auto-suffixes server-side);
                 reopening a draft keeps its existing name, so hide it then. */}
             {!adoptedProjectId && (

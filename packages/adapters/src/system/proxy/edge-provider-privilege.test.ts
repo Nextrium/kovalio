@@ -10,7 +10,7 @@ import type { CommandExecutor } from "../../types";
  *
  * This is the one failure in the whole host-resolver area that produced NO error. Every
  * side of the container-edge path needs root on a non-root login — vhosts land in
- * root-owned `/var/lib/openship/edge`, `/etc/letsencrypt` is 0700, `docker exec` needs
+ * root-owned `/var/lib/kovalio/edge`, `/etc/letsencrypt` is 0700, `docker exec` needs
  * the daemon socket — and `edgeContainerExecutor`'s docstring said privilege was the
  * caller's problem, which no caller then solved. Routing gaps never fail a deploy, so a
  * deploy to `deploy@host` built the app, ran it, reported success, and routed nothing.
@@ -39,7 +39,7 @@ function probeHost(spec: Parameters<typeof probeOutput>[0]) {
 
 /** The provider's own executor — the composition of elevation and `docker exec`. */
 async function providerExecutor(executor: CommandExecutor): Promise<CommandExecutor> {
-  const provider = await containerEdgeProvider(executor, "openship-edge");
+  const provider = await containerEdgeProvider(executor, "kovalio-edge");
   return (provider as unknown as { executor: CommandExecutor }).executor;
 }
 
@@ -70,12 +70,12 @@ describe("containerEdgeProvider privilege", () => {
     expect(reload.startsWith("sudo -n sh -c ")).toBe(true);
     expect(reload).toContain("docker exec");
 
-    await edge.writeFile("/var/lib/openship/edge/sites/app.conf", "server {}");
+    await edge.writeFile("/var/lib/kovalio/edge/sites/app.conf", "server {}");
     // Staged as the login user, published into the root-owned dir as root, then cleaned
     // up. Every one of those runs on the HOST with no `docker exec`: the staging dir must
     // be on the same side of the mount as the file, or a dir created in the container
     // would leave the host's staging dir to be made — 0755 — by the write itself.
-    const staging = commands.filter((c) => c.includes("openship-elev"));
+    const staging = commands.filter((c) => c.includes("kovalio-elev"));
     expect(staging.some((c) => c.includes("docker exec"))).toBe(false);
     expect(staging[0]).toMatch(/^mkdir -m 700 /);
     expect(staging[1]).toMatch(/^sudo -n sh -c .*chown 0:0 .* && mv -f /);
@@ -87,7 +87,7 @@ describe("containerEdgeProvider privilege", () => {
     const edge = await providerExecutor(executor);
 
     await edge.exec("openresty -s reload");
-    expect(commands.at(-1)).toBe("docker exec 'openship-edge' sh -c 'openresty -s reload'");
+    expect(commands.at(-1)).toBe("docker exec 'kovalio-edge' sh -c 'openresty -s reload'");
   });
 
   // Routing is best-effort by design, so an unprivileged box must still get whatever it

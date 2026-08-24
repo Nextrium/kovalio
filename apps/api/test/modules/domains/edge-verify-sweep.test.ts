@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 /**
  * The sweep exists for one failure: a box that deploys nothing for three months.
  *
- * Openship Cloud proves target control once and renews by RE-PROBING THE SAME TOKEN
+ * Kovalio Cloud proves target control once and renews by RE-PROBING THE SAME TOKEN
  * within 7 days of the 90-day expiry. Deploys re-assert the token already, so an
  * active install is covered. An idle one is not — its host state dir gets wiped or the
  * server is rebuilt, nothing writes the token back, and the free domain stops

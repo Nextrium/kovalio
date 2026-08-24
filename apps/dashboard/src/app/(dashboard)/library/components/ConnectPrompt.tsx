@@ -69,7 +69,7 @@ export function ConnectPrompt({
   selfHosted,
 }: {
   connecting: boolean;
-  /** source: "oauth" → Openship App (OAuth+install), "cli" → GitHub device sign-in. */
+  /** source: "oauth" → Kovalio App (OAuth+install), "cli" → GitHub device sign-in. */
   onConnect: (source?: "oauth" | "cli") => void;
   cliAction: CliAction | null;
   onRefresh: () => void;
@@ -79,7 +79,7 @@ export function ConnectPrompt({
   const router = useRouter();
   // Which methods to offer is the BACKEND's call (github.capabilities.ts). This
   // component used to branch on `selfHosted` and hardcode the pair of cards, which
-  // is how the empty state ended up advertising Openship Cloud on installs that
+  // is how the empty state ended up advertising Kovalio Cloud on installs that
   // had no use for it. `selfHosted` remains only as the pre-load fallback.
   const { capabilities } = useGitHub();
   const { deployMode } = usePlatform();
@@ -220,7 +220,7 @@ export function ConnectPrompt({
         ) : can("device") || can("token") ? (
           // Desktop: sign in with GitHub (device code, nothing to register), or
           // bring your own credential. A single card centers; two go side by side.
-          // Openship Cloud is deliberately absent here — reachable in Settings.
+          // Kovalio Cloud is deliberately absent here — reachable in Settings.
           <div
             className={`grid gap-3 mx-auto text-start ${
               cardCount <= 1 ? "max-w-sm sm:grid-cols-1" : "max-w-xl sm:grid-cols-2"
@@ -272,7 +272,7 @@ export function ConnectPrompt({
             )}
           </div>
         ) : (
-          // SaaS: one path — the Openship GitHub App via OAuth.
+          // SaaS: one path — the Kovalio GitHub App via OAuth.
           <div className="flex flex-col items-center gap-3">
             <button
               onClick={() => onConnect("oauth")}
@@ -363,7 +363,7 @@ function TokenField({ onSaved }: { onSaved: () => void }) {
       </div>
       {error && <p className="text-xs text-danger leading-relaxed">{error}</p>}
       <a
-        href="https://github.com/settings/tokens/new?scopes=repo,read:org&description=Openship"
+        href="https://github.com/settings/tokens/new?scopes=repo,read:org&description=Kovalio"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground underline underline-offset-2"

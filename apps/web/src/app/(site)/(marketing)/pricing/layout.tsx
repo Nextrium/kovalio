@@ -12,7 +12,7 @@ import {
 } from "@/lib/pricing";
 import { faq } from "./_data";
 
-const PAGE_URL = "https://openship.io/pricing";
+const PAGE_URL = "https://nextrium.org/pricing";
 
 /**
  * Same reasoning as the page: the Offers below carry a campaign price, so they
@@ -34,9 +34,9 @@ const TITLE = "Pricing";
  * snapshotted into a snippet.
  */
 const DESCRIPTION = [
-  "Openship pricing - self-hosted is free forever and open source (Apache 2.0).",
+  "Kovalio pricing - self-hosted is free forever and open source (Apache 2.0).",
   CLOUD_FROM_LIST
-    ? `Managed Openship Cloud starts free and paid plans begin at ${CLOUD_FROM_LIST} a month.`
+    ? `Managed Kovalio Cloud starts free and paid plans begin at ${CLOUD_FROM_LIST} a month.`
     : null,
   "Unlimited team members on every plan.",
 ]
@@ -48,14 +48,14 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   alternates: { canonical: "/pricing" },
   openGraph: {
-    title: `${TITLE} - Openship`,
+    title: `${TITLE} - Kovalio`,
     description: DESCRIPTION,
     url: "/pricing",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${TITLE} - Openship`,
+    title: `${TITLE} - Kovalio`,
     description: DESCRIPTION,
   },
 };
@@ -138,7 +138,7 @@ function buildLd(now: Date) {
 
       return {
         "@type": "Offer",
-        name: `Openship Cloud ${plan.name}`,
+        name: `Kovalio Cloud ${plan.name}`,
         description: plan.description,
         price: priceLd(charged),
         priceCurrency: CURRENCY_LD,
@@ -159,17 +159,17 @@ function buildLd(now: Date) {
   const productLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: "Openship",
+    name: "Kovalio",
     description: [
       "Open source, self-hostable deployment platform with AI-powered builds, free SSL, instant rollbacks, and CLI/MCP support.",
-      "Free forever on your own servers; Openship Cloud is the managed option.",
+      "Free forever on your own servers; Kovalio Cloud is the managed option.",
       CUSTOM_TIERS.length > 0
         ? `${CUSTOM_TIERS.map((p) => p.name).join(" and ")} pricing is negotiated per contract.`
         : null,
     ]
       .filter((s): s is string => s !== null)
       .join(" "),
-    brand: { "@type": "Brand", name: "Openship" },
+    brand: { "@type": "Brand", name: "Kovalio" },
     category: "Software / Developer Tools",
     offers: {
       "@type": "AggregateOffer",
@@ -187,7 +187,7 @@ function buildLd(now: Date) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "https://openship.io" },
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://nextrium.org" },
       { "@type": "ListItem", position: 2, name: "Pricing", item: PAGE_URL },
     ],
   };

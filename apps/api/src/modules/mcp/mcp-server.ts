@@ -11,7 +11,7 @@ import { listPrompts, getPrompt } from "./mcp-prompts";
  * onto the real HTTP API; prompts are the static guided-flow catalog.
  */
 
-const SERVER_INFO = { name: "openship", version: "1.0.0" };
+const SERVER_INFO = { name: "kovalio", version: "1.0.0" };
 const DEFAULT_PROTOCOL = "2025-06-18";
 /** Versions we can speak; `initialize` negotiates down to one of these. */
 const SUPPORTED_PROTOCOLS = new Set(["2025-06-18", "2025-03-26", "2024-11-05"]);

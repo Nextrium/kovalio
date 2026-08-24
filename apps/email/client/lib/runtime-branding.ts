@@ -4,7 +4,7 @@
  * GH-568: `siteConfig` is a BUILD-time constant, and root.tsx's `meta` export
  * used it directly. Because the SPA hydrates the whole document, React
  * re-rendered the <head> from those constants and undid the values the server
- * had just substituted - the tab reverted to "OpenShip Mail" moments after
+ * had just substituted - the tab reverted to "Kovalio Mail" moments after
  * load, and duplicate description/og metas were appended.
  *
  * The server therefore embeds the branding it used in the document itself

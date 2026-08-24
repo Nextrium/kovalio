@@ -6,7 +6,7 @@
  *
  *   Path A (self_hosted_remote): SSH-pull the latest dump from the
  *                                operator's VPS, restore locally.
- *   Path B (cloud_hosted):       Pull the dump from api.openship.io.
+ *   Path B (cloud_hosted):       Pull the dump from api.nextrium.org.
  *   Path C (tunneled):           Tear down the Oblien tunnel (no data
  *                                move).
  *
@@ -298,7 +298,7 @@ function labelFor(mode: TeamMode): string {
     case "self_hosted_remote":
       return "your server";
     case "cloud_hosted":
-      return "Openship Cloud";
+      return "Kovalio Cloud";
     case "tunneled":
       return "the tunnel";
     default:

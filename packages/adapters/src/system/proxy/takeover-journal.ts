@@ -5,7 +5,7 @@
  * Split out of takeover.ts for two reasons:
  *   • `runEdgeTakeover` (dashboard / bare self-install) does stop → install →
  *     register in ONE process, so it journals and rolls back internally.
- *   • `openship up` / the setup wizard CAN'T: the edge is a container that doesn't
+ *   • `kovalio up` / the setup wizard CAN'T: the edge is a container that doesn't
  *     exist until `docker compose up` runs, so the host-side stop and the edge
  *     install happen in different processes. Those callers drive the same journal
  *     through `beginEdgeTakeover` → `completeEdgeTakeover` / `rollbackEdgeTakeover`.
@@ -30,7 +30,7 @@ import {
 import { rootOrDegrade } from "../privilege";
 import { tryExec } from "../probe-exec";
 
-const JOURNAL_DIR = "/var/lib/openship";
+const JOURNAL_DIR = "/var/lib/kovalio";
 export const JOURNAL_PATH = `${JOURNAL_DIR}/edge-takeover.json`;
 
 export interface TakeoverJournal {
@@ -106,7 +106,7 @@ export async function buildJournal(
 }
 
 /**
- * The executor for the journal FILE itself. `/var/lib/openship` is root-owned, so on a
+ * The executor for the journal FILE itself. `/var/lib/kovalio` is root-owned, so on a
  * non-root login the `mkdir` and the write are both refused — and this file is the only
  * thing that lets the next boot repair a takeover that already stopped someone's proxy.
  *
@@ -143,7 +143,7 @@ export async function clearJournal(executor: CommandExecutor): Promise<void> {
  * Read the journal back through the SAME executor that wrote it.
  *
  * It is written as root into a root-owned directory, so reading it on the raw executor
- * was an asymmetry with one outcome: on a box whose `/var/lib/openship` an operator
+ * was an asymmetry with one outcome: on a box whose `/var/lib/kovalio` an operator
  * has tightened, a refused `cat` returned null and every caller here reads null as
  * "there is no unfinished takeover" — so boot recovery quietly declined to restore a
  * proxy this machine had already stopped. `onLog` exists for that one case: an
@@ -162,7 +162,7 @@ export async function readJournal(
     if (listed?.trim()) {
       onLog?.(
         log(
-          `An unfinished edge takeover is recorded at ${JOURNAL_PATH}, but Openship could not ` +
+          `An unfinished edge takeover is recorded at ${JOURNAL_PATH}, but Kovalio could not ` +
             `read it as this user — the previous proxy will NOT be restored automatically. ` +
             `Re-run as root, or restore it by hand.`,
           "error",
@@ -209,7 +209,7 @@ export async function rollback(
     purpose: "Restarting the proxy that was holding ports 80/443",
     consequence:
       "Restarting and re-enabling it will likely be refused — so if :80 is served after " +
-      "this, it is because nothing was ever stopped, not because Openship put it back.",
+      "this, it is because nothing was ever stopped, not because Kovalio put it back.",
     report: (message) => onLog(log(message, "warn")),
   });
   // Release 80/443 from OUR edge first, or every restore below fails to bind and
@@ -218,7 +218,7 @@ export async function rollback(
   // The CONTAINER edge is the one that actually holds the ports today — this used
   // to stop only the openresty UNIT, which on a container box isn't running at all,
   // so `docker start <their-nginx>` hit "address already in use" while
-  // openship-edge kept the socket. Both are attempted: the unit for a legacy bare
+  // kovalio-edge kept the socket. Both are attempted: the unit for a legacy bare
   // edge, the container for every current one. `--restart=no` before the stop, or
   // the daemon brings it straight back and re-takes the port.
   await tryExec(restore, `docker update --restart=no ${sq(EDGE_CONTAINER_NAME)} 2>/dev/null || true`);
@@ -250,7 +250,7 @@ export async function rollback(
     } else {
       onLog(
         log(
-          `Starting ${c.name} without setting a restart policy — Openship never managed to ` +
+          `Starting ${c.name} without setting a restart policy — Kovalio never managed to ` +
             `read the one it had. Confirm it still comes back on reboot.`,
           "warn",
         ),

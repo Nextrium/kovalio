@@ -11,7 +11,7 @@ import { pickHostPort } from "@repo/adapters";
  * the host changes. A migration replays the source's port on a target that knows nothing about
  * it, and if anything there holds it Docker refuses the bind:
  *
- *   driver failed programming external connectivity on endpoint openship-clincai-api:
+ *   driver failed programming external connectivity on endpoint kovalio-clincai-api:
  *   Bind for 127.0.0.1:20001 failed: port is already allocated
  *
  * — which took down `api` and, by dependency, `dashboard` and `web`: 3 of 5 services, on a

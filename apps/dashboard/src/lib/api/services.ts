@@ -2,7 +2,7 @@ import { api } from "./client";
 import { endpoints } from "./endpoints";
 import type { ComposeAdvanced, ComposeAdvancedPatch } from "@repo/core";
 
-export type { ComposeAdvanced, ComposeAdvancedPatch, ComposeHealthcheck, OpenshipReadiness } from "@repo/core";
+export type { ComposeAdvanced, ComposeAdvancedPatch, ComposeHealthcheck, KovalioReadiness } from "@repo/core";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */

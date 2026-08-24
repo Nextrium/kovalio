@@ -9,7 +9,7 @@ vi.mock("@repo/db", () => ({
     projectConnection: { listByTarget: (...a: unknown[]) => listByTarget(...a) },
     project: { findById: (...a: unknown[]) => findById(...a) },
     // The consumer's OWN container ids, passed explicitly because an adopted container
-    // keeps its original labels and the `openship.project` filter cannot see it.
+    // keeps its original labels and the `kovalio.project` filter cannot see it.
     service: { listByDeployment: (...a: unknown[]) => listByDeployment(...a) },
   },
 }));
@@ -23,7 +23,7 @@ describe("attachLinkedNetworks", () => {
     listByDeployment.mockReset().mockResolvedValue([]);
   });
 
-  it("attaches the consumer to each INTERNAL-linked source's openship-<slug> network (public links ignored)", async () => {
+  it("attaches the consumer to each INTERNAL-linked source's kovalio-<slug> network (public links ignored)", async () => {
     listByTarget.mockResolvedValue([
       { mode: "internal", sourceProjectId: "s1" },
       { mode: "public", sourceProjectId: "s2" }, // must be skipped
@@ -37,12 +37,12 @@ describe("attachLinkedNetworks", () => {
     await attachLinkedNetworks("target", { attachToExternalNetworks: attach });
 
     expect(attach).toHaveBeenCalledTimes(1);
-    expect(attach).toHaveBeenCalledWith("target", ["openship-supabase", "openship-mongo"], []);
+    expect(attach).toHaveBeenCalledWith("target", ["kovalio-supabase", "kovalio-mongo"], []);
   });
 
   /**
-   * An ADOPTED (in-place migrated) container keeps its ORIGINAL `openship.*` labels —
-   * labels are immutable — so `attachToExternalNetworks`'s `openship.project=<id>` filter
+   * An ADOPTED (in-place migrated) container keeps its ORIGINAL `kovalio.*` labels —
+   * labels are immutable — so `attachToExternalNetworks`'s `kovalio.project=<id>` filter
    * is structurally blind to it. Connecting an app to a migrated project in internal mode
    * therefore wrote the alias (`db:5432`) into the consumer's env and never joined the
    * container to the source's network: the connection failed to resolve at runtime while
@@ -63,7 +63,7 @@ describe("attachLinkedNetworks", () => {
 
     await attachLinkedNetworks("target", { attachToExternalNetworks: attach });
 
-    expect(attach).toHaveBeenCalledWith("target", ["openship-supabase"], [
+    expect(attach).toHaveBeenCalledWith("target", ["kovalio-supabase"], [
       "adopted-web-1",
       "adopted-db-1",
     ]);
@@ -76,7 +76,7 @@ describe("attachLinkedNetworks", () => {
     );
     const attach = vi.fn().mockResolvedValue(undefined);
     await attachLinkedNetworks("target", { attachToExternalNetworks: attach });
-    expect(attach).toHaveBeenCalledWith("target", ["openship-supabase"], []);
+    expect(attach).toHaveBeenCalledWith("target", ["kovalio-supabase"], []);
     expect(listByDeployment).not.toHaveBeenCalled();
   });
 
@@ -100,7 +100,7 @@ describe("attachLinkedNetworks", () => {
     ).resolves.toBeUndefined();
   });
 
-  it("linkedNetworkName builds openship-<slug>", () => {
-    expect(linkedNetworkName("foo")).toBe("openship-foo");
+  it("linkedNetworkName builds kovalio-<slug>", () => {
+    expect(linkedNetworkName("foo")).toBe("kovalio-foo");
   });
 });

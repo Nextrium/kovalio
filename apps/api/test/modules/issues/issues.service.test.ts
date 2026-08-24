@@ -438,10 +438,10 @@ describe("every row carries its own fix", () => {
   });
 
   it("gives the control plane's own update no in-app button", async () => {
-    // `build.service` refuses to redeploy Openship itself, so a project-style
+    // `build.service` refuses to redeploy Kovalio itself, so a project-style
     // Update row here would be a button that 403s.
     listOrganizationUpdates.mockResolvedValue([
-      update({ projectId: "proj-self", name: "Openship", appTemplateId: "openship" }),
+      update({ projectId: "proj-self", name: "Kovalio", appTemplateId: "kovalio" }),
     ]);
 
     const { issues } = await listOrganizationIssues(ctx);

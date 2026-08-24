@@ -21,14 +21,14 @@
   },
   "serverCta": {
     "title": "自分のサーバーにデプロイ",
-    "description": "SSH でサーバーを接続し、Openship Cloud と並行して自分のインフラでプロジェクトを実行できます。",
+    "description": "SSH でサーバーを接続し、Kovalio Cloud と並行して自分のインフラでプロジェクトを実行できます。",
     "button": "サーバーを接続"
   },
   "filters": {
     "title": "ターゲットで絞り込む",
     "subtitle": "プロジェクトのデプロイ先",
     "allProjects": "すべてのプロジェクト",
-    "cloud": "Openship Cloud",
+    "cloud": "Kovalio Cloud",
     "local": "ローカル"
   },
   "card": {
@@ -106,7 +106,7 @@
     "cleanupFailedTitle": "クリーンアップに失敗しました",
     "alreadyDeleted": "プロジェクトはすでに削除されています",
     "forceModalTitle": "ソースから削除できませんでした",
-    "forceModalBody": "ランタイムに到達できなかった（または失敗が続いた）ため、このプロジェクトは削除処理されていません。それでも Openship から削除できます — レコードは今すぐ消え、残ったリソースはサーバーに到達できるようになり次第、自動的に回収されます。",
+    "forceModalBody": "ランタイムに到達できなかった（または失敗が続いた）ため、このプロジェクトは削除処理されていません。それでも Kovalio から削除できます — レコードは今すぐ消え、残ったリソースはサーバーに到達できるようになり次第、自動的に回収されます。",
     "forceModalConfirm": "ストレージから削除",
     "forceModalCancel": "キャンセル",
     "unlinked": "{projects} とのリンクを解除しました — 反映するには再デプロイしてください。",
@@ -192,7 +192,7 @@
     "typeProject": "プロジェクト"
   },
   "overview": {
-    "platformCloud": "Openship Cloud",
+    "platformCloud": "Kovalio Cloud",
     "platformServer": "セルフホスト（サーバー）",
     "platformLocal": "セルフホスト（ローカル）",
     "modeStatic": "静的サイト",

@@ -1,9 +1,9 @@
 /**
- * `openship config init` / `openship config validate` — author and check the
- * repo-root `openship.json` (Openship's declarative deploy config).
+ * `kovalio config init` / `kovalio config validate` — author and check the
+ * repo-root `kovalio.json` (Kovalio's declarative deploy config).
  *
  * `validate` runs the SAME validator the deploy pipeline uses
- * (`parseOpenshipConfigJson` from @repo/core, over the same `parseOpenshipConfig`
+ * (`parseKovalioConfigJson` from @repo/core, over the same `parseKovalioConfig`
  * the API calls), so a file that validates here behaves identically on deploy —
  * and since #641 the deploy REPORTS the same refusals instead of applying what it
  * can and staying quiet. This command keeps the engine's exact JSON syntax-error
@@ -16,16 +16,16 @@
 import { Command } from "commander";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseOpenshipConfigJson, type OpenshipConfig } from "@repo/core";
+import { parseKovalioConfigJson, type KovalioConfig } from "@repo/core";
 import { err, info, isJsonMode, ok, printJson } from "../lib/output";
 
-const SCHEMA_URL = "https://openship.io/openship.schema.json";
-const CONFIG_FILE = "openship.json";
+const SCHEMA_URL = "https://nextrium.org/kovalio.schema.json";
+const CONFIG_FILE = "kovalio.json";
 
 /** Cheap, dependency-free stack hints from the target dir. No network, no clone. */
-function detectHints(dir: string): Partial<OpenshipConfig> {
-  const hints: Partial<OpenshipConfig> = {};
-  const lock: Array<[string, OpenshipConfig["packageManager"]]> = [
+function detectHints(dir: string): Partial<KovalioConfig> {
+  const hints: Partial<KovalioConfig> = {};
+  const lock: Array<[string, KovalioConfig["packageManager"]]> = [
     ["pnpm-lock.yaml", "pnpm"],
     ["yarn.lock", "yarn"],
     ["bun.lockb", "bun"],
@@ -53,9 +53,9 @@ function detectHints(dir: string): Partial<OpenshipConfig> {
 }
 
 const initCmd = new Command("init")
-  .description("Scaffold an openship.json in the current directory")
+  .description("Scaffold an kovalio.json in the current directory")
   .option("--dir <path>", "Directory to write into", process.cwd())
-  .option("--force", "Overwrite an existing openship.json")
+  .option("--force", "Overwrite an existing kovalio.json")
   .action((opts) => {
     const dir: string = opts.dir || process.cwd();
     const path = join(dir, CONFIG_FILE);
@@ -66,7 +66,7 @@ const initCmd = new Command("init")
 
     const hints = detectHints(dir);
     // $schema first (editor autocomplete); then detected fields. Everything else
-    // is intentionally omitted — Openship auto-detects it, and openship.json only
+    // is intentionally omitted — Kovalio auto-detects it, and kovalio.json only
     // needs to carry what you want to override.
     const scaffold: Record<string, unknown> = { $schema: SCHEMA_URL, ...hints };
     const text = JSON.stringify(scaffold, null, 2) + "\n";
@@ -77,11 +77,11 @@ const initCmd = new Command("init")
       return;
     }
     ok(`\n  Wrote ${CONFIG_FILE} → ${path}`);
-    info("  Edit it to declare framework, env, domains, resources, services… then `openship config validate`.\n");
+    info("  Edit it to declare framework, env, domains, resources, services… then `kovalio config validate`.\n");
   });
 
 const validateCmd = new Command("validate")
-  .description("Validate an openship.json against the deploy schema")
+  .description("Validate an kovalio.json against the deploy schema")
   .argument("[file]", "Path to the config file", CONFIG_FILE)
   .action((file: string) => {
     const path = file === CONFIG_FILE ? join(process.cwd(), CONFIG_FILE) : file;
@@ -91,7 +91,7 @@ const validateCmd = new Command("validate")
       process.exit(1);
     }
 
-    const { config, errors, warnings } = parseOpenshipConfigJson(readFileSync(path, "utf8"));
+    const { config, errors, warnings } = parseKovalioConfigJson(readFileSync(path, "utf8"));
     const valid = errors.length === 0 && config !== null;
 
     if (isJsonMode()) {
@@ -109,6 +109,6 @@ const validateCmd = new Command("validate")
   });
 
 export const configCommand = new Command("config")
-  .description("Author and validate openship.json (declarative deploy config)")
+  .description("Author and validate kovalio.json (declarative deploy config)")
   .addCommand(initCmd)
   .addCommand(validateCmd);

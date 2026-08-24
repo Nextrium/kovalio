@@ -1,9 +1,9 @@
 ---
 title: Add an app
-description: Write the catalog JSON that makes a one-click Openship app, built up field by field from a bare service to a complete submission — plus how to ship it as a pull request or upload it privately to your own organization.
+description: Write the catalog JSON that makes a one-click Kovalio app, built up field by field from a bare service to a complete submission — plus how to ship it as a pull request or upload it privately to your own organization.
 ---
 
-Openship's **Apps** tab is a catalog of one-click installs. Each entry is a single JSON file, and that
+Kovalio's **Apps** tab is a catalog of one-click installs. Each entry is a single JSON file, and that
 file is the whole deliverable: it describes the containers, how they wire together, which secrets to
 generate, how it gets exposed, and what the user sees once it is running.
 
@@ -51,7 +51,7 @@ We will add **Umami**, a self-hosted analytics app that needs a Postgres databas
 one decision; the [complete file](#the-complete-file) is at the end.
 
 <Callout title="Keep the $schema line" type="info">
-Start the file with `"$schema": "https://openship.io/app.schema.json"`. Your editor then autocompletes
+Start the file with `"$schema": "https://nextrium.org/app.schema.json"`. Your editor then autocompletes
 field names and flags bad **values** — an invalid `category`, a wrong `type`, a missing required
 field. It cannot flag a misspelled field *name*, because unknown keys are deliberately ignored rather
 than rejected, so lean on the autocomplete.
@@ -64,7 +64,7 @@ app appears as *coming soon* and cannot be installed while you are still working
 
 ```json
 {
-  "$schema": "https://openship.io/app.schema.json",
+  "$schema": "https://nextrium.org/app.schema.json",
   "available": false,
   "id": "umami",
   "name": "Umami",
@@ -96,7 +96,7 @@ Umami needs Postgres. Add it as a second service — and remember that **the ser
 hostname**: `umami` reaches the database at `umami-db` on the project network.
 
 The password must never be a plaintext default. Declare it as a `configField` with
-`generate: "secret"`, and Openship mints a random value at install that the operator never types.
+`generate: "secret"`, and Kovalio mints a random value at install that the operator never types.
 
 The interesting part is getting that one generated password into **two** places — the database's own
 `POSTGRES_PASSWORD`, and the connection string the app reads:
@@ -154,7 +154,7 @@ both fields the same `generateGroup` and they always match.
 
 ### 3. Choose how it gets exposed
 
-`endpoints` is what the install wizard asks the operator about. Omit it and Openship derives one
+`endpoints` is what the install wizard asks the operator about. Omit it and Kovalio derives one
 `http` endpoint per exposed service — fine here, but declaring it lets you label it properly:
 
 ```json
@@ -234,7 +234,7 @@ Everything above, assembled — this is exactly what the PR adds:
 
 ```json
 {
-  "$schema": "https://openship.io/app.schema.json",
+  "$schema": "https://nextrium.org/app.schema.json",
   "available": false,
   "id": "umami",
   "name": "Umami",
@@ -334,7 +334,7 @@ Two fields worth knowing for richer apps, both covered in the reference:
 Every service so far has pulled a prebuilt `image`. Some apps can't — the upstream ships a base image
 that still needs extra packages and a provisioning entrypoint baked in (Neon's compute node is the
 canonical case). For those, give the service a **`build`** instead of an `image`: an inline Dockerfile
-plus its build-context files, which Openship materializes and `docker build`s on the deploy host at
+plus its build-context files, which Kovalio materializes and `docker build`s on the deploy host at
 deploy time. Set **exactly one** of `image` or `build` per service.
 
 ```json
@@ -393,7 +393,7 @@ The runtime catalog is the bundled copy overlaid by a live fetch of `catalog.jso
 10-minute TTL. So your app appears on instances that are already running — gated per-entry by
 [`minEngine`](/docs/reference/app-catalog#stability-and-versioning). If your definition uses a
 capability that only shipped in a given release, set `minEngine` to it: older instances then show a
-guided *Requires Openship ≥ X* card instead of failing the install.
+guided *Requires Kovalio ≥ X* card instead of failing the install.
 </Callout>
 
 ## What the user sees on install
@@ -431,7 +431,7 @@ The same JSON, kept private to your organization and needing no review. In the d
 
 ```bash
 curl -X POST https://your-host/api/apps/custom \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H 'Content-Type: application/json' \
   --data @umami.json
 ```

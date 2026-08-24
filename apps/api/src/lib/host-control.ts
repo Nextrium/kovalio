@@ -1,10 +1,10 @@
 /**
- * THE host-control resolver — may OpenShip deploy to the machine it runs on?
+ * THE host-control resolver — may Kovalio deploy to the machine it runs on?
  *
  * "Host control" governs whether this box is itself a deploy target: the isLocal
  * "This Server" row, and every host-OS operation that reaches the machine through
  * the container→host SSH channel (or LocalExecutor on a bare install). Turning it
- * off (`openship up --no-host-control`) makes the box control-plane-only.
+ * off (`kovalio up --no-host-control`) makes the box control-plane-only.
  *
  * Precedence (DELIBERATELY the productMode direction, NOT authMode's):
  *   1. Not a self-hosted target (SaaS / desktop / Oblien runtime) → always false.
@@ -12,7 +12,7 @@
  *      keeps the client-facing "effective" value in agreement with the backend
  *      and ends the isServerHost-vs-target divergence for the UI.
  *   2. instance_settings.host_control_enabled — the operator's Settings toggle.
- *   3. OPENSHIP_HOST_CONTROL env — the install-time default.
+ *   3. KOVALIO_HOST_CONTROL env — the install-time default.
  *
  * Why DB-overrides-env here even though this gates privileged behavior (host-root
  * deploys, unlike the presentation-only productMode): the operator's explicit need
@@ -29,7 +29,7 @@ import { resolvePlatformConfig } from "./controller-helpers";
 /** The raw env floor, parsed exactly as @repo/adapters does, so an unset DB value
  *  resolves to the same answer the executor gate would give on its own. */
 function envHostControlDisabled(): boolean {
-  return process.env.OPENSHIP_HOST_CONTROL?.trim().toLowerCase() === "false";
+  return process.env.KOVALIO_HOST_CONTROL?.trim().toLowerCase() === "false";
 }
 
 /** Cached because /health/env is unauthenticated and polled by every dashboard

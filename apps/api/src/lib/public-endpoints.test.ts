@@ -4,7 +4,7 @@ import { getRoutingBaseDomain } from "./routing-domains";
 
 // The Cloud gate must classify by the HOSTNAME's physical truth, not a bare
 // `domainType` string. Regression for: removing a migrated custom-domain route
-// wrongly demanded "Connect Openship Cloud to use a free subdomain" because the
+// wrongly demanded "Connect Kovalio Cloud to use a free subdomain" because the
 // stale row's domainType wasn't stamped "custom".
 describe("storedPublicEndpointsNeedCloud", () => {
   const base = getRoutingBaseDomain();
@@ -26,19 +26,19 @@ describe("storedPublicEndpointsNeedCloud", () => {
     // the exact bug: migrated custom domain, domainType not stamped
     expect(
       storedPublicEndpointsNeedCloud([
-        { customDomain: "api.openship.io", domainType: undefined as never },
+        { customDomain: "api.nextrium.org", domainType: undefined as never },
       ]),
     ).toBe(false);
     // even if a stale row (wrongly) marked it free — the hostname is the truth
     expect(
       storedPublicEndpointsNeedCloud([
-        { customDomain: "api.openship.io", domainType: "free" as never },
+        { customDomain: "api.nextrium.org", domainType: "free" as never },
       ]),
     ).toBe(false);
     // ...or the host was misfiled into the free `domain` field as a full host
     expect(
       storedPublicEndpointsNeedCloud([
-        { domain: "api.openship.io", domainType: undefined as never },
+        { domain: "api.nextrium.org", domainType: undefined as never },
       ]),
     ).toBe(false);
   });
@@ -54,13 +54,13 @@ describe("storedPublicEndpointsNeedCloud", () => {
   test("mixed set → Cloud needed iff any endpoint is a managed free subdomain", () => {
     expect(
       storedPublicEndpointsNeedCloud([
-        { customDomain: "api.openship.io", domainType: "custom" },
+        { customDomain: "api.nextrium.org", domainType: "custom" },
         { domain: "dash", domainType: "free" },
       ]),
     ).toBe(true);
     expect(
       storedPublicEndpointsNeedCloud([
-        { customDomain: "api.openship.io", domainType: "custom" },
+        { customDomain: "api.nextrium.org", domainType: "custom" },
         { customDomain: "app.clincai.com", domainType: "custom" },
       ]),
     ).toBe(false);

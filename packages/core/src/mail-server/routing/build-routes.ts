@@ -2,9 +2,9 @@
  * Build the routing + DNS plan for one mail server.
  *
  * Pure function - no I/O, no platform calls, no DB. Takes the four inputs
- * (user domain, mail VPS IP, Zero server origin, Zero client origin, openship
+ * (user domain, mail VPS IP, Zero server origin, Zero client origin, kovalio
  * API origin) and produces the complete plan that
- *   - `register.service.ts` feeds into openship's routing layer, and
+ *   - `register.service.ts` feeds into kovalio's routing layer, and
  *   - the dashboard UI renders as the DNS-records instruction list.
  *
  * Why pure: this is the contract surface. We want it unit-testable in
@@ -23,7 +23,7 @@ import type {
 
 /**
  * Construct the route+DNS topology iRedMail's nginx used to set up locally -
- * but published into openship's routing layer instead, with the mail VPS
+ * but published into kovalio's routing layer instead, with the mail VPS
  * exposing only raw mail protocols.
  */
 export function buildMailServerRoutes(input: MailServerRouteInput): MailServerRoutePlan {
@@ -130,12 +130,12 @@ function buildRoutes(input: MailServerRouteInput): MailRoute[] {
     {
       id: "autodiscover",
       hostname: autodiscoverHost!,
-      targetUrl: input.openshipApiOrigin,
+      targetUrl: input.kovalioApiOrigin,
       tls: true,
-      description: "Outlook / Thunderbird autodiscover XML - served by openship's API controller.",
+      description: "Outlook / Thunderbird autodiscover XML - served by kovalio's API controller.",
     },
     // Intentionally no public "email-admin" route - mailbox / domain / alias
-    // management runs inside openship's API, which writes to the mail-server
+    // management runs inside kovalio's API, which writes to the mail-server
     // Postgres directly via @repo/db-email. Postfix and Dovecot see new rows
     // on their next query, no HTTP admin surface on the mail VPS at all.
   ];
@@ -185,7 +185,7 @@ function buildDnsRecords(input: MailServerRouteInput): MailDnsRecord[] {
       // Filled in after iRedMail finishes installing - Amavisd generates the
       // DKIM keypair during setup. The dashboard surfaces the actual key
       // once the install completes.
-      value: "<DKIM public key - generated during mail server install; copy from openship dashboard once provisioning completes>",
+      value: "<DKIM public key - generated during mail server install; copy from kovalio dashboard once provisioning completes>",
       description: `DKIM signs outgoing mail with a private key the mail server holds; recipients verify against this public key. Critical for deliverability to Gmail/Outlook.`,
       required: false,
     },
@@ -200,12 +200,12 @@ function buildDnsRecords(input: MailServerRouteInput): MailDnsRecord[] {
       required: false,
     },
 
-    // ── Web routes pointed at openship's routing ingress ────────────────
+    // ── Web routes pointed at kovalio's routing ingress ────────────────
     //
     // These are CNAMEs (or A records - depends on the user's DNS provider)
-    // from the user-facing hostnames to wherever openship's routing layer
+    // from the user-facing hostnames to wherever kovalio's routing layer
     // ingress lives. We emit CNAMEs because the routing-layer ingress
-    // hostname is what openship knows; the resolved IP is openship's
+    // hostname is what kovalio knows; the resolved IP is kovalio's
     // problem (and can change without re-pointing DNS).
     //
     // The `value` here uses the routing layer's hostname - extracted from
@@ -216,7 +216,7 @@ function buildDnsRecords(input: MailServerRouteInput): MailDnsRecord[] {
       type: "CNAME",
       name: mailHostname(d),
       value: hostnameFromUrl(input.zeroClientOrigin),
-      description: `Routes ${mailHostname(d)} (the webmail UI) to openship's app-deploy ingress where the Zero client is hosted.`,
+      description: `Routes ${mailHostname(d)} (the webmail UI) to kovalio's app-deploy ingress where the Zero client is hosted.`,
       required: true,
     },
     {
@@ -224,18 +224,18 @@ function buildDnsRecords(input: MailServerRouteInput): MailDnsRecord[] {
       type: "CNAME",
       name: apiMailHostname(d),
       value: hostnameFromUrl(input.zeroServerOrigin),
-      description: `Routes ${apiMailHostname(d)} (the Zero server's tRPC API) to the mail VPS via openship's routing layer.`,
+      description: `Routes ${apiMailHostname(d)} (the Zero server's tRPC API) to the mail VPS via kovalio's routing layer.`,
       required: true,
     },
-    // No email-admin CNAME - admin operations run inside openship's own API
+    // No email-admin CNAME - admin operations run inside kovalio's own API
     // and write to the mail-server Postgres directly. There is no public
     // admin endpoint to point at.
     {
       id: "autodiscover-cname",
       type: "CNAME",
       name: `autodiscover.${d}`,
-      value: hostnameFromUrl(input.openshipApiOrigin),
-      description: `Routes autodiscover.${d} to openship's API, which serves the XML mail clients use to auto-configure (Outlook, Thunderbird).`,
+      value: hostnameFromUrl(input.kovalioApiOrigin),
+      description: `Routes autodiscover.${d} to kovalio's API, which serves the XML mail clients use to auto-configure (Outlook, Thunderbird).`,
       required: false,
     },
   ];
@@ -249,7 +249,7 @@ function normalizeInput(input: MailServerRouteInput): MailServerRouteInput {
     mailServerIp: input.mailServerIp.trim(),
     zeroServerOrigin: input.zeroServerOrigin.trim(),
     zeroClientOrigin: input.zeroClientOrigin.trim(),
-    openshipApiOrigin: input.openshipApiOrigin.trim(),
+    kovalioApiOrigin: input.kovalioApiOrigin.trim(),
   };
 }
 

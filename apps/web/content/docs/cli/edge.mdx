@@ -3,10 +3,10 @@ title: Edge & monitoring
 description: Manage the OpenResty edge from the terminal — install and serve :80/:443, take over an existing reverse proxy and import its sites, route domains, apply per-route rules, and read traffic, analytics, and request logs.
 ---
 
-The **edge** is the OpenResty reverse proxy Openship runs on ports `:80`/`:443`. It terminates
+The **edge** is the OpenResty reverse proxy Kovalio runs on ports `:80`/`:443`. It terminates
 TLS, routes each hostname to the right container, enforces per-route rules (rate limits, bans,
 geo/CIDR access), and — because it already sees every request — counts the traffic that feeds
-the Monitoring tab. `openship edge` is the terminal surface for all of that: stand it up, take
+the Monitoring tab. `kovalio edge` is the terminal surface for all of that: stand it up, take
 over a proxy that's already on those ports, manage domains and rules, and read the analytics it
 produces.
 
@@ -16,9 +16,9 @@ domain, protecting a route, watching traffic — start with the [The edge](/docs
 </Callout>
 
 <Callout title="The edge vs. the server" type="info">
-Two separate things run on a box. The **server** is Openship's API + dashboard (see
+Two separate things run on a box. The **server** is Kovalio's API + dashboard (see
 [Running & updating](/docs/cli/run)); the **edge** is the public reverse proxy in front of your
-apps. `openship up` installs both together. `openship edge` manages just the proxy half and reads
+apps. `kovalio up` installs both together. `kovalio edge` manages just the proxy half and reads
 the traffic it records — you'll use it when a proxy is already on `:80/:443`, or to drive
 domains / rules / analytics without opening the dashboard.
 </Callout>
@@ -34,7 +34,7 @@ from any machine (including macOS/desktop), against whichever instance your acti
 ## When to use it
 
 - **Something else already owns `:80/:443`.** You have nginx / Apache / Caddy on the box and want
-  Openship's edge to take over — either importing its existing sites (`migrate`) or just claiming
+  Kovalio's edge to take over — either importing its existing sites (`migrate`) or just claiming
   the ports (`takeover`).
 - **Route a hostname to a port** without building a full project — `edge domains add app.example.com --port 8080`
   registers the host, points it at `127.0.0.1:8080`, and issues a certificate.
@@ -49,69 +49,69 @@ or a script.
 
 | Command | Purpose |
 |---|---|
-| `openship edge` (no args) | Interactive panel — status, domains, traffic, take-over, and monitoring in one loop. |
-| `openship edge status` | Is the edge installed and serving `:80/:443`? |
-| `openship edge up` (alias `install`, `start`) | Ensure the edge is up; optionally enable monitoring (built-in analytics DB). |
-| `openship edge migrate` | Take over `:80/:443` **and import** the existing proxy's sites. |
-| `openship edge takeover` | Free `:80/:443` for the edge — stop whatever holds them (its sites drop). |
-| `openship edge sites` (alias `scan`) | List reverse-proxy sites on this host the edge could import. |
-| `openship edge repair` (alias `doctor`) | Diagnose why the edge isn't serving; `--fix` resolves a port conflict. |
-| `openship edge domains` (alias `domain`) | Domains routed through the edge: list, register on a port, verify SSL, remove. |
-| `openship edge rules` | Per-route rules: rate-limit, ban, access control. |
-| `openship edge traffic` | Traffic overview for a project (requests, bandwidth, hourly periods). |
-| `openship edge analytics` | Per-domain analytics: visitors, countries, top paths. |
-| `openship edge logs` | Recent HTTP request logs the edge captured for a project. |
+| `kovalio edge` (no args) | Interactive panel — status, domains, traffic, take-over, and monitoring in one loop. |
+| `kovalio edge status` | Is the edge installed and serving `:80/:443`? |
+| `kovalio edge up` (alias `install`, `start`) | Ensure the edge is up; optionally enable monitoring (built-in analytics DB). |
+| `kovalio edge migrate` | Take over `:80/:443` **and import** the existing proxy's sites. |
+| `kovalio edge takeover` | Free `:80/:443` for the edge — stop whatever holds them (its sites drop). |
+| `kovalio edge sites` (alias `scan`) | List reverse-proxy sites on this host the edge could import. |
+| `kovalio edge repair` (alias `doctor`) | Diagnose why the edge isn't serving; `--fix` resolves a port conflict. |
+| `kovalio edge domains` (alias `domain`) | Domains routed through the edge: list, register on a port, verify SSL, remove. |
+| `kovalio edge rules` | Per-route rules: rate-limit, ban, access control. |
+| `kovalio edge traffic` | Traffic overview for a project (requests, bandwidth, hourly periods). |
+| `kovalio edge analytics` | Per-domain analytics: visitors, countries, top paths. |
+| `kovalio edge logs` | Recent HTTP request logs the edge captured for a project. |
 
-## `openship edge` — the interactive panel
+## `kovalio edge` — the interactive panel
 
-Run `openship edge` with no arguments on a terminal to open a looping panel. It shows the edge's
+Run `kovalio edge` with no arguments on a terminal to open a looping panel. It shows the edge's
 current state (installed? serving? how many domains) and offers the right actions for where you
 are: browse domains, register one, view a traffic overview, bring up or repair the edge, migrate
 or take over another proxy, scan for importable sites, and — if there's no server yet — enable
 monitoring. Pick an action, do it, and land back on the menu; **Quit** exits.
 
 The panel is a *trusted local tool*. On a desktop / loopback box the API is zero-auth, so it just
-makes the call — no token needed. It only asks you to `openship login` if a call actually comes
+makes the call — no token needed. It only asks you to `kovalio login` if a call actually comes
 back unauthorized (a real self-hosted server with an admin), and tells you plainly when the API
 isn't reachable rather than showing a dead-end login screen.
 
 ```bash
-openship edge
+kovalio edge
 ```
 
-## `openship edge up`
+## `kovalio edge up`
 
 Ensures the edge container is up and serving `:80/:443`, repairing it if it isn't. With
-`--monitoring` it also stands up the built-in Openship server (a bare install with an embedded
+`--monitoring` it also stands up the built-in Kovalio server (a bare install with an embedded
 database) so the traffic the edge counts has somewhere to land and the `traffic` / `analytics`
-commands have something to read. On a box that already has Openship installed, `--monitoring` is a
+commands have something to read. On a box that already has Kovalio installed, `--monitoring` is a
 no-op — monitoring is already available through the running instance.
 
 ```bash
 # Just make sure the edge is serving
-openship edge up
+kovalio edge up
 
 # Serve, and on a port conflict import the existing proxy's sites
-openship edge up --migrate
+kovalio edge up --migrate
 
 # Also turn on monitoring (installs the built-in server + analytics DB)
-openship edge up --monitoring --admin-email you@example.com
+kovalio edge up --monitoring --admin-email you@example.com
 ```
 
 | Flag | Purpose |
 |---|---|
 | `--migrate` | On a port conflict, import the existing proxy's sites and take over. |
 | `--takeover` | On a port conflict, stop whatever holds `:80/:443` (its sites drop). |
-| `--monitoring` | Also enable monitoring: install the built-in Openship server + embedded DB for analytics. |
+| `--monitoring` | Also enable monitoring: install the built-in Kovalio server + embedded DB for analytics. |
 | `--no-monitoring` | Edge only — skip the monitoring prompt (the headless default). |
 | `--admin-name <name>` | Admin display name for a fresh monitoring install. |
 | `--admin-email <email>` | Admin email — **required** when enabling monitoring headlessly. |
-| `--admin-password <pw>` | Admin password. Prefer the `OPENSHIP_ADMIN_PASSWORD` env var (keeps it out of shell history). |
+| `--admin-password <pw>` | Admin password. Prefer the `KOVALIO_ADMIN_PASSWORD` env var (keeps it out of shell history). |
 
 <Callout title="After enabling monitoring, log in to read it" type="info">
 Enabling monitoring creates a local admin, and — like every CLI-installed instance — reading its
-data requires a login. Run `openship login` with a PAT from the dashboard, then
-`openship edge traffic -p <project>` / `openship edge analytics -p <project>`. The panel and verbs
+data requires a login. Run `kovalio login` with a PAT from the dashboard, then
+`kovalio edge traffic -p <project>` / `kovalio edge analytics -p <project>`. The panel and verbs
 tell you when auth is what's missing. (Zero-auth without a login is desktop-only.)
 </Callout>
 
@@ -123,17 +123,17 @@ fails, it unwinds cleanly rather than leaving you with neither proxy serving.
 
 ```bash
 # Take over AND bring the old proxy's sites across (recommended)
-openship edge migrate
+kovalio edge migrate
 
 # Just free the ports — the old proxy is stopped and its sites drop
-openship edge takeover
+kovalio edge takeover
 
 # See what would be imported before committing
-openship edge sites
+kovalio edge sites
 
 # Diagnose why the edge isn't serving; attempt a fix
-openship edge repair --fix          # defaults to migrate
-openship edge repair --fix --takeover
+kovalio edge repair --fix          # defaults to migrate
+kovalio edge repair --fix --takeover
 ```
 
 `migrate` reads the existing proxy's virtual hosts, registers each one on the edge (so it keeps
@@ -141,11 +141,11 @@ serving), and only then frees the ports. `takeover` skips the import and just st
 
 <Callout title="You don't have to remember to run this" type="info">
 When a foreign proxy grabs `:80/:443`, the same "another proxy is here — take over and migrate its
-sites?" prompt surfaces automatically during `openship up` and in the bare `openship` control
-panel, not only under `openship edge`. Running the commands above is the manual equivalent.
+sites?" prompt surfaces automatically during `kovalio up` and in the bare `kovalio` control
+panel, not only under `kovalio edge`. Running the commands above is the manual equivalent.
 </Callout>
 
-## `openship edge domains`
+## `kovalio edge domains`
 
 Domains routed through the edge. `add` registers a hostname and points it somewhere: attach it to an
 existing project with `--project` (uses that project's port) **or** bind a brand-new tracked project
@@ -154,14 +154,14 @@ Let's Encrypt certificate unless you pass `--no-verify`.
 
 ```bash
 # Route a host straight at a local port (creates a tracked project)
-openship edge domains add app.example.com --port 8080
+kovalio edge domains add app.example.com --port 8080
 
 # Attach a host to an existing project
-openship edge domains add www.example.com --project prj_123 --primary
+kovalio edge domains add www.example.com --project prj_123 --primary
 
 # List / remove
-openship edge domains list -p prj_123
-openship edge domains rm app.example.com -p prj_123
+kovalio edge domains list -p prj_123
+kovalio edge domains rm app.example.com -p prj_123
 ```
 
 | `add` flag | Purpose |
@@ -172,10 +172,10 @@ openship edge domains rm app.example.com -p prj_123
 | `--no-verify` | Skip DNS verification + SSL issuance (just claim the hostname). |
 
 For the full custom-domain / DNS / certificate workflow, see the project-level
-[`openship domain`](/docs/cli/projects) command — `edge domains` is the edge-scoped view of the same
+[`kovalio domain`](/docs/cli/projects) command — `edge domains` is the edge-scoped view of the same
 routing.
 
-## `openship edge rules`
+## `kovalio edge rules`
 
 Per-route edge rules — rate limits, bans, and access control — applied by the proxy before a request
 ever reaches your app. Scope a rule to the whole project, one domain (`--domain`), or a path prefix
@@ -183,16 +183,16 @@ ever reaches your app. Scope a rule to the whole project, one domain (`--domain`
 
 ```bash
 # 20 req/s per client IP on the login path, allowing short bursts
-openship edge rules add -p prj_123 --path /login --rate-limit 20 --burst 40
+kovalio edge rules add -p prj_123 --path /login --rate-limit 20 --burst 40
 
 # Block two countries and an abusive IP, returning 403
-openship edge rules add -p prj_123 --ban-country RU,CN --ban-ip 203.0.113.7 --block-status 403
+kovalio edge rules add -p prj_123 --ban-country RU,CN --ban-ip 203.0.113.7 --block-status 403
 
 # Allow-list an office CIDR — everything else is denied
-openship edge rules add -p prj_123 --allow-cidr 198.51.100.0/24
+kovalio edge rules add -p prj_123 --allow-cidr 198.51.100.0/24
 
-openship edge rules list -p prj_123
-openship edge rules rm <ruleId> -p prj_123
+kovalio edge rules list -p prj_123
+kovalio edge rules rm <ruleId> -p prj_123
 ```
 
 | `add` flag | Purpose |
@@ -212,7 +212,7 @@ openship edge rules rm <ruleId> -p prj_123
 <Callout title="Rate limits need the real client IP" type="info">
 Per-IP rate limits and country rules only work if the edge sees the true client address. If another
 reverse proxy (or Cloudflare) sits in front, it must overwrite `X-Real-IP` with the real client IP and
-you must run with `--trust-proxy` — see [`openship up`](/docs/cli/run). Openship's own managed edge
+you must run with `--trust-proxy` — see [`kovalio up`](/docs/cli/run). Kovalio's own managed edge
 handles this for you.
 </Callout>
 
@@ -225,14 +225,14 @@ back. All three take `-p, --project` and accept `--json`.
 
 ```bash
 # Traffic overview: requests, bandwidth, and hourly periods
-openship edge traffic -p prj_123
+kovalio edge traffic -p prj_123
 
 # Per-domain analytics: visitors, countries, top paths
-openship edge analytics -p prj_123 --domain app.example.com
+kovalio edge analytics -p prj_123 --domain app.example.com
 
 # Recent raw request log, and follow it live
-openship edge logs -p prj_123 --limit 100
-openship edge logs -p prj_123 --follow
+kovalio edge logs -p prj_123 --limit 100
+kovalio edge logs -p prj_123 --follow
 ```
 
 | Command | Key flags |

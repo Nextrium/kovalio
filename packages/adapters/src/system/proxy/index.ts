@@ -43,8 +43,8 @@ export type { RegisterImportedSitesOptions } from "./takeover";
 export {
   scanImportableSites,
   canImportProxy,
-  scanOpenshipEdge,
-  scanOpenshipEdgeStrict,
+  scanKovalioEdge,
+  scanKovalioEdgeStrict,
   detectInstalledProxy,
 } from "./import";
 // The READ api — prefer this over re-assembling probeEdge + importSites + your own
@@ -153,7 +153,7 @@ function sysLog(message: string, level: SystemLog["level"] = "info"): SystemLog 
  * takeover result and lets the caller decide).
  */
 /**
- * The SINGLE "ensure Openship owns the edge" orchestrator every caller should use
+ * The SINGLE "ensure Kovalio owns the edge" orchestrator every caller should use
  * (deploy pipeline, server-setup, self-app, mail). You supply how to install the
  * edge feature for your target — `install(promptUser)` — which, if a foreign proxy
  * holds 80/443, raises the `edge_conflict` consent prompt through `promptUser`

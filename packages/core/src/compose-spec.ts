@@ -1,6 +1,6 @@
 /**
  * Compose LONG-FORM mounts and ports, folded back into the single short-form
- * string openship stores.
+ * string kovalio stores.
  *
  * A service row keeps `volumes`/`ports` as compose short-form strings
  * (`src:target:ro`, `127.0.0.1:8080:80/udp`), because that is what
@@ -12,7 +12,7 @@
  * They folded it differently, which is the whole reason this module exists. The
  * CLI's version dropped `read_only`, and because `docker compose config` ALWAYS
  * normalizes to long form, every `:ro` a compose file declared was lost on
- * `openship service sync` — a host directory the author marked read-only was
+ * `kovalio service sync` — a host directory the author marked read-only was
  * bind-mounted writable, with nothing reporting it (#533). Same class for
  * `host_ip`: the CLI dropped the bound interface the API preserved.
  *
@@ -27,7 +27,7 @@ import { isValidEnvKey } from "./utils";
 
 const asIs = (s: string) => s;
 
-/** A Compose `build:` declaration Openship cannot honor faithfully. Values are
+/** A Compose `build:` declaration Kovalio cannot honor faithfully. Values are
  * deliberately never included: build args and SSH/secret configuration may be
  * sensitive even though Docker ARG itself is not a secret channel. */
 export type ComposeBuildIssue = {
@@ -51,7 +51,7 @@ function composeOptionRequestsSomething(value: unknown): boolean {
 /**
  * Validate the Compose build subsection shared by both importers.
  *
- * Openship currently models exactly `context`, `dockerfile`, and `args`. Every
+ * Kovalio currently models exactly `context`, `dockerfile`, and `args`. Every
  * other requested key fails closed: ignoring `target`, `additional_contexts`,
  * `ssh`, `secrets`, architecture, network, cache/provenance, or a future Compose
  * key can produce a different artifact or silently omit a security contract.
@@ -74,12 +74,12 @@ export function composeBuildIssues(
     } else if (REMOTE_BUILD_CONTEXT_RE.test(resolved)) {
       block(
         "build.context",
-        "build.context uses a remote URL, which Openship cannot build as a repository-relative context.",
+        "build.context uses a remote URL, which Kovalio cannot build as a repository-relative context.",
       );
     } else if (!options.allowAbsoluteContext && ABSOLUTE_BUILD_CONTEXT_RE.test(resolved)) {
       block(
         "build.context",
-        "build.context is absolute or home-relative; Openship requires a path inside the linked repository.",
+        "build.context is absolute or home-relative; Kovalio requires a path inside the linked repository.",
       );
     }
   };
@@ -222,7 +222,7 @@ export type ComposeMountIssue = {
  * the import marked.
  *
  * Shared for the same reason the fold is: both importers need the identical answer.
- * `openship service sync` originally refused only `network_mode: host`, so the same
+ * `kovalio service sync` originally refused only `network_mode: host`, so the same
  * compose file was accepted by the CLI and rejected by the API — a divergence that
  * is worse than either policy alone.
  *
@@ -247,7 +247,7 @@ export function composeMountIssues(mount: Record<string, unknown>): ComposeMount
       {
         field: "volumes[].type=tmpfs",
         reason:
-          `the tmpfs mount at ${target} is not modeled. Openship mounts volumes and ` +
+          `the tmpfs mount at ${target} is not modeled. Kovalio mounts volumes and ` +
           `host paths only, so this would be created as a persistent volume on disk ` +
           `rather than in memory — remove it or make it a named volume deliberately.`,
         blocking: true,

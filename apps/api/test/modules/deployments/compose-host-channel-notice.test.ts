@@ -268,7 +268,7 @@ describe("compose deploy — host channel unavailable", () => {
     // The real demotion path: host control off is the same typed error an
     // unprovisioned container channel raises, and it is the one a test can produce
     // without a container.
-    vi.stubEnv("OPENSHIP_HOST_CONTROL", "false");
+    vi.stubEnv("KOVALIO_HOST_CONTROL", "false");
     const executor = await demotedExecutor();
 
     const { logger, lines } = recordingLogger();
@@ -286,7 +286,7 @@ describe("compose deploy — host channel unavailable", () => {
     ).toBeDefined();
     expect(notice!.level).toBe("warn");
     // The reason, with the remedy the executor refuses every call with.
-    expect(notice!.message).toContain("OPENSHIP_HOST_CONTROL=false");
+    expect(notice!.message).toContain("KOVALIO_HOST_CONTROL=false");
     // From @repo/core — the deploy in progress still succeeds.
     expect(notice!.message).toContain("Ordinary deploys to this box still work");
     // Said ONCE per deploy, not per touchpoint.
@@ -303,7 +303,7 @@ describe("compose deploy — host channel unavailable", () => {
   it("is independent of the routing strategy", async () => {
     // The pre-existing hint appeared only under `loopback-port` — the one strategy that
     // pins a host port. Every strategy loses the same host operations.
-    vi.stubEnv("OPENSHIP_HOST_CONTROL", "false");
+    vi.stubEnv("KOVALIO_HOST_CONTROL", "false");
     const executor = await demotedExecutor();
 
     for (const routeStrategy of ["container-ip", "loopback-port", undefined]) {

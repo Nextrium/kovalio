@@ -262,13 +262,13 @@ export class NohupSupervisor implements ProcessSupervisor {
         timestamp: new Date().toISOString(),
         message:
           "No supervisor log for this deployment — the process is supervised elsewhere " +
-          "(container logs, or `openship logs` on the host). Streaming anyway in case it starts writing.\r\n",
+          "(container logs, or `kovalio logs` on the host). Streaming anyway in case it starts writing.\r\n",
         level: "info",
       });
     }
     // `--retry` + a pre-created file instead of a bare `tail -f`: a deployment
     // this supervisor never started (an ADOPT deployment — the process is
-    // supervised by something else, e.g. `openship up`) has no log file here, and
+    // supervised by something else, e.g. `kovalio up`) has no log file here, and
     // `tail` wrote its own diagnostic to the stream, so the log viewer showed
     // "tail: cannot open '…/.logs/dep_x.log' for reading: No such file or
     // directory / tail: no files remaining" instead of anything about the app.

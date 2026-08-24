@@ -31,9 +31,9 @@ vi.mock("@repo/adapters", async () => ({
   // stopped being true. Imported by path because that module is dependency-free;
   // pulling in the package entry point would defeat mocking it.
   ...(await import("../../../../packages/adapters/src/system/errors")),
-  // Read at module scope by openship-server-store (imported transitively), so the
+  // Read at module scope by kovalio-server-store (imported transitively), so the
   // mock has to carry it or nothing under test loads. Its value is irrelevant here.
-  HOST_STATE_DIR: "/root/.openship",
+  HOST_STATE_DIR: "/root/.kovalio",
   createHostExecutor: vi.fn(() => {
     h.created += 1;
     return {
@@ -60,7 +60,7 @@ import { sshManager } from "./ssh-manager";
 const pool = () => (sshManager as unknown as { servers: Map<string, unknown> }).servers;
 
 /** Mirrors the module-private pool key for the shared host channel. */
-const HOST_KEY = "__openship_host__";
+const HOST_KEY = "__kovalio_host__";
 
 beforeEach(() => {
   h.created = 0;
@@ -327,7 +327,7 @@ describe("diagnoseReachability carries the reason, not just the verdict", () => 
   /**
    * #509. `host_channel_blocked` is ONE verdict over several states, and the remedy
    * differs per state — a dial that was dropped wants a firewall rule, a channel that was
-   * never provisioned wants `openship up`. So the state has to travel, and the fields
+   * never provisioned wants `kovalio up`. So the state has to travel, and the fields
    * that mean "we contacted this" must not be filled in for a channel nothing contacted:
    * the dashboard reads a present `target` as evidence, and reported that nothing answered
    * on an address nothing had ever dialed.

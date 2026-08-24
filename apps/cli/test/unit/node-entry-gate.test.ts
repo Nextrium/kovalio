@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
- * `npm i -g openship` is the only install path that runs on the USER's Node — the
+ * `npm i -g kovalio` is the only install path that runs on the USER's Node — the
  * curl installer resolves Node itself (scripts/install.sh: system >= 22, else it
  * vendors one). With no floor declared, npm installed onto Node 18 with a warning
  * that named `commander`, exited 0, linked the bin, and then the command died with
@@ -60,7 +60,7 @@ describe("the Node gate in node-entry.ts", () => {
 });
 
 describe("the recovery bundle stays loadable on the Node it recovers", () => {
-  // node-bootstrap.ts reuses ensureNodeRuntime() — the same function `openship update`
+  // node-bootstrap.ts reuses ensureNodeRuntime() — the same function `kovalio update`
   // calls — so there is ONE implementation of "get a Node that satisfies the floor".
   // That only works if its whole import chain parses on the old Node: a single
   // third-party dependency with modern syntax (string-width's `/v` flag is the exact
@@ -89,7 +89,7 @@ describe("the recovery bundle stays loadable on the Node it recovers", () => {
 
   it("never re-enters recovery in a re-exec'd child", () => {
     // Otherwise a vendored runtime that still fails the floor re-execs itself forever.
-    expect(ENTRY).toContain("OPENSHIP_NODE_REEXEC");
+    expect(ENTRY).toContain("KOVALIO_NODE_REEXEC");
     const bootstrap = readFileSync(join(CLI_ROOT, "src/node-bootstrap.ts"), "utf8");
     expect(bootstrap).toContain("NODE_REEXEC_ENV");
   });
@@ -127,16 +127,16 @@ describe("the download prompt", () => {
 });
 
 describe("the published package manifest", () => {
-  it("declares the Node floor, so npm's warning names openship", () => {
+  it("declares the Node floor, so npm's warning names kovalio", () => {
     // Advisory unless the user set engine-strict — but it makes the warning point at
     // the right package instead of at a transitive dependency.
     expect(PKG.engines?.node).toBe(">=22");
   });
 
   it("does not depend on itself", () => {
-    // Shipped in 0.6.0 and 0.6.1: `"openship": "^0.5.0"` landed by accident, so every
+    // Shipped in 0.6.0 and 0.6.1: `"kovalio": "^0.5.0"` landed by accident, so every
     // install unpacked a second, older CLI under
-    // lib/node_modules/openship/node_modules/openship, plus its whole dep tree.
+    // lib/node_modules/kovalio/node_modules/kovalio, plus its whole dep tree.
     expect(Object.keys(PKG.dependencies ?? {})).not.toContain(PKG.name);
   });
 });

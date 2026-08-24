@@ -7,7 +7,7 @@ import {
 } from "../src/runtime/runtime-env";
 
 /**
- * The shared exclude list behind openship#623.
+ * The shared exclude list behind kovalio#623.
  *
  * This helper exists because the original bug WAS one fix landing on some
  * surfaces and not others, so the four runtimes (docker single-app, docker

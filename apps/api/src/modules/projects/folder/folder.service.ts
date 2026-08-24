@@ -30,7 +30,7 @@ import { promisify } from "node:util";
 import { getBuildImage, safeErrorMessage, type StackId } from "@repo/core";
 import { provisionCloudWorkspace } from "@repo/adapters";
 import { env } from "../../../config/env";
-import { getNamespaceClient } from "../../../lib/openship-cloud";
+import { getNamespaceClient } from "../../../lib/kovalio-cloud";
 import { resolveApiPublicUrl } from "../../../lib/public-url";
 import {
   newFolderSessionId,
@@ -90,7 +90,7 @@ export interface UploadTarget {
    * The same target, fully resolved — so a client that doesn't know this API's
    * base URL (MCP, curl) doesn't have to guess one. On the self-hosted relay
    * this is built from the instance's public URL, so it's only as reachable as
-   * that is configured (OPENSHIP_PUBLIC_URL / a verified self-app domain);
+   * that is configured (KOVALIO_PUBLIC_URL / a verified self-app domain);
    * `url` stays the authoritative form for a client that has its own base.
    */
   absoluteUrl: string;
@@ -101,7 +101,7 @@ export interface UploadTarget {
    * relay route is permission-checked like any other (send the same
    * `Authorization: Bearer …` you used to open the session, or the session
    * cookie). False for an external target, which carries its own token in
-   * `headers` and must never see Openship credentials.
+   * `headers` and must never see Kovalio credentials.
    */
   requiresAuth: boolean;
   /** Send the browser's session cookie? true for the same-origin API relay,
@@ -209,7 +209,7 @@ export async function createFolderSession(
   }
 
   // ── Self-hosted: relay upload to a staging dir on this host ──
-  const stagingDir = await mkdtemp(join(tmpdir(), "openship-upload-"));
+  const stagingDir = await mkdtemp(join(tmpdir(), "kovalio-upload-"));
   const uploadTicket = randomBytes(24).toString("base64url");
 
   putFolderSession({

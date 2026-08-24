@@ -44,7 +44,7 @@ export async function prepareInstanceExport(
 
   return {
     file: {
-      kind: "openship-instance-export",
+      kind: "kovalio-instance-export",
       envelopeVersion: 1,
       createdAt: new Date().toISOString(),
       sourceDriver: dump.sourceDriver,

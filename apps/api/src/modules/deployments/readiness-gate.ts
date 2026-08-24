@@ -21,7 +21,7 @@
  */
 
 import { SYSTEM } from "@repo/core";
-import type { OpenshipReadiness, OpenshipReadinessFailureAction } from "@repo/core";
+import type { KovalioReadiness, KovalioReadinessFailureAction } from "@repo/core";
 
 export interface ResolvedReadinessGate {
   /** TCP/HTTP readiness probe against the app's port. */
@@ -40,7 +40,7 @@ export interface ResolvedReadinessGate {
     windowMs: number;
   };
   /** What a failed check does. */
-  onFailure: OpenshipReadinessFailureAction;
+  onFailure: KovalioReadinessFailureAction;
   /** True when at least one check is enabled — i.e. the pipeline needs a gate at all. */
   active: boolean;
 }
@@ -60,7 +60,7 @@ function secondsToMs(seconds: number | undefined, fallbackMs: number): number {
  * outright, rather than invoking a no-op check.
  */
 export function resolveReadinessGate(
-  config: OpenshipReadiness | null | undefined,
+  config: KovalioReadiness | null | undefined,
 ): ResolvedReadinessGate {
   const probeEnabled = config?.enabled === true;
   const stabilizationEnabled = config?.stabilization === true;

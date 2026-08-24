@@ -197,7 +197,7 @@ describe("terminal.controller teardown", () => {
 function fakeUpgradeContext(token: string, serverId: string) {
   const headers: Record<string, string> = {
     origin: trustedOrigins[0]!,
-    "sec-websocket-protocol": `openship.terminal.v1+${token}`,
+    "sec-websocket-protocol": `kovalio.terminal.v1+${token}`,
   };
   return {
     req: {

@@ -1,7 +1,7 @@
 {
   "checking": "DNS sağlayıcınız kontrol ediliyor…",
   "noProviderTitle": "Bu kayıtları otomatik olarak ayarla",
-  "noProviderDesc": "Bir DNS sağlayıcısı bağlayın; Openship bu kayıtları sizin için eklesin.",
+  "noProviderDesc": "Bir DNS sağlayıcısı bağlayın; Kovalio bu kayıtları sizin için eklesin.",
   "connect": "DNS sağlayıcısı bağla",
   "unauthorizedTitle": "DNS sağlayıcısının yeniden bağlanması gerekiyor",
   "unauthorizedDesc": "Kayıtlı belirteciniz reddedildi. DNS'i otomatik yapılandırmak için yeniden bağlayın.",
@@ -19,7 +19,7 @@
   "actionAdopt": "Yeniden yönlendir",
   "actionInSync": "Yerinde",
   "actionConflict": "Çakışma",
-  "conflictNote": "Openship tarafından yönetilmiyor — kaldırın veya bu kaydı elle ayarlayın.",
+  "conflictNote": "Kovalio tarafından yönetilmiyor — kaldırın veya bu kaydı elle ayarlayın.",
   "outcomeApplied": "Uygulandı",
   "outcomeSkipped": "Atlandı",
   "outcomeFailed": "Başarısız",

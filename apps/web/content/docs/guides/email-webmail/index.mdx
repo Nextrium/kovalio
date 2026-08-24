@@ -1,17 +1,17 @@
 ---
 title: Email & webmail
-description: Run your own self-hosted mail server and a webmail app with Openship — provision it, manage domains and mailboxes, and put an inbox in the browser.
+description: Run your own self-hosted mail server and a webmail app with Kovalio — provision it, manage domains and mailboxes, and put an inbox in the browser.
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-Most people rent their email from someone else — Gmail, Outlook, and the like. Openship lets you run the
+Most people rent their email from someone else — Gmail, Outlook, and the like. Kovalio lets you run the
 whole post office yourself: a real mail server on your own machine, with your own domain, that sends and
 receives mail and even gives you a webmail inbox in the browser. Think of it as the difference between renting
 a PO box and owning the building.
 
 You're not limited to one, either. Each mail server runs on its own host (one mail setup per server), and
-Openship keeps them all in a single **Mail servers** list — provision as many as you like and switch between
+Kovalio keeps them all in a single **Mail servers** list — provision as many as you like and switch between
 them from one place. A lone server opens straight into its admin panel; once you have more than one, you land
 on the list first.
 
@@ -20,13 +20,13 @@ go through them. The fiddly bits — the exact DNS records and the reverse-DNS s
 happen, because the wizard walks you through those live.
 
 <Callout title="Self-hosted only" type="warn">
-Email lives entirely in **self-hosted Openship**. The **Emails** item only appears in the sidebar when you're
-running Openship on your own infrastructure — it isn't part of the managed cloud. If you don't see it, you're
+Email lives entirely in **self-hosted Kovalio**. The **Emails** item only appears in the sidebar when you're
+running Kovalio on your own infrastructure — it isn't part of the managed cloud. If you don't see it, you're
 on a hosted plan. See [Installation](/docs/getting-started/installation) to self-host.
 </Callout>
 
 <Callout title="What you need first">
-- Openship running self-hosted, with at least one **connected server** (a clean Ubuntu or Debian machine is
+- Kovalio running self-hosted, with at least one **connected server** (a clean Ubuntu or Debian machine is
   recommended). See [Connect your own server](/docs/guides/custom-servers) if you don't have one yet.
 - A **domain name** you control, where you can edit DNS records.
 - **Port 25 open** for outbound mail — some hosting providers block it by default, so check before you start.
@@ -35,7 +35,7 @@ on a hosted plan. See [Installation](/docs/getting-started/installation) to self
 
 A few words you'll see a lot:
 
-- **Mail server** — the software that actually sends and receives email. Openship installs a well-known stack
+- **Mail server** — the software that actually sends and receives email. Kovalio installs a well-known stack
   (Postfix, Dovecot, and anti-spam tools) for you.
 - **Mailbox** — one email account, like `you@yourdomain.com`, with its own password and inbox.
 - **DNS records** — public settings for your domain that tell the rest of the internet where your mail lives.
@@ -51,7 +51,7 @@ A few words you'll see a lot:
 
 In the sidebar, click **Emails**. With no mail server set up yet, you land straight on the **Mail Server
 Setup** form. If you already run **several** mail servers, you'll see a list of them first — click **Add mail
-server** to start another. (With a single existing server, Openship opens it straight to its admin panel; use
+server** to start another. (With a single existing server, Kovalio opens it straight to its admin panel; use
 the **Add mail server** button there to set up another.)
 
 <Callout title="Screenshot">The **Emails** page showing the "Mail Server Setup" form (server picker, Domain field, Admin Password field). *(screenshot pending)*</Callout>
@@ -62,12 +62,12 @@ the **Add mail server** button there to set up another.)
 
 ### Pick a server and a domain
 
-Choose which of your connected servers the mail stack should run on. If you only have one, Openship picks it
+Choose which of your connected servers the mail stack should run on. If you only have one, Kovalio picks it
 for you.
 
 Then fill in two things:
 
-- **Domain** — your bare domain, like `example.com` (no `https://`, no path). Openship shows you that your
+- **Domain** — your bare domain, like `example.com` (no `https://`, no path). Kovalio shows you that your
   mail server will live at `mail.example.com`.
 - **Admin Password** — the password for the first mailbox, `postmaster@yourdomain`. You'll use it to log in
   after setup. Don't want to think one up? Click **Generate** for a strong random one, then copy it somewhere
@@ -83,7 +83,7 @@ access, port 25 open, a clean server).
 
 ### Press Start Setup and watch it run
 
-Click **Start Setup**. Openship connects to your server and works through the install one step at a time
+Click **Start Setup**. Kovalio connects to your server and works through the install one step at a time
 (system update, mail stack, SSL, and so on), streaming the logs live — like watching the oven through the
 glass door. You don't have to do anything while it runs.
 
@@ -134,15 +134,15 @@ mail providers reject mail from servers whose reverse DNS doesn't match — so t
 
 ### Done
 
-Openship finishes the SSL step and the page flips to the **admin panel**. Your mail server is live. It also
+Kovalio finishes the SSL step and the page flips to the **admin panel**. Your mail server is live. It also
 offers to send a quick welcome test email so you can confirm mail is flowing.
 
 </Step>
 
 </Steps>
 
-<Callout title="Already have a mail server from Openship?" type="info">
-If you set one up before and Openship lost track of it (for example, you moved to a new computer), you don't
+<Callout title="Already have a mail server from Kovalio?" type="info">
+If you set one up before and Kovalio lost track of it (for example, you moved to a new computer), you don't
 have to reinstall. On the setup form, click **Already have a mail server? Adopt it**, pick the server, and
 click **Scan server**. If a mail stack is found, click **Adopt** — it's brought back into the dashboard with
 your mailboxes and data left untouched.
@@ -173,14 +173,14 @@ server. It's organized into tabs:
 <Callout title="Screenshot">The mail admin panel on the Emails page: the tab bar (Overview, Domains, Mailboxes, Aliases, Notifications, Sending, DNS, Health, Backup, Advanced) with the Overview tab open. *(screenshot pending)*</Callout>
 
 <Callout title="Adding a second domain" type="info">
-When you add a domain under the **Domains** tab, Openship generates its DNS records (including a fresh DKIM
+When you add a domain under the **Domains** tab, Kovalio generates its DNS records (including a fresh DKIM
 key). Publish those at your DNS provider — the **DNS** tab shows them and can verify them — before you rely on
 that domain for mail.
 </Callout>
 
 ## Step 3 — Deploy the webmail app
 
-A mail server on its own has no web page — you'd point a mail app at it. Openship can also deploy **Zero**, a
+A mail server on its own has no web page — you'd point a mail app at it. Kovalio can also deploy **Zero**, a
 webmail app, so you (and your users) get an inbox in the browser instead.
 
 <Steps>
@@ -216,7 +216,7 @@ The summary panel on the right restates your target and domain.
 
 ### Press Deploy webmail
 
-Click **Deploy webmail**. Openship creates a project and a deployment for you and drops you on the standard
+Click **Deploy webmail**. Kovalio creates a project and a deployment for you and drops you on the standard
 **build screen**, which streams the logs live — the same screen you'd see [deploying any app](/docs/guides/deploy-from-github).
 When it's done, the Overview card's button changes to **Open webmail**, which opens your inbox in a new tab.
 
@@ -224,7 +224,7 @@ When it's done, the Overview card's button changes to **Open webmail**, which op
 
 </Steps>
 
-<Callout title="Upgrading a webmail from Openship 0.6.1 or earlier" type="warn">
+<Callout title="Upgrading a webmail from Kovalio 0.6.1 or earlier" type="warn">
 Webmail used to ship as a prebuilt bundle instead of an app, and those older installs can't be redeployed —
 they're replaced. The Overview card shows a **Replace webmail** link, and the deploy screen explains what goes
 before the button does anything: the old webmail's project, container and sign-in sessions. Your mailboxes,
@@ -238,22 +238,22 @@ is self-hosted only.
 
 ```bash
 # Start the install on a server for your domain (streams live)
-openship mail setup <serverId> --domain example.com
+kovalio mail setup <serverId> --domain example.com
 
 # When it pauses for DNS: publish the records, then acknowledge and resume
-openship mail dns-ack <serverId>
-openship mail setup <serverId> --domain example.com --start-step <n>
+kovalio mail dns-ack <serverId>
+kovalio mail setup <serverId> --domain example.com --start-step <n>
 
 # When it pauses for reverse DNS: set the PTR, then acknowledge and resume
-openship mail ptr-ack <serverId>
-openship mail setup <serverId> --domain example.com --start-step <n>
+kovalio mail ptr-ack <serverId>
+kovalio mail setup <serverId> --domain example.com --start-step <n>
 
 # Check where things stand at any time
-openship mail status <serverId>
+kovalio mail status <serverId>
 
 # Re-adopt an existing install (after losing the dashboard's record of it)
-openship mail scan <serverId>
-openship mail adopt <serverId>
+kovalio mail scan <serverId>
+kovalio mail adopt <serverId>
 ```
 
 <Callout title="Tip" type="info">
@@ -264,7 +264,7 @@ When the install pauses, the CLI prints the exact `--start-step` number to resum
 ## If something goes wrong
 
 <Callout title="I don't see an “Emails” item in the sidebar" type="warn">
-Email is self-hosted only. It appears when Openship is running on your own infrastructure. On a managed/cloud
+Email is self-hosted only. It appears when Kovalio is running on your own infrastructure. On a managed/cloud
 plan it's hidden on purpose.
 </Callout>
 

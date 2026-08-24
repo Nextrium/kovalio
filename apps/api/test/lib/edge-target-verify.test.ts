@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * The state machine that proves to Openship Cloud that this box controls a routing
+ * The state machine that proves to Kovalio Cloud that this box controls a routing
  * target. Two rules outrank everything else here and are what these tests pin:
  *
  * 1. It is REACTIVE. It only runs after a sync came back `target_unverified`, so a

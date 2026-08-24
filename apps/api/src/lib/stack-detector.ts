@@ -407,7 +407,7 @@ const FRAMEWORK_RULES: FrameworkRule[] = [
  * here in hand, and the two halves of detection then disagree: dependency
  * matching still finds the framework (it reads the text), but command derivation
  * silently degrades to the registry's bare `next build` / `next start`. That
- * combination is openship#623 — a Next app whose `build` script we never saw.
+ * combination is kovalio#623 — a Next app whose `build` script we never saw.
  *
  * Returns undefined only when there is genuinely no readable manifest.
  */

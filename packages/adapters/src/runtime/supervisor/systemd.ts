@@ -9,7 +9,7 @@
  *   - Logs via journalctl (structured, rotated automatically)
  *   - Language-agnostic - any start command works
  *
- * Unit naming: openship-{deploymentId}.service
+ * Unit naming: kovalio-{deploymentId}.service
  * Unit location: /etc/systemd/system/ (standard for admin-created units)
  */
 
@@ -98,7 +98,7 @@ export class SystemdSupervisor implements ProcessSupervisor {
       .join("\n");
 
     return `[Unit]
-Description=Openship deployment ${opts.deploymentId}
+Description=Kovalio deployment ${opts.deploymentId}
 After=network.target
 
 [Service]

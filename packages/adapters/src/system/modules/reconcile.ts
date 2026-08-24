@@ -112,7 +112,7 @@ async function applyStep(
   // exec: write the verified script to a temp path, run with the author's own
   // `set -eu`, propagate the exit code, always clean up.
   const safeId = step.id.replace(/[^A-Za-z0-9._-]/g, "_");
-  const tmp = `/tmp/openship-mig-${opts.module}-${safeId}.sh`;
+  const tmp = `/tmp/kovalio-mig-${opts.module}-${safeId}.sh`;
   const argStr = (step.args ?? []).map(sq).join(" ");
   log(opts, `${opts.dryRun ? "[dry-run] " : ""}exec ${step.asset}${argStr ? ` ${argStr}` : ""}`);
   if (opts.dryRun) return { applied: true, skipped: false };
@@ -247,7 +247,7 @@ export async function reconcileServerModule(
               ok: false,
               error:
                 `step ${step.id} is gated to ${step.distroFamily.join("/")}, but this host's ` +
-                `distro family is not one Openship recognizes ` +
+                `distro family is not one Kovalio recognizes ` +
                 `(${JSON.stringify(String(hostFamily))}, os-release ID ` +
                 `${JSON.stringify(opts.profile.distroId ?? "")}) — refusing to guess`,
             };

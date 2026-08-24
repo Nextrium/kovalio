@@ -77,14 +77,14 @@ describe("resolveServerExecutor — local row with no host channel", () => {
     h.acquire.mockRejectedValue(
       new HostChannelUnavailableError(
         "disabled",
-        "Host control is disabled on this instance (OPENSHIP_HOST_CONTROL=false).",
+        "Host control is disabled on this instance (KOVALIO_HOST_CONTROL=false).",
       ),
     );
     const { executor } = await resolve();
-    await expect(executor.exec("uname -a")).rejects.toThrow(/OPENSHIP_HOST_CONTROL=false/);
+    await expect(executor.exec("uname -a")).rejects.toThrow(/KOVALIO_HOST_CONTROL=false/);
     // Not a silent `false`: an unproven answer that reads as fact is how a blocked
     // channel produced wrong work instead of a visible failure.
-    await expect(executor.exists("/opt/openship")).rejects.toThrow(/Host control is disabled/);
+    await expect(executor.exists("/opt/kovalio")).rejects.toThrow(/Host control is disabled/);
   });
 
   it("still resolves when containerized with no channel provisioned", async () => {
@@ -143,7 +143,7 @@ describe("the demotion leaves a trace", () => {
     h.acquire.mockRejectedValue(
       new HostChannelUnavailableError(
         "not_configured",
-        "no host channel is configured. Re-run `openship up` to provision the host channel.",
+        "no host channel is configured. Re-run `kovalio up` to provision the host channel.",
       ),
     );
     await resolve();
@@ -152,7 +152,7 @@ describe("the demotion leaves a trace", () => {
     // Once — this sits on every deploy AND on read paths (logs, status polls), so a
     // line per resolve would bury the log it is meant to be found in.
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn.mock.calls[0]?.[0]).toContain("openship up");
+    expect(warn.mock.calls[0]?.[0]).toContain("kovalio up");
     expect(warn.mock.calls[0]?.[0]).toContain("not_configured");
     warn.mockRestore();
   });
@@ -177,7 +177,7 @@ describe("hostChannelDeployNotice", () => {
     h.acquire.mockRejectedValue(
       new HostChannelUnavailableError(
         "not_configured",
-        "no host channel is configured. Re-run `openship up` to provision the host channel.",
+        "no host channel is configured. Re-run `kovalio up` to provision the host channel.",
       ),
     );
     const { executor } = await resolve();
@@ -186,7 +186,7 @@ describe("hostChannelDeployNotice", () => {
     // "deploy continues" lines that follow — those name neither the channel nor a fix.
     expect(notice).toContain("port-occupancy");
     expect(notice).toContain("edge/routing");
-    expect(notice).toContain("openship up");
+    expect(notice).toContain("kovalio up");
     // Straight from @repo/core: this is a degraded install, not a broken one, and the
     // deploy in progress is going to succeed.
     expect(notice).toContain("Ordinary deploys to this box still work");

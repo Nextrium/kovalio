@@ -3,7 +3,7 @@
  *
  * GH-568: `siteTitle` and `siteDescription` were accepted by
  * `PATCH /admin/branding`, persisted, and echoed by `/branding.json` - yet the
- * served page still said "OpenShip Mail", because the SPA is prebuilt and both
+ * served page still said "Kovalio Mail", because the SPA is prebuilt and both
  * values are frozen into `client/build/client/index.html`. The fix substitutes
  * them server-side (apps/email/server/src/lib/index-html.ts) rather than in the
  * browser, because the issue also asks for correct OpenGraph tags and
@@ -34,9 +34,9 @@ const HEAD = [
   "<head>",
   '<meta charSet="utf-8"/>',
   '<link rel="manifest" href="/manifest.json"/>',
-  "<title>OpenShip Mail</title>",
+  "<title>Kovalio Mail</title>",
   '<meta name="description" content="Your self-hosted mailbox."/>',
-  '<meta property="og:title" content="OpenShip Mail"/>',
+  '<meta property="og:title" content="Kovalio Mail"/>',
   '<meta property="og:description" content="Your self-hosted mailbox."/>',
   '<meta property="og:image" content="/og.png"/>',
   "</head>",
@@ -71,7 +71,7 @@ describe("webmail branding head (GH-568)", () => {
     expect(html).toContain('<meta property="og:title" content="Contribute Club eMail"/>');
     expect(html).toContain('<meta property="og:description" content="Mail Server for CC"/>');
     // The default must be gone, not merely accompanied.
-    expect(html).not.toContain("OpenShip Mail");
+    expect(html).not.toContain("Kovalio Mail");
     expect(html).not.toContain("Your self-hosted mailbox.");
   });
 
@@ -125,7 +125,7 @@ describe("webmail branding head (GH-568)", () => {
  * The half that makes the fix stick. Substituting the head is not enough on its
  * own: the SPA hydrates the whole document, so if the client's first render
  * disagrees with the server, React rewrites <title> and appends duplicate metas
- * - the tab reverted to "OpenShip Mail" moments after load. The server
+ * - the tab reverted to "Kovalio Mail" moments after load. The server
  * therefore embeds what it rendered and the client reads it back.
  */
 describe("webmail branding hydration agreement (GH-568)", () => {

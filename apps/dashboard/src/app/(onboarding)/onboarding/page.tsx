@@ -84,7 +84,7 @@ function OnboardingInner() {
       <div className="ob-top-bar">
         <div className="ob-logo">
           <div className="ob-logo-circle" aria-hidden="true" />
-          <span className="ob-logo-text">Openship</span>
+          <span className="ob-logo-text">Kovalio</span>
         </div>
         <div className="ob-top-bar-links">
           <button
@@ -129,10 +129,10 @@ function OnboardingInner() {
               </>
             )}
           </div>
-          <a className="ob-top-bar-link" href="https://openship.io" target="_blank" rel="noopener noreferrer" title={t.onboarding.topBar.website}>
+          <a className="ob-top-bar-link" href="https://nextrium.org" target="_blank" rel="noopener noreferrer" title={t.onboarding.topBar.website}>
             <GlobeIcon />
           </a>
-          <a className="ob-top-bar-link" href="https://github.com/oblien/openship" target="_blank" rel="noopener noreferrer" title={t.onboarding.topBar.github}>
+          <a className="ob-top-bar-link" href="https://github.com/Nextrium/kovalio" target="_blank" rel="noopener noreferrer" title={t.onboarding.topBar.github}>
             <GitHubIcon />
           </a>
         </div>

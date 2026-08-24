@@ -135,7 +135,7 @@ export async function setStoredDeviceToken(
 /**
  * How the instance's git identity was established, for labelling and for the
  * consent decision. "host-cli" = probed off the host's own `gh` login (nothing
- * the operator did inside Openship); "device"/"token" = they connected it here.
+ * the operator did inside Kovalio); "device"/"token" = they connected it here.
  */
 export type GitIdentityMethod = "host-cli" | "device" | "token";
 
@@ -504,7 +504,7 @@ interface DeviceFlowState {
 const activeFlows = new Map<string, DeviceFlowState>();
 
 /**
- * Openship's own OAuth app client id for the device flow — the shipped default
+ * Kovalio's own OAuth app client id for the device flow — the shipped default
  * so a fresh self-hosted instance can sign in to GitHub from the UI with NO
  * setup: no app registration, no cloud account, no SSH into the box.
  *
@@ -533,7 +533,7 @@ const DEVICE_FLOW_CLIENT_ID = "";
  *      my users" must not silently decide which app the device flow authorizes
  *      under — and an app without "Enable Device Flow" ticked fails here with
  *      GitHub's opaque error while an explicit override sat ignored.
- *   3. Openship's shipped id.
+ *   3. Kovalio's shipped id.
  *
  * SaaS never reaches this: `deviceFlowAvailable()` returns false under CLOUD_MODE
  * and `runDeviceFlow` throws there before touching any of it, so the platform's

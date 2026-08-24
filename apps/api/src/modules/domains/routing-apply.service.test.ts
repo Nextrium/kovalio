@@ -390,7 +390,7 @@ describe("applyProjectRouting — static frontend composite", () => {
     domainType: null,
     publicEndpoints: null,
   };
-  const RELEASE_DIR = "/opt/openship/static/releases/dep_1-web";
+  const RELEASE_DIR = "/opt/kovalio/static/releases/dep_1-web";
 
   /** The static frontend owns no container — only the promoted release directory. */
   function rows(webImageRef: string | null) {
@@ -409,7 +409,7 @@ describe("applyProjectRouting — static frontend composite", () => {
         serviceId: "svc_api",
         deploymentId: "dep_1",
         containerId: "container_api",
-        imageRef: "openship/api:bld_1",
+        imageRef: "kovalio/api:bld_1",
         ip: "172.19.0.5",
         hostPort: null,
       },
@@ -456,8 +456,8 @@ describe("applyProjectRouting — static frontend composite", () => {
 
   it("ignores an image tag in the same column", async () => {
     // `image_ref` is polymorphic: a containerized service's tag lives there too, and
-    // handing `openship/web:bld_1` to nginx as a `root` would emit a broken vhost.
-    rows("openship/web:bld_1");
+    // handing `kovalio/web:bld_1` to nginx as a `root` would emit a broken vhost.
+    rows("kovalio/web:bld_1");
 
     await applyProjectRouting("proj_1");
 
@@ -493,7 +493,7 @@ describe("applyProjectRouting — static frontend composite", () => {
         serviceId: "svc_api",
         deploymentId: "dep_1",
         containerId: "container_api",
-        imageRef: "openship/api:bld_1",
+        imageRef: "kovalio/api:bld_1",
         ip: null,
         hostPort: null,
       },

@@ -1,5 +1,5 @@
 /**
- * `openship deploy` — deploy the current project.
+ * `kovalio deploy` — deploy the current project.
  *
  * Two paths, auto-selected by whether the cwd is a git repository:
  *   - Git repo  → POST /api/deployments (git-source build of the linked project).
@@ -37,7 +37,7 @@ interface CreateResponse {
 
 export const deployCommand = new Command("deploy")
   .description("Trigger a deployment for the current project")
-  .option("--project <id>", "Project ID (defaults to the linked project in .openship/project.json)")
+  .option("--project <id>", "Project ID (defaults to the linked project in .kovalio/project.json)")
   .option("--branch <name>", "Git branch to deploy (defaults to the current branch)")
   .option("--commit <sha>", "Specific commit SHA (defaults to the latest commit on the branch)")
   .option("--env <environment>", "Target environment: production | preview", "production")
@@ -94,10 +94,10 @@ export const deployCommand = new Command("deploy")
         spinner?.succeed(deploymentId ? `Deployment queued: ${deploymentId}` : "Deployment queued");
         // AFTER the spinner resolves, or these lines land mid-spinner-frame. The
         // deploy already went ahead on whatever parsed (#641) — this only says
-        // which parts of openship.json didn't apply. The server strips control
+        // which parts of kovalio.json didn't apply. The server strips control
         // characters from these strings, so they cannot repaint the line.
         if (result.configDiagnostics?.wholeFile) {
-          err("  ✗ openship.json was ignored entirely — deployed with detected settings:");
+          err("  ✗ kovalio.json was ignored entirely — deployed with detected settings:");
         }
         for (const e of result.configDiagnostics?.errors ?? []) err(`    • ${e}`);
         for (const w of result.configDiagnostics?.warnings ?? []) info(`    ⚠ ${w}`);
@@ -109,7 +109,7 @@ export const deployCommand = new Command("deploy")
     } else {
       const projectId: string | undefined = opts.project || link?.projectId;
       if (!projectId) {
-        err("No project specified. Pass --project <id> or run `openship init` to link one.");
+        err("No project specified. Pass --project <id> or run `kovalio init` to link one.");
         process.exit(1);
       }
 
@@ -156,7 +156,7 @@ export const deployCommand = new Command("deploy")
     }
 
     if (!opts.watch) {
-      info(`Follow with: openship logs ${deploymentId} --follow`);
+      info(`Follow with: kovalio logs ${deploymentId} --follow`);
       return;
     }
 

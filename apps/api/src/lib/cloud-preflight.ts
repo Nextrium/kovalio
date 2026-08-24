@@ -1,5 +1,5 @@
 import { createPlatform, type CloudRuntime } from "@repo/adapters";
-import { getOblienClient, getNamespaceClient, issueNamespaceToken } from "./openship-cloud";
+import { getOblienClient, getNamespaceClient, issueNamespaceToken } from "./kovalio-cloud";
 import { getRoutingBaseDomain } from "./routing-domains";
 import { safeErrorMessage } from "@repo/core";
 

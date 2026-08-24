@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The mail console — the whole of /emails, and Openship Mail's home page.
+ * The mail console — the whole of /emails, and Kovalio Mail's home page.
  *
  * It lives here rather than inside a `page.tsx` because two routes render it:
  * /emails on the full platform, and `/` in mail view, where the platform
@@ -302,7 +302,7 @@ function MailConsoleInner() {
     try {
       const { servers } = await mailApi.listMailServers();
       setMailServers(servers);
-      // In Openship Mail view the sidebar is built from this same registry, so
+      // In Kovalio Mail view the sidebar is built from this same registry, so
       // tell it when the set changed — an install completing has to expand the
       // rail from "Set up mail" to the tabs in place, or it reads as a failure.
       const sig = registrySignature(servers);
@@ -658,7 +658,7 @@ function MailConsoleInner() {
   }, []);
 
   /**
-   * Wipe `/root/.openship-mail-state.json` on the target server, then refetch
+   * Wipe `/root/.kovalio-mail-state.json` on the target server, then refetch
    * status. The local working state (logs, errors, resume hints) is cleared
    * here too so the page goes back to a "no install" view immediately.
    *
@@ -670,7 +670,7 @@ function MailConsoleInner() {
    *   2. Tell the backend to cancel any active session (releases the
    *      in-memory `active` flag - otherwise the reset endpoint returns
    *      409 and the wipe never happens)
-   *   3. Wipe `/root/.openship-mail-state.json` on the target VPS
+   *   3. Wipe `/root/.kovalio-mail-state.json` on the target VPS
    *   4. Clear every piece of frontend state that touches install UI
    *   5. Refetch /mail/status to confirm - server should return the
    *      empty shell, overwriting anything we missed locally
@@ -865,7 +865,7 @@ function MailConsoleInner() {
   const showSetupForm = view === "setup";
   const showProgress = view === "progress";
 
-  // Openship Mail: the rail names the section, so the page header does too —
+  // Kovalio Mail: the rail names the section, so the page header does too —
   // "Domains", not "Email Server" over a second "Domains" heading inside the tab
   // (which is where that heading used to live; see _lib/mail-section). Overview
   // keeps "Email Server": it's the server's front page.

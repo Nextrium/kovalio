@@ -1,8 +1,8 @@
 /**
  * ONE resolver for a prebuilt release/dist directory, generalizing the two
- * near-identical copies that used to live in migration/openship-dist.ts and the
+ * near-identical copies that used to live in migration/kovalio-dist.ts and the
  * retired webmail dist shipper. A release-source project (or the
- * openship-instance app) deploys the directory this returns as `localPath` with
+ * kovalio-instance app) deploys the directory this returns as `localPath` with
  * no build.
  *
  * Three-slot resolution (unchanged from the originals):
@@ -40,7 +40,7 @@ const API_ROOT = resolve(__dirname, "../..");
 /**
  * Resolve a path relative to apps/api/. Consumers use this for their
  * slot-2 repo-local dev dist anchor instead of re-deriving __dirname:
- *   openship → apiRootPath("release-dist")
+ *   kovalio → apiRootPath("release-dist")
  *   webmail  → apiRootPath("..", "email", "dist")
  */
 export function apiRootPath(...segments: string[]): string {
@@ -48,7 +48,7 @@ export function apiRootPath(...segments: string[]): string {
 }
 
 /**
- * The API's own version (mono-version default for openship/webmail dists).
+ * The API's own version (mono-version default for kovalio/webmail dists).
  *
  * Returns the version EMBEDDED at build time — never package.json off disk. The
  * desktop ships the API as a `bun build --compile` binary where
@@ -65,7 +65,7 @@ export function readApiVersion(): string {
 }
 
 function computeDataDir(): string {
-  return process.env.OPENSHIP_DATA_DIR ?? join(homedir(), ".openship");
+  return process.env.KOVALIO_DATA_DIR ?? join(homedir(), ".kovalio");
 }
 
 export class ReleaseDistMissingError extends Error {
@@ -85,18 +85,18 @@ export class ReleaseDistMissingError extends Error {
 }
 
 export interface ReleaseDistSpec {
-  /** Cache subdir + error text, e.g. "openship" | "email" | project slug. */
+  /** Cache subdir + error text, e.g. "kovalio" | "email" | project slug. */
   name: string;
   /** Semver (leading "v" tolerated). */
   version: string;
   source: ReleaseSource;
-  /** Slot-1 env var name (e.g. "OPENSHIP_RELEASE_DIST_PATH"). */
+  /** Slot-1 env var name (e.g. "KOVALIO_RELEASE_DIST_PATH"). */
   envOverride?: string;
   /** Subdir joined under the env-override dir (webmail joins "dist"). */
   envOverrideSubdir?: string;
   /** Slot-2 absolute repo-local dev dist path. */
   repoLocalPath?: string;
-  /** Slot-3 cache root (default OPENSHIP_DATA_DIR ?? ~/.openship). */
+  /** Slot-3 cache root (default KOVALIO_DATA_DIR ?? ~/.kovalio). */
   dataDir?: string;
 }
 
@@ -224,7 +224,7 @@ export async function fetchLatestRelease(repo: string): Promise<GithubReleasePay
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 10_000);
     const res = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
-      headers: { Accept: "application/vnd.github+json", "User-Agent": "openship" },
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "kovalio" },
       signal: ctl.signal,
     }).finally(() => clearTimeout(timer));
     if (!res.ok) return null;
@@ -268,7 +268,7 @@ export async function resolveLatestReleaseVersion(
 /**
  * Resolve the version a deployment should ship. Explicit webhook/manual input
  * wins, then a configured pin, then the latest upstream release. An unavailable
- * arbitrary upstream never silently borrows Openship's own API version.
+ * arbitrary upstream never silently borrows Kovalio's own API version.
  */
 export async function resolveReleaseVersion(
   source: ReleaseSource,
@@ -293,7 +293,7 @@ async function fetchVersionFromUrl(url: string): Promise<ResolvedReleaseVersion 
     // IP, and repeats that validation for every redirect. Self-hosted installs
     // may intentionally use a LAN release feed; multi-tenant cloud never may.
     const res = await safeFetch(url, {
-      headers: { "User-Agent": "openship" },
+      headers: { "User-Agent": "kovalio" },
       timeoutMs: 10_000,
       maxRedirects: 5,
       maxBodyBytes: 8192,

@@ -1,6 +1,6 @@
 -- User-chosen internal DNS alias for a single-app native project.
 --
--- Single-app containers now join their own `openship-<slug>` network with a
+-- Single-app containers now join their own `kovalio-<slug>` network with a
 -- stable default alias (`<slug>`), the same east-west reachability compose
 -- services already have. This column lets an operator add a custom hostname
 -- that resolves ALONGSIDE the default (both point at the container) — it never

@@ -1,6 +1,6 @@
 /**
  * The cloud client facade — the single typed surface the rest of the app uses
- * to talk to api.openship.io. Construction takes the scope (userId or
+ * to talk to api.nextrium.org. Construction takes the scope (userId or
  * organizationId) once; every method dispatches through the matching transport
  * primitive (cloudFetch vs cloudFetchAsOrgOwner) based on that scope:
  *
@@ -48,7 +48,7 @@ export function cloudClient(scope: CloudClientScope): CloudClient {
       : cloudFetchAsOrgOwner(scope.organizationId, path, init);
 
   /** Resolve the underlying cloud-linked user id for cache keys. Returns
-   *  null when org scope is used and no member has linked Openship Cloud. */
+   *  null when org scope is used and no member has linked Kovalio Cloud. */
   const resolveUserId = async (): Promise<string | null> => {
     if (isUserScope) return scope.userId;
     return resolveOrgCloudUserId(scope.organizationId);
@@ -79,7 +79,7 @@ export function cloudClient(scope: CloudClientScope): CloudClient {
       ...(opts.body !== undefined ? { body: JSON.stringify(opts.body) } : {}),
     });
     if (!res) {
-      return { ok: false, error: "Not connected to Openship Cloud" };
+      return { ok: false, error: "Not connected to Kovalio Cloud" };
     }
     if (!res.ok) {
       const err = await readCloudJson<{
@@ -155,7 +155,7 @@ export function cloudClient(scope: CloudClientScope): CloudClient {
         });
         if (!res) {
           throw new Error(
-            "Not connected to Openship Cloud — connect your account in Settings.",
+            "Not connected to Kovalio Cloud — connect your account in Settings.",
           );
         }
         if (!res.ok) {
@@ -179,7 +179,7 @@ export function cloudClient(scope: CloudClientScope): CloudClient {
         });
         if (!res) {
           throw new Error(
-            "Not connected to Openship Cloud — connect your account in Settings.",
+            "Not connected to Kovalio Cloud — connect your account in Settings.",
           );
         }
         if (!res.ok) {
@@ -196,7 +196,7 @@ export function cloudClient(scope: CloudClientScope): CloudClient {
         });
         if (!res) {
           throw new Error(
-            "Not connected to Openship Cloud — connect your account in Settings.",
+            "Not connected to Kovalio Cloud — connect your account in Settings.",
           );
         }
         if (!res.ok) {
@@ -213,7 +213,7 @@ export function cloudClient(scope: CloudClientScope): CloudClient {
         });
         if (!res) {
           throw new Error(
-            "Not connected to Openship Cloud — connect your account in Settings.",
+            "Not connected to Kovalio Cloud — connect your account in Settings.",
           );
         }
         if (!res.ok) {
@@ -415,7 +415,7 @@ export function cloudClient(scope: CloudClientScope): CloudClient {
 
 /**
  * Org-scoped cloud-token lookup. Returns the owner's cloud token — only the
- * owner can link Openship Cloud, and their connection is the org's cloud
+ * owner can link Kovalio Cloud, and their connection is the org's cloud
  * identity for every member to use under the hood.
  */
 export async function getOrgCloudToken(

@@ -10,7 +10,7 @@
  *
  * The copy says WHY it is off, which matters here in a way it doesn't for an ordinary empty
  * state: this is the only analytics dimension that is opt-in, and without the reason an
- * operator reasonably reads it as something Openship forgot to turn on.
+ * operator reasonably reads it as something Kovalio forgot to turn on.
  */
 
 import { TrendingUp, Zap } from "lucide-react";

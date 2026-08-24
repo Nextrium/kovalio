@@ -59,7 +59,7 @@ export interface BillingState {
    */
   overQuota: boolean;
   /**
-   * Total build time this period, in minutes. Openship-derived (sum of
+   * Total build time this period, in minutes. Kovalio-derived (sum of
    * build-session durations) — Oblien does not meter build separately.
    */
   buildTimeMinutes: number;
@@ -99,7 +99,7 @@ export interface BillingState {
    */
   buildMinutesResetAt: Date;
   /**
-   * MASTER billing-feature availability, decided by Openship Cloud and driven
+   * MASTER billing-feature availability, decided by Kovalio Cloud and driven
    * by `BILLING_ENABLED`. Every mode reads this (SaaS builds it; self-hosted +
    * local forward it verbatim through the billing proxy) so the dashboard knows
    * whether billing is live or "coming soon". Stripe-mutating endpoints enforce

@@ -1,4 +1,4 @@
-# Contributing to Openship
+# Contributing to Kovalio
 
 Thanks for your interest in contributing! This guide covers everything you need to get started.
 
@@ -65,8 +65,8 @@ A focused, verified, well-explained PR — AI-assisted or not — is exactly wha
 ## Development Setup
 
 ```bash
-git clone https://github.com/oblien/openship.git
-cd openship
+git clone https://github.com/Nextrium/kovalio.git
+cd kovalio
 bun install --frozen-lockfile
 cp apps/api/.env.example apps/api/.env
 cp apps/dashboard/.env.example apps/dashboard/.env
@@ -100,7 +100,7 @@ the dashboard, and the web app; its web app is exposed at `http://localhost:3000
 ```
 apps/
   api/            → Hono API engine (port 4000)
-  cli/            → CLI tool (`openship deploy`)
+  cli/            → CLI tool (`kovalio deploy`)
   dashboard/      → Next.js deployment dashboard (port 3001)
   desktop/        → Electron desktop app and local service launcher
   email/          → Email engine and Zero server/client orchestrator
@@ -166,7 +166,7 @@ The one-click **Apps** catalog is data, not code — adding one is a small pull 
 single JSON file. No TypeScript required.
 
 1. Write `packages/core/src/apps/catalog/<id>.json` (start it with
-   `"$schema": "https://openship.io/app.schema.json"` for editor autocomplete)
+   `"$schema": "https://nextrium.org/app.schema.json"` for editor autocomplete)
 2. Regenerate the merged artifact and validate:
 
 ```bash
@@ -180,8 +180,8 @@ bunx vitest run src/apps/catalog.test.ts    # shape + referential validation for
 Apps must be open-source, use an official image **pinned** to a version, and auto-generate any
 credentials. Full walkthrough and field reference:
 
-- **[Add an app](https://openship.io/docs/guides/add-an-app)** — builds a real two-service app step by step
-- **[App catalog JSON](https://openship.io/docs/reference/app-catalog)** — every field
+- **[Add an app](https://nextrium.org/docs/guides/add-an-app)** — builds a real two-service app step by step
+- **[App catalog JSON](https://nextrium.org/docs/reference/app-catalog)** — every field
 
 ## Database
 

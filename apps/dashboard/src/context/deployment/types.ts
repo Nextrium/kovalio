@@ -1,7 +1,7 @@
 import type { Terminal } from "@xterm/xterm";
 import type { FrameworkId, EnvironmentVariable } from "@/components/import-project/types";
 import type { PrepareComposeService, PrepareSingleAppCandidate } from "@/lib/api/deploy";
-import { getBuildImage, STACKS, resolveWorkload, type WorkloadType, type ProjectType, type BuildStrategy, type DeployTarget, type RuntimeMode, type StackId, type RoutingConfig, type OpenshipReadiness, type ResourceTier as CoreResourceTier } from "@repo/core";
+import { getBuildImage, STACKS, resolveWorkload, type WorkloadType, type ProjectType, type BuildStrategy, type DeployTarget, type RuntimeMode, type StackId, type RoutingConfig, type KovalioReadiness, type ResourceTier as CoreResourceTier } from "@repo/core";
 import type { BuildLog } from "@/utils/deploymentPhaseDetector";
 import type { BuildSessionLoadResult } from "./load-session";
 import { randomUUID } from "@/lib/random-uuid";
@@ -11,7 +11,7 @@ import { randomUUID } from "@/lib/random-uuid";
 /**
  * One deployable sub-app inside a monorepo. Mirrors the single-app form fields
  * (rootDirectory, install/build/start commands, port) plus per-app routing/env
- * scoping. Multiple of these live under one openship project, all sharing the
+ * scoping. Multiple of these live under one kovalio project, all sharing the
  * monorepoWorkspace install at the repo root.
  */
 export interface MonorepoAppConfig {
@@ -305,7 +305,7 @@ export interface DeploymentModeSnapshots {
 }
 
 /**
- * Resource tier IDs for Openship Cloud deploys — DERIVED from the one tier union
+ * Resource tier IDs for Kovalio Cloud deploys — DERIVED from the one tier union
  * in @repo/core, which the backend provisioner reads too. `unlimited` is excluded
  * because a metered cloud workspace must be provisioned at a concrete size.
  * The picker's display specs come from the same core table (see
@@ -411,19 +411,19 @@ export interface DeploymentConfig {
   routingConfig?: RoutingConfig | null;
   /**
    * Deploy-time readiness gate, set in the wizard's collapsed Health section and
-   * seeded by the repo's `openship.json`. Undefined/null = OFF, which is the
+   * seeded by the repo's `kovalio.json`. Undefined/null = OFF, which is the
    * default: the deploy reports ready as soon as the workload is up and routed,
    * and nothing post-start can delay or veto it.
    */
-  readiness?: OpenshipReadiness | null;
+  readiness?: KovalioReadiness | null;
   /**
-   * What the scan's openship.json parse refused (#641). NOT a user setting — it's
+   * What the scan's kovalio.json parse refused (#641). NOT a user setting — it's
    * a fresh observation of the repo, so it is never hydrated from the saved
    * project and never sent back on save.
    */
   configDiagnostics?: { errors: string[]; warnings: string[]; wholeFile?: true };
   /**
-   * Resource tier picked for Openship Cloud deploys. Self-hosted servers
+   * Resource tier picked for Kovalio Cloud deploys. Self-hosted servers
    * inherit the host's capacity, so this field is meaningless for them
    * — kept on the config (not nested under cloud) because operators
    * sometimes preview the cost before picking the target. The backend

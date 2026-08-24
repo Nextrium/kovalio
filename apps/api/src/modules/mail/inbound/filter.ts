@@ -44,7 +44,7 @@ export type DropReason =
   | "auto-submitted"
   | "bulk-precedence"
   | "mailing-list"
-  | "openship-sender"
+  | "kovalio-sender"
   | "spam-flagged";
 
 export interface FilterDecision {
@@ -135,13 +135,13 @@ export function bareAddress(value: string | undefined): string | undefined {
  * notification delivered to an address on the watched engine re-captures itself and the
  * loop only stops when someone notices — so these are not tuning knobs.
  *
- * `openshipSenders` are the addresses this instance sends its own mail FROM (the platform
+ * `kovalioSenders` are the addresses this instance sends its own mail FROM (the platform
  * mailbox, and whatever Settings→Email is configured with). They are passed in rather
  * than derived so this stays pure.
  */
 export function loopGuard(
   h: ParsedHeaders,
-  opts: { openshipSenders?: readonly string[] } = {},
+  opts: { kovalioSenders?: readonly string[] } = {},
 ): FilterDecision {
   // A null envelope sender is a BOUNCE. Notifying on bounces is how a bounce storm
   // becomes an alert storm, and the reply-to-a-bounce case is a classic mail loop.
@@ -160,9 +160,9 @@ export function loopGuard(
   // `List-Id` marks list traffic, which is the highest-volume way to flood a channel.
   if (h.listId) return { drop: true, reason: "mailing-list" };
 
-  const senders = opts.openshipSenders ?? [];
+  const senders = opts.kovalioSenders ?? [];
   if (h.fromAddress && senders.some((s) => s.toLowerCase() === h.fromAddress)) {
-    return { drop: true, reason: "openship-sender" };
+    return { drop: true, reason: "kovalio-sender" };
   }
   return { drop: false };
 }

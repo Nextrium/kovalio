@@ -155,11 +155,11 @@ describe("remote-journal base dir", () => {
 
     expect(r.code).toBe(0);
     // The exact call that raised EACCES on a non-root host.
-    expect(writes).toEqual(["/home/deploy/.openship/bin/opsh-run.tmp"]);
+    expect(writes).toEqual(["/home/deploy/.kovalio/bin/opsh-run.tmp"]);
     expect(writes.some((p) => p.startsWith("/root/"))).toBe(false);
     // And the op itself journals to the same base — a split would break the harvest.
-    expect(commands.some((c) => c.includes("/home/deploy/.openship/bin/opsh-run"))).toBe(true);
-    expect(commands.some((c) => c.includes("/root/.openship"))).toBe(false);
+    expect(commands.some((c) => c.includes("/home/deploy/.kovalio/bin/opsh-run"))).toBe(true);
+    expect(commands.some((c) => c.includes("/root/.kovalio"))).toBe(false);
   });
 
   it("still resolves /root for a root login, so nothing moves on a working host", async () => {
@@ -201,7 +201,7 @@ describe("remote-journal base dir", () => {
     expect(r.code).toBe(0);
     expect(drops).toHaveLength(1);
     // Re-probed on the retry, so the base dir is the host's real answer.
-    expect(writes).toEqual(["/home/deploy/.openship/bin/opsh-run.tmp"]);
+    expect(writes).toEqual(["/home/deploy/.kovalio/bin/opsh-run.tmp"]);
   });
 
   it("still absorbs a command-level probe failure without reporting a drop", async () => {

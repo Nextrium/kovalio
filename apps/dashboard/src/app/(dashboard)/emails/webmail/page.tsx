@@ -15,7 +15,7 @@
  *   project exists                             → /projects/<id>   (the projects UI)
  *   no project                                 → install offer    (→ /deploy/mail)
  *
- * "Installed on the box but no project row" (adopted server, rebuilt openship DB)
+ * "Installed on the box but no project row" (adopted server, rebuilt kovalio DB)
  * is NOT a fourth state: there is nothing here to manage, so it lands on the same
  * install offer — deploying stands up the catalog app on its own volume, and the
  * mail server's link is re-stamped to it. The dead-end card that used to render

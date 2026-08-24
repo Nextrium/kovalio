@@ -23,9 +23,9 @@ import { compareSemver } from "../updates/semver";
 export const MAX_SUPPORTED_SCHEMA = 1;
 
 /**
- * Is a template's `minEngine` satisfied by this instance's Openship version?
+ * Is a template's `minEngine` satisfied by this instance's Kovalio version?
  * No `minEngine` (or no known engine) ⇒ always ok. Shared by the catalog
- * resolver + the install gate so "needs a newer Openship" is decided one way.
+ * resolver + the install gate so "needs a newer Kovalio" is decided one way.
  */
 export function templateEngineOk(
   minEngine: string | undefined,
@@ -324,7 +324,7 @@ export const appTemplateSchema = z.object({
   // How the app is hosted, for an honest catalog badge + wizard notice. Absent ⇒
   // "self-hosted" (the default: runs on the user's own server). "experimental" =
   // self-host that runs but isn't production-grade (heavy/unsupported). Purely
-  // presentational; additive. Every catalog app is something Openship runs.
+  // presentational; additive. Every catalog app is something Kovalio runs.
   hosting: z.enum(["self-hosted", "experimental"]).optional(),
   // Versioning / compat gate (see parseAppTemplate).
   schemaVersion: z.number().optional(),
@@ -424,7 +424,7 @@ export type AppTemplateRejection =
  * Full ingest decision for one catalog entry: shape + schemaVersion + minEngine.
  * Returns `{ ok: true }` (the CALLER keeps the raw object, so forward-added
  * fields survive) or a typed rejection. `engineVersion` is this instance's
- * Openship version; omit to skip the engine gate (e.g. in pure-shape tests).
+ * Kovalio version; omit to skip the engine gate (e.g. in pure-shape tests).
  */
 export function parseAppTemplate(
   raw: unknown,

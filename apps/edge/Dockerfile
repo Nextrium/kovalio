@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# ─── openship-edge ──────────────────────────────────────────────────────────
+# ─── kovalio-edge ──────────────────────────────────────────────────────────
 # The routing/TLS edge, run as a CONTAINER on :80/:443 (network_mode: host)
 # instead of bare OpenResty on the host. Cleaner than apt-installing OpenResty +
 # certbot on the box: the edge ships as an image.
@@ -10,7 +10,7 @@
 # `docker exec`. Three dirs are SHARED VOLUMES (api writes, edge reads):
 #   • /usr/local/openresty/nginx/conf/sites-enabled  — managed vhosts
 #   • /etc/letsencrypt                                — issued certs
-# nginx.conf + the openship Lua are BAKED here (complete, no runtime edits), so
+# nginx.conf + the kovalio Lua are BAKED here (complete, no runtime edits), so
 # the api never installs OpenResty or Lua in docker mode.
 # ─────────────────────────────────────────────────────────────────────────────
 FROM openresty/openresty:1.27.1.1-alpine
@@ -35,10 +35,10 @@ FROM openresty/openresty:1.27.1.1-alpine
 #           has been silently dark on every containerized edge.
 RUN apk add --no-cache certbot procps curl openssl libmaxminddb
 
-# Openship Lua (rules engine + analytics + logging + webhook) plus the vendored
+# Kovalio Lua (rules engine + analytics + logging + webhook) plus the vendored
 # maxminddb FFI binding. Baked in at the path lua_package_path resolves
-# (`require "openship.rules_lib"`, `require "openship.maxminddb"` etc.).
-COPY packages/adapters/src/infra/lua/ /usr/local/openresty/site/lualib/openship/
+# (`require "kovalio.rules_lib"`, `require "kovalio.maxminddb"` etc.).
+COPY packages/adapters/src/infra/lua/ /usr/local/openresty/site/lualib/kovalio/
 
 # GeoLite2-Country, from the copy we already vendor and already treat as the
 # source of truth for the API's own lookups (apps/api/assets/geoip/README.md:
@@ -80,12 +80,12 @@ RUN mkdir -p /usr/local/openresty/nginx/conf/sites-enabled /var/www/acme /etc/le
 # The path is generated into nginx.conf from edgeDefaultCertPaths() in
 # packages/adapters/src/infra/openresty-lua.ts — a test asserts this file still
 # agrees with it.
-RUN mkdir -p /usr/local/openresty/nginx/conf/openship-default-cert && \
+RUN mkdir -p /usr/local/openresty/nginx/conf/kovalio-default-cert && \
     openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -days 3650 \
-      -subj /CN=openship-edge-default \
-      -keyout /usr/local/openresty/nginx/conf/openship-default-cert/privkey.pem \
-      -out /usr/local/openresty/nginx/conf/openship-default-cert/fullchain.pem && \
-    chmod 600 /usr/local/openresty/nginx/conf/openship-default-cert/privkey.pem
+      -subj /CN=kovalio-edge-default \
+      -keyout /usr/local/openresty/nginx/conf/kovalio-default-cert/privkey.pem \
+      -out /usr/local/openresty/nginx/conf/kovalio-default-cert/fullchain.pem && \
+    chmod 600 /usr/local/openresty/nginx/conf/kovalio-default-cert/privkey.pem
 
 # Fail the BUILD on a config the edge could not boot with, rather than shipping it.
 # The catch-all's not-found page is a ~1.6 KB HTML body inlined in a `return`

@@ -74,7 +74,7 @@ export const RoutingUnsyncedCallout = () => {
       // The SERVER's reason when it has one, and only then the generic line.
       //
       // The generic line describes exactly one cause — a free `.opsh.io` URL that didn't route
-      // through Openship Cloud's edge — and it was shown for every cause. On a self-hosted
+      // through Kovalio Cloud's edge — and it was shown for every cause. On a self-hosted
       // project with custom domains waiting for certificates it was simply false, and it sent
       // the operator to a cloud they don't use instead of to DNS + Verify, which is what the
       // server had already worked out and written down.

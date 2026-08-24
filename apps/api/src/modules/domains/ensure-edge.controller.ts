@@ -224,7 +224,7 @@ export async function ensureEdgeStream(c: Context) {
         await recoverInterruptedTakeover(executor, onLog).catch(() => {});
         // Stage-B APPLY, ahead of the installer: build the edge from our source on
         // the control plane and ship it to this box, so the create path below adopts
-        // the dev image instead of pulling `ghcr.io/oblien/openship-edge:<version>`
+        // the dev image instead of pulling `ghcr.io/oblien/kovalio-edge:<version>`
         // (the reported bug). No-op in prod — no checkout → deliver returns at once.
         await deliverManagedImage({
           kind: "edge",
@@ -248,7 +248,7 @@ export async function ensureEdgeStream(c: Context) {
       });
 
       appendEdgeLog(session.id, "Edge ready — applying routes…");
-      // Prepare the box to answer Openship Cloud's target check while we're already
+      // Prepare the box to answer Kovalio Cloud's target check while we're already
       // here. Doing it at edge-setup (not when a free domain is added) is what makes
       // a later free domain work without a redeploy — and it can't be deferred to the
       // baked image's catch-all, which never reaches an edge on an older image.

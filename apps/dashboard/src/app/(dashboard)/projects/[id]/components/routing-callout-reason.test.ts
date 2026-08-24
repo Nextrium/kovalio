@@ -8,7 +8,7 @@ import { baseDictionary as en } from "@/i18n";
  * `routingUnsynced` fires for any route/TLS sync failure — `deploymentRoutingUnsynced` reads
  * `edgeUnsynced || deployWarning`, and the compose pipeline sets both for ANY `routeIssuesWarning`,
  * including custom domains merely waiting on a certificate. The banner carried one hardcoded
- * sentence about a free `.opsh.io` URL failing to route through Openship Cloud's edge, and showed
+ * sentence about a free `.opsh.io` URL failing to route through Kovalio Cloud's edge, and showed
  * it for every cause: a self-hosted project with three CUSTOM domains was told its free domain
  * hadn't routed through a cloud it doesn't use, and pointed at the wrong remedy — while the
  * accurate sentence sat unread in the same deployment meta blob.
@@ -42,9 +42,9 @@ describe("the fallback copy names no single cause", () => {
     }
   });
 
-  it("does not send a self-hosted operator to Openship Cloud", () => {
+  it("does not send a self-hosted operator to Kovalio Cloud", () => {
     // The old description did exactly that, for a project that may never touch the cloud.
-    expect(r.description).not.toMatch(/Openship Cloud/i);
+    expect(r.description).not.toMatch(/Kovalio Cloud/i);
   });
 
   it("still offers a remedy", () => {

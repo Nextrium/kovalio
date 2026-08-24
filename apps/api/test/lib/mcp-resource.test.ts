@@ -122,7 +122,7 @@ describe("protected resource metadata", () => {
 describe("rewriteMetadataOrigin", () => {
   /**
    * #543: Better Auth builds this document from its static baseURL, which on a
-   * box whose API container has no OPENSHIP_PUBLIC_URL is the internal
+   * box whose API container has no KOVALIO_PUBLIC_URL is the internal
    * `http://api:4000`. The advertised authorize/token endpoints then name a
    * host the external OAuth client can't reach. Re-point the whole document at
    * the request's public origin.

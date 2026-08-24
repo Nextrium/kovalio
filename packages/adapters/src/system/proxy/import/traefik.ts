@@ -287,11 +287,11 @@ export function parseTraefikLabels(containers: TraefikContainer[]): ProxyScanRes
     // Not silent: the operator should know we recognised it, not wonder if it
     // was missed. Distinct wording from a real loss.
     warnings.push(
-      `traefik: ${d.hosts.join(", ")} router "${d.router}" is an http→https redirect — Openship's edge does that itself (nothing to migrate)`,
+      `traefik: ${d.hosts.join(", ")} router "${d.router}" is an http→https redirect — Kovalio's edge does that itself (nothing to migrate)`,
     );
   }
   for (const s of defs.streamRouters) {
-    warnings.push(`traefik: ${s} can't migrate — Openship's edge routes HTTP(S), not raw TCP/UDP`);
+    warnings.push(`traefik: ${s} can't migrate — Kovalio's edge routes HTTP(S), not raw TCP/UDP`);
   }
   if (defs.fileProvider) {
     warnings.push(

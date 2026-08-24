@@ -16,13 +16,13 @@ import { detectBuildContext, devFallbackTag } from "./managed-images";
 export function pinnedEdgeImage(): string {
   // Precedence lives in ONE place — buildEdgeImageRef (@repo/core) — shared with
   // adapters' resolveEdgeImage so the pin this produces and the ref that consumes
-  // it can't drift (they used to disagree on OPENSHIP_EDGE_TAG). Pin the tag to
+  // it can't drift (they used to disagree on KOVALIO_EDGE_TAG). Pin the tag to
   // APP_VERSION: the Lua + nginx.conf baked into the edge must match this build.
   //
   // In a source checkout the fallback becomes a content-derived DEV tag
   // (`<APP_VERSION>-dev.<hash>`) so a manual edit to apps/edge moves the tag and the
   // drift scan reports the box behind — see devSourceTag. An explicit
-  // OPENSHIP_EDGE_TAG / OPENSHIP_VERSION still wins (buildEdgeImageRef precedence),
+  // KOVALIO_EDGE_TAG / KOVALIO_VERSION still wins (buildEdgeImageRef precedence),
   // and a compiled/prod install has no checkout so it stays the plain APP_VERSION.
   return buildEdgeImageRef({ fallbackTag: devFallbackTag(APP_VERSION, edgeBuildSpec()) });
 }
@@ -43,7 +43,7 @@ export function withPinnedEdgeImage(config: InstallerConfig = {}): InstallerConf
 
 /**
  * apps/edge/ holds the edge's Dockerfile; the image it produces is published as
- * `openship-edge`. The image→Dockerfile map lives in
+ * `kovalio-edge`. The image→Dockerfile map lives in
  * .github/workflows/docker-images.yml — keep the two in step.
  */
 const EDGE_DOCKERFILE = join("apps", "edge", "Dockerfile");
@@ -61,5 +61,5 @@ const EDGE_DOCKERFILE = join("apps", "edge", "Dockerfile");
  * build` as root) live in {@link detectBuildContext}, the shared detector.
  */
 export function edgeBuildSpec(): { context: string; dockerfile: string } | undefined {
-  return detectBuildContext(EDGE_DOCKERFILE, "OPENSHIP_EDGE_BUILD_CONTEXT");
+  return detectBuildContext(EDGE_DOCKERFILE, "KOVALIO_EDGE_BUILD_CONTEXT");
 }

@@ -29,7 +29,7 @@ import { SettingsSection } from "./SettingsSection";
 import { useI18n, interpolate } from "@/components/i18n-provider";
 
 const EMPTY_STATE: GitHubConnectionState = {
-  sources: { openshipApp: { connected: false }, ghCli: { available: false } },
+  sources: { kovalioApp: { connected: false }, ghCli: { available: false } },
   primary: null,
 };
 
@@ -153,8 +153,8 @@ export function GitHubConnection() {
     [ctxDisconnect, loadStatus],
   );
 
-  // Self-hosted needs an active Openship Cloud connection to use the
-  // GitHub App at all — the App private key lives in openship.io and
+  // Self-hosted needs an active Kovalio Cloud connection to use the
+  // GitHub App at all — the App private key lives in nextrium.org and
   // self-hosted instances proxy through it. PAT + gh CLI escape hatches
   // don't require cloud.
   const { connected: cloudConnected, startConnect: startCloudConnect } = useCloud();
@@ -193,7 +193,7 @@ export function GitHubConnection() {
   };
 
   // STRICT source-of-truth for the GitHub App card. Read ONLY from
-  // state.sources.openshipApp (which the backend computes from the SaaS
+  // state.sources.kovalioApp (which the backend computes from the SaaS
   // /api/cloud/github/user-status response in cloud-app mode, or from
   // local OAuth in app mode). NEVER use `connected` from useGitHub() —
   // that's derived from state.primary, which can be "gh-cli" when only
@@ -202,8 +202,8 @@ export function GitHubConnection() {
   // here would lie about which orgs the App can actually deploy from
   // (they could be completely different sets, and the user would think
   // the App is installed where it isn't).
-  const appConnected = state.sources.openshipApp.connected;
-  const appLogin = state.sources.openshipApp.login;
+  const appConnected = state.sources.kovalioApp.connected;
+  const appLogin = state.sources.kovalioApp.login;
   // accounts is only meaningful when the App itself is connected. When
   // primary is "gh-cli" the backend returns CLI orgs in this field
   // (tagged source: "cli") — gate on appConnected AND filter to
@@ -436,7 +436,7 @@ export function GitHubConnection() {
         </div>
       ) : (
         /* Nothing connected. Signing in with GitHub is the default because it
-           needs no app registration, no Openship account and no shell on the box;
+           needs no app registration, no Kovalio account and no shell on the box;
            everything else is a deliberate choice behind the disclosure.
 
            When a credential IS stored and merely failed its check, the chooser
@@ -730,7 +730,7 @@ function MethodDisclosure(props: { summary: string; children: React.ReactNode })
 function MethodChooser(props: {
   /** Backend-declared availability per method — never re-derived here. */
   can: (kind: "device" | "token" | "app" | "ssh-key" | "forwarding") => boolean;
-  /** Backend-declared: does the App need an Openship Cloud link on this install? */
+  /** Backend-declared: does the App need an Kovalio Cloud link on this install? */
   appRequiresCloud: boolean;
   cloudConnected: boolean;
   connecting: boolean;
@@ -770,8 +770,8 @@ function MethodChooser(props: {
     </button>
   );
 
-  // The App needs Openship Cloud on self-hosted (the private key lives in
-  // openship.io), so the row's action is cloud-connect until that's done.
+  // The App needs Kovalio Cloud on self-hosted (the private key lives in
+  // nextrium.org), so the row's action is cloud-connect until that's done.
   const needsCloudFirst = appRequiresCloud && !cloudConnected;
   const appRow = row(
     "app",
@@ -889,7 +889,7 @@ function TokenForm(props: { message: string; hint?: string; onSaved: () => void 
       {error && <p className="text-xs text-danger leading-relaxed">{error}</p>}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground/70">
         <a
-          href="https://github.com/settings/tokens/new?scopes=repo,read:org&description=Openship"
+          href="https://github.com/settings/tokens/new?scopes=repo,read:org&description=Kovalio"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 font-medium text-foreground underline underline-offset-2 hover:text-primary"

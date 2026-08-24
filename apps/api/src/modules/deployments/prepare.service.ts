@@ -33,17 +33,17 @@ import {
 } from "../../lib/project-root-detector";
 import {
   parseDeploymentMetadata,
-  parseOpenshipConfig,
+  parseKovalioConfig,
   METADATA_FILES,
   type ProjectType,
   type RoutingConfig,
-  type OpenshipConfig,
-  type OpenshipDomain,
-  type OpenshipEnv,
-  type OpenshipService,
-  type OpenshipResources,
-  type OpenshipReadiness,
-  type OpenshipMonorepoApp,
+  type KovalioConfig,
+  type KovalioDomain,
+  type KovalioEnv,
+  type KovalioService,
+  type KovalioResources,
+  type KovalioReadiness,
+  type KovalioMonorepoApp,
   type ComposeAdvanced,
   type WorkloadType,
   resolveTierResources,
@@ -203,7 +203,7 @@ export interface ProjectInfo {
   rootDirectory: string;
   /**
    * The compose path this resolution actually used, echoed back so the wizard can
-   * show it and persist it — including when it came from `openship.json` rather
+   * show it and persist it — including when it came from `kovalio.json` rather
    * than the request. Absent when the root was detected the usual way.
    */
   composePath?: string;
@@ -216,24 +216,24 @@ export interface ProjectInfo {
   /** Compose variables the file marks mandatory that no `.env`/caller value
    *  satisfied — the wizard's list to prompt for. Absent when there are none. */
   missingRequiredEnv?: ComposeMissingVariable[];
-  /** Compose keys the file declares that Openship doesn't model — shown so the
+  /** Compose keys the file declares that Kovalio doesn't model — shown so the
    *  user knows what won't carry over. Blocking ones never reach here: they
    *  refuse the scan instead. Absent when there are none. */
   unsupportedCompose?: ComposeUnsupportedField[];
   monorepoApps?: MonorepoApp[];
   monorepoWorkspace?: MonorepoWorkspace;
   rootEnv?: Record<string, string>;
-  /** Routing config parsed from the repo-root `vercel.json`/`openship.json`
+  /** Routing config parsed from the repo-root `vercel.json`/`kovalio.json`
    *  (rewrites/redirects/headers/cleanUrls/trailingSlash). Persisted on the
    *  project + compiled to OpenResty at deploy. */
   routing?: RoutingConfig;
-  // ── Declared overlay (repo-root `openship.json`) ─────────────────────────
+  // ── Declared overlay (repo-root `kovalio.json`) ─────────────────────────
   // Fields the heuristic detector doesn't produce, declared by the user and
   // authoritative when present. Build-shaping fields (framework/commands/
   // output/routing) fold in through the metadata parser and appear above.
   /** How the app is served: "host"/"static"/"standalone" (seeds hasServer). */
   productionMode?: "host" | "static" | "standalone";
-  /** The runtime workload (web | worker | static) declared via openship.json's
+  /** The runtime workload (web | worker | static) declared via kovalio.json's
    *  `workload`. Authoritative over `productionMode` when both are present — it's
    *  the only way to declare a `worker`, which no legacy field can express (#538). */
   workloadType?: WorkloadType;
@@ -242,29 +242,29 @@ export interface ProjectInfo {
   /** Declared public endpoints (from `domains`), normalized to the create shape. */
   publicEndpoints?: DeclaredPublicEndpoint[];
   /** Declared resource sizing (cloud tier or explicit cpu/mem/disk). */
-  resources?: OpenshipResources;
+  resources?: KovalioResources;
   /**
    * Declared deploy-time readiness gate. SEEDS the wizard's Health section only —
    * absent here means the wizard shows it off (the default), which is also what
    * the pipeline does when the project has no `readiness`.
    */
-  readiness?: OpenshipReadiness;
+  readiness?: KovalioReadiness;
   /**
-   * What the root `openship.json` parse REFUSED, when it refused anything (#641).
+   * What the root `kovalio.json` parse REFUSED, when it refused anything (#641).
    * Advisory only: an invalid config has never failed a scan or a deploy, it just
    * silently didn't apply — which IS the bug. Absent when the repo has no file or
    * it parsed clean, so an unaffected repo's payload is unchanged.
    */
-  configDiagnostics?: OpenshipConfigDiagnostics;
+  configDiagnostics?: KovalioConfigDiagnostics;
 }
 
 /**
  * `errors` are fields the parse refused — or, for a syntax error / non-object
  * root, the whole file. `warnings` are keys it didn't recognize and skipped.
  * Two arrays rather than one list because they read differently: an unrecognized
- * key is usually a typo or a newer Openship's field, a refused one a wrong type.
+ * key is usually a typo or a newer Kovalio's field, a refused one a wrong type.
  */
-export interface OpenshipConfigDiagnostics {
+export interface KovalioConfigDiagnostics {
   errors: string[];
   warnings: string[];
   /**
@@ -309,13 +309,13 @@ const MAX_CONFIG_DIAGNOSTIC_CHARS = 240;
 /**
  * Reported WITHOUT the engine's own message on purpose. Both V8 and JSC quote the
  * offending token back — JSC quotes it whole, unbounded — so forwarding it would
- * ship raw `openship.json` bytes, an `env` secret included, out through the
+ * ship raw `kovalio.json` bytes, an `env` secret included, out through the
  * metadata-tier detect endpoint that exists to carry conclusions only (see
- * test/modules/deployments/detect-no-content-leak.test.ts). `openship config
+ * test/modules/deployments/detect-no-content-leak.test.ts). `kovalio config
  * validate` runs on the user's own machine and still prints the precise message.
  */
-const OPENSHIP_JSON_UNPARSEABLE =
-  "openship.json is not valid JSON — run `openship config validate` in the repo to see the " +
+const KOVALIO_JSON_UNPARSEABLE =
+  "kovalio.json is not valid JSON — run `kovalio config validate` in the repo to see the " +
   "parse error.";
 
 /**
@@ -341,34 +341,34 @@ function sanitizeDiagnostics(list: string[]): string[] {
   ];
 }
 
-interface ExtractedOpenshipConfig {
-  config?: OpenshipConfig;
-  diagnostics?: OpenshipConfigDiagnostics;
+interface ExtractedKovalioConfig {
+  config?: KovalioConfig;
+  diagnostics?: KovalioConfigDiagnostics;
 }
 
 /**
- * Parse the repo-ROOT `openship.json` (case-insensitive). The overlay stays
+ * Parse the repo-ROOT `kovalio.json` (case-insensitive). The overlay stays
  * LENIENT — a refused field is skipped, an unparseable file applies nothing, and
  * neither ever fails the scan — but what was refused now comes BACK instead of
  * being dropped (#641), so "my config did nothing" is answerable. The
  * build-shaping subset still flows separately through the metadata parser fold.
  *
- * `JSON.parse` runs here rather than inside `parseOpenshipConfigJson` for two
+ * `JSON.parse` runs here rather than inside `parseKovalioConfigJson` for two
  * reasons: the syntax-error message stays ours (see above), and a whole-file
  * failure becomes distinguishable from a field failure without matching a string.
  */
-function extractOpenshipConfig(fileContents: Record<string, string>): ExtractedOpenshipConfig {
-  const entry = Object.entries(fileContents).find(([name]) => name.toLowerCase() === "openship.json");
+function extractKovalioConfig(fileContents: Record<string, string>): ExtractedKovalioConfig {
+  const entry = Object.entries(fileContents).find(([name]) => name.toLowerCase() === "kovalio.json");
   if (!entry?.[1]) return {};
 
   let raw: unknown;
   try {
     raw = JSON.parse(entry[1]);
   } catch {
-    return { diagnostics: { errors: [OPENSHIP_JSON_UNPARSEABLE], warnings: [], wholeFile: true } };
+    return { diagnostics: { errors: [KOVALIO_JSON_UNPARSEABLE], warnings: [], wholeFile: true } };
   }
 
-  const { config, errors, warnings } = parseOpenshipConfig(raw);
+  const { config, errors, warnings } = parseKovalioConfig(raw);
   // Only a non-object root nulls the config — every field-level failure still
   // yields a partial config that overlays. So `!config` is the whole-file case,
   // and the flag says so without the message having to.
@@ -390,7 +390,7 @@ function extractOpenshipConfig(fileContents: Record<string, string>): ExtractedO
  * shape. A hostname with a dot is a custom domain (goes in `customDomain`); a
  * bare label is a free subdomain (goes in `domain`). Honors an explicit `type`.
  */
-function domainsToPublicEndpoints(domains: OpenshipDomain[]): DeclaredPublicEndpoint[] {
+function domainsToPublicEndpoints(domains: KovalioDomain[]): DeclaredPublicEndpoint[] {
   return domains.map((d) => {
     const isCustom = d.type ? d.type === "custom" : d.domain.includes(".");
     return {
@@ -409,7 +409,7 @@ function domainsToPublicEndpoints(domains: OpenshipDomain[]): DeclaredPublicEndp
  * the env-merge endpoint is the encrypt-at-rest path); a declared value is never
  * an opaque masked secret at this stage.
  */
-function envMapToRecord(envMap: OpenshipEnv): Record<string, string> {
+function envMapToRecord(envMap: KovalioEnv): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(envMap)) out[k] = typeof v === "string" ? v : v.value;
   return out;
@@ -428,7 +428,7 @@ function splitDomain(host: string): { domain?: string; customDomain?: string; do
  * Returns undefined when nothing was declared (inherit the project).
  */
 function toAdvancedResources(
-  r: OpenshipResources | undefined,
+  r: KovalioResources | undefined,
 ): { cpuCores?: number; memoryMb?: number } | undefined {
   if (!r) return undefined;
   const base = r.tier ? resolveTierResources(r.tier) : undefined;
@@ -448,7 +448,7 @@ function toAdvancedResources(
  * per-service resources map into the `advanced` JSONB blob, mirroring the
  * compose parser.
  */
-function openshipServicesToCompose(services: OpenshipService[]): ComposeService[] {
+function kovalioServicesToCompose(services: KovalioService[]): ComposeService[] {
   return services.map((s) => {
     const domain = s.domain ? splitDomain(s.domain) : undefined;
     return {
@@ -486,7 +486,7 @@ function openshipServicesToCompose(services: OpenshipService[]): ComposeService[
  * detected value; unmatched declarations are ignored (declaring apps the
  * detector didn't find is out of scope — use per-sub-app config instead).
  */
-function mergeMonorepoApps(detected: MonorepoApp[], declared: OpenshipMonorepoApp[]): MonorepoApp[] {
+function mergeMonorepoApps(detected: MonorepoApp[], declared: KovalioMonorepoApp[]): MonorepoApp[] {
   const byRoot = new Map(
     declared.map((d) => [normalizeProjectRootDirectory(d.rootDirectory), d]),
   );
@@ -508,12 +508,12 @@ function mergeMonorepoApps(detected: MonorepoApp[], declared: OpenshipMonorepoAp
 }
 
 /**
- * Overlay a repo-root `openship.json` onto detected ProjectInfo. Only the fields
+ * Overlay a repo-root `kovalio.json` onto detected ProjectInfo. Only the fields
  * the metadata parser can't carry (runtime/port/productionMode/sleepMode/domains/
  * env) are applied here; each present field wins over detection, absent fields
  * keep the detected value. Mutates + returns `info` for call-site brevity.
  */
-function applyOpenshipOverlay(info: ProjectInfo, config: OpenshipConfig | undefined): ProjectInfo {
+function applyKovalioOverlay(info: ProjectInfo, config: KovalioConfig | undefined): ProjectInfo {
   if (!config) return info;
   if (config.packageManager) info.packageManager = config.packageManager;
   if (config.rootDirectory) info.rootDirectory = config.rootDirectory;
@@ -541,7 +541,7 @@ function applyOpenshipOverlay(info: ProjectInfo, config: OpenshipConfig | undefi
   // project. runtimeMode="docker" then falls out of buildProductionProjectInput's
   // projectType pin, so no explicit runtime is needed here.
   if (config.services?.length) {
-    info.services = openshipServicesToCompose(config.services);
+    info.services = kovalioServicesToCompose(config.services);
     info.projectType = "services";
   }
 
@@ -591,7 +591,7 @@ export function projectInfoToScanResponse(result: ProjectInfo) {
     services: (result.services ?? []).map(maskScanService),
     ...(result.missingRequiredEnv && { missingRequiredEnv: result.missingRequiredEnv }),
     ...(result.unsupportedCompose && { unsupportedCompose: result.unsupportedCompose }),
-    // Declared-overlay fields (openship.json) — omitted from the response when
+    // Declared-overlay fields (kovalio.json) — omitted from the response when
     // absent so a repo without the file yields the exact same payload as before.
     ...(result.productionMode && { productionMode: result.productionMode }),
     ...(result.workloadType && { workloadType: result.workloadType }),
@@ -818,7 +818,7 @@ export async function resolveFromReader(
 ): Promise<ProjectInfo> {
   const rootSnapshot = await readProjectSnapshot(reader);
   const routing = extractRootRouting(rootSnapshot.fileContents ?? {});
-  const openship = extractOpenshipConfig(rootSnapshot.fileContents ?? {});
+  const kovalio = extractKovalioConfig(rootSnapshot.fileContents ?? {});
 
   // Also logged server-side, because the response field only reaches a caller
   // that asked for a scan. A push-to-deploy asks for none: the pipeline runs off
@@ -826,10 +826,10 @@ export async function resolveFromReader(
   // returns early for anything that isn't a GitHub-source COMPOSE project. So a
   // pushed single-app deploy still gets no signal at all — see #641's discussion
   // of why replaying onto the BuildLogger would have to be stale or re-fetch.
-  if (openship.diagnostics) {
+  if (kovalio.diagnostics) {
     console.warn(
-      `[openship.json] ${repoMeta.full_name}: ` +
-        [...openship.diagnostics.errors, ...openship.diagnostics.warnings].join(" · "),
+      `[kovalio.json] ${repoMeta.full_name}: ` +
+        [...kovalio.diagnostics.errors, ...kovalio.diagnostics.warnings].join(" · "),
     );
   }
 
@@ -837,7 +837,7 @@ export async function resolveFromReader(
   // persisted on the project — wins over the repo-declared one. Resolved before
   // the root so a declared path can pre-empt detection; the overlay applied at
   // the end of this function is far too late to relocate the compose read.
-  const declaredComposePath = opts.composePath?.trim() || openship.config?.composePath?.trim();
+  const declaredComposePath = opts.composePath?.trim() || kovalio.config?.composePath?.trim();
   const root = declaredComposePath
     ? await resolveDeclaredRoot(reader, declaredComposePath)
     : await resolveDetectedRoot(reader, rootSnapshot);
@@ -864,13 +864,13 @@ export async function resolveFromReader(
     routing,
     { declaredCompose: !!root.declaredComposePath, env: opts.env },
   );
-  const overlaid = applyOpenshipOverlay(info, openship.config);
-  if (openship.diagnostics) overlaid.configDiagnostics = openship.diagnostics;
+  const overlaid = applyKovalioOverlay(info, kovalio.config);
+  if (kovalio.diagnostics) overlaid.configDiagnostics = kovalio.diagnostics;
 
   if (root.declaredComposePath) {
     // The compose directory IS this project's root — it anchors every relative
     // `build:` context. Re-pin it after the overlay so a stray `rootDirectory` in
-    // openship.json can't desync the two and send builds at the wrong folder.
+    // kovalio.json can't desync the two and send builds at the wrong folder.
     overlaid.rootDirectory = root.selected.rootDirectory || "./";
     overlaid.composePath = root.declaredComposePath;
   }
@@ -977,7 +977,7 @@ function toProjectInfo(
     if (blocking.length > 0) {
       const where = opts?.declaredCompose ? ` at "${projectRoot.rootDirectory || "."}"` : "";
       throw new ComposeConfigurationError(
-        `The Docker Compose file${where} declares options Openship can't deploy faithfully:\n` +
+        `The Docker Compose file${where} declares options Kovalio can't deploy faithfully:\n` +
           describeBlockingComposeFields(blocking),
       );
     }

@@ -21,7 +21,7 @@ import { packBuildContext } from "../src/runtime/docker";
  */
 describe("packBuildContext — build-context tar (#448)", () => {
   it("packs a real context into a gzip tar without error", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "openship-ctx-ok-"));
+    const dir = await mkdtemp(join(tmpdir(), "kovalio-ctx-ok-"));
     try {
       await writeFile(join(dir, "real.txt"), "hello");
 
@@ -42,7 +42,7 @@ describe("packBuildContext — build-context tar (#448)", () => {
   });
 
   it("captures a mid-walk lstat ENOENT and aborts instead of crashing the process", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "openship-ctx-enoent-"));
+    const dir = await mkdtemp(join(tmpdir(), "kovalio-ctx-enoent-"));
     try {
       await writeFile(join(dir, "real.txt"), "hello");
 

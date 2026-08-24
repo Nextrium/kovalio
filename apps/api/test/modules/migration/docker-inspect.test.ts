@@ -165,7 +165,7 @@ describe("reconcileStack", () => {
   });
 
   it("does not read another stack's declaration for a same-named service", () => {
-    // The #584 host shape: Openship's own stack and the user's stack both declare a
+    // The #584 host shape: Kovalio's own stack and the user's stack both declare a
     // service called `postgres`. With a flat name-keyed map the first file read won for
     // BOTH, so the user's container was reconciled against OUR declaration — importing
     // our depends_on (and our declared-env set, which decides env provenance).
@@ -182,7 +182,7 @@ services:
     depends_on: [migration]
 `;
     const declared = new Map([
-      ...declaredMap(ours, "openship"),
+      ...declaredMap(ours, "kovalio"),
       ...declaredMap(theirs, "dependabot"),
     ]);
     const theirPg: DockerContainerDetail = {

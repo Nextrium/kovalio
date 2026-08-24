@@ -13,7 +13,7 @@ const ENTRYPOINT = readFileSync(
 const temporaryRoots: string[] = [];
 
 function fixture() {
-  const root = mkdtempSync(join(tmpdir(), "openship-postfix-chroot-"));
+  const root = mkdtempSync(join(tmpdir(), "kovalio-postfix-chroot-"));
   temporaryRoots.push(root);
   const source = join(root, "source-etc");
   const target = join(root, "spool", "etc");

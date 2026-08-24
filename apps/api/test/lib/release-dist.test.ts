@@ -49,8 +49,8 @@ afterEach(() => {
 
 const github: ReleaseSource = {
   mode: "github",
-  repo: "oblien/openship",
-  assetTemplate: "openship-{tag}-{os}-{arch}.tar.gz",
+  repo: "oblien/kovalio",
+  assetTemplate: "kovalio-{tag}-{os}-{arch}.tar.gz",
 };
 
 describe("resolveReleaseDist — slot order", () => {
@@ -107,11 +107,11 @@ describe("resolveReleaseDist — slot order", () => {
 
   it("slot 3: cache hit at <dataDir>/<name>-dist/v<version>", async () => {
     const dataDir = join(root, "data");
-    const cached = join(dataDir, "openship-dist", "v2.3.4");
+    const cached = join(dataDir, "kovalio-dist", "v2.3.4");
     mkdirSync(cached, { recursive: true });
 
     const res = await resolveReleaseDist({
-      name: "openship",
+      name: "kovalio",
       version: "2.3.4",
       source: github,
       dataDir,
@@ -124,11 +124,11 @@ describe("resolveReleaseDist — slot order", () => {
 
   it("slot 3: download on miss (github) renders the asset name from the version", async () => {
     const dataDir = join(root, "data");
-    const downloaded = join(dataDir, "openship-dist", "v5.0.0");
+    const downloaded = join(dataDir, "kovalio-dist", "v5.0.0");
     fetchMock.mockResolvedValue({ path: downloaded });
 
     const res = await resolveReleaseDist({
-      name: "openship",
+      name: "kovalio",
       version: "5.0.0",
       source: github,
       dataDir,
@@ -136,11 +136,11 @@ describe("resolveReleaseDist — slot order", () => {
 
     expect(res.origin).toBe("downloaded");
     expect(res.dir).toBe(downloaded);
-    expect(res.asset).toBe("openship-v5.0.0-linux-amd64.tar.gz");
+    expect(res.asset).toBe("kovalio-v5.0.0-linux-amd64.tar.gz");
     expect(fetchMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        repo: "oblien/openship",
-        asset: "openship-v5.0.0-linux-amd64.tar.gz",
+        repo: "oblien/kovalio",
+        asset: "kovalio-v5.0.0-linux-amd64.tar.gz",
         tag: "v5.0.0",
       }),
     );
@@ -170,7 +170,7 @@ describe("resolveReleaseDist — slot order", () => {
     fetchMock.mockRejectedValue(new Error("boom"));
     await expect(
       resolveReleaseDist({
-        name: "openship",
+        name: "kovalio",
         version: "9.9.9",
         source: github,
         dataDir: join(root, "data"),
@@ -183,13 +183,13 @@ describe("resolveReleaseDistOrNull — no download", () => {
   it("returns the cached dir when present, null otherwise (never downloads)", () => {
     const dataDir = join(root, "data");
     expect(
-      resolveReleaseDistOrNull({ name: "openship", version: "1.0.0", source: github, dataDir }),
+      resolveReleaseDistOrNull({ name: "kovalio", version: "1.0.0", source: github, dataDir }),
     ).toBeNull();
 
-    const cached = join(dataDir, "openship-dist", "v1.0.0");
+    const cached = join(dataDir, "kovalio-dist", "v1.0.0");
     mkdirSync(cached, { recursive: true });
     expect(
-      resolveReleaseDistOrNull({ name: "openship", version: "1.0.0", source: github, dataDir }),
+      resolveReleaseDistOrNull({ name: "kovalio", version: "1.0.0", source: github, dataDir }),
     ).toBe(cached);
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -241,7 +241,7 @@ describe("resolveLatestVersion", () => {
     });
     expect(await resolveLatestVersion(source)).toBe("7.8.9");
     expect(safeFetchMock).toHaveBeenCalledWith("https://cdn/latest.txt", {
-      headers: { "User-Agent": "openship" },
+      headers: { "User-Agent": "kovalio" },
       timeoutMs: 10_000,
       maxRedirects: 5,
       maxBodyBytes: 8192,
@@ -312,7 +312,7 @@ describe("resolveReleaseVersion", () => {
     expect(safeFetchMock).not.toHaveBeenCalled();
   });
 
-  it("throws a typed error instead of borrowing Openship's API version", async () => {
+  it("throws a typed error instead of borrowing Kovalio's API version", async () => {
     safeFetchMock.mockRejectedValue(new Error("upstream unavailable"));
     const source: ReleaseSource = {
       mode: "url",

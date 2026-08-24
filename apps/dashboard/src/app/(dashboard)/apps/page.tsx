@@ -47,7 +47,7 @@ const FEATURED_APPS: FeaturedApp[] = [
   { id: "convex", name: "Convex", desc: "Reactive backend & database", icon: Database },
   { id: "mongodb", name: "MongoDB", desc: "Document database + Mongo Express", icon: Database },
   { id: "neon", name: "Neon", desc: "Serverless Postgres engine", icon: Database },
-  { id: "mail", name: "Openship Mail", desc: "Self-hosted mail server + webmail", icon: Mail },
+  { id: "mail", name: "Kovalio Mail", desc: "Self-hosted mail server + webmail", icon: Mail },
   { id: "ghost", name: "Ghost", desc: "Publishing & newsletters", icon: FileText },
   { id: "uptime-kuma", name: "Uptime Kuma", desc: "Uptime monitoring", icon: Activity },
   { id: "vaultwarden", name: "Vaultwarden", desc: "Self-hosted password manager", icon: KeyRound },

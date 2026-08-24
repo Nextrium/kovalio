@@ -11,7 +11,7 @@ import { runCommand, stubFetch, type FetchStub } from "../helpers/harness";
 let fetchStub: FetchStub;
 afterEach(() => fetchStub?.restore());
 
-describe("openship api (raw passthrough)", () => {
+describe("kovalio api (raw passthrough)", () => {
   it("GETs the given path under /api and pretty-prints JSON", async () => {
     fetchStub = stubFetch(() => ({ json: { hello: "world" } }));
     const { out, code } = await runCommand(apiCommand, ["/projects"]);

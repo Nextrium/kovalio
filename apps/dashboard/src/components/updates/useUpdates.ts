@@ -25,9 +25,9 @@ import {
 import { useDeploymentInfo } from "@/hooks/useDeploymentInfo";
 import { getRestApiBaseUrl } from "@/lib/api/urls";
 
-const LS_MUTED = "openship_update_muted";
-const LS_DISMISSED = "openship_dismissed_advisories";
-const LS_LAST_SEEN = "openship_last_seen_version";
+const LS_MUTED = "kovalio_update_muted";
+const LS_DISMISSED = "kovalio_dismissed_advisories";
+const LS_LAST_SEEN = "kovalio_last_seen_version";
 
 function isDesktop(): boolean {
   return typeof window !== "undefined" && !!window.desktop?.isDesktop;

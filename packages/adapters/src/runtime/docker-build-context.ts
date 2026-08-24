@@ -116,7 +116,7 @@ function spawnGit(
   });
 }
 
-const GENERATED_DOCKERFILE_NAME = "Dockerfile.openship";
+const GENERATED_DOCKERFILE_NAME = "Dockerfile.kovalio";
 
 type IgnoreMatcher = ReturnType<typeof ignore>;
 
@@ -481,7 +481,7 @@ export async function prepareSourceTree(
   config: BuildConfig,
   opts?: { onLog?: LogCallback; perServiceBuildContexts?: boolean },
 ): Promise<SourceTree> {
-  const contextDir = await mkdtemp(join(tmpdir(), "openship-docker-context-"));
+  const contextDir = await mkdtemp(join(tmpdir(), "kovalio-docker-context-"));
 
   try {
     // The destructive prune is only sound while the tree IS the build context. Once
@@ -547,7 +547,7 @@ export function missingContextDockerfileMessage(
       ? " The source root has a Dockerfile, but it is outside this service's build context, so it is not used — set the service's build path to the directory that holds the Dockerfile you want, or add one there."
       : "") +
     (opts?.generatedRecipeRefused
-      ? " A declared build context builds from its own Dockerfile — Openship will not generate one for it, because a generated recipe copies from the source root."
+      ? " A declared build context builds from its own Dockerfile — Kovalio will not generate one for it, because a generated recipe copies from the source root."
       : "")
   );
 }

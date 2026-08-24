@@ -125,8 +125,8 @@ describe("reapplyProjectLiveRoutes self-app loopback route (issue #129)", () => 
   // the app runs on the host, so the runtime resolves the upstream to
   // 127.0.0.1:<dashboard port> rather than a container IP.
   const project = {
-    id: "proj-openship",
-    slug: "openship",
+    id: "proj-kovalio",
+    slug: "kovalio",
     port: 3001,
     cloudWorkspaceId: null,
     activeDeploymentId: "dep-1",
@@ -216,7 +216,7 @@ describe("reapplyProjectLiveRoutes static (path-targeted) routes", () => {
   /** `containerId` on a static-file-serve deployment is its release root on the host. */
   const deployment = (meta: Record<string, unknown>) => ({
     id: "dep-1",
-    containerId: "/var/lib/openship/releases/site-42",
+    containerId: "/var/lib/kovalio/releases/site-42",
     meta,
     organizationId: "org-1",
   });
@@ -256,7 +256,7 @@ describe("reapplyProjectLiveRoutes static (path-targeted) routes", () => {
       {
         hostname: "sadsa.opsh.io",
         isCustomDomain: false,
-        staticRoot: "/var/lib/openship/releases/site-42/dist",
+        staticRoot: "/var/lib/kovalio/releases/site-42/dist",
       },
     ]);
   });
@@ -299,7 +299,7 @@ describe("reapplyProjectLiveRoutes static (path-targeted) routes", () => {
         headerRules: [{ path: "/api/", headers: [{ key: "Cache-Control", value: "no-store" }] }],
         cleanUrls: true,
         trailingSlash: false,
-        staticRoot: "/var/lib/openship/releases/site-42/dist",
+        staticRoot: "/var/lib/kovalio/releases/site-42/dist",
       },
     ]);
   });
@@ -355,7 +355,7 @@ describe("reapplyProjectLiveRoutes static (path-targeted) routes", () => {
     await reapplyProjectLiveRoutes(staticProject, []);
 
     expect(reconcile.mock.calls[0][1].registers[0].staticRoot).toBe(
-      "/var/lib/openship/releases/site-42/dist/docs",
+      "/var/lib/kovalio/releases/site-42/dist/docs",
     );
   });
 
@@ -370,7 +370,7 @@ describe("reapplyProjectLiveRoutes static (path-targeted) routes", () => {
     await reapplyProjectLiveRoutes(staticProject, []);
 
     expect(reconcile.mock.calls[0][1].registers[0].staticRoot).toBe(
-      "/var/lib/openship/releases/site-42",
+      "/var/lib/kovalio/releases/site-42",
     );
   });
 
@@ -381,11 +381,11 @@ describe("reapplyProjectLiveRoutes static (path-targeted) routes", () => {
     await reapplyProjectLiveRoutes(staticProject, []);
 
     expect(reconcile.mock.calls[0][1].registers[0].staticRoot).toBe(
-      "/var/lib/openship/releases/site-42/dist",
+      "/var/lib/kovalio/releases/site-42/dist",
     );
   });
 
-  it("syncs the free domain of a static project on Openship Cloud's edge", async () => {
+  it("syncs the free domain of a static project on Kovalio Cloud's edge", async () => {
     // The other half of the same bug: the edge route is `<slug>.opsh.io` → this
     // server's :80. What the vhost then does with the request is a local matter,
     // so excluding path targets here left static free domains with no edge route.
@@ -528,7 +528,7 @@ describe("deriveNextProjectRouteState custom-hostname gate", () => {
 });
 
 /**
- * Issue #618: a project MIGRATED into Openship (adopted in place) verified its
+ * Issue #618: a project MIGRATED into Kovalio (adopted in place) verified its
  * domain, took a certificate — and never got a vhost. Both re-attach paths store
  * the COMPOSE_SENTINEL in `deployment.container_id` (migrate.service.ts →
  * reattachRuntime / attachLiveRuntime), and this re-apply treated that as "there is

@@ -8,7 +8,7 @@ import { useI18n } from "@/components/i18n-provider";
 /**
  * First-run welcome shown on the home page when the user has no projects.
  *
- * The motif is what Openship IS: the brand mark at the centre, wired to the four
+ * The motif is what Kovalio IS: the brand mark at the centre, wired to the four
  * things it handles — repo in, build/deploy, data, public domain.
  *
  * TOKENS: only steps that EXIST in styles/theme.css. The --th-on-* scale is
@@ -127,7 +127,7 @@ const HomeWelcome: React.FC = () => {
           </Node>
           <NodeLabel x={236} y={124}>Data</NodeLabel>
 
-          {/* Hub = the Openship mark: the ring (components/logo.tsx,
+          {/* Hub = the Kovalio mark: the ring (components/logo.tsx,
               public/apple-touch-icon.png). Soft halo for presence, no plate —
               a ring inside a filled circle reads as a target. */}
           <circle cx="144" cy="66" r="27" fill="var(--th-on-04)" />

@@ -87,7 +87,7 @@ export type ProjectStatusSource = {
   /** True while an atomic teardown is in flight (the real in-progress flag;
    *  teardown hard-deletes on success, so `deletedAt` is rarely set). */
   deletionInProgress?: boolean | null;
-  /** Marks the Openship control-plane self-app. It IS the running host service and
+  /** Marks the Kovalio control-plane self-app. It IS the running host service and
    *  has no deployment behind it, so it must never fall through to "draft". */
   appTemplateId?: string | null;
   isApp?: boolean | null;
@@ -175,7 +175,7 @@ function latestDeployIsLive(project: ProjectStatusSource): boolean {
 export function getProjectAttentionReason(
   project: ProjectStatusSource,
 ): ProjectAttentionReason | null {
-  if (project.appTemplateId === "openship") return null;
+  if (project.appTemplateId === "kovalio") return null;
   if (project.deletedAt || project.deletionInProgress) return null;
   // Before every deploy-derived reason: a parked migration is about the WORKLOAD's location,
   // and it outranks anything the deployment row has to say — the target's own deploy is
@@ -201,10 +201,10 @@ export function getProjectStatus(project: ProjectStatusSource): ProjectStatus {
     return "deleting";
   }
 
-  // The Openship control-plane self-app IS the running host process; it has no
+  // The Kovalio control-plane self-app IS the running host process; it has no
   // deployment record, so it must never render as "draft" with a "Deploy now"
   // CTA. If you can see the dashboard, it's live.
-  if (project.appTemplateId === "openship") {
+  if (project.appTemplateId === "kovalio") {
     return "live";
   }
 

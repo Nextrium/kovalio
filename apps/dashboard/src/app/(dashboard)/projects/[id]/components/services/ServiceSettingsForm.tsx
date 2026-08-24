@@ -12,7 +12,7 @@ import {
   type Service,
   type ServiceInput,
   type ComposeAdvancedPatch,
-  type OpenshipReadiness,
+  type KovalioReadiness,
 } from "@/lib/api/services";
 
 /**
@@ -84,7 +84,7 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
   const [hcStartPeriod, setHcStartPeriod] = useState("");
   /** Per-service readiness gate. undefined = inherit the project's (which is
    *  itself off by default). */
-  const [readiness, setReadiness] = useState<OpenshipReadiness | undefined>(undefined);
+  const [readiness, setReadiness] = useState<KovalioReadiness | undefined>(undefined);
   const [enabled, setEnabled] = useState(true);
   const [rootDirectory, setRootDirectory] = useState("");
   const [framework, setFramework] = useState("");

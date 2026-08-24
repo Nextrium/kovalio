@@ -49,7 +49,7 @@ export interface CreateDestinationInput {
   sshHost?: string | null;
   sshPort?: number | null;
   sshUser?: string | null;
-  /** When kind="openship_server", the user's servers.id to reuse. */
+  /** When kind="kovalio_server", the user's servers.id to reuse. */
   serverId?: string | null;
   accessKeyId?: string | null;
   secretAccessKey?: string | null;
@@ -68,7 +68,7 @@ export interface UpdateDestinationInput {
   sshHost?: string | null;
   sshPort?: number | null;
   sshUser?: string | null;
-  /** Retarget an openship_server destination at a different box. */
+  /** Retarget an kovalio_server destination at a different box. */
   serverId?: string | null;
   /** Pass undefined to leave unchanged; null to clear; string to replace. */
   accessKeyId?: string | null;
@@ -250,7 +250,7 @@ export async function getDestinationUsage(ctx: RequestContext, id: string): Prom
 }
 
 /**
- * The serverId on an openship_server destination MUST belong to the calling org.
+ * The serverId on an kovalio_server destination MUST belong to the calling org.
  *
  * It arrives from the request body, and the destination is what a backup SSHes into —
  * so an unchecked id lets a caller point their own destination at a victim's box and
@@ -265,7 +265,7 @@ async function assertServerUsable(
   serverId: string | null | undefined,
 ): Promise<void> {
   if (!serverId) {
-    throw new Error("openship_server destinations require a serverId");
+    throw new Error("kovalio_server destinations require a serverId");
   }
   const server = await repos.server.get(serverId);
   if (!server) {
@@ -284,7 +284,7 @@ export async function createDestination(
 ): Promise<SerializedDestination> {
   await validateInput(input);
 
-  if (input.kind === "openship_server") {
+  if (input.kind === "kovalio_server") {
     await assertServerUsable(ctx, input.serverId);
   }
 
@@ -363,11 +363,11 @@ export async function updateDestination(
   if (patch.sshUser !== undefined) update.sshUser = patch.sshUser;
   if (patch.isDefault !== undefined) update.isDefault = patch.isDefault;
   if (patch.serverId !== undefined) {
-    // Was dropped entirely: retargeting an openship_server destination at a different
+    // Was dropped entirely: retargeting an kovalio_server destination at a different
     // box was a no-op the UI confirmed as saved, and every later run kept going to the
     // old machine. Clearing it is refused rather than stored — `toAdapterRow` calls a
-    // serverId-less openship_server row corrupted state and every run on it fails.
-    if (existing.kind === "openship_server") {
+    // serverId-less kovalio_server row corrupted state and every run on it fails.
+    if (existing.kind === "kovalio_server") {
       await assertServerUsable(ctx, patch.serverId);
       update.serverId = patch.serverId;
     } else if (patch.serverId) {
@@ -471,7 +471,7 @@ export async function preflightDraft(
 
   let adapterRow: BackupDestinationRow;
   try {
-    if (input.kind === "openship_server") {
+    if (input.kind === "kovalio_server") {
       const serverId = input.serverId ?? stored?.serverId ?? null;
       if (!serverId) return { ok: false, reason: "Select a server to test" };
       adapterRow = await hydrateServerAdapterRow({
@@ -555,9 +555,9 @@ async function validateInput(input: CreateDestinationInput): Promise<void> {
         throw new Error("SFTP destinations require a password or private key");
       }
       break;
-    case "openship_server":
+    case "kovalio_server":
       if (!input.serverId) {
-        throw new Error("openship_server destinations require a serverId");
+        throw new Error("kovalio_server destinations require a serverId");
       }
       break;
     case "local":

@@ -59,7 +59,7 @@ export interface BrowseResult {
 }
 
 /**
- * A vhost the edge serves with no Openship record behind it.
+ * A vhost the edge serves with no Kovalio record behind it.
  *
  * `static` is the case that matters: it keeps returning 200 with a removed
  * project's built files. A dead `proxy` vhost 502s and announces itself.
@@ -95,8 +95,8 @@ export interface InstanceSettings {
   productMode?: "platform" | "mail" | null;
   /** What the instance actually resolves to right now (override ?? env). */
   productModeEffective?: "platform" | "mail";
-  /** Stored host-control override — may OpenShip deploy to the machine it runs
-   *  on ("This Server")? null = unset (the OPENSHIP_HOST_CONTROL env decides). */
+  /** Stored host-control override — may Kovalio deploy to the machine it runs
+   *  on ("This Server")? null = unset (the KOVALIO_HOST_CONTROL env decides). */
   hostControl?: boolean | null;
   /** What host control actually resolves to right now (override ?? env), already
    *  false off a non-selfhosted target so the UI agrees with the backend. */
@@ -131,7 +131,7 @@ export type ServerReachabilityCode =
  * Mirrors HostChannelCode in @repo/adapters (src/system/executor.ts) — the
  * dashboard can't import the adapters (ssh/docker, server-only). It refines the
  * reachability code rather than replacing it, because the REMEDY differs: a
- * `not_configured` channel is provisioned with `openship up`, while an
+ * `not_configured` channel is provisioned with `kovalio up`, while an
  * `unreachable` one is usually a host firewall dropping bridge→host traffic, and
  * offering the wrong one of those sends an operator to edit a firewall that was
  * never involved (#509).
@@ -168,7 +168,7 @@ export interface ServerReachability {
    * The address the channel WILL use once provisioned — intent, never a machine that
    * failed to answer. Optional because nothing produces it today: the API can only
    * report what its own env says, and in this state the env says nothing, so filling
-   * this in would mean guessing at what `openship up` would have written. Consumed
+   * this in would mean guessing at what `kovalio up` would have written. Consumed
    * already (rendered as intent, in its own sentence) so that whichever surface can
    * honestly supply it needs no client change.
    */
@@ -458,7 +458,7 @@ export interface EdgeOccupant {
   isDocker?: boolean;
   containerName?: string;
   proxy?: EdgeProxyKind;
-  managedByOpenship: boolean;
+  managedByKovalio: boolean;
 }
 
 export interface EdgeStatus {
@@ -603,7 +603,7 @@ export interface TunnelInfo {
 
 export const systemApi = {
   /**
-   * Vhosts the local edge serves that Openship no longer tracks.
+   * Vhosts the local edge serves that Kovalio no longer tracks.
    *
    * `scanned: false` is NOT "all clear" — it means we couldn't compare (no edge,
    * or a foreign proxy). Render the reason, never an empty success state.
@@ -773,7 +773,7 @@ export const systemApi = {
    * Remove a server, resolving the fate of every workload bound to it.
    *
    * `destroyOnSource` is the operator's explicit opt-in to stop and delete the
-   * containers on the machine; without it the workloads are removed from Openship
+   * containers on the machine; without it the workloads are removed from Kovalio
    * only and keep running. Flags travel as query params (same idiom as
    * `projectsApi.delete`), and the timeout scales with the workload count because
    * each teardown is its own SSH round-trip — a short client timeout would abort a

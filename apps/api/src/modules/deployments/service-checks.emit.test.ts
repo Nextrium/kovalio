@@ -53,7 +53,7 @@ vi.mock("../../lib/org-actor", () => ({ resolveOrgOwner: async () => h.orgOwner 
 vi.mock("../../lib/request-context", () => ({
   buildBackgroundContext: (o: unknown) => o,
 }));
-vi.mock("../../config", () => ({ runtimeTarget: { dashboard: "https://openship.test/" } }));
+vi.mock("../../config", () => ({ runtimeTarget: { dashboard: "https://kovalio.test/" } }));
 vi.mock("@repo/core", () => ({
   isServiceSuccessStatus: (s: string) => s === "success" || s === "running",
   isServiceFailureStatus: (s: string) => s === "failure" || s === "cancelled",

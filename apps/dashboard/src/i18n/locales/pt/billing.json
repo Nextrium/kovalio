@@ -1,7 +1,7 @@
 {
   "capacity": {
     "title": "Capacidade e uso",
-    "subtitle": "Capacidade incluída no seu plano e quanto você usou. Os números ao vivo são sincronizados do Openship Cloud.",
+    "subtitle": "Capacidade incluída no seu plano e quanto você usou. Os números ao vivo são sincronizados do Kovalio Cloud.",
     "routes": "Rotas gratuitas",
     "runningServices": "Serviços em execução",
     "projects": "Projetos",
@@ -41,19 +41,19 @@
   },
   "unavailable": {
     "notConnected": {
-      "title": "Conecte-se ao Openship Cloud para gerenciar a cobrança",
-      "description": "Sua instância local ainda não está conectada ao Openship Cloud. Conecte-se para ver o estado da assinatura, o uso, as faturas e as recargas.",
-      "connect": "Conectar ao Openship Cloud",
+      "title": "Conecte-se ao Kovalio Cloud para gerenciar a cobrança",
+      "description": "Sua instância local ainda não está conectada ao Kovalio Cloud. Conecte-se para ver o estado da assinatura, o uso, as faturas e as recargas.",
+      "connect": "Conectar ao Kovalio Cloud",
       "connecting": "Aguardando login…"
     },
     "sessionExpired": {
-      "title": "Sua sessão do Openship Cloud expirou",
-      "description": "Você ainda está vinculado, mas o token de sessão emitido pelo Openship Cloud não é mais válido. Reconecte-se para atualizá-lo — não é necessário desconectar primeiro.",
-      "reconnect": "Reconectar ao Openship Cloud",
+      "title": "Sua sessão do Kovalio Cloud expirou",
+      "description": "Você ainda está vinculado, mas o token de sessão emitido pelo Kovalio Cloud não é mais válido. Reconecte-se para atualizá-lo — não é necessário desconectar primeiro.",
+      "reconnect": "Reconectar ao Kovalio Cloud",
       "connecting": "Aguardando login…"
     },
     "unreachable": {
-      "title": "Não foi possível acessar a cobrança do Openship Cloud",
+      "title": "Não foi possível acessar a cobrança do Kovalio Cloud",
       "description": "Sua sessão na nuvem pode ter expirado ou a nuvem está temporariamente indisponível. Tente novamente ou reconecte-se em Configurações → Nuvem.",
       "tryAgain": "Tentar novamente",
       "reconnect": "Reconectar"

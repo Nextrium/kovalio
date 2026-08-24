@@ -99,7 +99,7 @@ export { classifyProxy, EDGE_CONTAINER_NAME, isOurEdgeContainer };
  * Runs before EVERY edge start, not only after a carry. A conf left by an older or
  * failed attempt lives in the HOST bind mount, so it poisons every later start —
  * including compose, which never carried anything. That is how one bad conversion
- * became `[emerg] duplicate default server` on every subsequent `openship up`.
+ * became `[emerg] duplicate default server` on every subsequent `kovalio up`.
  *
  * Best-effort: a box where this can't run is no worse off than before, and
  * `openresty -t` is still the gate that catches a bad tree.
@@ -175,7 +175,7 @@ export async function sanitizeEdgeVhosts(
  * container reports `.State.Running == true` and appears in plain `docker ps`, so
  * every running-only probe (`resolveOurEdgeContainer`, `docker ps --filter name=`)
  * says yes while nothing is being served. Pass `container` to ask about a specific
- * one — a container renamed via OPENSHIP_EDGE_CONTAINER isn't `openship-edge`, and
+ * one — a container renamed via KOVALIO_EDGE_CONTAINER isn't `kovalio-edge`, and
  * inspecting the default name instead silently answers about a container that
  * doesn't exist (unreadable → "fine").
  */
@@ -230,8 +230,8 @@ export function edgeFailureReason(containerLog: string): string | null {
 }
 
 /**
- * Is OUR edge CONTAINER running? `openship-edge` by NAME (the default) or by
- * IMAGE (covers a container renamed via OPENSHIP_EDGE_CONTAINER). A running edge
+ * Is OUR edge CONTAINER running? `kovalio-edge` by NAME (the default) or by
+ * IMAGE (covers a container renamed via KOVALIO_EDGE_CONTAINER). A running edge
  * container OWNS 80/443 — host-networked (no `--filter publish` match; its Lua
  * lives inside the container, so a host `test -f` misses it) or bridged. This is
  * the SELF-TAKEOVER LOCK: a running edge container alone proves the edge is
@@ -292,7 +292,7 @@ export function invalidateEdgeContainer(executor?: CommandExecutor): void {
  * Same detection as {@link ourEdgeContainerRunning} — it's the same probe, so
  * this is the single source of truth and the boolean delegates here. Callers that
  * need to reach INTO the edge (`docker exec`) must use this rather than
- * `OPENSHIP_EDGE_CONTAINER`: that env names the CONTROL PLANE's own edge, which
+ * `KOVALIO_EDGE_CONTAINER`: that env names the CONTROL PLANE's own edge, which
  * says nothing about a remote server we're scanning or deploying to.
  *
  * Memoized per executor for a few seconds. Pass `{ fresh: true }` on paths that
@@ -326,7 +326,7 @@ export async function resolveOurEdgeContainer(
  * stopped edge must read as "no edge"). A `docker ps -a` pass so a
  * provisioned-but-stopped edge still resolves (`running:false`, `exists:true`)
  * instead of vanishing from tracking. Matches by NAME first, then by our image for
- * a container renamed via OPENSHIP_EDGE_CONTAINER. The `.Image` field carries the
+ * a container renamed via KOVALIO_EDGE_CONTAINER. The `.Image` field carries the
  * created-with ref, which is what drift compares against the pinned ref — no extra
  * `docker inspect`.
  *
@@ -363,11 +363,11 @@ export async function detectEdgeContainer(
 async function probeOurEdgeContainer(executor: CommandExecutor): Promise<string | null> {
   const byName = await tryExec(
     executor,
-    `docker ps --filter name=openship-edge --format '{{.Names}}' 2>/dev/null | head -1`,
+    `docker ps --filter name=kovalio-edge --format '{{.Names}}' 2>/dev/null | head -1`,
   );
   if (byName?.trim()) return byName.trim();
 
-  // Renamed container (OPENSHIP_EDGE_CONTAINER): still ours if it runs our image.
+  // Renamed container (KOVALIO_EDGE_CONTAINER): still ours if it runs our image.
   const all = await tryExec(executor, `docker ps --format '{{.Names}}\t{{.Image}}' 2>/dev/null`);
   if (!all) return null;
   for (const line of all.split("\n").map((l) => l.trim()).filter(Boolean)) {
@@ -473,7 +473,7 @@ async function probeEdgePort(
 
   // "Ours" means EXACTLY ONE THING: our edge CONTAINER. Two shapes of the same
   // fact, because host networking hides the publish:
-  //   - OUR edge container publishes this port (bridged `openship-edge`) — the
+  //   - OUR edge container publishes this port (bridged `kovalio-edge`) — the
   //     docker occupant IS our edge image/name.
   //   - our edge container is RUNNING and healthy (host-networked → no docker
   //     publish match). A running edge container OWNS 80/443, so the host-process
@@ -483,16 +483,16 @@ async function probeEdgePort(
   //     `readlink /proc/<pid>/exe` can be denied). THIS is the self-takeover lock:
   //     our own edge must never read as foreign and get killed by the takeover.
   //
-  // A BARE HOST OpenResty is NOT ours, even one an older Openship installed. The
+  // A BARE HOST OpenResty is NOT ours, even one an older Kovalio installed. The
   // edge is a container; a host OpenResty is a proxy to MIGRATE FROM, exactly like
   // a distro nginx or a Caddy (`canImportProxy("openresty")` is true and
-  // `scanOpenshipEdge` reads both bare sites-enabled layouts). Calling it "ours"
+  // `scanKovalioEdge` reads both bare sites-enabled layouts). Calling it "ours"
   // was the whole bug: `classification` came back `ours`, `canProceedClean` was
   // true, the consent gate returned immediately, nothing stopped it, and the edge
   // container then crash-looped forever on
   // `bind() to 0.0.0.0:80 failed (98: Address already in use)` while every surface
   // reported the edge installed and running.
-  const managedByOpenship =
+  const managedByKovalio =
     isOurEdgeContainer(docker?.name, docker?.image) ||
     (ours.containerRunning && !foreignDockerProxy);
 
@@ -512,7 +512,7 @@ async function probeEdgePort(
     containerId: docker?.id ?? listener?.containerId,
     dockerPublished: listener?.dockerPublished,
     proxy,
-    managedByOpenship,
+    managedByKovalio,
   };
 }
 
@@ -535,7 +535,7 @@ export async function probeEdge(executor: CommandExecutor): Promise<EdgeStatus> 
     if (occ) occupants.push(occ);
   }
 
-  const foreign = occupants.filter((o) => !o.managedByOpenship);
+  const foreign = occupants.filter((o) => !o.managedByKovalio);
 
   let classification: EdgeStatus["classification"];
   if (occupants.length === 0) classification = "free";

@@ -825,7 +825,7 @@ describe("the traffic block folds", () => {
   it("remembers the choice under its own key", async () => {
     const { readFileSync } = await import("node:fs");
     const src = readFileSync(new URL("./MonitoringView.tsx", import.meta.url), "utf8");
-    expect(src).toContain("openship.monitoring.trafficOpen");
+    expect(src).toContain("kovalio.monitoring.trafficOpen");
     // Read lazily in a useState initializer, not a useEffect — an effect renders the
     // default first and then snaps, which on a block this tall is a visible jump on every
     // navigation.
@@ -987,7 +987,7 @@ describe("the recent-hit list is opt-in", () => {
   it("remembers the choice under its own key", async () => {
     const { readFileSync } = await import("node:fs");
     const src = readFileSync(new URL("./VisitorMap.tsx", import.meta.url), "utf8");
-    expect(src).toContain("openship.monitoring.liveFeed");
+    expect(src).toContain("kovalio.monitoring.liveFeed");
     // Read in a useState initializer like the colour mode, so the first paint is already
     // right rather than flashing the default.
     expect(src).toContain("useState<boolean>(initialFeed)");

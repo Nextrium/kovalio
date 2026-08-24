@@ -1,6 +1,6 @@
 # Monitoring
 
-Openship's per-project Monitoring tab answers three questions — what is my app using
+Kovalio's per-project Monitoring tab answers three questions — what is my app using
 right now, where is my traffic coming from, and what is it returning — and it is designed
 so that answering them costs your visitors nothing.
 
@@ -89,7 +89,7 @@ evict the counters in another.
 ### Measured cost
 
 Benchmarked by running the handler's exact shared-dict writes in a loop inside the real
-`openship-edge` image (aarch64, 2 vCPU container, 300,000 iterations, 5 samples):
+`kovalio-edge` image (aarch64, 2 vCPU container, 300,000 iterations, 5 samples):
 
 | | per request |
 |---|---|
@@ -294,19 +294,19 @@ If the edge sits behind a proxy, the connecting peer is the *proxy*, and without
 that, every visitor's country resolves to the PoP, distinct-visitor counts collapse toward
 the number of PoPs, and per-IP rate limits bucket everyone behind one PoP together.
 
-Openship recovers the real client address using nginx's `realip` module with Cloudflare's
+Kovalio recovers the real client address using nginx's `realip` module with Cloudflare's
 published ranges, honouring `CF-Connecting-IP`. The trust is anchored to *who opened the
 socket*: the header is believed only when the peer is a trusted address, so sending it
 yourself at the origin does nothing. See
 [`edge-real-ip.ts`](../packages/adapters/src/infra/edge-real-ip.ts) for why
 `CF-Connecting-IP` and not `X-Forwarded-For`.
 
-For a non-Cloudflare proxy, set `OPENSHIP_EDGE_TRUSTED_PROXIES` (comma-separated CIDRs)
-and optionally `OPENSHIP_EDGE_REAL_IP_HEADER`.
+For a non-Cloudflare proxy, set `KOVALIO_EDGE_TRUSTED_PROXIES` (comma-separated CIDRs)
+and optionally `KOVALIO_EDGE_REAL_IP_HEADER`.
 
 ### Free `*.opsh.io` domains
 
-A free domain is served by Openship Cloud's own edge, which proxies to your box on plain :80
+A free domain is served by Kovalio Cloud's own edge, which proxies to your box on plain :80
 and names the visitor in `X-Real-IP` — a different header from the Cloudflare path, and nginx
 allows one `real_ip_header` per config scope. So those vhosts (and only those) carry their own
 `realip` block, emitted inside the `server { }` by `registerRoute`.
@@ -326,7 +326,7 @@ generated-config fix applying to nothing.
 
 ---
 
-## On Openship Cloud
+## On Kovalio Cloud
 
 On the SaaS, traffic analytics live at Oblien's edge and are read through on demand —
 never scraped into a local database. Both the `analytics:scrape` and

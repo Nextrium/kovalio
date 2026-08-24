@@ -2,9 +2,9 @@
  * @module edge-orphans.service
  *
  * The I/O half of the edge-orphan sweep: read what the local edge serves, read
- * what Openship tracks, and hand both to the pure diff in `@repo/core`.
+ * what Kovalio tracks, and hand both to the pure diff in `@repo/core`.
  *
- * Why an orphan exists at all — record-only delete ("Remove from Openship only")
+ * Why an orphan exists at all — record-only delete ("Remove from Kovalio only")
  * promises the workload keeps running, which explicitly includes NOT removing the
  * route. So the vhost outlives its DB rows by design. A port-based leftover 502s
  * and announces itself; a STATIC leftover keeps serving the old project's files
@@ -42,7 +42,7 @@ export interface EdgeOrphanScan {
 }
 
 /**
- * Every hostname Openship believes it should be serving on this box.
+ * Every hostname Kovalio believes it should be serving on this box.
  *
  * Assembled from the SAME producers that write vhosts, so the sweep doesn't flag
  * live infrastructure:
@@ -50,7 +50,7 @@ export interface EdgeOrphanScan {
  *   - mail-server route plan     → mail./api.mail./autodiscover. per mail domain,
  *                                  registered straight from the plan with no
  *                                  domain row of their own
- *   - OPENSHIP_PUBLIC_URL host   → the managed-edge vhost fronting the dashboard
+ *   - KOVALIO_PUBLIC_URL host   → the managed-edge vhost fronting the dashboard
  *
  * A producer added later without being added here shows up as an orphan. That is
  * the safe direction — the report is advisory and removal is per-hostname and
@@ -73,7 +73,7 @@ export async function collectKnownHostnames(): Promise<string[]> {
   }
 
   // The dashboard's own vhost, when this box runs the managed edge.
-  const publicHost = hostnameFromUrl(env.OPENSHIP_PUBLIC_URL);
+  const publicHost = hostnameFromUrl(env.KOVALIO_PUBLIC_URL);
   if (publicHost) out.add(publicHost);
 
   return [...out];
@@ -89,7 +89,7 @@ function hostnameFromUrl(value: string | undefined): string | null {
 }
 
 /**
- * Compare the local edge's vhosts against what Openship tracks.
+ * Compare the local edge's vhosts against what Kovalio tracks.
  *
  * Fails SOFT in every direction: no edge, a foreign edge, or a read error all
  * return `scanned: false` with a reason rather than throwing. This runs from a
@@ -115,7 +115,7 @@ export async function scanEdgeOrphans(): Promise<EdgeOrphanScan> {
   // A foreign proxy's vhosts are not ours to call orphaned — the operator may run
   // unrelated sites on it, and the takeover/import flow is what reasons about those.
   if (!api.ours) {
-    return empty(`The edge on this machine is ${api.kind}, not Openship's — nothing to reconcile.`);
+    return empty(`The edge on this machine is ${api.kind}, not Kovalio's — nothing to reconcile.`);
   }
 
   const [scan, knownHostnames] = await Promise.all([
@@ -132,7 +132,7 @@ export async function scanEdgeOrphans(): Promise<EdgeOrphanScan> {
 }
 
 /**
- * Is a vhost already serving `hostname` that Openship has no record of?
+ * Is a vhost already serving `hostname` that Kovalio has no record of?
  *
  * Used by the domain-claim path. Returns null when the hostname is fine to claim
  * (nothing there, already tracked, foreign edge, or unreadable) — the claim must

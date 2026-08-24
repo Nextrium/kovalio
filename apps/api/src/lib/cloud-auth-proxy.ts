@@ -1,12 +1,12 @@
 /**
- * Cloud auth proxy - shared utilities for Openship Cloud authentication.
+ * Cloud auth proxy - shared utilities for Kovalio Cloud authentication.
  *
  * Used by:
  *   - Desktop mode: cloud-callback exchanges a one-time code for a local session
  *   - Self-hosted settings: connect-callback stores cloud token for deploys
  *   - Cloud mode (SaaS): desktop-handoff generates one-time codes
  *
- * All external auth happens on app.openship.io - this module only handles
+ * All external auth happens on kovalio.nextrium.org - this module only handles
  * the local side (mirroring users, creating sessions, managing codes).
  */
 
@@ -137,7 +137,7 @@ export async function mintSession(opts: {
     now.getTime() + (opts.ttlSeconds ?? 60 * 60 * 24 * 30) * 1000,
   );
   const defaultUserAgent =
-    opts.purpose === "linked-instance" ? "openship-local-link" : null;
+    opts.purpose === "linked-instance" ? "kovalio-local-link" : null;
 
   await db.insert(schema.session).values({
     id,
@@ -266,7 +266,7 @@ async function exchangeHandoffCode(
 }
 
 /**
- * Exchange a one-time code with the Openship Cloud API.
+ * Exchange a one-time code with the Kovalio Cloud API.
  * Shared by desktop cloud-callback and self-hosted connect-callback.
  *
  * @param codeVerifier - PKCE code_verifier (plain). Required when the

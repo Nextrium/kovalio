@@ -7,7 +7,7 @@ import { RESOURCE_TIER_SPECS, ALL_RESOURCE_TIERS } from "@repo/core";
  * A cloud workspace is metered and must be provisioned at a concrete size, so
  * this resolver must ALWAYS return a usable ResourceConfig — never undefined.
  *
- * The regression that motivated these: `openship.json` gained a self-hosted-only
+ * The regression that motivated these: `kovalio.json` gained a self-hosted-only
  * `tier: "unlimited"`, which is reachable input here because the value comes from
  * a repo file. Indexing the cloud tier table with it returned
  * undefined-as-ResourceConfig, and the failure surfaced much later as a

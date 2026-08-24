@@ -77,7 +77,7 @@ const DeployRepository: React.FC = () => {
     // Desktop AND self-hosted pick a deploy target (this box / a registered server
     // / cloud) — only the multi-tenant SaaS always deploys to cloud. Self-hosted
     // was wrongly excluded, so its target picker never mounted and the "cloud"
-    // DEFAULT_CONFIG value silently shipped ("Build Location: Openship Cloud").
+    // DEFAULT_CONFIG value silently shipped ("Build Location: Kovalio Cloud").
     // Reuse the shared "self-managed, not SaaS" predicate instead of re-deriving
     // it inline; the picker's own auto-select already prefers "This Server". #263
     const canPickTarget = canUseCloudConnection({ selfHosted, deployMode });
@@ -450,7 +450,7 @@ const DeployRepository: React.FC = () => {
                             )}
 
                             {/* Above every type-specific section: a refused
-                                openship.json field can belong to any of them, and
+                                kovalio.json field can belong to any of them, and
                                 the notice must survive the `app → services` flip
                                 that applying a compose path causes (#641). */}
                             <ConfigDiagnostics />

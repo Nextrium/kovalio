@@ -130,7 +130,7 @@ export interface InstallerConfig {
   /**
    * Edge container image ref. The API pins this to its OWN version so the Lua
    * baked into the edge can never skew from the API driving it; unset falls back
-   * to OPENSHIP_EDGE_IMAGE / registry+OPENSHIP_VERSION.
+   * to KOVALIO_EDGE_IMAGE / registry+KOVALIO_VERSION.
    */
   edgeImage?: string;
   /**
@@ -191,7 +191,7 @@ export interface EdgeOccupant {
   dockerPublished?: boolean;
   proxy?: ProxyKind;
   /** true when this is our own OpenResty (never counted as a conflict) */
-  managedByOpenship: boolean;
+  managedByKovalio: boolean;
 }
 
 export interface EdgeStatus {
@@ -200,7 +200,7 @@ export interface EdgeStatus {
    * Owners that must be resolved before we can bind 80/443 — i.e. everything on
    * the edge ports EXCEPT our own healthy edge container.
    *
-   * A bare-host OpenResty belongs here even one an older Openship installed: the
+   * A bare-host OpenResty belongs here even one an older Kovalio installed: the
    * edge is a container now, so a host OpenResty is a proxy to migrate FROM like
    * any other. Calling it "ours" was what let it keep :80 while the edge container
    * crash-looped and every surface reported success.

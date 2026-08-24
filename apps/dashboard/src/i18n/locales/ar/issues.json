@@ -1,6 +1,6 @@
 {
   "title": "المشكلات",
-  "subtitle": "كل ما وجده Openship من خلل في مشاريعك وخوادمك ونطاقاتك.",
+  "subtitle": "كل ما وجده Kovalio من خلل في مشاريعك وخوادمك ونطاقاتك.",
   "tabs": {
     "open": "مفتوحة",
     "resolved": "محلولة"
@@ -17,7 +17,7 @@
     "clear": "مسح الفلاتر"
   },
   "scopes": {
-    "platform": "Openship",
+    "platform": "Kovalio",
     "server": "الخوادم",
     "project": "المشاريع",
     "domain": "النطاقات"

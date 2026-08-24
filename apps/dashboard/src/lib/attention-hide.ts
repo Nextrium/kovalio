@@ -25,7 +25,7 @@ const WINDOW_MS: Record<AttentionCardKey, number> = {
   behind: 7 * 24 * 60 * 60 * 1000,
 };
 
-const storageKey = (card: AttentionCardKey) => `openship:attentionHidden:${card}`;
+const storageKey = (card: AttentionCardKey) => `kovalio:attentionHidden:${card}`;
 
 interface HiddenState {
   fp: string;

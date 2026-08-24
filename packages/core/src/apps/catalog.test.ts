@@ -53,19 +53,19 @@ describe("app catalog (JSON)", () => {
 
 describe("mail has exactly one entry point in the catalog", () => {
   /**
-   * Openship Mail and Openship Webmail used to be two cards with the same logo,
+   * Kovalio Mail and Kovalio Webmail used to be two cards with the same logo,
    * the same category and overlapping copy — the mail wizard's "connect existing"
    * branch installs the webmail app, so one of them was a subset of the other. The
    * wizard is now the single door; webmail keeps its id and stays installable.
    */
   const listed = APP_TEMPLATES.filter((t) => !t.unlisted);
 
-  it("puts Openship Mail first", () => {
+  it("puts Kovalio Mail first", () => {
     expect(listed[0]?.id).toBe("mail");
   });
 
-  it("lists no second Openship-branded mail card", () => {
-    const own = listed.filter((t) => t.category === "mail" && /^Openship /.test(t.name));
+  it("lists no second Kovalio-branded mail card", () => {
+    const own = listed.filter((t) => t.category === "mail" && /^Kovalio /.test(t.name));
     expect(own.map((t) => t.id)).toEqual(["mail"]);
   });
 

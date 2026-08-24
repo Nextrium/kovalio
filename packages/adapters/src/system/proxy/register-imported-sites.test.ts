@@ -315,7 +315,7 @@ describe("registerImportedSites", () => {
     await registerImportedSites(routing as RoutingProvider, ssl as SslProvider, fakeExecutor(), sites, {
       onLog: () => {},
       warnings: [],
-      staticRootOverrides: { "front.com": "/opt/openship/static/_adopted/front.com" },
+      staticRootOverrides: { "front.com": "/opt/kovalio/static/_adopted/front.com" },
     });
 
     // Both server names register, and BOTH get the corrected root (the override keys
@@ -324,14 +324,14 @@ describe("registerImportedSites", () => {
       domain: "front.com",
       tls: false,
       terminatesTlsLocally: false,
-      staticRoot: "/opt/openship/static/_adopted/front.com",
+      staticRoot: "/opt/kovalio/static/_adopted/front.com",
       staticRootAdopted: true,
     });
     expect(routing.registerRoute).toHaveBeenCalledWith({
       domain: "www.front.com",
       tls: false,
       terminatesTlsLocally: false,
-      staticRoot: "/opt/openship/static/_adopted/front.com",
+      staticRoot: "/opt/kovalio/static/_adopted/front.com",
       staticRootAdopted: true,
     });
   });
@@ -345,7 +345,7 @@ describe("registerImportedSites", () => {
       onLog: () => {},
       warnings: [],
       // A key for a DIFFERENT site (operator left this one) must not leak across.
-      staticRootOverrides: { "other.com": "/opt/openship/static/_adopted/other.com" },
+      staticRootOverrides: { "other.com": "/opt/kovalio/static/_adopted/other.com" },
     });
 
     expect(routing.registerRoute).toHaveBeenCalledWith({

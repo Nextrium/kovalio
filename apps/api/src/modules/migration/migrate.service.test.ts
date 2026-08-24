@@ -144,7 +144,7 @@ describe("buildAdoptedServiceRows — adoption never host-publishes an adopted p
   it("strips a pinned host mapping to the container port only — the #388 collision fix", () => {
     // A discovered "5432:5432" (e.g. carried over from a Coolify migration) would
     // bind host 5432 at deploy and collide with whatever already holds it —
-    // Openship's OWN Postgres, or a second project's — aborting the whole deploy.
+    // Kovalio's OWN Postgres, or a second project's — aborting the whole deploy.
     // Adoption keeps only the container side; the service is reached by name and
     // re-exposed later from the Domains tab.
     const { rows } = buildAdoptedServiceRows(
@@ -224,7 +224,7 @@ describe("buildAdoptedServiceRows — repo-service rename (migration mapping)", 
         volumes: [
           {
             type: "volume",
-            source: "openship-openship-postgres",
+            source: "kovalio-kovalio-postgres",
             target: "/var/lib/postgresql/data",
             rw: true,
           },
@@ -236,7 +236,7 @@ describe("buildAdoptedServiceRows — repo-service rename (migration mapping)", 
     });
     expect(rows).toHaveLength(1);
     expect(rows[0]!.name).toBe("db"); // adopted under the repo service name
-    expect(rows[0]!.volumes).toEqual(["openship-openship-postgres:/var/lib/postgresql/data"]); // volume verbatim
+    expect(rows[0]!.volumes).toEqual(["kovalio-kovalio-postgres:/var/lib/postgresql/data"]); // volume verbatim
     expect(rows[0]!.image).toBe("postgres:16-alpine"); // running image reused, no build
     expect(rows[0]!.build).toBeUndefined();
     expect(renames).toEqual({ postgres: "db" });
@@ -270,7 +270,7 @@ describe("buildAdoptedServiceRows — native rows from the mapped repo compose",
     // repo `build:` service, the row must carry the BUILD context (so Redeploy
     // reclones + rebuilds), NOT the frozen tag — and the running image is reused
     // exactly once via `handover`.
-    const chosen = [svc({ name: "openship-api", image: "openship/openship-api:bld_stale" })];
+    const chosen = [svc({ name: "kovalio-api", image: "kovalio/kovalio-api:bld_stale" })];
     const repoServices = new Map([
       [
         "api",
@@ -283,16 +283,16 @@ describe("buildAdoptedServiceRows — native rows from the mapped repo compose",
     ]);
     const { rows, handover } = buildAdoptedServiceRows(
       chosen,
-      new Set(["openship-api"]),
+      new Set(["kovalio-api"]),
       undefined,
-      { "openship-api": "api" },
+      { "kovalio-api": "api" },
       repoServices,
     );
     expect(rows[0]!.name).toBe("api");
     expect(rows[0]!.build).toBe("./apps/api"); // native source → Redeploy rebuilds
     expect(rows[0]!.buildArgs).toEqual({ APP_PACKAGE: "@myorg/api", FROM_ENV: null });
     expect(rows[0]!.image).toBeUndefined(); // NOT the stale bld_ tag
-    expect(handover).toEqual({ api: "openship/openship-api:bld_stale" }); // reuse once
+    expect(handover).toEqual({ api: "kovalio/kovalio-api:bld_stale" }); // reuse once
   });
 
   it("an image: repo service (postgres) → pulls its registry image, no build, no handover", () => {

@@ -386,7 +386,7 @@ export interface AppTemplate {
    *  run on a small box — this is a refusal, not a hint. */
   minResources?: AppMinResources;
   /** Hidden from the browsable catalog, still installable by id — for an app whose
-   *  entry point is another app's wizard (webmail, reached through Openship Mail).
+   *  entry point is another app's wizard (webmail, reached through Kovalio Mail).
    *  Distinct from `available: false`, which is a server-side refusal. */
   unlisted?: boolean;
   /** How the app is hosted — an honest catalog badge + wizard notice. Absent ⇒
@@ -400,7 +400,7 @@ export interface AppTemplate {
    * forward-compat gate that lets the shape evolve without breaking old boxes.
    */
   schemaVersion?: number;
-  /** Minimum Openship version (semver) required to install this app. Absent ⇒ any. */
+  /** Minimum Kovalio version (semver) required to install this app. Absent ⇒ any. */
   minEngine?: string;
   /** ISO timestamp of the last catalog edit — surface-only ("template updated"). */
   updatedAt?: string;

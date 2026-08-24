@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { OpenshipReadiness } from "@repo/core";
+import type { KovalioReadiness } from "@repo/core";
 import { resolveReadinessGate } from "../../../src/modules/deployments/readiness-gate";
 
 /**
@@ -19,7 +19,7 @@ import { resolveReadinessGate } from "../../../src/modules/deployments/readiness
 
 // Kept in sync with WEBMAIL_READINESS in webmail-install.service.ts, which is private to
 // that module; duplicating the literal is what makes a change to it fail here.
-const WEBMAIL_READINESS: OpenshipReadiness = { stabilization: true, onFailure: "fail" };
+const WEBMAIL_READINESS: KovalioReadiness = { stabilization: true, onFailure: "fail" };
 
 describe("webmail's readiness gate", () => {
   it("watches for a restart loop and vetoes the deploy", () => {

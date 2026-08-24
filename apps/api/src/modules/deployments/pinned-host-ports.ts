@@ -66,7 +66,7 @@ function assertStableTarget(target: HostPortTargetIdentity): void {
   if (target.stable) return;
   throw new Error(
     "Cannot safely reserve loopback ports because this target has no stable host identity. " +
-      "Make /etc/machine-id readable or allow Openship to create /var/lib/openship/host-id.",
+      "Make /etc/machine-id readable or allow Kovalio to create /var/lib/kovalio/host-id.",
   );
 }
 

@@ -4,8 +4,8 @@ description: Fix a custom domain that won't verify, DNS that hasn't propagated, 
 ---
 
 Adding a custom domain has two moving parts: the **DNS records** you paste at your registrar, and the
-**verification** step where Openship looks those records up and confirms them. Almost every domain problem is
-really one of those two records not resolving the way Openship expects. This page walks through the exact
+**verification** step where Kovalio looks those records up and confirms them. Almost every domain problem is
+really one of those two records not resolving the way Kovalio expects. This page walks through the exact
 messages you'll see and what each one means.
 
 If you haven't added a domain yet, start with the [custom domains guide](/docs/guides/custom-domains) — this
@@ -13,7 +13,7 @@ page is for when something is already stuck.
 
 <Callout title="The two records, in one sentence">
 Every custom domain needs a **routing record** (an `A` or `CNAME` that points the name at your app) and a
-**TXT ownership record** at host `_openship-challenge` (a secret code that proves the domain is yours).
+**TXT ownership record** at host `_kovalio-challenge` (a secret code that proves the domain is yours).
 Verify checks both.
 </Callout>
 
@@ -21,26 +21,26 @@ Verify checks both.
 
 <Callout type="error" title="Symptom / what you see">
 You click **Verify** and it doesn't turn green. A toast titled **"Verification failed"** appears, and its body
-is the exact reason Openship returned — one or both of:
+is the exact reason Kovalio returned — one or both of:
 
-- `A record not pointing to server for app.example.com` (self-hosted) or `CNAME record not found for app.example.com` (Openship Cloud)
-- `TXT record _openship-challenge.app.example.com must equal "…"`
+- `A record not pointing to server for app.example.com` (self-hosted) or `CNAME record not found for app.example.com` (Kovalio Cloud)
+- `TXT record _kovalio-challenge.app.example.com must equal "…"`
 
-(If Openship can't produce a specific reason it falls back to the generic *"\{hostname} could not be verified yet."*)
+(If Kovalio can't produce a specific reason it falls back to the generic *"\{hostname} could not be verified yet."*)
 
 From the API, `POST /api/domains/:id/verify` returns **422** with `cnameVerified` and `txtVerified` flags that
 tell you which check is still failing.
 </Callout>
 
-**What it means.** Openship ran two independent lookups and at least one came back wrong. The message names the
+**What it means.** Kovalio ran two independent lookups and at least one came back wrong. The message names the
 record that failed, so you never have to guess. Fix whichever record is mentioned — the other one is already
 fine.
 
 | Message you see | Which record | What's wrong |
 |---|---|---|
 | `A record not pointing to server for …` | Routing (`A`) — self-hosted | The `A` record is missing, or points at a different IP than your server. |
-| `CNAME record not found for …` | Routing (`CNAME`) — Openship Cloud | The `CNAME` is missing or doesn't point at the Cloud target. |
-| `TXT record _openship-challenge.… must equal "…"` | Ownership (`TXT`) | The `_openship-challenge` TXT record is missing, or its value doesn't match the secret code. |
+| `CNAME record not found for …` | Routing (`CNAME`) — Kovalio Cloud | The `CNAME` is missing or doesn't point at the Cloud target. |
+| `TXT record _kovalio-challenge.… must equal "…"` | Ownership (`TXT`) | The `_kovalio-challenge` TXT record is missing, or its value doesn't match the secret code. |
 
 <Callout title="Why the API says “cnameVerified” even on a self-hosted A record" type="info">
 The verify response reports the routing check as `cnameVerified` regardless of whether your project uses an
@@ -53,11 +53,11 @@ check — only the record *type* differs. `txtVerified` is always the ownership 
 **How to fix**
 
 1. Open your project's **Domains** tab and reopen the **DNS Records** panel for the domain (or run
-   `openship domain records <domainId>`).
+   `kovalio domain records <domainId>`).
 2. Compare the routing row against what's actually at your registrar. Self-hosted expects an `A` record with
    host `@` pointing at your **server's public IP**; Cloud expects a `CNAME` with host `@` pointing at the
-   **Openship Cloud target**.
-3. Fix any mismatch — copy the value from Openship, don't retype it. Delete any old, conflicting record for the
+   **Kovalio Cloud target**.
+3. Fix any mismatch — copy the value from Kovalio, don't retype it. Delete any old, conflicting record for the
    same name first (a stale `A`/`CNAME` left in place is a common cause).
 4. Wait for the change to take effect, then click **Verify** again.
 
@@ -71,14 +71,14 @@ failing — point the record at the address the outside world actually sees.
 
 **How to fix**
 
-1. At your registrar, add (or correct) a **TXT** record with host `_openship-challenge` — Openship looks it up
-   at `_openship-challenge.<your-domain>`.
+1. At your registrar, add (or correct) a **TXT** record with host `_kovalio-challenge` — Kovalio looks it up
+   at `_kovalio-challenge.<your-domain>`.
 2. Set its value to the exact string from the **DNS Records** panel. Use the **Copy** button; a single extra
    space or a missing character will fail the match.
 3. Save, wait for propagation, and click **Verify** again.
 
 <Callout title="Already verified?" type="info">
-If you re-run Verify on a domain that's already done, Openship simply replies **"Already verified"** and
+If you re-run Verify on a domain that's already done, Kovalio simply replies **"Already verified"** and
 changes nothing — that's expected, not an error.
 </Callout>
 
@@ -90,7 +90,7 @@ sometimes minutes after you saved them.
 </Callout>
 
 **What it means.** DNS isn't instant. After you save a record, it has to spread across the internet's caches
-before Openship's lookup can see it. As the DNS Records panel itself notes: *"DNS changes can take up to 48
+before Kovalio's lookup can see it. As the DNS Records panel itself notes: *"DNS changes can take up to 48
 hours to propagate globally."* Usually it's a few minutes; occasionally it's much longer.
 
 **How to fix**
@@ -98,9 +98,9 @@ hours to propagate globally."* Usually it's a few minutes; occasionally it's muc
 1. Double-check there are no typos in the **Host** field and no leftover conflicting record for the same name.
 2. Wait. Save the records, give it several minutes, then click **Verify** again — re-clicking once DNS
    resolves is the reliable path.
-3. Openship's enabled-by-default **Domain DNS verification** job runs every 13 minutes. Once a pending
+3. Kovalio's enabled-by-default **Domain DNS verification** job runs every 13 minutes. Once a pending
    domain is at least 10 minutes old, the job retries verification and certificate issuance automatically.
-   This also runs in Openship Desktop against the project's connected deployment server. Clicking
+   This also runs in Kovalio Desktop against the project's connected deployment server. Clicking
    **Verify** is the faster, explicit retry; it is not required for the normal background lifecycle.
 
 <Callout title="What the first deployment does" type="info">
@@ -110,9 +110,9 @@ after verification succeeds, either from the scheduled job or from **Verify**.
 </Callout>
 
 <Callout title="Confirm propagation yourself" type="info">
-To check what the world currently sees, look the record up directly — e.g. `dig TXT _openship-challenge.app.example.com`
-or `dig A app.example.com`. If your own lookup doesn't return the new value yet, Openship won't see it either;
-that's a propagation delay, not an Openship problem.
+To check what the world currently sees, look the record up directly — e.g. `dig TXT _kovalio-challenge.app.example.com`
+or `dig A app.example.com`. If your own lookup doesn't return the new value yet, Kovalio won't see it either;
+that's a propagation delay, not an Kovalio problem.
 </Callout>
 
 ## SSL stuck on "Provisioning" (or no certificate issued)
@@ -123,7 +123,7 @@ so `https://` doesn't work yet.
 </Callout>
 
 **What it means.** On a self-hosted or Desktop-connected server, **Verify** obtains the certificate before
-reporting success and rewrites the existing route with TLS. On Openship Cloud, verification can start
+reporting success and rewrites the existing route with TLS. On Kovalio Cloud, verification can start
 certificate issuance in the background. **Provisioning** means issuance is still in progress, its result has
 not been observed yet, or the first attempt failed.
 
@@ -141,7 +141,7 @@ not been observed yet, or the first attempt failed.
 
 <Callout title="Renewing certificates" type="info">
 Once a certificate is **Active** you normally never touch it again. Renewal targets certificates within about
-two weeks of expiry: on Openship Cloud, and on self-hosted setups where your proxy or edge (Traefik, Caddy, a
+two weeks of expiry: on Kovalio Cloud, and on self-hosted setups where your proxy or edge (Traefik, Caddy, a
 load balancer) owns TLS, this is handled for you; a self-hosted operator can also point a scheduled job at the
 renew endpoint. **Renew SSL** is the manual fallback if a certificate ever lapses.
 </Callout>
@@ -163,12 +163,12 @@ that indicates a separate edge/route reconciliation failure.
 
 <Callout type="error" title="Symptom / what you see">
 Your app already sits behind a Cloudflare Tunnel, a load balancer, or another reverse proxy that handles
-HTTPS — but Openship keeps asking for an `A`/`CNAME` and tries to issue its own certificate, which you don't
+HTTPS — but Kovalio keeps asking for an `A`/`CNAME` and tries to issue its own certificate, which you don't
 want.
 </Callout>
 
-**What it means.** By default Openship assumes it's the edge: it wants the domain to resolve to it and it
-issues the certificate. When **your** edge terminates TLS, that's the wrong model — Openship should only
+**What it means.** By default Kovalio assumes it's the edge: it wants the domain to resolve to it and it
+issues the certificate. When **your** edge terminates TLS, that's the wrong model — Kovalio should only
 confirm you own the name and stay out of the certificate business.
 
 **How to fix**
@@ -176,20 +176,20 @@ confirm you own the name and stay out of the certificate business.
 1. When adding the domain, turn on **External ingress & TLS**. As the toggle explains: *"TLS terminates
    upstream (Cloudflare Tunnel, load balancer). Verify by TXT only — the domain need not point at this server,
    and we won't issue a certificate."* From the API, pass `"externalIngress": true` on `POST /api/domains`.
-2. Add **only** the `TXT` record with host `_openship-challenge` — there's no routing record to add, because
+2. Add **only** the `TXT` record with host `_kovalio-challenge` — there's no routing record to add, because
    your edge already controls where the name points.
-3. Click **Verify**. Openship checks the TXT alone and confirms with *"Domain verified — TLS is handled by
+3. Click **Verify**. Kovalio checks the TXT alone and confirms with *"Domain verified — TLS is handled by
    your external ingress; no certificate is issued here."*
 
 <Callout title="What the SSL pill shows" type="info">
-An external-ingress domain reads **External TLS** for its SSL status — that's correct and final. Openship
+An external-ingress domain reads **External TLS** for its SSL status — that's correct and final. Kovalio
 issues nothing and never runs certbot for it; your edge owns the padlock. **Recheck SSL** and **Renew SSL**
 don't apply.
 </Callout>
 
 <Callout title="Turn it on only if you mean it" type="warn">
 If your edge does **not** handle HTTPS, leave External ingress off — otherwise the domain will verify but
-serve plain HTTP, with no certificate from anyone. When in doubt, leave it off and let Openship issue the
+serve plain HTTP, with no certificate from anyone. When in doubt, leave it off and let Kovalio issue the
 certificate.
 </Callout>
 

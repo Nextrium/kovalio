@@ -84,7 +84,7 @@ app.get('/health', (c) => c.json({ ok: true, version: '0.2.0' }));
 
 // Plain JSON branding config - no tRPC envelope, no auth. Reads
 // from ${BRANDING_PATH}/config.json via the filesystem-backed store.
-// Consumers (Zero client, openship dashboard) can fetch this without
+// Consumers (Zero client, kovalio dashboard) can fetch this without
 // going through tRPC; useful for static HTML/SSR and curl.
 app.get('/branding.json', (c) => c.json(getBranding()));
 
@@ -100,13 +100,13 @@ app.use(
 
 app.route('/auth', authRoutes);
 app.route('/mail', idleRoute);
-// Token-gated write API for branding. Openship's dashboard PATCHes
+// Token-gated write API for branding. Kovalio's dashboard PATCHes
 // here using the shared BRANDING_ADMIN_TOKEN. Reads (`/branding.json`)
 // stay unauthenticated for the login page.
 app.route('/admin', brandingAdminRoute);
 
 // The upstream Zero client posts to /api/trpc; we keep /trpc as a
-// convenience for curl + the openship dashboard. `endpoint` MUST match
+// convenience for curl + the kovalio dashboard. `endpoint` MUST match
 // the mount point - the hono adapter uses it to strip the prefix
 // before resolving the procedure name.
 const createTrpcContext = async (_opts: unknown, c: any) => {
@@ -174,7 +174,7 @@ app.use('/*', serveStatic({ root: clientBuildDir }));
 // take over routing on the client. Registered last so it never shadows API
 // routes (those returned a response above and never fell through). Deep links
 // are documents too, so they get the same branded shell - a link preview of
-// https://mail.example.com/mail/inbox must not say "OpenShip Mail" either.
+// https://mail.example.com/mail/inbox must not say "Kovalio Mail" either.
 app.get('*', sendIndexHtml);
 
 const port = env.PORT;

@@ -4,7 +4,7 @@ import { dataTransferApi, inspectDirectTransferCode } from "./data-transfer";
 
 function captureRequest() {
   const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
-    new Response(JSON.stringify({ kind: "openship-instance-export" }), {
+    new Response(JSON.stringify({ kind: "kovalio-instance-export" }), {
       status: 200,
       headers: { "content-type": "application/json" },
     }),

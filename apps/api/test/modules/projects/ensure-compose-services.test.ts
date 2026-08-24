@@ -181,7 +181,7 @@ describe("ensureProject compose services — masked env", () => {
       mode: "api-relay",
       createdAt: Date.now(),
       expiresAt: Date.now() + 60_000,
-      stagingDir: "/tmp/openship-upload-y",
+      stagingDir: "/tmp/kovalio-upload-y",
       uploaded: true,
       services: [{ name: "api", environment: { DB_PASSWORD: "s3cret" } }] as any,
       ...overrides,

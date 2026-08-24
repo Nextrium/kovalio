@@ -758,7 +758,7 @@ describe("selectPreferredSingleAppRoot - services-with-app dual mode", () => {
  * same manifest recovery: a sub-app whose parsed package.json came back empty
  * (readJson swallows every failure) otherwise gets the registry's bare
  * `next build` / `next start` even though its scripts are in fileContents — the
- * monorepo flavour of openship#623.
+ * monorepo flavour of kovalio#623.
  */
 describe("applyWorkspaceContext - recovers a sub-app manifest from its text (#623)", () => {
   const SUB_APP_PACKAGE_JSON = JSON.stringify({

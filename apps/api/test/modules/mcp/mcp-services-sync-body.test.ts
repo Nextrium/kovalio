@@ -13,7 +13,7 @@ import { SyncServicesBody } from "../../../src/modules/services/service.schema";
 
 const syncTool = () => getMcpTools().find((t) => t.name === "post_projects_by_id_services_sync");
 
-/** The shape `openship service sync` builds from `docker compose config` (apps/cli mapComposeService). */
+/** The shape `kovalio service sync` builds from `docker compose config` (apps/cli mapComposeService). */
 const cliPayload = {
   services: [
     {

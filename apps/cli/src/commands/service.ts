@@ -1,5 +1,5 @@
 /**
- * `openship service` — manage the services inside a compose stack.
+ * `kovalio service` — manage the services inside a compose stack.
  *
  * A "stack" is a multi-service project: services are mounted under
  * /api/projects/:id/services (service.routes.ts), so every subcommand
@@ -31,7 +31,7 @@ import { isJsonMode, printJson, printTable, ok, err, info } from "../lib/output"
 
 function requireAuth(): void {
   if (!getToken()) {
-    err("  Not logged in. Run `openship login` first.");
+    err("  Not logged in. Run `kovalio login` first.");
     process.exit(1);
   }
 }
@@ -488,7 +488,7 @@ const syncCmd = stackCommand("sync")
     // anyway is how a compose file's namespace intent used to disappear silently.
     if (mapErrors.length > 0) {
       err(
-        `  This compose file declares options Openship can't deploy faithfully:\n${mapErrors.join("\n")}`,
+        `  This compose file declares options Kovalio can't deploy faithfully:\n${mapErrors.join("\n")}`,
       );
       process.exit(1);
     }
@@ -551,7 +551,7 @@ function containerActionCommand(action: "start" | "stop" | "restart"): Command {
         err(`  Restart refused: "${body.serviceName ?? service}" has pending environment changes.`);
         if (keys.length > 0) info(`  Pending: ${keys.join(", ")}`);
         info(
-          `  Apply them:  openship deploy --refresh --service-ids ${serviceId} -p ${opts.project}`,
+          `  Apply them:  kovalio deploy --refresh --service-ids ${serviceId} -p ${opts.project}`,
         );
         info(`  Bounce anyway (changes NOT applied):  add --force`);
         process.exit(1);
@@ -811,7 +811,7 @@ const execCmd = stackCommand("exec")
   .argument("[service]", "Service name or id")
   .action(() => {
     err(
-      "  `openship service exec` is not available yet — an interactive terminal needs a\n" +
+      "  `kovalio service exec` is not available yet — an interactive terminal needs a\n" +
         "  WebSocket client (the CLI ships no ws dependency). Use the dashboard's service\n" +
         "  terminal for now.",
     );

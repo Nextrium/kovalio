@@ -321,7 +321,7 @@ export async function getQuotaState(orgId: string): Promise<QuotaState | null> {
   const row = quotas.find((q) => q?.service === SERVICE_CODE);
   if (!row) return null;
 
-  // Oblien reports whole credits; openship state is milli-credits (×1000).
+  // Oblien reports whole credits; kovalio state is milli-credits (×1000).
   const quotaLimit =
     typeof row.quota_limit === "number" ? fromOblienCredits(row.quota_limit) : null;
   const quotaUsed =

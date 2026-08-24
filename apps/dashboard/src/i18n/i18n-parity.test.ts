@@ -97,7 +97,7 @@ const MISSING_BASELINE: Record<string, number> = {
   // auto-scan toggle copy included) — the tab shrank to policy + a roll-up line,
   // so the list-era keys are gone and the remainder is short enough to translate.
   //
-  // +144: Openship Mail's two mode pickers — settings.mailMode (instance-wide
+  // +144: Kovalio Mail's two mode pickers — settings.mailMode (instance-wide
   // default, 9 keys) and settings.productView (the per-user "which interface do I
   // get" choice, 8 keys), plus sidebar.tabs.systemSender, which renames the Email
   // tab to "System sender" in mail view so it isn't read as the mail server's own
@@ -181,7 +181,7 @@ const MISSING_BASELINE: Record<string, number> = {
   // internet. English-first in the other 8 locales via deepMerge.
   //
   // +32: banner.hostChannelMissing*/WouldUse/ProvisionFix — 4 more keys for the
-  // channel that was never provisioned at all (#509), which needs `openship up`
+  // channel that was never provisioned at all (#509), which needs `kovalio up`
   // rather than a firewall rule and must not name a machine nothing contacted.
   // English-first for the same reason, and kept in the SAME language as the four
   // above on purpose: they render in one banner, and half a translated block reads
@@ -189,7 +189,7 @@ const MISSING_BASELINE: Record<string, number> = {
   //
   // +16: form.keyPathBrowse / form.keyPathHelp — the desktop "Browse…" file picker
   // for the SSH key, and the line saying the path belongs to the machine running
-  // Openship (not the browser's). English-first in the other 8 locales via
+  // Kovalio (not the browser's). English-first in the other 8 locales via
   // deepMerge, same as the rest of this form's block.
   //
   // +72: form.keyMode{Paste,Path}/keyPaste/keyPastePlaceholder/keyPasteHelp/

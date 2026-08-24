@@ -11,7 +11,7 @@ import { organization } from "./organization";
  * The `modules:scan` job probes each server's on-box version and compares it to
  * the verified catalog, upserting the outcome so the server's Components tab can
  * render "vX → vY, Update" without re-probing. The on-box manifest
- * (/etc/openship/modules/<module>.json) is the source of truth on the host; this
+ * (/etc/kovalio/modules/<module>.json) is the source of truth on the host; this
  * is the org-visible cache.
  *
  * `organizationId` is nullable because `servers.organizationId` is nullable

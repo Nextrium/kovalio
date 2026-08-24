@@ -63,7 +63,7 @@ export interface SealedSecrets {
 }
 
 export interface DataTransferFile {
-  kind: "openship-instance-export";
+  kind: "kovalio-instance-export";
   envelopeVersion: 1;
   createdAt: string;
   sourceDriver: "pg" | "pglite";

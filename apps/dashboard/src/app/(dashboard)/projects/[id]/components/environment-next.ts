@@ -8,7 +8,7 @@ import { encodeProjectSlug } from "@/utils/repoSlug";
  * 1. ON FAILURE it rendered `error.message`. For an `ApiError` that string is
  *    `` `API ${status}: ${statusText}` `` — so the operator saw "API 400: Bad
  *    Request" while the server had been returning an actionable sentence
- *    ("Connect Openship Cloud to use a free subdomain…") in the response body all
+ *    ("Connect Kovalio Cloud to use a free subdomain…") in the response body all
  *    along. `getApiErrorMessage` is the existing extractor for exactly that and
  *    simply was not being used here.
  *

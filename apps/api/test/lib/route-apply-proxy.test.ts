@@ -96,14 +96,14 @@ describe("reconcileProjectRoutes — project request limits", () => {
       registers: [
         {
           hostname: "site.example.com",
-          staticRoot: "/opt/openship/static/site",
+          staticRoot: "/opt/kovalio/static/site",
           isCustomDomain: false,
         },
       ],
     });
 
     expect(registerRoute.mock.calls[0][0]).toMatchObject({
-      staticRoot: "/opt/openship/static/site",
+      staticRoot: "/opt/kovalio/static/site",
       proxy: { clientMaxBodySize: "50m" },
     });
   });

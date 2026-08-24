@@ -45,7 +45,7 @@ const include =
  * Per-process, because the suite removes this whole tree when it finishes: a fixed
  * name would let one run delete the sandbox another was mid-backup in.
  */
-const BACKUP_ROOT = join(tmpdir(), `openship-e2e-backup-root-${process.pid}`);
+const BACKUP_ROOT = join(tmpdir(), `kovalio-e2e-backup-root-${process.pid}`);
 
 export default defineConfig({
   resolve: {

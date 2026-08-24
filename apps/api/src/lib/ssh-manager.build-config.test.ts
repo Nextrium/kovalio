@@ -17,7 +17,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 vi.mock("@repo/db", () => ({ repos: { server: { get: vi.fn() } } }));
 vi.mock("@repo/adapters", async () => ({
   ...(await import("../../../../packages/adapters/src/system/errors")),
-  HOST_STATE_DIR: "/root/.openship",
+  HOST_STATE_DIR: "/root/.kovalio",
   createHostExecutor: vi.fn(),
   hostChannelHealth: vi.fn(),
   probeTcp: vi.fn(),

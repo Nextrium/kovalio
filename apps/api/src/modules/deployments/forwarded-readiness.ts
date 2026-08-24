@@ -1,7 +1,7 @@
 /**
  * Readiness probing from a machine that is not this process.
  *
- * A containerized Openship API has its own network namespace, so the published
+ * A containerized Kovalio API has its own network namespace, so the published
  * candidate at `127.0.0.1:<hostPort>` means nothing here — that address only resolves
  * to the deployment on the HOST. Two ways to borrow the host's namespace:
  *
@@ -11,14 +11,14 @@
  *   2. Running an HTTP client ON the host over the same channel (`executor.exec`).
  *      The fallback, for a channel whose key forbids forwarding.
  *
- * Why (2) exists at all — GH-583. `openship up --compose` provisioned the host key
+ * Why (2) exists at all — GH-583. `kovalio up --compose` provisioned the host key
  * with OpenSSH's `restrict`, which forbids port forwarding; sshd answered every
  * `forwardOut` with SSH_OPEN_ADMINISTRATIVELY_PROHIBITED. The refusal was swallowed
  * into the same `null` a closed port produces, so the probe polled the full timeout
  * and then reported "the app never answered" — on installs where `curl` from the host
- * returned 200 the whole time, and where `openship doctor` correctly said the channel
+ * returned 200 the whole time, and where `kovalio doctor` correctly said the channel
  * was reachable (it execs fine; only forwarding is denied). The key is fixed for new
- * installs, but an existing one stays that way until `openship up` is re-run, so the
+ * installs, but an existing one stays that way until `kovalio up` is re-run, so the
  * refusal must be both survivable and legible HERE.
  *
  * The invariant that follows: a probe that cannot RUN never fails a deploy. It reports
@@ -218,9 +218,9 @@ export async function waitForForwardedReady(
 }
 
 /** Marker the host-side probe prints when the host has no HTTP client to probe with. */
-const PROBE_NO_CLIENT = "OPENSHIP_PROBE_NO_CLIENT";
+const PROBE_NO_CLIENT = "KOVALIO_PROBE_NO_CLIENT";
 /** Marker prefix carrying curl's status code and exit code back. */
-const PROBE_RESULT = "OPENSHIP_PROBE";
+const PROBE_RESULT = "KOVALIO_PROBE";
 
 /**
  * One host-side probe of `http://host:port<path>`, as a shell command.

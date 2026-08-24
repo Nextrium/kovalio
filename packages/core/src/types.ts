@@ -145,14 +145,14 @@ export type ComposeHealthcheck = {
  * both @repo/db (storage) and @repo/adapters (runtime) can share one definition.
  */
 /**
- * Openship's own DEPLOY-TIME readiness gate — the sibling of, and NOT the same
+ * Kovalio's own DEPLOY-TIME readiness gate — the sibling of, and NOT the same
  * thing as, `ComposeHealthcheck` above.
  *
  *   ComposeHealthcheck  = the Docker HEALTHCHECK directive. An arbitrary command
  *                         ("pg_isready", "curl -f /health") that the DAEMON runs
  *                         on an interval, forever, to mark a container
  *                         healthy/unhealthy. Custom conditions, continuous.
- *   OpenshipReadiness   = "did this thing actually come up?", asked ONCE by the
+ *   KovalioReadiness   = "did this thing actually come up?", asked ONCE by the
  *                         deploy pipeline between "started" and "ready". A port
  *                         that accepts a connection (optionally an HTTP path that
  *                         answers < 500), a static site whose doc-root has a
@@ -173,7 +173,7 @@ export type ComposeHealthcheck = {
  * Settable per PROJECT (the project's `readiness` column) and per compose SERVICE
  * (`service.advanced.readiness`, which overrides the project's for that service).
  */
-export type OpenshipReadiness = {
+export type KovalioReadiness = {
   /**
    * Probe the workload after start and wait for it to answer — a port for a
    * running process, servable files for a static site. `false`/absent ⇒ no probe
@@ -205,12 +205,12 @@ export type OpenshipReadiness = {
    *   "fail"           — the deploy fails and reverts to the previous
    *                      deployment, which keeps serving.
    */
-  onFailure?: OpenshipReadinessFailureAction;
+  onFailure?: KovalioReadinessFailureAction;
 };
 
-export type OpenshipReadinessFailureAction = "warn" | "fail";
+export type KovalioReadinessFailureAction = "warn" | "fail";
 
-export const OPENSHIP_READINESS_FAILURE_ACTIONS: readonly OpenshipReadinessFailureAction[] = [
+export const KOVALIO_READINESS_FAILURE_ACTIONS: readonly KovalioReadinessFailureAction[] = [
   "warn",
   "fail",
 ];
@@ -258,7 +258,7 @@ export type ComposeAdvanced = {
    * that one is a daemon-run custom command, this one is the pipeline's one-shot
    * "did it come up?" and is the only one that can fail a deploy.
    */
-  readiness?: OpenshipReadiness;
+  readiness?: KovalioReadiness;
   /**
    * Generated config files bind-mounted (read-only) into this service's
    * container at deploy — seeded from an app template's `files` (e.g. Kong's

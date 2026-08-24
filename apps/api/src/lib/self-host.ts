@@ -21,7 +21,7 @@ function isLoopbackAddress(host: string): boolean {
  * ALSO add it as a plain SSH row — onboarding (/system/setup) or Settings→Servers
  * default `isLocal:false` — pointing at loopback or the box's own public address.
  * Deploying to / probing such a row dials SSH to the API's own loopback (the
- * CONTAINER's, when compose-deployed via `openship up`) where there is no sshd —
+ * CONTAINER's, when compose-deployed via `kovalio up`) where there is no sshd —
  * the "Can't reach 127.0.0.1 … couldn't open an SSH connection to 127.0.0.1:22"
  * failure. These rows must resolve to the local host executor + mounted docker
  * socket (DooD), exactly like the isLocal row — never SSH.

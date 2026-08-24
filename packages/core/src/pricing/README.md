@@ -1,6 +1,6 @@
 # Pricing — the catalog we sell from
 
-This directory is the **single source of truth for every price, allowance and limit** on Openship
+This directory is the **single source of truth for every price, allowance and limit** on Kovalio
 Cloud. Prices are not in TypeScript: they are in [`pricing.json`](./pricing.json), and the words that
 describe them are in [`locales/`](./locales/), one file per language.
 
@@ -10,7 +10,7 @@ Three surfaces read this and are guaranteed to agree:
 |---|---|
 | API — `GET /api/billing/plans` | `resolvePlans(locale)`, serving the caller's language |
 | Dashboard — Billing → Plans | the same payload, over the wire |
-| Marketing — `openship.io/pricing` | imports `@repo/core` directly (server component) |
+| Marketing — `nextrium.org/pricing` | imports `@repo/core` directly (server component) |
 
 Enforcement (build minutes, free subdomains, static-only) reads `planLimits(tier)` — never the
 localized view, because a limit must not depend on which language a request arrived in.

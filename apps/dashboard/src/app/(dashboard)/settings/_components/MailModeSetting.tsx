@@ -2,7 +2,7 @@
 
 /**
  * Settings → Instance → Product mode. Instance-wide default: does this box
- * present itself as Openship Mail (mail control plane in the sidebar, "OpenShip
+ * present itself as Kovalio Mail (mail control plane in the sidebar, "Kovalio
  * Mail" in the chrome and the browser tab) or as the full platform?
  *
  * Two cards, not a toggle — the same control `ProductViewSetting` uses one tab
@@ -92,7 +92,7 @@ export function MailModeSetting() {
       setMode(next);
       try {
         // Explicit value both ways, never null: "platform" has to be able to
-        // override an OPENSHIP_PRODUCT=mail environment, and clearing would hand
+        // override an KOVALIO_PRODUCT=mail environment, and clearing would hand
         // the decision back to it.
         await systemApi.updateSettings({ productMode: next });
         setFromEnv(false);

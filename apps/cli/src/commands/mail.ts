@@ -1,5 +1,5 @@
 /**
- * `openship mail` — self-hosted mail server (iRedMail) setup + admin.
+ * `kovalio mail` — self-hosted mail server (iRedMail) setup + admin.
  *
  * [self-host] only: every subcommand gates via caps.requireSelfHost. The
  * whole /api/mail mount is localOnly on the API side.
@@ -64,7 +64,7 @@ function guard<A extends unknown[]>(
 ): (...args: A) => Promise<void> {
   return async (...args: A) => {
     if (!getToken()) {
-      err("Not logged in. Run `openship login` first.");
+      err("Not logged in. Run `kovalio login` first.");
       process.exit(1);
     }
     try {
@@ -208,7 +208,7 @@ const scanCmd = new Command("scan")
       info(`  domain:         ${res.domain ?? "-"}`);
       info(`  install done:   ${res.installComplete ? "yes" : "no"}`);
       info(`  webmail:        ${res.webmailPresent ? "yes" : "no"}`);
-      if (res.adoptable) ok(`  Adoptable — run \`openship mail adopt ${serverId}\`.`);
+      if (res.adoptable) ok(`  Adoptable — run \`kovalio mail adopt ${serverId}\`.`);
       else info("  Nothing to adopt on this server.");
     }),
   );
@@ -283,13 +283,13 @@ const setupCmd = new Command("setup")
             break;
           case "dns_pending":
             info("  Publish the DNS records above, then:");
-            info(`    openship mail dns-ack ${serverId}`);
-            info(`    openship mail setup ${serverId} --domain ${opts.domain} --start-step ${p.resumeStep}`);
+            info(`    kovalio mail dns-ack ${serverId}`);
+            info(`    kovalio mail setup ${serverId} --domain ${opts.domain} --start-step ${p.resumeStep}`);
             return;
           case "ptr_pending":
             info(`  Set reverse DNS (PTR) for ${p.ipv4}${p.ipv6 ? ` / ${p.ipv6}` : ""} → ${p.target}, then:`);
-            info(`    openship mail ptr-ack ${serverId}`);
-            info(`    openship mail setup ${serverId} --domain ${opts.domain} --start-step ${p.resumeStep}`);
+            info(`    kovalio mail ptr-ack ${serverId}`);
+            info(`    kovalio mail setup ${serverId} --domain ${opts.domain} --start-step ${p.resumeStep}`);
             return;
           case "complete":
             ok(`  Mail setup complete for ${p.domain}.`);
@@ -516,7 +516,7 @@ function resolveBuildContext(explicit?: string): string | null {
 /**
  * The ref the API's `pinnedMailImage()` will look for: buildMailImageRef with the
  * fallback tag read from the checkout's apps/api version, honoring the same
- * OPENSHIP_MAIL_* / OPENSHIP_IMAGE_REGISTRY env the API reads — so the CLI tags
+ * KOVALIO_MAIL_* / KOVALIO_IMAGE_REGISTRY env the API reads — so the CLI tags
  * exactly what mail bring-up resolves.
  */
 function defaultMailRef(context: string): string {
@@ -527,15 +527,15 @@ function defaultMailRef(context: string): string {
     };
     if (typeof pkg.version === "string") fallbackTag = pkg.version;
   } catch {
-    /* no checkout package.json → buildMailImageRef falls back to OPENSHIP_VERSION / latest */
+    /* no checkout package.json → buildMailImageRef falls back to KOVALIO_VERSION / latest */
   }
   return buildMailImageRef({ fallbackTag });
 }
 
 const buildCmd = new Command("build")
-  .description("Build the openship-mail engine image locally from a source checkout [dev]")
+  .description("Build the kovalio-mail engine image locally from a source checkout [dev]")
   .option("--context <dir>", "Repo root containing apps/email/Dockerfile (default: checkout or cwd)")
-  .option("--tag <ref>", "Image ref to tag (default: the pinned openship-mail ref)")
+  .option("--tag <ref>", "Image ref to tag (default: the pinned kovalio-mail ref)")
   .action(async (opts: { context?: string; tag?: string }) => {
     try {
       if (!has("docker")) {

@@ -1,6 +1,6 @@
 ---
 title: App catalog JSON
-description: The complete field reference for an Openship App definition — the JSON that turns a set of containers into a one-click install, with generated secrets, a curated settings form, and a connection card.
+description: The complete field reference for an Kovalio App definition — the JSON that turns a set of containers into a one-click install, with generated secrets, a curated settings form, and a connection card.
 ---
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
@@ -19,7 +19,7 @@ Add the `$schema` line for editor autocomplete and inline validation:
 
 ```json
 {
-  "$schema": "https://openship.io/app.schema.json",
+  "$schema": "https://nextrium.org/app.schema.json",
   "id": "it-tools",
   "name": "IT-Tools",
   "description": "A handy collection of developer and sysadmin utilities.",
@@ -33,7 +33,7 @@ It is **JSON, not JSONC** — no comments, no trailing commas.
 
 <Callout title="Unknown keys are ignored, not rejected">
 The validator strips keys it does not recognize instead of failing. That is deliberate: it is what
-lets a newer app definition stay installable on an older Openship, and it is why growth is always
+lets a newer app definition stay installable on an older Kovalio, and it is why growth is always
 additive. The trade-off is that a **misspelled field name fails silently** — it is dropped, not
 reported, by both the published schema and the server. So keep the `$schema` line and let your editor
 autocomplete field names rather than typing them from memory.
@@ -75,7 +75,7 @@ autocomplete field names rather than typing them from memory.
     hosting: { type: '"self-hosted" | "experimental"', description: 'experimental → an ⚗ badge on the card and a heads-up in the wizard: it runs, but it is heavy or not production-grade upstream.' },
     minResources: { type: '{ memoryMb?, cpuCores? }', description: 'What the app needs from the machine. Shown against the chosen destination in the install wizard and enforced by deploy preflight. See Host requirements.' },
     schemaVersion: { type: 'number', description: 'JSON shape revision. Defaults to 1. See Stability and versioning.' },
-    minEngine: { type: 'string (semver)', description: 'Minimum Openship version required to install this app.' },
+    minEngine: { type: 'string (semver)', description: 'Minimum Kovalio version required to install this app.' },
     updatedAt: { type: 'string', description: 'Informational last-updated stamp.' },
     repository: { type: 'string (URL)', description: 'Upstream source repository. Must be a valid URL.' },
   }}
@@ -95,7 +95,7 @@ name, never an IP or a localhost address.
   type={{
     name: { type: 'string', description: 'Service name, and its hostname on the project network.', required: true },
     image: { type: 'string', description: 'Prebuilt image to pull. Pin a version — unpinned tags are rejected in review. Exactly one of image | build per service.' },
-    build: { type: 'ServiceBuild', description: 'Inline Docker build context — for a service Openship must BUILD rather than pull. Mutually exclusive with image. See Building an image.' },
+    build: { type: 'ServiceBuild', description: 'Inline Docker build context — for a service Kovalio must BUILD rather than pull. Mutually exclusive with image. See Building an image.' },
     ports: { type: 'string[]', description: 'Compose-style port strings, e.g. ["2368:2368"].' },
     exposedPort: { type: 'number', description: 'The container port that receives the public route.' },
     exposed: { type: 'boolean', description: 'Marks this service as the one that gets a public route.' },
@@ -114,7 +114,7 @@ name, never an IP or a localhost address.
 
 Most services **pull** a prebuilt `image`. Some can't: the upstream ships a base image that still
 needs extra packages and a provisioning entrypoint baked in — Neon's compute node is the canonical
-case. For those, set `build` instead of `image`. It is an inline Docker build context that Openship
+case. For those, set `build` instead of `image`. It is an inline Docker build context that Kovalio
 materializes at deploy time and builds on the deploy host through the normal compose build pipeline.
 Building subsumes an entrypoint override: the Dockerfile sets its own `ENTRYPOINT`.
 
@@ -154,7 +154,7 @@ a `configField`) and reference it with `ARG` in the Dockerfile.
 
 <Callout title="Building happens on the deploy host">
 A large base image builds where it deploys. On a small host a heavy build — Neon's compute node pulls a
-multi-hundred-MB base — can be slow or memory-bound. That cost is inherent to the app, not to Openship.
+multi-hundred-MB base — can be slow or memory-bound. That cost is inherent to the app, not to Kovalio.
 </Callout>
 
 ## Two field systems
@@ -332,7 +332,7 @@ pre-run database initialization use [`files`](#files) to write into
 ## Endpoints
 
 What the install wizard asks you about — how to ship each port. Omit `endpoints` entirely and
-Openship derives one `http` endpoint per exposed service.
+Kovalio derives one `http` endpoint per exposed service.
 
 <TypeTable
   type={{
@@ -403,12 +403,12 @@ undersized — the operator's way out of that is a deploy, not a refusal. After 
 successful deploy a shortfall is a warning only.
 </Callout>
 
-- **An unmeasurable machine never fails.** A box Openship could not probe means it did not look,
+- **An unmeasurable machine never fails.** A box Kovalio could not probe means it did not look,
   not that the hardware is too small.
 - **Round numbers pass the box they name.** A "16 GB" machine reports ~15.6 GB once firmware and
   the kernel take their cut, so a tenth under the declared figure still passes — declare the
   round number an operator recognises.
-- **Openship Cloud is skipped.** A cloud workspace is sized from the tier table, not from host
+- **Kovalio Cloud is skipped.** A cloud workspace is sized from the tier table, not from host
   hardware.
 
 ## Files
@@ -425,7 +425,7 @@ not just env (an init `.sql`, for example). Supports [placeholders](#placeholder
 />
 
 <Callout title="Self-hosted and desktop only" type="info">
-`files` are not applied on Openship Cloud.
+`files` are not applied on Kovalio Cloud.
 </Callout>
 
 ## Management
@@ -437,7 +437,7 @@ Overrides how the installed app is managed.
 | `{ "kind": "schema" }` | Render the curated settings form from `settings`. |
 | `{ "kind": "custom", "href": "/emails" }` | Send the user to a bespoke surface instead. |
 
-Omit it and Openship derives the behavior: `schema` when `settings` exist, otherwise the raw project
+Omit it and Kovalio derives the behavior: `schema` when `settings` exist, otherwise the raw project
 tabs.
 
 ## Placeholders
@@ -483,7 +483,7 @@ is never repurposed or removed within a schema version.
 
 <TypeTable
   type={{
-    minEngine: { type: 'string (semver)', description: 'THE version knob. Minimum Openship version required to install this app. Set it to the release that introduced whatever capability the definition now uses.' },
+    minEngine: { type: 'string (semver)', description: 'THE version knob. Minimum Kovalio version required to install this app. Set it to the release that introduced whatever capability the definition now uses.' },
     schemaVersion: { type: 'number', description: 'The JSON shape revision, default 1. An instance refuses a shape newer than it understands. Bump only on a genuinely breaking shape change.' },
   }}
 />
@@ -494,11 +494,11 @@ app `minEngine`:
 
 - the app **is bundled** there → it keeps serving the bundled copy, and may note that an update is
   available;
-- the app **is brand new** → the catalog shows a guided *Requires Openship ≥ X* card and install is
+- the app **is brand new** → the catalog shows a guided *Requires Kovalio ≥ X* card and install is
   refused, client and server. Never a silent disappearance.
 
 ## See also
 
 - [Add an app](/docs/guides/add-an-app) — how to submit one, and how to upload a custom app
 - [Apps API](/docs/api/apps) — the REST surface
-- [openship.json](/docs/reference/openship-json) — the per-repo deploy config
+- [kovalio.json](/docs/reference/kovalio-json) — the per-repo deploy config

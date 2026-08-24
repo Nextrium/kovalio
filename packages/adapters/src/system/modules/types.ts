@@ -3,7 +3,7 @@
  *
  * A signed, per-module catalog describes ordered, run-once migrations for infra
  * installed on servers (OpenResty first). The catalog is authored/signed by
- * Openship (ed25519), pulled from a pinned GitHub ref (or the embedded fallback),
+ * Kovalio (ed25519), pulled from a pinned GitHub ref (or the embedded fallback),
  * and VERIFIED before anything is written or executed on a target host. See
  * ./verify.ts for the trust gate and ./reconcile.ts for the runner.
  *

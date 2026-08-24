@@ -70,7 +70,7 @@ with no account-level store; `workspaces.create` has no `restore_from`,
 commit-workspace-to-custom-image flow; and `POST /workspace/{wsId}/restore` only
 restores to the last snapshot of THAT workspace. It would need a new Oblien endpoint
 (open question with their team) or external durable storage, which was explored and
-reverted as the wrong call for Openship Cloud. The inline model sidesteps the
+reverted as the wrong call for Kovalio Cloud. The inline model sidesteps the
 requirement entirely, which is why it is the path.
 
 **What it costs until then.** Retention archives the previous release
@@ -92,7 +92,7 @@ The column accepts `'inplace' | 'offload'` (`schema/project.ts:393`), the API ta
 `cloud.ts:2141-2179`, never receives the project row, so it cannot vary by strategy.
 
 Reserved for a future self-hosted-to-external-S3 path (shipping archives off-host).
-Not buildable for Openship Cloud, which would need the Oblien support the item above
+Not buildable for Kovalio Cloud, which would need the Oblien support the item above
 establishes we don't have. Either wire it or stop accepting the value.
 
 *(Correction to the old reference list: `0022_cloud_archive_offload.sql` does not

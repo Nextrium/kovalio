@@ -38,19 +38,19 @@ describe("unreachableStaticRoots", () => {
 
   test("accepts a docroot already under a mounted path", () => {
     const sites = [
-      staticSite("ok.example.com", "/opt/openship/static/ok"),
+      staticSite("ok.example.com", "/opt/kovalio/static/ok"),
       // The mount root itself, and a trailing slash, both count as inside.
-      staticSite("root.example.com", "/opt/openship/static"),
-      staticSite("slash.example.com", "/opt/openship/static/x/"),
+      staticSite("root.example.com", "/opt/kovalio/static"),
+      staticSite("slash.example.com", "/opt/kovalio/static/x/"),
     ];
     expect(unreachableStaticRoots(sites, { containerEdge: true })).toEqual([]);
   });
 
   test("matches on a path boundary, not a string prefix", () => {
-    // `/opt/openship/staticstuff` is NOT inside `/opt/openship/static`.
-    const sites = [staticSite("sneaky.example.com", "/opt/openship/staticstuff/dist")];
+    // `/opt/kovalio/staticstuff` is NOT inside `/opt/kovalio/static`.
+    const sites = [staticSite("sneaky.example.com", "/opt/kovalio/staticstuff/dist")];
     expect(unreachableStaticRoots(sites, { containerEdge: true })).toEqual([
-      { host: "sneaky.example.com", root: "/opt/openship/staticstuff/dist" },
+      { host: "sneaky.example.com", root: "/opt/kovalio/staticstuff/dist" },
     ]);
   });
 
@@ -85,11 +85,11 @@ describe("copyStaticRootIntoEdge", () => {
       host: "front.example.com",
     });
     // Dest is under the mounted static dir (host==container path) so the edge can read it.
-    expect(newRoot).toBe("/opt/openship/static/_adopted/front.example.com");
+    expect(newRoot).toBe("/opt/kovalio/static/_adopted/front.example.com");
     expect(commands).toEqual([
-      "mkdir -p '/opt/openship/static/_adopted/front.example.com'",
+      "mkdir -p '/opt/kovalio/static/_adopted/front.example.com'",
       // `<src>/.` copies CONTENTS, so files land directly under <dest> matching `root <dest>;`.
-      "cp -a '/home/App.Front/dist/site/browser/.' '/opt/openship/static/_adopted/front.example.com/'",
+      "cp -a '/home/App.Front/dist/site/browser/.' '/opt/kovalio/static/_adopted/front.example.com/'",
     ]);
   });
 
@@ -99,9 +99,9 @@ describe("copyStaticRootIntoEdge", () => {
       root: "/srv/My Site/dist/",
       host: "Weird_Host!!.example.com",
     });
-    expect(newRoot).toBe("/opt/openship/static/_adopted/weird_host--.example.com");
+    expect(newRoot).toBe("/opt/kovalio/static/_adopted/weird_host--.example.com");
     expect(commands[1]).toBe(
-      "cp -a '/srv/My Site/dist/.' '/opt/openship/static/_adopted/weird_host--.example.com/'",
+      "cp -a '/srv/My Site/dist/.' '/opt/kovalio/static/_adopted/weird_host--.example.com/'",
     );
   });
 });

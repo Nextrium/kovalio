@@ -26,7 +26,7 @@ vi.mock("../../src/lib/edge-target", () => ({
 import { ensureEdgeChallengeReady } from "../../src/lib/edge-challenge";
 
 /**
- * Preparing the box to answer Openship Cloud's target check runs at EDGE-ENSURE, not
+ * Preparing the box to answer Kovalio Cloud's target check runs at EDGE-ENSURE, not
  * when a free domain is added, because the challenge location serves a directory and
  * so the vhost is valid before any token exists.
  *

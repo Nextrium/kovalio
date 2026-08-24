@@ -6,7 +6,7 @@
  * When project A "connects" a database/service app B in internal mode, B's
  * connection URL is rewritten to B's service alias (e.g. `mongo:27017`,
  * `db:5432`) — which only resolves if A's container is ON B's
- * `openship-<slug>` network. Both the compose/services deploy path AND the
+ * `kovalio-<slug>` network. Both the compose/services deploy path AND the
  * single-app build/deploy path call this so BOTH consumer kinds actually reach
  * their linked services (single-app used to skip it → injected host unresolved).
  *
@@ -26,7 +26,7 @@ type AttachRuntime = {
 
 /** Docker network name for a project slug — the source app's private network. */
 export function linkedNetworkName(slug: string): string {
-  return `openship-${slug}`;
+  return `kovalio-${slug}`;
 }
 
 export async function attachLinkedNetworks(
@@ -47,7 +47,7 @@ export async function attachLinkedNetworks(
       /**
        * Name this project's containers EXPLICITLY as well as by label.
        *
-       * `attachToExternalNetworks` filters on `openship.project=<id>`, and an ADOPTED
+       * `attachToExternalNetworks` filters on `kovalio.project=<id>`, and an ADOPTED
        * (in-place migrated) container keeps its ORIGINAL labels — labels are immutable, which
        * is why the migration has its own id-keyed joiner at all. So for a migrated consumer
        * the label match found nothing: the alias (`db:5432`) went into the env and the

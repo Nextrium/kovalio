@@ -49,7 +49,7 @@ vi.mock("./detect", () => ({
   resolveOurEdgeContainer: h.resolveOurEdgeContainer,
   sq: (s: string) => `'${s}'`,
   // The rollback stops OUR edge container before restoring a foreign proxy.
-  EDGE_CONTAINER_NAME: "openship-edge",
+  EDGE_CONTAINER_NAME: "kovalio-edge",
 }));
 
 import { runEdgeTakeover } from "./takeover";
@@ -68,7 +68,7 @@ const STATUS: EdgeStatus = {
   classification: "known",
   canProceedClean: false,
   occupants: [
-    { port: 80, systemdUnit: "nginx.service", proxy: "nginx", managedByOpenship: false },
+    { port: 80, systemdUnit: "nginx.service", proxy: "nginx", managedByKovalio: false },
   ],
 };
 const SITES: ImportedSite[] = [
@@ -191,7 +191,7 @@ describe("runEdgeTakeover", () => {
     // nothing serves from — and by this point the foreign proxy is already stopped,
     // so it reads as "migrated N sites" with the box actually dark.
     h.installContainerEdge.mockResolvedValue({ success: true });
-    h.resolveOurEdgeContainer.mockResolvedValue("openship-edge");
+    h.resolveOurEdgeContainer.mockResolvedValue("kovalio-edge");
     h.containerEdgeProvider.mockResolvedValue({
       registerRoute: h.registerRoute,
       provisionCert: h.provisionCert,
@@ -205,7 +205,7 @@ describe("runEdgeTakeover", () => {
     expect(res.registered).toEqual(["app.example.com"]);
     expect(h.containerEdgeProvider).toHaveBeenCalledWith(
       executor,
-      "openship-edge",
+      "kovalio-edge",
       expect.anything(),
     );
     // The bare path must NOT be consulted when a container edge is present.

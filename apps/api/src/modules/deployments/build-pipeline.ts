@@ -62,7 +62,7 @@ import {
 } from "./build-execution-plan";
 import { attachLinkedNetworks } from "./attach-linked-networks";
 import { probeDeployedReadiness } from "./readiness-probe";
-import { syncProjectToServerManifest } from "../../lib/openship-manifest-sync";
+import { syncProjectToServerManifest } from "../../lib/kovalio-manifest-sync";
 import { syncManagedEdgeRoutes, edgeUnsyncedWarning } from "../../lib/managed-edge-proxy";
 import { decryptEnvMap } from "../../lib/encryption";
 import {
@@ -873,7 +873,7 @@ async function executeBuildAndDeploy(project: Project, dep: Deployment, buildSes
           "the server has no GitHub identity of its own, no App/PAT token is available, and no git " +
           "identity could be forwarded. Falling back to cloning on the API host and transferring the " +
           "build context. To clone directly on the server, connect it under Servers → GitHub " +
-          "(a read-only per-repo deploy key is the narrowest option), or install the Openship App / " +
+          "(a read-only per-repo deploy key is the narrowest option), or install the Kovalio App / " +
           "add a per-project clone token.",
         "warn",
       );
@@ -1219,7 +1219,7 @@ async function executeBuildAndDeploy(project: Project, dep: Deployment, buildSes
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    if (process.env.OPENSHIP_DEBUG_PIPELINE) console.error("[pipeline]", err);
+    if (process.env.KOVALIO_DEBUG_PIPELINE) console.error("[pipeline]", err);
     // Only an UNSETTLED error is a deploy failure. An error thrown after the
     // outcome was recorded is bookkeeping: reporting it as a failure would
     // invert a working deploy and tear its containers down.
@@ -1247,7 +1247,7 @@ interface DeployPhaseInputs {
   /** Reaches the static release tree; see `sharedMountExecutor`. */
   staticExecutor: CommandExecutor | null;
   /** Base platform target ("desktop" | "selfhosted" | "cloud") + the resolved
-   *  per-deployment target/server — used to gate the `.openship` manifest write
+   *  per-deployment target/server — used to gate the `.kovalio` manifest write
    *  to desktop-mode server deploys only. */
   baseTarget: string;
   effectiveTarget: string;
@@ -1529,7 +1529,7 @@ function buildDeployEnvironment(
               if (plannedDomains.some((d) => d.requiresSslTooling)) {
                 await system.ensureFeature("ssl", systemLog);
               }
-              // Same idea for Openship Cloud's target check: make the box able to
+              // Same idea for Kovalio Cloud's target check: make the box able to
               // answer it now, so a free domain added later doesn't need a redeploy
               // first. Cheap and idempotent (a couple of stats once written).
               await ensureEdgeChallengeReady(phase.project.organizationId, phase.routing, {
@@ -1656,7 +1656,7 @@ async function executeServerDeploy(phase: DeployPhaseInputs): Promise<void> {
   // file-serve runtime rooted at the edge-shared STATIC_RELEASE_BASE promotes
   // the built dir into a release and hands the edge a `root`. Its executor is the
   // one that reaches that tree — SSH for a remote server, LOCAL for the local box,
-  // where /opt/openship/static is the one bind mount the api container, the edge and
+  // where /opt/kovalio/static is the one bind mount the api container, the edge and
   // the host all see, so no host channel is in the path (`sharedMountExecutor`).
   const isStaticFileServe = phase.deployRouting.deployMode === "static-file-serve";
   // A worker is a running container like a server, but portless: no host port to
@@ -1902,7 +1902,7 @@ async function executeServerDeploy(phase: DeployPhaseInputs): Promise<void> {
               logger.log(
                 `Couldn't read live port occupancy on the target, so ${pinnedHostPort} avoids only ` +
                   `database-pinned ports. If publishing it fails as "already allocated", ` +
-                  `check that Openship can reach this host (Servers → this box).\n`,
+                  `check that Kovalio can reach this host (Servers → this box).\n`,
                 "warn",
               );
             }
@@ -2126,7 +2126,7 @@ async function executeServerDeploy(phase: DeployPhaseInputs): Promise<void> {
   // only deactivates prevDep.containerId — which in compose mode is just the
   // old primary service's container (or the literal "compose" sentinel, not a
   // real container) — so the remaining per-service containers
-  // (openship-{slug}-{service}) have no owner in the single-app path and would
+  // (kovalio-{slug}-{service}) have no owner in the single-app path and would
   // otherwise orphan. Skip the one runDeployPipeline already handles and the
   // sentinel. Best-effort; never blocks the deploy.
   if (prevDep) {
@@ -2505,7 +2505,7 @@ async function executeServerDeploy(phase: DeployPhaseInputs): Promise<void> {
   });
 
   // FINAL STEP (desktop-only, best-effort): mirror this project onto the
-  // server's .openship/manifest.json so a fresh orchestrator can re-adopt it.
+  // server's .kovalio/manifest.json so a fresh orchestrator can re-adopt it.
   // Self-gated inside — a no-op for VPS/self-hosted and non-server targets.
   await syncProjectToServerManifest({
     baseTarget: phase.baseTarget,

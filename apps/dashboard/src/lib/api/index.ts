@@ -1,7 +1,7 @@
 /**
  * @module @/lib/api
  *
- * Centralised API layer for the Openship dashboard.
+ * Centralised API layer for the Kovalio dashboard.
  *
  * Usage:
  *   import { projectsApi, deployApi, githubApi } from "@/lib/api";
@@ -100,7 +100,7 @@ export type {
   DiscoveredService,
   DiscoveredVolumeMount,
   ComposeRepoService,
-  OpenshipProjectGroup,
+  KovalioProjectGroup,
   ReimportResult,
   AdoptResult,
   MigrationPreview,

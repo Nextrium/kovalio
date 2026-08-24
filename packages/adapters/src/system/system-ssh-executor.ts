@@ -380,10 +380,10 @@ export class SystemSshExecutor implements CommandExecutor {
       includes: options?.includes,
       alsoInclude: options?.alsoInclude,
     });
-    const tmpLocalDir = await mkdtemp(join(tmpdir(), "openship-xfer-"));
+    const tmpLocalDir = await mkdtemp(join(tmpdir(), "kovalio-xfer-"));
     const localArchive = join(tmpLocalDir, "context.tar.gz");
     // Sibling of the destination dir so it lands on the same filesystem.
-    const remoteArchive = `${remotePath}.openship-xfer.tar.gz`;
+    const remoteArchive = `${remotePath}.kovalio-xfer.tar.gz`;
 
     try {
       onLog?.(logEntry("Packing source into a single archive..."));
@@ -464,7 +464,7 @@ export class SystemSshExecutor implements CommandExecutor {
     if (!pending) {
       pending = (async () => {
         await this.ensureMaster();
-        const localSocket = `/tmp/openship-fwd-${process.pid}-${randomBytes(6).toString("hex")}.sock`;
+        const localSocket = `/tmp/kovalio-fwd-${process.pid}-${randomBytes(6).toString("hex")}.sock`;
         await execFileAsync(
           "ssh",
           [...this.baseArgs(), "-O", "forward", "-L", `${localSocket}:${remoteSocket}`, sshTarget(this.config)],
@@ -526,7 +526,7 @@ export class SystemSshExecutor implements CommandExecutor {
     // even though our local stdio are plain pipes. `stty sane` gives the shell
     // a clean cooked-mode baseline, we set the initial size, and stash the pty
     // device path so setWindow() can resize that exact pty over the master.
-    const ptyMarker = `/tmp/openship-pty-${process.pid}-${randomBytes(6).toString("hex")}`;
+    const ptyMarker = `/tmp/kovalio-pty-${process.pid}-${randomBytes(6).toString("hex")}`;
     const remoteInit =
       `tty > ${ptyMarker} 2>/dev/null; ` +
       `stty sane 2>/dev/null; stty cols ${cols} rows ${rows} 2>/dev/null; ` +

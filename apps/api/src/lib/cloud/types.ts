@@ -1,7 +1,7 @@
 /**
  * Shared types for the cloud client layer (lib/cloud/*).
  *
- * The SaaS (api.openship.io) is the source of truth. A self-hosted instance
+ * The SaaS (api.nextrium.org) is the source of truth. A self-hosted instance
  * stores only the per-user encrypted `cloud_session_token` (user_settings) and
  * talks to the SaaS through the transport → session → client layers here.
  */
@@ -24,7 +24,7 @@ export interface TokenCache {
 //
 // Self-hosted instances never hold GITHUB_APP_ID / GITHUB_PRIVATE_KEY.
 // All App-scoped operations (install URL, list installations, mint install
-// tokens, OAuth identity) are proxied through api.openship.io which is the
+// tokens, OAuth identity) are proxied through api.nextrium.org which is the
 // sole holder of the App credentials. The local instance authenticates with
 // its cloud_session_token (same as every other cloud-proxied feature).
 
@@ -48,7 +48,7 @@ export interface CloudGithubUserStatus {
   id?: number;
 }
 
-// ─── Edge-target verification (Openship Cloud proves control of a target) ────
+// ─── Edge-target verification (Kovalio Cloud proves control of a target) ────
 //
 // Mirrors Oblien's `EdgeProxyVerification*` shapes, restated here rather than
 // re-exported: the SDK is a SaaS-side dependency, and a self-hosted box must be
@@ -120,7 +120,7 @@ export interface CloudClient {
     }): Promise<{ ok: true; hostname: string } | null>;
     deregister(slug: string): Promise<{ ok: true; removed: boolean } | null>;
     /**
-     * Ask Openship Cloud for a challenge proving we control `target`.
+     * Ask Kovalio Cloud for a challenge proving we control `target`.
      *
      * `target` MUST be `canonicalEdgeTarget(host)` — the row is keyed on the
      * normalized string, so a target verified in one spelling and routed in
@@ -130,7 +130,7 @@ export interface CloudClient {
      * previous one (see the retired-token rule on the persistence side).
      */
     requestVerification(target: string): Promise<CloudEdgeVerificationChallenge | null>;
-    /** Run the probe. Openship Cloud fetches the token from the target itself; we
+    /** Run the probe. Kovalio Cloud fetches the token from the target itself; we
      *  only report the outcome. One call per attempt — never a poll loop. */
     checkVerification(verificationId: number): Promise<CloudEdgeVerificationResult | null>;
   };

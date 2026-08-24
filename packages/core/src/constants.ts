@@ -2,7 +2,7 @@
  * Shared constants used across the monorepo.
  */
 
-export const APP_NAME = "Openship";
+export const APP_NAME = "Kovalio";
 
 /**
  * Outbound links to our own properties — docs, support, community, socials.
@@ -15,26 +15,26 @@ export const APP_NAME = "Openship";
 /**
  * Where our published images live when nothing overrides it.
  *
- * `OPENSHIP_IMAGE_REGISTRY` overrides it everywhere. Shared because the fallback
+ * `KOVALIO_IMAGE_REGISTRY` overrides it everywhere. Shared because the fallback
  * was typed independently in the CLI's compose generator, the API's edge-image
  * pin and the adapters' edge installer — three defaults that had to agree for a
  * pull to resolve, with nothing making them.
  *
- * NOTE: the shipped compose YAML repeats it as `${OPENSHIP_IMAGE_REGISTRY:-…}`
+ * NOTE: the shipped compose YAML repeats it as `${KOVALIO_IMAGE_REGISTRY:-…}`
  * because compose interpolation can't read TypeScript. That copy is asserted
  * against this one by test.
  */
 export const DEFAULT_IMAGE_REGISTRY = "ghcr.io/oblien";
 
 export const BRAND_LINKS = {
-  site: "https://openship.io",
-  docs: "https://openship.io/docs",
-  support: "https://openship.io/support",
-  contact: "https://openship.io/contact",
-  github: "https://github.com/oblien/openship",
-  issues: "https://github.com/oblien/openship/issues/new",
+  site: "https://nextrium.org",
+  docs: "https://nextrium.org/docs",
+  support: "https://nextrium.org/support",
+  contact: "https://nextrium.org/contact",
+  github: "https://github.com/Nextrium/kovalio",
+  issues: "https://github.com/Nextrium/kovalio/issues/new",
   community: "https://discord.gg/Q9eWNCeXjg",
-  x: "https://x.com/openship",
+  x: "https://x.com/kovalio",
 } as const;
 
 export const DEPLOYMENT_STATUSES = [

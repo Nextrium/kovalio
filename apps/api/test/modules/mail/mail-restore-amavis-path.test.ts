@@ -122,9 +122,9 @@ describe("a restored amavis config lands where the TARGET reads it", () => {
     // known candidates rather than used — otherwise `cp -a` is an arbitrary root write.
     // With no amavis to probe and no usable recorded path, nothing is placed at all: the
     // default's include dir doesn't exist on such a box and `|| true` absorbs the miss.
-    const r = place({ target: "none", archiveFrom: "/tmp/openship-amavis-escape/authorized_keys" });
+    const r = place({ target: "none", archiveFrom: "/tmp/kovalio-amavis-escape/authorized_keys" });
 
-    expect(existsSync("/tmp/openship-amavis-escape/authorized_keys")).toBe(false);
+    expect(existsSync("/tmp/kovalio-amavis-escape/authorized_keys")).toBe(false);
     expect(r.at(RHEL)).toBe(false);
     expect(r.at(DEBIAN)).toBe(false);
   });

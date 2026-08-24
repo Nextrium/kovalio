@@ -56,7 +56,7 @@ describe("ConfigDiagnostics (#641)", () => {
     // The severity that used to be wrong: with bad JSON the overlay applies
     // nothing, so copy promising "the rest was applied" would be a lie.
     const html = render({
-      errors: ["openship.json is not valid JSON — run `openship config validate`"],
+      errors: ["kovalio.json is not valid JSON — run `kovalio config validate`"],
       warnings: [],
       wholeFile: true,
     });

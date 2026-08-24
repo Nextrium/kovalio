@@ -486,13 +486,13 @@ export async function skipPortCheck(
 }
 
 /**
- * Tail the control plane's own process log (tee'd by `openship up` to
- * OPENSHIP_INSTANCE_LOG). The self-app is an adopt deployment with no container,
+ * Tail the control plane's own process log (tee'd by `kovalio up` to
+ * KOVALIO_INSTANCE_LOG). The self-app is an adopt deployment with no container,
  * so its "runtime logs" ARE the running instance's stdout/stderr. Empty when the
  * env var is unset (e.g. foreground `up` with no tee, or non-CLI deploy).
  */
 function readInstanceLog(tail?: number): LogEntry[] {
-  const path = process.env.OPENSHIP_INSTANCE_LOG;
+  const path = process.env.KOVALIO_INSTANCE_LOG;
   if (!path || !existsSync(path)) return [];
   let text: string;
   try {
@@ -520,7 +520,7 @@ export async function getDeploymentLogs(
   const dep = await getDeployment(deploymentId, organizationId);
 
   // Self-app adopt deployment: no container — its logs are the control plane's
-  // own process output (OPENSHIP_INSTANCE_LOG), not a build session / container.
+  // own process output (KOVALIO_INSTANCE_LOG), not a build session / container.
   if ((dep.meta as DeploymentMeta | null)?.adopt) {
     return readInstanceLog(tail);
   }

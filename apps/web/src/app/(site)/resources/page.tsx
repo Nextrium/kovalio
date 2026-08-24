@@ -2,7 +2,7 @@ import Link from "next/link";
 import { resourcesSource, type ResourceFrontmatter } from "@/lib/source";
 import type { Metadata } from "next";
 
-const SITE_URL = "https://openship.io";
+const SITE_URL = "https://nextrium.org";
 
 type RPage = { url: string; data: ResourceFrontmatter };
 
@@ -44,13 +44,13 @@ export async function generateMetadata({
 
   const pageTitle =
     category && category !== "all"
-      ? `${category.charAt(0).toUpperCase() + category.slice(1)} – Openship Resources`
-      : "Resources – Openship";
+      ? `${category.charAt(0).toUpperCase() + category.slice(1)} – Kovalio Resources`
+      : "Resources – Kovalio";
 
   const pageDescription =
     category && category !== "all"
-      ? `Browse ${category} articles, guides, and updates from the Openship team`
-      : "Engineering deep-dives, product updates, and guides from the Openship team.";
+      ? `Browse ${category} articles, guides, and updates from the Kovalio team`
+      : "Engineering deep-dives, product updates, and guides from the Kovalio team.";
 
   return {
     title: pageTitle,
@@ -59,7 +59,7 @@ export async function generateMetadata({
       title: pageTitle,
       description: pageDescription,
       url: `${SITE_URL}/resources${category && category !== "all" ? `?category=${category}` : ""}`,
-      siteName: "Openship",
+      siteName: "Kovalio",
       type: "website",
     },
     twitter: {
@@ -102,13 +102,13 @@ export default async function ResourcesPage({
   const blogStructuredData = {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "Openship Resources",
+    name: "Kovalio Resources",
     description:
-      "Engineering deep-dives, product updates, and guides from the Openship team",
+      "Engineering deep-dives, product updates, and guides from the Kovalio team",
     url: `${SITE_URL}/resources`,
     publisher: {
       "@type": "Organization",
-      name: "Openship",
+      name: "Kovalio",
     },
     blogPost: pages.slice(0, 10).map((page) => ({
       "@type": "BlogPosting",
@@ -116,7 +116,7 @@ export default async function ResourcesPage({
       description: page.data.description,
       url: `${SITE_URL}${page.url}`,
       datePublished: page.data.date,
-      author: { "@type": "Person", name: page.data.author || "Openship Team" },
+      author: { "@type": "Person", name: page.data.author || "Kovalio Team" },
     })),
   };
 
@@ -133,7 +133,7 @@ export default async function ResourcesPage({
           <h1 className="res-title">Notes from the build.</h1>
           <p className="res-sub">
             Engineering deep-dives, product updates, and guides from the
-            Openship team - straight from the source.
+            Kovalio team - straight from the source.
           </p>
         </section>
 
@@ -171,7 +171,7 @@ export default async function ResourcesPage({
                 {(featured.data.author || "O")[0].toUpperCase()}
               </div>
               <span className="res-meta-name">
-                {featured.data.author || "Openship Team"}
+                {featured.data.author || "Kovalio Team"}
               </span>
               {featured.data.date && (
                 <>
@@ -207,7 +207,7 @@ export default async function ResourcesPage({
                   <div className="res-avatar" aria-hidden="true">
                     {(post.data.author || "O")[0].toUpperCase()}
                   </div>
-                  <span>{post.data.author || "Openship Team"}</span>
+                  <span>{post.data.author || "Kovalio Team"}</span>
                 </div>
               </Link>
             ))}

@@ -210,7 +210,7 @@ function parseCaddyJson(raw: string): { sites: ImportedSite[]; warnings: string[
           `caddy: ${hosts.join(", ")} has no catch-all upstream — used its path-scoped one; verify the target`,
         );
       }
-      // Certs: Caddy auto-provisions, and openship re-issues via Let's Encrypt on
+      // Certs: Caddy auto-provisions, and kovalio re-issues via Let's Encrypt on
       // takeover, so we carry only the ssl flag here (no fragile cert→SNI mapping).
       sites.push({ serverNames: hosts, ssl, target: outcome.target, source: "caddy (adapt)" });
     }

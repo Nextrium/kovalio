@@ -15,7 +15,7 @@ import { useI18n, interpolate } from "@/components/i18n-provider";
 // Static target options. "server" gets a server-id sub-picker below.
 //
 // A default is a BINDING, so there are only two: a server row, or a cloud
-// workspace. There is deliberately no "This Machine" — when Openship runs on a
+// workspace. There is deliberately no "This Machine" — when Kovalio runs on a
 // server, that machine is already the "This Server" row in the picker below, and
 // choosing the other name for it dropped the row's real address (a deploy then
 // reported `http://localhost:<port>` for a VPS). Desktop still deploys to its own

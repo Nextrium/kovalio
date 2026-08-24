@@ -76,7 +76,7 @@ export interface ComposeParseResult {
    */
   missingRequired: ComposeMissingVariable[];
   /**
-   * Compose keys this file declares that openship does not model. Reported, never
+   * Compose keys this file declares that kovalio does not model. Reported, never
    * thrown (same reason as `missingRequired`): the caller decides, and a `blocking`
    * entry is the one it must refuse on rather than deploy.
    *
@@ -87,7 +87,7 @@ export interface ComposeParseResult {
   unsupported: ComposeUnsupportedField[];
 }
 
-/** One compose key the file declares and openship can't honor. */
+/** One compose key the file declares and kovalio can't honor. */
 export interface ComposeUnsupportedField {
   /** Service it was declared on. */
   service: string;
@@ -608,7 +608,7 @@ function parseNamespaceField(
 }
 
 /**
- * Compose keys openship does not model, so the wizard can say so instead of the
+ * Compose keys kovalio does not model, so the wizard can say so instead of the
  * file quietly deploying as something else.
  *
  * Grouped by what the omission costs, because that is what decides `blocking`:
@@ -645,7 +645,7 @@ const UNSUPPORTED_SERVICE_KEYS: Record<string, string> = {
   // `entrypoint` is modeled (#575) — see parseAdvanced.
   user: "user is not modeled — the container runs as the image's user.",
   working_dir: "working_dir is not modeled — the image's WORKDIR is used.",
-  hostname: "hostname is not modeled — Openship sets the hostname to the service name.",
+  hostname: "hostname is not modeled — Kovalio sets the hostname to the service name.",
   domainname: "domainname is not modeled.",
   mac_address: "mac_address is not modeled.",
   platform: "platform is not modeled — the image is pulled for the host's architecture.",
@@ -665,7 +665,7 @@ const UNSUPPORTED_SERVICE_KEYS: Record<string, string> = {
   secrets: "secrets is not modeled — use environment variables instead.",
   volumes_from: "volumes_from is legacy and not modeled — declare the volume on both services.",
   profiles: "profiles is not modeled — every service in the file is imported.",
-  labels: "labels is not modeled — Openship sets its own container labels.",
+  labels: "labels is not modeled — Kovalio sets its own container labels.",
   logging: "logging is not modeled — the daemon's default log driver is used.",
 };
 
@@ -709,13 +709,13 @@ function collectUnsupported(
         service: serviceName,
         field: "deploy",
         reason:
-          `deploy.${rest.join("/")} is not modeled — Openship runs one container per ` +
+          `deploy.${rest.join("/")} is not modeled — Kovalio runs one container per ` +
           `service (only deploy.resources.limits is honored).`,
       });
     }
   }
 
-  // A service pinned to named networks: openship puts every service on ONE
+  // A service pinned to named networks: kovalio puts every service on ONE
   // project network, so the topology flattens. They still resolve each other by
   // name, which is why this is a warning rather than a refusal.
   const networks = svc.networks;
@@ -745,7 +745,7 @@ function collectUnsupported(
 
 /** Long-form mount options {@link parseVolumes} can't fold into a bind spec. The
  *  rules live in @repo/core so the CLI's sync mapper enforces the identical set —
- *  a file the API refuses must not be accepted by `openship service sync`. */
+ *  a file the API refuses must not be accepted by `kovalio service sync`. */
 function collectUnsupportedMounts(
   serviceName: string,
   vols: unknown,

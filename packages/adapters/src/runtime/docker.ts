@@ -12,7 +12,7 @@
  * Build strategy:
  *   Builds from a staged source context sent to the Docker daemon. If the
  *   repository already provides a Dockerfile, that becomes the source of
- *   truth. Otherwise Openship generates a minimal builder Dockerfile.
+ *   truth. Otherwise Kovalio generates a minimal builder Dockerfile.
  *   Deploy creates a container from the resulting image.
  *
  * SECURITY MODEL:
@@ -67,8 +67,8 @@ const isDockerNotFoundError = isRuntimeNotFoundError;
 /**
  * Is this image tag one WE built, and therefore ours to delete?
  *
- * Only `openship/…` tags are (see `imageTag`), and every build mints a globally
- * unique one (`openship/<slug>:<session>`), so exactly one deployment row ever
+ * Only `kovalio/…` tags are (see `imageTag`), and every build mints a globally
+ * unique one (`kovalio/<slug>:<session>`), so exactly one deployment row ever
  * owns a given tag. Anything else is either pulled from a registry
  * (`postgres:17`) or adopted by a docker-migration import — and those two are
  * precisely the tags that must NOT be deleted by row:
@@ -80,7 +80,7 @@ const isDockerNotFoundError = isRuntimeNotFoundError;
  *     deleting it buys nothing (it re-pulls).
  *
  * This mirrors the safety model `image-gc` already documents — it only ever
- * considers images carrying the `openship.project` label, which `labels()`
+ * considers images carrying the `kovalio.project` label, which `labels()`
  * stamps on final build images and never on pulled/adopted ones. Structural, so
  * it needs no daemon round-trip: the caller's keep-set answers "does another
  * RETAINED release need this tag", and this answers "is it even ours".
@@ -88,9 +88,9 @@ const isDockerNotFoundError = isRuntimeNotFoundError;
 export function ownsBuiltImage(imageRef: string): boolean {
   // `imageTag()` always uses the reserved local namespace AND a generated
   // build-session tag. Prefix-only matching would misclassify a legitimate
-  // Docker Hub image such as `openship/agent:v1` as ours and allow cleanup to
+  // Docker Hub image such as `kovalio/agent:v1` as ours and allow cleanup to
   // untag registry content that this deployment never built.
-  return /^openship\/[a-z0-9][a-z0-9._-]*:bld_[A-Za-z0-9_-]+$/.test(imageRef);
+  return /^kovalio\/[a-z0-9][a-z0-9._-]*:bld_[A-Za-z0-9_-]+$/.test(imageRef);
 }
 
 /** Clamp a terminal window dimension to a sane min/max with default. */
@@ -107,7 +107,7 @@ function clampShellWindow(
 }
 import type { Feature, SystemLog } from "../system/types";
 import { isRuntimeNotFoundError } from "../system/errors";
-import { OPENSHIP_LABEL } from "../system/port-owner";
+import { KOVALIO_LABEL } from "../system/port-owner";
 import { dirOf, ensureOwnedDir } from "../system/elevated-executor";
 import { dockerConfigJsonFor, registryForImage, resolveDockerAuth } from "./docker-auth";
 
@@ -323,7 +323,7 @@ const IN_CONTAINER_EXEC_WATCHDOG = [
 /** argv for a one-shot in-container exec that kills itself after `timeoutMs`. */
 export function buildInContainerExecCmd(command: string, timeoutMs: number): string[] {
   const seconds = Math.max(1, Math.ceil(timeoutMs / 1000));
-  return ["sh", "-c", IN_CONTAINER_EXEC_WATCHDOG, "openship-exec", command, String(seconds)];
+  return ["sh", "-c", IN_CONTAINER_EXEC_WATCHDOG, "kovalio-exec", command, String(seconds)];
 }
 
 /** Just the `inspect()` surface the exit-code poll needs, so both a dockerode
@@ -832,7 +832,7 @@ function extractNetworkInfo(data: { NetworkSettings?: any; HostConfig?: any }): 
         const port = Number(binding?.HostPort);
         if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) return null;
         const ip = binding?.HostIp?.trim().replace(/^\[|\]$/g, "") ?? "";
-        // A container can retain the operator's public publish AND Openship's
+        // A container can retain the operator's public publish AND Kovalio's
         // loopback publish for one container port. Routes dial the loopback one,
         // so Docker array order must not decide which reservation we recover.
         const priority =
@@ -1099,7 +1099,7 @@ export class DockerRuntime implements RuntimeAdapter {
 
   /** Canonical image tag for a build session. */
   private imageTag(slug: string | undefined, sessionId: string): string {
-    const name = slug ? `openship/${slug}` : `openship/build`;
+    const name = slug ? `kovalio/${slug}` : `kovalio/build`;
     return `${name}:${sessionId}`;
   }
 
@@ -1111,14 +1111,14 @@ export class DockerRuntime implements RuntimeAdapter {
     service?: string;
   }) {
     const l: Record<string, string> = {
-      [OPENSHIP_LABEL.project]: config.projectId,
+      [KOVALIO_LABEL.project]: config.projectId,
     };
-    if (config.deploymentId) l[OPENSHIP_LABEL.deployment] = config.deploymentId;
-    if (config.sessionId) l[OPENSHIP_LABEL.build] = config.sessionId;
+    if (config.deploymentId) l[KOVALIO_LABEL.deployment] = config.deploymentId;
+    if (config.sessionId) l[KOVALIO_LABEL.build] = config.sessionId;
     // Present on single-app containers that joined the project network; lets the
     // label-scoped reconcileNetworkMembership re-alias them after an out-of-band
     // network rebuild, exactly like a compose service.
-    if (config.service) l[OPENSHIP_LABEL.service] = config.service;
+    if (config.service) l[KOVALIO_LABEL.service] = config.service;
     return l;
   }
 
@@ -1214,7 +1214,7 @@ export class DockerRuntime implements RuntimeAdapter {
       if (!line) return null;
 
       const marker = line.match(
-        /^\[openship-build\]\s+step=(clone|install|build)\s+status=(running|completed|skipped)$/,
+        /^\[kovalio-build\]\s+step=(clone|install|build)\s+status=(running|completed|skipped)$/,
       );
       if (marker) {
         const [, step, status] = marker;
@@ -1327,7 +1327,7 @@ export class DockerRuntime implements RuntimeAdapter {
    *   1. `transferLocalDirectory(...)` - defaults to rsync over the
    *      SYSTEM `ssh` binary (NOT the Node `ssh2` library), with native
    *      `--progress` output streamed straight from rsync. ~10-30 MB/s
-   *      typical. Lands the context at `/tmp/openship-build-<sessionId>`
+   *      typical. Lands the context at `/tmp/kovalio-build-<sessionId>`
    *      on remote. Falls back to tar through the ssh2 channel only if
    *      rsync isn't installed on either side.
    *
@@ -1406,8 +1406,8 @@ export class DockerRuntime implements RuntimeAdapter {
       // banner, or a `docker` wrapper's help text, must not read as "buildx".
       // `|| true` keeps a missing plugin off the error path — docker exits non-zero
       // for an unknown subcommand and an SshExecutor rejects on that.
-      .exec("docker buildx version >/dev/null 2>&1 && echo OPENSHIP_BUILDKIT_OK || true")
-      .then((out) => out.split(/\r?\n/).some((line) => line.trim() === "OPENSHIP_BUILDKIT_OK"))
+      .exec("docker buildx version >/dev/null 2>&1 && echo KOVALIO_BUILDKIT_OK || true")
+      .then((out) => out.split(/\r?\n/).some((line) => line.trim() === "KOVALIO_BUILDKIT_OK"))
       .catch(() => false));
 
     const available = await probe;
@@ -1754,7 +1754,7 @@ export class DockerRuntime implements RuntimeAdapter {
     log: BuildLogger,
     signal?: AbortSignal,
   ): Promise<void> {
-    const remoteContextDir = `/tmp/openship-build-${config.sessionId}`;
+    const remoteContextDir = `/tmp/kovalio-build-${config.sessionId}`;
     try {
       // The whole TREE is transferred (a narrowed context still needs its siblings
       // present for a compose batch); only the `docker build` cwd narrows.
@@ -2035,7 +2035,7 @@ export class DockerRuntime implements RuntimeAdapter {
       // Clone the repo ON the remote host and build there — no local clone and
       // no context transfer. Only for SSH server builds that opted in.
       if (sshExecutor && config.cloneOnServer) {
-        const remoteContextDir = `/tmp/openship-build-${config.sessionId}`;
+        const remoteContextDir = `/tmp/kovalio-build-${config.sessionId}`;
         try {
           this.emitDockerStep(log, "clone", "running", "Cloning source on the server...");
           await this.cloneSourceOnRemote(config, remoteContextDir, log);
@@ -2044,7 +2044,7 @@ export class DockerRuntime implements RuntimeAdapter {
           const { remoteBuildDir, dockerfileName } = await this.resolveRemoteDockerfile(
             config,
             remoteContextDir,
-            "Dockerfile.openship",
+            "Dockerfile.kovalio",
             config.stack === "docker",
             log,
           );
@@ -2172,7 +2172,7 @@ export class DockerRuntime implements RuntimeAdapter {
    * runs exactly the bytes acquired here even if a mutable tag moves between
    * prepare and deploy. The image is deliberately non-owned: it came from a
    * registry and may be shared by unrelated containers on the target daemon, so
-   * deployment cleanup must never remove it as if Openship had built it.
+   * deployment cleanup must never remove it as if Kovalio had built it.
    */
   async prepareImage(config: ImageArtifactConfig, logger?: BuildLogger): Promise<BuildResult> {
     const log = logger ?? new BuildLogger();
@@ -2406,7 +2406,7 @@ export class DockerRuntime implements RuntimeAdapter {
    *
    * Two distinct problems, one fix. The build context is pruned by `.dockerignore`
    * and THEN the generated recipe is written into it, so for these projects the
-   * published site contained `.dockerignore` + `Dockerfile.openship…` — and any
+   * published site contained `.dockerignore` + `Dockerfile.kovalio…` — and any
    * tracked `.git` — at their own public URLs. Worse, those files count as
    * content: a repo with an allowlist `.dockerignore` (`*` + `!src`) extracted to
    * a tree holding ONLY the two build files, which passed the non-empty check and
@@ -2518,7 +2518,7 @@ export class DockerRuntime implements RuntimeAdapter {
    * arrives as real stderr and a real exit code.
    *
    * Requires that the daemon's filesystem IS this process's filesystem, which is
-   * true for DooD (`/opt/openship/static` is a host bind mount at the same path
+   * true for DooD (`/opt/kovalio/static` is a host bind mount at the same path
    * inside and out — see docker/docker-compose.yml) and false for a VM-backed
    * daemon (Docker Desktop, Colima), where `hostOutDir` resolves inside the VM and
    * the copy would land somewhere this process can't see.
@@ -2541,8 +2541,8 @@ export class DockerRuntime implements RuntimeAdapter {
     const { join } = await import("node:path");
     const { randomBytes } = await import("node:crypto");
     await mkdir(hostOutDir, { recursive: true });
-    const OUT = "/__openship_out";
-    const probe = `.openship-extract-probe-${randomBytes(6).toString("hex")}`;
+    const OUT = "/__kovalio_out";
+    const probe = `.kovalio-extract-probe-${randomBytes(6).toString("hex")}`;
     await writeFile(join(hostOutDir, probe), "probe");
     const container = await this.docker.createContainer({
       Image: tag,
@@ -2702,7 +2702,7 @@ export class DockerRuntime implements RuntimeAdapter {
     const source = specs[0]!.config;
     const isSsh = this.transport.kind === "ssh" && !!this.connectionOptions?.executor;
     const cloneOnServer = isSsh && !!source.cloneOnServer;
-    const remoteContextDir = `/tmp/openship-build-${source.sessionId}`;
+    const remoteContextDir = `/tmp/kovalio-build-${source.sessionId}`;
 
     // Register EVERY service's build up front, before the shared clone/transfer:
     // a cancel that lands during that shared phase must be seen by all of them,
@@ -2773,7 +2773,7 @@ export class DockerRuntime implements RuntimeAdapter {
       // per-service generated name so concurrent builds never clobber each other.
       const resolvedList = await Promise.all(
         specs.map(async (spec) => {
-          const generatedName = `Dockerfile.openship.${spec.config.sessionId}`;
+          const generatedName = `Dockerfile.kovalio.${spec.config.sessionId}`;
           const requireRepo = spec.requireRepositoryDockerfile ?? spec.config.stack === "docker";
           try {
             if (cloneOnServer) {
@@ -3054,7 +3054,7 @@ export class DockerRuntime implements RuntimeAdapter {
     // command has already exited.
     const executor = this.transport.kind === "ssh" ? this.connectionOptions?.executor : undefined;
     if (executor) {
-      await killProcessesUnderDir(executor, `/tmp/openship-build-${sessionId}`, {
+      await killProcessesUnderDir(executor, `/tmp/kovalio-build-${sessionId}`, {
         includeSuffixed: true,
       });
     }
@@ -3064,10 +3064,10 @@ export class DockerRuntime implements RuntimeAdapter {
     // `<sessionId>-<serviceId>`, which an exact-value filter would never match.
     const containers = await this.docker.listContainers({
       all: true,
-      filters: { label: [OPENSHIP_LABEL.build] },
+      filters: { label: [KOVALIO_LABEL.build] },
     });
     for (const c of containers) {
-      const buildId = c.Labels?.[OPENSHIP_LABEL.build];
+      const buildId = c.Labels?.[KOVALIO_LABEL.build];
       if (!buildId || !cancelCovers(sessionId, buildId)) continue;
       try {
         await this.docker.getContainer(c.Id).remove({ force: true });
@@ -3091,7 +3091,7 @@ export class DockerRuntime implements RuntimeAdapter {
       throw new Error("Docker deploy requires an imageRef (built image tag)");
     }
 
-    const containerName = `openship-${config.runtimeName || config.projectId}-${config.deploymentId}`;
+    const containerName = `kovalio-${config.runtimeName || config.projectId}-${config.deploymentId}`;
 
     // Environment variables. A worker (config.portless) listens on nothing, so
     // injecting PORT would be a lie the app might bind to — omit it there (#538-B).
@@ -3148,7 +3148,7 @@ export class DockerRuntime implements RuntimeAdapter {
     });
 
     // Internal reachability (east-west): when an alias is set, join the project's
-    // own `openship-<slug>` bridge network so another project explicitly linked to
+    // own `kovalio-<slug>` bridge network so another project explicitly linked to
     // this one (attachLinkedNetworks) can resolve it by name — the same DNS a
     // compose service gets. The alias existing is NOT public exposure: the network
     // is the project's boundary and stays empty until an explicit link joins a
@@ -3258,7 +3258,7 @@ export class DockerRuntime implements RuntimeAdapter {
   async removeImage(imageRef: string): Promise<void> {
     // A path is not an image. Guarding at the verb — not only at the callers that
     // classify — is what makes issue #640 unrepeatable: dockerode would happily
-    // issue `DELETE /images//opt/openship/static/...`, whose failure is not a 404
+    // issue `DELETE /images//opt/kovalio/static/...`, whose failure is not a 404
     // and so is rethrown, failing a project teardown forever. Callers that can
     // hold either shape must route a path to destroy() instead.
     if (isArtifactPathRef(imageRef)) {
@@ -3322,19 +3322,19 @@ export class DockerRuntime implements RuntimeAdapter {
    * Every container (running OR stopped) labeled for this project. Lets
    * project teardown reclaim orphans that have no DB row — e.g. a deploy
    * that started a container then failed during routing, or rows lost to
-   * a crash. The `openship.project` label is stamped at create time
+   * a crash. The `kovalio.project` label is stamped at create time
    * (see `labels()`), so this is authoritative for THIS docker host.
    */
   async listProjectContainerIds(projectId: string): Promise<string[]> {
     const containers = await this.docker.listContainers({
       all: true,
-      filters: { label: [`openship.project=${projectId}`] },
+      filters: { label: [`kovalio.project=${projectId}`] },
     });
     return containers.map((c) => c.Id);
   }
 
   /**
-   * Built images that belong to this project — the label `openship.project=<id>`
+   * Built images that belong to this project — the label `kovalio.project=<id>`
    * that `labels()` stamps on every FINAL build image. Base/third-party images
    * (postgres, redis, …) are PULLED, never labeled, so they can never appear
    * here — that label filter is the primary guardrail for the image GC, which
@@ -3347,13 +3347,13 @@ export class DockerRuntime implements RuntimeAdapter {
     Array<{ id: string; repoTags: string[]; buildId?: string; deploymentId?: string; size: number }>
   > {
     const images = await this.docker.listImages({
-      filters: { label: [`openship.project=${projectId}`] },
+      filters: { label: [`kovalio.project=${projectId}`] },
     });
     return images.map((img) => ({
       id: img.Id,
       repoTags: (img.RepoTags ?? []).filter((t) => t && t !== "<none>:<none>"),
-      buildId: img.Labels?.[OPENSHIP_LABEL.build],
-      deploymentId: img.Labels?.[OPENSHIP_LABEL.deployment],
+      buildId: img.Labels?.[KOVALIO_LABEL.build],
+      deploymentId: img.Labels?.[KOVALIO_LABEL.deployment],
       size: img.Size ?? 0,
     }));
   }
@@ -3368,7 +3368,7 @@ export class DockerRuntime implements RuntimeAdapter {
   async pruneProjectDanglingImages(projectId: string): Promise<void> {
     try {
       await this.docker.pruneImages({
-        filters: { dangling: ["true"], label: [`openship.project=${projectId}`] },
+        filters: { dangling: ["true"], label: [`kovalio.project=${projectId}`] },
       });
     } catch {
       /* best-effort — a prune failure must never fail a build/deploy */
@@ -3387,7 +3387,7 @@ export class DockerRuntime implements RuntimeAdapter {
   ): Promise<Array<{ containerId: string; status: ContainerStatus; serviceName?: string }>> {
     const containers = await this.docker.listContainers({
       all: true,
-      filters: { label: [`openship.deployment=${deploymentId}`] },
+      filters: { label: [`kovalio.deployment=${deploymentId}`] },
     });
     const stateMap: Record<string, ContainerStatus> = {
       running: "running",
@@ -3403,7 +3403,7 @@ export class DockerRuntime implements RuntimeAdapter {
     return containers.map((c) => ({
       containerId: c.Id,
       status: stateMap[(c.State ?? "").toLowerCase().trim()] ?? "stopped",
-      serviceName: c.Labels?.[OPENSHIP_LABEL.service],
+      serviceName: c.Labels?.[KOVALIO_LABEL.service],
     }));
   }
 
@@ -3497,10 +3497,10 @@ export class DockerRuntime implements RuntimeAdapter {
 
   // ── Docker discovery (label-agnostic) ────────────────────────────────────
   //
-  // Enumerate the ENTIRE daemon, not just openship-labeled resources. Powers
+  // Enumerate the ENTIRE daemon, not just kovalio-labeled resources. Powers
   // "migrate an existing Docker deployment": read whatever already runs on a
   // server (a compose stack or hand-run containers) so it can be adopted as an
-  // Openship project. Strictly read-only.
+  // Kovalio project. Strictly read-only.
 
   /** Every container on the host (running or stopped), summarized. */
   async listAllContainers(): Promise<DockerContainerSummary[]> {
@@ -3637,7 +3637,7 @@ export class DockerRuntime implements RuntimeAdapter {
       const auth = await this.connectionOptions?.resolveRegistryAuth?.(ref);
       const config = auth ? dockerConfigJsonFor(auth) : null;
       if (!config) {
-        // No Openship credential for this registry: the remote pulls with whatever it has
+        // No Kovalio credential for this registry: the remote pulls with whatever it has
         // of its own, which is the behaviour every existing install depends on.
         await executor.exec(`docker pull ${sq(ref)}`, { timeout });
         return;
@@ -3654,7 +3654,7 @@ export class DockerRuntime implements RuntimeAdapter {
       // transport remotely, and the CLI reads credentials from exactly one place — a
       // `config.json` in the directory named by DOCKER_CONFIG. There is no env-var or
       // file-descriptor form. `docker login` would also work and is worse: it persists the
-      // credential on a machine whose lifecycle Openship does not own.
+      // credential on a machine whose lifecycle Kovalio does not own.
       //
       // So: minimize the window instead. The secret goes in through `writeFile`, never argv
       // (an argument is visible in `ps` to every user on that box for the life of the
@@ -3663,7 +3663,7 @@ export class DockerRuntime implements RuntimeAdapter {
       // world-readable, and no chance of writing into a directory something else prepared.
       // Cleanup runs on the command's own exit path AND in the finally below, which is what
       // covers a timeout that kills the exec before it reaches its own `rm`.
-      const dir = `/tmp/openship-pull-${crypto.randomUUID()}`;
+      const dir = `/tmp/kovalio-pull-${crypto.randomUUID()}`;
       try {
         await executor.exec(`mkdir -m 700 ${sq(dir)}`);
         await executor.writeFile(`${dir}/config.json`, config);
@@ -3682,9 +3682,9 @@ export class DockerRuntime implements RuntimeAdapter {
     // with an unauthorized manifest fetch (#581). Resolved per pull rather than cached: a
     // credential can be added while the API is running, and a stale "none" would outlive it.
     //
-    // The INJECTED resolver wins — that is Openship's own credential store, which works on
+    // The INJECTED resolver wins — that is Kovalio's own credential store, which works on
     // every install shape and every target. The host config is the fallback, and only when
-    // no resolver was supplied at all: an org that manages its registries in Openship
+    // no resolver was supplied at all: an org that manages its registries in Kovalio
     // should not have a stray `docker login` on the box quietly override it.
     const authconfig = this.connectionOptions?.resolveRegistryAuth
       ? await this.connectionOptions.resolveRegistryAuth(ref)
@@ -4419,7 +4419,7 @@ export class DockerRuntime implements RuntimeAdapter {
    * reach each other by service name as hostname.
    */
   async ensureNetwork(slug: string): Promise<string> {
-    const networkName = `openship-${slug}`;
+    const networkName = `kovalio-${slug}`;
     // list-then-create is check-then-act: two concurrent deploys for the same
     // slug would both miss and both create, yielding two networks with the same
     // name (Docker allows it) and ambiguous name lookups. Serialize per server.
@@ -4435,7 +4435,7 @@ export class DockerRuntime implements RuntimeAdapter {
       const network = await this.docker.createNetwork({
         Name: networkName,
         Driver: "bridge",
-        Labels: { "openship.network": slug },
+        Labels: { "kovalio.network": slug },
       });
       return network.id;
     };
@@ -4463,10 +4463,10 @@ export class DockerRuntime implements RuntimeAdapter {
 
   /**
    * Join already-running containers (migration attach-live reuse) to a project's
-   * `openship-<slug>` network with a DNS alias each — so a natively-deployed
+   * `kovalio-<slug>` network with a DNS alias each — so a natively-deployed
    * service in the SAME project resolves them by name (e.g. a freshly-built `web`
    * reaching the reused `postgres:5432`). These containers keep their ORIGINAL
-   * openship labels, so the label-scoped reconcileNetworkMembership never joins
+   * kovalio labels, so the label-scoped reconcileNetworkMembership never joins
    * them; this is the explicit, additive join (a network connect does NOT restart
    * the container or touch its volumes). Idempotent + best-effort per member.
    */
@@ -4537,7 +4537,7 @@ export class DockerRuntime implements RuntimeAdapter {
     const ownNames = new Set<string>();
     const foreign = new Map<string, string>(); // volume name → other container name
     for (const c of containers) {
-      const owner = c.Labels?.[OPENSHIP_LABEL.project];
+      const owner = c.Labels?.[KOVALIO_LABEL.project];
       if (!owner) continue;
       for (const m of c.Mounts ?? []) {
         if (m.Type !== "volume" || !m.Name || !named.has(m.Name)) continue;
@@ -4585,7 +4585,7 @@ export class DockerRuntime implements RuntimeAdapter {
     try {
       containers = await this.docker.listContainers({
         all: true,
-        filters: { label: [`openship.project=${projectId}`] },
+        filters: { label: [`kovalio.project=${projectId}`] },
       });
     } catch {
       return;
@@ -4598,7 +4598,7 @@ export class DockerRuntime implements RuntimeAdapter {
       );
       if (onNetwork) continue;
       if (this.cannotJoinNetworks(c)) continue;
-      const service = c.Labels?.[OPENSHIP_LABEL.service];
+      const service = c.Labels?.[KOVALIO_LABEL.service];
       try {
         await network.connect({
           Container: c.Id,
@@ -4621,7 +4621,7 @@ export class DockerRuntime implements RuntimeAdapter {
   /**
    * Attach every container of `projectId` to the given networks (by name) — for
    * cross-project service links: a consumer joins a linked database app's
-   * `openship-<slug>` network so it resolves that app's service alias
+   * `kovalio-<slug>` network so it resolves that app's service alias
    * (`mongo:27017`) with no public port. Best-effort + idempotent; a network that
    * doesn't exist (source not deployed) is skipped and nothing here ever throws —
    * a link networking failure must never fail the consumer's deploy.
@@ -4636,7 +4636,7 @@ export class DockerRuntime implements RuntimeAdapter {
     try {
       containers = await this.docker.listContainers({
         all: true,
-        filters: { label: [`openship.project=${projectId}`] },
+        filters: { label: [`kovalio.project=${projectId}`] },
       });
     } catch {
       return;
@@ -4645,8 +4645,8 @@ export class DockerRuntime implements RuntimeAdapter {
      * The label filter alone is structurally blind to ADOPTED containers.
      *
      * A migration that reuses containers in place cannot relabel them — labels are
-     * immutable — so an adopted container keeps its ORIGINAL `openship.*`/compose labels
-     * and `openship.project=<id>` never matches it. Connect an app to a migrated project in
+     * immutable — so an adopted container keeps its ORIGINAL `kovalio.*`/compose labels
+     * and `kovalio.project=<id>` never matches it. Connect an app to a migrated project in
      * INTERNAL mode and the alias (`db:5432`) was written into the consumer's env while the
      * adopted container was never joined to the network: the connection simply failed to
      * resolve at runtime, and the UI reported success.
@@ -4701,7 +4701,7 @@ export class DockerRuntime implements RuntimeAdapter {
 
   /** Remove a project network (best-effort). */
   async removeNetwork(slug: string): Promise<void> {
-    const networkName = `openship-${slug}`;
+    const networkName = `kovalio-${slug}`;
     try {
       const network = this.docker.getNetwork(networkName);
       await network.remove();
@@ -4722,7 +4722,7 @@ export class DockerRuntime implements RuntimeAdapter {
     onLog?: LogCallback,
   ): Promise<MultiServiceDeployResult> {
     const log = onLog ?? (() => {});
-    const containerName = `openship-${config.slug}-${config.serviceName}`;
+    const containerName = `kovalio-${config.slug}-${config.serviceName}`;
 
     // Stop and remove any existing container with the same name. A container that
     // declared a shutdown grace period (compose stop_grace_period, #388) gets a
@@ -4791,7 +4791,7 @@ export class DockerRuntime implements RuntimeAdapter {
     // Port bindings
     const { exposedPorts, portBindings } = parsePortBindings(config.ports);
 
-    // Project-scope NAMED volumes (openship-<slug>-<name>) so two projects can
+    // Project-scope NAMED volumes (kovalio-<slug>-<name>) so two projects can
     // never share one docker volume; bind mounts / anonymous volumes pass
     // through. Grandfathered services (namespaceVolumes=false) keep their bare
     // names — for those, fail fast if a bare name already belongs to another
@@ -4841,7 +4841,7 @@ export class DockerRuntime implements RuntimeAdapter {
     }
 
     // Pull image if not local
-    if (!config.image.startsWith("openship/")) {
+    if (!config.image.startsWith("kovalio/")) {
       try {
         log({
           timestamp: new Date().toISOString(),
@@ -4881,7 +4881,7 @@ export class DockerRuntime implements RuntimeAdapter {
           deploymentId: config.deploymentId,
           projectId: config.projectId,
         }),
-        [OPENSHIP_LABEL.service]: config.serviceName,
+        [KOVALIO_LABEL.service]: config.serviceName,
       },
       ...(healthcheck && { Healthcheck: healthcheck }),
       ...stopConfig,

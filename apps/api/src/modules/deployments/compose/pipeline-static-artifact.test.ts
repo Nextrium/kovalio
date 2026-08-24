@@ -78,7 +78,7 @@ const SNAPSHOT = {
 
 /** The promoted release dir a static sub-app is served from — same value the
  *  vhost's root points at and the same value that lands in builtImageRefs. */
-const STATIC_ROOT = "/opt/openship/static/releases/dep_1-svc_1";
+const STATIC_ROOT = "/opt/kovalio/static/releases/dep_1-svc_1";
 
 type ServiceResult = {
   serviceId: string;
@@ -162,7 +162,7 @@ describe("executeComposePipeline — built-artifact cleanup", () => {
     await run(
       new Map([
         ["svc_1", STATIC_ROOT],
-        ["svc_2", "openship/svc_2:bld_x"],
+        ["svc_2", "kovalio/svc_2:bld_x"],
       ]),
       composeResult("ready", [
         { serviceId: "svc_1", serviceName: "site", status: "running", staticRoot: STATIC_ROOT },
@@ -175,13 +175,13 @@ describe("executeComposePipeline — built-artifact cleanup", () => {
     expect(mocks.cleanupBuildArtifact).toHaveBeenCalledTimes(1);
     expect(mocks.cleanupBuildArtifact).toHaveBeenCalledWith(
       expect.anything(),
-      "openship/svc_2:bld_x",
+      "kovalio/svc_2:bld_x",
     );
   });
 
   it("leaves a running container service's image in place", async () => {
     await run(
-      new Map([["svc_1", "openship/svc_1:bld_x"]]),
+      new Map([["svc_1", "kovalio/svc_1:bld_x"]]),
       composeResult("ready", [
         { serviceId: "svc_1", serviceName: "api", status: "running", containerId: "c_1" },
       ]),
@@ -194,7 +194,7 @@ describe("executeComposePipeline — built-artifact cleanup", () => {
     await run(
       new Map([
         ["svc_1", STATIC_ROOT],
-        ["svc_2", "openship/svc_2:bld_x"],
+        ["svc_2", "kovalio/svc_2:bld_x"],
       ]),
       composeResult("failed", [
         { serviceId: "svc_1", serviceName: "site", status: "running", staticRoot: STATIC_ROOT },
@@ -207,7 +207,7 @@ describe("executeComposePipeline — built-artifact cleanup", () => {
     expect(mocks.cleanupBuildArtifact).toHaveBeenCalledWith(expect.anything(), STATIC_ROOT);
     expect(mocks.cleanupBuildArtifact).toHaveBeenCalledWith(
       expect.anything(),
-      "openship/svc_2:bld_x",
+      "kovalio/svc_2:bld_x",
     );
     expect(mocks.onFailure).toHaveBeenCalledTimes(1);
     expect(mocks.onSuccess).not.toHaveBeenCalled();

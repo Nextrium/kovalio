@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { label: "Pricing", href: "/pricing" },
 ];
 
-const GITHUB_URL = "https://github.com/oblien/openship";
+const GITHUB_URL = "https://github.com/Nextrium/kovalio";
 
 export function Navbar() {
   const [dark, setDark] = useState(false);
@@ -57,7 +57,7 @@ export function Navbar() {
               transition: "color .3s",
             }}
           >
-            Openship
+            Kovalio
           </span>
         </Link>
 

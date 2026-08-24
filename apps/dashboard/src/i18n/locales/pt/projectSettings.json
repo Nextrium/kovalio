@@ -122,7 +122,7 @@
     },
     "statusActive": "Ativo",
     "statusDisabled": "Desativado",
-    "hostedCloud": "Openship Cloud",
+    "hostedCloud": "Kovalio Cloud",
     "hostedServer": "Servidor",
     "hostedLocal": "Local",
     "projectStatus": {
@@ -143,7 +143,7 @@
       "currentServer": "Servidor atual",
       "migrate": "Migrar",
       "noOtherServers": "Adicione um segundo servidor para mover este projeto para lá.",
-      "cloudLater": "De servidor para servidor. Mover para ou do Openship Cloud ainda não é suportado.",
+      "cloudLater": "De servidor para servidor. Mover para ou do Kovalio Cloud ainda não é suportado.",
       "startFailed": "Não foi possível iniciar a migração",
       "confirmTitle": "Mover {project} para {server}",
       "confirmSubtitle": "Nada muda até você iniciar a mudança.",
@@ -188,7 +188,7 @@
       "anotherServer": "Outro servidor",
       "targetLocal": "Máquina local",
       "targetServer": "Servidor auto-hospedado",
-      "targetCloud": "Openship Cloud"
+      "targetCloud": "Kovalio Cloud"
     },
     "danger": {
       "title": "Zona de perigo",
@@ -291,7 +291,7 @@
   "build": {
     "edit": "Editar",
     "webmail": {
-      "title": "Gerido pelo openship",
+      "title": "Gerido pelo kovalio",
       "description": "O webmail utiliza um pipeline fixo de compilação e arranque — os comandos de instalação, compilação e execução não são configuráveis. Reimplemente a partir da visão geral do correio para obter as alterações a montante."
     },
     "services": {
@@ -422,12 +422,12 @@
     },
     "appBanner": {
       "title": "Aplicação GitHub não instalada",
-      "description": "Instale a Aplicação GitHub da Openship na sua conta ou organização para ativar a implementação automática e as implementações despoletadas por webhook para projetos na cloud.",
+      "description": "Instale a Aplicação GitHub da Kovalio na sua conta ou organização para ativar a implementação automática e as implementações despoletadas por webhook para projetos na cloud.",
       "install": "Instalar Aplicação GitHub"
     },
     "webhookBanner": {
       "title": "Ativar implementação automática",
-      "description": "A implementação automática requer um endpoint de webhook direto. Exponha esta API da Openship num URL público ou configure um domínio de webhook verificado para entrega direta."
+      "description": "A implementação automática requer um endpoint de webhook direto. Exponha esta API da Kovalio num URL público ou configure um domínio de webhook verificado para entrega direta."
     },
     "source": {
       "title": "Repositório de origem",
@@ -457,7 +457,7 @@
       "active": "Ativo",
       "inactive": "Inativo",
       "descDirect": "Os eventos são entregues diretamente via {domain}",
-      "descActive": "Os eventos do repositório estão a chegar à Openship",
+      "descActive": "Os eventos do repositório estão a chegar à Kovalio",
       "descInactive": "O webhook não foi configurado ou não está a responder"
     },
     "rollbackStrategy": {

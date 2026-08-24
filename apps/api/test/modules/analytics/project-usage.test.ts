@@ -82,10 +82,10 @@ const ctx = { organizationId: "org1" } as never;
 /** A `docker ps -a` entry carrying our canonical labels. */
 const container = (id: string, service: string, state = "running") => ({
   id,
-  names: [`openship-app-${service}`],
+  names: [`kovalio-app-${service}`],
   state,
   status: state === "running" ? "Up 2 hours" : "Exited (0) 1 min ago",
-  labels: { "openship.project": "p1", "openship.service": service },
+  labels: { "kovalio.project": "p1", "kovalio.service": service },
   ports: [],
 });
 

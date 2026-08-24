@@ -9,7 +9,7 @@
  *     single row, so a file that wants several payload kinds must RE-POINT its policy
  *     rather than accumulate one per kind — which is what an operator does anyway.
  *   - A capture is only proven by the bytes at the destination. "The run said succeeded"
- *     is exactly the claim [#611](https://github.com/oblien/openship/issues/611) taught
+ *     is exactly the claim [#611](https://github.com/Nextrium/kovalio/issues/611) taught
  *     us not to take on trust, so `capture()` stats every artifact and the manifest.
  *   - A restore is TWO calls and a poll: `beginPrepare` is synchronous-ish, `apply` is
  *     fire-and-forget, and the row is the only witness. A test that awaited `apply` and

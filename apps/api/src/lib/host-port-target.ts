@@ -25,13 +25,13 @@ export interface HostPortConnectionLocator {
 }
 
 const MACHINE_ID_PATH = "/etc/machine-id";
-const OPENSHIP_HOST_ID_PATH = "/var/lib/openship/host-id";
+const KOVALIO_HOST_ID_PATH = "/var/lib/kovalio/host-id";
 const MACHINE_ID_RE = /^[0-9a-f]{32}$/i;
 const HOST_ID_RE =
   /^(?:[0-9a-f]{32}|[0-9a-f]{64}|[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
 const stableTargetIds = new WeakMap<
   CommandExecutor,
-  { source: "machine-id" | "openship-host-id"; value: string }
+  { source: "machine-id" | "kovalio-host-id"; value: string }
 >();
 
 function nonZeroHex(value: string): boolean {
@@ -73,7 +73,7 @@ export function normalizeHostPortConnectionLocator(locator: HostPortConnectionLo
 }
 
 function fingerprint(
-  source: "machine-id" | "openship-host-id" | "connection",
+  source: "machine-id" | "kovalio-host-id" | "connection",
   value: string,
 ): string {
   return createHash("sha256").update(`${source}\0${value}`, "utf8").digest("hex");
@@ -81,12 +81,12 @@ function fingerprint(
 
 async function readValidatedTargetId(
   executor: CommandExecutor,
-): Promise<{ source: "machine-id" | "openship-host-id"; value: string } | null> {
+): Promise<{ source: "machine-id" | "kovalio-host-id"; value: string } | null> {
   const cached = stableTargetIds.get(executor);
   if (cached) return cached;
   // machine-id is the OS-issued, normally world-readable identity. Prefer it so
-  // all SSH users converge even when a private OpenShip host-id has narrower
-  // permissions. The OpenShip id is the stable fallback for targets without one.
+  // all SSH users converge even when a private Kovalio host-id has narrower
+  // permissions. The Kovalio id is the stable fallback for targets without one.
   try {
     const machineId = normalizeTargetMachineId(await executor.readFile(MACHINE_ID_PATH));
     if (machineId) {
@@ -95,12 +95,12 @@ async function readValidatedTargetId(
       return found;
     }
   } catch {
-    // Fall through to the existing OpenShip target id, then the locator.
+    // Fall through to the existing Kovalio target id, then the locator.
   }
   try {
-    const hostId = normalizeTargetHostId(await executor.readFile(OPENSHIP_HOST_ID_PATH));
+    const hostId = normalizeTargetHostId(await executor.readFile(KOVALIO_HOST_ID_PATH));
     if (hostId) {
-      const found = { source: "openship-host-id" as const, value: hostId };
+      const found = { source: "kovalio-host-id" as const, value: hostId };
       stableTargetIds.set(executor, found);
       return found;
     }
@@ -125,8 +125,8 @@ function shellQuote(value: string): string {
  */
 async function ensureTargetHostId(executor: CommandExecutor): Promise<string | null> {
   const candidate = randomUUID();
-  const dir = "/var/lib/openship";
-  const path = OPENSHIP_HOST_ID_PATH;
+  const dir = "/var/lib/kovalio";
+  const path = KOVALIO_HOST_ID_PATH;
   const script =
     `umask 022; mkdir -p ${shellQuote(dir)}; ` +
     `if [ ! -e ${shellQuote(path)} ]; then ` +
@@ -171,7 +171,7 @@ export async function resolveHostPortTargetIdentity(input: {
   if (!stableId) {
     const created = await ensureTargetHostId(input.executor);
     if (created) {
-      stableId = { source: "openship-host-id", value: created };
+      stableId = { source: "kovalio-host-id", value: created };
       stableTargetIds.set(input.executor, stableId);
     }
   }

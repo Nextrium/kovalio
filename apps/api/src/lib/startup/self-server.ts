@@ -2,7 +2,7 @@
  * "This Server" — the box's own deploy-target row. Self-hosted (server-host /
  * "VPS") only.
  *
- * When OpenShip runs ON a server, the host is itself a deployable target, so it
+ * When Kovalio runs ON a server, the host is itself a deployable target, so it
  * gets exactly ONE `isLocal` row, owned by the box org (`boxOwningOrgId`). Deploys
  * to it resolve to the pooled HOST channel (`sshManager.acquireHostChannel`), not to
  * a per-row SSH dial — see `deployment-runtime.acquireLocalHostExecutor`.
@@ -12,7 +12,7 @@
  * invariant about the MACHINE — never about a domain, an install method, or which
  * branch of the admin bootstrap happened to run. That coupling is exactly what
  * broke: the row used to be written only in the tail of a SUCCESSFUL
- * bootstrap-admin, so on the free-domain install (which connects Openship Cloud
+ * bootstrap-admin, so on the free-domain install (which connects Kovalio Cloud
  * FIRST, and cloud-connect mirrors the cloud user into a real admin) bootstrap-admin
  * answered 409 "already exists", the CLI fell back to reset-admin-password, and the
  * box had no server row until the API next restarted. A custom domain connects

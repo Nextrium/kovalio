@@ -28,7 +28,7 @@ export const InstallAppBody = Type.Object({
             [Type.Literal("port"), Type.Literal("free"), Type.Literal("custom")],
             {
               description:
-                "port = no public route (published host port only); free = managed *.opsh.io subdomain (needs Openship Cloud); custom = your own hostname.",
+                "port = no public route (published host port only); free = managed *.opsh.io subdomain (needs Kovalio Cloud); custom = your own hostname.",
             },
           ),
           domain: Type.Optional(

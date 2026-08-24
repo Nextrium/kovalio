@@ -25,7 +25,7 @@ export function elevateCommand(command: string): string {
  * disagree with the unelevated view about `canSudo` — the same host, two answers. This
  * lets the cache key on the box rather than on the view of it.
  */
-export const EXECUTOR_DELEGATE = Symbol.for("openship.executor.delegate");
+export const EXECUTOR_DELEGATE = Symbol.for("kovalio.executor.delegate");
 
 /** Parent directory of an absolute path (for `mkdir -p` before a move). POSIX-only
  *  by contract — these are remote host paths, never native-joined. */
@@ -111,7 +111,7 @@ export function elevatedExecutor(inner: CommandExecutor): CommandExecutor {
    * `_writeFile`), and forcing one here would silently loosen theirs.
    */
   const writeFileElevated = async (path: string, content: string): Promise<void> => {
-    const stage = `/tmp/.openship-elev-${randomBytes(12).toString("hex")}`;
+    const stage = `/tmp/.kovalio-elev-${randomBytes(12).toString("hex")}`;
     await inner.exec(`mkdir -m 700 ${sq(stage)}`);
     try {
       const staged = `${stage}/payload`;
@@ -168,7 +168,7 @@ export function elevatedExecutor(inner: CommandExecutor): CommandExecutor {
 /**
  * Ensure `path` exists and the login user can write into it.
  *
- * Openship's host directories sit under `/opt`, which no non-root user may
+ * Kovalio's host directories sit under `/opt`, which no non-root user may
  * create in, and the ones Docker materialises for a bind mount are created by
  * the daemon and so are root-owned. A plain `mkdir -p` fails on both, which is
  * why this elevates and then hands the result over rather than only creating it.

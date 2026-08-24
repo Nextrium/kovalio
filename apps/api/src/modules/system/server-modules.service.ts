@@ -59,7 +59,7 @@ const MODULE_DEFS: Record<string, ModuleDef> = {
     parseVersion: (out) => out.match(/openresty\/(\S+)/)?.[1] ?? out.match(/nginx\/(\S+)/)?.[1],
     // OPENRESTY_LUA_DIR from openresty-lua.ts — where the legacy hash marker lives.
     seed: {
-      legacyMarkerPath: "/usr/local/openresty/site/lualib/openship/.openship-lua-version",
+      legacyMarkerPath: "/usr/local/openresty/site/lualib/kovalio/.kovalio-lua-version",
       baselineVersion: "1.0.0",
     },
     postApply: async (executor) => {
@@ -77,7 +77,7 @@ const MODULE_DEFS: Record<string, ModuleDef> = {
     // OpenResty still exists for) has no container to find, so it stays eligible.
     supersededBy: async (executor) =>
       (await ourEdgeContainerRunning(executor))
-        ? "this box serves through the openship-edge container, whose config is baked into its image"
+        ? "this box serves through the kovalio-edge container, whose config is baked into its image"
         : null,
   },
 };

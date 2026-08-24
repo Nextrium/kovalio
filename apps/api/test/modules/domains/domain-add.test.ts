@@ -46,7 +46,7 @@ vi.mock("../../../src/lib/domain-ssl", () => ({
   manageDomainSsl: vi.fn(),
 }));
 
-// Stubbed so the provisioning ARGUMENTS are assertable: which hostnames Openship
+// Stubbed so the provisioning ARGUMENTS are assertable: which hostnames Kovalio
 // actually writes records for is the thing that matters, not what Cloudflare says.
 const provisionRecords = vi.fn().mockResolvedValue({ provisioned: true, records: [] });
 vi.mock("../../../src/modules/dns/dns-credential.service", () => ({

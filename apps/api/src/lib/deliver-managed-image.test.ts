@@ -60,7 +60,7 @@ describe("deliverManagedImage", () => {
 
     const res = await deliverManagedImage({
       kind: "edge",
-      image: "ghcr.io/oblien/openship-edge:0.5.0",
+      image: "ghcr.io/oblien/kovalio-edge:0.5.0",
       targetExecutor: executor,
       onLog,
     });
@@ -79,7 +79,7 @@ describe("deliverManagedImage", () => {
 
     const res = await deliverManagedImage({
       kind: "edge",
-      image: "ghcr.io/oblien/openship-edge:0.5.0-dev.abc123",
+      image: "ghcr.io/oblien/kovalio-edge:0.5.0-dev.abc123",
       targetExecutor: executor,
       onLog,
     });
@@ -119,7 +119,7 @@ describe("deliverManagedImage", () => {
 
     const res = await deliverManagedImage({
       kind: "mail",
-      image: "ghcr.io/oblien/openship-mail:0.5.0-dev.def456",
+      image: "ghcr.io/oblien/kovalio-mail:0.5.0-dev.def456",
       targetExecutor: executor,
       onLog,
     });
@@ -129,7 +129,7 @@ describe("deliverManagedImage", () => {
     const [from, to] = calls.transferIn[0];
     expect(from).toBe("/repo");
     // Temp dir is kind + sanitized-tag scoped so edge and mail can't collide.
-    expect(to).toContain("openship-managed-build-mail-");
+    expect(to).toContain("kovalio-managed-build-mail-");
     // Built from the SHIPPED context, not the control-plane path.
     expect(mockBuildImage).toHaveBeenCalledTimes(1);
     expect(mockBuildImage.mock.calls[0][2]).toEqual({

@@ -50,7 +50,7 @@ r.get("/:id/dns/plan", { tag: "domain:read", mcp: { description: "Preview what a
 r.post("/:id/dns/apply", { tag: "domain:write", mcp: { description: "Auto-configure this domain's DNS through a connected provider." } }, cloudDomainProxy, ctrl.dnsApply);
 r.post("/:id/renew", { tag: "domain:write", mcp: { description: "Renew the domain's SSL certificate." } }, cloudDomainProxy, ctrl.renewSsl);
 r.post("/:id/verify-ssl", { tag: "domain:write", mcp: { description: "Check/verify the domain's SSL certificate." } }, cloudDomainProxy, ctrl.verifySsl);
-// Self-hosted only: installs a cert into the box's OpenResty. On Openship Cloud
+// Self-hosted only: installs a cert into the box's OpenResty. On Kovalio Cloud
 // TLS is owned by the managed edge, so this 404s in CLOUD_MODE (localOnly gate).
 r.post(
   "/:id/certificate",

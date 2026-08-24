@@ -14,11 +14,11 @@
  * disagreeing about what is safe — and the disagreement would surface as a plan the
  * user approved for a migration that then refuses, or worse, the reverse.
  *
- * THE CONTROL PLANE IS NOT A RE-IMPORT. `linkSelfAppServices` binds Openship's own
+ * THE CONTROL PLANE IS NOT A RE-IMPORT. `linkSelfAppServices` binds Kovalio's own
  * compose containers (`api`, `dashboard`, `edge`, `postgres`, `redis`) to the
  * control-plane project. Those names collide with ordinary stacks, so a name-based
  * selection matched them and the gate refused the operator's entire migration,
- * unretryably (#584). Adopting Openship into a user project is forbidden outright
+ * unretryably (#584). Adopting Kovalio into a user project is forbidden outright
  * (`assertNotControlPlane`), so there is no decision to put to the operator: drop ours
  * and migrate the rest. This stays as the backstop for a name-only client, which
  * cannot tell the user's `postgres` from ours; the scan's structural exclusion
@@ -40,7 +40,7 @@ export interface ManagedConflict {
 }
 
 export interface ManagedClassification {
-  /** Container ids belonging to Openship ITSELF — never adoptable, never a conflict. */
+  /** Container ids belonging to Kovalio ITSELF — never adoptable, never a conflict. */
   controlPlane: Set<string>;
   /** Container ids a real project already manages: a genuine re-import. */
   conflicts: ManagedConflict[];
@@ -97,12 +97,12 @@ export async function classifyManagedContainers(
 }
 
 /**
- * The MIGRATION's policy: drop Openship's own containers, refuse a real re-import.
+ * The MIGRATION's policy: drop Kovalio's own containers, refuse a real re-import.
  *
  * Applied by both the adopt path and the orchestrator, which re-discover the server
  * independently — the orchestrator's set is the one that decides
  * `scannedContainerIds`, and moveData's first act is `rtA.stop(cid)` on every id in
- * it. Skipping it there would stop Openship's own database to copy its volume.
+ * it. Skipping it there would stop Kovalio's own database to copy its volume.
  */
 // NO opt-out parameter. This briefly took a `duplicatingToAnotherHost` flag, because duplicating
 // a project ran its own containers through this gate and needed the refusal suppressed. A
@@ -120,7 +120,7 @@ export async function excludeAlreadyManaged(
   if (first) {
     // Name the OFFENDER and the way out. "These containers are already managed" told
     // the operator neither WHICH of six services collided nor what to do about it —
-    // which is why #584 read as "Openship thinks everything is already managed".
+    // which is why #584 read as "Kovalio thinks everything is already managed".
     const which = first.serviceName
       ? `Service "${first.serviceName}" (container ${first.containerId.slice(0, 12)}) is`
       : "These containers are";
@@ -136,8 +136,8 @@ export async function excludeAlreadyManaged(
   const kept = chosen.filter((s) => !(s.containerId && controlPlane.has(s.containerId)));
   if (kept.length === 0) {
     throw new Error(
-      "Only Openship's own containers matched the selected service names. " +
-        "Openship manages its own runtime — pick the services you want to migrate instead.",
+      "Only Kovalio's own containers matched the selected service names. " +
+        "Kovalio manages its own runtime — pick the services you want to migrate instead.",
     );
   }
   return kept;

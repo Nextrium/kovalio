@@ -32,7 +32,7 @@
  *
  * Postfix config applied over SSH:
  *   /etc/postfix/sasl_passwd        =  [<host>]:<port> <user>:<pass>
- *   /etc/postfix/openship_tls_policy = [<host>]:<port> encrypt   (selected only)
+ *   /etc/postfix/kovalio_tls_policy = [<host>]:<port> encrypt   (selected only)
  *   postconf -e relayhost=[<host>]:<port>          (all scope only)
  *              smtp_sasl_auth_enable=yes
  *              smtp_sasl_password_maps=hash:/etc/postfix/sasl_passwd

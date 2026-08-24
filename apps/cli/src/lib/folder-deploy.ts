@@ -1,6 +1,6 @@
 /**
  * Folder (non-git) deploy for the CLI — the terminal equivalent of the MCP /
- * dashboard folder-upload flow. When `openship deploy` runs outside a git repo,
+ * dashboard folder-upload flow. When `kovalio deploy` runs outside a git repo,
  * we package the current folder and drive the same server-side pipeline:
  *
  *   folder/session → (upload the tar.gz) → folder/scan → projects/ensure →
@@ -46,7 +46,7 @@ interface ScanRes {
    *  preflight uses the services branch — not single-app "missing build image"),
    *  and so per-service scoping (--service-ids) has real rows to act on. */
   services?: Array<Record<string, unknown>>;
-  /** What the server's openship.json parse refused (#641). Advisory — the deploy
+  /** What the server's kovalio.json parse refused (#641). Advisory — the deploy
    *  ran on the fields that did parse — but printing it is the difference between
    *  "my config did nothing" and knowing which line to fix. */
   configDiagnostics?: { errors: string[]; warnings: string[]; wholeFile?: true };
@@ -130,7 +130,7 @@ export async function deployFolder(opts: {
   // 404'd. When a build DOES run it overwrites its own output directory anyway, so
   // shipping it costs upload bytes and nothing else.
   step("Packaging folder");
-  const tarball = join(tmpdir(), `openship-upload-${session.sessionId}.tar.gz`);
+  const tarball = join(tmpdir(), `kovalio-upload-${session.sessionId}.tar.gz`);
   execFileSync(
     "tar",
     [

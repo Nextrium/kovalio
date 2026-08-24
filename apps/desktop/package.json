@@ -1,9 +1,9 @@
 {
   "name": "@repo/desktop",
-  "productName": "Openship",
+  "productName": "Kovalio",
   "version": "0.6.7",
   "private": true,
-  "description": "Openship Desktop - Electron wrapper for the deployment dashboard",
+  "description": "Kovalio Desktop - Electron wrapper for the deployment dashboard",
   "author": "Oblien",
   "license": "Apache-2.0",
   "main": "dist/main/index.js",

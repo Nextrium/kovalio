@@ -24,7 +24,7 @@ import { useToast } from "@/context/ToastContext";
 type Tab = "folder" | "repositories" | "url" | "template" | "server";
 
 /** One-time gh-CLI repo-read consent flag (per browser — desktop is single-user). */
-const GH_CLI_CONSENT_KEY = "openship.gh-cli-consent";
+const GH_CLI_CONSENT_KEY = "kovalio.gh-cli-consent";
 
 interface TabItem {
   key: Tab;
@@ -76,7 +76,7 @@ export default function LibraryPage() {
     setGhCliConsent(true);
   }, []);
   // Gate ONLY a credential we found on the host by ourselves. A device sign-in or
-  // a pasted token was handed over by the operator inside Openship — asking them
+  // a pasted token was handed over by the operator inside Kovalio — asking them
   // to consent again to the thing they just did is a dead end that made a fresh
   // token look broken until the prompt was noticed and accepted.
   const needsGhCliConsent =

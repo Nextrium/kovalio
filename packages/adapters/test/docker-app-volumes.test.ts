@@ -23,7 +23,7 @@ async function captureCreate(config: Partial<DeployConfig>) {
     deploymentId: "dep_1",
     projectId: "proj_1",
     buildSessionId: "sess_1",
-    imageRef: "openship/app:sess_1",
+    imageRef: "kovalio/app:sess_1",
     environment: "production",
     port: 8000,
     envVars: {},
@@ -39,7 +39,7 @@ async function captureCreate(config: Partial<DeployConfig>) {
 describe("DockerRuntime.deploy persistent storage", () => {
   it("mounts declared volumes, project-scoped so two projects can't collide", async () => {
     const created = await captureCreate({ volumes: ["storage:/app/storage"] });
-    expect(created.HostConfig.Binds).toEqual(["openship-my-app-storage:/app/storage"]);
+    expect(created.HostConfig.Binds).toEqual(["kovalio-my-app-storage:/app/storage"]);
   });
 
   it("leaves Binds unset when nothing is declared (no empty-array noise)", async () => {
@@ -59,6 +59,6 @@ describe("DockerRuntime.deploy persistent storage", () => {
 
   it("falls back to runtimeName for the scope when slug is absent", async () => {
     const created = await captureCreate({ slug: undefined, volumes: ["storage:/app/storage"] });
-    expect(created.HostConfig.Binds).toEqual(["openship-my-app-storage:/app/storage"]);
+    expect(created.HostConfig.Binds).toEqual(["kovalio-my-app-storage:/app/storage"]);
   });
 });

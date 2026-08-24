@@ -76,7 +76,7 @@ function SettingsPageInner() {
   const { activeTab } = useSettingsTabs();
 
   /**
-   * Openship Mail drops the cards that only a deploy platform has a use for —
+   * Kovalio Mail drops the cards that only a deploy platform has a use for —
    * GitHub, build preferences, clone credentials. An operator running this box as
    * a mail server has no repository in the picture.
    *
@@ -137,14 +137,14 @@ function SettingsPageInner() {
               {showBuildPreferences && <BuildPreferences />}
               {/* {showBuildPreferences && <RoutePreferences />} */}
               <LanguageSetting />
-              {/* Per-user shell: full platform vs Openship Mail's mail-only rail.
+              {/* Per-user shell: full platform vs Kovalio Mail's mail-only rail.
                   Renders nothing on the SaaS. */}
               <ProductViewSetting />
               <PreferencesSetting />
             </>
           )}
 
-          {/* Tokens is INBOUND only — somebody authenticating TO Openship. The clone PAT
+          {/* Tokens is INBOUND only — somebody authenticating TO Kovalio. The clone PAT
               moved to Credentials, which is everything pointing the other way. */}
           {activeTab === "tokens" && <PersonalAccessTokens />}
 
@@ -177,7 +177,7 @@ function SettingsPageInner() {
           {activeTab === "infrastructure" && (selfHosted || deployMode === "desktop") && (
             <>
               <InfrastructureTab />
-              {/* Hostnames the local edge still serves with no Openship record —
+              {/* Hostnames the local edge still serves with no Kovalio record —
                   the leftovers a record-only delete deliberately keeps running.
                   Owner-gated inside the component, renders nothing when clean.
                   Self-hosted only: on the SaaS the edge isn't the operator's. */}
@@ -188,7 +188,7 @@ function SettingsPageInner() {
           {activeTab === "instance" && (
             <>
               <InstanceInfo />
-              {/* Instance-wide default product mode (Openship Mail vs the full
+              {/* Instance-wide default product mode (Kovalio Mail vs the full
                   platform). Owner-gated inside; self-hosted only. */}
               <MailModeSetting />
               {/* Updates to this install — not on the SaaS, where the managed

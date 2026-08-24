@@ -57,7 +57,7 @@ export interface ServiceHandle {
   /** Project slug — used in destination key paths. */
   projectSlug: string;
   /** Whether this service's NAMED volumes are project-scoped
-   *  (openship-<slug>-<name>). Mirrors service.namespaceVolumes so the DB
+   *  (kovalio-<slug>-<name>). Mirrors service.namespaceVolumes so the DB
    *  fallback in listSources resolves the same name deploy used. False for
    *  grandfathered pre-migration services (bare names). */
   namespaceVolumes: boolean;
@@ -231,7 +231,7 @@ export interface BackupExecutor {
    *
    * Producers detect a database and authenticate to it from `ServiceHandle.env`,
    * which is assembled from the service row plus the project's env-var rows. That
-   * covers everything Openship deployed and nothing it adopted: a service row built
+   * covers everything Kovalio deployed and nothing it adopted: a service row built
    * from a running container carries no `environment` at all, so `POSTGRES_DB` and
    * `POSTGRES_USER` are simply absent and `PgDumpProducer.detects()` returns false
    * for an image that is plainly postgres — the volume fallback then runs instead
@@ -367,7 +367,7 @@ export interface ProducerOpts {
  * Deliberately does NOT carry a post-restore startup timeout. `startupTimeoutMs`
  * lived here for a while, dropped on the floor by every producer and read by no
  * executor — honoring it means building a readiness probe, which is a feature and
- * belongs with `OpenshipReadiness`, not a field that quietly implies one exists.
+ * belongs with `KovalioReadiness`, not a field that quietly implies one exists.
  */
 export interface RestoreOpts {
   /** Pass clearTarget through. */
@@ -452,7 +452,7 @@ export type DestinationCapability =
 export type DestinationKind =
   | "s3_compatible"
   | "sftp"
-  | "openship_server"
+  | "kovalio_server"
   | "local"
   | "http_upload";
 
@@ -471,7 +471,7 @@ export interface BackupDestinationRow {
   sshHost: string | null;
   sshPort: number | null;
   sshUser: string | null;
-  /** When kind="openship_server" this is the user's servers.id. The
+  /** When kind="kovalio_server" this is the user's servers.id. The
    *  apps/api layer hydrates SSH creds from that server BEFORE handing
    *  the row to resolveDestination — the adapter never queries the DB. */
   serverId?: string | null;

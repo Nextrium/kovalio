@@ -360,12 +360,12 @@ export interface DeployConfig {
   restartPolicy?: "always" | "on-failure" | "no";
   /** Runtime-safe identifier used for workload/container/page naming. */
   runtimeName?: string;
-  /** Project slug — scopes named volumes to `openship-<slug>-<name>` so two
+  /** Project slug — scopes named volumes to `kovalio-<slug>-<name>` so two
    *  projects that pick the same volume name never share one. */
   slug?: string;
   /**
    * Internal DNS alias for this single-app container. When set, the container
-   * joins its `openship-<slug>` bridge network with this name as a network
+   * joins its `kovalio-<slug>` bridge network with this name as a network
    * alias + `Hostname`, so another project linked to it (via
    * `attachLinkedNetworks`) resolves it by name — the same east-west
    * reachability compose services already have. This does NOT publish a public
@@ -406,7 +406,7 @@ export interface DeployConfig {
    * runtime that supports adoption (currently Bare) skips build promotion and
    * the supervisor start entirely — it only health-probes `port` and returns a
    * running result. Used to model an externally-supervised process (e.g. the
-   * Openship control plane launched by `openship up`) as a real deployment so
+   * Kovalio control plane launched by `kovalio up`) as a real deployment so
    * the normal routing/SSL pipeline owns it, without a second process binding
    * the port. No-op for runtimes that don't advertise adoption.
    */
@@ -611,7 +611,7 @@ interface BaseRouteConfig {
   tls: boolean;
   /**
    * TLS for this host terminates on THIS box (we hold or will hold its cert),
-   * rather than at an upstream ingress or Openship Cloud's edge.
+   * rather than at an upstream ingress or Kovalio Cloud's edge.
    *
    * When set, the routing provider guarantees a :443 listener for the host from
    * the moment the route exists — serving a temporary self-signed cert until the
@@ -627,8 +627,8 @@ interface BaseRouteConfig {
    */
   terminatesTlsLocally?: boolean;
   /**
-   * When set, adds a `/_openship/hooks/` location that proxies
-   * webhook requests to the Openship API at this URL.
+   * When set, adds a `/_kovalio/hooks/` location that proxies
+   * webhook requests to the Kovalio API at this URL.
    * Example: "http://127.0.0.1:4000/api/webhooks/"
    */
   webhookProxy?: string;
@@ -694,9 +694,9 @@ export interface StaticRouteConfig extends BaseRouteConfig {
   targetUrl?: never;
   /**
    * This root is being ADOPTED from a proxy we're taking over, not produced by an
-   * Openship build.
+   * Kovalio build.
    *
-   * Openship-managed roots are confined to {@link MANAGED_STATIC_BASE}: a route we
+   * Kovalio-managed roots are confined to {@link MANAGED_STATIC_BASE}: a route we
    * generate must never be able to publish an arbitrary host directory, so a bad or
    * crafted value fails closed instead of serving `/etc` to the internet.
    *

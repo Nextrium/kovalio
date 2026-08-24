@@ -213,7 +213,7 @@ describe("derived local target — a dead host channel", () => {
     h.acquireHostChannel.mockRejectedValue(
       new HostChannelUnavailableError(
         "not_configured",
-        "no host channel is configured. Re-run `openship up` to provision the host channel.",
+        "no host channel is configured. Re-run `kovalio up` to provision the host channel.",
       ),
     );
     const platform = await resolveTargetPlatform("local", "docker");
@@ -223,10 +223,10 @@ describe("derived local target — a dead host channel", () => {
       exec: (cmd: string) => Promise<unknown>;
       exists: (p: string) => Promise<unknown>;
     };
-    await expect(executor.exec("uname -a")).rejects.toThrow(/openship up/);
+    await expect(executor.exec("uname -a")).rejects.toThrow(/kovalio up/);
     // Not a silent `false`: an unproven answer that reads as fact is how a blocked
     // channel produced wrong work instead of a visible failure.
-    await expect(executor.exists("/opt/openship")).rejects.toThrow(/no host channel/);
+    await expect(executor.exists("/opt/kovalio")).rejects.toThrow(/no host channel/);
   });
 
   it("an AUTH failure is still a real failure, not a degrade", async () => {

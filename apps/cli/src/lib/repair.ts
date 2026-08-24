@@ -1,12 +1,12 @@
 /**
- * Shared health-gathering + database-repair logic behind `openship doctor` and
- * the bare-`openship` control panel. Kept in one place so both entry points
+ * Shared health-gathering + database-repair logic behind `kovalio doctor` and
+ * the bare-`kovalio` control panel. Kept in one place so both entry points
  * present the same status readout and run the identical, well-tested repair
  * sequence.
  *
  * The repair itself lives here (not in the API) because a corrupt PGlite dir
  * crash-loops the API on boot — so recovery must run with the service STOPPED,
- * from this same-machine CLI, against ~/.openship/data directly. See lib/heal.ts.
+ * from this same-machine CLI, against ~/.kovalio/data directly. See lib/heal.ts.
  */
 
 import { spawnSync } from "node:child_process";
@@ -127,7 +127,7 @@ export function lastServiceError(): string | null {
 const CORRUPTION_RE = /aborted\(\)|malformed|corrupt|database disk image|locked/i;
 
 /** Heuristic: the box is installed but not running, and the log carries a
- *  DB-corruption signature — the case `openship doctor` exists to fix. */
+ *  DB-corruption signature — the case `kovalio doctor` exists to fix. */
 export function looksCorrupted(): boolean {
   const svc = serviceStatus();
   if (!svc.installed || svc.running) return false;
@@ -161,14 +161,14 @@ function mapState(dockerState: string): ServiceState {
   return "stopped"; // exited / created / paused
 }
 
-/** Live list of deployed-app containers (all openship deployments), via one
+/** Live list of deployed-app containers (all kovalio deployments), via one
  *  `docker ps`. Empty when docker isn't the runtime / isn't reachable. */
 export function dockerServices(): ServiceRow[] {
   if (!dockerAvailable()) return [];
-  const fmt = '{{.Names}}\t{{.State}}\t{{.Label "openship.project"}}';
+  const fmt = '{{.Names}}\t{{.State}}\t{{.Label "kovalio.project"}}';
   const r = spawnSync(
     "docker",
-    ["ps", "-a", "--filter", "label=openship.deployment", "--format", fmt],
+    ["ps", "-a", "--filter", "label=kovalio.deployment", "--format", fmt],
     { encoding: "utf8", timeout: 6000 },
   );
   if (r.status !== 0 || !r.stdout.trim()) return [];
@@ -205,7 +205,7 @@ export interface ComponentCheck {
 /**
  * The container→host SSH channel, dialed from inside the api container.
  *
- * `openship up --compose` provisions this channel (key + authorized_keys + env)
+ * `kovalio up --compose` provisions this channel (key + authorized_keys + env)
  * without ever sending a packet over it, so on a default-deny host it is dead from
  * birth and every host operation fails looking exactly like a bad key (#490). This
  * row is where an operator finds that out on purpose — the install-time preflight
@@ -244,7 +244,7 @@ const NEVER_PROVISIONED_DETAIL = `never provisioned — run \`${HOST_CHANNEL_PRO
  * split are pinned without shelling into a container.
  *
  * `api` is the fallback for an install shape the LOCAL probe can't see: it needs
- * `~/.openship/compose/docker-compose.yml` both to read the channel out of `.env` and to
+ * `~/.kovalio/compose/docker-compose.yml` both to read the channel out of `.env` and to
  * `docker compose exec` into the api container, and a stack brought up by running
  * `docker/docker-compose.yml` by hand has neither. That install used to get no row at all
  * — from the one command #509's error text names (see HOST_CHANNEL_NOT_PROVISIONED).
@@ -263,7 +263,7 @@ export function hostControlRow(
 
   if (!res?.configured) {
     // #509 closed the loop the wrong way round: the error an operator reads when a host
-    // op dies names `openship doctor` as the way to check this, and doctor printed no row
+    // op dies names `kovalio doctor` as the way to check this, and doctor printed no row
     // at all for the state that produces that error. A channel that was never provisioned
     // is exactly as broken as one that's firewalled off, and this is where an operator
     // finds that out.
@@ -310,7 +310,7 @@ export function hostControlRow(
     // Only a dropped SYN is the firewall shape, so it is the only row that names the
     // flag; pointing the others at ufw is the mistake the preflight exists to avoid.
     case "timeout":
-      return row("fail", `${why("timeout")} — open the host firewall: openship up --open-host-firewall`);
+      return row("fail", `${why("timeout")} — open the host firewall: kovalio up --open-host-firewall`);
     case "refused":
     case "unresolved":
     case "no_route":
@@ -360,14 +360,14 @@ export async function componentChecks(
     detail: dashUp ? `serving on :${dashboardPort()}` : `not serving on :${dashboardPort()}`,
   });
 
-  // Edge (OpenResty) — our container is named `openship-edge`. Absent = not
+  // Edge (OpenResty) — our container is named `kovalio-edge`. Absent = not
   // installed (fine on a private/local box), so warn-not-fail.
-  const edge = dockerNameRunning("openship-edge");
+  const edge = dockerNameRunning("kovalio-edge");
   checks.push(
     edge == null
       ? { name: "Edge", id: "edge", state: "warn", detail: "docker unavailable — can't check" }
       : edge
-        ? { name: "Edge", id: "edge", state: "pass", detail: "openship-edge running" }
+        ? { name: "Edge", id: "edge", state: "pass", detail: "kovalio-edge running" }
         : { name: "Edge", id: "edge", state: "warn", detail: "not installed (fine for a local box)" },
   );
 

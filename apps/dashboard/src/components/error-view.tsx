@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
  *
  * Built in the same theme-variable language as `not-found-view.tsx` so all three
  * dead ends read as one family, and — unlike the bare centered text they replace —
- * it keeps the Openship brand mark and a way out (docs / GitHub), because these
+ * it keeps the Kovalio brand mark and a way out (docs / GitHub), because these
  * are exactly the screens where a self-hoster is stuck and needs a next step.
  *
  * Callers own the full-height centering wrapper, matching NotFoundView.
@@ -107,7 +107,7 @@ export function ErrorView({
   code,
   codeLabel,
   actions,
-  docsHref = "https://openship.io/docs",
+  docsHref = "https://nextrium.org/docs",
   docsLabel,
   githubLabel,
 }: {
@@ -196,7 +196,7 @@ export function ErrorView({
         </a>
         <span aria-hidden className="size-1 rounded-full bg-muted-foreground/30" />
         <a
-          href="https://github.com/oblien/openship/issues"
+          href="https://github.com/Nextrium/kovalio/issues"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"

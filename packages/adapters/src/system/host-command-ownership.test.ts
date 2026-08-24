@@ -151,7 +151,7 @@ const RULES: readonly OwnershipRule[] = [
       // Re-enables a unit IT disabled during an edge takeover, on rollback. The unit came
       // from a systemd scan, so systemd is a fact about that unit and not an assumption.
       "packages/adapters/src/system/proxy/takeover-journal.ts",
-      // Installs Openship's OWN service on the machine the CLI runs on: a user-level unit
+      // Installs Kovalio's OWN service on the machine the CLI runs on: a user-level unit
       // plus `loginctl enable-linger`, which is not a shape `envOps` speaks. It already
       // takes the systemd/launchd decision from the resolver rather than probing.
       "apps/cli/src/lib/service.ts",

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { scanForeignOpenResty, scanOpenshipEdge } from "./nginx";
+import { scanForeignOpenResty, scanKovalioEdge } from "./nginx";
 import {
   OPENRESTY_DEFAULT_PATHS,
   edgeChallengeVhostConf,
@@ -27,17 +27,17 @@ server {
 function containerEdgeHost(): CommandExecutor {
   return {
     exec: vi.fn(async (cmd: string) => {
-      if (cmd.startsWith("docker ps --filter name=openship-edge")) return "openship-edge";
+      if (cmd.startsWith("docker ps --filter name=kovalio-edge")) return "kovalio-edge";
       if (cmd.startsWith("docker exec") && cmd.includes("cat ")) return VHOST;
       return ""; // host `cat` of every sites path: nothing there
     }),
   } as unknown as CommandExecutor;
 }
 
-describe("scanOpenshipEdge", () => {
+describe("scanKovalioEdge", () => {
   it("reads vhosts from the host when they're there, without touching Docker", async () => {
     const exec = vi.fn(async (cmd: string) => (cmd.startsWith("cat ") ? VHOST : ""));
-    const result = await scanOpenshipEdge({ exec } as unknown as CommandExecutor);
+    const result = await scanKovalioEdge({ exec } as unknown as CommandExecutor);
 
     expect(result.sites).toHaveLength(1);
     expect(result.sites[0]!.serverNames).toEqual(["app.example.com"]);
@@ -46,10 +46,10 @@ describe("scanOpenshipEdge", () => {
 
   it("cats the canonical bind-mounted sites dir as well as the bare-host layouts", async () => {
     const exec = vi.fn(async (_cmd: string) => "");
-    await scanOpenshipEdge({ exec } as unknown as CommandExecutor);
+    await scanKovalioEdge({ exec } as unknown as CommandExecutor);
 
     const cat = exec.mock.calls.map(([cmd]) => cmd).find((cmd) => cmd.startsWith("cat "))!;
-    expect(cat).toContain("/var/lib/openship/edge/sites-enabled/*.conf");
+    expect(cat).toContain("/var/lib/kovalio/edge/sites-enabled/*.conf");
     expect(cat).toContain("/usr/local/openresty/nginx/conf/sites-enabled/*.conf");
     expect(cat).toContain("/etc/openresty/sites-enabled/*.conf");
   });
@@ -58,7 +58,7 @@ describe("scanOpenshipEdge", () => {
     // The reported regression: a compose box keeps its sites tree in a named volume
     // the host can't see, so the host read returned "" and the migrate wizard showed
     // zero domains and zero certs — indistinguishable from a box serving nothing.
-    const result = await scanOpenshipEdge(containerEdgeHost());
+    const result = await scanKovalioEdge(containerEdgeHost());
 
     expect(result.sites).toHaveLength(1);
     expect(result.sites[0]!.serverNames).toEqual(["app.example.com"]);
@@ -84,7 +84,7 @@ describe("scanOpenshipEdge", () => {
     const dumped = [catchAll, edgeChallengeVhostConf("203.0.113.10"), VHOST].join("\n");
     const exec = vi.fn(async (cmd: string) => (cmd.startsWith("cat ") ? dumped : ""));
 
-    const result = await scanOpenshipEdge({ exec } as unknown as CommandExecutor);
+    const result = await scanKovalioEdge({ exec } as unknown as CommandExecutor);
 
     // Exactly the one real site: the catch-all is `server_name _` and the challenge
     // vhost is scaffolding, so neither is a site — but the vhost AFTER them must
@@ -108,24 +108,24 @@ describe("scanOpenshipEdge", () => {
     const exec = vi.fn(async (cmd: string) =>
       cmd.startsWith("cat ") ? edgeChallengeVhostConf("box.example.com") : "",
     );
-    const result = await scanOpenshipEdge({ exec } as unknown as CommandExecutor);
+    const result = await scanKovalioEdge({ exec } as unknown as CommandExecutor);
     expect(result.sites).toEqual([]);
     expect(result.warnings).toEqual([]);
   });
 
   it("returns empty (never throws) when there is no edge container either", async () => {
     const exec = vi.fn(async () => "");
-    expect((await scanOpenshipEdge({ exec } as unknown as CommandExecutor)).sites).toEqual([]);
+    expect((await scanKovalioEdge({ exec } as unknown as CommandExecutor)).sites).toEqual([]);
   });
 
   it("returns empty when the box is unreachable", async () => {
     const dead = { exec: vi.fn().mockRejectedValue(new Error("ssh timeout")) };
-    expect((await scanOpenshipEdge(dead as unknown as CommandExecutor)).sites).toEqual([]);
+    expect((await scanKovalioEdge(dead as unknown as CommandExecutor)).sites).toEqual([]);
   });
 });
 
 // `openresty -T` output for a legacy bare edge whose real vhost is `include`d from a
-// path NONE of scanOpenshipEdge's fixed globs cover — the shape that made a takeover
+// path NONE of scanKovalioEdge's fixed globs cover — the shape that made a takeover
 // offer "takeover only" (drop every site) instead of a migrate.
 const LEGACY_OPENRESTY_DUMP = `# configuration file /usr/local/openresty/nginx/conf/nginx.conf:
 http {
@@ -157,7 +157,7 @@ describe("scanForeignOpenResty", () => {
     expect(exec.mock.calls.some(([cmd]) => cmd.startsWith("openresty -T"))).toBe(true);
   });
 
-  it("falls back to the openship site trees when no dump is available (no binary / stopped-with-no-config)", async () => {
+  it("falls back to the kovalio site trees when no dump is available (no binary / stopped-with-no-config)", async () => {
     // `openresty -T` yields nothing (binary absent) → the fixed-glob read still finds
     // an edge whose sites DO sit in a known tree.
     const exec = vi.fn(async (cmd: string) => {

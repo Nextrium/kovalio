@@ -1,6 +1,6 @@
 {
   "title": "Problèmes",
-  "subtitle": "Tout ce qu'Openship a trouvé d'anormal dans vos projets, serveurs et domaines.",
+  "subtitle": "Tout ce qu'Kovalio a trouvé d'anormal dans vos projets, serveurs et domaines.",
   "tabs": {
     "open": "Ouverts",
     "resolved": "Résolus"
@@ -17,7 +17,7 @@
     "clear": "Réinitialiser les filtres"
   },
   "scopes": {
-    "platform": "Openship",
+    "platform": "Kovalio",
     "server": "Serveurs",
     "project": "Projets",
     "domain": "Domaines"

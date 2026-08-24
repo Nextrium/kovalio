@@ -7,7 +7,7 @@
  *   1. Mail server card   - combined identity + webmail CTA. Big hostname,
  *                            "Open webmail" primary action, "Protocol
  *                            details →" link to the Advanced tab. Webmail
- *                            is bundled with openship, so it's always
+ *                            is bundled with kovalio, so it's always
  *                            available - no deploy gate needed.
  *   2. Setup guides       - 4-up banner that deep-links to the public
  *                            walkthroughs on /mail/setup-guide/<client> in
@@ -101,7 +101,7 @@ const CTA_CLASS =
  * Single editorial card at the top of the overview. Combines mail-server
  * identity (the hostname) with the webmail CTA.
  *
- * Webmail state is read from `status.webmail` - the openship API derives it
+ * Webmail state is read from `status.webmail` - the kovalio API derives it
  * from the webmail project this mail server is linked to. If the record is
  * absent (or `installed=false`), the operator sees a Deploy webmail CTA that
  * opens /deploy/mail (host + domain picker, then the standard build screen).

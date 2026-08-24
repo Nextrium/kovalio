@@ -10,12 +10,12 @@ import {
 
 describe("pinned artifact lookup", () => {
   const snapshot = {
-    handoverImages: { web: "openship/app-web:bld_1", api: "  ", db: "postgres:16" },
-    handoverAppImage: "openship/app:bld_1",
+    handoverImages: { web: "kovalio/app-web:bld_1", api: "  ", db: "postgres:16" },
+    handoverAppImage: "kovalio/app:bld_1",
   };
 
   it("resolves a service's pinned image by NAME", () => {
-    expect(pinnedImageForService(snapshot, "web")).toBe("openship/app-web:bld_1");
+    expect(pinnedImageForService(snapshot, "web")).toBe("kovalio/app-web:bld_1");
     expect(pinnedImageForService(snapshot, "db")).toBe("postgres:16");
   });
 
@@ -56,7 +56,7 @@ describe("snapshotNeedsGitSource — the clone / token / GitHub-access gate", ()
   it("single app: a git repo needs source normally, not when its image is pinned", () => {
     expect(snapshotNeedsGitSource({ repoUrl: repo, hasBuild: true })).toBe(true);
     expect(
-      snapshotNeedsGitSource({ repoUrl: repo, hasBuild: true, handoverAppImage: "openship/app:1" }),
+      snapshotNeedsGitSource({ repoUrl: repo, hasBuild: true, handoverAppImage: "kovalio/app:1" }),
     ).toBe(false);
     expect(
       snapshotNeedsGitSource({
@@ -108,7 +108,7 @@ describe("snapshotNeedsGitSource — the clone / token / GitHub-access gate", ()
     expect(
       snapshotNeedsGitSource({
         composeServices: services,
-        handoverImages: { web: "openship/app-web:bld_1" },
+        handoverImages: { web: "kovalio/app-web:bld_1" },
       }),
     ).toBe(false);
   });
@@ -120,7 +120,7 @@ describe("snapshotNeedsGitSource — the clone / token / GitHub-access gate", ()
           { name: "web", build: "./web" },
           { name: "api", kind: "monorepo" },
         ],
-        handoverImages: { web: "openship/app-web:bld_1" },
+        handoverImages: { web: "kovalio/app-web:bld_1" },
       }),
     ).toBe(true);
   });

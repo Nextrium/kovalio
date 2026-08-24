@@ -1,5 +1,5 @@
 /**
- * Prove to Openship Cloud that this installation controls a routing target.
+ * Prove to Kovalio Cloud that this installation controls a routing target.
  *
  * Cloud will only route `<slug>.opsh.io` to a target whose control has been proven:
  * it fetches a one-time token from the target over an SSRF-safe, IP-pinned
@@ -7,7 +7,7 @@
  * refused with `403 target_unverified`.
  *
  * The whole flow is automatic and invisible — there is no "Verify" button, because a
- * deploy and `openship up` both have to work unattended.
+ * deploy and `kovalio up` both have to work unattended.
  *
  * ── The rule that outranks the flow ─────────────────────────────────────────
  * A verification lasts 90 days and Cloud re-probes THE SAME token shortly before it
@@ -99,7 +99,7 @@ export async function ensureTargetVerified(
     return {
       verified: false,
       reason:
-        `this box can't serve Openship Cloud's target challenge — its routing provider ` +
+        `this box can't serve Kovalio Cloud's target challenge — its routing provider ` +
         `has no HTTP surface, so ${host} cannot be proven from here`,
     };
   }
@@ -115,7 +115,7 @@ export async function ensureTargetVerified(
     return { verified: false, reason: safeErrorMessage(err) };
   }
   if (!challenge) {
-    return { verified: false, reason: "Openship Cloud is not connected for this organization" };
+    return { verified: false, reason: "Kovalio Cloud is not connected for this organization" };
   }
 
   const row = await repos.edgeTargetVerification.recordChallenge({
@@ -157,7 +157,7 @@ export async function ensureTargetVerified(
   if (selfProbeWarning) {
     opts.onLog?.(
       `Note: couldn't read the target challenge back from ${canonical} (${selfProbeWarning}). ` +
-        `Continuing — Openship Cloud probes from outside your network, which may still succeed.\n`,
+        `Continuing — Kovalio Cloud probes from outside your network, which may still succeed.\n`,
       "warn",
     );
   }
@@ -174,7 +174,7 @@ export async function ensureTargetVerified(
     return { verified: false, reason, ...(selfProbeWarning ? { selfProbeWarning } : {}) };
   }
   if (!result) {
-    const reason = "Openship Cloud returned no verification result";
+    const reason = "Kovalio Cloud returned no verification result";
     await recordFailure(row.id, reason);
     return { verified: false, reason, ...(selfProbeWarning ? { selfProbeWarning } : {}) };
   }
@@ -188,7 +188,7 @@ export async function ensureTargetVerified(
 
   if (result.status === "verified") {
     opts.onLog?.(
-      `Verified ${canonical} with Openship Cloud` +
+      `Verified ${canonical} with Kovalio Cloud` +
         (result.validatedIp ? ` (routing pinned to ${result.validatedIp})` : "") +
         `.\n`,
     );
@@ -201,7 +201,7 @@ export async function ensureTargetVerified(
     verified: false,
     reason:
       result.error ??
-      `Openship Cloud could not confirm control of ${canonical} (status: ${result.status})`,
+      `Kovalio Cloud could not confirm control of ${canonical} (status: ${result.status})`,
     ...(selfProbeWarning ? { selfProbeWarning } : {}),
   };
 }
@@ -243,7 +243,7 @@ export async function probeOwnToken(
     const res = await fetch(url, {
       redirect: "manual",
       signal: AbortSignal.timeout(SELF_PROBE_TIMEOUT_MS),
-      headers: { "User-Agent": "openship-target-check" },
+      headers: { "User-Agent": "kovalio-target-check" },
     });
     if (!res.ok) return { ok: false, reason: `HTTP ${res.status} from ${url}` };
     const body = (await res.text()).trim();

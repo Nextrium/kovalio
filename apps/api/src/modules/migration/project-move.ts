@@ -1,5 +1,5 @@
 /**
- * The migration's SECOND door: move a project Openship already owns onto another
+ * The migration's SECOND door: move a project Kovalio already owns onto another
  * server, instead of adopting a stranger's containers into a new one.
  *
  * The first door starts from a scan. It discovers containers, asks the operator which
@@ -18,7 +18,7 @@
  *
  * WHY THE WORKLOAD IS READ FROM THE HOST, NOT FROM `service.containerId`: that column
  * rotates on every redeploy, and for a compose service it can hold a sentinel rather than
- * an id (`!containerId` reads as "compose"). The `openship.project=<id>` label is stamped
+ * an id (`!containerId` reads as "compose"). The `kovalio.project=<id>` label is stamped
  * at container create time and is authoritative for the host it was read from — which is
  * the same reason project teardown reclaims orphans by label rather than by row.
  *
@@ -104,7 +104,7 @@ export interface ProjectMoveWorkload {
  * ({@link loadProjectMoveWorkload}).
  *
  * `discovered` is a FLAT-DOCKER scan of the source server. Flat mode is what makes this
- * work at all: it "ignores the openship.* namespace", so the project's own managed
+ * work at all: it "ignores the kovalio.* namespace", so the project's own managed
  * containers appear as ordinary candidates with full inspection detail (image, imageId,
  * volumes, ports, env) instead of being split off into the re-import set. `ourContainerIds`
  * is then the label-scoped filter that says which of those candidates are ours.
@@ -135,11 +135,11 @@ export function assertProjectMovable(input: {
   const { project, targetServerId } = input;
 
   if (input.isControlPlane) {
-    // Openship cannot migrate itself with itself: the run would stop the API executing
-    // it. Moving a control plane is `openship` CLI work on the box, not a wizard.
+    // Kovalio cannot migrate itself with itself: the run would stop the API executing
+    // it. Moving a control plane is `kovalio` CLI work on the box, not a wizard.
     throw new ProjectMoveRefused(
       "control_plane",
-      "This is the Openship control plane — it can't migrate itself. Move it with the Openship CLI on the server instead.",
+      "This is the Kovalio control plane — it can't migrate itself. Move it with the Kovalio CLI on the server instead.",
     );
   }
 
@@ -151,7 +151,7 @@ export function assertProjectMovable(input: {
     throw new ProjectMoveRefused(
       "not_server_hosted",
       target === "cloud"
-        ? `"${project.name}" runs on Openship Cloud. Moving between Cloud and a server isn't supported yet.`
+        ? `"${project.name}" runs on Kovalio Cloud. Moving between Cloud and a server isn't supported yet.`
         : `"${project.name}" isn't bound to a server, so there's no source host to move it from.`,
     );
   }
@@ -183,9 +183,9 @@ export function planProjectMove(input: {
   targetServerId: string;
   /** A flat-docker scan of the source server. */
   discovered: DiscoveredService[];
-  /** Container ids carrying `openship.project=<project.id>` on the source host. */
+  /** Container ids carrying `kovalio.project=<project.id>` on the source host. */
   ourContainerIds: string[];
-  /** True when this project IS the Openship control plane. */
+  /** True when this project IS the Kovalio control plane. */
   isControlPlane?: boolean;
   /** What the operator is doing. Only a COPY may be scoped — see `serviceNames`. */
   intent?: ProjectMoveIntent;

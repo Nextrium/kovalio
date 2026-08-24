@@ -1,31 +1,31 @@
 ---
 title: Quickstart
-description: The fastest path from a fresh install to a live app — start Openship, open the dashboard, and deploy one thing.
+description: The fastest path from a fresh install to a live app — start Kovalio, open the dashboard, and deploy one thing.
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-Just installed Openship? This page gets you to a live app in four short steps. Think of Openship as a
+Just installed Kovalio? This page gets you to a live app in four short steps. Think of Kovalio as a
 little kitchen that runs on your own computer: you turn it on, open the door, hand it your code, and it
 cooks and serves the meal. No servers to rent, no config files to write.
 
 <Callout title="What you need">
 - A computer running macOS, Linux, or Windows.
 - Some code you want to put online — a GitHub repo, or a folder on your disk.
-- No rented server and no config files — Openship runs on the machine you're on. (On Linux it uses Docker automatically when it's installed; otherwise it runs as a single lightweight process.)
+- No rented server and no config files — Kovalio runs on the machine you're on. (On Linux it uses Docker automatically when it's installed; otherwise it runs as a single lightweight process.)
 </Callout>
 
 <Steps>
 
 <Step>
 
-### Install the Openship CLI
+### Install the Kovalio CLI
 
 The CLI is one small command-line tool. Copy the line for your system and paste it into a terminal:
 
 <InstallTabs />
 
-Already have a package manager? `npm i -g openship` works too (or `pnpm`, `yarn`, `bun`) — that
+Already have a package manager? `npm i -g kovalio` works too (or `pnpm`, `yarn`, `bun`) — that
 route needs **Node 22+**, since it runs on your Node rather than bringing its own.
 Full options — desktop app, cloud, Docker Compose — are on the [Installation](/docs/getting-started/installation) page.
 
@@ -33,13 +33,13 @@ Full options — desktop app, cloud, Docker Compose — are on the [Installation
 
 <Step>
 
-### Set up Openship
+### Set up Kovalio
 
 ```bash
-openship
+kovalio
 ```
 
-Run **`openship`** with no arguments — the interactive setup walks you through it: your **admin login**
+Run **`kovalio`** with no arguments — the interactive setup walks you through it: your **admin login**
 (name, email, password), then whether the instance is private (this machine only) or public (your own domain
 + HTTPS). It deploys, installs itself as an always-on background service (back on reboot, auto-restarts), and
 prints your sign-in URL. The **API** runs on `:4000` and the **dashboard** on `:3001`. On Linux with Docker
@@ -47,13 +47,13 @@ it brings up the full stack (Postgres, Redis, and an OpenResty edge for domains 
 lightweight process with a built-in database. Nothing else to set up.
 
 <Callout title="Scripting or CI? Skip the prompts" type="info">
-`openship up` runs the same install **without** the wizard (no admin is created — you register the first
-account in the dashboard). `openship up --foreground` runs it attached to your terminal (Ctrl-C to stop);
-`openship stop` stops the service.
+`kovalio up` runs the same install **without** the wizard (no admin is created — you register the first
+account in the dashboard). `kovalio up --foreground` runs it attached to your terminal (Ctrl-C to stop);
+`kovalio stop` stops the service.
 </Callout>
 
 <Callout title="Want the no-login, no-terminal version?" type="info">
-The [desktop app](/docs/getting-started/installation) runs Openship on your machine only while it's open,
+The [desktop app](/docs/getting-started/installation) runs Kovalio on your machine only while it's open,
 with no login.
 </Callout>
 
@@ -64,12 +64,12 @@ with no login.
 ### Open the dashboard
 
 ```bash
-openship open
+kovalio open
 ```
 
 This opens the dashboard in your browser at `http://localhost:3001`. **Sign in with the admin you created
 during setup.** A CLI-managed instance always requires a login — only the
-[desktop app](/docs/getting-started/installation) runs with no login. (If you used `openship up` instead of
+[desktop app](/docs/getting-started/installation) runs with no login. (If you used `kovalio up` instead of
 the wizard, register that first account here now.)
 
 </Step>
@@ -79,7 +79,7 @@ the wizard, register that first account here now.)
 ### Deploy one thing
 
 In the dashboard, start a new project and point it at your code — a GitHub repository or a folder on your
-disk. Openship looks at your code, figures out what kind of app it is, and shows you a summary. For most
+disk. Kovalio looks at your code, figures out what kind of app it is, and shows you a summary. For most
 apps you don't change anything: just press **Deploy**.
 
 You land on the build screen, which streams the logs live — like watching the oven through the glass door.
@@ -98,18 +98,18 @@ folder:
 
 ```bash
 cd your-project
-openship init         # pick which project this folder belongs to
-openship deploy       # build it and put it online
+kovalio init         # pick which project this folder belongs to
+kovalio deploy       # build it and put it online
 ```
 
-`openship init` writes a small `.openship/project.json` file so later commands know which project to act
-on. Add `--watch` to `openship deploy` to follow the build logs until it's done.
+`kovalio init` writes a small `.kovalio/project.json` file so later commands know which project to act
+on. Add `--watch` to `kovalio deploy` to follow the build logs until it's done.
 
 ## If something goes wrong
 
-<Callout title="`openship open` says the API isn't responding" type="warn">
-The platform isn't up yet. Run `openship up` first (give it a few seconds to become healthy), then try
-`openship open` again. Check its state any time with `openship status`.
+<Callout title="`kovalio open` says the API isn't responding" type="warn">
+The platform isn't up yet. Run `kovalio up` first (give it a few seconds to become healthy), then try
+`kovalio open` again. Check its state any time with `kovalio status`.
 </Callout>
 
 <Callout title="The build failed" type="error">

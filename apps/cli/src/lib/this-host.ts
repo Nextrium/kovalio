@@ -1,7 +1,7 @@
 /**
  * The machine the CLI is running on, as the resolver measured it.
  *
- * `openship up` provisions the box it is invoked on, so "the target host" and "this
+ * `kovalio up` provisions the box it is invoked on, so "the target host" and "this
  * process's host" are the same thing — and before this the CLI answered questions about
  * it three different ways: a `command -v systemctl` of its own, a `command -v ufw` +
  * `ufw status` of its own, and a fabricated `{os:"linux",serviceManager:"systemd"}` cast.

@@ -1,11 +1,11 @@
 /**
- * `openship context` — manage the named connection contexts in
- * ~/.openship/config.json (see lib/config.ts). Each context pins an
+ * `kovalio context` — manage the named connection contexts in
+ * ~/.kovalio/config.json (see lib/config.ts). Each context pins an
  * API + dashboard endpoint and its PAT; `current` selects the active one that
  * every authenticated command reads from.
  *
  * Pure config CRUD — no API calls. `add` here only stores endpoints/token;
- * `openship login` is still the way to validate a token before saving it.
+ * `kovalio login` is still the way to validate a token before saving it.
  */
 import { Command } from "commander";
 import {
@@ -81,7 +81,7 @@ export const contextCommand = new Command("context")
   .alias("ctx")
   .description("Manage connection contexts (list/use/add/rm)")
   .action(() => {
-    // Bare `openship context` → show the list (active row is starred).
+    // Bare `kovalio context` → show the list (active row is starred).
     ok(`  Active context: ${getActiveContext()}`);
     renderContexts();
   })

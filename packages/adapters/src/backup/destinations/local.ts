@@ -83,8 +83,8 @@ class LocalDestinationImpl implements BackupDestination {
    * restore point would quietly become unrestorable.
    *
    * Deliberately an existence check rather than a "does the key already start with the
-   * prefix" string test: the key builder's first literal segment is `openship`, so a
-   * destination whose prefix is also `openship` would make that test ambiguous. The
+   * prefix" string test: the key builder's first literal segment is `kovalio`, so a
+   * destination whose prefix is also `kovalio` would make that test ambiguous. The
    * filesystem is not ambiguous. Reads only — `put` always writes the current layout,
    * so this shim shrinks to nothing as old runs age out of retention.
    */
@@ -108,7 +108,7 @@ class LocalDestinationImpl implements BackupDestination {
   async preflight(): Promise<{ ok: true } | { ok: false; reason: string }> {
     try {
       await fs.mkdir(this.root, { recursive: true });
-      const probeKey = `.openship-probe-${randomBytes(6).toString("hex")}`;
+      const probeKey = `.kovalio-probe-${randomBytes(6).toString("hex")}`;
       const probePath = join(this.root, probeKey);
       await fs.writeFile(probePath, "ok");
       await fs.readFile(probePath);

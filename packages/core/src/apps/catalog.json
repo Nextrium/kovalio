@@ -5,7 +5,7 @@
       "available": true,
       "verified": true,
       "id": "mail",
-      "name": "Openship Mail",
+      "name": "Kovalio Mail",
       "description": "Your own mail on your own domain — SMTP/IMAP, mailboxes and webmail on one server. Or keep the mailboxes you already have and just run the webmail.",
       "kind": "flow",
       "logo": "mail",
@@ -2115,7 +2115,7 @@
           "secret": true
         },
         {
-          "key": "OPENSHIP_BUCKET",
+          "key": "KOVALIO_BUCKET",
           "service": "minio",
           "label": "First bucket",
           "help": "Created on the first deploy so an app can use this storage immediately. More can be added from the console.",
@@ -2127,7 +2127,7 @@
       "prepare": [
         {
           "service": "minio",
-          "command": "mc alias set local http://127.0.0.1:9000 \"$MINIO_ROOT_USER\" \"$MINIO_ROOT_PASSWORD\" > /dev/null && mc mb --ignore-existing \"local/$OPENSHIP_BUCKET\" > /dev/null && printf '%s' \"$OPENSHIP_BUCKET\"",
+          "command": "mc alias set local http://127.0.0.1:9000 \"$MINIO_ROOT_USER\" \"$MINIO_ROOT_PASSWORD\" > /dev/null && mc mb --ignore-existing \"local/$KOVALIO_BUCKET\" > /dev/null && printf '%s' \"$KOVALIO_BUCKET\"",
           "capture": "bucket",
           "phase": "post-ready",
           "readiness": {
@@ -2189,7 +2189,7 @@
           {
             "id": "bucket",
             "label": "Bucket",
-            "source": "env:minio:OPENSHIP_BUCKET",
+            "source": "env:minio:KOVALIO_BUCKET",
             "service": "minio",
             "envKey": "S3_BUCKET"
           }
@@ -2623,7 +2623,7 @@
           "label": "Console admin email",
           "help": "The first account is created for you and is the instance admin. Sign-up closes as soon as it exists.",
           "type": "text",
-          "default": "admin@openship.local",
+          "default": "admin@kovalio.local",
           "required": true
         },
         {
@@ -2764,7 +2764,7 @@
           "healthcheck": {
             "test": [
               "CMD-SHELL",
-              "wget --no-verbose --tries=1 --spider http://127.0.0.1:80/openship-health || exit 1"
+              "wget --no-verbose --tries=1 --spider http://127.0.0.1:80/kovalio-health || exit 1"
             ],
             "interval": "10s",
             "timeout": "5s",
@@ -3437,16 +3437,16 @@
         {
           "service": "proxy",
           "path": "/etc/caddy/Caddyfile",
-          "content": "{\n\tservers {\n\t\ttrusted_proxies static 127.0.0.1/32 ::1/128 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16\n\t}\n}\n\n# Host-less site address on purpose. PostHog's own default is\n# `http://localhost:8000`, which compiles to a Host matcher — behind Openship's\n# edge a foreign Host then returns an empty HTTP 200 instead of a 404, so every\n# ingestion POST would look successful while the events were silently dropped.\n# `:80` also emits no automatic_https and no tls app, so Caddy never tries ACME.\n:80 {\n\t# Health target for the container healthcheck. Deliberately answered by\n\t# Caddy itself: proxying /_health through to Django would report unhealthy\n\t# for the whole first-boot migration window and raise a false incident.\n\t@openship-health {\n\t\tpath /openship-health\n\t}\n\n\thandle @openship-health {\n\t\trespond \"ok\" 200\n\t}\n\n\t@replay-capture {\n\t\tpath /s\n\t\tpath /s/\n\t\tpath /s/*\n\t}\n\n\t@capture {\n\t\tpath /e\n\t\tpath /e/\n\t\tpath /e/*\n\t\tpath /i/v0\n\t\tpath /i/v0/\n\t\tpath /i/v0/*\n\t\tpath /i/v1/analytics/events\n\t\tpath /i/v1/analytics/events/\n\t\tpath /batch\n\t\tpath /batch/\n\t\tpath /batch/*\n\t\tpath /capture\n\t\tpath /capture/\n\t\tpath /capture/*\n\t}\n\n\t@flags {\n\t\tpath /flags\n\t\tpath /flags/\n\t\tpath /flags/*\n\t\tpath /api/feature_flag/local_evaluation\n\t\tpath /api/feature_flag/local_evaluation/\n\t\tpath /api/feature_flag/local_evaluation/*\n\t}\n\n\t@surveys {\n\t\tpath /surveys\n\t\tpath /surveys/\n\t\tpath /api/surveys\n\t\tpath /api/surveys/\n\t}\n\n\t@remote-config {\n\t\tpath /array/*\n\t}\n\n\t@webhooks {\n\t\tpath /public/webhooks\n\t\tpath /public/webhooks/\n\t\tpath /public/webhooks/*\n\t\tpath /public/m/\n\t\tpath /public/m/*\n\t}\n\n\t@objectstorage {\n\t\tpath /posthog\n\t\tpath /posthog/\n\t\tpath /posthog/*\n\t}\n\n\thandle @capture {\n\t\treverse_proxy capture:3000\n\t}\n\n\thandle @replay-capture {\n\t\treverse_proxy replay-capture:3000\n\t}\n\n\thandle @flags {\n\t\treverse_proxy feature-flags:3001\n\t}\n\n\thandle @surveys {\n\t\treverse_proxy hypercache-server:3002\n\t}\n\n\thandle @remote-config {\n\t\treverse_proxy hypercache-server:3002\n\t}\n\n\thandle @webhooks {\n\t\treverse_proxy plugins:6738\n\t}\n\n\thandle @objectstorage {\n\t\treverse_proxy objectstorage:8333\n\t}\n\n\thandle {\n\t\treverse_proxy web:8000\n\t}\n}\n"
+          "content": "{\n\tservers {\n\t\ttrusted_proxies static 127.0.0.1/32 ::1/128 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16\n\t}\n}\n\n# Host-less site address on purpose. PostHog's own default is\n# `http://localhost:8000`, which compiles to a Host matcher — behind Kovalio's\n# edge a foreign Host then returns an empty HTTP 200 instead of a 404, so every\n# ingestion POST would look successful while the events were silently dropped.\n# `:80` also emits no automatic_https and no tls app, so Caddy never tries ACME.\n:80 {\n\t# Health target for the container healthcheck. Deliberately answered by\n\t# Caddy itself: proxying /_health through to Django would report unhealthy\n\t# for the whole first-boot migration window and raise a false incident.\n\t@kovalio-health {\n\t\tpath /kovalio-health\n\t}\n\n\thandle @kovalio-health {\n\t\trespond \"ok\" 200\n\t}\n\n\t@replay-capture {\n\t\tpath /s\n\t\tpath /s/\n\t\tpath /s/*\n\t}\n\n\t@capture {\n\t\tpath /e\n\t\tpath /e/\n\t\tpath /e/*\n\t\tpath /i/v0\n\t\tpath /i/v0/\n\t\tpath /i/v0/*\n\t\tpath /i/v1/analytics/events\n\t\tpath /i/v1/analytics/events/\n\t\tpath /batch\n\t\tpath /batch/\n\t\tpath /batch/*\n\t\tpath /capture\n\t\tpath /capture/\n\t\tpath /capture/*\n\t}\n\n\t@flags {\n\t\tpath /flags\n\t\tpath /flags/\n\t\tpath /flags/*\n\t\tpath /api/feature_flag/local_evaluation\n\t\tpath /api/feature_flag/local_evaluation/\n\t\tpath /api/feature_flag/local_evaluation/*\n\t}\n\n\t@surveys {\n\t\tpath /surveys\n\t\tpath /surveys/\n\t\tpath /api/surveys\n\t\tpath /api/surveys/\n\t}\n\n\t@remote-config {\n\t\tpath /array/*\n\t}\n\n\t@webhooks {\n\t\tpath /public/webhooks\n\t\tpath /public/webhooks/\n\t\tpath /public/webhooks/*\n\t\tpath /public/m/\n\t\tpath /public/m/*\n\t}\n\n\t@objectstorage {\n\t\tpath /posthog\n\t\tpath /posthog/\n\t\tpath /posthog/*\n\t}\n\n\thandle @capture {\n\t\treverse_proxy capture:3000\n\t}\n\n\thandle @replay-capture {\n\t\treverse_proxy replay-capture:3000\n\t}\n\n\thandle @flags {\n\t\treverse_proxy feature-flags:3001\n\t}\n\n\thandle @surveys {\n\t\treverse_proxy hypercache-server:3002\n\t}\n\n\thandle @remote-config {\n\t\treverse_proxy hypercache-server:3002\n\t}\n\n\thandle @webhooks {\n\t\treverse_proxy plugins:6738\n\t}\n\n\thandle @objectstorage {\n\t\treverse_proxy objectstorage:8333\n\t}\n\n\thandle {\n\t\treverse_proxy web:8000\n\t}\n}\n"
         },
         {
           "service": "clickhouse",
-          "path": "/etc/clickhouse-server/config.d/openship-posthog.xml",
+          "path": "/etc/clickhouse-server/config.d/kovalio-posthog.xml",
           "content": "<clickhouse>\n  <!-- PostHog creates every table as ReplicatedMergeTree ON CLUSTER, so the\n       macros, the clusters and ZooKeeper must all resolve or migrate_clickhouse\n       cannot create a single table. Shipped as a config.d overlay rather than a\n       replacement config.xml so the image's own defaults still apply. -->\n  <zookeeper>\n    <node>\n      <host>zookeeper</host>\n      <port>2181</port>\n    </node>\n  </zookeeper>\n  <macros>\n    <shard>01</shard>\n    <replica>ch1</replica>\n  </macros>\n  <distributed_ddl>\n    <path>/clickhouse/task_queue/ddl</path>\n  </distributed_ddl>\n  <!-- ~95 Kafka-engine tables each hold a background schedule slot. -->\n  <background_schedule_pool_size>256</background_schedule_pool_size>\n  <format_schema_path>/var/lib/clickhouse/format_schemas/</format_schema_path>\n  <remote_servers>\n    <posthog><shard><replica><host>clickhouse</host><port>9000</port></replica></shard></posthog>\n    <posthog_single_shard><shard><replica><host>clickhouse</host><port>9000</port></replica></shard></posthog_single_shard>\n    <posthog_migrations><shard><replica><host>clickhouse</host><port>9000</port></replica></shard></posthog_migrations>\n    <posthog_writable><shard><replica><host>clickhouse</host><port>9000</port></replica></shard></posthog_writable>\n    <posthog_primary_replica><shard><replica><host>clickhouse</host><port>9000</port></replica></shard></posthog_primary_replica>\n    <ai_events><shard><replica><host>clickhouse</host><port>9000</port></replica></shard></ai_events>\n    <aux><shard><replica><host>clickhouse</host><port>9000</port></replica></shard></aux>\n    <ops><shard><replica><host>clickhouse</host><port>9000</port></replica></shard></ops>\n    <sessions><shard><replica><host>clickhouse</host><port>9000</port></replica></shard></sessions>\n  </remote_servers>\n  <!-- PostHog's Kafka tables reference a named collection, not a broker list. -->\n  <named_collections>\n    <msk_cluster><kafka_broker_list from_env=\"KAFKA_HOSTS\"/></msk_cluster>\n    <warpstream_ingestion><kafka_broker_list from_env=\"KAFKA_HOSTS\"/></warpstream_ingestion>\n    <warpstream_calculated_events><kafka_broker_list from_env=\"KAFKA_HOSTS\"/></warpstream_calculated_events>\n    <warpstream_replay><kafka_broker_list from_env=\"KAFKA_HOSTS\"/></warpstream_replay>\n    <warpstream_shared><kafka_broker_list from_env=\"KAFKA_HOSTS\"/></warpstream_shared>\n    <warpstream_cyclotron><kafka_broker_list from_env=\"KAFKA_HOSTS\"/></warpstream_cyclotron>\n    <warpstream_logs><kafka_broker_list from_env=\"KAFKA_HOSTS\"/></warpstream_logs>\n    <warpstream_traces><kafka_broker_list from_env=\"KAFKA_HOSTS\"/></warpstream_traces>\n  </named_collections>\n</clickhouse>\n"
         },
         {
           "service": "clickhouse",
-          "path": "/etc/clickhouse-server/users.d/openship-posthog.xml",
+          "path": "/etc/clickhouse-server/users.d/kovalio-posthog.xml",
           "content": "<clickhouse>\n  <!-- CLICKHOUSE_SKIP_USER_SETUP=1 means the image creates no users, but the\n       Django app connects as api/app/billing/dict_reader on different query\n       paths. Passwords match the values the app is configured with; ClickHouse\n       is never published outside the project network. -->\n  <profiles>\n    <default>\n      <max_memory_usage>10000000000</max_memory_usage>\n      <use_uncompressed_cache>0</use_uncompressed_cache>\n      <load_balancing>random</load_balancing>\n    </default>\n  </profiles>\n  <users>\n    <default>\n      <password></password>\n      <networks><ip>::/0</ip></networks>\n      <profile>default</profile>\n      <quota>default</quota>\n      <access_management>1</access_management>\n    </default>\n    <api>\n      <password>apipass</password>\n      <networks><ip>::/0</ip></networks>\n      <profile>default</profile>\n      <quota>default</quota>\n    </api>\n    <app>\n      <password>apppass</password>\n      <networks><ip>::/0</ip></networks>\n      <profile>default</profile>\n      <quota>default</quota>\n    </app>\n    <billing>\n      <password>billingpass</password>\n      <networks><ip>::/0</ip></networks>\n      <profile>default</profile>\n      <quota>default</quota>\n    </billing>\n    <dict_reader>\n      <password>dictreaderpass</password>\n      <networks><ip>::/0</ip></networks>\n      <profile>default</profile>\n      <quota>default</quota>\n    </dict_reader>\n  </users>\n  <quotas>\n    <default><interval><duration>3600</duration></interval></default>\n  </quotas>\n</clickhouse>\n"
         }
       ],
@@ -3819,8 +3819,8 @@
       "verified": true,
       "unlisted": true,
       "id": "webmail",
-      "name": "Openship Webmail",
-      "description": "A fast, self-hosted webmail client. Point it at any IMAP/SMTP mailbox — an Openship Mail server, Gmail, Fastmail, or your company's — and read, search and send from a clean UI on your own domain. Nothing is stored outside your server.",
+      "name": "Kovalio Webmail",
+      "description": "A fast, self-hosted webmail client. Point it at any IMAP/SMTP mailbox — an Kovalio Mail server, Gmail, Fastmail, or your company's — and read, search and send from a clean UI on your own domain. Nothing is stored outside your server.",
       "kind": "template",
       "logo": "webmail",
       "category": "mail",
@@ -3836,7 +3836,7 @@
       "services": [
         {
           "name": "webmail",
-          "image": "ghcr.io/oblien/openship-webmail:latest",
+          "image": "ghcr.io/oblien/kovalio-webmail:latest",
           "exposedPort": 4080,
           "exposed": true,
           "volumes": [
@@ -3861,7 +3861,7 @@
           "key": "BRANDING_ADMIN_TOKEN",
           "service": "webmail",
           "label": "Branding admin token",
-          "help": "Auto-generated. Lets Openship write this webmail's white-label login page (logo, name, colors) over its admin API. Nothing else accepts it.",
+          "help": "Auto-generated. Lets Kovalio write this webmail's white-label login page (logo, name, colors) over its admin API. Nothing else accepts it.",
           "generate": "secret",
           "secret": true
         }
@@ -3870,7 +3870,7 @@
         {
           "id": "backend",
           "label": "Mail backend",
-          "description": "Which IMAP/SMTP server this webmail talks to. Leave the hosts blank and each address resolves to mail.<its own domain> at sign-in — the convention Openship Mail and iRedMail install. Set them to pin every mailbox to one server. Users can still override host and port on the sign-in screen.",
+          "description": "Which IMAP/SMTP server this webmail talks to. Leave the hosts blank and each address resolves to mail.<its own domain> at sign-in — the convention Kovalio Mail and iRedMail install. Set them to pin every mailbox to one server. Users can still override host and port on the sign-in screen.",
           "fields": [
             {
               "key": "DEFAULT_IMAP_HOST",
@@ -3931,7 +3931,7 @@
               "key": "TRUSTED_ORIGINS",
               "service": "webmail",
               "label": "Trusted origins",
-              "help": "Comma-separated origins allowed to sign in — scheme + host, no path. Defaults to this app's own public URL. Set it when the app is served through a proxy Openship doesn't route, e.g. an Openship Mail server fronting mail.<domain> for a cloud deploy.",
+              "help": "Comma-separated origins allowed to sign in — scheme + host, no path. Defaults to this app's own public URL. Set it when the app is served through a proxy Kovalio doesn't route, e.g. an Kovalio Mail server fronting mail.<domain> for a cloud deploy.",
               "type": "text",
               "placeholder": "https://mail.example.com",
               "advanced": true,

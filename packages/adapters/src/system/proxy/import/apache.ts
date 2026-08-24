@@ -70,7 +70,7 @@ function directiveAll(body: string, name: string): string[] {
  * `RewriteRule … [R=301]` — and such a vhost very often ALSO carries a
  * DocumentRoot, so it parsed as a real static site and then collided with the
  * `:443` vhost for the same ServerName. That collision is how a live HTTPS site
- * came back as an empty docroot. Openship's edge issues that redirect itself, so
+ * came back as an empty docroot. Kovalio's edge issues that redirect itself, so
  * there is nothing here to carry.
  */
 function isHttpsRedirectOnly(body: string): boolean {

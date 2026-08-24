@@ -11,7 +11,7 @@ import { useToast } from "@/context/ToastContext";
 import { SettingsSection } from "./SettingsSection";
 
 /**
- * Every third-party credential Openship holds, in one place.
+ * Every third-party credential Kovalio holds, in one place.
  *
  * SCHEMA-DRIVEN, deliberately: the form for each provider is rendered from the field list
  * the server sends (`CREDENTIAL_PROVIDERS` in @repo/core), so adding a provider needs no

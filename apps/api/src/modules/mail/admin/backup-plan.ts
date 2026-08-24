@@ -96,7 +96,7 @@ export function buildMailBackupPayload(
           //
           // These are root-owned paths — `${HOST_STATE_DIR}` sits under /root (mode 0700)
           // and is itself created 0700, and /var/lib/dkim holds private keys. On a host
-          // Openship logs into as a sudoer rather than as root, the old
+          // Kovalio logs into as a sudoer rather than as root, the old
           // `[ -f … ] && cp … || true` could not even stat them: the test failed for lack
           // of privilege, `|| true` absorbed it, and the run exited 0 having recorded
           // `keys: true` on an archive containing no keys. mail-state.json is the ONLY

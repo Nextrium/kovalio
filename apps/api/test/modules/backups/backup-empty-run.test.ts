@@ -1,7 +1,7 @@
 /**
  * A backup that captured nothing must FAIL.
  *
- * [#611](https://github.com/oblien/openship/issues/611): a policy on the control
+ * [#611](https://github.com/Nextrium/kovalio/issues/611): a policy on the control
  * plane's own `postgres` service finished in two seconds with
  * `status: "succeeded"`, `bytesTransferred: 0`, `artifacts: []`, and an empty
  * destination prefix. The volume producer had found no sources and simply
@@ -68,7 +68,7 @@ vi.mock("@repo/db", () => ({
         id: "dst_1",
         organizationId: "org_1",
         name: "R2",
-        pathPrefix: "openship",
+        pathPrefix: "kovalio",
       }),
       setLastVerified: async () => {},
     },
@@ -88,8 +88,8 @@ vi.mock("@repo/db", () => ({
     project: {
       findById: async () => ({
         id: "prj_1",
-        slug: "openship",
-        name: "Openship",
+        slug: "kovalio",
+        name: "Kovalio",
         organizationId: "org_1",
         activeDeploymentId: "dep_1",
       }),
@@ -141,9 +141,9 @@ vi.mock("@repo/adapters", async () => {
     HashingPassthrough: FakeHasher,
     PRESERVED_ARTIFACT_METADATA_KEYS,
     sanitizeProducerOpts,
-    artifactKey: (_b: unknown, name: string) => `openship/openship/postgres/bkr_live/${name}`,
-    manifestKey: () => "openship/openship/postgres/bkr_live/manifest.json",
-    runPrefix: () => "openship/openship/postgres/bkr_live",
+    artifactKey: (_b: unknown, name: string) => `kovalio/kovalio/postgres/bkr_live/${name}`,
+    manifestKey: () => "kovalio/kovalio/postgres/bkr_live/manifest.json",
+    runPrefix: () => "kovalio/kovalio/postgres/bkr_live",
     buildManifest: () => ({ version: 1 }),
     resolveDestination: () => ({
       preflight: async () => ({ ok: true }),
@@ -268,7 +268,7 @@ describe("a run that captured nothing is not a successful backup", () => {
     expect(h.row.status).toBe("succeeded");
     // Derived from the payload the producer actually yielded, not from a fixture knob.
     expect(h.row.bytesTransferred).toBe(4096);
-    expect(h.puts).toContain("openship/openship/postgres/bkr_live/manifest.json");
+    expect(h.puts).toContain("kovalio/kovalio/postgres/bkr_live/manifest.json");
     expect(h.notifications).toContain("backup_run.succeeded");
   });
 
@@ -285,8 +285,8 @@ describe("a run that captured nothing is not a successful backup", () => {
 
     expect(h.row.status).toBe("failed");
     expect(h.deleted).toEqual([
-      "openship/openship/postgres/bkr_live/volume-data.tar.zst",
-      "openship/openship/postgres/bkr_live/volume-empty.tar.zst",
+      "kovalio/kovalio/postgres/bkr_live/volume-data.tar.zst",
+      "kovalio/kovalio/postgres/bkr_live/volume-empty.tar.zst",
     ]);
   });
 
@@ -301,6 +301,6 @@ describe("a run that captured nothing is not a successful backup", () => {
     await new BackupOrchestrator().execute("bkr_live");
 
     expect(h.row.status).toBe("failed");
-    expect(h.deleted).toContain("openship/openship/postgres/bkr_live/volume-data.tar.zst");
+    expect(h.deleted).toContain("kovalio/kovalio/postgres/bkr_live/volume-data.tar.zst");
   });
 });

@@ -239,7 +239,7 @@ export async function addDomain(
   }
 
   /**
-   * Is the edge ALREADY serving this hostname from a vhost Openship lost track of?
+   * Is the edge ALREADY serving this hostname from a vhost Kovalio lost track of?
    *
    * The DB conflict check above is the only gate on claiming a hostname, and it
    * only knows about `domain` rows. Edge config lives on the host and outlives
@@ -607,7 +607,7 @@ async function markDomainVerifiedActive(
  * mode shares the cert volume, so it's never "unreachable" there.
  */
 async function edgeHostUnreachable(ctx: RequestContext, project: Project): Promise<boolean> {
-  if (process.env.OPENSHIP_EDGE_MODE === "docker") return false;
+  if (process.env.KOVALIO_EDGE_MODE === "docker") return false;
   // Only the LOCAL host-server can be "unreachable from a container" (a
   // containerized API with no host channel). A REMOTE server is reached over SSH
   // by definition — the SSH executor lands on its host, never a container — so
@@ -632,9 +632,9 @@ async function edgeHostUnreachable(ctx: RequestContext, project: Project): Promi
 }
 
 const HOST_CHANNEL_HINT =
-  "This server runs a bare-metal edge, but Openship's API is in a container that can't reach the host's " +
-  "OpenResty or /etc/letsencrypt to manage TLS. Provision the host SSH channel (OPENSHIP_HOST_SSH_*, e.g. " +
-  "via `openship up`), or bind-mount the host's /etc/letsencrypt + OpenResty sites into the API container.";
+  "This server runs a bare-metal edge, but Kovalio's API is in a container that can't reach the host's " +
+  "OpenResty or /etc/letsencrypt to manage TLS. Provision the host SSH channel (KOVALIO_HOST_SSH_*, e.g. " +
+  "via `kovalio up`), or bind-mount the host's /etc/letsencrypt + OpenResty sites into the API container.";
 
 /** Guard a hostname before it's interpolated into a filesystem path (defence in
  *  depth — the row is already validated at creation). */
@@ -644,7 +644,7 @@ function isPathSafeHostname(hostname: string): boolean {
 
 /**
  * Migration / first-publish SSL reuse. When a custom-domain row is freshly minted
- * for a hostname the SERVER ALREADY serves — an Openship re-migration on the same
+ * for a hostname the SERVER ALREADY serves — an Kovalio re-migration on the same
  * box, or a foreign reverse proxy (nginx/caddy/apache/traefik, bare OR container)
  * we're taking over — adopt the cert that's already there instead of re-issuing via
  * ACME (which fails behind Cloudflare, or when the cert isn't at certbot's standard
@@ -1055,13 +1055,13 @@ export async function removeDomain(ctx: RequestContext, domainId: string) {
   // `releaseRecords` deletes only records carrying our ownership marker. Matching
   // on the name alone is what makes this dangerous: for an apex custom domain
   // these names ARE the zone apex, where the operator's MX, SPF TXT and CAA live,
-  // and "remove this domain from Openship" must never take their mail with it.
+  // and "remove this domain from Kovalio" must never take their mail with it.
   const released = await releaseRecords(ctx.organizationId, domain.hostname, [
     domain.hostname,
-    `_openship-challenge.${domain.hostname}`,
+    `_kovalio-challenge.${domain.hostname}`,
   ]).catch((err: unknown) => ({ deleted: 0, reason: safeErrorMessage(err) }));
   if (released.reason) {
-    // Not fatal: a domain must stay removable from Openship when the provider is
+    // Not fatal: a domain must stay removable from Kovalio when the provider is
     // unreachable. An orphan record is visible in the zone; a blocked delete isn't.
     console.warn(
       `[dns] could not fully clean up records for ${domain.hostname}:`,
@@ -1090,7 +1090,7 @@ export async function removeDomain(ctx: RequestContext, domainId: string) {
   });
   if (edgeFailures.length > 0) {
     throw new AppError(
-      `Couldn't release the free ${domain.hostname} route on Openship Cloud (${edgeFailures.join(", ")}). ` +
+      `Couldn't release the free ${domain.hostname} route on Kovalio Cloud (${edgeFailures.join(", ")}). ` +
         `The domain was kept so you can retry — removing it now would leave the URL resolving and the name reserved.`,
       502,
       "MANAGED_EDGE_RELEASE_FAILED",
@@ -1102,7 +1102,7 @@ export async function removeDomain(ctx: RequestContext, domainId: string) {
   // just the domain row left the service still configured for that hostname,
   // which is why removing a free route then made every later action demand Cloud:
   // preflight's `servicesNeedCloud` kept seeing the stale *.opsh.io slug and
-  // reported "Connect Openship Cloud to expose services on free *.opsh.io
+  // reported "Connect Kovalio Cloud to expose services on free *.opsh.io
   // subdomains" — even while the user was adding a CUSTOM domain.
   //
   // ONE transaction, because the two writes describe one outcome. As separate
@@ -1484,9 +1484,9 @@ async function verifyCname(hostname: string): Promise<boolean> {
   }
 }
 
-/** Check _openship-challenge.{hostname} TXT record for verification token. */
+/** Check _kovalio-challenge.{hostname} TXT record for verification token. */
 async function verifyTxt(hostname: string, token: string): Promise<boolean> {
-  const records = await resolveRecords(`_openship-challenge.${hostname}`, "TXT");
+  const records = await resolveRecords(`_kovalio-challenge.${hostname}`, "TXT");
   return records.some((v) => v === token);
 }
 
@@ -1521,7 +1521,7 @@ export function relativeSubdomain(hostname: string): string | null {
 /**
  * The route record (A/CNAME) + TXT ownership record host+name for a hostname.
  * `name` is the FQDN — EXACTLY what verifyARecord/verifyCname/verifyTxt resolve
- * (`hostname` and `_openship-challenge.${hostname}`), so "add the shown records
+ * (`hostname` and `_kovalio-challenge.${hostname}`), so "add the shown records
  * → verify passes" holds by construction. `host` is the zone-relative form.
  * Pure — the unit-test seam for the per-hostname record fix.
  */
@@ -1535,8 +1535,8 @@ export function dnsRecordHosts(hostname: string): {
   return {
     routeHost: sub ?? "@",
     routeName: hostname,
-    txtHost: sub ? `_openship-challenge.${sub}` : "_openship-challenge",
-    txtName: `_openship-challenge.${hostname}`,
+    txtHost: sub ? `_kovalio-challenge.${sub}` : "_kovalio-challenge",
+    txtName: `_kovalio-challenge.${hostname}`,
   };
 }
 
@@ -1547,7 +1547,7 @@ export function dnsRecordHosts(hostname: string): {
  *
  * Cloud       → CNAME <host> → <target from Oblien>
  * Self-hosted → A     <host> → <server public IP>
- * Both        → TXT _openship-challenge[.<sub>] → <verification hash>
+ * Both        → TXT _kovalio-challenge[.<sub>] → <verification hash>
  */
 async function buildRecords(
   hostname: string,
@@ -1661,7 +1661,7 @@ function verifyMessage(
   }
 
   if (!txtOk) {
-    parts.push(`TXT record _openship-challenge.${hostname} must equal "${token}"`);
+    parts.push(`TXT record _kovalio-challenge.${hostname} must equal "${token}"`);
   }
 
   return parts.join(". ");

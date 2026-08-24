@@ -200,7 +200,7 @@ const DEFAULT_MODE: GeoColorMode = "flag";
 
 /** Remembered across visits — a colouring preference you have to re-pick every time is
  *  not a preference. Own key, not tied to the UI theme, since it's orthogonal to it. */
-const MODE_KEY = "openship.monitoring.geoColorMode";
+const MODE_KEY = "kovalio.monitoring.geoColorMode";
 
 /**
  * Whether the recent-hit list shows alongside the ripples.
@@ -211,7 +211,7 @@ const MODE_KEY = "openship.monitoring.geoColorMode";
  *
  * Own key, remembered, because someone who does want it here wants it every time.
  */
-const FEED_KEY = "openship.monitoring.liveFeed";
+const FEED_KEY = "kovalio.monitoring.liveFeed";
 
 function initialFeed(): boolean {
   if (typeof window === "undefined") return false;

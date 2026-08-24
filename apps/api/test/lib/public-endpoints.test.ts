@@ -364,24 +364,24 @@ describe("pickCanonicalDomainRow", () => {
 });
 
 describe("resolveProjectAccess", () => {
-  it("resolves a project whose only domains are service-scoped (the openship repro)", () => {
+  it("resolves a project whose only domains are service-scoped (the kovalio repro)", () => {
     // Multi-service project: both verified custom domains live on service-scoped
     // rows, so project-level publicEndpoints is empty — the exact case that used
     // to fall back to localhost. Access must be the primary service host.
     const access = resolveProjectAccess({
       rows: [
-        row({ hostname: "api.openship.io", serviceId: "svc_api", verified: true, isPrimary: true }),
-        row({ hostname: "app.openship.io", serviceId: "svc_dash", verified: true, isPrimary: false }),
+        row({ hostname: "api.nextrium.org", serviceId: "svc_api", verified: true, isPrimary: true }),
+        row({ hostname: "kovalio.nextrium.org", serviceId: "svc_dash", verified: true, isPrimary: false }),
       ],
       target: "server",
       port: null,
     });
     expect(access).toEqual({
-      url: "https://api.openship.io",
-      host: "api.openship.io",
+      url: "https://api.nextrium.org",
+      host: "api.nextrium.org",
       kind: "custom",
       isLocal: false,
-      urls: ["https://api.openship.io", "https://app.openship.io"],
+      urls: ["https://api.nextrium.org", "https://kovalio.nextrium.org"],
     });
   });
 

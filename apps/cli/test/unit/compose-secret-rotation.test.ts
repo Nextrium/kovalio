@@ -14,8 +14,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
  *     have to come out of the running container.
  *
  * The third is the one #509's own advice walks operators into: `docker/docker-compose.yml`
- * pins `name: openship`, the same compose project the CLI pins, so re-running
- * `openship up` on a raw-compose box ADOPTS that stack and its `openship_postgres_data`.
+ * pins `name: kovalio`, the same compose project the CLI pins, so re-running
+ * `kovalio up` on a raw-compose box ADOPTS that stack and its `kovalio_postgres_data`.
  * Telling that operator to "restore .env from a backup" points at a file that never
  * existed, and the only other thing on screen is `--reset-secrets`, which destroys every
  * environment variable stored in their database.
@@ -94,8 +94,8 @@ import {
 } from "../../src/lib/compose";
 
 const OURS = composePaths.file;
-const RAW_COMPOSE = "/root/openship/docker/docker-compose.yml";
-const PROJECT = "openship";
+const RAW_COMPOSE = "/root/kovalio/docker/docker-compose.yml";
+const PROJECT = "kovalio";
 const VOLUME = `${PROJECT}_postgres_data`;
 const ROTATION = { volume: VOLUME, keys: ["POSTGRES_PASSWORD", "BETTER_AUTH_SECRET"] };
 
@@ -106,8 +106,8 @@ const row = (name: string, project: string, configFiles: string, service = "") =
 /** The adopted shape: a raw-compose stack running under the project name we pin. */
 const adoptedRows = () =>
   [
-    row("openship-postgres-1", PROJECT, RAW_COMPOSE, "postgres"),
-    row("openship-api-1", PROJECT, RAW_COMPOSE, "api"),
+    row("kovalio-postgres-1", PROJECT, RAW_COMPOSE, "postgres"),
+    row("kovalio-api-1", PROJECT, RAW_COMPOSE, "api"),
     row("unrelated-app", "other", "/srv/other/compose.yml", "web"),
   ].join("\n");
 
@@ -142,14 +142,14 @@ describe("adoptedStackOrigin", () => {
     expect(adoptedStackOrigin(adoptedRows(), PROJECT)).toEqual({
       project: PROJECT,
       configFiles: RAW_COMPOSE,
-      apiContainer: "openship-api-1",
+      apiContainer: "kovalio-api-1",
     });
   });
 
   it("is null when the stack is ours (compose relabels what it adopts)", () => {
     const rows = [
-      row("openship-postgres-1", PROJECT, OURS, "postgres"),
-      row("openship-api-1", PROJECT, OURS, "api"),
+      row("kovalio-postgres-1", PROJECT, OURS, "postgres"),
+      row("kovalio-api-1", PROJECT, OURS, "api"),
     ].join("\n");
     expect(adoptedStackOrigin(rows, PROJECT)).toBeNull();
   });
@@ -158,8 +158,8 @@ describe("adoptedStackOrigin", () => {
     // `up` recreates services one at a time; if any container already carries our
     // config_files label, this install is one we created and the backup advice applies.
     const rows = [
-      row("openship-postgres-1", PROJECT, RAW_COMPOSE, "postgres"),
-      row("openship-api-1", PROJECT, OURS, "api"),
+      row("kovalio-postgres-1", PROJECT, RAW_COMPOSE, "postgres"),
+      row("kovalio-api-1", PROJECT, OURS, "api"),
     ].join("\n");
     expect(adoptedStackOrigin(rows, PROJECT)).toBeNull();
   });
@@ -173,15 +173,15 @@ describe("adoptedStackOrigin", () => {
     // A label-less `docker run` stack, or an older compose that didn't set the label:
     // there is still an api container to read, and its name is derivable.
     const out = adoptedStackOrigin(row("something", PROJECT, ""), PROJECT);
-    expect(out).toEqual({ project: PROJECT, configFiles: "", apiContainer: "openship-api-1" });
+    expect(out).toEqual({ project: PROJECT, configFiles: "", apiContainer: "kovalio-api-1" });
   });
 
   it("ignores containers belonging to other projects when picking the api", () => {
     const rows = [
       row("other-api-1", "other", "/srv/other.yml", "api"),
-      row("openship-api-1", PROJECT, RAW_COMPOSE, "api"),
+      row("kovalio-api-1", PROJECT, RAW_COMPOSE, "api"),
     ].join("\n");
-    expect(adoptedStackOrigin(rows, PROJECT)?.apiContainer).toBe("openship-api-1");
+    expect(adoptedStackOrigin(rows, PROJECT)?.apiContainer).toBe("kovalio-api-1");
   });
 });
 
@@ -226,7 +226,7 @@ describe("renderSecretRotationRefusal — a stack we did NOT create", () => {
 
   it("reads the missing keys out of the api container's own environment", () => {
     const msg = renderSecretRotationRefusal(ROTATION);
-    expect(msg).toContain("docker inspect openship-api-1");
+    expect(msg).toContain("docker inspect kovalio-api-1");
     expect(msg).toContain("{{range .Config.Env}}{{println .}}{{end}}");
     // Exactly the keys that are missing — not a fixed list that could drift from the gate.
     expect(msg).toContain("grep -E '^(POSTGRES_PASSWORD|BETTER_AUTH_SECRET)='");
@@ -244,7 +244,7 @@ describe("renderSecretRotationRefusal — a stack we did NOT create", () => {
 
   it("frames --reset-secrets as the destructive last resort, not an option", () => {
     const msg = renderSecretRotationRefusal(ROTATION);
-    expect(msg).toContain("openship up --reset-secrets");
+    expect(msg).toContain("kovalio up --reset-secrets");
     expect(msg).toContain("DESTROYS");
     expect(msg).toContain("permanently unreadable");
   });
@@ -252,15 +252,15 @@ describe("renderSecretRotationRefusal — a stack we did NOT create", () => {
   it("wins over a stale .env.bak — the backup cannot hold this stack's secrets", () => {
     h.existing.add(composePaths.envBackup);
     const msg = renderSecretRotationRefusal(ROTATION);
-    expect(msg).toContain("docker inspect openship-api-1");
+    expect(msg).toContain("docker inspect kovalio-api-1");
     expect(msg).not.toContain(`cp ${composePaths.envBackup}`);
   });
 
   it("says so even when the container carries no compose labels at all", () => {
-    h.psAll = row("openship-api-1", PROJECT, "");
+    h.psAll = row("kovalio-api-1", PROJECT, "");
     const msg = renderSecretRotationRefusal(ROTATION);
     expect(msg).toContain("an unlabelled `docker run`");
-    expect(msg).toContain("docker inspect openship-api-1");
+    expect(msg).toContain("docker inspect kovalio-api-1");
   });
 });
 
@@ -300,7 +300,7 @@ describe("composeUp — the adopted stack refusal, end to end", () => {
 
     const msg = err.mock.calls.map((c) => c.join(" ")).join("\n");
     expect(msg).toContain(RAW_COMPOSE);
-    expect(msg).toContain("docker inspect openship-api-1");
+    expect(msg).toContain("docker inspect kovalio-api-1");
     expect(msg).not.toContain("from a backup");
     err.mockRestore();
   });

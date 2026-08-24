@@ -13,7 +13,7 @@ const { buildCommand, parseHttp, statusIsServed } = __staticProbeInternals;
  */
 
 describe("buildCommand", () => {
-  const P = "/opt/openship/static/releases/dep_1";
+  const P = "/opt/kovalio/static/releases/dep_1";
 
   it("always emits the two filesystem markers", () => {
     const cmd = buildCommand(P);
@@ -113,7 +113,7 @@ describe("statusIsServed", () => {
     // `outputFindingIsBroken` no longer lets a redirect override the filesystem
     // verdict. Both halves are asserted where they live; this pins the boundary.
     expect(statusIsServed(301)).toBe(true);
-    expect(buildCommand("/opt/openship/static/releases/dep_1", { hostname: "shop.example" })).toContain(
+    expect(buildCommand("/opt/kovalio/static/releases/dep_1", { hostname: "shop.example" })).toContain(
       "X-Forwarded-Proto: https",
     );
   });

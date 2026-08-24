@@ -21,7 +21,7 @@
  *
  *   - The image→kind table was duplicated between the producers and the dialog, and
  *     the dialog's copy was labelled "display-only … drift here is cosmetic". It was
- *     not: [#611](https://github.com/oblien/openship/issues/611) is an operator
+ *     not: [#611](https://github.com/Nextrium/kovalio/issues/611) is an operator
  *     reading *"Detected PostgreSQL — Auto backs it up with pg_dump"* while the run
  *     silently took a volume snapshot of nothing. That copy was consolidated into
  *     `backup-image-detect.ts`; the TABLE now lives here and that module is the

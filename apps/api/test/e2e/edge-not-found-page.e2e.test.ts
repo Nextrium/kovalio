@@ -60,8 +60,8 @@ const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const CLAIMED_HOST = "box.example.com";
 /** A hostname nothing on the box knows: the case the page exists for. */
 const UNROUTED_HOST = "nope.example";
-const TOKEN = "openship-e2e-token";
-const CERT_CN = "openship-edge-default";
+const TOKEN = "kovalio-e2e-token";
+const CERT_CN = "kovalio-edge-default";
 
 const PLACEHOLDER_SUBJ = `/CN=${CERT_CN}`;
 const { certPath, keyPath } = edgeDefaultCertPaths(OPENRESTY_DEFAULT_PATHS.confDir);
@@ -71,7 +71,7 @@ const CONF_PATH = `${OPENRESTY_DEFAULT_PATHS.confDir}/nginx.conf`;
 
 /**
  * A stock `http {}` envelope for the BARE edge's files. A bare box's own
- * `nginx.conf` is its distribution's; what Openship writes there is
+ * `nginx.conf` is its distribution's; what Kovalio writes there is
  * `sites-enabled/*.conf`, and that is what this test is for.
  */
 const BARE_ENVELOPE = `
@@ -114,7 +114,7 @@ async function edgeBaseImage(): Promise<string> {
  * write the key to a file for the same reason.
  */
 async function placeholderCert(): Promise<{ cert: string; key: string }> {
-  const dir = await mkdtemp(join(tmpdir(), "openship-edge-cert-"));
+  const dir = await mkdtemp(join(tmpdir(), "kovalio-edge-cert-"));
   try {
     const certFile = join(dir, "cert.pem");
     const keyFile = join(dir, "key.pem");

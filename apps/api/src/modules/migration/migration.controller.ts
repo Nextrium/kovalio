@@ -1,6 +1,6 @@
 /**
  * Docker migration controller — inspect an existing Docker deployment on a
- * server so it can be adopted as an Openship project.
+ * server so it can be adopted as an Kovalio project.
  *
  * Self-hosted only (mounted behind `localOnly`): inspection requires SSH into
  * a user's own server, which cloud mode has no notion of. Mirrors the mail
@@ -22,7 +22,7 @@ import {
   type DiscoveredStack,
   type DiscoveredService,
 } from "./docker-inspect.service";
-import { adoptServerStack, reimportOpenshipProject, parseRepoCompose } from "./migrate.service";
+import { adoptServerStack, reimportKovalioProject, parseRepoCompose } from "./migrate.service";
 import {
   assertProjectMovable,
   ProjectMoveRefused,
@@ -53,7 +53,7 @@ const TERMINAL_MIGRATION = ["succeeded", "failed", "rolled_back"];
 /**
  * #336: mask the live `env` read off running containers before it leaves the
  * server-scan API. `services` is a flat view of the same objects nested in
- * `groups` / `openshipProjects`, so each array is masked into its own copy. The
+ * `groups` / `kovalioProjects`, so each array is masked into its own copy. The
  * adopt path re-discovers server-side (server truth), so masking the RESPONSE
  * doesn't affect what actually gets persisted. Typed against the real shapes so
  * a field rename fails to compile instead of silently un-masking.
@@ -66,7 +66,7 @@ function maskDiscoveredStack(stack: DiscoveredStack): DiscoveredStack {
     ...stack,
     services: stack.services.map(maskDiscoveredEnv),
     groups: stack.groups.map((g) => ({ ...g, services: g.services.map(maskDiscoveredEnv) })),
-    openshipProjects: stack.openshipProjects.map((g) => ({
+    kovalioProjects: stack.kovalioProjects.map((g) => ({
       ...g,
       services: g.services.map(maskDiscoveredEnv),
     })),
@@ -227,7 +227,7 @@ export async function revealServiceEnv(c: Context) {
 /**
  * POST /migration/adopt  { serverId, projectName, serviceNames[] }
  *
- * Create an Openship `services` project from the selected discovered services.
+ * Create an Kovalio `services` project from the selected discovered services.
  * Re-discovers server-side (server truth, not client-sent config). Records only
  * — reuses the existing named volumes in place; deploy + cutover is separate.
  */
@@ -287,7 +287,7 @@ export async function adoptServer(c: Context) {
 /**
  * POST /migration/reimport  { serverId, projectId, projectName?, serviceNames? }
  *
- * Recover an ORPHANED Openship project (DR / cross-instance) from a server,
+ * Recover an ORPHANED Kovalio project (DR / cross-instance) from a server,
  * preserving its original id so the running containers re-attach. Records only —
  * the user redeploys from the project to finalize. `organizationId` comes from
  * the request context, never from server-supplied data.
@@ -314,7 +314,7 @@ export async function reimportServer(c: Context) {
   }
 
   try {
-    const result = await reimportOpenshipProject({
+    const result = await reimportKovalioProject({
       serverId,
       organizationId: ctx.organizationId,
       projectId: projectId.trim(),
@@ -521,7 +521,7 @@ async function assertProjectMoveAllowed(
  * POST /migration/project  { projectId, targetServerId, transferMode?, transferCompression?,
  *                            conflictResolution?, customPaths? }
  *
- * Move a project Openship already owns onto another server. Same pipeline, same run row and
+ * Move a project Kovalio already owns onto another server. Same pipeline, same run row and
  * same `{ migrationId, confirmationToken }` contract as `/migrate`, so the client opens the
  * existing run panel by id and confirms the cutover the existing way.
  *

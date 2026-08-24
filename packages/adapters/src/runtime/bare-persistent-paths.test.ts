@@ -50,7 +50,7 @@ function config(volumes: string[]): DeployConfig {
   } as unknown as DeployConfig;
 }
 
-const WORK = "/opt/openship";
+const WORK = "/opt/kovalio";
 const RELEASE = `${WORK}/proj_1`;
 const SHARED = `${WORK}/shared/proj_1`;
 

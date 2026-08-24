@@ -7,7 +7,7 @@ import { organization } from "./organization";
 /**
  * Organization-scoped third-party credentials — one table for every provider.
  *
- * Openship holds other people's secrets for unrelated jobs (write a DNS record, pull a
+ * Kovalio holds other people's secrets for unrelated jobs (write a DNS record, pull a
  * private image, later push a backup), and each job had grown its own storage: a single
  * token column on `dns_credential`, five encrypted columns inlined on a backup
  * destination, a channel's own on notifications. Same `enc1:` envelope, three shapes,
@@ -23,7 +23,7 @@ import { organization } from "./organization";
  * which are readable, so adding a provider touches a registry entry and a verify
  * function — never this table.
  *
- * NOT for `personal_access_token`: those are INBOUND (authenticating TO Openship), with
+ * NOT for `personal_access_token`: those are INBOUND (authenticating TO Kovalio), with
  * different scoping and revocation. Same word "token", opposite direction.
  */
 export const credential = pgTable(

@@ -5,7 +5,7 @@
  *
  * Resolution order (mirrors readLua's disk-first/embedded-fallback in
  * openresty-lua.ts): remote pinned catalog → embedded fallback. A dev dir
- * override (OPENSHIP_MODULE_CATALOG_DIR) is still signature-checked.
+ * override (KOVALIO_MODULE_CATALOG_DIR) is still signature-checked.
  *
  * Fetching happens HOST-SIDE (the API/orchestrator has Node + the baked pubkey);
  * we push already-verified bytes down to the target server. Fetch hardening
@@ -25,9 +25,9 @@ import { EMBEDDED_CATALOG } from "./catalog-embedded";
 
 /** Pinned catalog coordinates, baked at build time; env overrides for dev/ops. */
 const CATALOG_BASE_URL =
-  process.env.OPENSHIP_MODULE_CATALOG_BASE_URL?.trim() ||
-  "https://raw.githubusercontent.com/openship/native-modules";
-const CATALOG_REF = process.env.OPENSHIP_MODULE_CATALOG_REF?.trim() || "main";
+  process.env.KOVALIO_MODULE_CATALOG_BASE_URL?.trim() ||
+  "https://raw.githubusercontent.com/kovalio/native-modules";
+const CATALOG_REF = process.env.KOVALIO_MODULE_CATALOG_REF?.trim() || "main";
 
 export interface CatalogLoadResult {
   catalog?: VerifiedCatalog;

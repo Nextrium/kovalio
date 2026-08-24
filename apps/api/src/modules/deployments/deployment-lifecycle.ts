@@ -846,7 +846,7 @@ export async function onSuccess(
     void detectAndStoreFavicon(project.id, result.url);
   }
 
-  // Webmail on Openship Cloud, routed on the mail server's own `mail.<domain>`:
+  // Webmail on Kovalio Cloud, routed on the mail server's own `mail.<domain>`:
   // the mail VPS proxies that hostname to the cloud URL, which can only be
   // registered once the URL exists. Returns immediately for every other deploy.
   void onWebmailDeployed(project, result.url);

@@ -36,7 +36,7 @@ describe("checkEdge", () => {
     // edge is serving fine.
     const status = await checkEdge(
       host([
-        ["docker ps --filter name=openship-edge", "openship-edge"],
+        ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
         EDGE_RUNNING,
         PORT_80_LISTENING,
         ["openresty -v", "nginx version: openresty/1.27.1.1"],
@@ -50,14 +50,14 @@ describe("checkEdge", () => {
   it("flags an unresponsive edge container that is nonetheless serving :80", async () => {
     const status = await checkEdge(
       host([
-        ["docker ps --filter name=openship-edge", "openship-edge"],
+        ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
         EDGE_RUNNING,
         PORT_80_LISTENING,
       ]),
     );
 
     expect(status.healthy).toBe(false);
-    expect(status.message).toMatch(/docker logs openship-edge/);
+    expect(status.message).toMatch(/docker logs kovalio-edge/);
   });
 
   // ── The bug this check existed to miss ──
@@ -71,7 +71,7 @@ describe("checkEdge", () => {
   it("is NOT healthy for a crash-looping edge, even when it answers a version probe", async () => {
     const status = await checkEdge(
       host([
-        ["docker ps --filter name=openship-edge", "openship-edge"],
+        ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
         ["docker inspect", "restarting"],
         ["openresty -v", "nginx version: openresty/1.27.1.1"],
         ["docker logs", "2026/08/04 nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)"],
@@ -88,7 +88,7 @@ describe("checkEdge", () => {
   it("is NOT healthy when the container is up but nothing is listening on :80", async () => {
     const status = await checkEdge(
       host([
-        ["docker ps --filter name=openship-edge", "openship-edge"],
+        ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
         EDGE_RUNNING,
       ]),
     );
@@ -109,14 +109,14 @@ describe("checkEdge", () => {
     );
 
     expect(status.healthy).toBe(false);
-    expect(status.message).toMatch(/openship-edge container/);
+    expect(status.message).toMatch(/kovalio-edge container/);
   });
 
   it("reports missing on a box with neither, pointing at the container install", async () => {
     const status = await checkEdge(host([]));
     expect(status.healthy).toBe(false);
     expect(status.name).toBe("edge");
-    expect(status.message).toMatch(/openship-edge container/);
+    expect(status.message).toMatch(/kovalio-edge container/);
   });
 });
 
@@ -129,7 +129,7 @@ describe("uninstallEdge on a container edge", () => {
     const exec = vi.fn(async (cmd: string) => {
       cmds.push(cmd);
       if (cmd.includes("opsh_begin")) return probeOutput();
-      if (cmd.startsWith("docker ps --filter name=openship-edge")) return "openship-edge";
+      if (cmd.startsWith("docker ps --filter name=kovalio-edge")) return "kovalio-edge";
       return "";
     });
 
@@ -139,7 +139,7 @@ describe("uninstallEdge on a container edge", () => {
     );
 
     expect(result.success).toBe(true);
-    expect(cmds.some((c) => c.includes("docker rm -f 'openship-edge'"))).toBe(true);
+    expect(cmds.some((c) => c.includes("docker rm -f 'kovalio-edge'"))).toBe(true);
     // Restart policy cleared first, or the daemon brings it right back.
     expect(cmds.some((c) => c.includes("docker update --restart=no"))).toBe(true);
     expect(cmds.some((c) => c.includes("pkill"))).toBe(false);

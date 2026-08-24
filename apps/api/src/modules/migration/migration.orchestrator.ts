@@ -1,7 +1,7 @@
 /**
  * MigrationOrchestrator — drives a full Docker migration:
  *
- *   adopt  → create the Openship `services` project from the selected stack
+ *   adopt  → create the Kovalio `services` project from the selected stack
  *   moving_data → quiesce (stop) the originals on the source; for a
  *                 cross-server move, stream each named volume AND app-data bind
  *                 mount A→B directly
@@ -16,12 +16,12 @@
  *                 live standby. Same-server keep leaves them stopped (the target
  *                 now holds their ports/volumes).
  *   cutover → stop + remove the originals on the source (by scanned container
- *             id — they carry no openship.* labels). Never removes A volumes.
+ *             id — they carry no kovalio.* labels). Never removes A volumes.
  *   rolled_back → any pre-cutover failure: tear down the target deployment and
  *                 restart the originals on the source. Never destroys A.
  *
  * A dedicated FSM (not the backup/restore orchestrators) because the source has
- * no Openship deployment to resolve an executor from, the target is
+ * no Kovalio deployment to resolve an executor from, the target is
  * container-less pre-deploy, and we require no configured backup destination.
  */
 
@@ -94,7 +94,7 @@ import {
 
 /** Per-service volume ownership for a same-server migration.
  *  "reuse" (default) = seize the original volume in place (zero copy).
- *  "copy" = duplicate data into a new openship-<slug>-<name> volume, leaving the
+ *  "copy" = duplicate data into a new kovalio-<slug>-<name> volume, leaving the
  *  original untouched. Cross-server ignores this (it always copies A→B, keeps A). */
 export type VolumeStrategy = "reuse" | "copy";
 
@@ -211,7 +211,7 @@ export interface StartMigrationInput {
    *  the ambiguous name match. See {@link selectDiscoveredServices}. */
   serviceContainerIds?: string[];
   /** Adopt in flat-docker mode — MUST match the scan the user selected from, or
-   *  openship-labeled containers get treated as managed and "none are found". */
+   *  kovalio-labeled containers get treated as managed and "none are found". */
   flatDocker?: boolean;
   /** Present ⇒ this is a PROJECT MOVE or DUPLICATE (door B), not a scan-and-adopt: the
    *  subject is a project this instance already owns. The workload comes from that
@@ -319,10 +319,10 @@ export interface PendingItem {
  * `ServiceHandle` passed to `listSources()` — NOT null unless we genuinely
  * never scanned one. `listSources()` treats a null containerId as "not
  * deployed yet" and falls back to GUESSING the volume name from
- * `service.volumes` + `namespaceVolumes` (the name OpenShip's OWN deploy
+ * `service.volumes` + `namespaceVolumes` (the name Kovalio's OWN deploy
  * pipeline would assign) — correct for the backup/restore use case
  * `listSources` was built for, but wrong for an adopted source service (e.g.
- * from Coolify), which was never namespaced by OpenShip: the guess doesn't
+ * from Coolify), which was never namespaced by Kovalio: the guess doesn't
  * match any volume that actually exists on the source, and enumeration
  * silently produces a name the source (or target) rejects with "no such
  * volume". Passing the real id makes `listSources` inspect the live
@@ -669,7 +669,7 @@ class MigrationOrchestratorImpl {
     if (selected.length === 0) {
       throw new Error("None of the selected services were found on the server.");
     }
-    // Never adopt the edge proxy (traefik/nginx/… on 80/443) — Openship's
+    // Never adopt the edge proxy (traefik/nginx/… on 80/443) — Kovalio's
     // OpenResty replaces it. Drop it from the workload set and leave it
     // UNTOUCHED (absent from scannedContainerIds, so moveData won't stop it):
     // we never blind-stop the user's proxy. It's reclaimed later — with
@@ -678,14 +678,14 @@ class MigrationOrchestratorImpl {
     let chosen = selected.filter((s) => !s.proxyKind);
     if (chosen.length === 0) {
       throw new Error(
-        "Only a reverse proxy was selected. Openship installs its own edge on 80/443 — pick the app services to migrate instead.",
+        "Only a reverse proxy was selected. Kovalio installs its own edge on 80/443 — pick the app services to migrate instead.",
       );
     }
     // The SAME gate adoptServerStack applies, applied HERE too — this set is not
     // adopt's. It decides `scannedContainerIds`, and moveData's first act is
     // `rtA.stop(cid)` on every id in it. A name-only client cannot tell the user's
     // `postgres` from the control plane's, so without this the run would stop
-    // Openship's own database to copy its volume (#584). Also fails a genuine
+    // Kovalio's own database to copy its volume (#584). Also fails a genuine
     // re-import before any container is touched, rather than after.
     chosen = await excludeAlreadyManaged(chosen, organizationId);
     const blocked = chosen.filter((s) => Boolean(s.build) && !s.image);
@@ -874,7 +874,7 @@ class MigrationOrchestratorImpl {
       // the project network (row name + custom alias) so east-west resolution
       // works exactly as it does for a deployed service. Runs for EVERY attach
       // run, not just ones that also deploy — a pure-reuse project used to end up
-      // with no `openship-<slug>` network at all, so a service added later
+      // with no `kovalio-<slug>` network at all, so a service added later
       // couldn't resolve the reused ones by name. Must precede the build below, so
       // a freshly-built service resolves them from its first start (web →
       // postgres:5432); the deploy's ensureServiceGroup reuses this network.
@@ -1281,7 +1281,7 @@ class MigrationOrchestratorImpl {
   /** Stop originals on the source; then move volume data:
    *   - cross-server: stream every named/app-data source A→B (bare ids match).
    *   - same-server "copy" services: stream each NAMED volume from its original
-   *     bare name into the scoped openship-<slug>-<name> volume on the SAME
+   *     bare name into the scoped kovalio-<slug>-<name> volume on the SAME
    *     daemon, so the deploy mounts the copy and the original is left intact.
    *   - same-server "reuse" services: nothing — the deploy reuses the volume in place.
    *  Returns total bytes written. */
@@ -1304,7 +1304,7 @@ class MigrationOrchestratorImpl {
      * Slug of the project the volumes BELONG TO, when that isn't `projectId`.
      *
      * For a move they are the same. For a DUPLICATE they are not: `projectId` is the copy being
-     * created (`clincai-copy`) while the volumes are the source's (`openship-clincai-*`), so
+     * created (`clincai-copy`) while the volumes are the source's (`kovalio-clincai-*`), so
      * recognising "our own debris on the target" has to key off the SOURCE slug or it silently
      * stops working for exactly the flow that needs it most.
      */
@@ -1516,7 +1516,7 @@ class MigrationOrchestratorImpl {
             namespaceVolumes: false,
           });
           // Scoped dst handle for a "clone"-resolved volume (target volume →
-          // openship-<slug>-<name>); mirrors the same-server copy branch. Lazy —
+          // kovalio-<slug>-<name>); mirrors the same-server copy branch. Lazy —
           // only computed when this service actually has a clone volume.
           const scopedHandle: ServiceHandle = {
             ...handle,
@@ -1800,8 +1800,8 @@ class MigrationOrchestratorImpl {
       /**
        * Is this volume name one OUR deploy of THIS project would produce?
        *
-       * Exact prefix on the project's own slug, never a loose "starts with openship-": a
-       * substring rule would match `openship-clincai-staging-pgdata` while moving `clincai`, and
+       * Exact prefix on the project's own slug, never a loose "starts with kovalio-": a
+       * substring rule would match `kovalio-clincai-staging-pgdata` while moving `clincai`, and
        * a stranger's project is exactly what must never be overwritten. `scopedVolumeName` is the
        * one place that name is formed, so the test is built from it rather than re-spelled.
        *
@@ -1846,7 +1846,7 @@ class MigrationOrchestratorImpl {
         }
         // OUR OWN DEBRIS IS NOT A CONFLICT.
         //
-        // `openship-<slug>-<vol>` is the name OUR deploy gives THIS project's volumes. Finding
+        // `kovalio-<slug>-<vol>` is the name OUR deploy gives THIS project's volumes. Finding
         // one on a server the project doesn't live on means an earlier attempt at this same move
         // wrote it and didn't clean up — and refusing over it left the operator in a loop no
         // retry could break, only `docker volume rm` on the box by hand. Rollback now removes
@@ -2074,7 +2074,7 @@ class MigrationOrchestratorImpl {
    * identity key, its live state, and any duplicate that also claims it.
    *
    * This is the migration's own read-back. A same-server "reuse" run adopts
-   * containers whose `openship.*` labels still name the PREVIOUS project (labels
+   * containers whose `kovalio.*` labels still name the PREVIOUS project (labels
    * are immutable in place), so "did every service actually land?" can't be
    * answered from the DB — only by matching the host. Best-effort, log-only.
    */
@@ -2551,7 +2551,7 @@ class MigrationOrchestratorImpl {
     organizationId: string,
     runTag?: string,
   ): Promise<void> {
-    const pattern = runTag ? `openship-migration-${runTag}` : "openship-migration-";
+    const pattern = runTag ? `kovalio-migration-${runTag}` : "kovalio-migration-";
     const serverIds = [...new Set([sourceServerId, targetServerId].filter(Boolean))] as string[];
     await Promise.all(
       serverIds.map(async (sid) => {
@@ -2605,7 +2605,7 @@ class MigrationOrchestratorImpl {
       if (remainder) this.appendLog(id, `cutover: ${remainder}`);
       // A project move also has to leave the OLD EDGE. Door A never needs this: an
       // adopted stack sat behind the operator's own proxy, which the migration
-      // deliberately never touches. Ours was served by Openship's edge on the source,
+      // deliberately never touches. Ours was served by Kovalio's edge on the source,
       // and destroying a container does not remove the vhost pointing at it — so the old
       // server would keep answering for the project's domains with a 502, which is worse
       // than not answering, and would silently win for as long as DNS still resolves
@@ -2624,7 +2624,7 @@ class MigrationOrchestratorImpl {
       run.sourceServerId !== run.targetServerId &&
       // A PROJECT MOVE's originals stay stopped. For an adopted stack "keep" means the
       // old server becomes a live standby, which is safe because those containers were
-      // never Openship's. Here they ARE this project's: the row now names the target, so
+      // never Kovalio's. Here they ARE this project's: the row now names the target, so
       // restarting them would leave ONE project live on TWO servers — two copies of the
       // same volumes diverging, both still answering for the same domain from the source's
       // edge. Kept-but-stopped is a rollback point; kept-and-running is a split brain.

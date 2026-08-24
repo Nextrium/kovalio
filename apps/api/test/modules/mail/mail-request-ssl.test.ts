@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
  * certificate in the system, and must never shell out to a host `certbot`.
  *
  * It used to run `certbot certonly --standalone` itself, with a comment claiming it
- * was "the same ACME mechanism the rest of openship uses" — it imitated
+ * was "the same ACME mechanism the rest of kovalio uses" — it imitated
  * `NginxProvider.provisionCert` rather than calling it. Two things were wrong:
  * the duplicate could drift, and it ran on the HOST, which broke outright once the
  * edge became a container (certbot lives inside the image; the host has none, and

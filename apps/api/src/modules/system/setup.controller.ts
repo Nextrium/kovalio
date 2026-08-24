@@ -76,7 +76,7 @@ type AuthModeValidation =
  *
  * Zero-auth on a network-reachable instance means anyone who can hit the
  * API can act as admin, so the operator must opt in via the
- * OPENSHIP_ALLOW_ZERO_AUTH env var (deliberate restart) AND echo the
+ * KOVALIO_ALLOW_ZERO_AUTH env var (deliberate restart) AND echo the
  * confirmation phrase in the request body (deliberate click) before we
  * write the value. Desktop deployments bypass the gate — loopback-only
  * Electron is the default zero-auth target.
@@ -92,7 +92,7 @@ function validateAuthModeChange(body: Record<string, unknown>): AuthModeValidati
   }
   const value = raw as AuthMode;
 
-  // A declared mode (OPENSHIP_AUTH_MODE) outranks the DB, so a write that
+  // A declared mode (KOVALIO_AUTH_MODE) outranks the DB, so a write that
   // disagrees with it would persist a value the API will never honour — silent,
   // confusing, and exactly how the desktop ended up with a stored "cloud" it
   // couldn't act on. Refuse instead of writing a lie. Writing the SAME value is
@@ -104,20 +104,20 @@ function validateAuthModeChange(body: Record<string, unknown>): AuthModeValidati
       status: 409,
       body: {
         error:
-          `authMode is pinned to "${pinned}" by OPENSHIP_AUTH_MODE and cannot be changed ` +
+          `authMode is pinned to "${pinned}" by KOVALIO_AUTH_MODE and cannot be changed ` +
           `at runtime. Change that environment variable and restart the API.`,
       },
     };
   }
 
   if (value === "none" && env.DEPLOY_MODE !== "desktop") {
-    if (!env.OPENSHIP_ALLOW_ZERO_AUTH) {
+    if (!env.KOVALIO_ALLOW_ZERO_AUTH) {
       return {
         ok: false,
         status: 403,
         body: {
           error:
-            "Zero-auth toggle disabled. Operator must set OPENSHIP_ALLOW_ZERO_AUTH=true and restart.",
+            "Zero-auth toggle disabled. Operator must set KOVALIO_ALLOW_ZERO_AUTH=true and restart.",
         },
       };
     }
@@ -326,7 +326,7 @@ export async function updateSettings(c: Context) {
   }
   if (body.autoUpdateInfra !== undefined) patch.autoUpdateInfra = Boolean(body.autoUpdateInfra);
   if (body.autoScanInfra !== undefined) patch.autoScanInfra = Boolean(body.autoScanInfra);
-  // Openship Mail. `null` clears the override so OPENSHIP_PRODUCT governs again —
+  // Kovalio Mail. `null` clears the override so KOVALIO_PRODUCT governs again —
   // that's a meaningful state, not an absent field, so it's accepted explicitly.
   if (body.productMode !== undefined) {
     if (body.productMode !== null && !isProductMode(body.productMode)) {
@@ -337,8 +337,8 @@ export async function updateSettings(c: Context) {
     }
     patch.productMode = body.productMode;
   }
-  // Host control (#527): may OpenShip deploy to the machine it runs on? `null`
-  // clears the override so OPENSHIP_HOST_CONTROL governs again — a meaningful
+  // Host control (#527): may Kovalio deploy to the machine it runs on? `null`
+  // clears the override so KOVALIO_HOST_CONTROL governs again — a meaningful
   // state, accepted explicitly like productMode.
   //
   // Unlike every other field here this grants PRIVILEGED behavior (host-root
@@ -377,7 +377,7 @@ export async function updateSettings(c: Context) {
       // Enabled: materialize "This Server" now so it's a target immediately (the
       // GET /servers self-heal would do it eventually, but the toggle should be
       // instant). On Compose the row appears and container deploys work at once;
-      // host-OS ops still refuse with the "re-run `openship up`" advisory until the
+      // host-OS ops still refuse with the "re-run `kovalio up`" advisory until the
       // CLI provisions the channel — the deliberate degrade-and-advise behaviour.
       await ensureLocalServer().catch(() => null);
     } else {
@@ -553,7 +553,7 @@ export async function deleteSettings(c: Context) {
   // The row just dropped held host_control_enabled (#527). Without reconciling here
   // the cached effective value and the pushed adapters override would both survive
   // the delete and keep serving the deleted choice until the next boot — so re-sync
-  // to let the OPENSHIP_HOST_CONTROL env floor govern again.
+  // to let the KOVALIO_HOST_CONTROL env floor govern again.
   clearHostControlCache();
   await syncHostControlOverride().catch(() => {});
   return c.json({ ok: true });
@@ -577,8 +577,8 @@ export async function onboardingStatus(c: Context) {
 /**
  * POST /system/bootstrap-admin — create the FIRST admin from the CLI.
  *
- * How `openship` setup makes a CLI-managed instance without ever using
- * zero-auth: the service boots in local-auth mode (OPENSHIP_REQUIRE_AUTH), and
+ * How `kovalio` setup makes a CLI-managed instance without ever using
+ * zero-auth: the service boots in local-auth mode (KOVALIO_REQUIRE_AUTH), and
  * the CLI — holding the instance's INTERNAL_TOKEN — calls this to mint the
  * initial email/password admin. It reuses the exact account-creation the
  * desktop onboarding uses (ensureLocalUser → credential account → authMode
@@ -620,8 +620,8 @@ export async function bootstrapAdmin(c: Context) {
     return c.json(
       {
         error:
-          `authMode is pinned to "${pinned}" by OPENSHIP_AUTH_MODE, so creating a ` +
-          `password admin would have no effect. Set OPENSHIP_AUTH_MODE=local and restart first.`,
+          `authMode is pinned to "${pinned}" by KOVALIO_AUTH_MODE, so creating a ` +
+          `password admin would have no effect. Set KOVALIO_AUTH_MODE=local and restart first.`,
       },
       409,
     );
@@ -661,7 +661,7 @@ export async function bootstrapAdmin(c: Context) {
   // Register "This Server" NOW that a founding admin exists. The boot hook already
   // ran and bailed for want of one (the API comes up before the CLI calls this), and
   // nothing else re-runs it — so without this a freshly installed box showed
-  // "No servers yet" until the API happened to restart, even though Openship itself
+  // "No servers yet" until the API happened to restart, even though Kovalio itself
   // was listed under Apps. Best-effort: a failure here must not fail the bootstrap,
   // since the boot hook will still catch it on the next restart.
   await ensureLocalServer().catch((err) =>
@@ -704,7 +704,7 @@ export async function resetAdminPassword(c: Context) {
   // multi-user box the reset never lands on an arbitrary member row.
   const admin = await repos.user.findFoundingAdmin();
   if (!admin) {
-    return c.json({ error: "No admin account exists yet — run `openship` to create one." }, 409);
+    return c.json({ error: "No admin account exists yet — run `kovalio` to create one." }, 409);
   }
 
   const email =
@@ -872,7 +872,7 @@ export async function inviteSignup(c: Context) {
  *   3. Insert a credential-provider account row with the hashed
  *      password (Better Auth's own hasher).
  *   4. If `useOwnMailServer === true` and a provisioned mail server
- *      exists, ensureOpenshipPlatformMailbox(serverId) so the platform
+ *      exists, ensureKovalioPlatformMailbox(serverId) so the platform
  *      transport is ready for the new login emails.
  *   5. Flip instanceSettings.authMode "none" → "local" (audit row).
  *   6. Mint a Better Auth session and stamp the response cookie so the
@@ -986,10 +986,10 @@ export async function upgradeToAuth(c: Context) {
       const mailServers = await repos.mailServer.list();
       const installed = mailServers.find((m) => m.installedAt != null);
       if (installed) {
-        const { ensureOpenshipPlatformMailbox } = await import(
+        const { ensureKovalioPlatformMailbox } = await import(
           "../mail/admin/platform-mailbox.service"
         );
-        await ensureOpenshipPlatformMailbox(installed.serverId);
+        await ensureKovalioPlatformMailbox(installed.serverId);
         invalidatePlatformTransportCache();
       }
     } catch (err) {

@@ -23,16 +23,16 @@ describe("mail backup plan targets the right topology", () => {
     // Nothing may assume a host-side postgres or vmail user.
     expect(produce).not.toContain("sudo -u postgres");
     expect(restore).not.toContain("sudo -u postgres");
-    expect(produce).toContain("docker exec openship-mail-db pg_dump -U postgres");
+    expect(produce).toContain("docker exec kovalio-mail-db pg_dump -U postgres");
 
     // The dump file is staged in the producer's $tmp ON THE HOST, which the sidecar
     // cannot see - so the replay must arrive over stdin, and docker exec needs -i.
-    expect(restore).toContain("docker exec -i openship-mail-db psql -U postgres");
+    expect(restore).toContain("docker exec -i kovalio-mail-db psql -U postgres");
     expect(restore).not.toMatch(/psql[^\n]*-f "\$tmp/);
 
     // Ownership must be applied where the vmail user exists: the ENGINE, not the sidecar,
     // and not the host.
-    expect(restore).toContain("docker exec openship-mail chown -R vmail:vmail /var/vmail/vmail1");
+    expect(restore).toContain("docker exec kovalio-mail chown -R vmail:vmail /var/vmail/vmail1");
     // ...and a failure there must not be swallowed - root-owned maildirs are unreadable.
     expect(restore).not.toMatch(/chown -R vmail:vmail [^\n]*\|\| true/);
 

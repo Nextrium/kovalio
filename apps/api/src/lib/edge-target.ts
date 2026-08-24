@@ -5,7 +5,7 @@ import { getInstanceReachability } from "./public-url";
 import { isIpLiteral, resolveInstancePublicIp, resolveLocalServerHost } from "./server-target";
 
 /**
- * The host Openship Cloud's shared edge (Oblien) dials for a free `<slug>.opsh.io`
+ * The host Kovalio Cloud's shared edge (Oblien) dials for a free `<slug>.opsh.io`
  * route — it must be a PUBLIC address reachable from the internet on :80, never a
  * loopback/private one.
  *
@@ -35,19 +35,19 @@ export interface EdgeTargetResult {
 }
 
 const NO_PUBLIC_HOST =
-  "this server has no public address Openship Cloud can reach — set OPENSHIP_PUBLIC_URL or SERVER_IP";
+  "this server has no public address Kovalio Cloud can reach — set KOVALIO_PUBLIC_URL or SERVER_IP";
 
 /** Why a `.opsh.io` target is refused. `fix` differs by source: the instance's own
  *  address comes from env, a server row's comes from the row. */
 const cloudEdgeTargetReason = (address: string, fix: string) =>
-  `"${address}" is a ${SYSTEM.DOMAINS.CLOUD_DOMAIN} hostname, which IS the Openship Cloud edge — ` +
+  `"${address}" is a ${SYSTEM.DOMAINS.CLOUD_DOMAIN} hostname, which IS the Kovalio Cloud edge — ` +
   `proxying there would loop back to the edge instead of reaching the box. ${fix}`;
 
 const CLOUD_EDGE_FIX_INSTANCE = "Set SERVER_IP to this server's own public IP.";
 const CLOUD_EDGE_FIX_SERVER = "Correct the server's address in Settings → Servers.";
 
 /**
- * Is this host the Openship Cloud edge itself (`*.opsh.io`)?
+ * Is this host the Kovalio Cloud edge itself (`*.opsh.io`)?
  *
  * A Cloud hostname is perfectly public — `isNonPublicHost` rightly says so — but it
  * is never a valid edge TARGET: Oblien terminates `<slug>.opsh.io` and forwards to
@@ -56,7 +56,7 @@ const CLOUD_EDGE_FIX_SERVER = "Correct the server's address in Settings → Serv
  * loopback guard never caught it.
  *
  * It happens on the normal path, not an exotic one: a free-domain install sets the
- * box's `OPENSHIP_PUBLIC_URL` to `https://<slug>.opsh.io`, and that env var is the
+ * box's `KOVALIO_PUBLIC_URL` to `https://<slug>.opsh.io`, and that env var is the
  * first candidate the target resolver reads.
  */
 export function isCloudEdgeHost(value: string): boolean {
@@ -70,7 +70,7 @@ export function isCloudEdgeHost(value: string): boolean {
 }
 
 /**
- * THE target string. Openship Cloud keys a target verification on a normalized
+ * THE target string. Kovalio Cloud keys a target verification on a normalized
  * `scheme://host:port`, and it must be byte-comparable with the string we later
  * route — verifying `http://1.2.3.4` and routing `1.2.3.4:8080` is a permanent
  * `target_unverified` that looks like a Cloud-side bug from here.
@@ -191,7 +191,7 @@ function usableTargets(candidates: readonly Candidate[]): string[] {
  */
 const hostnameTargetWarning = (host: string, fix: string) =>
   `routed by name ("${host}") rather than by IP. That serves fine while the name resolves to this ` +
-  `server on port 80, but Openship Cloud's edge re-resolves it per request, so putting a CDN/proxy in ` +
+  `server on port 80, but Kovalio Cloud's edge re-resolves it per request, so putting a CDN/proxy in ` +
   `front of it — or an https redirect on it — would stop the free URL reaching this app. ${fix}`;
 
 const HOSTNAME_FIX_INSTANCE = "Set SERVER_IP to this server's public IP to pin it.";
@@ -235,7 +235,7 @@ async function resolveInstanceEdgeIp(organizationId: string): Promise<string | n
  *   INSTANCE's own public address — never the display `sshHost`.
  *
  * For the instance, DECLARED beats GUESSED, and an IP breaks the tie among equals:
- *   1. a declared IP   — `preferHost` / OPENSHIP_PUBLIC_URL / SERVER_IP
+ *   1. a declared IP   — `preferHost` / KOVALIO_PUBLIC_URL / SERVER_IP
  *   2. a declared name  — the same three, then the verified self-app domain /
  *                         HOST_DOMAIN. Serves fine; carries a `warning` saying the
  *                         edge resolves it per request.
@@ -279,7 +279,7 @@ export async function resolveEdgeTargetHost(
   // first must not cost a self-app read. Both stages are named arrays and the
   // failure reason below reads those same arrays, so a source added here is
   // automatically considered there; spelling the list out twice is how they drift.
-  const envCandidates: readonly Candidate[] = [preferHost, env.OPENSHIP_PUBLIC_URL, env.SERVER_IP];
+  const envCandidates: readonly Candidate[] = [preferHost, env.KOVALIO_PUBLIC_URL, env.SERVER_IP];
   const envUsable = usableTargets(envCandidates);
 
   // 1. A DECLARED IP wins outright — the operator stated this box's address.
@@ -306,7 +306,7 @@ export async function resolveEdgeTargetHost(
 
   // Distinguish "no address at all" from "the only address we have is the Cloud
   // edge". Both leave the free URL unwired, but the fixes are different, and a
-  // free-domain install hits the second case with OPENSHIP_PUBLIC_URL set — where
+  // free-domain install hits the second case with KOVALIO_PUBLIC_URL set — where
   // "no public address" would read as flatly wrong.
   const looped = [...envCandidates, ...reachCandidates].find((c) => isCloudEdgeHost(c ?? ""));
   return {

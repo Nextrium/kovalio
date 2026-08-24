@@ -99,7 +99,7 @@ describe("getNavSections (the platform rail)", () => {
   });
 });
 
-describe("getMailNavSections (the Openship Mail rail)", () => {
+describe("getMailNavSections (the Kovalio Mail rail)", () => {
   it("shows one entry pointing at the real route before the list loads", () => {
     const mail = find(mailAt({ loaded: false }), "mail");
     expect(keysOf(mail)).toEqual(["emails"]);

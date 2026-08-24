@@ -2,7 +2,7 @@
  * Which product SHELL the dashboard draws for THIS user, this request.
  *
  *   "platform" → the full deploy platform rail (Projects, Apps, Deployments, …)
- *   "mail"     → Openship Mail: the rail becomes the mail control plane
+ *   "mail"     → Kovalio Mail: the rail becomes the mail control plane
  *
  * Two inputs, resolved server-side so the very first painted HTML is already the
  * right rail:
@@ -23,18 +23,18 @@ export const PRODUCT_VIEWS = ["platform", "mail"] as const;
 export type ProductView = (typeof PRODUCT_VIEWS)[number];
 
 /** Cookie name, 1-year `lax` like LOCALE_COOKIE (`src/i18n/index.ts`). Mirrored
- *  onto `x-openship-product-view` by src/proxy.ts, because `cookies()` can come
+ *  onto `x-kovalio-product-view` by src/proxy.ts, because `cookies()` can come
  *  back empty in the SSR render path. */
-export const PRODUCT_VIEW_COOKIE = "openship-product-view";
+export const PRODUCT_VIEW_COOKIE = "kovalio-product-view";
 
-export const PRODUCT_VIEW_HEADER = "x-openship-product-view";
+export const PRODUCT_VIEW_HEADER = "x-kovalio-product-view";
 
 export function isProductView(value: unknown): value is ProductView {
   return PRODUCT_VIEWS.includes(value as ProductView);
 }
 
 /**
- * The product name to show in chrome: "OpenShip" or "OpenShip Mail". "Mail" is a
+ * The product name to show in chrome: "Kovalio" or "Kovalio Mail". "Mail" is a
  * product suffix, not a translatable word (cf. Google Mail / Yahoo Mail), so it's
  * appended to the single `brand` string rather than forked across 9 dictionaries.
  *

@@ -149,7 +149,7 @@ describe("generateDockerfile — non-PHP is unaffected", () => {
 // package.json script says the same. `npm run` / `bun run` resolve those by
 // prepending node_modules/.bin; a Dockerfile RUN and a container CMD do not, so
 // the recipe has to. Without this the docker build strategy failed 100% of
-// Next+Bun deploys with `next: not found`, exit 127 (openship#623).
+// Next+Bun deploys with `next: not found`, exit 127 (kovalio#623).
 describe("generateDockerfile — node_modules/.bin on PATH (#623)", () => {
   const bunNext = (over: Partial<BuildConfig> = {}) =>
     config({

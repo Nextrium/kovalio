@@ -90,7 +90,7 @@ export class BuildLogger {
  * exec API, docker exec) behind this interface.
  */
 export interface BuildEnvironment {
-  /** The working directory where the project is cloned (e.g. "/app", "/tmp/openship/proj-id") */
+  /** The working directory where the project is cloned (e.g. "/app", "/tmp/kovalio/proj-id") */
   readonly projectDir: string;
 
   /** When true, env vars are set at the container/workspace level - pipeline skips shell export prefix. */
@@ -349,7 +349,7 @@ export async function runBuildPipeline(
     // Both the build dir and the repo root are added (monorepos hoist deps up).
     // Shared with the Dockerfile generator, which needs the same PATH for the
     // same reason — deriving it twice is how the two surfaces drifted apart and
-    // left the docker build strategy failing at exit 127 (openship#623).
+    // left the docker build strategy failing at exit 127 (kovalio#623).
     const binPathExport = nodeBinPathExport(config.packageManager, [buildDir, env.projectDir]);
 
     const inDir = (cmd: string) => {

@@ -141,11 +141,11 @@ describe("buildCompositeRegistration — static frontend served from disk", () =
       services: [web, api],
       resolveTargetUrl: (id) => targets[id] ?? null,
       resolveDomain: () => domain,
-      resolveStaticRoot: (id) => (id === "web" ? "/opt/openship/static/proj/web" : null),
+      resolveStaticRoot: (id) => (id === "web" ? "/opt/kovalio/static/proj/web" : null),
     });
     // One vhost: files at `/`, backend proxied at the prefix. No frontend upstream,
     // so no container and no port for the static app.
-    expect(reg?.register.staticRoot).toBe("/opt/openship/static/proj/web");
+    expect(reg?.register.staticRoot).toBe("/opt/kovalio/static/proj/web");
     expect(reg?.register.targetUrl).toBeUndefined();
     expect(reg?.register.proxyLocations).toEqual([
       { pathPrefix: "/api/", targetUrl: "http://10.0.0.5:3000" },
@@ -159,7 +159,7 @@ describe("buildCompositeRegistration — static frontend served from disk", () =
       services: [web, api],
       resolveTargetUrl: (id) => (id === "api" ? targets.api : null),
       resolveDomain: () => domain,
-      resolveStaticRoot: (id) => (id === "web" ? "/opt/openship/static/proj/web" : null),
+      resolveStaticRoot: (id) => (id === "web" ? "/opt/kovalio/static/proj/web" : null),
     });
     expect(reg).not.toBeNull();
   });
@@ -182,7 +182,7 @@ describe("buildCompositeRegistration — static frontend served from disk", () =
       services: [web, api],
       resolveTargetUrl: () => null,
       resolveDomain: () => domain,
-      resolveStaticRoot: (id) => (id === "web" ? "/opt/openship/static/proj/web" : null),
+      resolveStaticRoot: (id) => (id === "web" ? "/opt/kovalio/static/proj/web" : null),
     });
     expect(reg).toBeNull();
   });

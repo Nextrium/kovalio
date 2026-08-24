@@ -26,7 +26,7 @@ vi.mock("./runtime/bare", () => ({ BareRuntime: class {} }));
  * the bare gate — by design, so a Mac running the compose stack keeps its edge — and
  * `resolveOurEdgeContainer` takes a real `LocalExecutor` here, meaning it shells out
  * to the DEVELOPER'S docker. On any machine that happens to be running
- * `openship-edge` (i.e. anyone dogfooding Openship) the container branch won.
+ * `kovalio-edge` (i.e. anyone dogfooding Kovalio) the container branch won.
  * Stubbing it is what makes this a test of the bare gate rather than of the host.
  */
 vi.mock("./system/proxy/detect", async (importOriginal) => ({

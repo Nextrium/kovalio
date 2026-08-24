@@ -19,7 +19,7 @@ import { listProviderCredentials } from "../credentials/credential.service";
 import {
   DnsApiError,
   DnsProviderNotReadyError,
-  isOpenshipManaged,
+  isKovalioManaged,
   type DnsProvider,
   type DnsProviderName,
   type DnsRecordInput,
@@ -148,7 +148,7 @@ export async function resolveDnsManager(
   hostname: string,
 ): Promise<DnsManagerLookup> {
   // The generic credential store is the single source of truth: `dns_credential` was one
-  // of three places Openship kept a third-party secret, each with its own shape and form.
+  // of three places Kovalio kept a third-party secret, each with its own shape and form.
   // Rows land here via the boot backfill (see credential-backfill.ts) — SQL could not do
   // that copy, because the old column is an `enc1:` envelope over the RAW token and the new
   // one is over a JSON object, and the key is app-side.
@@ -222,7 +222,7 @@ export async function markCredentialInvalid(
  * What we determined about a record relative to the zone, before touching it.
  *
  *   create   → nothing answers this name+type yet.
- *   update   → an Openship-managed record exists; we rewrite it in place.
+ *   update   → an Kovalio-managed record exists; we rewrite it in place.
  *   adopt    → one existing record we did NOT create; apply repoints it (that is
  *              what connecting a domain means) but leaves its ownership alone.
  *   in-sync  → a record already answers with exactly the value we'd write.
@@ -293,13 +293,13 @@ async function classifyRecord(
   // Mirrors the provider's upsert decision: >1 records none of which are ours is
   // a set the operator maintains; a single foreign record is adopted (repointed);
   // ours is updated in place.
-  const target = existing.length > 1 ? existing.find(isOpenshipManaged) : existing[0];
+  const target = existing.length > 1 ? existing.find(isKovalioManaged) : existing[0];
   if (existing.length > 1 && !target) {
     return { action: "conflict", current: `${existing.length} existing records` };
   }
   if (!target) return { action: "create" };
   if (target.content === desired.content) return { action: "in-sync", current: target.content };
-  return { action: isOpenshipManaged(target) ? "update" : "adopt", current: target.content };
+  return { action: isKovalioManaged(target) ? "update" : "adopt", current: target.content };
 }
 
 /**
@@ -410,7 +410,7 @@ export async function provisionRecords(
           outcome: "failed",
           action,
           error:
-            "Existing records here are not managed by Openship — remove or consolidate them first.",
+            "Existing records here are not managed by Kovalio — remove or consolidate them first.",
         });
         continue;
       }
@@ -445,7 +445,7 @@ export async function provisionRecords(
 }
 
 /**
- * Delete the records Openship created for `names`, and only those.
+ * Delete the records Kovalio created for `names`, and only those.
  *
  * Ownership is read off the provider-side comment marker. Name matching alone is
  * not enough: for an apex domain these names ARE the zone apex, where the
@@ -470,12 +470,12 @@ export async function releaseRecords(
   for (const name of new Set(names)) {
     try {
       const found = await provider.listRecords(credentials, zone.id, { name });
-      for (const record of found.filter(isOpenshipManaged)) {
+      for (const record of found.filter(isKovalioManaged)) {
         await provider.deleteRecord(credentials, zone.id, record.id);
         deleted++;
       }
     } catch (err) {
-      // Best effort by design: a domain must still be removable from Openship
+      // Best effort by design: a domain must still be removable from Kovalio
       // when the provider is unreachable. The leftover record is visible in the
       // operator's zone; a blocked delete is not.
       return { deleted, reason: safeErrorMessage(err) };

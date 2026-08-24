@@ -52,7 +52,7 @@ import { WelcomeModal } from "./welcome-modal";
 import { ReputationBanner } from "./reputation-banner";
 import { MailEngineBanner } from "./engine-banner";
 
-const WELCOME_SEEN_PREFIX = "openship:mail:welcome-seen:";
+const WELCOME_SEEN_PREFIX = "kovalio:mail:welcome-seen:";
 
 interface MailAdminPanelProps {
   status: MailSetupStatus;
@@ -97,7 +97,7 @@ const TABS: TabDef[] = MAIL_TAB_KEYS.map((key) => ({ key, icon: TAB_ICONS[key] }
 export function MailAdminPanel({ status, serverId, onRefresh, onForgotten }: MailAdminPanelProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // In Openship Mail the sidebar IS this tab bar — same ten keys, same order
+  // In Kovalio Mail the sidebar IS this tab bar — same ten keys, same order
   // (`MAIL_TAB_KEYS` in lib/mail-tabs.ts, which both render from) — so showing both
   // is one row of navigation twice. See the hook for why it depends on the rail's
   // state and not just on the view.

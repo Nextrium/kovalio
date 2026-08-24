@@ -39,7 +39,7 @@ import { repos } from "@repo/db";
 export type GitHubMethodKind =
   | "device"      // browser device sign-in (instance-wide git identity)
   | "token"       // pasted PAT (same slot as `device`)
-  | "app"         // Openship Cloud GitHub App installation
+  | "app"         // Kovalio Cloud GitHub App installation
   | "ssh-key"     // per-server deploy key — clone transport, not a token
   | "forwarding"; // desktop SSH relay of the operator's identity
 
@@ -50,9 +50,9 @@ export interface GitHubMethod {
   /** Already set up. Drives "Connected" vs "Set up" affordances. */
   configured: boolean;
   /**
-   * Needs an Openship Cloud link before it can work. The App's private key lives
-   * in openship.io, so a self-hosted instance proxies through it — the UI turns
-   * this row's action into "Connect Openship Cloud" rather than showing a button
+   * Needs an Kovalio Cloud link before it can work. The App's private key lives
+   * in nextrium.org, so a self-hosted instance proxies through it — the UI turns
+   * this row's action into "Connect Kovalio Cloud" rather than showing a button
    * that 403s.
    */
   requiresCloud?: boolean;
@@ -114,7 +114,7 @@ export async function resolveGitHubCapabilities(
       available: identityUsable && hasDeviceClientId,
       configured: identityConfigured && identityMethod === "device",
       unavailableReason: !identityUsable
-        ? "Not available on Openship Cloud."
+        ? "Not available on Kovalio Cloud."
         : !hasDeviceClientId
           ? "This instance has no GitHub device client id configured."
           : undefined,
@@ -123,7 +123,7 @@ export async function resolveGitHubCapabilities(
       kind: "token",
       available: identityUsable,
       configured: identityConfigured && identityMethod !== "device",
-      unavailableReason: identityUsable ? undefined : "Not available on Openship Cloud.",
+      unavailableReason: identityUsable ? undefined : "Not available on Kovalio Cloud.",
     },
     {
       kind: "app",
@@ -139,7 +139,7 @@ export async function resolveGitHubCapabilities(
       available: platform === "selfhosted",
       configured: false, // per-server state; the Servers page owns the detail
       unavailableReason:
-        platform === "selfhosted" ? undefined : "Openship Cloud manages build hosts for you.",
+        platform === "selfhosted" ? undefined : "Kovalio Cloud manages build hosts for you.",
     },
     {
       kind: "forwarding",

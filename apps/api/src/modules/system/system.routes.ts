@@ -46,21 +46,21 @@ r.public("post", "/onboarding/test-connection", { reason: "First-run SSH reachab
 /* ── Internal routes (Electron → API with shared token) ─────────── */
 r.public("post", "/setup", { reason: "Electron desktop client setup - protected by internalAuth shared token" }, internalAuth, setup.setup);
 r.public("get", "/setup", { reason: "Electron desktop client setup read - protected by internalAuth shared token" }, internalAuth, setup.getSetup);
-r.public("get", "/health", { reason: "CLI `openship doctor` — internal-token gated deep health rollup (DB liveness/migrations + project/service counts); the public /api/health is only a liveness stub" }, internalAuth, systemHealth.systemHealth);
-r.public("post", "/bootstrap-admin", { reason: "CLI first-admin creation — internal-token gated, one-shot before any admin exists (openship setup)" }, internalAuth, setup.bootstrapAdmin);
-r.public("post", "/reset-admin-password", { reason: "CLI password recovery — internal-token gated; resets the local admin login for a locked-out operator (openship reset-admin-password)" }, internalAuth, setup.resetAdminPassword);
+r.public("get", "/health", { reason: "CLI `kovalio doctor` — internal-token gated deep health rollup (DB liveness/migrations + project/service counts); the public /api/health is only a liveness stub" }, internalAuth, systemHealth.systemHealth);
+r.public("post", "/bootstrap-admin", { reason: "CLI first-admin creation — internal-token gated, one-shot before any admin exists (kovalio setup)" }, internalAuth, setup.bootstrapAdmin);
+r.public("post", "/reset-admin-password", { reason: "CLI password recovery — internal-token gated; resets the local admin login for a locked-out operator (kovalio reset-admin-password)" }, internalAuth, setup.resetAdminPassword);
 r.public("post", "/invite-signup", { reason: "Self-host invited signup — authorized by the unguessable invitation id (token) in the emailed link, NOT a session; creates the account for the invitation's own email. Public + rate-limited because the invitee isn't logged in yet." }, rateLimiterFor("auth-tight"), setup.inviteSignup);
 
 /* ── Control-plane self-registration (CLI setup wizard) ─────────────
- * After bootstrap-admin, the wizard registers Openship itself as an app
+ * After bootstrap-admin, the wizard registers Kovalio itself as an app
  * (shows under Apps) + attaches its domain — free (Oblien edge) or custom
  * (OpenResty + Let's Encrypt, streamed). All internal-token gated. */
-r.public("get", "/cloud-status", { reason: "CLI setup — read Openship Cloud connection state; internal-token gated" }, internalAuth, selfApp.cloudStatus);
-r.public("post", "/cloud-connect", { reason: "CLI setup — finalize Openship Cloud PKCE handshake for a free domain; internal-token gated" }, internalAuth, selfApp.cloudConnect);
+r.public("get", "/cloud-status", { reason: "CLI setup — read Kovalio Cloud connection state; internal-token gated" }, internalAuth, selfApp.cloudStatus);
+r.public("post", "/cloud-connect", { reason: "CLI setup — finalize Kovalio Cloud PKCE handshake for a free domain; internal-token gated" }, internalAuth, selfApp.cloudConnect);
 r.public("post", "/self-register", { reason: "CLI setup — register the control plane as an app + attach its domain; internal-token gated" }, internalAuth, selfApp.selfRegister);
 r.public("get", "/self-register/stream", { reason: "CLI setup — SSE progress for custom-domain edge provisioning; internal-token gated" }, internalAuth, selfApp.selfRegisterStream);
 r.public("post", "/self-edge/preflight", { reason: "CLI setup — detect what owns ports 80/443 before installing OpenResty; internal-token gated" }, internalAuth, selfApp.selfEdgePreflight);
-r.public("post", "/edge/import-sites", { reason: "CLI `openship up` (compose) — register sites migrated from a foreign proxy into the container edge (host stops the proxy pre-up; api re-serves via DockerEdgeExecutor); internal-token gated" }, internalAuth, selfApp.edgeImportSites);
+r.public("post", "/edge/import-sites", { reason: "CLI `kovalio up` (compose) — register sites migrated from a foreign proxy into the container edge (host stops the proxy pre-up; api re-serves via DockerEdgeExecutor); internal-token gated" }, internalAuth, selfApp.edgeImportSites);
 
 /* ── Untracked edge vhosts ──────────────────────────────────────────
  * Edge config lives on the host and outlives its DB rows by design (record-only
@@ -69,7 +69,7 @@ r.public("post", "/edge/import-sites", { reason: "CLI `openship up` (compose) �
  * files with a 200. This finds them, and removes them one named hostname at a
  * time — never as a sweep, which would break record-only's guarantee. */
 // The scan diffs the host's live vhosts against EVERY org's domains
-// (repos.domain.listAllHostnames + every mail server + OPENSHIP_PUBLIC_URL), so
+// (repos.domain.listAllHostnames + every mail server + KOVALIO_PUBLIC_URL), so
 // the READ is instance-wide too. `settings:read` alone admits a plain member
 // (lib/permission.ts discards the action half of the tag), which made this a
 // cross-tenant enumeration of every hostname the box serves. Gating the write

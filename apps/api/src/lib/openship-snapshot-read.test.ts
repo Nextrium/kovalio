@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import type { CommandExecutor } from "@repo/adapters";
 import type { DatabaseDump } from "@repo/db";
-import { readProjectSnapshot } from "./openship-manifest";
+import { readProjectSnapshot } from "./kovalio-manifest";
 
-/** Minimal executor stub: `readOpenshipFile` runs `cat …` via exec — return the
+/** Minimal executor stub: `readKovalioFile` runs `cat …` via exec — return the
  *  canned payload for that, ignore the mkdir/other calls. */
 function execReturning(raw: string): CommandExecutor {
   return { exec: async () => raw } as unknown as CommandExecutor;

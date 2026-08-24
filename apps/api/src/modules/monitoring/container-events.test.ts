@@ -58,7 +58,7 @@ vi.mock("./health-watch", () => ({
 
 vi.mock("../../config/env", () => ({
   env: {
-    get OPENSHIP_DISABLE_CONTAINER_EVENTS() {
+    get KOVALIO_DISABLE_CONTAINER_EVENTS() {
       return h.disabled;
     },
   },

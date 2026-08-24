@@ -71,7 +71,7 @@ beforeEach(() => {
   getGitHubAuthMode.mockReturnValue("cli");
   cacheGet.mockResolvedValue(null);
   cacheSet.mockResolvedValue(undefined);
-  // A PAT the operator pasted into Openship, stored encrypted. Present for every
+  // A PAT the operator pasted into Kovalio, stored encrypted. Present for every
   // case below, so the probe never falls through to the host `gh` binary.
   instanceSettingsGet.mockResolvedValue({
     ghDeviceTokenEncrypted: "sealed",

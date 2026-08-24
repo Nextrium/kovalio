@@ -47,7 +47,7 @@ const h = {
       projectId: "p_src",
       name: "web",
       kind: "compose",
-      image: "openship/web:abc",
+      image: "kovalio/web:abc",
       // The LOGICAL declaration. The running container mounts a namespaced name (below).
       volumes: ["assets:/app/public"],
       namespaceVolumes: true,
@@ -129,8 +129,8 @@ const discovered = (name: string, volumeSource: string, target: string): Discove
   }) as unknown as DiscoveredService;
 
 const CHOSEN = [
-  discovered("web", "openship-clincai-assets", "/app/public"),
-  discovered("db", "openship-clincai-pgdata", "/var/lib/postgresql/data"),
+  discovered("web", "kovalio-clincai-assets", "/app/public"),
+  discovered("db", "kovalio-clincai-pgdata", "/var/lib/postgresql/data"),
 ];
 
 const clone = (over: Partial<Parameters<typeof cloneProjectToServer>[0]> = {}) =>
@@ -236,13 +236,13 @@ describe("volumes come from the RUNTIME, not the rows", () => {
     // NOT "pgdata:/var/lib/postgresql/data" (the row's logical declaration) — the bytes landed
     // on the target under the source's resolved volume name.
     expect(rows[1]!.row.volumes).toEqual([
-      "openship-clincai-pgdata:/var/lib/postgresql/data",
+      "kovalio-clincai-pgdata:/var/lib/postgresql/data",
     ]);
-    expect(rows[0]!.row.volumes).toEqual(["openship-clincai-assets:/app/public"]);
+    expect(rows[0]!.row.volumes).toEqual(["kovalio-clincai-assets:/app/public"]);
   });
 
   it("turns namespacing OFF, so the new slug cannot rewrite those names", async () => {
-    // With namespacing on, the copy's deploy would mount openship-<newslug>-pgdata — a volume
+    // With namespacing on, the copy's deploy would mount kovalio-<newslug>-pgdata — a volume
     // the transfer never created. The copy would start empty and report success.
     await clone();
     for (const svc of clonedServices()) expect(svc.row.namespaceVolumes).toBe(false);

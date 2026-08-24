@@ -1,5 +1,5 @@
 /**
- * Host-side edge preflight for `openship up` (Docker Compose self-deploy).
+ * Host-side edge preflight for `kovalio up` (Docker Compose self-deploy).
  *
  * The compose stack's OpenResty `edge` container binds host :80/:443 via
  * `network_mode: host` the instant `docker compose up` runs. If another proxy
@@ -7,7 +7,7 @@
  * BEFORE bringing the stack up we run the SAME detect → "proxy X serving N
  * sites" → consent → stop chain the dashboard and the bare wizard use. This is
  * the piece `apps/api/src/lib/startup/self-edge.ts` explicitly delegates to
- * `openship up` in docker-edge mode.
+ * `kovalio up` in docker-edge mode.
  *
  * Detection runs directly against the host via a `LocalExecutor` (the api isn't
  * up yet, so we can't use its /self-edge/preflight endpoint). On "migrate" we
@@ -157,7 +157,7 @@ export interface EdgePreflightDeps {
 function privilegeClause(privilegeDegraded: boolean): string {
   if (!privilegeDegraded) return "";
   return (
-    " — and Openship could not run the stop as root on this host (see the privilege " +
+    " — and Kovalio could not run the stop as root on this host (see the privilege " +
     "warning above), so stopping it was almost certainly refused rather than too slow. " +
     "Retrying as this user will fail the same way: re-run as root, or as a user with " +
     "passwordless sudo"
@@ -317,8 +317,8 @@ const IMPORTED_MARKER = join(OS_DIR, "imported-proxy");
  * Hostnames OUR edge already serves, read from its live vhosts.
  *
  * The authoritative "already imported?" signal. A marker file under OS_DIR is not:
- * `openship-dev` runs with OPENSHIP_HOME=~/.openship-dev, so a marker written by
- * one install is invisible to the other, and wiping ~/.openship (or reinstalling)
+ * `kovalio-dev` runs with KOVALIO_HOME=~/.kovalio-dev, so a marker written by
+ * one install is invisible to the other, and wiping ~/.kovalio (or reinstalling)
  * loses it — either way the operator gets re-asked to import sites that are
  * already live, which reads as the tool having forgotten what it just did.
  *
@@ -331,7 +331,7 @@ function edgeServedHostnames(): Set<string> {
     "docker",
     [
       "exec",
-      "openship-edge",
+      "kovalio-edge",
       "sh",
       "-c",
       "cat /usr/local/openresty/nginx/conf/sites-enabled/*.conf 2>/dev/null || true",
@@ -449,7 +449,7 @@ function dockerState(name: string): { exists: boolean; running: boolean } {
 }
 
 /**
- * Why isn't the containerized edge serving? Answers the question `openship doctor`
+ * Why isn't the containerized edge serving? Answers the question `kovalio doctor`
  * needs, without changing anything.
  */
 export async function diagnoseEdge(): Promise<EdgeDiagnosis> {
@@ -463,7 +463,7 @@ export async function diagnoseEdge(): Promise<EdgeDiagnosis> {
   };
   if (process.platform !== "linux") return empty;
 
-  const { exists, running } = dockerState("openship-edge");
+  const { exists, running } = dockerState("kovalio-edge");
   const executor = new LocalExecutor();
   let status: EdgeStatus | undefined;
   let owner: string | null = null;
@@ -479,7 +479,7 @@ export async function diagnoseEdge(): Promise<EdgeDiagnosis> {
   // bare pid) or some other container. If our container is meant to own these
   // ports, anything else here is what's blocking it.
   // `isOurEdgeContainer`, not a name comparison: the container name is configurable via
-  // OPENSHIP_EDGE_CONTAINER, so a renamed edge running our image compared unequal here and
+  // KOVALIO_EDGE_CONTAINER, so a renamed edge running our image compared unequal here and
   // read as a foreign proxy blocking itself.
   const foreignOccupants = status.occupants.filter((o) => !isOurEdgeContainer(o.containerName));
   const hostProxySquatting =
@@ -509,7 +509,7 @@ export async function diagnoseEdge(): Promise<EdgeDiagnosis> {
  *
  * `migrate` imports the occupant's sites into our edge first; `stop` just frees
  * the ports (the occupant's sites stop being served). Both go through the SAME
- * journaled stop as `openship up`, so an interrupted repair is restorable, and
+ * journaled stop as `kovalio up`, so an interrupted repair is restorable, and
  * both reuse the api's import endpoint rather than reimplementing registration.
  */
 export async function repairEdgeConflict(
@@ -523,7 +523,7 @@ export async function repairEdgeConflict(
   const executor = new LocalExecutor();
   const { status, owner } = await realForeignProxyOnEdge(executor);
   if (status.occupants.length === 0) {
-    spawnSync("docker", ["restart", "openship-edge"], { stdio: "ignore" });
+    spawnSync("docker", ["restart", "kovalio-edge"], { stdio: "ignore" });
     return { ok: true, registered: [], detail: "ports were already free — restarted the edge" };
   }
 
@@ -550,7 +550,7 @@ export async function repairEdgeConflict(
         privilegeClause(freed.privilegeDegraded),
     };
   }
-  spawnSync("docker", ["restart", "openship-edge"], { stdio: "ignore" });
+  spawnSync("docker", ["restart", "kovalio-edge"], { stdio: "ignore" });
 
   if (mode === "migrate" && scan.sites.length > 0) {
     const { importMigratedSites } = await import("./edge-import");
@@ -663,7 +663,7 @@ export async function confirmEdgeAction(info: {
             {
               value: "migrate" as const,
               label: `Migrate ${importable} site${importable === 1 ? "" : "s"} & take over`,
-              hint: "import the existing sites into Openship's edge, then take 80/443",
+              hint: "import the existing sites into Kovalio's edge, then take 80/443",
             },
           ]
         : []),
@@ -675,7 +675,7 @@ export async function confirmEdgeAction(info: {
       { value: "cancel" as const, label: "Cancel — leave it running" },
     ],
     // Default to MIGRATE whenever there are sites we can import: it's the only
-    // option that both gets Openship onto 80/443 and keeps the operator's
+    // option that both gets Kovalio onto 80/443 and keeps the operator's
     // existing sites served, so it's the choice they almost always want and
     // the one that loses nothing on a reflexive Enter.
     // With nothing importable there's no safe default: a known proxy falls
@@ -730,7 +730,7 @@ export async function remediateUnreachableStaticRoots(opts: {
         {
           value: "copy" as const,
           label: `Copy ${unreachable.length === 1 ? "it" : "all"} into the edge`,
-          hint: "snapshot the files under /opt/openship/static (recommended)",
+          hint: "snapshot the files under /opt/kovalio/static (recommended)",
         },
         {
           value: "leave" as const,
@@ -783,9 +783,9 @@ function defaultDeps(): EdgePreflightDeps {
     edgeServedHostnames,
     confirmStoppedImport: async ({ proxy, count }) => {
       const take = await select({
-        message: `${proxy} is stopped but still has ${count} site(s) not served by Openship — import them?`,
+        message: `${proxy} is stopped but still has ${count} site(s) not served by Kovalio — import them?`,
         options: [
-          { value: "import", label: `Import ${count} site(s)`, hint: "serve them from Openship's edge" },
+          { value: "import", label: `Import ${count} site(s)`, hint: "serve them from Kovalio's edge" },
           { value: "skip", label: "Skip", hint: "leave them unserved" },
         ],
         initialValue: "import",

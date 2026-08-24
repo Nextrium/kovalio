@@ -35,7 +35,7 @@ import type {
 const SESSION_TTL_MS = 10 * 60_000;
 const MAX_ACTIVE_SESSIONS = 20;
 const DIRECT_RECEIVE_PATH = "system/data-transfer/direct/receive";
-const KEY_CONTEXT = Buffer.from("openship-direct-transfer-v1", "utf8");
+const KEY_CONTEXT = Buffer.from("kovalio-direct-transfer-v1", "utf8");
 const DIRECT_RUNTIME_ID = randomUUID();
 
 interface ReceiveSession {

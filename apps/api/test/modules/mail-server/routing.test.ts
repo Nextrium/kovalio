@@ -2,7 +2,7 @@
  * Mail-server routing - pure builder tests.
  *
  * Covers `buildMailServerRoutes` only - the registration service hits
- * openship's platform() and is best validated with an integration test
+ * kovalio's platform() and is best validated with an integration test
  * once the provisioning module exists.
  */
 
@@ -14,12 +14,12 @@ const baseInput: MailServerRouteInput = {
   mailServerIp: "203.0.113.10",
   zeroServerOrigin: "https://zero-server.internal:3001",
   zeroClientOrigin: "https://zero-client.opsh.io",
-  openshipApiOrigin: "https://api.opsh.io",
+  kovalioApiOrigin: "https://api.opsh.io",
 };
 
 describe("buildMailServerRoutes", () => {
   it("emits exactly the three user-facing HTTP routes (no admin subdomain)", () => {
-    // Admin operations run inside openship's own API writing to the mail-server
+    // Admin operations run inside kovalio's own API writing to the mail-server
     // Postgres directly via @repo/db-email - no public admin endpoint exists.
     const plan = buildMailServerRoutes(baseInput);
     expect(plan.routes.map((r) => r.id)).toEqual([
@@ -42,10 +42,10 @@ describe("buildMailServerRoutes", () => {
     const byId = Object.fromEntries(plan.routes.map((r) => [r.id, r.targetUrl]));
     expect(byId["mail-client"]).toBe(baseInput.zeroClientOrigin);
     expect(byId["mail-api"]).toBe(baseInput.zeroServerOrigin);
-    expect(byId["autodiscover"]).toBe(baseInput.openshipApiOrigin);
+    expect(byId["autodiscover"]).toBe(baseInput.kovalioApiOrigin);
   });
 
-  it("does not emit any public admin subdomain (admin is openship-internal)", () => {
+  it("does not emit any public admin subdomain (admin is kovalio-internal)", () => {
     const plan = buildMailServerRoutes(baseInput);
     expect(plan.routes.find((r) => r.hostname.startsWith("email-admin"))).toBeUndefined();
     expect(plan.dns.find((r) => r.name.startsWith("email-admin"))).toBeUndefined();

@@ -87,7 +87,7 @@ describe("reportHostChannelAtBoot — when it stays quiet", () => {
     const health = async () => ({
       ok: false,
       code: "disabled" as const,
-      hint: "Host control is off (OPENSHIP_HOST_CONTROL=false).",
+      hint: "Host control is off (KOVALIO_HOST_CONTROL=false).",
     });
     expect(await reportHostChannelAtBoot({ health, log })).toBe("disabled");
     expect(out).toEqual([]);
@@ -125,7 +125,7 @@ describe("reportHostChannelAtBoot — forwarding blocked on an otherwise healthy
     expect(said).toContain("root@host.docker.internal:22");
     expect(said).toContain("refuses TCP forwarding");
     expect(said).toContain("deploy health checks");
-    expect(said).toContain("openship up");
+    expect(said).toContain("kovalio up");
   });
 
   // Nothing is broken yet, so it must not wear the "this box cannot drive its host"
@@ -153,7 +153,7 @@ describe("reportHostChannelAtBoot — a blocked channel", () => {
     // Deploys keep working — an operator must not read this as "my box is broken".
     expect(text).toContain("deploys to this box still work");
     expect(text).toContain('reads "Offline"');
-    expect(text).toContain("openship up --no-host-control");
+    expect(text).toContain("kovalio up --no-host-control");
     // …and the repair comes before the switch that only hides the warning.
     expect(text.indexOf(UNREACHABLE.rule)).toBeLessThan(text.indexOf("--no-host-control"));
     // Every body line is prefixed so the banner is greppable and visually one block.
@@ -211,8 +211,8 @@ describe("reportHostChannelAtBoot — a blocked channel", () => {
     expect(out.join("\n")).toContain("HOST CONTROL NOT CONFIGURED");
     expect(text).toContain("no host channel");
     // Both halves of the remedy: what repairs it, and how to confirm the repair.
-    expect(text).toContain("openship up");
-    expect(text).toContain("openship doctor");
+    expect(text).toContain("kovalio up");
+    expect(text).toContain("kovalio doctor");
     // No firewall rule was implicated, so none is suggested.
     expect(text).not.toContain("Fix:");
     expect(text).not.toContain("ufw");

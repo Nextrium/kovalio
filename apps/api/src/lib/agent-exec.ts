@@ -147,7 +147,7 @@ export async function execOnHost(
 }
 
 /** Marks the exit code in the wrapped output. Long and unlikely to occur naturally. */
-const EXIT_SENTINEL = "__openship_exec_exit__:";
+const EXIT_SENTINEL = "__kovalio_exec_exit__:";
 
 /**
  * Run a command INSIDE a running service container.

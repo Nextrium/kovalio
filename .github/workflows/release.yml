@@ -22,8 +22,8 @@ jobs:
     name: Release gate
     uses: ./.github/workflows/release-gate.yml
 
-  build-openship:
-    name: Build openship release artifact
+  build-kovalio:
+    name: Build kovalio release artifact
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     steps:
@@ -52,7 +52,7 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build openship release
+      - name: Build kovalio release
         run: bun run --cwd apps/api build-release
 
       - name: Package release artifact
@@ -60,7 +60,7 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
-          ARTIFACT="openship-${TAG}-linux-amd64.tar.gz"
+          ARTIFACT="kovalio-${TAG}-linux-amd64.tar.gz"
           tar -czf "${ARTIFACT}" -C apps/api/release-dist .
           sha256sum "${ARTIFACT}" > "${ARTIFACT}.sha256"
           echo "artifact=${ARTIFACT}" >> "$GITHUB_OUTPUT"
@@ -68,7 +68,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: openship-release
+          name: kovalio-release
           path: |
             ${{ steps.package.outputs.artifact }}
             ${{ steps.package.outputs.artifact }}.sha256
@@ -76,7 +76,7 @@ jobs:
           retention-days: 7
 
   build-email:
-    name: Build openship email release artifact
+    name: Build kovalio email release artifact
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     steps:
@@ -113,7 +113,7 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
-          ARTIFACT="openship-email-${TAG}-linux-amd64.tar.gz"
+          ARTIFACT="kovalio-email-${TAG}-linux-amd64.tar.gz"
           # The email build script outputs to apps/email/dist/ (not
           # release-dist — the api and email build scripts use different
           # output dir conventions; matching their actual layouts here).
@@ -124,7 +124,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: openship-email-release
+          name: kovalio-email-release
           path: |
             ${{ steps.package.outputs.artifact }}
             ${{ steps.package.outputs.artifact }}.sha256
@@ -132,7 +132,7 @@ jobs:
           retention-days: 7
 
   build-dashboard:
-    name: Build dashboard bundle (lazy-downloaded by `openship up`)
+    name: Build dashboard bundle (lazy-downloaded by `kovalio up`)
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     steps:
@@ -168,7 +168,7 @@ jobs:
         env:
           NODE_ENV: production
           CLOUD_MODE: "false"
-          OPENSHIP_TARGET: local
+          KOVALIO_TARGET: local
           NEXT_PUBLIC_API_PROXY: "true"
 
       - name: Package dashboard bundle
@@ -187,7 +187,7 @@ jobs:
           if [ -d apps/dashboard/public ]; then
             cp -a apps/dashboard/public "$STAGING/apps/dashboard/public"
           fi
-          ARTIFACT="openship-dashboard-${TAG}.tar.gz"
+          ARTIFACT="kovalio-dashboard-${TAG}.tar.gz"
           tar -czf "$ARTIFACT" -C "$STAGING" .
           sha256sum "$ARTIFACT" > "$ARTIFACT.sha256"
           echo "artifact=$ARTIFACT" >> "$GITHUB_OUTPUT"
@@ -195,7 +195,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: openship-dashboard-release
+          name: kovalio-dashboard-release
           path: |
             ${{ steps.package.outputs.artifact }}
             ${{ steps.package.outputs.artifact }}.sha256
@@ -240,7 +240,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       # tsup + stage-server (Bun.build) → dist/, then stage-cli-payload stages the
-      # arch-independent prod closure and tars openship-cli-<TAG>.tar.gz. The tag
+      # arch-independent prod closure and tars kovalio-cli-<TAG>.tar.gz. The tag
       # is taken from GITHUB_REF_NAME by the staging script.
       - name: Build CLI payload
         run: bun run --cwd apps/cli build:payload
@@ -248,14 +248,14 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: openship-cli-release
+          name: kovalio-cli-release
           # .cli-payload is a hidden dir (leading dot); upload-artifact excludes
           # hidden files by default, so without this the tarball is silently
           # dropped ("No files were found") and the release ships no CLI payload.
           include-hidden-files: true
           path: |
-            apps/cli/.cli-payload/openship-cli-*.tar.gz
-            apps/cli/.cli-payload/openship-cli-*.tar.gz.sha256
+            apps/cli/.cli-payload/kovalio-cli-*.tar.gz
+            apps/cli/.cli-payload/kovalio-cli-*.tar.gz.sha256
           if-no-files-found: error
           retention-days: 7
 
@@ -269,19 +269,19 @@ jobs:
           - os: windows-latest
             label: Windows x64
             find: "-name *.zip"
-            asset: Openship-win32-x64.zip
+            asset: Kovalio-win32-x64.zip
           - os: ubuntu-latest
             label: Linux x64
             find: "-name *.AppImage -o -name *.deb -o -name *.rpm"
-            asset: Openship.AppImage
+            asset: Kovalio.AppImage
           # GitHub-hosted native aarch64 runner → stage.ts derives arm64 from
           # process.arch, so the API bun --compile + the AppImage build are arm64.
-          # x64 keeps the legacy `Openship.AppImage` name (auto-update compat);
+          # x64 keeps the legacy `Kovalio.AppImage` name (auto-update compat);
           # arm64 is a NEW asset selected only by arm64 clients.
           - os: ubuntu-24.04-arm
             label: Linux arm64
             find: "-name *.AppImage"
-            asset: Openship-arm64.AppImage
+            asset: Kovalio-arm64.AppImage
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -347,12 +347,12 @@ jobs:
           # Collect .deb
           DEB="$(find apps/desktop/out/make -type f -name '*.deb' | head -n1)"
           if [[ -n "${DEB}" ]]; then
-            cp "${DEB}" "dist/Openship.deb"
+            cp "${DEB}" "dist/Kovalio.deb"
             cd dist
             if command -v shasum >/dev/null 2>&1; then
-              shasum -a 256 "Openship.deb" > "Openship.deb.sha256"
+              shasum -a 256 "Kovalio.deb" > "Kovalio.deb.sha256"
             else
-              sha256sum "Openship.deb" > "Openship.deb.sha256"
+              sha256sum "Kovalio.deb" > "Kovalio.deb.sha256"
             fi
             cd ..
           else
@@ -361,12 +361,12 @@ jobs:
           # Collect .rpm
           RPM="$(find apps/desktop/out/make -type f -name '*.rpm' | head -n1)"
           if [[ -n "${RPM}" ]]; then
-            cp "${RPM}" "dist/Openship.rpm"
+            cp "${RPM}" "dist/Kovalio.rpm"
             cd dist
             if command -v shasum >/dev/null 2>&1; then
-              shasum -a 256 "Openship.rpm" > "Openship.rpm.sha256"
+              shasum -a 256 "Kovalio.rpm" > "Kovalio.rpm.sha256"
             else
-              sha256sum "Openship.rpm" > "Openship.rpm.sha256"
+              sha256sum "Kovalio.rpm" > "Kovalio.rpm.sha256"
             fi
             cd ..
           else
@@ -461,7 +461,7 @@ jobs:
         if: env.APPLE_IDENTITY != ''
         run: |
           set -euo pipefail
-          KEYCHAIN="$RUNNER_TEMP/openship-signing.keychain-db"
+          KEYCHAIN="$RUNNER_TEMP/kovalio-signing.keychain-db"
           KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
           CERT="$RUNNER_TEMP/certificate.p12"
           echo "$APPLE_CERTIFICATE_P12_BASE64" | base64 --decode > "$CERT"
@@ -502,7 +502,7 @@ jobs:
         run: |
           set -euo pipefail
           for arch in arm64 x64; do
-            dmg="apps/desktop/out/make/Openship-${arch}.dmg"
+            dmg="apps/desktop/out/make/Kovalio-${arch}.dmg"
             echo "▸ signing ${dmg}"
             codesign --force --timestamp --sign "$APPLE_IDENTITY" "${dmg}"
             echo "▸ notarizing ${dmg}"
@@ -521,12 +521,12 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           for arch in arm64 x64; do
-            src="apps/desktop/out/make/Openship-${arch}.dmg"
+            src="apps/desktop/out/make/Kovalio-${arch}.dmg"
             if [[ ! -f "${src}" ]]; then
               echo "Missing ${src}"; ls -R apps/desktop/out/make || true; exit 1
             fi
-            cp "${src}" "dist/Openship-${arch}.dmg"
-            ( cd dist && shasum -a 256 "Openship-${arch}.dmg" > "Openship-${arch}.dmg.sha256" )
+            cp "${src}" "dist/Kovalio-${arch}.dmg"
+            ( cd dist && shasum -a 256 "Kovalio-${arch}.dmg" > "Kovalio-${arch}.dmg.sha256" )
           done
 
       - name: Upload artifact
@@ -534,10 +534,10 @@ jobs:
         with:
           name: desktop-macos
           path: |
-            dist/Openship-arm64.dmg
-            dist/Openship-arm64.dmg.sha256
-            dist/Openship-x64.dmg
-            dist/Openship-x64.dmg.sha256
+            dist/Kovalio-arm64.dmg
+            dist/Kovalio-arm64.dmg.sha256
+            dist/Kovalio-x64.dmg
+            dist/Kovalio-x64.dmg.sha256
           if-no-files-found: error
           retention-days: 7
 
@@ -665,7 +665,7 @@ jobs:
   publish:
     name: Publish GitHub release
     if: github.event_name == 'push'
-    needs: [gate, build-openship, build-email, build-dashboard, build-cli-payload, build-desktop, build-desktop-macos]
+    needs: [gate, build-kovalio, build-email, build-dashboard, build-cli-payload, build-desktop, build-desktop-macos]
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -673,28 +673,28 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download openship artifact
+      - name: Download kovalio artifact
         uses: actions/download-artifact@v8
         with:
-          name: openship-release
+          name: kovalio-release
           path: dist
 
       - name: Download email artifact
         uses: actions/download-artifact@v8
         with:
-          name: openship-email-release
+          name: kovalio-email-release
           path: dist
 
       - name: Download dashboard artifact
         uses: actions/download-artifact@v8
         with:
-          name: openship-dashboard-release
+          name: kovalio-dashboard-release
           path: dist
 
       - name: Download CLI payload artifact
         uses: actions/download-artifact@v8
         with:
-          name: openship-cli-release
+          name: kovalio-cli-release
           path: dist
 
       - name: Download desktop installers
@@ -715,14 +715,14 @@ jobs:
             PRERELEASE_FLAG="--prerelease"
           fi
           CORE_ASSETS=(
-            "dist/openship-${TAG}-linux-amd64.tar.gz"
-            "dist/openship-${TAG}-linux-amd64.tar.gz.sha256"
-            "dist/openship-email-${TAG}-linux-amd64.tar.gz"
-            "dist/openship-email-${TAG}-linux-amd64.tar.gz.sha256"
-            "dist/openship-dashboard-${TAG}.tar.gz"
-            "dist/openship-dashboard-${TAG}.tar.gz.sha256"
-            "dist/openship-cli-${TAG}.tar.gz"
-            "dist/openship-cli-${TAG}.tar.gz.sha256"
+            "dist/kovalio-${TAG}-linux-amd64.tar.gz"
+            "dist/kovalio-${TAG}-linux-amd64.tar.gz.sha256"
+            "dist/kovalio-email-${TAG}-linux-amd64.tar.gz"
+            "dist/kovalio-email-${TAG}-linux-amd64.tar.gz.sha256"
+            "dist/kovalio-dashboard-${TAG}.tar.gz"
+            "dist/kovalio-dashboard-${TAG}.tar.gz.sha256"
+            "dist/kovalio-cli-${TAG}.tar.gz"
+            "dist/kovalio-cli-${TAG}.tar.gz.sha256"
           )
           # Idempotent: on a re-run the release already exists and `gh release
           # create` would fail — re-upload the core assets with --clobber instead
@@ -733,7 +733,7 @@ jobs:
             gh release upload "${TAG}" "${CORE_ASSETS[@]}" --clobber
           else
             gh release create "${TAG}" \
-              --title "Openship ${TAG}" \
+              --title "Kovalio ${TAG}" \
               --notes-from-tag \
               ${PRERELEASE_FLAG} \
               "${CORE_ASSETS[@]}"
@@ -747,7 +747,7 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           # Upload whichever desktop installers built (fail-fast:false means a
           # single-OS failure shouldn't block the release).
-          for asset in Openship-arm64.dmg Openship-x64.dmg Openship-win32-x64.zip Openship.AppImage Openship-arm64.AppImage Openship.deb Openship.rpm; do
+          for asset in Kovalio-arm64.dmg Kovalio-x64.dmg Kovalio-win32-x64.zip Kovalio.AppImage Kovalio-arm64.AppImage Kovalio.deb Kovalio.rpm; do
             if [[ -f "dist/${asset}" ]]; then
               gh release upload "${TAG}" "dist/${asset}" "dist/${asset}.sha256" --clobber
             else

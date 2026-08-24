@@ -78,7 +78,7 @@ describe("compose deploy plans project-level domain rows", () => {
 
 describe("compose deploy pairs a free project-level route with its cloud edge route", () => {
   it("syncs the managed edge proxy for a free *.opsh.io project hostname", () => {
-    // A free hostname resolves ONLY through Openship Cloud's edge. The per-service loop
+    // A free hostname resolves ONLY through Kovalio Cloud's edge. The per-service loop
     // already pairs each of its free routes with `ensureManagedEdgeProxy`; a project-level
     // route that skipped it would have a working origin and nothing pointing at it.
     expect(BLOCK).toContain("route.isCloud && route.managedSubdomain");

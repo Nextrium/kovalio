@@ -1,7 +1,7 @@
 /**
  * A cloud call that failed with a status the CALLER has to act on.
  *
- * The SaaS already forwards Openship Cloud's machine-readable `code` alongside its
+ * The SaaS already forwards Kovalio Cloud's machine-readable `code` alongside its
  * status (`oblienErrorResponse` → `c.json({ error, code })`), but the throwing
  * client methods used to flatten both into one message string. That made
  * `403 target_unverified` — the single code the whole verification flow branches on

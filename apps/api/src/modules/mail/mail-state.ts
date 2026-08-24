@@ -1,9 +1,9 @@
 /**
- * Mail-server install state - lives on the target VPS, not in openship's DB.
+ * Mail-server install state - lives on the target VPS, not in kovalio's DB.
  *
  * Rationale: state about "what's installed on this server" belongs with the
  * server. If the operator purges the VPS, the state file dies with it -
- * no stale "step 9 complete" rows in openship's DB to confuse the next
+ * no stale "step 9 complete" rows in kovalio's DB to confuse the next
  * install attempt. Same model as Terraform's remote state on the resource
  * being managed, or Ansible facts living on the host.
  *
@@ -24,22 +24,22 @@ const MAX_PERSISTED_LOGS = 800;
 import type { CommandExecutor } from "@repo/adapters";
 import { safeErrorMessage, type RelayProviderId } from "@repo/core";
 import {
-  OPENSHIP_DIR,
-  readOpenshipFile,
-  writeOpenshipFile,
-  removeOpenshipFile,
-} from "../../lib/openship-server-store";
+  KOVALIO_DIR,
+  readKovalioFile,
+  writeKovalioFile,
+  removeKovalioFile,
+} from "../../lib/kovalio-server-store";
 import { withKeyedMutex } from "../../lib/provision-lock";
 
 /**
- * Mail state lives inside the one `.openship/` dir on the target server
+ * Mail state lives inside the one `.kovalio/` dir on the target server
  * (alongside the project manifest), so a single root-only folder is the
  * server's self-describing source of truth. All folder/atomic-write mechanics
- * live in `openship-server-store`; this module only owns the mail schema.
+ * live in `kovalio-server-store`; this module only owns the mail schema.
  */
 const MAIL_STATE_FILE = "mail-state.json";
 /** Full path — for log messages only; I/O goes through the store helpers. */
-export const STATE_FILE_PATH = `${OPENSHIP_DIR}/${MAIL_STATE_FILE}`;
+export const STATE_FILE_PATH = `${KOVALIO_DIR}/${MAIL_STATE_FILE}`;
 
 const STATE_VERSION = 1;
 
@@ -62,26 +62,26 @@ const STATE_VERSION = 1;
  * wholesale, never rewritten field by field.
  */
 export interface MailWebmailState {
-  /** The openship server the Zero process ran on — empty string for a cloud deploy. */
+  /** The kovalio server the Zero process ran on — empty string for a cloud deploy. */
   targetServerId?: string;
 }
 
 /**
  * Platform SMTP mailbox credential cache.
  *
- * Lives at `openship@<state.domain>` (the primary install). The
+ * Lives at `kovalio@<state.domain>` (the primary install). The
  * doveadm-hashed password is stored in `vmail.mailbox`; the plaintext
  * here is the canonical copy the API hands to nodemailer. Both ends are
- * written in a SINGLE call to `ensureOpenshipPlatformMailbox` so drift is
+ * written in a SINGLE call to `ensureKovalioPlatformMailbox` so drift is
  * structurally impossible — see
  * apps/api/src/modules/mail/admin/platform-mailbox.service.ts.
  *
  * Absence of the field on an existing state file = "not yet provisioned"
  * (older install). The next call to sendTestEmail backfills via
- * `ensureOpenshipPlatformMailbox(serverId)` before sending.
+ * `ensureKovalioPlatformMailbox(serverId)` before sending.
  */
 export interface PlatformMailboxState {
-  /** `openship@<domain>` */
+  /** `kovalio@<domain>` */
   email: string;
   /**
    * Encrypted password blob (AES-256-GCM via lib/encryption.ts). Legacy
@@ -105,7 +105,7 @@ export interface PlatformMailboxState {
  * Per-domain test mailbox credential cache.
  *
  * Same shape as `PlatformMailboxState` — the only difference is scope:
- * one entry per provisioned domain (`openship@<domain>` for each domain
+ * one entry per provisioned domain (`kovalio@<domain>` for each domain
  * in `vmail.domain`), keyed by the domain in `MailServerState.testMailboxes`.
  * Used by the admin "send test mail" flow when the operator wants to
  * verify deliverability from a specific domain rather than from the
@@ -117,7 +117,7 @@ export interface PlatformMailboxState {
  * without re-reading `state.domain`.
  */
 export interface TestMailboxState {
-  /** `openship@<domain>` for this entry's domain key. */
+  /** `kovalio@<domain>` for this entry's domain key. */
   email: string;
   /** Encrypted password blob — see PlatformMailboxState.password. */
   password: string;
@@ -271,7 +271,7 @@ export interface AdditionalDomainDns {
    * mirror that behavior so every domain has a working SMTP-Auth account
    * out of the box - the welcome test-email and any future
    * orchestrator-driven sending both rely on it. State file lives at
-   * `/root/.openship/mail-state.json` with root-only permissions, same
+   * `/root/.kovalio/mail-state.json` with root-only permissions, same
    * blast radius as `/etc/dovecot/dovecot-sql.conf`.
    */
   postmasterPassword?: string;
@@ -290,14 +290,14 @@ export interface MailServerState {
   /** Bump on schema changes - readers older than this MUST refuse the file. */
   version: number;
   /**
-   * The openship serverId that owns this install. Not validated (the file is
-   * trusted; openship is the only writer), but lets the dashboard cross-check.
+   * The kovalio serverId that owns this install. Not validated (the file is
+   * trusted; kovalio is the only writer), but lets the dashboard cross-check.
    */
   serverId: string;
   /** Primary mail domain (`mail.<domain>` is the SMTP/IMAP host). */
   domain: string;
   /**
-   * What the deploy step (`stepDeployEngine`) last brought up for the `openship-mail`
+   * What the deploy step (`stepDeployEngine`) last brought up for the `kovalio-mail`
    * container engine: the image ref the dashboard surfaces as the running version and
    * that `ensureContainerMail` compares to decide a "pull newer + recreate" swap, and
    * the container name it manages. Absent on legacy host-native installs adopted
@@ -354,16 +354,16 @@ export interface MailServerState {
    */
   additionalDomains?: Record<string, AdditionalDomainDns>;
   /**
-   * Platform SMTP mailbox credentials (`openship@<state.domain>`). Set by
-   * `ensureOpenshipPlatformMailbox` on first run (typically from the
+   * Platform SMTP mailbox credentials (`kovalio@<state.domain>`). Set by
+   * `ensureKovalioPlatformMailbox` on first run (typically from the
    * post-install hook). Absent on legacy installs that pre-date the
    * primitive — call sites must backfill via ensure* before reading.
    */
   platformMailbox?: PlatformMailboxState;
   /**
    * Per-domain test mailbox credentials, keyed by the domain (e.g.
-   * `"oblien.com" -> { email: "openship@oblien.com", … }`). Set by
-   * `ensureOpenshipTestMailbox(serverId, domain)` on first run for a
+   * `"oblien.com" -> { email: "kovalio@oblien.com", … }`). Set by
+   * `ensureKovalioTestMailbox(serverId, domain)` on first run for a
    * given domain. Kept as a separate top-level field from
    * `platformMailbox` so read-back compatibility for the singular
    * platform credential is preserved; the two stores never alias.
@@ -390,7 +390,7 @@ export interface MailServerState {
 export async function readState(
   exec: CommandExecutor,
 ): Promise<MailServerState | null> {
-  const trimmed = await readOpenshipFile(exec, MAIL_STATE_FILE);
+  const trimmed = await readKovalioFile(exec, MAIL_STATE_FILE);
   if (!trimmed) return null;
 
   try {
@@ -423,12 +423,12 @@ export async function writeState(
     version: STATE_VERSION,
     updatedAt: new Date().toISOString(),
   };
-  await writeOpenshipFile(exec, MAIL_STATE_FILE, JSON.stringify(next, null, 2));
+  await writeKovalioFile(exec, MAIL_STATE_FILE, JSON.stringify(next, null, 2));
 }
 
 /** Wipe the state file. The next install will run as if fresh. */
 export async function clearState(exec: CommandExecutor): Promise<void> {
-  await removeOpenshipFile(exec, MAIL_STATE_FILE);
+  await removeKovalioFile(exec, MAIL_STATE_FILE);
 }
 
 /**

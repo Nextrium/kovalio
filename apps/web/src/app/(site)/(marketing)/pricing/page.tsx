@@ -74,9 +74,9 @@ export default function PricingPage() {
               </span>
             </h1>
             <p className="pp-sub">
-              Openship is open source under Apache 2.0 — run the whole platform on
+              Kovalio is open source under Apache 2.0 — run the whole platform on
               any Linux box for nothing, with no metering, no seat caps, and no
-              credit card. Or let us run it: Openship Cloud is fully managed
+              credit card. Or let us run it: Kovalio Cloud is fully managed
               {from ? `, from ${from} a month` : ""}.
             </p>
 
@@ -124,7 +124,7 @@ export default function PricingPage() {
         <section className="pp-plans-section">
           <div className="pp-container">
             <header className="pp-plans-head">
-              <h2 className="pp-plans-title">Openship Cloud</h2>
+              <h2 className="pp-plans-title">Kovalio Cloud</h2>
               <p className="pp-plans-note">
                 We run the servers, the edge, the backups. Same platform, same
                 containers — start at no cost and move up when you outgrow it.
@@ -282,7 +282,7 @@ export default function PricingPage() {
               <h2 className="pp-end-title">Your servers, or ours.</h2>
               <p className="pp-end-sub">
                 Self-hosting is free and one command away on any Linux box. If
-                you'd rather we ran it, Openship Cloud is live — start at no cost
+                you'd rather we ran it, Kovalio Cloud is live — start at no cost
                 and pay only when you outgrow it.
               </p>
               <div className="pp-end-cta-row">

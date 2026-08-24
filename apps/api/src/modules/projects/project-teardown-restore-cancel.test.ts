@@ -71,7 +71,7 @@ vi.mock("./project-cleanup.service", () => ({
   collectProjectManifest: vi.fn(async () => ({ projectId: "p1", resources: [] })),
   executeCleanup: vi.fn(async () => ({ total: 0, succeeded: 0, failed: [] })),
 }));
-vi.mock("../../lib/openship-manifest-sync", () => ({
+vi.mock("../../lib/kovalio-manifest-sync", () => ({
   removeProjectFromServerManifests: vi.fn(async () => {}),
 }));
 vi.mock("../deployments/build.service", () => ({

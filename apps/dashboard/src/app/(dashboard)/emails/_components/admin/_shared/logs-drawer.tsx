@@ -7,7 +7,7 @@
  * The header prints the read the SERVER performed (`logs.source`) rather than a
  * command this file composes. It used to hardcode `journalctl -u <unit>`, which on
  * the container engine named a log that does not exist — the real read is
- * `docker exec openship-mail tail -n N /var/log/supervisor/<unit>.log`. Re-deriving
+ * `docker exec kovalio-mail tail -n N /var/log/supervisor/<unit>.log`. Re-deriving
  * it here would only move the guess client-side; only the box knows its topology.
  */
 

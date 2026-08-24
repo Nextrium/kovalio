@@ -26,7 +26,7 @@ describe("describeBuildTarget", () => {
 
   it("still describes cloud and local", () => {
     expect(describeBuildTarget({ deployTarget: "cloud" }, en as never))
-      .toBe(en.importProject.deploymentProcessing.targetOpenshipCloud);
+      .toBe(en.importProject.deploymentProcessing.targetKovalioCloud);
     expect(describeBuildTarget({ deployTarget: "local" }, en as never))
       .toBe(en.importProject.deploymentProcessing.targetLocal);
   });

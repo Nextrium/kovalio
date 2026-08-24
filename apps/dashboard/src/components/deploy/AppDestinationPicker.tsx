@@ -29,14 +29,14 @@ export interface AppDestination {
  * "Where to install" picker for the app wizards. Exactly two kinds of destination:
  * a SERVER ROW (the shared mail-style `ServerSelector` dropdown — pre-selects the
  * first/only server so the wizard opens with a destination already chosen,
- * collapses many into a searchable list, carries its own "add server") or Openship
+ * collapses many into a searchable list, carries its own "add server") or Kovalio
  * Cloud. Reports the pick as `{deployTarget, serverId, serverHost}`.
  *
  * The selector is a PEER radio option here, not a fixed header: passing an
  * explicit `null` while cloud is active is what makes it render unselected and
  * clickable again, so the choice stays two-way on a one-server box.
  *
- * THE OPENSHIP HOST IS A SERVER ROW, never a separate "this machine" card. On a
+ * THE KOVALIO HOST IS A SERVER ROW, never a separate "this machine" card. On a
  * server-host install the box registers itself as the `isLocal` "This Server" row
  * (startup/self-server.ts) and appears in the selector above, so a second card for
  * the same machine was not just redundant — it resolved to the same platform

@@ -359,7 +359,7 @@ beforeEach(() => {
 describe("the unrunnable shapes fail in prepare, in seconds", () => {
   it("names both missing facts when there is no container and no declared volume", async () => {
     // #434's row, exactly: nothing on the host, nothing on the service.
-    h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
 
     const last = await prepare();
 
@@ -376,7 +376,7 @@ describe("the unrunnable shapes fail in prepare, in seconds", () => {
     // Same visible outcome (zero sources), a completely different cause — and a
     // different next step for whoever reads it.
     h.volumes = ["pgdata:/var/lib/postgresql/data"];
-    h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
     h.probeError = "connect ECONNREFUSED /var/run/docker.sock";
 
     const last = await prepare();
@@ -414,21 +414,21 @@ describe("the unrunnable shapes fail in prepare, in seconds", () => {
 
   it("refuses when the backed-up volume is not one of the visible targets", async () => {
     h.volumes = ["uploads:/app/uploads"];
-    h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
 
     const last = await prepare();
 
     expect(last.status).toBe("failed");
     const message = String(last.patch?.errorMessage);
-    expect(message).toContain("openship-shop-pgdata");
+    expect(message).toContain("kovalio-shop-pgdata");
     // Naming what IS there is what turns this into an actionable message.
-    expect(message).toContain("openship-shop-uploads-0");
+    expect(message).toContain("kovalio-shop-uploads-0");
   });
 
   it("refuses an artifact that never recorded which volume it came from", async () => {
     h.volumes = ["pgdata:/var/lib/postgresql/data"];
     h.artifacts = [
-      { ...volumeArtifact("openship-shop-pgdata"), metadata: { compression: "zstd" } },
+      { ...volumeArtifact("kovalio-shop-pgdata"), metadata: { compression: "zstd" } },
     ];
 
     const last = await prepare();
@@ -443,17 +443,17 @@ describe("a container-less service is a legitimate target", () => {
     h.volumes = ["pgdata:/var/lib/postgresql/data"];
     // Recorded from the live container at capture time, so it is the PHYSICAL
     // name; the DB fallback ids the same volume positionally as
-    // `openship-shop-pgdata-0`. Resolving across that asymmetry is the
+    // `kovalio-shop-pgdata-0`. Resolving across that asymmetry is the
     // difference between restoring and refusing — a run captured while the
     // container was up and restored while it is gone is the common case.
-    h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
 
     const last = await restore();
 
     expect(last.status).toBe("succeeded");
     // Nothing was stopped: there was nothing running, and the extract mounts the
     // volume into its own helper anyway.
-    expect(h.calls).toEqual(["receive:openship-shop-pgdata"]);
+    expect(h.calls).toEqual(["receive:kovalio-shop-pgdata"]);
     expect(preparedMeta().targetContainer).toBe("none");
     expect(preparedMeta().targetSources).toBe(1);
   });
@@ -464,17 +464,17 @@ describe("a container-less service is a legitimate target", () => {
     h.containers.set("c_stopped", {
       Running: false,
       Mounts: [
-        { Type: "volume", Name: "openship-shop-pgdata", Destination: "/var/lib/postgresql/data" },
+        { Type: "volume", Name: "kovalio-shop-pgdata", Destination: "/var/lib/postgresql/data" },
       ],
     });
-    h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
 
     const last = await restore();
 
     expect(last.status).toBe("succeeded");
     // The old code started it unconditionally: a restore resurrected a service
     // the operator had deliberately taken down.
-    expect(h.calls).toEqual(["receive:openship-shop-pgdata"]);
+    expect(h.calls).toEqual(["receive:kovalio-shop-pgdata"]);
     expect(h.containers.get("c_stopped")!.Running).toBe(false);
   });
 
@@ -484,15 +484,15 @@ describe("a container-less service is a legitimate target", () => {
     h.containers.set("c_live", {
       Running: true,
       Mounts: [
-        { Type: "volume", Name: "openship-shop-pgdata", Destination: "/var/lib/postgresql/data" },
+        { Type: "volume", Name: "kovalio-shop-pgdata", Destination: "/var/lib/postgresql/data" },
       ],
     });
-    h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
 
     const last = await restore();
 
     expect(last.status).toBe("succeeded");
-    expect(h.calls).toEqual(["stop", "receive:openship-shop-pgdata", "start"]);
+    expect(h.calls).toEqual(["stop", "receive:kovalio-shop-pgdata", "start"]);
     expect(h.containers.get("c_live")!.Running).toBe(true);
   });
 });
@@ -507,14 +507,14 @@ describe("the deployment-managed container fallback", () => {
     h.serviceIds = ["svc_1"];
     h.containers.set("c_app", {
       Running: true,
-      Mounts: [{ Type: "volume", Name: "openship-shop-data", Destination: "/data" }],
+      Mounts: [{ Type: "volume", Name: "kovalio-shop-data", Destination: "/data" }],
     });
-    h.artifacts = [volumeArtifact("openship-shop-data")];
+    h.artifacts = [volumeArtifact("kovalio-shop-data")];
 
     const last = await restore();
 
     expect(last.status).toBe("succeeded");
-    expect(h.calls).toEqual(["stop", "receive:openship-shop-data", "start"]);
+    expect(h.calls).toEqual(["stop", "receive:kovalio-shop-data", "start"]);
     expect(preparedMeta().targetContainer).toBe("live");
   });
 
@@ -526,17 +526,17 @@ describe("the deployment-managed container fallback", () => {
     h.serviceIds = ["svc_1", "svc_2"];
     h.containers.set("c_primary", {
       Running: true,
-      Mounts: [{ Type: "volume", Name: "openship-shop-wrong", Destination: "/data" }],
+      Mounts: [{ Type: "volume", Name: "kovalio-shop-wrong", Destination: "/data" }],
     });
     h.volumes = ["pgdata:/var/lib/postgresql/data"];
-    h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
 
     const last = await restore();
 
     expect(last.status).toBe("succeeded");
     // Resolved from the DB's declared volumes instead, and c_primary was never
     // touched.
-    expect(h.calls).toEqual(["receive:openship-shop-pgdata"]);
+    expect(h.calls).toEqual(["receive:kovalio-shop-pgdata"]);
     expect(h.containers.get("c_primary")!.Running).toBe(true);
     expect(preparedMeta().targetContainer).toBe("none");
   });
@@ -545,20 +545,20 @@ describe("the deployment-managed container fallback", () => {
     h.activeDeploymentId = "dep_1";
     h.depContainerId = "compose"; // COMPOSE_SENTINEL — not a dial-able id
     h.volumes = ["pgdata:/var/lib/postgresql/data"];
-    h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
 
     const last = await restore();
 
     expect(last.status).toBe("succeeded");
-    expect(h.calls).toEqual(["receive:openship-shop-pgdata"]);
+    expect(h.calls).toEqual(["receive:kovalio-shop-pgdata"]);
     expect(preparedMeta().targetContainer).toBe("none");
   });
 
   it("refuses a static release directory as a container ref", async () => {
     h.activeDeploymentId = "dep_1";
-    h.depContainerId = "/var/lib/openship/static/shop/rel_1";
+    h.depContainerId = "/var/lib/kovalio/static/shop/rel_1";
     h.volumes = ["pgdata:/var/lib/postgresql/data"];
-    h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
 
     const last = await restore();
 
@@ -574,12 +574,12 @@ describe("the deployment-managed container fallback", () => {
     h.activeDeploymentId = "dep_1";
     h.depContainerId = "c_gone";
     h.volumes = ["pgdata:/var/lib/postgresql/data"];
-    h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
 
     const last = await restore();
 
     expect(last.status).toBe("succeeded");
-    expect(h.calls).toEqual(["receive:openship-shop-pgdata"]);
+    expect(h.calls).toEqual(["receive:kovalio-shop-pgdata"]);
   });
 });
 

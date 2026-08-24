@@ -48,7 +48,7 @@ class VolumeCopyProducerImpl implements BackupProducer {
       // The container id is in the message because it is the whole diagnosis. With
       // one, the live container was inspected and genuinely has no volume or bind
       // mounts. Without one, we only ever saw the service row's `volumes` column,
-      // which is empty for services Openship adopted rather than deployed (the
+      // which is empty for services Kovalio adopted rather than deployed (the
       // control plane's own compose stack is the reported case: its rows are
       // created from running containers and carry no volume specs).
       throw new Error(
@@ -57,7 +57,7 @@ class VolumeCopyProducerImpl implements BackupProducer {
             ? `Its live container (${service.containerId.slice(0, 12)}) reports no volume or bind ` +
               `mounts, so there is no persistent data here to capture.`
             : `No container was resolved for it, so only the service's recorded volumes could be ` +
-              `checked and it has none. If this service does hold data, redeploy it so Openship ` +
+              `checked and it has none. If this service does hold data, redeploy it so Kovalio ` +
               `records its volumes, or point the policy at a database payload instead of a volume ` +
               `snapshot.`),
       );

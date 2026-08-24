@@ -23,7 +23,7 @@ services:
         envFileContent: `
 NODE_VERSION=20
 BETTER_AUTH_SECRET=from-env
-POSTGRES_USER=openship
+POSTGRES_USER=kovalio
 POSTGRES_PASSWORD=secret
 EMPTY_VALUE=
 `,
@@ -33,7 +33,7 @@ EMPTY_VALUE=
     expect(parsed.services[0]?.image).toBe("node:20");
     expect(parsed.services[0]?.environment).toEqual({
       BETTER_AUTH_SECRET: "from-env",
-      DATABASE_URL: "postgres://openship:secret@db:5432/app",
+      DATABASE_URL: "postgres://kovalio:secret@db:5432/app",
       EMPTY_DEFAULT: "fallback",
       EMPTY_NO_COLON: "",
     });
@@ -477,7 +477,7 @@ services:
     expect(service?.buildArgs).toEqual({ UNSET_MAP: null });
   });
 
-  it("blocks Compose build behavior Openship cannot reproduce", () => {
+  it("blocks Compose build behavior Kovalio cannot reproduce", () => {
     const parsed = parseComposeFile(`
 services:
   api:
@@ -1062,7 +1062,7 @@ describe("parseComposeFile — shared namespaces (network_mode / pid)", () => {
 
   it("reports `host` as BLOCKING and stores nothing", () => {
     // The refusal this feature is built around: importing it anyway deploys a
-    // container that bypasses the edge and can reach Openship's own loopback API.
+    // container that bypasses the edge and can reach Kovalio's own loopback API.
     // Blocking (not a warning) because there is nothing the wizard could collect
     // to fix it — the compose file has to change.
     const parsed = parseComposeFile(svc("    network_mode: host\n"));

@@ -17,7 +17,7 @@
  * What this asserts is therefore mostly about EXIT CODES and the absence of false
  * success — the three cases below all passed (exit 0) before the fix.
  *
- * Why not boot `openship-mail` itself: that image is not published, and building it
+ * Why not boot `kovalio-mail` itself: that image is not published, and building it
  * runs the full iRedMail installer — minutes to tens of minutes, which is not a test.
  * The script's real collaborators are bash, psql, perl and the engine's SQL samples,
  * so a Debian `postgres:16` runner with the repo's actual `engine/samples` copied in
@@ -47,9 +47,9 @@ const EMAIL_DIR = join(REPO_ROOT, "apps/email");
 
 /** Unique per run so a leftover container from a killed run can't collide. */
 const SUFFIX = process.pid.toString(36);
-const NET = `openship-e2e-mailboot-${SUFFIX}`;
-const DB = `openship-e2e-mailboot-db-${SUFFIX}`;
-const RUNNER = `openship-e2e-mailboot-run-${SUFFIX}`;
+const NET = `kovalio-e2e-mailboot-${SUFFIX}`;
+const DB = `kovalio-e2e-mailboot-db-${SUFFIX}`;
+const RUNNER = `kovalio-e2e-mailboot-run-${SUFFIX}`;
 
 const DB_IMAGE = "postgres:16-alpine";
 /** Debian-based: the script is bash and uses perl for iRedMail's PH_ substitutions. */
@@ -62,7 +62,7 @@ const FIRST_DOMAIN = "e2e-mail.example";
 /** Any well-formed SSHA512 value; the script only validates the shape. */
 const STUB_HASH = "{SSHA512}ZTJlLXN0dWItaGFzaC12YWx1ZQ==";
 
-const SCRIPT_IN_RUNNER = "/opt/openship-mail/db-bootstrap.sh";
+const SCRIPT_IN_RUNNER = "/opt/kovalio-mail/db-bootstrap.sh";
 
 async function docker(args: string[], opts: { allowFail?: boolean } = {}) {
   try {
@@ -88,8 +88,8 @@ async function runBootstrap(env: Record<string, string> = {}) {
     VMAIL_DB_BIND_PASSWD: BIND_PASSWORD,
     DOMAIN_ADMIN_PASSWD_PLAIN: POSTMASTER_PLAIN,
     PGSQL_ROOT_PASSWD: PG_PASSWORD,
-    OPENSHIP_MAIL_DB_HOST: DB,
-    OPENSHIP_MAIL_DB_PORT: "5432",
+    KOVALIO_MAIL_DB_HOST: DB,
+    KOVALIO_MAIL_DB_PORT: "5432",
     ...env,
   }).flatMap(([k, v]) => ["--env", `${k}=${v}`]);
 
@@ -151,7 +151,7 @@ describeDockerE2E("mail engine DB bootstrap (real postgres)", () => {
     ]);
 
     // The REAL script and the REAL iRedMail SQL samples.
-    await docker(["exec", RUNNER, "mkdir", "-p", "/opt/openship-mail", "/opt/iRedMail-engine"]);
+    await docker(["exec", RUNNER, "mkdir", "-p", "/opt/kovalio-mail", "/opt/iRedMail-engine"]);
     await docker(["cp", join(EMAIL_DIR, "docker/db-bootstrap.sh"), `${RUNNER}:${SCRIPT_IN_RUNNER}`]);
     await docker(["cp", join(EMAIL_DIR, "engine/samples"), `${RUNNER}:/opt/iRedMail-engine/samples`]);
 
@@ -222,8 +222,8 @@ describeDockerE2E("mail engine DB bootstrap (real postgres)", () => {
       // firewall, a wrong host). It is also the case that proves PGCONNECT_TIMEOUT is
       // doing its job: without it libpq blocks for the OS default and the wait budget
       // below never gets a second iteration.
-      OPENSHIP_MAIL_DB_HOST: "203.0.113.1",
-      OPENSHIP_MAIL_DB_WAIT_SECS: "4",
+      KOVALIO_MAIL_DB_HOST: "203.0.113.1",
+      KOVALIO_MAIL_DB_WAIT_SECS: "4",
       PGCONNECT_TIMEOUT: "2",
     });
 
@@ -231,7 +231,7 @@ describeDockerE2E("mail engine DB bootstrap (real postgres)", () => {
     expect(r.log).toMatch(/did not accept queries within 4s/);
     // The message has to point somewhere. A bare "failed" is what made this a
     // multi-hour hunt in the field.
-    expect(r.log).toMatch(/docker logs openship-mail-db/);
+    expect(r.log).toMatch(/docker logs kovalio-mail-db/);
     expect(r.log).not.toMatch(/DB bootstrap complete/);
   }, 180_000);
 

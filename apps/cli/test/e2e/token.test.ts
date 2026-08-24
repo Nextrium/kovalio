@@ -26,7 +26,7 @@ async function freshTokenCommand(): Promise<typeof tokenCommand> {
   return (await import("../../src/commands/token")).tokenCommand;
 }
 
-describe("openship token list", () => {
+describe("kovalio token list", () => {
   it("GETs /tokens and tabulates the data envelope", async () => {
     fetchStub = stubFetch(() => ({
       json: { data: [{ id: "t1", name: "ci", readOnly: false }] },
@@ -39,7 +39,7 @@ describe("openship token list", () => {
   });
 });
 
-describe("openship token create", () => {
+describe("kovalio token create", () => {
   it("POSTs the name + flags and prints the one-time secret", async () => {
     fetchStub = stubFetch(() => ({
       json: { data: { id: "t2", name: "deploy", token: "opsh_secret_xyz" } },
@@ -107,7 +107,7 @@ describe("openship token create", () => {
   });
 });
 
-describe("openship token revoke", () => {
+describe("kovalio token revoke", () => {
   it("DELETEs the token by id", async () => {
     fetchStub = stubFetch(() => ({ status: 204 }));
     const { err, code } = await runCommand(tokenCommand, ["revoke", "t9"]);

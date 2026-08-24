@@ -36,7 +36,7 @@ const envSchema = z.object({
   /* ---------- Listen port ---------- */
   /**
    * Honored when set so a SINGLE docker-compose service definition works
-   * regardless of OPENSHIP_TARGET — the container binds a fixed internal
+   * regardless of KOVALIO_TARGET — the container binds a fixed internal
    * port and the reverse proxy maps the public domain to it. Unset, empty,
    * or invalid (non-integer / ≤0) falls back to the runtime target's port
    * (local=4000, saas=4100) via `.catch()`.
@@ -49,17 +49,17 @@ const envSchema = z.object({
    * isn't in the static runtime-target table — Electron passes it here at
    * spawn (e.g. "http://localhost:51234,http://127.0.0.1:51234").
    */
-  OPENSHIP_EXTRA_TRUSTED_ORIGINS: z.string().optional(),
+  KOVALIO_EXTRA_TRUSTED_ORIGINS: z.string().optional(),
 
   /**
    * Dashboard origin for auth redirects (desktop-login/claim, cloud-callback).
    * The desktop dashboard runs on a DYNAMIC port Electron injects here; unset
    * elsewhere → falls back to the static runtime-target dashboard URL.
    */
-  OPENSHIP_LOCAL_DASHBOARD_URL: z.string().optional(),
+  KOVALIO_LOCAL_DASHBOARD_URL: z.string().optional(),
 
   /**
-   * Set when this instance is served on a PUBLIC URL (e.g. `openship up
+   * Set when this instance is served on a PUBLIC URL (e.g. `kovalio up
    * --public-url https://ops.example.com` on a VPS). Two security effects:
    *   - zero-auth is refused outright (a network-exposed control plane must
    *     require login — the loopback guard is meaningless once a same-box
@@ -67,7 +67,7 @@ const envSchema = z.object({
    *   - the default auth mode for a fresh install becomes "local".
    * Presence, not the value, is the signal.
    */
-  OPENSHIP_PUBLIC_URL: z.string().optional(),
+  KOVALIO_PUBLIC_URL: z.string().optional(),
 
   /**
    * The origin THIS API is actually reachable at — used ONLY to construct
@@ -76,20 +76,20 @@ const envSchema = z.object({
    * fallback. The desktop app runs the API on a dynamic loopback port and passes
    * `http://127.0.0.1:<apiPort>` here.
    *
-   * SECURITY: this is a URL-CONSTRUCTION signal only. Unlike OPENSHIP_PUBLIC_URL
+   * SECURITY: this is a URL-CONSTRUCTION signal only. Unlike KOVALIO_PUBLIC_URL
    * it must NEVER feed the zero-auth / auth-mode / cookie / trustedOrigins-security
    * gates — that's the whole point (it lets desktop advertise a reachable origin
    * WITHOUT tripping `zeroAuthAllowed`'s "publicly-served" rejection).
    */
-  OPENSHIP_ADVERTISED_ORIGIN: z.string().optional(),
+  KOVALIO_ADVERTISED_ORIGIN: z.string().optional(),
 
   /**
    * Force login (no zero-auth) even in desktop DEPLOY_MODE. The CLI sets this
-   * for every `openship up` — a CLI-managed instance always requires a real
+   * for every `kovalio up` — a CLI-managed instance always requires a real
    * admin account (created by the CLI's setup), unlike the Electron desktop app
    * which keeps loopback zero-auth. Presence, not value, is the signal.
    */
-  OPENSHIP_REQUIRE_AUTH: envBool("false"),
+  KOVALIO_REQUIRE_AUTH: envBool("false"),
 
   /**
    * The instance's auth mode, DECLARED by whoever launches the API. When set it is
@@ -109,33 +109,33 @@ const envSchema = z.object({
    * further down.
    *
    * NOT a bypass: `zeroAuthAllowed()` still independently requires desktop (or an
-   * explicit OPENSHIP_ALLOW_ZERO_AUTH) AND a kernel-reported loopback peer, so
+   * explicit KOVALIO_ALLOW_ZERO_AUTH) AND a kernel-reported loopback peer, so
    * declaring "none" on a network-reachable box grants nothing on its own.
    */
-  OPENSHIP_AUTH_MODE: z.enum(["none", "local", "cloud"]).optional(),
+  KOVALIO_AUTH_MODE: z.enum(["none", "local", "cloud"]).optional(),
 
   /**
    * Managed edge: at boot, install OpenResty + certbot on THIS machine and
-   * route OPENSHIP_PUBLIC_URL's host → the local dashboard with a free Let's
+   * route KOVALIO_PUBLIC_URL's host → the local dashboard with a free Let's
    * Encrypt cert (reusing the app-deploy route/SSL pipes). Set by the CLI
    * wizard's "managed edge" path; off = bring-your-own reverse proxy.
    */
-  OPENSHIP_MANAGED_EDGE: envBool("false"),
+  KOVALIO_MANAGED_EDGE: envBool("false"),
   /** Loopback dashboard port the managed edge proxies to (defaults 3001). */
-  OPENSHIP_DASHBOARD_PORT: z.coerce.number().int().positive().catch(3001),
+  KOVALIO_DASHBOARD_PORT: z.coerce.number().int().positive().catch(3001),
   /** ACME account contact email (defaults to the admin during guided setup). */
-  OPENSHIP_ACME_EMAIL: z.string().optional(),
+  KOVALIO_ACME_EMAIL: z.string().optional(),
   /** Alternate ACME directory URL. Unset keeps Certbot's Let's Encrypt default. */
-  OPENSHIP_ACME_DIRECTORY_URL: z.string().url().optional(),
+  KOVALIO_ACME_DIRECTORY_URL: z.string().url().optional(),
   /** External Account Binding credentials (must be configured as a pair). */
-  OPENSHIP_ACME_EAB_KID: z.string().optional(),
-  OPENSHIP_ACME_EAB_HMAC_KEY: z.string().optional(),
+  KOVALIO_ACME_EAB_KID: z.string().optional(),
+  KOVALIO_ACME_EAB_HMAC_KEY: z.string().optional(),
   /** Certificate private-key algorithm and size. */
-  OPENSHIP_ACME_KEY_TYPE: z.enum(["ec256", "ec384", "rsa2048", "rsa4096"]).optional(),
+  KOVALIO_ACME_KEY_TYPE: z.enum(["ec256", "ec384", "rsa2048", "rsa4096"]).optional(),
   /** CA root bundle path as seen by the Certbot process. */
-  OPENSHIP_ACME_CA_BUNDLE: z.string().optional(),
+  KOVALIO_ACME_CA_BUNDLE: z.string().optional(),
   /** Non-interactive issuance requires explicit terms acceptance; historic default is true. */
-  OPENSHIP_ACME_TOS_AGREED: envBool("true"),
+  KOVALIO_ACME_TOS_AGREED: envBool("true"),
   /**
    * How long a deploy may HOLD waiting for a user decision (port conflict, edge
    * 80/443 takeover) before it gives up and aborts. Milliseconds; default 5 min
@@ -145,7 +145,7 @@ const envSchema = z.object({
    * has to poll to notice the prompt at all, so the human-tuned window can expire
    * before it ever looks. The deadline is published on the prompt as `expiresAt`.
    */
-  OPENSHIP_PROMPT_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
+  KOVALIO_PROMPT_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
 
   /**
    * Escape hatch for the container health watch's Docker event streams (one
@@ -159,12 +159,12 @@ const envSchema = z.object({
    * event stream" and "no health watch". To mute monitoring entirely, disable the
    * `services:health-watch` job — which also drains these streams.
    */
-  OPENSHIP_DISABLE_CONTAINER_EVENTS: envBool("false"),
+  KOVALIO_DISABLE_CONTAINER_EVENTS: envBool("false"),
 
   /* ---------- Mode ---------- */
   CLOUD_MODE: envBool("false"),
   /**
-   * MASTER switch for the whole Openship Cloud billing feature (subscriptions,
+   * MASTER switch for the whole Kovalio Cloud billing feature (subscriptions,
    * top-ups, Stripe portal). OFF by default → the billing state reports
    * `billing.status = "coming_soon"` and every Stripe-mutating endpoint fails
    * closed with a `BILLING_NOT_ENABLED` 403. Flip to `true` on the SaaS to make
@@ -182,7 +182,7 @@ const envSchema = z.object({
    */
   BILLING_TOPUPS_ENABLED: envBool("false"),
   /**
-   * Openship Cloud only: hard cap on projects per user (a cloud org maps 1:1
+   * Kovalio Cloud only: hard cap on projects per user (a cloud org maps 1:1
    * to its owning SaaS user, so per-org == per-user here). Enforced at project
    * create + ensure. Self-hosted ignores this and uses the high
    * SYSTEM.PROJECTS.MAX_PER_USER safety cap instead. Default 2 for now.
@@ -202,7 +202,7 @@ const envSchema = z.object({
    * from the dashboard without editing env and restarting).
    *
    *   - "platform" (default) → the full deploy platform
-   *   - "mail"               → Openship Mail: the dashboard's left rail becomes
+   *   - "mail"               → Kovalio Mail: the dashboard's left rail becomes
    *                            the mail control plane, the platform nav is hidden
    *
    * Orthogonal to DEPLOY_MODE: mail mode says what the UI presents, DEPLOY_MODE
@@ -212,7 +212,7 @@ const envSchema = z.object({
    * Always read through resolveProductMode() (lib/product-mode.ts), never
    * directly — that resolver owns the settings-override and CLOUD_MODE rules.
    */
-  OPENSHIP_PRODUCT: z.enum(["platform", "mail"]).default("platform"),
+  KOVALIO_PRODUCT: z.enum(["platform", "mail"]).default("platform"),
 
   /* ---------- Auth (Better Auth) ---------- */
   BETTER_AUTH_SECRET: z.string().default(DEFAULT_BETTER_AUTH_SECRET),
@@ -228,7 +228,7 @@ const envSchema = z.object({
    * settings write) rather than a single dashboard click. Desktop
    * deployments ignore this flag — zero-auth is the default there.
    */
-  OPENSHIP_ALLOW_ZERO_AUTH: envBool("false"),
+  KOVALIO_ALLOW_ZERO_AUTH: envBool("false"),
   /**
    * Cloud-session IP/UA pinning policy. Applied by cloudSessionAuth
    * middleware when a local instance presents a cloud_session_token.
@@ -288,7 +288,7 @@ const envSchema = z.object({
 
   /* ---------- GitHub App ---------- */
   GITHUB_APP_ID: z.string().optional(),
-  GITHUB_APP_SLUG: z.string().default("openship-io"),
+  GITHUB_APP_SLUG: z.string().default("kovalio-io"),
   /** PEM private key - raw multi-line string */
   GITHUB_PRIVATE_KEY: z.string().optional(),
   /** PEM private key - base64-encoded (single-line, for env vars) */
@@ -300,7 +300,7 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  SMTP_FROM: z.string().default("Openship <noreply@openship.io>"),
+  SMTP_FROM: z.string().default("Kovalio <noreply@nextrium.org>"),
 
   /* ---------- Network (self-hosted) ---------- */
   /**
@@ -355,14 +355,14 @@ const envSchema = z.object({
   /**
    * Absolute path that bounds every `kind: 'local'` destination.
    * Endpoints must resolve to a subpath of this root. Default
-   * /var/lib/openship/backups. Symlinks are resolved before the check.
+   * /var/lib/kovalio/backups. Symlinks are resolved before the check.
    */
-  BACKUP_LOCAL_ROOT: z.string().default("/var/lib/openship/backups"),
+  BACKUP_LOCAL_ROOT: z.string().default("/var/lib/kovalio/backups"),
 
   /**
    * Colon-separated extra roots accepted for `server.sshKeyPath`. The
-   * default allowlist already includes /var/lib/openship/ssh-keys and
-   * /etc/openship/ssh-keys — set this for installs that keep their
+   * default allowlist already includes /var/lib/kovalio/ssh-keys and
+   * /etc/kovalio/ssh-keys — set this for installs that keep their
    * SSH keys somewhere else.
    */
   SSH_KEY_PATH_ROOTS: z.string().default(""),
@@ -377,9 +377,9 @@ const envSchema = z.object({
 
   /* ---------- Mail webmail (Zero) ---------- */
   /**
-   * Base URL of the Zero webmail server reachable from openship's API.
+   * Base URL of the Zero webmail server reachable from kovalio's API.
    * The Zero server owns its branding storage and exposes
-   * `/branding.json` (public) + `/admin/branding` (token-auth). Openship
+   * `/branding.json` (public) + `/admin/branding` (token-auth). Kovalio
    * proxies dashboard branding writes here. Can be on the same VPS as
    * iRedMail, on a separate host, or even cross-region - wherever the
    * operator runs Zero.
@@ -388,7 +388,7 @@ const envSchema = z.object({
   /**
    * Shared secret matching the Zero server's `BRANDING_ADMIN_TOKEN`.
    * Sent as `X-Branding-Admin-Token` on writes. Never reaches the
-   * browser; openship API holds it, dashboard talks to openship.
+   * browser; kovalio API holds it, dashboard talks to kovalio.
    */
   MAIL_WEBMAIL_ADMIN_TOKEN: z.string().optional(),
 
@@ -450,34 +450,34 @@ const envSchema = z.object({
   // the first deploy, where NginxProvider's constructor re-checks the same rules
   // (that check stays: the adapter also serves non-env callers). Empty/whitespace
   // values count as unset, matching resolveAcmeProviderOptions.
-  const kid = cfg.OPENSHIP_ACME_EAB_KID?.trim();
-  const hmac = cfg.OPENSHIP_ACME_EAB_HMAC_KEY?.trim();
-  const bundle = cfg.OPENSHIP_ACME_CA_BUNDLE?.trim();
+  const kid = cfg.KOVALIO_ACME_EAB_KID?.trim();
+  const hmac = cfg.KOVALIO_ACME_EAB_HMAC_KEY?.trim();
+  const bundle = cfg.KOVALIO_ACME_CA_BUNDLE?.trim();
   if (!!kid !== !!hmac) {
     ctx.addIssue({
       code: "custom",
-      path: [kid ? "OPENSHIP_ACME_EAB_HMAC_KEY" : "OPENSHIP_ACME_EAB_KID"],
-      message: "OPENSHIP_ACME_EAB_KID and OPENSHIP_ACME_EAB_HMAC_KEY must be set together",
+      path: [kid ? "KOVALIO_ACME_EAB_HMAC_KEY" : "KOVALIO_ACME_EAB_KID"],
+      message: "KOVALIO_ACME_EAB_KID and KOVALIO_ACME_EAB_HMAC_KEY must be set together",
     });
   }
   if (kid && (!/^[\x20-\x7E]+$/.test(kid) || kid.length > 512)) {
     ctx.addIssue({
       code: "custom",
-      path: ["OPENSHIP_ACME_EAB_KID"],
+      path: ["KOVALIO_ACME_EAB_KID"],
       message: "must be printable ASCII (maximum 512 characters)",
     });
   }
   if (hmac && !/^[A-Za-z0-9_-]+={0,2}$/.test(hmac)) {
     ctx.addIssue({
       code: "custom",
-      path: ["OPENSHIP_ACME_EAB_HMAC_KEY"],
+      path: ["KOVALIO_ACME_EAB_HMAC_KEY"],
       message: "must be the base64url-encoded value supplied by the CA",
     });
   }
   if (bundle && !bundle.startsWith("/")) {
     ctx.addIssue({
       code: "custom",
-      path: ["OPENSHIP_ACME_CA_BUNDLE"],
+      path: ["KOVALIO_ACME_CA_BUNDLE"],
       message: "must be an absolute path in the Certbot environment",
     });
   }
@@ -490,9 +490,9 @@ export const env: Env = envSchema.parse(process.env);
 // Print resolution at MODULE LOAD, before any handler runs. If
 // boot crashes (e.g. EADDRINUSE on listen), this still shows. The
 // runtime-target row is resolved in @repo/core/runtime-config from
-// OPENSHIP_TARGET; no NODE_ENV magic, no CLOUD_MODE inference here.
+// KOVALIO_TARGET; no NODE_ENV magic, no CLOUD_MODE inference here.
 console.log(
-  `[env] OPENSHIP_TARGET=${process.env.OPENSHIP_TARGET ?? "(unset, default local)"}  ` +
+  `[env] KOVALIO_TARGET=${process.env.KOVALIO_TARGET ?? "(unset, default local)"}  ` +
     `→ self=${runtimeTargetId} (${runtimeTarget.api})  ` +
     `cloud=${cloudRuntimeTargetId} (${cloudRuntimeTarget.api})`,
 );
@@ -504,9 +504,9 @@ console.log(
  * replicas). Defaults ON whenever CLOUD_MODE is set — a multi-tenant SaaS must
  * share job queue / cache / rate-limit state across every instance. Self-hosted
  * single-box installs keep the auto-probe + in-memory fallback. Explicit
- * override: OPENSHIP_REQUIRE_REDIS=true|false (read raw so "unset" ≠ "false").
+ * override: KOVALIO_REQUIRE_REDIS=true|false (read raw so "unset" ≠ "false").
  */
-const requireRedisRaw = (process.env.OPENSHIP_REQUIRE_REDIS ?? "").toLowerCase().trim();
+const requireRedisRaw = (process.env.KOVALIO_REQUIRE_REDIS ?? "").toLowerCase().trim();
 export const REDIS_REQUIRED =
   requireRedisRaw === "true" || requireRedisRaw === "1"
     ? true
@@ -522,7 +522,7 @@ if (
   env.BETTER_AUTH_SECRET === DEFAULT_BETTER_AUTH_SECRET
 ) {
   throw new Error(
-    `BETTER_AUTH_SECRET must be set to a secure value when OPENSHIP_TARGET="${runtimeTargetId}".`,
+    `BETTER_AUTH_SECRET must be set to a secure value when KOVALIO_TARGET="${runtimeTargetId}".`,
   );
 }
 
@@ -548,9 +548,9 @@ if (env.DEPLOY_MODE !== "desktop" && !env.INTERNAL_TOKEN) {
 // instead. Electron sets this in apps/desktop/src/main/services.ts, and the two
 // are built + packaged in one stage.ts run so they cannot drift apart in a real
 // install. NODE_ENV=test is exempt so unit tests can exercise the unpinned path.
-if (env.DEPLOY_MODE === "desktop" && !env.OPENSHIP_AUTH_MODE && env.NODE_ENV !== "test") {
+if (env.DEPLOY_MODE === "desktop" && !env.KOVALIO_AUTH_MODE && env.NODE_ENV !== "test") {
   throw new Error(
-    `OPENSHIP_AUTH_MODE is required when DEPLOY_MODE="desktop". ` +
+    `KOVALIO_AUTH_MODE is required when DEPLOY_MODE="desktop". ` +
       `The launcher must declare the auth mode (the desktop app sets "none"); ` +
       `it is no longer inferred from the deploy mode.`,
   );
@@ -566,10 +566,10 @@ if (env.DEPLOY_MODE === "desktop" && !env.OPENSHIP_AUTH_MODE && env.NODE_ENV !==
 // The CLI used to claim it on a bare VPS install purely to get an in-process job
 // runner. The result: a server-host install that identified as a laptop — no
 // "This Server" row (its startup hook is gated on modes:["selfhosted"]), a deploy
-// wizard offering only Openship Cloud, and a relaxed auth posture on a networked
+// wizard offering only Kovalio Cloud, and a relaxed auth posture on a networked
 // box. The job runner never needed it (Redis reachability decides that).
 //
-// Electron declares BOTH DEPLOY_MODE=desktop and OPENSHIP_LOCAL_DASHBOARD_URL (it
+// Electron declares BOTH DEPLOY_MODE=desktop and KOVALIO_LOCAL_DASHBOARD_URL (it
 // serves the dashboard on a dynamic loopback port and must tell the API where).
 // Nothing else does. So a `desktop` claim without it is a launcher bug: warn
 // loudly rather than refuse, since a refusal here would brick the desktop app if
@@ -577,11 +577,11 @@ if (env.DEPLOY_MODE === "desktop" && !env.OPENSHIP_AUTH_MODE && env.NODE_ENV !==
 // kernel-reported loopback peer.
 if (
   env.DEPLOY_MODE === "desktop" &&
-  !env.OPENSHIP_LOCAL_DASHBOARD_URL &&
+  !env.KOVALIO_LOCAL_DASHBOARD_URL &&
   env.NODE_ENV !== "test"
 ) {
   console.warn(
-    `[env] DEPLOY_MODE="desktop" but OPENSHIP_LOCAL_DASHBOARD_URL is unset — ` +
+    `[env] DEPLOY_MODE="desktop" but KOVALIO_LOCAL_DASHBOARD_URL is unset — ` +
       `"desktop" is for the Electron app only. A server install should declare ` +
       `DEPLOY_MODE="bare" (host processes) or "docker" (compose); claiming desktop ` +
       `relaxes the zero-auth + internal-token gates and hides this box as a deploy target.`,
@@ -604,7 +604,7 @@ if (env.CLOUD_MODE && (env.GITHUB_AUTH_MODE === "cli" || env.GITHUB_AUTH_MODE ==
   );
 }
 
-// ─── OPENSHIP_ALLOW_ZERO_AUTH wiring (CRITICAL #4) ─────────────────────────
+// ─── KOVALIO_ALLOW_ZERO_AUTH wiring (CRITICAL #4) ─────────────────────────
 //
 // `getAuthMode()` already gates the SETTINGS write on this flag. The
 // runtime guard in authMiddleware ALSO refuses the zero-auth fallback
@@ -613,11 +613,11 @@ if (env.CLOUD_MODE && (env.GITHUB_AUTH_MODE === "cli" || env.GITHUB_AUTH_MODE ==
 // banner so the operator sees it.
 if (
   env.DEPLOY_MODE !== "desktop" &&
-  !env.OPENSHIP_ALLOW_ZERO_AUTH &&
+  !env.KOVALIO_ALLOW_ZERO_AUTH &&
   env.NODE_ENV !== "test"
 ) {
   console.log(
-    `[env] OPENSHIP_ALLOW_ZERO_AUTH=false (default) — zero-auth fallback disabled on this non-desktop instance.`,
+    `[env] KOVALIO_ALLOW_ZERO_AUTH=false (default) — zero-auth fallback disabled on this non-desktop instance.`,
   );
 }
 
@@ -631,45 +631,45 @@ if (env.BETTER_AUTH_COOKIE_DOMAIN) {
   validateCookieDomain(env.BETTER_AUTH_COOKIE_DOMAIN);
 }
 
-// ─── OPENSHIP_PUBLIC_URL validation ───────────────────────────────────────
+// ─── KOVALIO_PUBLIC_URL validation ───────────────────────────────────────
 //
 // It's used to build absolute callback URLs handed to external services
 // (GitHub webhooks) and injected into trustedOrigins. A malformed value would
 // register a dead webhook and pollute the CORS allowlist with a junk origin, so
 // fail-loud at boot instead of silently later (mirrors the cookie-domain guard).
-if (env.OPENSHIP_PUBLIC_URL) {
-  const raw = env.OPENSHIP_PUBLIC_URL.trim();
+if (env.KOVALIO_PUBLIC_URL) {
+  const raw = env.KOVALIO_PUBLIC_URL.trim();
   let parsed: URL;
   try {
     parsed = new URL(raw);
   } catch {
     throw new Error(
-      `OPENSHIP_PUBLIC_URL="${raw}" is not a valid absolute URL (expected e.g. https://ops.example.com).`,
+      `KOVALIO_PUBLIC_URL="${raw}" is not a valid absolute URL (expected e.g. https://ops.example.com).`,
     );
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(
-      `OPENSHIP_PUBLIC_URL must use http or https (got "${parsed.protocol}" in "${raw}").`,
+      `KOVALIO_PUBLIC_URL must use http or https (got "${parsed.protocol}" in "${raw}").`,
     );
   }
 }
 
-// ─── OPENSHIP_ADVERTISED_ORIGIN validation ────────────────────────────────
+// ─── KOVALIO_ADVERTISED_ORIGIN validation ────────────────────────────────
 // URL-construction only (see the field doc). Same fail-loud shape as
-// OPENSHIP_PUBLIC_URL so a malformed origin can't produce junk discovery URLs.
-if (env.OPENSHIP_ADVERTISED_ORIGIN) {
-  const raw = env.OPENSHIP_ADVERTISED_ORIGIN.trim();
+// KOVALIO_PUBLIC_URL so a malformed origin can't produce junk discovery URLs.
+if (env.KOVALIO_ADVERTISED_ORIGIN) {
+  const raw = env.KOVALIO_ADVERTISED_ORIGIN.trim();
   let parsed: URL;
   try {
     parsed = new URL(raw);
   } catch {
     throw new Error(
-      `OPENSHIP_ADVERTISED_ORIGIN="${raw}" is not a valid absolute URL (expected e.g. http://127.0.0.1:54777).`,
+      `KOVALIO_ADVERTISED_ORIGIN="${raw}" is not a valid absolute URL (expected e.g. http://127.0.0.1:54777).`,
     );
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(
-      `OPENSHIP_ADVERTISED_ORIGIN must use http or https (got "${parsed.protocol}" in "${raw}").`,
+      `KOVALIO_ADVERTISED_ORIGIN must use http or https (got "${parsed.protocol}" in "${raw}").`,
     );
   }
 }
@@ -691,7 +691,7 @@ function validateCookieDomain(raw: string): void {
 
   // Compute the runtime target's eTLD+1 (rightmost 2 labels) and
   // require the cookie domain ends with it. Avoids cross-product
-  // leaks (".openship.io" on an instance whose API runs at
+  // leaks (".nextrium.org" on an instance whose API runs at
   // "api.example.com").
   let apiHostname: string;
   try {
@@ -717,7 +717,7 @@ function validateCookieDomain(raw: string): void {
 
 // ─── Self-hosted GitHub App creds are deprecated ────────────────────────────
 //
-// The GitHub App private key now lives exclusively in api.openship.io
+// The GitHub App private key now lives exclusively in api.nextrium.org
 // (CLOUD_MODE=true). Self-hosted instances proxy all App-scoped operations
 // through cloud-client.ts. Setting these on a self-hosted instance has no
 // effect but suggests the operator hasn't seen the new flow — warn so they
@@ -729,7 +729,7 @@ if (!env.CLOUD_MODE) {
   // listed: it's no longer REQUIRED (webhooks now mint + persist a
   // per-project signing secret), but it stays a valid LEGACY FALLBACK the
   // webhook verifier still accepts — so we don't nag operators to remove it.
-  // The vars below ARE App-private credentials that moved to api.openship.io.
+  // The vars below ARE App-private credentials that moved to api.nextrium.org.
   const stale = [
     env.GITHUB_APP_ID && "GITHUB_APP_ID",
     (env.GITHUB_PRIVATE_KEY || env.GITHUB_PRIVATE_KEY_BASE64) && "GITHUB_PRIVATE_KEY",
@@ -738,7 +738,7 @@ if (!env.CLOUD_MODE) {
     console.warn(
       `[env] Self-hosted instances no longer use local GitHub App credentials. ` +
       `These env vars are ignored: ${stale.join(", ")}. ` +
-      `Connect to Openship Cloud in Settings to enable App-scoped GitHub access.`,
+      `Connect to Kovalio Cloud in Settings to enable App-scoped GitHub access.`,
     );
   }
 }
@@ -748,7 +748,7 @@ if (!env.CLOUD_MODE) {
  * hardcoded clean origins from `@repo/core` (no trailing slashes,
  * always http(s)) so we just dedupe them — no normalization needed.
  */
-const extraTrustedOrigins = (env.OPENSHIP_EXTRA_TRUSTED_ORIGINS ?? "")
+const extraTrustedOrigins = (env.KOVALIO_EXTRA_TRUSTED_ORIGINS ?? "")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
@@ -757,10 +757,10 @@ export const trustedOrigins = [
   ...new Set([
     runtimeTarget.dashboard,
     runtimeTarget.api,
-    // Public serving (openship up --public-url): the browser's origin is the
+    // Public serving (kovalio up --public-url): the browser's origin is the
     // operator's public URL, so it must be trusted for CORS, the origin guard,
     // and Better Auth's login CSRF check — otherwise remote login is rejected.
-    ...(env.OPENSHIP_PUBLIC_URL ? [env.OPENSHIP_PUBLIC_URL.replace(/\/+$/, "")] : []),
+    ...(env.KOVALIO_PUBLIC_URL ? [env.KOVALIO_PUBLIC_URL.replace(/\/+$/, "")] : []),
     ...extraTrustedOrigins,
     ...(env.NODE_ENV === "production"
       ? []
@@ -770,17 +770,17 @@ export const trustedOrigins = [
 
 /**
  * Dashboard origin for auth redirects (desktop-login/claim, cloud-callback).
- * Desktop injects the dynamic dashboard port via OPENSHIP_LOCAL_DASHBOARD_URL;
+ * Desktop injects the dynamic dashboard port via KOVALIO_LOCAL_DASHBOARD_URL;
  * otherwise the static runtime-target dashboard URL.
  */
 export const localDashboardUrl =
-  env.OPENSHIP_LOCAL_DASHBOARD_URL?.trim() || runtimeTarget.dashboard;
+  env.KOVALIO_LOCAL_DASHBOARD_URL?.trim() || runtimeTarget.dashboard;
 
 /** Internal loopback URL for the API (used by nginx webhook proxy, etc.) */
 export const internalApiUrl = `http://127.0.0.1:${env.PORT}`;
 
 /**
- * proxy_pass target for the `/_openship/hooks/` webhook location injected into a
+ * proxy_pass target for the `/_kovalio/hooks/` webhook location injected into a
  * project's nginx vhost. Single source so the deploy-time and edit-time route
  * builders can't drift.
  */

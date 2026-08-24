@@ -239,7 +239,7 @@ export async function getInstallationId(
   if (!owner) return null;
   const userId = ctx.userId;
 
-  // Cloud-app mode: ALWAYS ask SaaS. api.openship.io is the canonical
+  // Cloud-app mode: ALWAYS ask SaaS. api.nextrium.org is the canonical
   // store — the GitHub App webhook fires to SaaS, not to us, so its
   // record is authoritative. Skip the local DB entirely; a stale row
   // would lie for up to 50min after a user uninstalls / re-installs.
@@ -343,7 +343,7 @@ export async function getInstallationIdByOrg(
  *
  * Path branches on the user's resolved auth mode:
  *   - "app"       → local JWT signing + api.github.com call (cloud-mode only)
- *   - "cloud-app" → cloud-client proxy to api.openship.io
+ *   - "cloud-app" → cloud-client proxy to api.nextrium.org
  *
  * Other modes (cli/oauth/token) don't use installation tokens.
  *
@@ -684,7 +684,7 @@ export async function getUserStatus(userId: string) {
   // off the bare userId. Use the internal mode resolver.
   const mode = await resolveAuthModeForUserId(userId);
 
-  // ── Cloud-app: status comes from openship.io ────────────────────────────
+  // ── Cloud-app: status comes from nextrium.org ────────────────────────────
   if (mode === "cloud-app") {
     const { cloudClient } = await import("../../lib/cloud/client");
     const status = await cloudClient({ userId }).github.userStatus();
@@ -816,7 +816,7 @@ export async function getUserStatusWithDiagnostics(
  *     on the wire.
  *
  * Priority for `primary`:
- *   1. Openship App when connected — safest (short-lived install tokens)
+ *   1. Kovalio App when connected — safest (short-lived install tokens)
  *   2. gh CLI when available — local builds only
  *   3. null — nothing usable
  */
@@ -826,7 +826,7 @@ export async function getGitHubConnectionState(
   const userId = ctx.userId;
   const onSelfHosted = !env.CLOUD_MODE;
 
-  // ── Openship App side ──────────────────────────────────────────────
+  // ── Kovalio App side ──────────────────────────────────────────────
   // In CLOUD_MODE the App is local-signed; in self-hosted+cloud-connected
   // the App is cloud-proxied. Both flow through getUserStatus which
   // already abstracts that.
@@ -901,14 +901,14 @@ export async function getGitHubConnectionState(
 
   // ── Resolve primary per the user-stated priority ───────────────────
   const primary: GitHubConnectionState["primary"] = appConnected
-    ? "openship-app"
+    ? "kovalio-app"
     : cliAvailable
       ? "gh-cli"
       : null;
 
   return {
     sources: {
-      openshipApp: {
+      kovalioApp: {
         connected: appConnected,
         login: appLogin,
         avatarUrl: appAvatar,
@@ -946,7 +946,7 @@ export async function getUserInstallations(
 
   if (mode === "cloud-app") {
     // SaaS is the canonical source of truth — the GitHub App's webhook
-    // fires to api.openship.io, not to us, so api.openship.io is the
+    // fires to api.nextrium.org, not to us, so api.nextrium.org is the
     // only place that reliably knows about installations. We do NOT
     // cache to local DB here: a stale local row would lie for up to
     // 50 minutes after the user uninstalls or moves the App, and the
@@ -1064,11 +1064,11 @@ export type GitHubAuthMode = "app" | "oauth" | "cli" | "token" | "cloud-app";
  *
  * Used by code paths that need a mode without a user context (e.g. boot-
  * time checks, batch jobs). Returns the LOCAL-only resolution:
- *   - CLOUD_MODE=true  → "app"  (this IS api.openship.io — holds App creds)
+ *   - CLOUD_MODE=true  → "app"  (this IS api.nextrium.org — holds App creds)
  *   - CLOUD_MODE=false → "cli"  (defaults to local gh CLI for offline use)
  *
  * Per-request callers should call `resolveGitHubAuthMode(ctx)` instead
- * — that one returns `"cloud-app"` when the user is connected to openship
+ * — that one returns `"cloud-app"` when the user is connected to kovalio
  * cloud, which is the canonical self-hosted path.
  */
 export function getGitHubAuthMode(): GitHubAuthMode {
@@ -1085,10 +1085,10 @@ export function getGitHubAuthMode(): GitHubAuthMode {
  * The canonical answer for any request that has a userId. Resolution:
  *
  *   1. Explicit `GITHUB_AUTH_MODE` env var → used as-is (escape hatch).
- *   2. `CLOUD_MODE=true` (this IS api.openship.io) → "app".
- *   3. Self-hosted + the user is connected to Openship Cloud → "cloud-app".
+ *   2. `CLOUD_MODE=true` (this IS api.nextrium.org) → "app".
+ *   3. Self-hosted + the user is connected to Kovalio Cloud → "cloud-app".
  *      All App-scoped operations (install URL, list installations, mint
- *      install token, OAuth identity) proxy through api.openship.io.
+ *      install token, OAuth identity) proxy through api.nextrium.org.
  *   4. Self-hosted + NOT cloud-connected → "cli" (the gh CLI / PAT
  *      escape hatch — no App-scoped features available).
  */
@@ -1163,10 +1163,10 @@ async function resolveAuthModeForOrgOwner(
  * Used when this process IS the App owner — i.e. cloud-mode SaaS or an
  * explicit GITHUB_AUTH_MODE=app self-host with creds set. For the
  * canonical self-hosted path (cloud-app), use `resolveInstallUrl(userId)`
- * which proxies through openship.io and returns a state-bound URL.
+ * which proxies through nextrium.org and returns a state-bound URL.
  */
 export function getInstallUrl(): string {
-  // Single source of truth: env.GITHUB_APP_SLUG defaults to "openship-io"
+  // Single source of truth: env.GITHUB_APP_SLUG defaults to "kovalio-io"
   // via the zod schema in apps/api/src/config/env.ts. No fallback needed
   // here — the schema guarantees a value.
   return `https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`;
@@ -1174,7 +1174,7 @@ export function getInstallUrl(): string {
 
 /**
  * Per-user install URL resolution. In cloud-app mode this round-trips
- * through openship.io to get a state-bound URL; otherwise returns the
+ * through nextrium.org to get a state-bound URL; otherwise returns the
  * sync `getInstallUrl()` result. `state` is empty string when not
  * applicable (local-app mode).
  */
@@ -1212,7 +1212,7 @@ export async function resolveInstallUrl(
       return res;
     }
     // SaaS-only mode: the GitHub App install URL MUST come from
-    // openship.io — it carries the org-bound state nonce the
+    // nextrium.org — it carries the org-bound state nonce the
     // install-complete webhook needs to attribute the installation.
     // The SaaS is unreachable (or has no cloud-owner link), so there is
     // NO valid local fallback: a stateless github.com/apps/... URL would
@@ -1220,7 +1220,7 @@ export async function resolveInstallUrl(
     // Signal unreachable so the caller tells the user the truth instead
     // of handing them a dead link.
     console.warn(
-      "[GitHub] install URL unavailable — Openship Cloud unreachable (cloud-app mode); refusing stateless local fallback",
+      "[GitHub] install URL unavailable — Kovalio Cloud unreachable (cloud-app mode); refusing stateless local fallback",
     );
     return { url: "", state: "", cloudUnreachable: true };
   }
@@ -1266,7 +1266,7 @@ export async function consumeInstallState(
 /**
  * Resolve the GitHub OAuth start URL for this user.
  *
- * Cloud-app mode (self-hosted + Openship Cloud connected): proxies to the
+ * Cloud-app mode (self-hosted + Kovalio Cloud connected): proxies to the
  * SaaS's /oauth-handoff endpoint, which mints a single-use bridge URL.
  * The browser opens that URL and the SaaS handles the entire OAuth
  * round-trip — local never has GitHub OAuth credentials. After OAuth
@@ -1295,7 +1295,7 @@ export async function resolveOauthHandoffUrl(
  * Disconnect a user from a GitHub source.
  *
  * `source`:
- *   - "oauth" → remove the OAuth account row (Openship App / standalone OAuth)
+ *   - "oauth" → remove the OAuth account row (Kovalio App / standalone OAuth)
  *   - "cli"   → set the cli-suppression flag so the host's `gh auth token`
  *               is ignored even when present. NEVER touches the host's gh
  *               config - we only refuse to use it.

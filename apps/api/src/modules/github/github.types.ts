@@ -193,7 +193,7 @@ export interface MappedRepository {
   updated_at: string;
   pushed_at: string;
   /**
-   * Where openship learned about this repo:
+   * Where kovalio learned about this repo:
    *   - "app"  → covered by a GitHub App installation. Deployable anywhere
    *              (local + remote) via short-lived install tokens.
    *   - "cli"  → seen by the local `gh` CLI but NOT covered by an App
@@ -219,7 +219,7 @@ export interface MappedAccount {
    * memberships — they look identical otherwise, and the settings card
    * MUST NOT claim the App is connected to a CLI-only org. Without an
    * explicit source, callers must assume "cli" and gate any App claims
-   * behind state.sources.openshipApp.connected.
+   * behind state.sources.kovalioApp.connected.
    *
    *  - "app" → real GitHub App installation (deployable anywhere via
    *            short-lived install tokens)
@@ -263,9 +263,9 @@ export interface RepositoryDetail {
 
 export interface GitHubConnectionState {
   sources: {
-    /** Openship GitHub App. In SaaS mode this is the local installation;
+    /** Kovalio GitHub App. In SaaS mode this is the local installation;
      *  in self-hosted+cloud-connected this is the cloud-proxied install. */
-    openshipApp: {
+    kovalioApp: {
       connected: boolean;
       login?: string;
       avatarUrl?: string;
@@ -284,8 +284,8 @@ export interface GitHubConnectionState {
       /**
        * HOW this identity was established, so the UI can name it correctly:
        *   "host-cli" → probed off the host's own `gh` login
-       *   "device"   → browser device sign-in, completed in Openship
-       *   "token"    → operator pasted a PAT into Openship
+       *   "device"   → browser device sign-in, completed in Kovalio
+       *   "token"    → operator pasted a PAT into Kovalio
        * Everything used to render as "gh CLI" regardless. Also decides whether
        * the library's first-run consent prompt applies — only "host-cli" is a
        * pre-existing credential the operator didn't hand over here.
@@ -310,11 +310,11 @@ export interface GitHubConnectionState {
   };
   /**
    * Which source listings + cloning prefer. The priority is:
-   *   1. openship-app (when connected) — safest, short-lived install tokens
+   *   1. kovalio-app (when connected) — safest, short-lived install tokens
    *   2. gh-cli (when available) — local builds only
    *   3. null — nothing connected
    *
    * `null` is the "show the connect prompt" signal.
    */
-  primary: "openship-app" | "gh-cli" | null;
+  primary: "kovalio-app" | "gh-cli" | null;
 }

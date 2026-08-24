@@ -1,5 +1,5 @@
 /**
- * Openship Desktop - Electron main process.
+ * Kovalio Desktop - Electron main process.
  *
  * Flow:
  *   1. App starts → check if onboarding is complete
@@ -61,7 +61,7 @@ import {
  */
 
 interface AppConfig {
-  /** URL of the Openship API server */
+  /** URL of the Kovalio API server */
   apiUrl: string;
   /** URL of the dashboard */
   dashboardUrl: string;
@@ -182,7 +182,7 @@ async function pushInstanceSettings(
     });
   } catch (err) {
     // Log but don't block - settings can be pushed again later
-    console.error("[openship] Failed to push instance settings:", err);
+    console.error("[kovalio] Failed to push instance settings:", err);
   }
 }
 
@@ -248,7 +248,7 @@ function createWindow() {
     ...(hasStoredPosition ? { x: bounds?.x, y: bounds?.y } : { center: true }),
     minWidth: 800,
     minHeight: 560,
-    title: "Openship",
+    title: "Kovalio",
     // The app draws its own header row (DesktopChrome in the dashboard), so no
     // platform gets an OS title-bar strip above it.
     //
@@ -386,7 +386,7 @@ function createWindow() {
 /**
  * Inline splash shown while the bundled services boot (packaged app).
  *
- * This is the app's FIRST screen, so it carries the brand mark (the Openship
+ * This is the app's FIRST screen, so it carries the brand mark (the Kovalio
  * ring) over the same node-graph motif the dashboard's first-run state uses —
  * hub wired to repo / services / data / domain, with the links animating as it
  * comes up. That reads as "connecting", which is what's actually happening, so
@@ -523,7 +523,7 @@ const LOADING_HTML = `<!doctype html><html><head><meta charset="utf-8"><style>
     <circle class="mark" cx="140" cy="62" r="24"/>
     <circle class="prog" id="prog" cx="140" cy="62" r="24"/>
   </svg>
-  <h1><span id="stage">Starting Openship</span><span class="d">.</span><span class="d">.</span><span class="d">.</span></h1>
+  <h1><span id="stage">Starting Kovalio</span><span class="d">.</span><span class="d">.</span><span class="d">.</span></h1>
 </div>
 <script>
   /* Progress on the ring. The main process reports the stage it has ACTUALLY
@@ -585,11 +585,11 @@ function setLoadingStage(text: string, ceiling?: number) {
 /**
  * First-run onboarding is OPT-IN — disabled by default, so the desktop app goes
  * straight to the dashboard (the instance is treated as already set up). Set
- * `OPENSHIP_ENABLE_ONBOARDING=1` (or `true`) to bring the onboarding wizard back.
+ * `KOVALIO_ENABLE_ONBOARDING=1` (or `true`) to bring the onboarding wizard back.
  */
 const ONBOARDING_ENABLED =
-  process.env.OPENSHIP_ENABLE_ONBOARDING === "1" ||
-  process.env.OPENSHIP_ENABLE_ONBOARDING === "true";
+  process.env.KOVALIO_ENABLE_ONBOARDING === "1" ||
+  process.env.KOVALIO_ENABLE_ONBOARDING === "true";
 
 /** Decide the first real view once services are up: onboarding vs dashboard. */
 function routeInitialView() {
@@ -617,7 +617,7 @@ function loadDashboard() {
       store.set("onboardingComplete", false);
       loadOnboarding();
     } else {
-      console.error("[openship] Dashboard failed to load:", err);
+      console.error("[kovalio] Dashboard failed to load:", err);
     }
   });
 }
@@ -643,7 +643,7 @@ app.whenReady().then(async () => {
       await startLocalServices(internalToken);
     } catch (err) {
       dialog.showErrorBox(
-        "Openship failed to start",
+        "Kovalio failed to start",
         err instanceof Error ? err.message : String(err),
       );
       app.quit();
@@ -1017,7 +1017,7 @@ ipcMain.handle("onboarding:cloud-auth", async () => {
   // it redirects to login first, then back to authorize after auth.
   const callbackUrl = `${getLocalApiUrl()}/api/auth/cloud-callback`;
   const machine = hostname();
-  const cloudAuthUrl = `${CLOUD_DASHBOARD_URL}/authorize?callback=${encodeURIComponent(callbackUrl)}&app=${encodeURIComponent("Openship Desktop")}&machine=${encodeURIComponent(machine)}&state=${encodeURIComponent(state)}&code_challenge=${encodeURIComponent(codeChallenge)}&flow=desktop-cloud`;
+  const cloudAuthUrl = `${CLOUD_DASHBOARD_URL}/authorize?callback=${encodeURIComponent(callbackUrl)}&app=${encodeURIComponent("Kovalio Desktop")}&machine=${encodeURIComponent(machine)}&state=${encodeURIComponent(state)}&code_challenge=${encodeURIComponent(codeChallenge)}&flow=desktop-cloud`;
   shell.openExternal(cloudAuthUrl);
 
   return { ok: true, cloudAuthUrl, nonce };
@@ -1119,7 +1119,7 @@ ipcMain.handle("cloud:connect", async () => {
 
   const callbackUrl = `${getLocalApiUrl()}/api/auth/cloud-callback`;
   const machine = hostname();
-  const cloudAuthUrl = `${CLOUD_DASHBOARD_URL}/authorize?callback=${encodeURIComponent(callbackUrl)}&app=${encodeURIComponent("Openship Desktop")}&machine=${encodeURIComponent(machine)}&state=${encodeURIComponent(state)}&code_challenge=${encodeURIComponent(codeChallenge)}&flow=desktop-cloud`;
+  const cloudAuthUrl = `${CLOUD_DASHBOARD_URL}/authorize?callback=${encodeURIComponent(callbackUrl)}&app=${encodeURIComponent("Kovalio Desktop")}&machine=${encodeURIComponent(machine)}&state=${encodeURIComponent(state)}&code_challenge=${encodeURIComponent(codeChallenge)}&flow=desktop-cloud`;
   shell.openExternal(cloudAuthUrl);
 
   return { ok: true, cloudAuthUrl, nonce };

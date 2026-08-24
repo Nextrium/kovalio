@@ -1,6 +1,6 @@
 /**
- * Fetch and extract a published Openship release tarball into a local
- * cache directory. Used by `openship-dist.ts` and the webmail dist
+ * Fetch and extract a published Kovalio release tarball into a local
+ * cache directory. Used by `kovalio-dist.ts` and the webmail dist
  * resolver to fill the third resolution slot (cache miss → download
  * from GitHub releases) after the env override and repo-local dev
  * paths fail.
@@ -37,7 +37,7 @@
  *      operations 5min — keeps a hung CDN from wedging the API.
  *
  *   6. **Operator escape hatch.** Every throw mentions the env var
- *      (`OPENSHIP_RELEASE_DIST_PATH`) the operator can point at a local
+ *      (`KOVALIO_RELEASE_DIST_PATH`) the operator can point at a local
  *      directory to bypass the download entirely.
  *
  * Layout produced inside cacheDir:
@@ -63,7 +63,7 @@ const TAR_TIMEOUT_MS = 5 * 60_000;
  *  sha-verify). Generous for real dists; bounds a hostile/oversized response. */
 const MAX_RELEASE_ARTIFACT_BYTES = 512_000_000;
 
-const DEFAULT_REPO = "oblien/openship";
+const DEFAULT_REPO = "oblien/kovalio";
 
 export interface FetchAndExtractReleaseInput {
   /** Release tag / cache key, e.g. "v0.1.0". The extracted dist lives at `<cacheDir>/<tag>/`. */
@@ -72,9 +72,9 @@ export interface FetchAndExtractReleaseInput {
   cacheDir: string;
 
   // ── GitHub-Releases mode (asset name → github.com/<repo>/releases/download/…) ──
-  /** GitHub `owner/repo`, e.g. "oblien/openship". Defaults to "oblien/openship". */
+  /** GitHub `owner/repo`, e.g. "oblien/kovalio". Defaults to "oblien/kovalio". */
   repo?: string;
-  /** Release asset filename, e.g. "openship-v0.1.0-linux-amd64.tar.gz". */
+  /** Release asset filename, e.g. "kovalio-v0.1.0-linux-amd64.tar.gz". */
   asset?: string;
 
   // ── External-URL mode (bring-your-own dist) — set assetUrl to use it ──
@@ -84,7 +84,7 @@ export interface FetchAndExtractReleaseInput {
   shaUrl?: string;
   /** OR a pinned inline sha256 hex (64 chars) for the external tarball. */
   sha256?: string;
-  /** Error-message escape-hatch hint (defaults to `OPENSHIP_RELEASE_DIST_PATH`). */
+  /** Error-message escape-hatch hint (defaults to `KOVALIO_RELEASE_DIST_PATH`). */
   envOverride?: string;
 }
 
@@ -100,7 +100,7 @@ export interface FetchAndExtractReleaseResult {
  * Surfaced in every error message so a stuck download isn't a dead end; callers
  * with their own escape hatch pass `envOverride` instead.
  */
-const DEFAULT_ENV_OVERRIDE = "OPENSHIP_RELEASE_DIST_PATH";
+const DEFAULT_ENV_OVERRIDE = "KOVALIO_RELEASE_DIST_PATH";
 
 export class ReleaseDownloadError extends Error {
   readonly code = "RELEASE_DOWNLOAD_FAILED" as const;

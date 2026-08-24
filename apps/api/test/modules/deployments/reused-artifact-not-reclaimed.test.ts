@@ -79,7 +79,7 @@ const ctx = (provisioned: { imageRef?: string }) =>
     logs: [],
   }) as never;
 
-const RELEASE_DIR = "/opt/openship/static/releases/d_old";
+const RELEASE_DIR = "/opt/kovalio/static/releases/d_old";
 
 describe("a reused artifact is not on the failure reclaim list", () => {
   beforeEach(() => {

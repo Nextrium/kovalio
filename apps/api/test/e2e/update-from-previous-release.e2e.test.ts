@@ -7,31 +7,31 @@
  * database, but on PGlite — Postgres compiled to WASM, close but not the
  * `postgres:16-alpine` an operator actually has. Nothing anywhere booted the PREVIOUS
  * RELEASE and then updated it, which is the only sequence an existing user ever
- * performs, and the one that produced "openship-api-1 enters a crash loop after
- * `openship update`" from an operator whose 0.6.1 install was already unhealthy.
+ * performs, and the one that produced "kovalio-api-1 enters a crash loop after
+ * `kovalio update`" from an operator whose 0.6.1 install was already unhealthy.
  *
  * What it does:
  *   1. Brings up postgres + redis + the PREVIOUS release's api image, waits for
  *      /api/health, and confirms that api actually migrated the database.
  *   2. Seeds rows into core tables, so what follows runs against a NON-EMPTY schema.
  *   3. Repins the api image to THIS release's and runs the same command
- *      `openship update` runs — `up -d --force-recreate api` — against the same
+ *      `kovalio update` runs — `up -d --force-recreate api` — against the same
  *      volume, same .env, same network.
  *   4. Asserts the new api reaches /api/health, applied the remaining migrations,
  *      kept every seeded row, and did NOT bounce on the way (RestartCount 0 — a
  *      container that crash-looped its way to healthy is the failure being hunted).
  *
- * Deliberately narrower than `openship up`: postgres + redis + api, not edge/mail/
+ * Deliberately narrower than `kovalio up`: postgres + redis + api, not edge/mail/
  * dashboard. The compose file below mirrors the shipped template for those three
  * services (apps/cli/src/lib/compose.ts) — how the CLI GENERATES that file is covered
  * by apps/cli/test/unit; what this owns is whether the update survives.
  *
  * Two inputs, because a checkout has neither side of an upgrade in it:
- *   OPENSHIP_E2E_NEW_API_IMAGE  the api image for the NEW side. CI passes the digest
+ *   KOVALIO_E2E_NEW_API_IMAGE  the api image for the NEW side. CI passes the digest
  *                               `build-images` just pushed, so the bytes under test are
  *                               the bytes about to be tagged. Unset → built from this
  *                               checkout (slow, but makes the test runnable anywhere).
- *   OPENSHIP_E2E_OLD_VERSION    the release to upgrade FROM. Unset → the newest
+ *   KOVALIO_E2E_OLD_VERSION    the release to upgrade FROM. Unset → the newest
  *                               `v*.*.*` tag that isn't the one at HEAD.
  *
  * Opt-in via `E2E_SCOPE=update` (see vitest.e2e.config.ts): it pulls a published
@@ -46,8 +46,8 @@ import { join } from "node:path";
 import { createServer } from "node:net";
 import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 
-const REGISTRY = process.env.OPENSHIP_E2E_IMAGE_REGISTRY ?? "ghcr.io/oblien";
-const PROJECT = `openship-e2e-update-${process.pid}`;
+const REGISTRY = process.env.KOVALIO_E2E_IMAGE_REGISTRY ?? "ghcr.io/oblien";
+const PROJECT = `kovalio-e2e-update-${process.pid}`;
 const SEED_ID = "e2e-upgrade-seed";
 const SEEDED_TABLES = ["organization", "project", "deployment", "servers"];
 
@@ -120,7 +120,7 @@ async function freePort(): Promise<number> {
  * Prereleases are skipped — an rc is not what an operator is upgrading from.
  */
 function resolvePreviousVersion(): string {
-  const override = process.env.OPENSHIP_E2E_OLD_VERSION?.trim();
+  const override = process.env.KOVALIO_E2E_OLD_VERSION?.trim();
   if (override) return override.replace(/^v/, "");
 
   const atHead = new Set(
@@ -134,7 +134,7 @@ function resolvePreviousVersion(): string {
   if (!tags.length) {
     throw new Error(
       "No previous v*.*.* tag to upgrade from. CI must check out with fetch-depth: 0, " +
-        "or set OPENSHIP_E2E_OLD_VERSION.",
+        "or set KOVALIO_E2E_OLD_VERSION.",
     );
   }
   return tags[0]!.replace(/^v/, "");
@@ -159,7 +159,7 @@ function pullOrThrow(ref: string, attempts = PULL_ATTEMPTS): void {
   }
   throw new Error(
     `Could not pull ${ref} after ${attempts} attempts — the previous release's image has to ` +
-      `exist for there to be an upgrade to test. Override with OPENSHIP_E2E_OLD_VERSION ` +
+      `exist for there to be an upgrade to test. Override with KOVALIO_E2E_OLD_VERSION ` +
       `if this release genuinely has no published predecessor.\n${last}`,
   );
 }
@@ -169,10 +169,10 @@ function pullOrThrow(ref: string, attempts = PULL_ATTEMPTS): void {
  * one we build this checkout, so the test is runnable on a laptop.
  */
 function resolveNewApiImage(): string {
-  const override = process.env.OPENSHIP_E2E_NEW_API_IMAGE?.trim();
+  const override = process.env.KOVALIO_E2E_NEW_API_IMAGE?.trim();
   if (override) return override;
 
-  const tag = `openship/e2e-update-api:${process.pid}`;
+  const tag = `kovalio/e2e-update-api:${process.pid}`;
   const repoRoot = join(import.meta.dirname, "..", "..", "..", "..");
   const built = sh(
     "docker",
@@ -192,8 +192,8 @@ function resolveNewApiImage(): string {
  * the volume (#350), a pg_isready healthcheck, and — the part this test exists to
  * exercise — `depends_on: {condition: service_healthy}` on the api.
  *
- * The api image is a variable so phase 2 can repin it the way `openship update` repins
- * OPENSHIP_VERSION, and recreate against the same volume.
+ * The api image is a variable so phase 2 can repin it the way `kovalio update` repins
+ * KOVALIO_VERSION, and recreate against the same volume.
  */
 const COMPOSE_YAML = `services:
   postgres:
@@ -224,7 +224,7 @@ const COMPOSE_YAML = `services:
       retries: 12
 
   api:
-    image: \${OPENSHIP_API_IMAGE}
+    image: \${KOVALIO_API_IMAGE}
     restart: unless-stopped
     ports: ["127.0.0.1:\${API_PORT}:\${API_PORT}"]
     volumes:
@@ -247,12 +247,12 @@ function writeEnv(apiImage: string): void {
   writeFileSync(
     join(workdir, ".env"),
     [
-      `OPENSHIP_API_IMAGE=${apiImage}`,
+      `KOVALIO_API_IMAGE=${apiImage}`,
       `API_PORT=${apiPort}`,
-      "POSTGRES_USER=openship",
+      "POSTGRES_USER=kovalio",
       "POSTGRES_PASSWORD=e2e-upgrade-password",
-      "POSTGRES_DB=openship",
-      // Stable across both phases, exactly as `openship update` carries them forward:
+      "POSTGRES_DB=kovalio",
+      // Stable across both phases, exactly as `kovalio update` carries them forward:
       // a new BETTER_AUTH_SECRET would make every stored env var undecryptable (#488).
       "BETTER_AUTH_SECRET=e2e0000000000000000000000000000000000000000000000000000000000000f",
       "INTERNAL_TOKEN=e2e-internal-token",
@@ -271,9 +271,9 @@ function psql(sql: string): string {
     "-v",
     "ON_ERROR_STOP=1",
     "-U",
-    "openship",
+    "kovalio",
     "-d",
-    "openship",
+    "kovalio",
     "-tAc",
     sql,
   ]);
@@ -367,7 +367,7 @@ function apiRestartCount(): number {
  * The image the api container is actually RUNNING, as a content ID.
  *
  * Compared before/after rather than the image reference: both sides are the same repo,
- * so a name check ("does it contain openship-api") passes identically for the old
+ * so a name check ("does it contain kovalio-api") passes identically for the old
  * release and proves nothing about which one is up.
  */
 function apiImageId(): string {
@@ -380,12 +380,12 @@ describeDockerE2E("update from the previous release", () => {
 
     oldVersion = resolvePreviousVersion();
     apiPort = await freePort();
-    workdir = mkdtempSync(join(tmpdir(), "openship-e2e-update-"));
+    workdir = mkdtempSync(join(tmpdir(), "kovalio-e2e-update-"));
     writeFileSync(join(workdir, "docker-compose.yml"), COMPOSE_YAML);
 
     // ── Phase 1: the previous release, exactly as an operator is running it now.
-    pullOrThrow(`${REGISTRY}/openship-api:${oldVersion}`);
-    writeEnv(`${REGISTRY}/openship-api:${oldVersion}`);
+    pullOrThrow(`${REGISTRY}/kovalio-api:${oldVersion}`);
+    writeEnv(`${REGISTRY}/kovalio-api:${oldVersion}`);
     composeOrThrow(["up", "-d"], `bringing up the ${oldVersion} stack`);
     await waitForHealth(`previous release (${oldVersion})`);
 
@@ -416,7 +416,7 @@ describeDockerE2E("update from the previous release", () => {
 
   it("recreates onto this release's image and comes up healthy, with the data intact", async () => {
     // The update: repin the image and force-recreate ONLY the api, which is what
-    // `openship update` does (composeUpdate → composeUp → up -d --force-recreate).
+    // `kovalio update` does (composeUpdate → composeUp → up -d --force-recreate).
     writeEnv(newApiImage);
     composeOrThrow(["up", "-d", "--force-recreate", "api"], "recreating the api onto the new image");
 

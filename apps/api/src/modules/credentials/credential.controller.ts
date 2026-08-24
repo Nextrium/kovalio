@@ -25,7 +25,7 @@ import type { TCreateCredentialBody, TUpdateCredentialBody } from "./credential.
  * GET /credentials/providers — the catalogue the settings form renders from.
  *
  * Serves the registry as-is (labels, field schema, selector, logo slug) so the client has
- * no second copy of it. A provider Openship cannot verify yet is filtered out: the service
+ * no second copy of it. A provider Kovalio cannot verify yet is filtered out: the service
  * refuses to store one, and offering it in the picker would be a form that always fails.
  */
 export async function listProviders(c: Context) {

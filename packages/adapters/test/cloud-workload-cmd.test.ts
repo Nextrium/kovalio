@@ -7,7 +7,7 @@ import { resolveCloudWorkloadCmd } from "../src/runtime/cloud/compose";
  * verbatim — cwd comes from `working_dir`, so NO `sh -c`/`cd` wrap (that broke
  * entrypoint+CMD images). Legacy string / built-app start commands keep the wrap.
  *
- * openship#623 adds `binPathExport`: the string branch runs through a bare
+ * kovalio#623 adds `binPathExport`: the string branch runs through a bare
  * `sh -c`, which does NOT prepend `node_modules/.bin` the way `npm run` does, so
  * a dependency-binary start command (`next start`) exited 127. The prelude is
  * confined to that branch — see the argv cases below.
@@ -41,7 +41,7 @@ describe("resolveCloudWorkloadCmd (#332)", () => {
     expect(resolveCloudWorkloadCmd({ commandArgv: null, workdir })).toBeUndefined();
   });
 
-  // ── openship#623: the node_modules/.bin prelude ──────────────────────────
+  // ── kovalio#623: the node_modules/.bin prelude ──────────────────────────
 
   // Pinned as a literal so a change to the prelude's SHAPE (quoting, separator,
   // the trailing "$PATH" that keeps the image PATH reachable) is visible here

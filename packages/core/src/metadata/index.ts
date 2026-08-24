@@ -1,4 +1,4 @@
-import { openshipMetadataParser } from "./openship";
+import { kovalioMetadataParser } from "./kovalio";
 import { vercelMetadataParser } from "./vercel";
 import { railwayMetadataParser } from "./railway";
 import { renderMetadataParser } from "./render";
@@ -14,7 +14,7 @@ export type {
   ProjectCompositeRoute,
   MetadataParser,
 } from "./types";
-export { openshipMetadataParser } from "./openship";
+export { kovalioMetadataParser } from "./kovalio";
 export { vercelMetadataParser, parseVercelConfig, extractCdTargets, type VercelConfig } from "./vercel";
 export { railwayMetadataParser } from "./railway";
 export { renderMetadataParser } from "./render";
@@ -39,13 +39,13 @@ export function missingOutputDirectoryMessage(outputDirectory?: string, subject?
 
 /**
  * All registered metadata parsers, in PRECEDENCE order (highest first).
- * `openship.json` is the NATIVE format and an explicit declaration, so it wins
+ * `kovalio.json` is the NATIVE format and an explicit declaration, so it wins
  * over the imported PaaS formats. `vercel.json` and `railway.toml`/`railway.json`
  * are authoritative build config; `render.yaml` is a fill-only fallback. Add a
  * source by implementing `MetadataParser` and appending it here.
  */
 export const METADATA_PARSERS: readonly MetadataParser[] = [
-  openshipMetadataParser,
+  kovalioMetadataParser,
   vercelMetadataParser,
   railwayMetadataParser,
   renderMetadataParser,

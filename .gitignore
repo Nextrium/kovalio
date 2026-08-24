@@ -45,7 +45,7 @@ Thumbs.db
 coverage/
 
 # Database (PGlite local data)
-.openship/
+.kovalio/
 data/
 *.pglite
 

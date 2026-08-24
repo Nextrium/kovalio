@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 /**
- * Record-only ("Remove from Openship only") delete contract.
+ * Record-only ("Remove from Kovalio only") delete contract.
  *
  * The UI promises "Nothing on the server is touched — the app keeps running with
  * its data". That is a HARD guarantee, so this pins every destructive door shut:
@@ -11,7 +11,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
  *                            manifest, so a skipped cleanup keeps the vhost
  *                            serving)
  *   • no webmail teardown  → the mail server's proxy vhost for it stays up
- *   • no manifest rewrite  → the server's .openship manifest still lists the
+ *   • no manifest rewrite  → the server's .kovalio manifest still lists the
  *                            project, so a later Docker scan can re-import it
  *   • no orphan records    → nothing for the GC sweep to reclaim later
  *   • force-cancel of an in-flight deploy keeps what it provisioned (the
@@ -96,7 +96,7 @@ vi.mock("./project-cleanup.service", () => ({
   executeCleanup: h.executeCleanup,
   disposeManifestRuntimes: h.disposeManifestRuntimes,
 }));
-vi.mock("../../lib/openship-manifest-sync", () => ({
+vi.mock("../../lib/kovalio-manifest-sync", () => ({
   removeProjectFromServerManifests: h.removeProjectFromServerManifests,
 }));
 vi.mock("../deployments/build.service", () => ({

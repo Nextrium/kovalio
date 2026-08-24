@@ -28,7 +28,7 @@ const OPENRESTY_MGMT_PORT = 9145;
  */
 export function isReservedLoopbackPort(port: number): boolean {
   const apiPort = env.PORT;
-  const dashboardPort = env.OPENSHIP_DASHBOARD_PORT;
+  const dashboardPort = env.KOVALIO_DASHBOARD_PORT;
   return port === apiPort || port === dashboardPort || port === OPENRESTY_MGMT_PORT;
 }
 
@@ -138,7 +138,7 @@ function managedHostnameSuffix(): string {
 }
 
 /**
- * True when `hostname` sits under the ACTUAL Openship Cloud domain — the only
+ * True when `hostname` sits under the ACTUAL Kovalio Cloud domain — the only
  * suffix whose DNS and edge we operate, and therefore the only one that needs a
  * Cloud connection to resolve.
  *

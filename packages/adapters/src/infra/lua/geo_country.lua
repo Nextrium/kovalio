@@ -5,7 +5,7 @@
 -- requests. No reload per stream or per request.
 --
 -- Dependencies:
---   Lua binding — `openship.maxminddb`, vendored beside this file. Falls back to
+--   Lua binding — `kovalio.maxminddb`, vendored beside this file. Falls back to
 --                 `resty.maxminddb` for a bare box that has the opm package
 --                 installed from before we vendored it.
 --   C library   — libmaxminddb.so (`apk add libmaxminddb` in apps/edge/Dockerfile;
@@ -27,7 +27,7 @@ local DB_PATH = "/usr/share/GeoIP/GeoLite2-Country.mmdb"
 
 -- Vendored copy first, opm-installed copy second. `ffi.load('libmaxminddb')`
 -- runs at require time in both, so a missing .so surfaces here as mmdb_ok=false.
-local mmdb_ok, maxmind = pcall(require, "openship.maxminddb")
+local mmdb_ok, maxmind = pcall(require, "kovalio.maxminddb")
 if not mmdb_ok then
     mmdb_ok, maxmind = pcall(require, "resty.maxminddb")
 end

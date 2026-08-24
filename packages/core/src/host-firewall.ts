@@ -14,7 +14,7 @@ import { type Answer, answered, refused } from "./answer";
 import type { SystemFirewall } from "./host-profile";
 
 /**
- * A firewall Openship can drive.
+ * A firewall Kovalio can drive.
  *
  * Derived from `SystemFirewall` rather than restated, minus the two members that are
  * answers about *looking* rather than managers: `none` (we looked, nothing is enforcing)
@@ -167,7 +167,7 @@ export function firewallManager(firewall: SystemFirewall): Answer<FirewallManage
       );
     case "unknown":
       return refused(
-        "Openship could not determine which firewall this host runs, so it will not " +
+        "Kovalio could not determine which firewall this host runs, so it will not " +
           "guess at a rule — applying an iptables rule where firewalld is managing the " +
           "chains looks like it worked and is gone after a reload.",
       );
@@ -193,7 +193,7 @@ const PERSISTS: Readonly<Record<SystemFirewall, boolean>> = {
 };
 
 /**
- * True when Openship may apply a rule and expect it to still be there tomorrow.
+ * True when Kovalio may apply a rule and expect it to still be there tomorrow.
  *
  * The CLI refused to apply an unpersisted rule while the API applied one, so the same box
  * got a different answer depending on which surface asked. This is that one answer.

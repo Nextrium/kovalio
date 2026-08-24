@@ -14,7 +14,7 @@ import { env } from "../config/env";
  *
  * The channel's address is host-LOCAL, so unlike a published container port it
  * traverses the host's filter/INPUT chain — where a default-deny ufw silently DROPs
- * it. `openship up` now probes during install; this covers boxes provisioned before
+ * it. `kovalio up` now probes during install; this covers boxes provisioned before
  * that existed, and any box whose firewall changed under a running install.
  *
  * Never throws and never blocks boot.
@@ -83,7 +83,7 @@ export async function reportHostChannelAtBoot(
       deps.log(
         `[host-channel] ${health.target ?? "the host channel"} refuses TCP forwarding, so ` +
           `deploy health checks fall back to \`curl\` on the host (and are skipped if it ` +
-          `has none). Re-run \`openship up\` to re-provision the channel with forwarding.`,
+          `has none). Re-run \`kovalio up\` to re-provision the channel with forwarding.`,
       );
     }
     return health.code;

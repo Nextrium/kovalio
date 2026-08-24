@@ -13,7 +13,7 @@
  *                           a release/dist tarball); no clone, no source build
  *   build    — HOW the image/artifact is produced:
  *                "dockerfile" → the repo ships its own Dockerfile
- *                "buildpack"  → openship runs the stack's install/build commands
+ *                "buildpack"  → kovalio runs the stack's install/build commands
  *                "static"     → a static site (files served by the edge)
  *                "prebuilt"   → nothing to build (image/release deploys verbatim)
  *   workload — WHAT runs after deploy:
@@ -29,7 +29,7 @@
  * it did before — `worker` is reachable ONLY via an explicit `workloadType`.
  *
  * Pure, no I/O — lives in @repo/core so the db schema, API request validation,
- * openship.json config and the deploy pipeline all resolve identically.
+ * kovalio.json config and the deploy pipeline all resolve identically.
  */
 
 import { normalizeFramework, STACKS, type StackDefinition, type StackId } from "./stacks";
@@ -50,7 +50,7 @@ export interface DeploymentClass {
 
 /**
  * The raw signals a class is resolved from. Adapters (project row / deployment
- * snapshot / openship.json) populate whatever they have; every field is optional
+ * snapshot / kovalio.json) populate whatever they have; every field is optional
  * so a partial/legacy source still resolves sensibly. The three `*Kind` fields
  * are the EXPLICIT overrides — when set (non-null) they win over derivation.
  */

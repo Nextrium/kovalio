@@ -4,7 +4,7 @@ import { RESOURCE_TIER_ORDER } from "../resources";
 
 /**
  * Shape gate for `pricing.json` — the one editable source of every price,
- * allowance and limit Openship Cloud sells.
+ * allowance and limit Kovalio Cloud sells.
  *
  * The catalog is a COMMITTED file, not user input, so `parse` (throw) is the
  * right failure mode: a malformed edit must break the build everywhere rather
@@ -54,7 +54,7 @@ const planLimitsSchema = z.object({
    * at rest. Drives `max_workspaces` (plus build headroom).
    */
   runningServices: limitNumber,
-  /** Projects (project groups). Oblien has no project concept — Openship gates it. */
+  /** Projects (project groups). Oblien has no project concept — Kovalio gates it. */
   maxProjects: limitNumber,
   /**
    * The largest per-service machine this tier may select, named in the deploy

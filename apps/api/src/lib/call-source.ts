@@ -7,7 +7,7 @@
  * That means an MCP-driven write and a scripted PAT write are indistinguishable
  * at the middleware layer unless the dispatcher says which it is.
  *
- * A plain `x-openship-source: mcp` header would say it — and so could anyone with
+ * A plain `x-kovalio-source: mcp` header would say it — and so could anyone with
  * curl, which matters because "what did the AI assistant do here" is a question
  * people will answer from this column. So the claim is signed with a nonce
  * generated at boot and never sent anywhere: only a request originating INSIDE
@@ -31,8 +31,8 @@ export function isAuditSource(value: unknown): value is AuditSource {
   return typeof value === "string" && (AUDIT_SOURCES as readonly string[]).includes(value);
 }
 
-const CALL_SOURCE_HEADER = "x-openship-call-source";
-const CALL_CLIENT_HEADER = "x-openship-call-client";
+const CALL_SOURCE_HEADER = "x-kovalio-call-source";
+const CALL_CLIENT_HEADER = "x-kovalio-call-client";
 
 /**
  * Shape of an attributable client id: the canonical principal id the auth layer
@@ -116,7 +116,7 @@ export function resolveCallClientId(c: Context): string | null {
  *   cookie / zero-auth session → dashboard  (a browser, or a local single-user box)
  *   OAuth bearer               → mcp        (auth.ts resolves one through `getMcpSession`,
  *                                            so an OAuth principal IS an MCP session)
- *   PAT + an openship-cli UA   → cli
+ *   PAT + an kovalio-cli UA   → cli
  *   any other bearer           → api
  *   no request context at all  → system
  *
@@ -147,7 +147,7 @@ function derive(c: Context): AuditSource {
 }
 
 function isCliAgent(c: Context): boolean {
-  return (c.req.header("user-agent") ?? "").startsWith("openship-cli");
+  return (c.req.header("user-agent") ?? "").startsWith("kovalio-cli");
 }
 
 /**

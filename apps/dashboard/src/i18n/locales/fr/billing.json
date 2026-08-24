@@ -1,7 +1,7 @@
 {
   "capacity": {
     "title": "Capacité et utilisation",
-    "subtitle": "Capacité incluse dans votre forfait et ce que vous avez utilisé. Les chiffres en direct se synchronisent depuis Openship Cloud.",
+    "subtitle": "Capacité incluse dans votre forfait et ce que vous avez utilisé. Les chiffres en direct se synchronisent depuis Kovalio Cloud.",
     "routes": "Routes gratuites",
     "runningServices": "Services en cours",
     "projects": "Projets",
@@ -41,19 +41,19 @@
   },
   "unavailable": {
     "notConnected": {
-      "title": "Connectez-vous à Openship Cloud pour gérer la facturation",
-      "description": "Votre instance locale n'est pas encore connectée à Openship Cloud. Connectez-vous pour consulter l'état de l'abonnement, l'utilisation, les factures et les recharges.",
-      "connect": "Se connecter à Openship Cloud",
+      "title": "Connectez-vous à Kovalio Cloud pour gérer la facturation",
+      "description": "Votre instance locale n'est pas encore connectée à Kovalio Cloud. Connectez-vous pour consulter l'état de l'abonnement, l'utilisation, les factures et les recharges.",
+      "connect": "Se connecter à Kovalio Cloud",
       "connecting": "En attente de la connexion…"
     },
     "sessionExpired": {
-      "title": "Votre session Openship Cloud a expiré",
-      "description": "Vous êtes toujours lié, mais le jeton de session émis par Openship Cloud n'est plus valide. Reconnectez-vous pour l'actualiser — inutile de vous déconnecter au préalable.",
-      "reconnect": "Se reconnecter à Openship Cloud",
+      "title": "Votre session Kovalio Cloud a expiré",
+      "description": "Vous êtes toujours lié, mais le jeton de session émis par Kovalio Cloud n'est plus valide. Reconnectez-vous pour l'actualiser — inutile de vous déconnecter au préalable.",
+      "reconnect": "Se reconnecter à Kovalio Cloud",
       "connecting": "En attente de la connexion…"
     },
     "unreachable": {
-      "title": "Impossible de joindre la facturation Openship Cloud",
+      "title": "Impossible de joindre la facturation Kovalio Cloud",
       "description": "Votre session cloud a peut-être expiré ou le cloud est temporairement indisponible. Réessayez, ou reconnectez-vous depuis Paramètres → Cloud.",
       "tryAgain": "Réessayer",
       "reconnect": "Se reconnecter"

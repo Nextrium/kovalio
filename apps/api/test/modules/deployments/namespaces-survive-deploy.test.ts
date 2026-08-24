@@ -91,7 +91,7 @@ describe("compose namespaces survive a deploy", () => {
     });
 
     it("clears the value when the caller IS the file and the key is gone", async () => {
-      // `openship service sync` / an authoritative import: the payload is the full
+      // `kovalio service sync` / an authoritative import: the payload is the full
       // compose file, so a missing `network_mode` was removed by the author.
       const stored = await seedService(projectId, {
         name: "qbit",

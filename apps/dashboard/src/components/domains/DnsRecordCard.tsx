@@ -54,8 +54,8 @@ export default function DnsRecordCard({
   const isAliasCname =
     record.type === "CNAME" && !!record.value && hostname.endsWith(`.${record.value}`);
 
-  // A challenge TXT lives at `_openship-challenge.<domain>`, so its purpose line
-  // must name the DOMAIN being verified — "you own _openship-challenge.x.com"
+  // A challenge TXT lives at `_kovalio-challenge.<domain>`, so its purpose line
+  // must name the DOMAIN being verified — "you own _kovalio-challenge.x.com"
   // reads as nonsense.
   const verifiedHostname = hostname.replace(/^_[^.]+\./, "");
 

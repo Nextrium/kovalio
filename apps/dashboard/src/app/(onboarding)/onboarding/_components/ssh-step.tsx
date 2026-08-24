@@ -358,7 +358,7 @@ export function SshStep({ state, onUpdate, onNext, onBack }: StepProps) {
 
         <a
           className="ob-tutorial-link"
-          href="https://openship.io/docs/guides/custom-servers"
+          href="https://nextrium.org/docs/guides/custom-servers"
           target="_blank"
           rel="noopener noreferrer"
         >

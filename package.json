@@ -1,11 +1,11 @@
 {
-  "name": "openship",
+  "name": "kovalio",
   "version": "0.6.7",
   "description": "Open-source, self-hostable deployment platform",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oblien/openship.git"
+    "url": "https://github.com/Nextrium/kovalio.git"
   },
   "workspaces": [
     "apps/*",
@@ -28,6 +28,7 @@
     "update:cloudflare-ips": "node scripts/update-cloudflare-ips.mjs",
     "update:world-map": "node scripts/update-world-map.mjs",
     "update:country-hues": "node scripts/update-country-hues.mjs",
+    "rebrand": "bun scripts/rebrand-kovalio.ts",
     "start:desktop": "node apps/desktop/build/run.mjs",
     "dev:all": "turbo run dev --concurrency=20",
     "dev:api": "turbo run dev --filter=@repo/api...",

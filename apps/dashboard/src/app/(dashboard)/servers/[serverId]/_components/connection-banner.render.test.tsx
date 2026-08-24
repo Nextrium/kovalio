@@ -93,10 +93,10 @@ describe("ConnectionBanner host_channel variant", () => {
 });
 
 /**
- * #509: containerized with no OPENSHIP_HOST_SSH_HOST. There was no endpoint, so
+ * #509: containerized with no KOVALIO_HOST_SSH_HOST. There was no endpoint, so
  * nothing was contacted — and the banner used to fill the gap with the row's
  * display host, telling the operator that nothing answered on 127.0.0.1:22. The
- * remedy is `openship up`, not a firewall rule.
+ * remedy is `kovalio up`, not a firewall rule.
  */
 const UNPROVISIONED_HINT = `${HOST_CHANNEL_UNPROVISIONED} ${HOST_CHANNEL_NOT_PROVISIONED}`;
 
@@ -111,7 +111,7 @@ describe("ConnectionBanner unprovisioned host channel", () => {
   it("offers the provisioning command, never a firewall rule", () => {
     const out = text(render({ diagnosis: { hint: UNPROVISIONED_HINT } }));
     expect(out).toContain("provision the channel");
-    expect(out).toContain("openship up");
+    expect(out).toContain("kovalio up");
     expect(out).not.toContain("ufw");
   });
 
@@ -159,7 +159,7 @@ describe("ConnectionBanner unprovisioned host channel", () => {
     );
     expect(out).toContain("Nothing answered there");
     expect(out).toContain(RULE);
-    expect(out).not.toContain("openship up");
+    expect(out).not.toContain("kovalio up");
   });
 });
 

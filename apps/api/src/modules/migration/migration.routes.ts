@@ -24,9 +24,9 @@ r.get("/scan/stream", { tag: "server:write", collection: true }, migration.scanS
 // On-demand reveal of ONE discovered container's real env (scan masks it). Write-
 // gated: the masked scan is a read, revealing the real secret is a write (#336).
 r.post("/reveal-env", { tag: "server:write", collection: true }, migration.revealServiceEnv);
-// Create an Openship project from the selected discovered services (records only).
+// Create an Kovalio project from the selected discovered services (records only).
 r.post("/adopt", { tag: "server:write", collection: true }, migration.adoptServer);
-// Re-import an orphaned Openship project (DR / cross-instance), preserving its id.
+// Re-import an orphaned Kovalio project (DR / cross-instance), preserving its id.
 r.post("/reimport", { tag: "server:write", collection: true }, migration.reimportServer);
 
 // Read-only: parse a linked repo's docker-compose (GitHub API) for the map step.

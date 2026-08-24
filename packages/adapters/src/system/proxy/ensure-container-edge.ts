@@ -2,7 +2,7 @@
  * Bring up OUR edge as a CONTAINER on any box — the single installed edge path.
  *
  * Replaces apt-installing OpenResty + certbot and templating nginx.conf/Lua onto
- * the host: `apps/edge` bakes a complete config, the Openship Lua and certbot into
+ * the host: `apps/edge` bakes a complete config, the Kovalio Lua and certbot into
  * one multi-arch image, so the edge becomes a versioned artifact pinned to the
  * release instead of a package-manager outcome that drifts per distro and arch.
  *
@@ -75,11 +75,11 @@ export function setDefaultEdgeImage(image: string | undefined): void {
  * The edge image to run — the API-side consumer of the shared precedence.
  *
  * Delegates to `buildEdgeImageRef` (@repo/core) so this and the API's
- * `pinnedEdgeImage` can't diverge (they used to disagree on `OPENSHIP_EDGE_TAG`).
+ * `pinnedEdgeImage` can't diverge (they used to disagree on `KOVALIO_EDGE_TAG`).
  * The `injectedDefault` slot is this layer's version source: the API injects its
  * APP_VERSION-pinned ref at boot via `setDefaultEdgeImage`, keeping the edge's baked
  * Lua == the API build. With no injection (bare adapters consumer, tests) it falls
- * through to the registry + `OPENSHIP_VERSION`/`:latest` tail.
+ * through to the registry + `KOVALIO_VERSION`/`:latest` tail.
  */
 export function resolveEdgeImage(explicit?: string): string {
   return buildEdgeImageRef({ explicit, injectedDefault: injectedDefaultImage });
@@ -118,7 +118,7 @@ export type EdgeProviderOptions = Omit<
  * wraps it.
  *
  * Every side of this needs root on a non-root login and none of it was elevated: the
- * vhost writes land in root-owned `/var/lib/openship/edge`, `/etc/letsencrypt` is
+ * vhost writes land in root-owned `/var/lib/kovalio/edge`, `/etc/letsencrypt` is
  * 0700 root, and `docker exec` needs the daemon socket. `edgeContainerExecutor`'s
  * docstring says privilege is the caller's problem — and then no caller solved it, so
  * a deploy to a `deploy@host` box built and ran the app and quietly routed nothing.
@@ -164,7 +164,7 @@ export async function containerEdgeProvider(
     executor: edgeContainerExecutor(await edgeHostExecutor(executor), container),
     // Challenge tokens go to the HOST side of the ACME mount, for the same reason
     // vhosts do. This is the ONE mount whose two sides differ
-    // (/var/lib/openship/edge/acme → /var/www/acme), so the write path and the
+    // (/var/lib/kovalio/edge/acme → /var/www/acme), so the write path and the
     // vhost's `root` are genuinely different strings — `root` stays the container
     // path. Overridden here and nowhere else, next to the `paths` override it
     // mirrors, so the two cannot drift.
@@ -451,7 +451,7 @@ export async function ensureContainerEdge(
       checked ??
       (await rootOrDegrade(executor, {
         purpose: "Resolving the edge's bind-mount sources",
-        consequence: "Docker may mount a different host directory than Openship writes.",
+        consequence: "Docker may mount a different host directory than Kovalio writes.",
         report: (message) => onLog(log(message, "warn")),
       }));
     resolvedMounts = await resolveEdgeContainerMounts(host);
@@ -480,7 +480,7 @@ export async function ensureContainerEdge(
     } else {
       // A listener is not proof that the container sees the host's vhosts. On
       // macOS an old command may have mounted `/var/...` from Docker's VM while
-      // Openship wrote through the host symlink at `/private/var/...`: nginx is
+      // Kovalio wrote through the host symlink at `/private/var/...`: nginx is
       // healthy and every domain still returns the unrouted 404. Compare Docker's
       // actual sources with the target host's physical paths and recreate on drift.
       const mounts = await targetMounts();
@@ -563,7 +563,7 @@ export async function ensureContainerEdge(
   // serving nothing and every later vhost write fails somewhere else entirely. Say it
   // once, here, where the cause is still in hand.
   // Through the gate, for the reason `edgeHostExecutor` goes through it: these are
-  // root-owned paths under /var/lib/openship, so on a box we log into as a non-root sudo
+  // root-owned paths under /var/lib/kovalio, so on a box we log into as a non-root sudo
   // user the unelevated `mkdir` fails — and the failure was swallowed into a warning
   // nobody acts on, leaving the empty-bind-mount outcome the comment above describes.
   // `installContainerEdge` already gates the same work; this reconcile entrypoint never
@@ -592,7 +592,7 @@ export async function ensureContainerEdge(
   //
   //    A DEPRECATED BARE-HOST OpenResty goes through here too, as an ordinary foreign
   //    proxy — same prompt, same site import, same journaled stop as a distro nginx or
-  //    a Caddy (`canImportProxy("openresty")` is true and `scanOpenshipEdge` reads both
+  //    a Caddy (`canImportProxy("openresty")` is true and `scanKovalioEdge` reads both
   //    bare layouts). There is no second "decommission the legacy edge" path, because
   //    a second path is how the first one got skipped: detect used to call a host
   //    OpenResty "ours", so this gate returned clean, the host proxy kept :80, and the

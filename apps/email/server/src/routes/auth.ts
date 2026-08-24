@@ -91,7 +91,7 @@ const LIST_COOKIE_NAME = `${env.SESSION_COOKIE_NAME}s`;
  */
 function evictShadowCookies(c: any) {
   // Which host's wide scopes to clear. COOKIE_DOMAIN is legacy config that
-  // openship no longer sets (the catalog app is one image on any hostname), so
+  // kovalio no longer sets (the catalog app is one image on any hostname), so
   // fall back to the host the browser is already talking to — which is exactly
   // the host whose shadow cookie would shadow ours. Attacker-controlled Host
   // only ever produces extra `Max-Age=0` deletes for a domain the browser isn't

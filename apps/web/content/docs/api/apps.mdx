@@ -17,14 +17,14 @@ In the dashboard this is the **Apps** tab. The definition format is documented i
 <Callout title="Base path & auth">
 Catalog and install paths sit at **`/api/apps`**; the two per-project paths are nested under
 **`/api/projects/:id`**. Send a personal access token as a bearer header
-(`Authorization: Bearer <token>`), created with [`openship token create`](/docs/cli/access). The
+(`Authorization: Bearer <token>`), created with [`kovalio token create`](/docs/cli/access). The
 dashboard uses your session cookie instead. See the [API overview](/docs/api) for the full auth model
 and [security/permissions](/docs/security/permissions) for how tags map to grants.
 </Callout>
 
 <Callout title="Self-hosted and cloud" type="info">
 Apps install as normal services projects, so this module is available on both self-hosted and
-Openship Cloud. For the per-project paths, a cloud project is transparently proxied to Openship
+Kovalio Cloud. For the per-project paths, a cloud project is transparently proxied to Kovalio
 Cloud while a local project is served by your own instance.
 </Callout>
 
@@ -50,12 +50,12 @@ GET /api/apps/catalog
 ```
 
 The runtime catalog is the copy **bundled** in your build, overlaid by a live fetch of the curated
-catalog from the Openship repo (refreshed on a 10-minute TTL, stale-while-revalidate), plus your
+catalog from the Kovalio repo (refreshed on a 10-minute TTL, stale-while-revalidate), plus your
 organization's custom apps. A failed fetch or an offline instance simply keeps serving the last-good
 copy, so the overlay can never break the catalog.
 
 <Callout title="Overlay trust model" type="info">
-The overlay is fetched over HTTPS from Openship's own repository — repo-curated, with **no signing**
+The overlay is fetched over HTTPS from Kovalio's own repository — repo-curated, with **no signing**
 and no user uploads in that channel — and **every entry is shape-validated before it can drive an
 install**, using the same strict validator as the bundled set. Your organization's custom apps are a
 separate, always-unverified channel.
@@ -68,7 +68,7 @@ Because the overlay can be **ahead of your instance**, entries carry compatibili
     available: { type: 'boolean', description: 'false → shown as coming soon and not installable. Enforced server-side, not just in the UI.' },
     verified: { type: 'boolean', description: 'Curated and reviewed. Always false for custom apps — trust is provenance-based, never read from the JSON.' },
     custom: { type: 'boolean', description: 'true for a per-organization uploaded app.' },
-    updateAvailable: { type: 'boolean', description: 'A newer definition exists upstream but needs a newer Openship, so your bundled copy is being served. Still installable.' },
+    updateAvailable: { type: 'boolean', description: 'A newer definition exists upstream but needs a newer Kovalio, so your bundled copy is being served. Still installable.' },
     requiresUpdate: { type: '{ minVersion?: string }', description: 'This app has no runnable copy on this instance. A guided placeholder is returned instead of the definition, and install is refused.' },
   }}
 />
@@ -166,7 +166,7 @@ Each `routes` entry:
   type={{
     service: { type: 'string', description: 'Service name from the app definition.', required: true },
     port: { type: 'integer', description: 'Container port this choice routes (1–65535).', required: true },
-    mode: { type: '"port" | "free" | "custom"', description: 'port = no public route, published host port only. free = a managed *.opsh.io subdomain (requires Openship Cloud). custom = a hostname you own.', required: true },
+    mode: { type: '"port" | "free" | "custom"', description: 'port = no public route, published host port only. free = a managed *.opsh.io subdomain (requires Kovalio Cloud). custom = a hostname you own.', required: true },
     domain: { type: 'string', description: 'free mode: the subdomain slug. Omit to take the app default label.' },
     customDomain: { type: 'string', description: 'custom mode: the hostname you own. Required in that mode.' },
   }}
@@ -180,7 +180,7 @@ which is a perfectly good outcome for a database or an internal tool.
 
 ```bash
 curl -X POST https://your-host/api/apps \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{
     "templateId": "ghost",
@@ -284,8 +284,8 @@ agent that only needs to inspect things, issue a read-only one.
 
 <Callout title="400 — install refused" type="warn">
 Install validates the app and your routing choices, and returns the reason as the message. Common
-ones: the app is still marked coming soon (`available: false`); it needs a newer Openship
-(`requiresUpdate`, reported as *Requires Openship ≥ X*); the app id is unknown; a `routes` entry
+ones: the app is still marked coming soon (`available: false`); it needs a newer Kovalio
+(`requiresUpdate`, reported as *Requires Kovalio ≥ X*); the app id is unknown; a `routes` entry
 names a service the app does not declare, or a port that service does not serve; two `routes` entries
 target the same service and port; or `mode: "custom"` was sent without a `customDomain`. A missing
 `templateId` is rejected the same way.
@@ -305,9 +305,9 @@ From `PATCH /app-settings`: the project is not an app or declares no settings
 numeric bounds, or the named service does not exist on the project.
 </Callout>
 
-<Callout title="403 — needs Openship Cloud" type="error">
+<Callout title="403 — needs Kovalio Cloud" type="error">
 A `routes` entry used `mode: "free"` (a managed `*.opsh.io` subdomain) on an instance that is not
-connected to Openship Cloud. These carry a `CLOUD_REQUIRED_*` code so a client can turn them into a
+connected to Kovalio Cloud. These carry a `CLOUD_REQUIRED_*` code so a client can turn them into a
 connect prompt rather than a dead end. Use `mode: "custom"` with your own hostname, or `mode: "port"`
 for no public route.
 </Callout>

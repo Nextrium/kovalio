@@ -1,6 +1,6 @@
 {
   "title": "Issues",
-  "subtitle": "Everything Openship found wrong across your projects, servers and domains.",
+  "subtitle": "Everything Kovalio found wrong across your projects, servers and domains.",
   "tabs": {
     "open": "Open",
     "resolved": "Resolved"
@@ -17,7 +17,7 @@
     "clear": "Clear filters"
   },
   "scopes": {
-    "platform": "Openship",
+    "platform": "Kovalio",
     "server": "Servers",
     "project": "Projects",
     "domain": "Domains"

@@ -1,4 +1,4 @@
-<h1 align="center">Openship</h1>
+<h1 align="center">Kovalio</h1>
 
 <p align="center">
   开源、可自托管的部署平台，内置 CI/CD。<br>
@@ -6,9 +6,9 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/openship"><img src="https://img.shields.io/npm/v/openship?color=0b7285&label=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/kovalio"><img src="https://img.shields.io/npm/v/kovalio?color=0b7285&label=npm" alt="npm version" /></a>
   <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License" /></a>
-  <a href="https://openship.io"><img src="https://img.shields.io/badge/website-openship.io-0b7285" alt="Website" /></a>
+  <a href="https://nextrium.org"><img src="https://img.shields.io/badge/website-nextrium.org-0b7285" alt="Website" /></a>
 </p>
 
 <p align="center">
@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  <img src="../screenshots/screen.png" alt="Openship dashboard" width="800" />
+  <img src="../screenshots/screen.png" alt="Kovalio dashboard" width="800" />
 </p>
 
 ---
@@ -33,29 +33,29 @@
 ## 快速开始
 
 ```bash
-npm i -g openship
-openship init
+npm i -g kovalio
+kovalio init
 ```
 
 就这么简单。或者，如果你更喜欢 Docker：
 
 ```bash
-git clone https://github.com/oblien/openship.git && cd openship
+git clone https://github.com/Nextrium/kovalio.git && cd kovalio
 cp .env.example .env
 docker compose up -d
 ```
 
-或从 [openship.io](https://openship.io) 下载桌面应用。
+或从 [nextrium.org](https://nextrium.org) 下载桌面应用。
 
 ---
 
 ## 功能简介
 
-把它指向一个代码仓库。Openship 会检测你的技术栈、构建它、配置好一切并发布 —— 没有配置文件、没有流水线、没有 YAML。
+把它指向一个代码仓库。Kovalio 会检测你的技术栈、构建它、配置好一切并发布 —— 没有配置文件、没有流水线、没有 YAML。
 
 数据库、域名、SSL、CDN、邮件、备份 —— 全部在一处管理。
 
-支持 **Openship Cloud**（托管）或你自己拥有的**任意 Linux 服务器**。独立开发者发布副业项目、团队运行生产环境，用的是同一个工具。
+支持 **Kovalio Cloud**（托管）或你自己拥有的**任意 Linux 服务器**。独立开发者发布副业项目、团队运行生产环境，用的是同一个工具。
 
 ---
 
@@ -79,7 +79,7 @@ docker compose up -d
 
 ## 部署到任何地方
 
-- **Openship Cloud** —— 托管、自动伸缩、零配置
+- **Kovalio Cloud** —— 托管、自动伸缩、零配置
 - **任意 VPS** —— Hetzner、DigitalOcean、Linode、OVH 等
 - **独立服务器** —— 裸机、托管机房、家庭实验室
 - **多服务器** —— 将负载分散到多台机器
@@ -94,7 +94,7 @@ docker compose up -d
 - **Web 控制台** —— 浏览器中的同一套界面，为团队打造。
 - **CLI** —— 可脚本化、对 CI 友好。
 
-**REST API** 和 **MCP**（AI 智能体协议）为自动化和工具集成收尾。完整的命令与 API 参考见 [openship.io/docs](https://openship.io/docs)。
+**REST API** 和 **MCP**（AI 智能体协议）为自动化和工具集成收尾。完整的命令与 API 参考见 [nextrium.org/docs](https://nextrium.org/docs)。
 
 > [!NOTE]
 > 文档仍在完善中 —— 我们正在积极补充。如果有缺失或不清楚的地方，非常欢迎[贡献](../../CONTRIBUTING.md)，这能帮助我们更快完善。
@@ -117,6 +117,6 @@ docker compose up -d
 
 ## 许可证
 
-Openship 是**开源**软件，依据 [Apache License 2.0](../../LICENSE) 授权。
+Kovalio 是**开源**软件，依据 [Apache License 2.0](../../LICENSE) 授权。
 
 你可以使用、运行、修改、自托管和分发它 —— 包括用于商业和闭源产品 —— 只要遵守 Apache 2.0 许可证的条款。完整文本见 [LICENSE](../../LICENSE)。

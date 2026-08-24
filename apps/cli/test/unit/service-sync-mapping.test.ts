@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { mapComposeService } from "../../src/commands/service";
 
 /**
- * `openship service sync` maps `docker compose config --format json` to the sync
+ * `kovalio service sync` maps `docker compose config --format json` to the sync
  * payload — and that mapper is a SECOND fold of compose's long form, independent
  * of the API's YAML parser. The two disagreed, which is the real half of #533's
  * mount claim: compose config ALWAYS normalizes volumes to long form, and this

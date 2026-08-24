@@ -4,8 +4,8 @@ import type {
   StackId,
   ComposeAdvanced,
   RoutingConfig,
-  OpenshipResourceTier,
-  OpenshipReadiness,
+  KovalioResourceTier,
+  KovalioReadiness,
   WorkloadType,
 } from "@repo/core";
 import type {
@@ -178,7 +178,7 @@ export interface PrepareProjectResponse extends PrepareAppConfig {
     branches?: Array<{ name: string }>;
   };
   singleAppCandidate?: PrepareSingleAppCandidate;
-  /** The compose path this scan used (request value, or the one openship.json
+  /** The compose path this scan used (request value, or the one kovalio.json
    *  declared). Absent when the root was detected normally. */
   composePath?: string;
   services?: PrepareComposeService[];
@@ -187,13 +187,13 @@ export interface PrepareProjectResponse extends PrepareAppConfig {
   rootEnv?: Record<string, string>;
   /** Routing config parsed from the repo's vercel.json (persisted on the project). */
   routing?: RoutingConfig;
-  // ── Declared overlay (repo-root openship.json) — present only when the repo
+  // ── Declared overlay (repo-root kovalio.json) — present only when the repo
   //    ships the file. Seed wizard defaults; absent → detection is unchanged. ──
   /** Declared serve mode ("static" ⇒ no server). Seeds `options.hasServer`. */
   productionMode?: "host" | "static" | "standalone";
   /** Declared runtime workload ("web"|"worker"|"static", #538). Wins over
    *  `productionMode` — seeds `options.workloadType` directly so a repo whose
-   *  openship.json declares `workload: worker` lands on the worker selection. */
+   *  kovalio.json declares `workload: worker` lands on the worker selection. */
   workloadType?: WorkloadType;
   /** Declared runtime isolation. Seeds `runtimeMode` for a brand-new deploy. */
   runtimeMode?: "bare" | "docker";
@@ -206,9 +206,9 @@ export interface PrepareProjectResponse extends PrepareAppConfig {
     targetPath?: string;
   }>;
   /** Declared cloud sizing (tier OR explicit cpu/mem/disk). Seeds resource tier. */
-  /** Tier ids come from @repo/core (OpenshipResourceTier) — not re-spelled here. */
+  /** Tier ids come from @repo/core (KovalioResourceTier) — not re-spelled here. */
   resources?: {
-    tier?: OpenshipResourceTier;
+    tier?: KovalioResourceTier;
     cpuCores?: number;
     memoryMb?: number;
     diskMb?: number;
@@ -217,9 +217,9 @@ export interface PrepareProjectResponse extends PrepareAppConfig {
    * Declared readiness gate. Seeds the wizard's Health section; absent (the
    * common case) leaves it off, which is also what the pipeline does.
    */
-  readiness?: OpenshipReadiness;
+  readiness?: KovalioReadiness;
   /**
-   * What the repo's openship.json parse refused (#641). Advisory — the deploy
+   * What the repo's kovalio.json parse refused (#641). Advisory — the deploy
    * runs either way, on the fields that did parse. Reaches the wizard without a
    * controller change because /deployments/prepare spreads ProjectInfo raw.
    */

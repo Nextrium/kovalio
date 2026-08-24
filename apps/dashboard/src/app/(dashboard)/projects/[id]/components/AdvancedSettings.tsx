@@ -34,7 +34,7 @@ import { getApiErrorMessage } from "@/lib/api/client";
 import { invalidateProjectCaches } from "@/hooks/useProjectEndpoints";
 import { migrationNeedsOperator } from "@/utils/project-status";
 import type { RouteStrategy } from "@/lib/api/settings";
-import type { OpenshipReadiness } from "@repo/core";
+import type { KovalioReadiness } from "@repo/core";
 import { workloadOf } from "@/context/deployment/types";
 import ReadinessSection from "@/components/project-settings/ReadinessSection";
 import { ProjectMigrationCard } from "@/components/migration/ProjectMigrationCard";
@@ -580,7 +580,7 @@ export const AdvancedSettings = ({ onDeleteProject }: Props) => {
         >
           <ReadinessCard
             projectId={projectData.id}
-            initial={(projectData?.readiness as OpenshipReadiness | null) ?? null}
+            initial={(projectData?.readiness as KovalioReadiness | null) ?? null}
           />
         </SectionCard>
 
@@ -888,12 +888,12 @@ function ReadinessCard({
   initial,
 }: {
   projectId: string;
-  initial: OpenshipReadiness | null;
+  initial: KovalioReadiness | null;
 }) {
   const { t } = useI18n();
   const { showToast } = useToast();
-  const [value, setValue] = useState<OpenshipReadiness | null>(initial);
-  const savedRef = React.useRef<OpenshipReadiness | null>(initial);
+  const [value, setValue] = useState<KovalioReadiness | null>(initial);
+  const savedRef = React.useRef<KovalioReadiness | null>(initial);
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const title = t.importProject.buildSettings.healthCheck.title;
 
@@ -904,7 +904,7 @@ function ReadinessCard({
     [],
   );
 
-  function handleChange(next: OpenshipReadiness | undefined) {
+  function handleChange(next: KovalioReadiness | undefined) {
     const resolved = next ?? null;
     setValue(resolved);
     if (timerRef.current) clearTimeout(timerRef.current);

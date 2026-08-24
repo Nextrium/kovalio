@@ -2,7 +2,7 @@
  * A service with a live container is backed up THROUGH the container, whatever the
  * deployment snapshot claims.
  *
- * [#611](https://github.com/oblien/openship/issues/611)'s root cause. The control
+ * [#611](https://github.com/Nextrium/kovalio/issues/611)'s root cause. The control
  * plane's own project is a Docker compose stack, but its adopt deployment is stamped
  * `runtimeMode: "bare"` — accurately, for what that adopt did (it health-probed a
  * port with BareRuntime and never started a container). Both orchestrators read the

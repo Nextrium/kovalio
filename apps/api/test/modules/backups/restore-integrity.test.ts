@@ -24,7 +24,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const sha256 = (buf: Buffer) => crypto.createHash("sha256").update(buf).digest("hex");
 
-const VOLUME = Buffer.from("openship-volume-archive-bytes");
+const VOLUME = Buffer.from("kovalio-volume-archive-bytes");
 const VOLUME_SHA = sha256(VOLUME);
 
 interface Recorded {
@@ -280,7 +280,7 @@ describe("prepare re-hashes what it says it re-hashes", () => {
     h.artifacts = [artifact];
     // Same length, different bytes — precisely what the size-only check waved
     // through. `tar` would extract this happily onto a live volume.
-    const corrupt = Buffer.from("openship-volume-archive-BYTES");
+    const corrupt = Buffer.from("kovalio-volume-archive-BYTES");
     expect(corrupt.byteLength).toBe(VOLUME.byteLength);
     h.objects.set(artifact.key, corrupt);
 
@@ -302,7 +302,7 @@ describe("prepare re-hashes what it says it re-hashes", () => {
     const second = recorded({ key: "org_1/bkr_1/volume-uploads.tar.zst" });
     h.artifacts = [good, second];
     h.objects.set(good.key, VOLUME);
-    h.objects.set(second.key, Buffer.from("openship-volume-archive-BYTES"));
+    h.objects.set(second.key, Buffer.from("kovalio-volume-archive-BYTES"));
 
     const last = await prepare();
 

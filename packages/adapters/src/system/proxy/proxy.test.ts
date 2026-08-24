@@ -21,12 +21,12 @@ function makeExecutor(rules: Array<[string, string]>): CommandExecutor {
 const nginxStatus: EdgeStatus = {
   classification: "known",
   canProceedClean: false,
-  occupants: [{ port: 80, proxy: "nginx", managedByOpenship: false }],
+  occupants: [{ port: 80, proxy: "nginx", managedByKovalio: false }],
 };
 const unknownStatus: EdgeStatus = {
   classification: "unknown",
   canProceedClean: false,
-  occupants: [{ port: 80, managedByOpenship: false }],
+  occupants: [{ port: 80, managedByKovalio: false }],
 };
 const freeStatus: EdgeStatus = { classification: "free", canProceedClean: true, occupants: [] };
 
@@ -75,7 +75,7 @@ describe("foreignProxyOnEdge", () => {
   });
 
   test("a bare HOST OpenResty → blocked (deprecated: it's a migration source, not our edge)", async () => {
-    // Our edge is the openship-edge CONTAINER. A host OpenResty is a foreign proxy
+    // Our edge is the kovalio-edge CONTAINER. A host OpenResty is a foreign proxy
     // we migrate off, even with our Lua on disk from an older install — otherwise
     // preflight waves the box through and the edge container can never bind :80.
     const r = await foreignProxyOnEdge(
@@ -94,7 +94,7 @@ describe("foreignProxyOnEdge", () => {
   test("our own edge CONTAINER on the edge → NOT blocked (it's ours)", async () => {
     const r = await foreignProxyOnEdge(
       makeExecutor([
-        ["docker ps --filter name=openship-edge", "openship-edge"],
+        ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
         ["sport = :80", 'LISTEN 0 511 *:80 *:* users:(("nginx",pid=555,fd=6))'],
         ["-p 555 -o args=", "nginx: master process /usr/local/openresty/nginx/sbin/nginx"],
       ]),

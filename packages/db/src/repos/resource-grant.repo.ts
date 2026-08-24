@@ -273,7 +273,7 @@ export function createResourceGrantRepo(db: Database) {
     /**
      * Delete ALL GitHub access grants (github / github_installation /
      * github_repository) for an org. Called when the org disconnects
-     * Openship Cloud — the org loses its GitHub App identity entirely, so
+     * Kovalio Cloud — the org loses its GitHub App identity entirely, so
      * every member-level GitHub grant is moot. Returns rows removed.
      */
     async deleteAllGitHubGrants(organizationId: string): Promise<number> {

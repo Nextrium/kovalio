@@ -7,7 +7,7 @@
  * Every tab in here talks to Postfix/Dovecot/vmail over SSH, so when the engine
  * isn't serving they ALL fail. Before this, each one discovered that separately
  * and printed its own red line (or, worse, a raw `No such container:
- * openship-mail-db`), and none of them offered a way out. One banner at the top of
+ * kovalio-mail-db`), and none of them offered a way out. One banner at the top of
  * the panel states the condition once and carries the single next step:
  *
  *   - engine present but stopped → **Start the engine**, dispatched through the

@@ -1,5 +1,5 @@
 /**
- * Email templates for Openship.
+ * Email templates for Kovalio.
  *
  * Each template returns { subject, html, text } so they can be
  * passed directly to sendMail(). Keep all copy and markup here
@@ -10,7 +10,7 @@
 /*  Shared layout                                                      */
 /* ------------------------------------------------------------------ */
 
-const BRAND = "Openship";
+const BRAND = "Kovalio";
 
 /**
  * Escape a value for interpolation into HTML text/attribute content
@@ -79,7 +79,7 @@ export function verifyEmailTemplate(user: { name?: string | null; email: string 
   `);
 
   return {
-    subject: "Verify your Openship email",
+    subject: "Verify your Kovalio email",
     html,
     text: `Hi ${user.name || "there"},\n\nVerify your email: ${url}\n\nIf you didn't create an account, ignore this email.`,
   };
@@ -190,7 +190,7 @@ export function organizationInviteEmail(opts: {
     </p>
     ${ctaButton(opts.url, "Accept invitation")}
     <p style="color:#9ca3af;font-size:13px;margin:0">
-      If you don't have an Openship account yet, you'll be asked to create one with this email
+      If you don't have an Kovalio account yet, you'll be asked to create one with this email
       (${htmlEscape(opts.invitee.email)}). The invitation expires in 7 days.
     </p>
   `);

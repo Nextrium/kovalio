@@ -283,7 +283,7 @@ export async function verifySsl(c: Context) {
 /** POST /domains/:id/certificate - install an operator-supplied cert (BYO / Origin CA) */
 export async function uploadCert(c: Context) {
   // Self-hosted only: installing an operator-supplied cert writes to the box's
-  // OpenResty. On Openship Cloud, TLS is owned by the managed edge — there's
+  // OpenResty. On Kovalio Cloud, TLS is owned by the managed edge — there's
   // nothing to install, so refuse rather than run a no-op/misleading path.
   const guard = assertNotCloud(c);
   if (guard) return guard;

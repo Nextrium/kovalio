@@ -138,10 +138,10 @@ export async function getCredential(
 function requireProvider(providerId: string): CredentialProvider {
   const provider = getCredentialProvider(providerId);
   if (!provider) throw new ValidationError(`Unknown credential provider "${providerId}".`);
-  // A provider Openship cannot check must not be storable: rule 2 above would be
+  // A provider Kovalio cannot check must not be storable: rule 2 above would be
   // unenforceable for it, and the operator would get a credential that looks fine.
   if (!hasVerifier(provider.id)) {
-    throw new ValidationError(`Openship cannot verify ${provider.label} credentials yet.`);
+    throw new ValidationError(`Kovalio cannot verify ${provider.label} credentials yet.`);
   }
   return provider;
 }

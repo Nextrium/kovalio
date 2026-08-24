@@ -25,7 +25,7 @@ vi.mock("@repo/adapters", () => ({
 }));
 
 vi.mock("../../src/lib/mail-image", () => ({
-  pinnedMailImage: vi.fn(() => "ghcr.io/oblien/openship-mail:0.5.0"),
+  pinnedMailImage: vi.fn(() => "ghcr.io/oblien/kovalio-mail:0.5.0"),
   mailBuildSpec: vi.fn(() => undefined),
 }));
 
@@ -80,7 +80,7 @@ describe("repairServerMail", () => {
       flavor: "container",
       running: false,
       exists: true,
-      image: "ghcr.io/oblien/openship-mail:0.5.0",
+      image: "ghcr.io/oblien/kovalio-mail:0.5.0",
     } as never);
 
     const r = await repairServerMail(executor, { onLog });

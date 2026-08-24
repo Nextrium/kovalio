@@ -2,7 +2,7 @@
  * Boot hook: react to a control-plane version bump by scanning remote infra.
  *
  * When this control plane self-updates — a desktop relaunch onto a new build, or
- * `openship update` on a self-hosted box — `APP_VERSION` moves forward, and the
+ * `kovalio update` on a self-hosted box — `APP_VERSION` moves forward, and the
  * edge/mail containers already deployed on connected servers are now pinned to a
  * newer tag than they're running. The periodic `infra:scan` job would notice
  * within its 6-hour window; this hook makes it IMMEDIATE, right after the boot

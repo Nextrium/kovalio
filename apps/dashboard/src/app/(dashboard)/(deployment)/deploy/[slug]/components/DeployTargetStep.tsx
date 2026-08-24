@@ -332,9 +332,9 @@ export const DeployTargetSummary: React.FC<CompactSummaryProps> = ({
   };
   const target = targetLabels[deployTarget];
   // Build label is driven by buildStrategy FIRST — a "local" build always runs
-  // on this machine, even when the deploy target is Openship Cloud
+  // on this machine, even when the deploy target is Kovalio Cloud
   // (local-orchestrated cloud: build here, upload the output to the cloud
-  // workspace). Only a SERVER build inherits the target's name ("Openship
+  // workspace). Only a SERVER build inherits the target's name ("Kovalio
   // Cloud" when the workspace builds it, else the generic remote label).
   const build =
     buildStrategy === "local"
@@ -563,7 +563,7 @@ export type LastPick = {
 };
 
 export const lastPickStore = createPersistedValue<LastPick>(
-  "openship.deploy-last-pick",
+  "kovalio.deploy-last-pick",
   (raw): raw is LastPick => {
     if (!raw || typeof raw !== "object") return false;
     const obj = raw as { target?: unknown; serverId?: unknown };
@@ -1370,8 +1370,8 @@ const DeployTargetStep: React.FC<DeployTargetStepProps> = ({ targets, onContinue
     },
     {
       value: "api-host",
-      // The "api host" is the machine running Openship: the user's own device in
-      // desktop mode, the Openship orchestrator when self-hosted. Not the cloud —
+      // The "api host" is the machine running Kovalio: the user's own device in
+      // desktop mode, the Kovalio orchestrator when self-hosted. Not the cloud —
       // so no cloud icon, and a label that says which machine it actually is.
       icon: <Cpu className="size-5" />,
       label: isDesktop ? ts.clone.apiHostDesktopLabel : ts.clone.apiHostServerLabel,
@@ -1483,8 +1483,8 @@ const DeployTargetStep: React.FC<DeployTargetStepProps> = ({ targets, onContinue
   };
 
   const handleContinue = async () => {
-    // The only hard gate at this step: deploying TO Openship Cloud needs an
-    // Openship Cloud connection. Anything else (free .${baseDomain} domains
+    // The only hard gate at this step: deploying TO Kovalio Cloud needs an
+    // Kovalio Cloud connection. Anything else (free .${baseDomain} domains
     // on own-server / local, free domains in compose services, etc.) is a
     // downstream concern - the stack/domains screens after Continue prompt
     // for cloud at the exact moment it's actually needed. Interrupting here

@@ -14,7 +14,7 @@ const RESTARTING =
 // The daemon phrase riding along is exactly why isContainerRestartingError used to
 // false-positive on this and burn four pointless retries.
 const EDGE_DOWN_BLOB = `${explainEdgeDown({
-  container: "openship-edge",
+  container: "kovalio-edge",
   status: "restarting",
   reason: "[emerg] bind() to 0.0.0.0:80 failed (98: Address in use)",
 })}\n${RESTARTING}`;
@@ -183,13 +183,13 @@ describe("registerResolvedRoutes — proxy tunables", () => {
       routing,
       undefined,
       [{ hostname: "site.example.com", tls: false, targetPath: "/" }],
-      { staticRoot: "/opt/openship/static/site" },
+      { staticRoot: "/opt/kovalio/static/site" },
       undefined,
       { proxy: PROXY_OPTS },
     );
 
     expect(routing.registerRoute.mock.calls[0][0]).toMatchObject({
-      staticRoot: "/opt/openship/static/site",
+      staticRoot: "/opt/kovalio/static/site",
       proxy: PROXY_OPTS,
     });
   });
@@ -230,12 +230,12 @@ describe("registerResolvedRoutes — compiled vercel.json rules", () => {
       routing,
       undefined,
       [{ hostname: "site.example.com", tls: false, targetPath: "/" }],
-      { staticRoot: "/opt/openship/static/site" },
+      { staticRoot: "/opt/kovalio/static/site" },
       undefined,
       { ...RULES },
     );
     expect(routing.registerRoute.mock.calls[0][0]).toMatchObject({
-      staticRoot: "/opt/openship/static/site",
+      staticRoot: "/opt/kovalio/static/site",
       ...RULES,
     });
   });

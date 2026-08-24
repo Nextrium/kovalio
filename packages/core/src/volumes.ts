@@ -13,7 +13,7 @@
  * strings the service path takes, plus the shorter form an app actually wants —
  * a bare path relative to the app root (`storage`) — and expands it to a real
  * spec. Docker volume NAMING is not here: `runtime/volume-namespace.ts` in
- * @repo/adapters is the single authority for the `openship-<slug>-` scoping, and
+ * @repo/adapters is the single authority for the `kovalio-<slug>-` scoping, and
  * both the single-app and multi-service deploys go through it.
  *
  * Pure string logic, no dependencies.
@@ -32,7 +32,7 @@ const MODE_SUFFIX = /:(ro|rw|z|Z|nocopy)$/;
 /**
  * Volume name for a bare app path: `storage/app` → `storage-app`. Only the
  * characters Docker accepts in a volume name survive; the result is later
- * prefixed with `openship-<slug>-` at container-create time, so it just has to
+ * prefixed with `kovalio-<slug>-` at container-create time, so it just has to
  * be stable and readable, not globally unique.
  */
 export function volumeAutoName(path: string): string {

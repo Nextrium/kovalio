@@ -1,7 +1,7 @@
 import { getRestApiBaseUrl } from "./urls";
 
 /**
- * Standard API client for the Openship dashboard.
+ * Standard API client for the Kovalio dashboard.
  *
  * Use this for all non-auth API calls (projects, deployments, domains, etc.).
  * Auth calls should go through `auth-client.ts` (Better Auth SDK).
@@ -241,9 +241,9 @@ export function setActiveOrganizationId(orgId: string | null) {
   _currentOrgId = orgId;
   if (typeof window !== "undefined") {
     if (orgId) {
-      window.localStorage.setItem("openship.activeOrgId", orgId);
+      window.localStorage.setItem("kovalio.activeOrgId", orgId);
     } else {
-      window.localStorage.removeItem("openship.activeOrgId");
+      window.localStorage.removeItem("kovalio.activeOrgId");
     }
   }
 }
@@ -256,7 +256,7 @@ export function getActiveOrganizationId(): string | null {
 // Restore from localStorage on module load so a page refresh keeps the
 // previously-active org in context until the auth hook sets a fresh one.
 if (typeof window !== "undefined") {
-  const stored = window.localStorage.getItem("openship.activeOrgId");
+  const stored = window.localStorage.getItem("kovalio.activeOrgId");
   if (stored) _currentOrgId = stored;
 }
 

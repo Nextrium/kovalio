@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Cut a new Openship release.
+ * Cut a new Kovalio release.
  *
  * Usage:
  *   bun scripts/release.ts patch          # 0.1.0      → 0.1.1
@@ -464,7 +464,7 @@ function ghOwnerRepo(): { owner: string; repo: string } | null {
 
 /**
  * `bun release docker [tag]` — trigger the docker-images workflow to publish the
- * openship-api/dashboard/edge images to GHCR. This is the DOCKER-ONLY path: it
+ * kovalio-api/dashboard/edge images to GHCR. This is the DOCKER-ONLY path: it
  * dispatches the workflow (no version bump, no git tag, no GitHub release, no
  * npm/desktop) and the dispatch run never moves `:latest`. Untracked/dirty tree
  * is fine — it builds whatever is on the pushed `--ref` branch, not your working
@@ -517,8 +517,8 @@ function releaseDocker(): void {
   log(``);
   log(`Verify when green:`);
   if (or) {
-    log(`  docker manifest inspect ghcr.io/${or.owner}/openship-edge:${shown}   # amd64 + arm64`);
-    log(`  docker pull ghcr.io/${or.owner}/openship-api:${shown}`);
+    log(`  docker manifest inspect ghcr.io/${or.owner}/kovalio-edge:${shown}   # amd64 + arm64`);
+    log(`  docker pull ghcr.io/${or.owner}/kovalio-api:${shown}`);
     log(`  Packages: https://github.com/orgs/${or.owner}/packages?repo_name=${or.repo}`);
   }
 }
@@ -728,10 +728,10 @@ function buildAdvisory(
     // explicit key rather than left for clients to infer from severity.
     announce: true,
     affects: `<${version}`,
-    title: `Update to Openship ${version}`,
+    title: `Update to Kovalio ${version}`,
     message:
       opts.message ??
-      `Openship ${version} is available. See the release notes for what's new — updating is recommended.`,
+      `Kovalio ${version} is available. See the release notes for what's new — updating is recommended.`,
     action: { label: "Update now", kind: "update" },
     // Omitted entirely when targeting everyone, so the manifest stays identical
     // to what older clients (which ignore `modes`) already understand.
@@ -805,7 +805,7 @@ async function runWizard(): Promise<string[] | null> {
     const current = readVersion(API_PKG);
     const branch = currentBranch();
     console.log("");
-    console.log(`  Openship release`);
+    console.log(`  Kovalio release`);
     console.log(`  current version  ${current}`);
     console.log(`  branch           ${branch}${branch === "main" ? "" : dim("  (not main)")}`);
     console.log(dim(`  Enter accepts the ›default; q cancels.`));

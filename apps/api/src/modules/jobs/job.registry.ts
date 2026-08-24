@@ -241,7 +241,7 @@ export const SYSTEM_JOB_DEFS: SystemJobDef[] = [
   {
     key: "edge:target-verify",
     label: "Free-domain target verification",
-    // Openship Cloud proves target control ONCE and re-probes the SAME token before
+    // Kovalio Cloud proves target control ONCE and re-probes the SAME token before
     // the 90-day expiry, so the standing job is to still be answering then. Deploys
     // re-assert the token already; this covers the box that deploys nothing for three
     // months and loses its host state dir in between — the failure that otherwise

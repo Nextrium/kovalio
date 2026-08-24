@@ -17,9 +17,9 @@
  *     OR an env-configured override)
  *   - deny common system paths even when nested under an env-configured or
  *     caller-supplied root (the built-in DEFAULT_ROOTS are exempt — one of
- *     them, /etc/openship/ssh-keys, deliberately sits under /etc)
+ *     them, /etc/kovalio/ssh-keys, deliberately sits under /etc)
  *   - the operator's own `~/.ssh` is exempt from the denylist too, so a
- *     root-run API (homedir() === /root) can still use ~/.ssh/openship even
+ *     root-run API (homedir() === /root) can still use ~/.ssh/kovalio even
  *     though /root/.ssh is on the denylist — see the note at the check.
  *
  * Tests live in test/lib/ssh-key-path.test.ts.
@@ -55,7 +55,7 @@ const SYSTEM_DENY = [
 /** Default roots — operator's home / standard SSH key dirs. The user
  *  field is intentionally empty: callers pass the operator's HOME via
  *  resolveSafeSshKeyPath's `extraRoots` argument. */
-const DEFAULT_ROOTS = ["/var/lib/openship/ssh-keys", "/etc/openship/ssh-keys"];
+const DEFAULT_ROOTS = ["/var/lib/kovalio/ssh-keys", "/etc/kovalio/ssh-keys"];
 
 export interface SshKeyPathOptions {
   /** Extra allowed roots — typically the operator's $HOME so they can
@@ -94,11 +94,11 @@ export function resolveSafeSshKeyPath(
   // SYSTEM_DENY is deliberately broad (`/etc`, `/root/.ssh`). Two kinds of path
   // are exempt from it:
   //   1. the built-in DEFAULT_ROOTS — hardcoded, not caller-supplied, so one
-  //      like `/etc/openship/ssh-keys` is an explicit carve-out.
+  //      like `/etc/kovalio/ssh-keys` is an explicit carve-out.
   //   2. the operator's own `~/.ssh` — i.e. `<extraRoot>/.ssh`. extraRoots is
   //      always the home of the user the API runs as (never attacker input),
   //      and `~/.ssh` is where SSH keys naturally live. Without this a root-run
-  //      API (homedir() === "/root") could never use `~/.ssh/openship`, because
+  //      API (homedir() === "/root") could never use `~/.ssh/kovalio`, because
   //      `/root/.ssh` is on the denylist — so the convenience buildSshConfig and
   //      hydrate-server advertise would silently fail only when running as root.
   // The carve-out is narrow (only `<home>/.ssh`), so an `extraRoots` of `/`
@@ -142,7 +142,7 @@ export function resolveSafeSshKeyPath(
 
 /**
  * The convenience root every runtime caller adds: the operator's home, so
- * `$HOME/.ssh/openship` works with no explicit configuration. Defined once so
+ * `$HOME/.ssh/kovalio` works with no explicit configuration. Defined once so
  * `buildSshConfig` and the test-connection precheck can't disagree about which
  * paths are acceptable — a mismatch would mean "Test Connection" passing on a key
  * a real deploy then refuses (or vice versa).
@@ -172,7 +172,7 @@ export function sshKeyPathProblem(raw: string): string | null {
   try {
     accessSync(resolved, constants.R_OK);
   } catch {
-    return `sshKeyPath is not readable by Openship — no such file, or no permission: ${resolved}`;
+    return `sshKeyPath is not readable by Kovalio — no such file, or no permission: ${resolved}`;
   }
 
   // A directory passes the readability probe but blows up in readFileSync later,

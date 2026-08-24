@@ -175,14 +175,14 @@ vi.mock("@repo/adapters", async (importOriginal) => {
       runtimeName: "docker",
       listSources: async () => [
         {
-          id: "openship-shop-pgdata",
-          source: "openship-shop-pgdata",
+          id: "kovalio-shop-pgdata",
+          source: "kovalio-shop-pgdata",
           target: "/var/lib/postgresql/data",
           type: "volume",
         },
         {
-          id: "openship-shop-uploads",
-          source: "openship-shop-uploads",
+          id: "kovalio-shop-uploads",
+          source: "kovalio-shop-uploads",
           target: "/app/uploads",
           type: "volume",
         },
@@ -317,7 +317,7 @@ beforeEach(() => {
   h.gateAt = null;
   h.abortThrows = true;
   h.running = false;
-  h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+  h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
   h.calls.length = 0;
   h.transitions.length = 0;
   h.events.length = 0;
@@ -370,7 +370,7 @@ describe("cancelling mid-write says so, and leaves the service down", () => {
     expect(last.status).toBe("cancelled");
     const message = String(last.patch?.errorMessage);
     expect(message).toContain("had begun writing");
-    expect(message).toContain('volume "openship-shop-pgdata"');
+    expect(message).toContain('volume "kovalio-shop-pgdata"');
     expect(message).toContain("partial data");
     expect(metaOf(last)).toMatchObject({
       destructive: true,
@@ -402,16 +402,16 @@ describe("cancelling mid-write says so, and leaves the service down", () => {
     // cancel would be a straightforward lie.
     h.running = true;
     h.artifacts = [
-      volumeArtifact("openship-shop-pgdata"),
-      volumeArtifact("openship-shop-uploads"),
+      volumeArtifact("kovalio-shop-pgdata"),
+      volumeArtifact("kovalio-shop-uploads"),
     ];
 
     const { last } = await cancelAtGate("receive-end", { abortThrows: false });
 
     expect(last.status).toBe("cancelled");
-    expect(String(last.patch?.errorMessage)).toContain('volume "openship-shop-pgdata"');
+    expect(String(last.patch?.errorMessage)).toContain('volume "kovalio-shop-pgdata"');
     expect(metaOf(last)).toMatchObject({ partialWrite: true, serviceLeftStopped: true });
-    expect(h.calls).toEqual(["stop", "receive:openship-shop-pgdata"]);
+    expect(h.calls).toEqual(["stop", "receive:kovalio-shop-pgdata"]);
     expect(h.running).toBe(false);
   });
 
@@ -426,7 +426,7 @@ describe("cancelling mid-write says so, and leaves the service down", () => {
     expect(firstDestructive).toBeGreaterThanOrEqual(0);
     expect(h.events[firstDestructive]).toMatchObject({
       type: "destructive",
-      source: 'volume "openship-shop-pgdata"',
+      source: 'volume "kovalio-shop-pgdata"',
     });
   });
 });
@@ -444,7 +444,7 @@ describe("the two cancels that decline", () => {
       destructive: true,
       cancelDeclined: "after-last-write",
     });
-    expect(h.calls).toEqual(["stop", "receive:openship-shop-pgdata", "start"]);
+    expect(h.calls).toEqual(["stop", "receive:kovalio-shop-pgdata", "start"]);
     expect(h.running).toBe(true);
   });
 
@@ -483,7 +483,7 @@ describe("the forced path exists so a wedged row can always be cleared", () => {
       confirmationToken: TOKEN,
       cancelRequested: true,
       cancelRequestedAt: new Date(Date.now() - 5 * 60 * 1000),
-      meta: { destructive: true, destructiveSource: 'volume "openship-shop-pgdata"' },
+      meta: { destructive: true, destructiveSource: 'volume "kovalio-shop-pgdata"' },
     };
 
     const outcome = await new RestoreOrchestrator().cancel(CTX, "bks_wedged");
@@ -493,7 +493,7 @@ describe("the forced path exists so a wedged row can always be cleared", () => {
     expect(last.status).toBe("cancelled");
     // Identical partial-data wording to the cooperative path, plus the one thing
     // it knows less about: whether the write kept going after this.
-    expect(String(last.patch?.errorMessage)).toContain('volume "openship-shop-pgdata"');
+    expect(String(last.patch?.errorMessage)).toContain('volume "kovalio-shop-pgdata"');
     expect(String(last.patch?.errorMessage)).toContain("partial data");
     expect(String(last.patch?.errorMessage)).toContain("force-cancelled");
     expect(metaOf(last)).toMatchObject({

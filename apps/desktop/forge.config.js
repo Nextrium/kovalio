@@ -33,12 +33,12 @@ const osxSigning = APPLE_IDENTITY
 
 module.exports = {
   packagerConfig: {
-    name: "Openship",
-    executableName: "openship",
+    name: "Kovalio",
+    executableName: "kovalio",
     // Stable, owned bundle identifier — used by the code signature, notarization,
     // Keychain, and LaunchServices. Without it packager defaults to the generic
-    // `com.electron.openship`, which collides with other Electron apps.
-    appBundleId: "com.oblien.openship",
+    // `com.electron.kovalio`, which collides with other Electron apps.
+    appBundleId: "com.oblien.kovalio",
     icon: ICON_BASE,
     asar: true,
     // The main/preload are bundled (build/bundle.mjs) into self-contained files,
@@ -63,7 +63,7 @@ module.exports = {
       path.join(RESOURCES, "dashboard"),
       path.join(RESOURCES, "migrations"),
       path.join(RESOURCES, "pglite"),
-      // Vendored GeoLite2 DB → OPENSHIP_GEOIP_DB. This list is explicit, not a
+      // Vendored GeoLite2 DB → KOVALIO_GEOIP_DB. This list is explicit, not a
       // glob of resources/ — anything staged by build/stage.ts and NOT named here
       // is silently absent from the packaged app.
       path.join(RESOURCES, "geoip"),
@@ -107,9 +107,9 @@ module.exports = {
         // its SUID helper, which can't run from a nosuid AppImage mount, the
         // app aborts at launch. 
         // This makes wrapper adds --no-sandbox only in these cases
-        const exe = path.join(out, "openship");
+        const exe = path.join(out, "kovalio");
         if (existsSync(exe)) {
-          renameSync(exe, path.join(out, "openship.bin"));
+          renameSync(exe, path.join(out, "kovalio.bin"));
           writeFileSync(
             exe,
             [
@@ -124,7 +124,7 @@ module.exports = {
               '   [ "$(cat /proc/sys/user/max_user_namespaces 2>/dev/null)" = "0" ]; then',
               '  set -- --no-sandbox "$@"',
               "fi",
-              'exec "$dir/openship.bin" "$@"',
+              'exec "$dir/kovalio.bin" "$@"',
               "",
             ].join("\n"),
           );
@@ -141,29 +141,29 @@ module.exports = {
     postMake: async (_forgeConfig, makeResults) => {
       if (process.platform !== "darwin") return makeResults;
       // Forge builds one arch per `make` invocation; take it from the results
-      // so a cross-built x64 make produces Openship-x64.dmg (not the host arch).
+      // so a cross-built x64 make produces Kovalio-x64.dmg (not the host arch).
       const arch = makeResults.find((r) => r.platform === "darwin")?.arch || process.arch;
-      const appPath = path.join(__dirname, "out", `Openship-darwin-${arch}`, "Openship.app");
+      const appPath = path.join(__dirname, "out", `Kovalio-darwin-${arch}`, "Kovalio.app");
       if (!existsSync(appPath)) {
         throw new Error(`postMake: expected packaged app at ${appPath}`);
       }
-      const dmgPath = path.join(__dirname, "out", "make", `Openship-${arch}.dmg`);
+      const dmgPath = path.join(__dirname, "out", "make", `Kovalio-${arch}.dmg`);
       const staging = path.join(__dirname, "out", `dmg-staging-${arch}`);
       execFileSync("rm", ["-rf", staging, dmgPath]);
       execFileSync("mkdir", ["-p", staging]);
       // `ditto` (not `cp -R`) preserves the code signature, symlinks, and
       // extended attributes of the signed .app bundle. `cp -R` can drop xattrs
       // and mangle framework symlinks, invalidating the signature.
-      execFileSync("ditto", [appPath, path.join(staging, "Openship.app")]);
+      execFileSync("ditto", [appPath, path.join(staging, "Kovalio.app")]);
       execFileSync("ln", ["-s", "/Applications", path.join(staging, "Applications")]);
       // hdiutil intermittently fails with "Resource busy" on CI macOS runners:
       // Spotlight/APFS grabs the just-`ditto`'d staging folder as hdiutil tries
-      // to snapshot it, or a stale /Volumes/Openship mount lingers from a prior
+      // to snapshot it, or a stale /Volumes/Kovalio mount lingers from a prior
       // attempt. Detach any leftover volume and retry with a short backoff so
       // the transient contention clears instead of failing the release.
       const detachStale = () => {
         try {
-          execFileSync("hdiutil", ["detach", "-force", "/Volumes/Openship"], { stdio: "ignore" });
+          execFileSync("hdiutil", ["detach", "-force", "/Volumes/Kovalio"], { stdio: "ignore" });
         } catch {
           /* nothing mounted — fine */
         }
@@ -174,7 +174,7 @@ module.exports = {
         try {
           execFileSync(
             "hdiutil",
-            ["create", "-volname", "Openship", "-srcfolder", staging, "-ov", "-format", "UDZO", dmgPath],
+            ["create", "-volname", "Kovalio", "-srcfolder", staging, "-ov", "-format", "UDZO", dmgPath],
             { stdio: "inherit" },
           );
           hdiutilErr = undefined;
@@ -197,20 +197,20 @@ module.exports = {
   makers: [
     {
       name: "@reforged/maker-appimage",
-      config: { options: { bin: "openship", icon: `${ICON_BASE}.png` } },
+      config: { options: { bin: "kovalio", icon: `${ICON_BASE}.png` } },
       platforms: ["linux"],
     },
     {
       name: "@electron-forge/maker-deb",
       config: {
         options: {
-          name: "openship",
-          productName: "Openship",
-          bin: "openship",
+          name: "kovalio",
+          productName: "Kovalio",
+          bin: "kovalio",
           icon: `${ICON_BASE}.png`,
           categories: ["Development", "Utilities"],
           maintainer: "Oblien",
-          homepage: "https://openship.io",
+          homepage: "https://nextrium.org",
           license: "Apache-2.0",
         },
       },
@@ -220,12 +220,12 @@ module.exports = {
       name: "@electron-forge/maker-rpm",
       config: {
         options: {
-          name: "openship",
-          productName: "Openship",
-          bin: "openship",
+          name: "kovalio",
+          productName: "Kovalio",
+          bin: "kovalio",
           icon: `${ICON_BASE}.png`,
           categories: ["Development", "Utilities"],
-          homepage: "https://openship.io",
+          homepage: "https://nextrium.org",
           // Required by electron-installer-redhat (the RPM spec's `License:`).
           // Also set on package.json; kept here so the maker never depends on it.
           license: "Apache-2.0",

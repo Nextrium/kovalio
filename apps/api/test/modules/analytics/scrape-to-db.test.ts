@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * ── The fixture is REAL ─────────────────────────────────────────────────────
  *
  * COLLECTED below is the verbatim response of `POST /analytics/collect` from a running
- * `openship-edge` container, after driving it with a known spread of requests:
+ * `kovalio-edge` container, after driving it with a known spread of requests:
  *
  *   US 8.8.8.8      5 × 200, 1 × 201, 2 × 404      → 8
  *   DE 78.46.0.1    1 × 200, 2 × 301, 1 × 304      → 4

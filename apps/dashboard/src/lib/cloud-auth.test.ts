@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/api/urls", () => ({
-  getCloudApiOrigin: () => "https://api.openship.io",
-  getCloudDashboardUrl: () => "https://app.openship.io",
+  getCloudApiOrigin: () => "https://api.nextrium.org",
+  getCloudDashboardUrl: () => "https://kovalio.nextrium.org",
 }));
 
 import { computePkceChallenge } from "./cloud-auth";
@@ -17,7 +17,7 @@ describe("computePkceChallenge", () => {
   });
 
   it("matches the Web Crypto implementation", async () => {
-    const verifier = "openship-private-lan-pkce-regression-test";
+    const verifier = "kovalio-private-lan-pkce-regression-test";
 
     const native = await computePkceChallenge(verifier, globalThis.crypto.subtle);
     const fallback = await computePkceChallenge(verifier, null);

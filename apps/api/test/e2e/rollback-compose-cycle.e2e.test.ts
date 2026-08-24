@@ -40,9 +40,9 @@ import {
 } from "../helpers/seed";
 
 const BASE_IMAGE = "busybox:latest";
-const WEB_V1 = "openship/e2e-compose-web:v1";
-const WEB_V2 = "openship/e2e-compose-web:v2";
-const API_V1 = "openship/e2e-compose-api:v1";
+const WEB_V1 = "kovalio/e2e-compose-web:v1";
+const WEB_V2 = "kovalio/e2e-compose-web:v2";
+const API_V1 = "kovalio/e2e-compose-api:v1";
 const SVC_PORT = 80;
 
 async function freePort(): Promise<number> {
@@ -97,7 +97,7 @@ describeDockerE2E("compose rollback cycle through the real entry point", () => {
     );
     const stream = await runtime.docker.buildImage(
       { context: contextDir, src: ["Dockerfile"] },
-      { t: tag, labels: { "openship.project": project.id } },
+      { t: tag, labels: { "kovalio.project": project.id } },
     );
     await new Promise<void>((resolve, reject) => {
       runtime.docker.modem.followProgress(stream, (err: Error | null) =>
@@ -141,7 +141,7 @@ describeDockerE2E("compose rollback cycle through the real entry point", () => {
       ports: [`${apiPort}:${SVC_PORT}`] as never,
     })) as never;
 
-    contextDir = await mkdtemp(join(tmpdir(), "openship-compose-e2e-"));
+    contextDir = await mkdtemp(join(tmpdir(), "kovalio-compose-e2e-"));
     await buildImage(WEB_V1, "web-v1");
     await buildImage(WEB_V2, "web-v2");
     await buildImage(API_V1, "api-v1");

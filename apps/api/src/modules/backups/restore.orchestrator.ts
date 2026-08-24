@@ -586,7 +586,7 @@ export class RestoreOrchestrator {
 
       // Nothing is staged locally — "prepared" is a verified plan, not bytes on
       // the target. Pre-staging would need a Docker named volume
-      // openship-restore-<id> plus a Cloud workspace path; it's a follow-up.
+      // kovalio-restore-<id> plus a Cloud workspace path; it's a follow-up.
       const artifacts = recordedArtifacts(sourceRun);
 
       const manifest = await this.checkManifest(destination, sourceRun, artifacts);

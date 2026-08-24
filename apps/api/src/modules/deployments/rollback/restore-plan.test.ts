@@ -15,7 +15,7 @@ const input = (over: Partial<RestorePlanInput> = {}): RestorePlanInput => ({
     id: "dep-old",
     status: "ready",
     containerId: "container-old",
-    imageRef: "openship/app-web:bld_old",
+    imageRef: "kovalio/app-web:bld_old",
     commitSha: "abc1234def",
     artifactRetainedAt: new Date("2026-07-01T00:00:00Z"),
     meta: { framework: "node", port: 3000 },
@@ -69,7 +69,7 @@ describe("planRestore — docker (image is the artifact)", () => {
     expect(planRestore(input())).toEqual({
       mode: "redeploy-pinned",
       handoverImages: {},
-      handoverAppImage: "openship/app-web:bld_old",
+      handoverAppImage: "kovalio/app-web:bld_old",
       rebuildServices: [],
     });
   });
@@ -162,8 +162,8 @@ describe("planRestore — docker (image is the artifact)", () => {
 
 describe("planRestore — compose (per-service images)", () => {
   const services = [
-    { serviceName: "web", imageRef: "openship/app-web:bld_1" },
-    { serviceName: "api", imageRef: "openship/app-api:bld_1" },
+    { serviceName: "web", imageRef: "kovalio/app-web:bld_1" },
+    { serviceName: "api", imageRef: "kovalio/app-api:bld_1" },
     { serviceName: "db", imageRef: "postgres:16-alpine" },
   ];
 
@@ -174,8 +174,8 @@ describe("planRestore — compose (per-service images)", () => {
     expect(plan).toEqual({
       mode: "redeploy-pinned",
       handoverImages: {
-        web: "openship/app-web:bld_1",
-        api: "openship/app-api:bld_1",
+        web: "kovalio/app-web:bld_1",
+        api: "kovalio/app-api:bld_1",
         db: "postgres:16-alpine",
       },
       rebuildServices: [],
@@ -187,12 +187,12 @@ describe("planRestore — compose (per-service images)", () => {
       input({
         target: { imageRef: COMPOSE_SENTINEL } as never,
         serviceImages: services,
-        imagePresent: (ref) => ref !== "openship/app-api:bld_1",
+        imagePresent: (ref) => ref !== "kovalio/app-api:bld_1",
       }),
     );
     expect(plan).toMatchObject({
       mode: "redeploy-pinned",
-      handoverImages: { web: "openship/app-web:bld_1", db: "postgres:16-alpine" },
+      handoverImages: { web: "kovalio/app-web:bld_1", db: "postgres:16-alpine" },
       rebuildServices: ["api"],
     });
     // A service with no pin falls into the normal buildable set, so this deploy
@@ -234,21 +234,21 @@ describe("planRestore — compose (per-service images)", () => {
       input({
         target: { imageRef: null } as never,
         serviceImages: [
-          { serviceName: null, imageRef: "openship/orphan:bld_1" },
-          { serviceName: "web", imageRef: "openship/app-web:bld_1" },
+          { serviceName: null, imageRef: "kovalio/orphan:bld_1" },
+          { serviceName: "web", imageRef: "kovalio/app-web:bld_1" },
         ],
       }),
     );
     expect(plan).toMatchObject({
       mode: "redeploy-pinned",
-      handoverImages: { web: "openship/app-web:bld_1" },
+      handoverImages: { web: "kovalio/app-web:bld_1" },
       rebuildServices: [],
     });
   });
 });
 
 describe("planRestore — static (a directory of files is the artifact)", () => {
-  const RELEASE_DIR = "/var/lib/openship/static/releases/dep-old";
+  const RELEASE_DIR = "/var/lib/kovalio/static/releases/dep-old";
 
   // A static release records a host PATH where others record a container id.
   const staticInput = (over: Partial<RestorePlanInput> = {}) =>

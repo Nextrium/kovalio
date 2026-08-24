@@ -82,7 +82,7 @@ export function isLoopbackHost(host: string | null | undefined): boolean {
 /**
  * Public IP echo endpoints, most white-label first. These return a BARE IP with
  * no branding page (unlike a product like ipify), and we try them in order for
- * redundancy. When Openship Cloud gains its own `/ip` echo we should prepend it.
+ * redundancy. When Kovalio Cloud gains its own `/ip` echo we should prepend it.
  */
 const IP_ECHO_PROVIDERS = [
   "https://checkip.amazonaws.com",
@@ -111,7 +111,7 @@ async function detectPublicIp(): Promise<string | null> {
 /**
  * Detect THIS box's public IP — called ONCE, at "ensure this server" registration
  * (startup/self-server.ts), and stored on the isLocal "This Server" row. Priority:
- * explicit SERVER_IP → an IP literal in OPENSHIP_PUBLIC_URL → a white-label echo
+ * explicit SERVER_IP → an IP literal in KOVALIO_PUBLIC_URL → a white-label echo
  * probe (self-hosted server boxes only; skipped under CLOUD_MODE and on desktop,
  * where the "public IP" would be a laptop's WAN address). Never throws.
  *
@@ -119,9 +119,9 @@ async function detectPublicIp(): Promise<string | null> {
  */
 export async function resolveInstancePublicIp(): Promise<string | null> {
   if (env.SERVER_IP) return env.SERVER_IP;
-  if (env.OPENSHIP_PUBLIC_URL) {
+  if (env.KOVALIO_PUBLIC_URL) {
     try {
-      const host = new URL(env.OPENSHIP_PUBLIC_URL).hostname;
+      const host = new URL(env.KOVALIO_PUBLIC_URL).hostname;
       if (isIpLiteral(host)) return host;
     } catch {
       /* not a parseable URL — ignore */

@@ -1,13 +1,13 @@
 /**
  * Built-image garbage collector.
  *
- * Every build mints a globally-unique tag (`openship/<slug>-<svc>:bld_..-svc_..`)
+ * Every build mints a globally-unique tag (`kovalio/<slug>-<svc>:bld_..-svc_..`)
  * so a redeploy never overwrites the prior image — without a sweep, each deploy
  * server accumulates old builds (and dangling layers) forever. This reconciles
  * the images ACTUALLY on each host against the DB keep-set and prunes the rest.
  *
  * Safety model (see the audit): the ONLY images considered are those carrying
- * the `openship.project=<id>` label, which `labels()` stamps on FINAL build
+ * the `kovalio.project=<id>` label, which `labels()` stamps on FINAL build
  * images — base/third-party images (postgres, redis, mongo, …) are PULLED, never
  * labeled, and are therefore structurally unreachable here. The keep-set is the
  * exact imageRef of the active + pinned + newest-`rollbackWindow` deployments
@@ -112,7 +112,7 @@ async function refreshRollbackCapacityFor(
   // Only OUR build images estimate a release's size; a project that has never
   // built anything (pure registry-image compose stack) has no snapshot cost.
   const sizes = images
-    .filter((img) => img.repoTags.some((t) => t.startsWith("openship/")))
+    .filter((img) => img.repoTags.some((t) => t.startsWith("kovalio/")))
     .map((img) => img.size);
   if (sizes.length === 0) return;
 
@@ -136,19 +136,19 @@ async function refreshRollbackCapacityFor(
  * critical selection, kept pure + unit-tested so "never ruin an operator's
  * image" is verifiable:
  *   - in the keep-set (active/pinned/rollback-window) → keep (`[]`).
- *   - has `openship/…` tags → return THOSE tags: we untag only what we own, so
+ *   - has `kovalio/…` tags → return THOSE tags: we untag only what we own, so
  *     Docker deletes the image when our last tag is gone. Removing by these tags
  *     (not the image id) can never yank a foreign tag the operator added.
  *   - truly dangling (NO tags at all) → the image id: our superseded, untagged
  *     final layer, safe to drop.
- *   - only NON-openship tags remain → the operator re-purposed this image → keep.
+ *   - only NON-kovalio tags remain → the operator re-purposed this image → keep.
  */
 export function selectImageRemovalRefs(
   img: { id: string; repoTags: string[] },
   keep: Set<string>,
 ): string[] {
   if (img.repoTags.some((t) => keep.has(t))) return [];
-  const ownTags = img.repoTags.filter((t) => t.startsWith("openship/"));
+  const ownTags = img.repoTags.filter((t) => t.startsWith("kovalio/"));
   if (ownTags.length > 0) return ownTags;
   if (img.repoTags.length === 0) return [img.id];
   return []; // only foreign tags → never touch

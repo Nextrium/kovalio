@@ -15,7 +15,7 @@ import { runCommand, stubFetch, type FetchStub } from "../helpers/harness";
 let fetchStub: FetchStub;
 afterEach(() => fetchStub?.restore());
 
-describe("openship project list", () => {
+describe("kovalio project list", () => {
   it("paginates /projects and tabulates the rows", async () => {
     fetchStub = stubFetch((req) => {
       expect(req.url).toContain("/api/projects");
@@ -28,7 +28,7 @@ describe("openship project list", () => {
   });
 });
 
-describe("openship project get", () => {
+describe("kovalio project get", () => {
   it("GETs /projects/:id", async () => {
     fetchStub = stubFetch(() => ({ json: { data: { id: "p1", name: "shop" } } }));
     const { out, code } = await runCommand(projectCommand, ["get", "p1"]);
@@ -38,7 +38,7 @@ describe("openship project get", () => {
   });
 });
 
-describe("openship project release-image", () => {
+describe("kovalio project release-image", () => {
   it("PUTs the complete GitHub release image source", async () => {
     fetchStub = stubFetch((req) => {
       expect(req.url).toBe("http://api.test/api/projects/project%2Fone/release-image-source");

@@ -14,7 +14,7 @@
  * No build/start-command knobs - the engine is fully prescriptive for
  * webmail. Operators only choose where and what domain.
  *
- * One extra state: a webmail deployed by a PRE-CATALOG openship can't be
+ * One extra state: a webmail deployed by a PRE-CATALOG kovalio can't be
  * redeployed, only replaced. The API refuses it with 409 `LEGACY_WEBMAIL` until
  * the request carries `replaceLegacy`, so this page explains what goes and turns
  * Deploy into Replace - the operator confirms by pressing that, not a dialog.

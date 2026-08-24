@@ -1,7 +1,7 @@
 /**
  * Which domain type a NEW endpoint should open on.
  *
- * A free `.opsh.io` subdomain routes through Openship Cloud, and backend preflight
+ * A free `.opsh.io` subdomain routes through Kovalio Cloud, and backend preflight
  * gates it on a Cloud connection — so on a self-hosted instance with none,
  * defaulting to "free" offers a dead end the user has to notice and undo. Default
  * those to their own domain instead. Cloud-connected instances (and SaaS/native,

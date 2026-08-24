@@ -3,8 +3,8 @@ import { cloudflareDnsProvider } from "../../../src/modules/dns/providers/cloudf
 import {
   DnsApiError,
   DnsRecordConflictError,
-  OPENSHIP_RECORD_COMMENT,
-  isOpenshipManaged,
+  KOVALIO_RECORD_COMMENT,
+  isKovalioManaged,
 } from "../../../src/modules/dns/types";
 
 /** Shape a Cloudflare v4 envelope the way the real API does. */
@@ -45,7 +45,7 @@ const record = (over: Record<string, unknown> = {}) => ({
   content: "198.51.100.1",
   ttl: 1,
   proxied: false,
-  comment: OPENSHIP_RECORD_COMMENT,
+  comment: KOVALIO_RECORD_COMMENT,
   ...over,
 });
 
@@ -190,9 +190,9 @@ describe("cloudflareDnsProvider", () => {
     it("carries the provider comment through so ownership is checkable", async () => {
       global.fetch = vi
         .fn()
-        .mockResolvedValue(cfOk([record({ comment: OPENSHIP_RECORD_COMMENT })]));
+        .mockResolvedValue(cfOk([record({ comment: KOVALIO_RECORD_COMMENT })]));
       const [r] = await cloudflareDnsProvider.listRecords({ apiToken: "t" }, "zone_123");
-      expect(r?.comment).toBe(OPENSHIP_RECORD_COMMENT);
+      expect(r?.comment).toBe(KOVALIO_RECORD_COMMENT);
     });
   });
 
@@ -214,7 +214,7 @@ describe("cloudflareDnsProvider", () => {
       });
 
       expect(result.id).toBe("rec_new");
-      expect(posted).toMatchObject({ comment: OPENSHIP_RECORD_COMMENT, ttl: 1, proxied: false });
+      expect(posted).toMatchObject({ comment: KOVALIO_RECORD_COMMENT, ttl: 1, proxied: false });
     });
 
     it("updates in place when one record already matches", async () => {
@@ -294,7 +294,7 @@ describe("cloudflareDnsProvider", () => {
     // A single pre-existing record is the normal state of an apex being connected,
     // and it is the operator's. Repointing it is the feature; claiming it is not —
     // the marker is what releaseRecords deletes on, so stamping it here would make
-    // "remove this domain" destroy a record Openship never created.
+    // "remove this domain" destroy a record Kovalio never created.
     it("REPOINTS a single unmarked operator record without claiming ownership", async () => {
       let put: Record<string, unknown> | null = null;
       global.fetch = vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => {
@@ -312,8 +312,8 @@ describe("cloudflareDnsProvider", () => {
       });
 
       expect(put).toMatchObject({ content: "203.0.113.5", comment: "prod origin" });
-      expect(put?.comment).not.toBe(OPENSHIP_RECORD_COMMENT);
-      expect(isOpenshipManaged(result)).toBe(false);
+      expect(put?.comment).not.toBe(KOVALIO_RECORD_COMMENT);
+      expect(isKovalioManaged(result)).toBe(false);
     });
 
     it("leaves a comment-less operator record unmarked when repointing it", async () => {
@@ -364,7 +364,7 @@ describe("cloudflareDnsProvider", () => {
         }
         return cfOk([
           record({ id: "rec_theirs", comment: null, content: "203.0.113.10" }),
-          record({ id: "rec_ours", comment: OPENSHIP_RECORD_COMMENT, content: "203.0.113.11" }),
+          record({ id: "rec_ours", comment: KOVALIO_RECORD_COMMENT, content: "203.0.113.11" }),
         ]);
       });
 

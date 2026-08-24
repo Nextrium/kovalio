@@ -1,7 +1,7 @@
 {
   "capacity": {
     "title": "Kapasite ve Kullanım",
-    "subtitle": "Planınıza dahil kapasite ve ne kadar kullandığınız. Canlı veriler Openship Cloud'dan senkronize edilir.",
+    "subtitle": "Planınıza dahil kapasite ve ne kadar kullandığınız. Canlı veriler Kovalio Cloud'dan senkronize edilir.",
     "routes": "Ücretsiz rotalar",
     "runningServices": "Çalışan hizmetler",
     "projects": "Projeler",
@@ -41,19 +41,19 @@
   },
   "unavailable": {
     "notConnected": {
-      "title": "Faturalandırmayı yönetmek için Openship Bulut'a bağlanın",
-      "description": "Yerel Openship kurulumunuz henüz Openship Bulut'a bağlı değil. Abonelik durumunu, kullanımı, faturaları ve kredi yüklemelerini görüntülemek için bağlanın.",
-      "connect": "Openship Bulut'a Bağlan",
+      "title": "Faturalandırmayı yönetmek için Kovalio Bulut'a bağlanın",
+      "description": "Yerel Kovalio kurulumunuz henüz Kovalio Bulut'a bağlı değil. Abonelik durumunu, kullanımı, faturaları ve kredi yüklemelerini görüntülemek için bağlanın.",
+      "connect": "Kovalio Bulut'a Bağlan",
       "connecting": "Giriş yapılması bekleniyor…"
     },
     "sessionExpired": {
-      "title": "Openship Bulut oturumunuzun süresi doldu",
-      "description": "Hâlâ bağlısınız ancak Openship Bulut tarafından sağlanan oturum jetonu artık geçerli değil. Yenilemek için yeniden bağlanın — önce bağlantıyı kesmeniz gerekmez.",
-      "reconnect": "Openship Bulut'a Tekrar Bağlan",
+      "title": "Kovalio Bulut oturumunuzun süresi doldu",
+      "description": "Hâlâ bağlısınız ancak Kovalio Bulut tarafından sağlanan oturum jetonu artık geçerli değil. Yenilemek için yeniden bağlanın — önce bağlantıyı kesmeniz gerekmez.",
+      "reconnect": "Kovalio Bulut'a Tekrar Bağlan",
       "connecting": "Giriş yapılması bekleniyor…"
     },
     "unreachable": {
-      "title": "Openship Bulut faturalandırma servisine ulaşılamadı",
+      "title": "Kovalio Bulut faturalandırma servisine ulaşılamadı",
       "description": "Bulut oturumunuzun süresi dolmuş olabilir veya bulut servisi geçici olarak kullanılamıyor olabilir. Tekrar deneyin ya da Ayarlar → Bulut bölümünden tekrar bağlanın.",
       "tryAgain": "Tekrar dene",
       "reconnect": "Tekrar Bağlan"

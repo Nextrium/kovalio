@@ -17,8 +17,8 @@ import type {
 import {
   DnsApiError,
   DnsRecordConflictError,
-  OPENSHIP_RECORD_COMMENT,
-  isOpenshipManaged,
+  KOVALIO_RECORD_COMMENT,
+  isKovalioManaged,
 } from "../types";
 
 const CF_API_BASE = "https://api.cloudflare.com/client/v4";
@@ -188,7 +188,7 @@ export const cloudflareDnsProvider: DnsProvider = {
     name: "cloudflare",
     displayName: "Cloudflare",
     description:
-      "Openship writes your domain's DNS records for you, so a new custom domain verifies and gets its certificate without you leaving the page.",
+      "Kovalio writes your domain's DNS records for you, so a new custom domain verifies and gets its certificate without you leaving the page.",
     requiredScopes: ["Zone:Zone:Read", "Zone:DNS:Edit"],
     tokenUrl: "https://dash.cloudflare.com/profile/api-tokens",
   },
@@ -274,7 +274,7 @@ export const cloudflareDnsProvider: DnsProvider = {
   ): Promise<DnsRecord> {
     const name = normalizeName(input.name);
     const desiredTtl = input.ttl ?? 1; // 1 = "automatic" in Cloudflare
-    const ownMarker = input.comment ?? OPENSHIP_RECORD_COMMENT;
+    const ownMarker = input.comment ?? KOVALIO_RECORD_COMMENT;
 
     const existing = await this.listRecords(credentials, zoneId, { name, type: input.type });
 
@@ -283,7 +283,7 @@ export const cloudflareDnsProvider: DnsProvider = {
     // hostname answering with a mix of their origin and ours — worse than not
     // acting. Ours-if-present, otherwise refuse and say so.
     const target =
-      existing.length > 1 ? existing.find(isOpenshipManaged) : existing[0];
+      existing.length > 1 ? existing.find(isKovalioManaged) : existing[0];
 
     if (existing.length > 1 && !target) {
       throw new DnsRecordConflictError(name, input.type, existing.length);
@@ -299,7 +299,7 @@ export const cloudflareDnsProvider: DnsProvider = {
       // CLAIMING it is not. `releaseRecords` deletes on our marker, so stamping it
       // here would make "remove this domain" destroy a record we never created and
       // whose original value we don't keep. Adopt the value, leave the ownership.
-      const comment = isOpenshipManaged(target) ? ownMarker : target.comment;
+      const comment = isKovalioManaged(target) ? ownMarker : target.comment;
 
       const unchanged =
         target.content === input.content &&
@@ -329,7 +329,7 @@ export const cloudflareDnsProvider: DnsProvider = {
     }
 
     // Nothing was there, so this record IS ours — mark it, and only this branch
-    // does, which is what makes the marker mean "Openship created this".
+    // does, which is what makes the marker mean "Kovalio created this".
     const created = await cfFetch<CfDnsRecordItem>(
       credentials.apiToken,
       `/zones/${encodeURIComponent(zoneId)}/dns_records`,

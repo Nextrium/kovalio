@@ -2,7 +2,7 @@
  * Steady-state container health watch — the loop that notices a workload broke
  * at 3am instead of when a user complains.
  *
- * Openship checks a container's health exactly once today: the ~15s post-deploy
+ * Kovalio checks a container's health exactly once today: the ~15s post-deploy
  * stabilization window. After that nobody looks again. The project page's status
  * pill *is* live, but only while a human is staring at it. This closes that gap by
  * asking every server's Docker daemon the same question once a minute and routing
@@ -194,7 +194,7 @@ const RECOVERY_HOLD_MS = 2 * 60_000;
  * Dedup key for a single-app deployment.
  *
  * NOT the container name: a single-app container is named
- * `openship-<project>-<deploymentId>`, so every redeploy would mint a new key,
+ * `kovalio-<project>-<deploymentId>`, so every redeploy would mint a new key,
  * abandon the open incident, and re-page. The project owns exactly one app
  * workload, so a constant is the stable identity.
  */

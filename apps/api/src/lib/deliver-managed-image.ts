@@ -75,7 +75,7 @@ export async function deliverManagedImage(
   // (3) Remote box: ship the git-truth source, build NATIVELY there, clean up. The
   // build context comes from `spec` (server-derived), never a request — it feeds
   // `docker build`, which runs the Dockerfile's RUN steps as root.
-  const remoteContext = `/tmp/openship-managed-build-${kind}-${image.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+  const remoteContext = `/tmp/kovalio-managed-build-${kind}-${image.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
   try {
     emit(`Shipping the ${kind} build context to the server...`);
     await targetExecutor.transferIn(spec.context, remoteContext, (l) => emit(l.message));

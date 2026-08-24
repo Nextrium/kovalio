@@ -66,7 +66,7 @@ vi.mock("@repo/adapters", () => ({
   },
 }));
 // The quota wrapper is reached through a DYNAMIC import inside
-// ensureNamespaceWithQuota (it imports getOblienClient from openship-cloud, so a
+// ensureNamespaceWithQuota (it imports getOblienClient from kovalio-cloud, so a
 // static import would be a cycle). vi.mock intercepts it either way.
 vi.mock("./billing-oblien-quota", () => ({ setQuotaForTier: h.setQuotaForTier }));
 
@@ -74,7 +74,7 @@ import {
   ensureNamespaceWithQuota,
   issueNamespaceToken,
   __resetQuotaAssertedForTests,
-} from "../../lib/openship-cloud";
+} from "../../lib/kovalio-cloud";
 
 describe("credit bypass — namespace cannot precede its ceiling", () => {
   beforeEach(async () => {

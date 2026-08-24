@@ -73,16 +73,16 @@ export const APP_LOGO: Record<
   "code-server": { src: "/app-logos/code-server.svg" },
   "it-tools": { src: "/app-logos/it-tools.png", fill: true },
   "stirling-pdf": { src: "/app-logos/stirling-pdf.svg", fill: true },
-  // openship-native mail stack — its own brand mark, a full-bleed square icon.
+  // kovalio-native mail stack — its own brand mark, a full-bleed square icon.
   // "mail" is the engine flow; "webmail" the catalog app that installs the client.
   // "mail-webmail" is the retired template id still stored on pre-catalog webmail
   // project rows — keep it so those rows keep their logo.
   "mail-webmail": { src: "/apple-touch-icon.png", fill: true },
   webmail: { src: "/apple-touch-icon.png", fill: true },
   mail: { src: "/apple-touch-icon.png", fill: true },
-  // The control plane self-registered as an app (CLI self-deploy) — Openship's
+  // The control plane self-registered as an app (CLI self-deploy) — Kovalio's
   // own brand mark, a full-bleed square icon.
-  openship: { src: "/apple-touch-icon.png", fill: true },
+  kovalio: { src: "/apple-touch-icon.png", fill: true },
   // MindWire's own monochrome mark is vendored so the catalog works offline and
   // the brand stays legible on both dashboard themes.
   mindwire: { src: "/app-logos/mindwire.svg", fill: true },

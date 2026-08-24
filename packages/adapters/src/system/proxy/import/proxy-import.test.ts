@@ -225,9 +225,9 @@ describe("scanNginx", () => {
     expect(res.sites).toHaveLength(0);
   });
 
-  test("Openship's own edge-target challenge vhost is not a site (IP or hostname)", async () => {
+  test("Kovalio's own edge-target challenge vhost is not a site (IP or hostname)", async () => {
     // `_oblien-challenge-<slug>.conf` proves this box controls a routing target for
-    // Openship Cloud's edge. Reading it as a site would surface it in the orphan
+    // Kovalio Cloud's edge. Reading it as a site would surface it in the orphan
     // sweep, the domain-claim warning and the migrate importer — all three read this
     // classifier, which is why the fix belongs here and not in each of them.
     const conf = `

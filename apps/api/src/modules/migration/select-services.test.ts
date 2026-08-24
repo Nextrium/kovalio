@@ -5,11 +5,11 @@ import type { DiscoveredService } from "./docker-reconcile";
 
 /**
  * GH-584: migrating a foreign compose stack failed with `already managed here by
- * project "Openship"`, unretryably, on every server running Openship itself.
+ * project "Kovalio"`, unretryably, on every server running Kovalio itself.
  *
  * The cause was a selection resolved by BARE SERVICE NAME against a server-wide
  * pool. A compose service name is unique only within its own project, and
- * Openship's control-plane stack has services named `api`, `dashboard`, `edge`,
+ * Kovalio's control-plane stack has services named `api`, `dashboard`, `edge`,
  * `postgres`, `redis` — so migrating anything with a `postgres` matched a seventh
  * container: ours.
  *
@@ -31,7 +31,7 @@ const svc = (name: string, containerId: string | undefined, project: string): Di
     composeProject: project,
   }) as unknown as DiscoveredService;
 
-/** The reporter's host: their `dependabot` stack + Openship's own control plane. */
+/** The reporter's host: their `dependabot` stack + Kovalio's own control plane. */
 const POOL: DiscoveredService[] = [
   svc("background-tasks", "c-bg", "dependabot"),
   svc("worker", "c-worker", "dependabot"),
@@ -39,12 +39,12 @@ const POOL: DiscoveredService[] = [
   svc("migration", "c-migration", "dependabot"),
   svc("postgres", "c-dependabot-pg", "dependabot"),
   svc("docker", "c-docker", "dependabot"),
-  // Openship itself, on the same box. No `openship.*` labels, so the scan leaves
+  // Kovalio itself, on the same box. No `kovalio.*` labels, so the scan leaves
   // these in the generic candidate pool.
-  svc("api", "c-openship-api", "openship"),
-  svc("dashboard", "c-openship-dash", "openship"),
-  svc("postgres", "c-openship-pg", "openship"),
-  svc("redis", "c-openship-redis", "openship"),
+  svc("api", "c-kovalio-api", "kovalio"),
+  svc("dashboard", "c-kovalio-dash", "kovalio"),
+  svc("postgres", "c-kovalio-pg", "kovalio"),
+  svc("redis", "c-kovalio-redis", "kovalio"),
 ];
 
 const DEPENDABOT_NAMES = ["background-tasks", "worker", "web", "migration", "postgres", "docker"];
@@ -57,8 +57,8 @@ describe("selectDiscoveredServices — identity scoping (#584)", () => {
       names: DEPENDABOT_NAMES,
     });
     expect(got.map((s) => s.containerId)).toEqual(DEPENDABOT_IDS);
-    // The whole bug in one assertion: Openship's own postgres must not be here.
-    expect(got.map((s) => s.containerId)).not.toContain("c-openship-pg");
+    // The whole bug in one assertion: Kovalio's own postgres must not be here.
+    expect(got.map((s) => s.containerId)).not.toContain("c-kovalio-pg");
     expect(got).toHaveLength(6);
   });
 
@@ -67,7 +67,7 @@ describe("selectDiscoveredServices — identity scoping (#584)", () => {
     // the control-plane exclusion in excludeAlreadyManaged has to exist.
     const got = selectDiscoveredServices(POOL, { names: DEPENDABOT_NAMES });
     expect(got).toHaveLength(7);
-    expect(got.map((s) => s.containerId)).toContain("c-openship-pg");
+    expect(got.map((s) => s.containerId)).toContain("c-kovalio-pg");
   });
 
   it("ignores a name that was not picked even when its id is unknown", () => {
@@ -112,14 +112,14 @@ describe("selectDiscoveredServices — identity scoping (#584)", () => {
 });
 
 describe("perService — per-service inputs cannot cross-apply (#584 class)", () => {
-  const ours = svc("postgres", "c-openship-pg", "openship");
+  const ours = svc("postgres", "c-kovalio-pg", "kovalio");
   const theirs = svc("postgres", "c-dependabot-pg", "dependabot");
 
   it("gives each same-named service its OWN value", () => {
     // The defect this closes: both were keyed as "postgres", so whichever the client
     // wrote last decided the volume strategy for BOTH — silently copying a volume the
     // operator asked to reuse in place, or attaching one they asked to copy.
-    const map = { "c-openship-pg": "reuse", "c-dependabot-pg": "copy" } as const;
+    const map = { "c-kovalio-pg": "reuse", "c-dependabot-pg": "copy" } as const;
     expect(perService(map, ours)).toBe("reuse");
     expect(perService(map, theirs)).toBe("copy");
   });

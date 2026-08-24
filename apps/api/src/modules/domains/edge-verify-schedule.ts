@@ -1,7 +1,7 @@
 /**
  * Keep target verifications alive, and make their failure visible.
  *
- * Openship Cloud's edge only forwards `<slug>.opsh.io` to a target whose control has
+ * Kovalio Cloud's edge only forwards `<slug>.opsh.io` to a target whose control has
  * been proven, a proof that lasts 90 days and is renewed by Cloud RE-PROBING THE SAME
  * TOKEN within 7 days of expiry. So the standing obligation is not to re-verify — it
  * is to still be answering when that probe arrives.
@@ -95,7 +95,7 @@ export async function runEdgeVerifySweep(): Promise<EdgeVerifySweepResult> {
   if (result.notServing > 0) {
     console.warn(
       `[edge-verify-sweep] ${result.notServing} of ${result.targets} verified target(s) ` +
-        `are not serving their Openship Cloud challenge token. Their free .opsh.io ` +
+        `are not serving their Kovalio Cloud challenge token. Their free .opsh.io ` +
         `domains will stop resolving when the verification expires.`,
     );
   }
@@ -164,7 +164,7 @@ async function sweepOne(
   result.notServing++;
   await repos.edgeTargetVerification.recordServeError(
     row.id,
-    `${row.target} is not returning its Openship Cloud challenge token (${probe.reason}). ` +
+    `${row.target} is not returning its Kovalio Cloud challenge token (${probe.reason}). ` +
       `Free .opsh.io routing to this server will stop when the verification expires` +
       `${row.expiresAt ? ` on ${row.expiresAt.toISOString().slice(0, 10)}` : ""}.`,
   );

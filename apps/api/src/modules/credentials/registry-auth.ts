@@ -1,5 +1,5 @@
 /**
- * Registry credentials for an image pull, from Openship's own credential store.
+ * Registry credentials for an image pull, from Kovalio's own credential store.
  *
  * THE ONE ISSUER for image-pull auth, in the same spirit as `resolveBuildGitToken` is for
  * git: every pull path asks this, so there is a single place where precedence, redaction

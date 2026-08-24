@@ -9,7 +9,7 @@ function setPlatform(value: NodeJS.Platform): void {
 afterEach(() => setPlatform(realPlatform));
 
 describe("planMethod", () => {
-  // The decision `openship up` itself makes (it calls this with a real
+  // The decision `kovalio up` itself makes (it calls this with a real
   // ensureDocker result), so a preview can never name a method the run wouldn't
   // pick — which is the whole point of sharing it.
   it("takes --bare over everything, without consulting Docker", () => {
@@ -125,15 +125,15 @@ describe("renderUpPlan", () => {
           method: "bare",
           service: {
             kind: "systemd-user",
-            path: "/home/u/.config/systemd/user/openship.service",
+            path: "/home/u/.config/systemd/user/kovalio.service",
             content: "[Service]\nExecStart=/usr/bin/node up --foreground\n",
           },
-          writes: ["/home/u/.config/systemd/user/openship.service"],
+          writes: ["/home/u/.config/systemd/user/kovalio.service"],
           runs: ["systemctl --user enable --now  (starts it now and on boot)"],
         }),
       ),
     );
-    expect(out).toContain("/home/u/.config/systemd/user/openship.service");
+    expect(out).toContain("/home/u/.config/systemd/user/kovalio.service");
     expect(out).toContain("ExecStart=/usr/bin/node up --foreground");
     expect(out).toContain("systemctl --user enable --now");
   });

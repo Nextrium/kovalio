@@ -17,7 +17,7 @@ import {
   type ProxyDirectiveSpec,
   type ProxySettings,
 } from "@repo/core";
-import { scanOpenshipEdge } from "../system/proxy/import/nginx";
+import { scanKovalioEdge } from "../system/proxy/import/nginx";
 import { makeTestCert } from "../system/proxy/test-certs";
 import { compileVercelRouting } from "./vercel-routing";
 import {
@@ -40,7 +40,7 @@ import type { RootChecked } from "../system/privilege";
 // `openresty -t` rolls the vhost back. It does NOT prove real nginx accepts the
 // output — that's the L3 docker suite. (See the routing-rules test audit.)
 
-const SITES = "/tmp/openship-nginx-test/sites-enabled";
+const SITES = "/tmp/kovalio-nginx-test/sites-enabled";
 const PATHS = { ...OPENRESTY_DEFAULT_PATHS, sitesDir: SITES };
 
 interface FakeOpts {
@@ -181,10 +181,10 @@ const PROXY: RouteConfig = {
 };
 /** Same route, flagged as one whose TLS this box terminates (a custom domain). */
 const OURS: RouteConfig = { ...PROXY, terminatesTlsLocally: true };
-const BOOTSTRAP_DIR = "/etc/letsencrypt/openship-bootstrap/app.example.com";
+const BOOTSTRAP_DIR = "/etc/letsencrypt/kovalio-bootstrap/app.example.com";
 
 /**
- * Openship Cloud's shared edge proves this box controls a routing target by fetching
+ * Kovalio Cloud's shared edge proves this box controls a routing target by fetching
  * a token over plain HTTP from the target. Every `:80` shape must answer it, because
  * any of them can be the vhost the probe lands on — and a `:443` block must NOT,
  * since the target is always schemed `http://`. The 443 catch-all is not an
@@ -221,7 +221,7 @@ describe("NginxProvider edge-target challenge location", () => {
     const { nginx, conf } = setup();
     await nginx.registerRoute(OURS);
     const c = conf("app-example-com")!;
-    expect(c).toContain("openship-bootstrap-tls:");
+    expect(c).toContain("kovalio-bootstrap-tls:");
     const [httpBlock, tlsBlock] = c.split("listen 443 ssl;");
     expect(hasChallenge(httpBlock!)).toBe(true);
     expect(hasChallenge(tlsBlock ?? "")).toBe(false);
@@ -238,7 +238,7 @@ describe("NginxProvider edge-target challenge location", () => {
 });
 
 /**
- * A free `<slug>.opsh.io` host is served by Openship Cloud's edge, which proxies here on
+ * A free `<slug>.opsh.io` host is served by Kovalio Cloud's edge, which proxies here on
  * plain :80 — so the peer is the edge and the visitor is named in `X-Real-IP`. The
  * http-scope realip block reads CF-Connecting-IP (for Cloudflare-fronted custom
  * domains), a header this front does not send, so inheriting it left `remote_addr` as
@@ -325,7 +325,7 @@ describe("NginxProvider.reapplyStoredRoutes", () => {
   /** What a pre-marker build left on disk: no generation line, no realip block. */
   const age = (conf: string) =>
     conf
-      .replace(/^# openship-vhost-gen: \d+\n/m, "")
+      .replace(/^# kovalio-vhost-gen: \d+\n/m, "")
       .replace(/^\s*(real_ip_header|real_ip_recursive|set_real_ip_from) .*$/gm, "");
 
   test("stamps the generation it wrote, so staleness is readable off the file", async () => {
@@ -360,7 +360,7 @@ describe("NginxProvider.reapplyStoredRoutes", () => {
     files.set(
       `${SITES}/myapp-opsh-io.conf`,
       conf("myapp-opsh-io")!
-        .replace(/^# openship-vhost-gen: \d+$/m, "# openship-vhost-gen: 1")
+        .replace(/^# kovalio-vhost-gen: \d+$/m, "# kovalio-vhost-gen: 1")
         .replace(/^\s*proxy_pass_header X-Accel-Buffering;\n/m, ""),
     );
     expect(readVhostGeneration(conf("myapp-opsh-io")!)).toBe(1);
@@ -494,7 +494,7 @@ describe("NginxProvider.serveEdgeChallenge", () => {
     // It carries `location /` rather than dropping the server_name because the vhost's
     // whole purpose is to answer for that host. Keeping the proxy scanner from reading
     // the result as a static site rooted at the challenge dir is the other half, and
-    // it lives in openship-edge-scan.test.ts against these same bytes.
+    // it lives in kovalio-edge-scan.test.ts against these same bytes.
     const { nginx, files } = setup();
     const r = await nginx.serveEdgeChallenge({
       host: "203.0.113.10",
@@ -629,10 +629,10 @@ describe("NginxProvider config generation", () => {
     await nginx.registerRoute({
       domain: "site.example.com",
       tls: false,
-      staticRoot: "/opt/openship/static/site/dist",
+      staticRoot: "/opt/kovalio/static/site/dist",
     });
     const c = conf("site-example-com")!;
-    expect(c).toContain("root /opt/openship/static/site/dist;");
+    expect(c).toContain("root /opt/kovalio/static/site/dist;");
     expect(c).toContain("try_files $uri $uri/ /index.html;");
     // The ONLY proxy_pass allowed on a static vhost is the ACME-challenge
     // location (→ certbot's standalone server); the app itself is served, not
@@ -692,7 +692,7 @@ describe("NginxProvider config generation", () => {
     expect(error?.message).not.toContain(hmac);
     expect(error?.message).toContain("[REDACTED]");
 
-    const secretWrite = writes.find((w) => w.path.includes(".openship-eab-"));
+    const secretWrite = writes.find((w) => w.path.includes(".kovalio-eab-"));
     expect(secretWrite?.content).toContain("eab-kid = kid-123");
     expect(secretWrite?.content).toContain(`eab-hmac-key = ${hmac}`);
     const certbot = calls.find((c) => c.startsWith("certbot "));
@@ -705,7 +705,7 @@ describe("NginxProvider config generation", () => {
     // the file itself is chmod 600 before the rename publishes it, and cleanup
     // removes the whole directory as a unit.
     const secretDir = configPath!.replace(/\/eab\.ini$/, "");
-    expect(secretDir).toContain(".openship-eab-");
+    expect(secretDir).toContain(".kovalio-eab-");
     const dirChmodIdx = calls.findIndex(
       (c) => c.startsWith("chmod ") && c.includes("'700'") && c.includes(secretDir),
     );
@@ -723,7 +723,7 @@ describe("NginxProvider config generation", () => {
   // path was RETURNED to it, so anything that throws while building the material has to
   // clean up itself — and the directory exists from the mkdir onward, not just from the
   // write. A refused `chmod` (read-only mount; or a container edge running the command
-  // inside while the mkdir landed on the host) left one `.openship-eab-*` behind in
+  // inside while the mkdir landed on the host) left one `.kovalio-eab-*` behind in
   // certbot's config dir on every attempt.
   test("a refused chmod leaves no EAB directory behind", async () => {
     const { nginx, calls, removed, writes } = setup({
@@ -732,11 +732,11 @@ describe("NginxProvider config generation", () => {
     });
     await expect(nginx.provisionCert("app.example.com")).rejects.toThrow(/chmod/);
     const dirChmod = calls.find((c) => c.startsWith("chmod ") && c.includes("'700'"));
-    const secretDir = dirChmod?.match(/'(\/[^']*\.openship-eab-[^']*)'/)?.[1];
+    const secretDir = dirChmod?.match(/'(\/[^']*\.kovalio-eab-[^']*)'/)?.[1];
     expect(secretDir).toBeDefined();
     expect(removed).toContain(secretDir);
     // It failed BEFORE the secret bytes were staged, and certbot never ran.
-    expect(writes.some((w) => w.path.includes(".openship-eab-"))).toBe(false);
+    expect(writes.some((w) => w.path.includes(".kovalio-eab-"))).toBe(false);
     expect(calls.some((c) => c.startsWith("certbot "))).toBe(false);
   });
 
@@ -808,7 +808,7 @@ describe("NginxProvider config generation", () => {
     expect(error?.message).toContain("[REDACTED]");
   });
 
-  test("webhook proxy adds the /_openship/hooks/ location", async () => {
+  test("webhook proxy adds the /_kovalio/hooks/ location", async () => {
     const { nginx, conf } = setup();
     await nginx.registerRoute({ ...PROXY, webhookProxy: "http://127.0.0.1:4000/api/webhooks/" });
     // `^~` for the same reason the ACME locations carry it: a compiled vercel.json
@@ -816,7 +816,7 @@ describe("NginxProvider config generation", () => {
     // OpenResty 1.27.1.1 swallowing this one — either 308-ing the delivery away (losing
     // the POST body, so push→redeploy silently stops) or proxying the payload AND its
     // X-Hub-Signature to whatever origin the repo named.
-    expect(conf("app-example-com")!).toContain("location ^~ /_openship/hooks/");
+    expect(conf("app-example-com")!).toContain("location ^~ /_kovalio/hooks/");
   });
 
   test("a compiled catch-all cannot out-rank the webhook or a composite backend", async () => {
@@ -835,7 +835,7 @@ describe("NginxProvider config generation", () => {
       ],
     });
     const c = conf("app-example-com")!;
-    expect(c).toContain("location ^~ /_openship/hooks/");
+    expect(c).toContain("location ^~ /_kovalio/hooks/");
     expect(c).toContain("location ^~ /api/ {");
     // A loopback origin is one of OURS, so it keeps our Host rather than the origin's.
     expect(c).not.toContain("proxy_set_header Host 127.0.0.1:9902;");
@@ -870,7 +870,7 @@ describe("NginxProvider config generation", () => {
     expect(c).toContain(`ssl_certificate ${BOOTSTRAP_DIR}/fullchain.pem;`);
     expect(c).toContain(`ssl_certificate_key ${BOOTSTRAP_DIR}/privkey.pem;`);
     // Placeholder state is legible on the box.
-    expect(c).toContain("openship-bootstrap-tls");
+    expect(c).toContain("kovalio-bootstrap-tls");
     // :80 must keep SERVING: plain HTTP answers the ACME challenge, and pushing a
     // browser onto an untrusted cert is worse than serving HTTP.
     expect(c).not.toContain("return 301 https://");
@@ -923,7 +923,7 @@ describe("NginxProvider config generation", () => {
     await nginx.registerRoute(OURS);
     const c = conf("app-example-com")!;
     expect(c).toContain("ssl_certificate /etc/letsencrypt/live/app.example.com/fullchain.pem;");
-    expect(c).not.toContain("openship-bootstrap");
+    expect(c).not.toContain("kovalio-bootstrap");
     // Removed only AFTER the reload — until the new conf is live, OpenResty is
     // still reading the placeholder paths.
     expect(removed).toContain(BOOTSTRAP_DIR);
@@ -1204,7 +1204,7 @@ describe("the generated vhost carries the tunables in every server block", () =>
     await nginx.registerRoute({
       domain: "app.example.com",
       tls: true,
-      staticRoot: "/opt/openship/static/site",
+      staticRoot: "/opt/kovalio/static/site",
       proxy: { clientMaxBodySize: "50m", gzip: true },
     });
     const c = conf("app-example-com")!;
@@ -1217,7 +1217,7 @@ describe("render → parse round-trip (the renderer and the read-back agree)", (
   /** Read our own edge back the way the live read-back and migrate both do. */
   async function scanBack(conf: string) {
     const exec = async (cmd: string) => (cmd.startsWith("cat ") ? conf : "");
-    const result = await scanOpenshipEdge({ exec } as unknown as CommandExecutor);
+    const result = await scanKovalioEdge({ exec } as unknown as CommandExecutor);
     return result.sites.find((s) => s.serverNames.includes("app.example.com"))!;
   }
 
@@ -1294,7 +1294,7 @@ describe("issuing a certificate keeps the tunables", () => {
     await nginx.registerRoute({
       domain: "app.example.com",
       tls: false,
-      staticRoot: "/opt/openship/site",
+      staticRoot: "/opt/kovalio/site",
       redirects: compiled.redirects,
       headerRules: compiled.headerRules,
       cleanUrls: compiled.cleanUrls,
@@ -1359,7 +1359,7 @@ describe("installCert leaves the private key unreadable to other users", () => {
  * On a CONTAINER edge the two halves of "write it, then tighten it" travel different
  * channels: the write lands on the HOST (bind mount) while `chmod` runs INSIDE the
  * container. Only a mount whose two sides are the same string — `/etc/letsencrypt`,
- * `/opt/openship/static` in `EDGE_CONTAINER_MOUNTS` — makes those the same file, which
+ * `/opt/kovalio/static` in `EDGE_CONTAINER_MOUNTS` — makes those the same file, which
  * is why both of today's mode-passing callers happen to work.
  *
  * A mode aimed anywhere else either misses (a path the container's shell cannot see) or
@@ -1369,7 +1369,7 @@ describe("installCert leaves the private key unreadable to other users", () => {
  */
 describe("a container edge refuses a mode it cannot aim at the file it wrote", () => {
   /** A cert store OUTSIDE the same-path mounts — visible on the host, not in the container. */
-  const OFF_MOUNT_CERT_DIR = "/var/lib/openship/edge/certs/live";
+  const OFF_MOUNT_CERT_DIR = "/var/lib/kovalio/edge/certs/live";
 
   test("installCert refuses rather than staging a key it cannot chmod", async () => {
     const { nginx, calls, files, writes } = setup({
@@ -1413,13 +1413,13 @@ describe("a container edge refuses a mode it cannot aim at the file it wrote", (
     });
 
     await expect(nginx.provisionCert("app.example.com")).rejects.toThrow(
-      /Refusing to write .*\.openship-eab-.* with mode 0700/,
+      /Refusing to write .*\.kovalio-eab-.* with mode 0700/,
     );
     // The 0700 parent is refused first, so the HMAC never reaches disk and certbot
     // never runs — and the mkdir'd directory is still cleaned up.
     expect(writes.some((w) => w.content.includes(hmac))).toBe(false);
     expect(calls.some((c) => c.startsWith("certbot ") || c.startsWith("env "))).toBe(false);
-    expect(removed.some((p) => p.includes(".openship-eab-"))).toBe(true);
+    expect(removed.some((p) => p.includes(".kovalio-eab-"))).toBe(true);
   });
 
   test("but the mount they actually live on is still tightened", async () => {
@@ -1455,7 +1455,7 @@ describe("a container edge refuses a mode it cannot aim at the file it wrote", (
 
       const c = conf("app-example-com")!;
       expect(c).not.toContain("listen 443 ssl;");
-      expect(c).not.toContain("openship-bootstrap");
+      expect(c).not.toContain("kovalio-bootstrap");
       expect(c).toContain("proxy_pass http://127.0.0.1:3009;");
       // Declined before the key was generated, so nothing was left in the container's
       // own filesystem either.
@@ -1496,7 +1496,7 @@ describe("re-registering a route leaves no stale rules", () => {
   const STATIC_ROUTE: RouteConfig = {
     domain: "app.example.com",
     tls: false,
-    staticRoot: "/opt/openship/site",
+    staticRoot: "/opt/kovalio/site",
   } as unknown as RouteConfig;
 
   const rules = (n: number) =>
@@ -1531,7 +1531,7 @@ describe("re-registering a route leaves no stale rules", () => {
     const c = conf("app-example-com")!;
     expect(c).not.toContain("map $request_uri");
     expect(c).not.toContain("osh_hdr_");
-    expect(c.startsWith("# Auto-generated by Openship")).toBe(true);
+    expect(c.startsWith("# Auto-generated by Kovalio")).toBe(true);
   });
 
   test("is idempotent — the same rules twice produce the same file", async () => {
@@ -1591,8 +1591,8 @@ describe("behind a TLS-terminating CDN", () => {
     // Unconditional `301 → https` on :80 sends the request back to the CDN, which
     // comes back here on :80: an infinite redirect loop.
     expect(c).toContain('if ($http_x_forwarded_proto = "https")');
-    expect(c).toContain("set $openship_redirect_https 0;");
-    expect(c).toContain("if ($openship_redirect_https) {");
+    expect(c).toContain("set $kovalio_redirect_https 0;");
+    expect(c).toContain("if ($kovalio_redirect_https) {");
     expect(c).toContain("return 301 https://$server_name$request_uri;");
     // …and when it does NOT redirect, :80 has to be able to serve — including the
     // rules guard, so rate limits / bans aren't bypassable by arriving on :80.
@@ -1607,15 +1607,15 @@ describe("behind a TLS-terminating CDN", () => {
     const c = conf("app-example-com")!;
     // `$scheme` reads "http" for a request the browser made over https, which breaks
     // app-generated absolute URLs, secure cookies, and framework HTTPS guards.
-    expect(c).toContain("proxy_set_header X-Forwarded-Proto $openship_fwd_proto;");
+    expect(c).toContain("proxy_set_header X-Forwarded-Proto $kovalio_fwd_proto;");
     expect(c).not.toContain("proxy_set_header X-Forwarded-Proto $scheme;");
     // Falls back to $scheme when no CDN set the header.
-    expect(c).toContain("set $openship_fwd_proto $scheme;");
+    expect(c).toContain("set $kovalio_fwd_proto $scheme;");
     // Only an exact "https" is honoured, and the LITERAL is forwarded — never the
     // client's own string, which is legally a list ("http, https") behind chained
     // proxies and would confuse a framework comparing it to "https".
-    expect(c).toContain("set $openship_fwd_proto https;");
-    expect(c).not.toContain("set $openship_fwd_proto $http_x_forwarded_proto;");
+    expect(c).toContain("set $kovalio_fwd_proto https;");
+    expect(c).not.toContain("set $kovalio_fwd_proto $http_x_forwarded_proto;");
   });
 
   // The upgrade has to cover every location that serves project traffic, not just
@@ -1633,10 +1633,10 @@ describe("behind a TLS-terminating CDN", () => {
     await nginx.registerRoute(API_LOC);
     const c = conf("app-example-com")!;
     const api = locationBody(httpBlock(c), "location ^~ /api/ {");
-    expect(api).toContain("if ($openship_redirect_https) {");
+    expect(api).toContain("if ($kovalio_redirect_https) {");
     expect(api).toContain("return 301 https://$server_name$request_uri;");
     // Ahead of what serves — the chain is first-match-wins inside one location.
-    expect(api.indexOf("$openship_redirect_https")).toBeLessThan(api.indexOf("proxy_pass"));
+    expect(api.indexOf("$kovalio_redirect_https")).toBeLessThan(api.indexOf("proxy_pass"));
   });
 
   test("…and never on :443, where the guard variable is 1 and would loop", async () => {
@@ -1644,7 +1644,7 @@ describe("behind a TLS-terminating CDN", () => {
     await nginx.registerRoute(API_LOC);
     const c = conf("app-example-com")!;
     expect(locationBody(tlsBlock(c), "location ^~ /api/ {")).not.toContain(
-      "$openship_redirect_https",
+      "$kovalio_redirect_https",
     );
   });
 
@@ -1664,9 +1664,9 @@ describe("behind a TLS-terminating CDN", () => {
     await nginx.registerRoute({ ...OURS, webhookProxy: "http://127.0.0.1:4000/api/webhooks/" });
     const hooks = locationBody(
       httpBlock(conf("app-example-com")!),
-      "location ^~ /_openship/hooks/ {",
+      "location ^~ /_kovalio/hooks/ {",
     );
-    expect(hooks).not.toContain("$openship_redirect_https");
+    expect(hooks).not.toContain("$kovalio_redirect_https");
   });
 
   test("every block that sends the header also defines the variable", async () => {
@@ -1680,8 +1680,8 @@ describe("behind a TLS-terminating CDN", () => {
       const c = conf("app-example-com")!;
       const blocks = c.split(/^server \{$/m).slice(1);
       for (const block of blocks) {
-        if (block.includes("$openship_fwd_proto")) {
-          expect(block).toContain("set $openship_fwd_proto $scheme;");
+        if (block.includes("$kovalio_fwd_proto")) {
+          expect(block).toContain("set $kovalio_fwd_proto $scheme;");
         }
       }
     }
@@ -1801,7 +1801,7 @@ describe("vercel.json path redirects", () => {
       expect(serve).toContain(rule);
       expect(serve.indexOf(rule)).toBeLessThan(serve.indexOf("proxy_pass"));
     }
-    expect(httpBlock(c).indexOf("$openship_redirect_https")).toBeLessThan(
+    expect(httpBlock(c).indexOf("$kovalio_redirect_https")).toBeLessThan(
       httpBlock(c).indexOf(rule),
     );
   });
@@ -1958,17 +1958,17 @@ describe("vercel.json path redirects", () => {
     expect(c).not.toContain("proxy_pass http://10.0.0.9:3000;");
   });
 
-  // `/_openship/` is ours: a rewrite naming the webhook prefix duplicated the delivery
+  // `/_kovalio/` is ours: a rewrite naming the webhook prefix duplicated the delivery
   // location (same `[emerg]`), and the repo's origin must never be the one that wins it.
   test("a rewrite cannot duplicate our own webhook location", async () => {
     const { nginx, conf } = setup();
     await nginx.registerRoute({
       ...PROXY,
       webhookProxy: "http://127.0.0.1:4000/api/webhooks/",
-      proxyLocations: [{ pathPrefix: "/_openship/hooks/", targetUrl: "http://attacker.example" }],
+      proxyLocations: [{ pathPrefix: "/_kovalio/hooks/", targetUrl: "http://attacker.example" }],
     });
     const c = appConf(conf);
-    expect(c.match(/location \^~ \/_openship\/hooks\/ \{/g)).toHaveLength(1);
+    expect(c.match(/location \^~ \/_kovalio\/hooks\/ \{/g)).toHaveLength(1);
     expect(c).toContain("proxy_pass http://127.0.0.1:4000/api/webhooks/;");
     expect(c).not.toContain("attacker.example");
   });
@@ -2080,7 +2080,7 @@ describe("vercel.json path headers and URL shape", () => {
   const STATIC: RouteConfig = {
     ...PROXY,
     targetUrl: undefined,
-    staticRoot: "/opt/openship/site",
+    staticRoot: "/opt/kovalio/site",
   } as unknown as RouteConfig;
 
   test("backs a path-scoped header with a $request_uri map, not a location", async () => {
@@ -2147,7 +2147,7 @@ describe("vercel.json path headers and URL shape", () => {
     expect(c).toContain("location @osh_add_slash {");
     // A named location inherits nothing, so it must repeat `root` — without it
     // `try_files /index.html` serves OpenResty's stock welcome page, not the site.
-    expect(c).toMatch(/location @osh_add_slash \{\n\s+root \/opt\/openship\/site;/);
+    expect(c).toMatch(/location @osh_add_slash \{\n\s+root \/opt\/kovalio\/site;/);
     // Declines a path that already ends in `/`, so the retry falls through to the index
     // instead of bouncing again.
     expect(c).toContain('if ($request_uri ~ "^([^?]*[^/?])([?].*)?$") {');
@@ -2299,7 +2299,7 @@ describe("canonical host redirect", () => {
     // Same reasoning as ACME above, and the same mechanism: both are interpolated in
     // their own slot OUTSIDE sharedBody, so the canonical-redirect suppression can't
     // reach them, and both out-prefix `location /` so the 301 inside it never runs
-    // for the challenge path. Openship Cloud's edge can therefore verify a target
+    // for the challenge path. Kovalio Cloud's edge can therefore verify a target
     // whose vhost redirects — which `hostnameTargetWarning` warns breaks the free
     // URL, but does NOT break verification.
     const { nginx, conf } = setup({ certDomains: ["www.example.com"] });
@@ -2347,7 +2347,7 @@ describe("canonical host redirect", () => {
     expect(c).not.toContain("location /api/");
     expect(c).not.toContain("location = /old");
     expect(c).not.toContain("X-Frame-Options");
-    expect(c).not.toContain("/_openship/hooks/");
+    expect(c).not.toContain("/_kovalio/hooks/");
   });
 
   test("REFUSES an injection-shaped target instead of interpolating it", async () => {
@@ -2459,7 +2459,7 @@ describe("default catch-all owns unmatched HTTPS hosts", () => {
 });
 
 describe("static root confinement", () => {
-  test("refuses a managed root outside /opt/openship", async () => {
+  test("refuses a managed root outside /opt/kovalio", async () => {
     const { nginx } = setup();
     // The whole point: a route we generate must not be able to publish an arbitrary
     // host directory. Fails closed rather than serving it.
@@ -2474,7 +2474,7 @@ describe("static root confinement", () => {
       nginx.registerRoute({
         domain: "evil.example.com",
         tls: false,
-        staticRoot: "/opt/openship-evil/dist",
+        staticRoot: "/opt/kovalio-evil/dist",
       }),
     ).rejects.toThrow(/Refusing to serve static root outside/);
   });

@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
  * Compose used to be skipped here — it registered `byo` plus a "add it from the
  * Domains tab" warning — on the belief that self-register would install and take
  * over the HOST's OpenResty and fight the container edge. It doesn't: with
- * OPENSHIP_EDGE_MODE=docker the api's `ensureSelfEdgeInfra` returns early and
+ * KOVALIO_EDGE_MODE=docker the api's `ensureSelfEdgeInfra` returns early and
  * installs nothing, then routes + certs through the edge CONTAINER. The wizard
  * that collects a hostname, prints the DNS record, and promises automatic HTTPS
  * has to actually request it.

@@ -3,8 +3,8 @@
  *
  * The fallback runs whenever the container is gone — a stopped service, one destroyed
  * and not yet redeployed — which is exactly when a backup matters most. It applied the
- * `openship-<slug>-` prefix unconditionally, so a row storing the already-scoped name
- * resolved to `openship-<slug>-openship-<slug>-<name>`. Docker creates that on mount,
+ * `kovalio-<slug>-` prefix unconditionally, so a row storing the already-scoped name
+ * resolved to `kovalio-<slug>-kovalio-<slug>-<name>`. Docker creates that on mount,
  * so the capture archived an empty volume and a restore wrote into one nothing reads.
  *
  * Only the fallback is exercised here: `containerId: null` is the branch, and it needs
@@ -44,8 +44,8 @@ describe("DockerBackupExecutor.listSources DB fallback", () => {
     );
     expect(sources).toEqual([
       {
-        id: "openship-clincai-pgdata-0",
-        source: "openship-clincai-pgdata",
+        id: "kovalio-clincai-pgdata-0",
+        source: "kovalio-clincai-pgdata",
         target: "/var/lib/postgresql/data",
         type: "volume",
       },
@@ -54,9 +54,9 @@ describe("DockerBackupExecutor.listSources DB fallback", () => {
 
   it("does NOT re-scope a name already stored scoped", async () => {
     const sources = await executor.listSources(
-      handle(["openship-clincai-pgdata:/var/lib/postgresql/data"]),
+      handle(["kovalio-clincai-pgdata:/var/lib/postgresql/data"]),
     );
-    expect(sources.map((s) => s.source)).toEqual(["openship-clincai-pgdata"]);
+    expect(sources.map((s) => s.source)).toEqual(["kovalio-clincai-pgdata"]);
   });
 
   it("leaves bind mounts and grandfathered services alone", async () => {
@@ -70,9 +70,9 @@ describe("DockerBackupExecutor.listSources DB fallback", () => {
   });
 
   it("keeps another project's prefix distinct rather than adopting it", async () => {
-    const sources = await executor.listSources(handle(["openship-other-pgdata:/data"]));
+    const sources = await executor.listSources(handle(["kovalio-other-pgdata:/data"]));
     expect(sources.map((s) => s.source)).toEqual([
-      "openship-clincai-openship-other-pgdata",
+      "kovalio-clincai-kovalio-other-pgdata",
     ]);
   });
 });

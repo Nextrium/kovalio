@@ -22,7 +22,7 @@ export type ZeroAuthDecision =
 /** A bounce back to /login this recent is the server refusing, not a session that aged out. */
 const BOUNCE_WINDOW_MS = 15_000;
 
-const ATTEMPT_KEY = "openship.zeroAuthAttemptedAt";
+const ATTEMPT_KEY = "kovalio.zeroAuthAttemptedAt";
 
 function isLoopbackOrigin(origin: string): boolean {
   try {

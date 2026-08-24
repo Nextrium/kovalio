@@ -2,7 +2,7 @@
 
 /**
  * Settings → General → Interface. Per-USER choice of which control plane this
- * dashboard shows: the full platform, or Openship Mail's mail-only rail.
+ * dashboard shows: the full platform, or Kovalio Mail's mail-only rail.
  *
  * Cookie-backed (see lib/product-view.ts) so the server layout resolves it during
  * SSR and the rail is right on first paint — which is also why picking one reloads

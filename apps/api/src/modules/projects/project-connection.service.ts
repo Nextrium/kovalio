@@ -242,7 +242,7 @@ async function loadConnectionEnds(
  * the host docker socket, and so does the auto-registered isLocal "This Server" row
  * AND a plain loopback/SERVER_IP row for this host (deployment-runtime
  * `resolveTargetPlatform`, `isLocalHostRow`). One daemon means one set of
- * `openship-<slug>` networks, so treating those as different machines refuses pairs
+ * `kovalio-<slug>` networks, so treating those as different machines refuses pairs
  * that are demonstrably co-located.
  */
 type ProjectHost = { kind: "cloud" } | { kind: "box" } | { kind: "server"; id: string };

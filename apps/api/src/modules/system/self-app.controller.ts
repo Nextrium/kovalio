@@ -3,17 +3,17 @@
  *
  * The CLI setup wizard calls these AFTER bootstrap-admin (internal-token gated,
  * self-hosted only). They reuse the ordinary app + domain pipes so that, once
- * setup finishes, Openship itself shows up under the dashboard's **Apps** tab
+ * setup finishes, Kovalio itself shows up under the dashboard's **Apps** tab
  * with a real domain:
- *   - createProject({ isApp:true, appTemplateId:"openship" })  → the Apps row
+ *   - createProject({ isApp:true, appTemplateId:"kovalio" })  → the Apps row
  *   - free  domain → Cloud edge proxy (slug.opsh.io → this box) through
  *     ensureManagedEdgeProxy, the same funnel a deployed app's free subdomain uses
  *     (which is also what proves this box controls the target) — needs the owner
- *     connected to Openship Cloud
+ *     connected to Kovalio Cloud
  *   - custom domain → OpenResty + Let's Encrypt via provisionSelfEdge, streamed
  *     live through a setup-session for the wizard's spinner
  *
- * No new routing/SSL machinery — Openship deploys itself with its own tools.
+ * No new routing/SSL machinery — Kovalio deploys itself with its own tools.
  */
 
 import type { Context } from "hono";
@@ -41,11 +41,11 @@ import {
   subscribeSetupSession,
 } from "./setup-session";
 
-const APP_SLUG = "openship";
-const APP_TEMPLATE_ID = "openship";
+const APP_SLUG = "kovalio";
+const APP_TEMPLATE_ID = "kovalio";
 
 /**
- * The org that OWNS this box. Once connected to Openship Cloud, the mirrored
+ * The org that OWNS this box. Once connected to Kovalio Cloud, the mirrored
  * cloud user is the admin and its personal org `org_<id>` carries the cloud
  * link — prefer that. Otherwise fall back to the deterministic local owner
  * (fresh / self-hosted-only box). Single source of truth so cloud-status and
@@ -83,7 +83,7 @@ async function ensureControlPlaneApp(organizationId: string, port?: number): Pro
   if (existing) return existing.id;
   const created = await createProject(
     {
-      name: "Openship",
+      name: "Kovalio",
       isApp: true,
       appTemplateId: APP_TEMPLATE_ID,
       hasBuild: false,
@@ -97,7 +97,7 @@ async function ensureControlPlaneApp(organizationId: string, port?: number): Pro
 }
 
 /**
- * GET /api/system/cloud-status — is the org's owner connected to Openship Cloud?
+ * GET /api/system/cloud-status — is the org's owner connected to Kovalio Cloud?
  * The wizard checks this before offering / after driving the free-domain path.
  */
 export async function cloudStatus(c: Context) {
@@ -109,7 +109,7 @@ export async function cloudStatus(c: Context) {
 
 /**
  * POST /api/system/cloud-connect — finalize the browser PKCE handshake AND make
- * the Openship Cloud account this box's admin, reusing the EXACT desktop
+ * the Kovalio Cloud account this box's admin, reusing the EXACT desktop
  * identity pipe (no duplication): `mirrorCloudUser` provisions a local user from
  * the cloud identity (+ its personal org + owner membership), we store the cloud
  * session against it, and switch the box to `authMode="cloud"` so the local
@@ -129,10 +129,10 @@ export async function cloudConnect(c: Context) {
     );
     const { clearAuthModeCache, isAuthModePinned } = await import("../../lib/auth-mode");
     const data = await exchangeCodeWithCloud(body.code, body.codeVerifier);
-    if (!data) return c.json({ error: "Could not verify with Openship Cloud" }, 401);
+    if (!data) return c.json({ error: "Could not verify with Kovalio Cloud" }, 401);
     const email = (data.user as { email?: string | null }).email ?? null;
 
-    // If this box ALREADY has a real local admin account, Openship Cloud is linked
+    // If this box ALREADY has a real local admin account, Kovalio Cloud is linked
     // for SERVICES ONLY — the free .opsh.io domain and managed mail. Store the cloud
     // session against the existing owner so the edge-proxy has a token, and DO NOT
     // change the login method. Only a fresh box with NO local admin (the free-domain
@@ -164,10 +164,10 @@ export async function cloudConnect(c: Context) {
     // Fresh box → local login becomes cloud-backed (passwordless). Reuse the
     // singleton upsert; clear the cached mode so the change takes effect now.
     //
-    // Skipped when the launcher DECLARED the mode (OPENSHIP_AUTH_MODE). This line
+    // Skipped when the launcher DECLARED the mode (KOVALIO_AUTH_MODE). This line
     // is where the desktop bug came from: desktop has no local admin by design
     // (zero-auth auto-provisions), so foundingAdminId() returns null and every
-    // "connect Openship Cloud" from Settings fell through to here and converted a
+    // "connect Kovalio Cloud" from Settings fell through to here and converted a
     // loopback-only app to remote login — with no way back short of wiping the
     // local DB. Linking a cloud account must not change how you log in to a box
     // whose login method was declared at launch.
@@ -212,7 +212,7 @@ export async function selfRegister(c: Context) {
   }>().catch(() => ({}) as Record<string, never>);
 
   const domainType = body.domainType ?? "byo";
-  const dashPort = Number(body.dashPort) || env.OPENSHIP_DASHBOARD_PORT || 3001;
+  const dashPort = Number(body.dashPort) || env.KOVALIO_DASHBOARD_PORT || 3001;
   const { organizationId } = await resolveOrg();
   const projectId = await ensureControlPlaneApp(organizationId, dashPort);
 
@@ -228,7 +228,7 @@ export async function selfRegister(c: Context) {
     // THE shared funnel — `ensureManagedEdgeProxy`, the same call a deployed app's
     // free subdomain goes through, with the operator's `--public-url` host passed as
     // a target candidate. This path used to resolve the target and post to the SaaS
-    // itself; that bypass is now load-bearing to close, because Openship Cloud
+    // itself; that bypass is now load-bearing to close, because Kovalio Cloud
     // refuses to route to an unproven target and the verify-and-retry lives in the
     // funnel. A wizard with its own copy would 403 with nothing to explain it.
     //
@@ -281,7 +281,7 @@ export async function selfRegister(c: Context) {
       const session = createSetupSession(
         [
           { name: "edge", label: "Install the edge (80/443)" },
-          { name: "route", label: "Route domain to Openship" },
+          { name: "route", label: "Route domain to Kovalio" },
         ],
         "self",
       );
@@ -359,7 +359,7 @@ export async function selfRegister(c: Context) {
       return c.json({ error: "a valid hostname is required for a custom domain" }, 400);
     }
     // verified:true — we assert control via ACME HTTP-01 (not A-record; SERVER_IP
-    // isn't set under `openship up`), and manageDomainSsl gates cert issuance on
+    // isn't set under `kovalio up`), and manageDomainSsl gates cert issuance on
     // the verified flag. Route registration doesn't depend on status.
     await repos.domain.findOrCreate({
       projectId,
@@ -375,7 +375,7 @@ export async function selfRegister(c: Context) {
     const session = createSetupSession(
       [
         { name: "edge", label: "Install the edge" },
-        { name: "route", label: "Route domain to Openship" },
+        { name: "route", label: "Route domain to Kovalio" },
         { name: "ssl", label: "Issue SSL certificate" },
       ],
       "self",
@@ -453,7 +453,7 @@ export async function selfEdgePreflight(c: Context) {
     const { detectEdge, importSites, unreachableStaticRoots, dockerAvailable } =
       await import("@repo/adapters");
     // Host-op executor: LocalExecutor bare, SSH→host.docker.internal when
-    // containerized (OPENSHIP_HOST_SSH_* set). Inspecting the api container's
+    // containerized (KOVALIO_HOST_SSH_* set). Inspecting the api container's
     // own netns would return a wrong migrate/takeover prompt in docker mode.
     // Pooled — this endpoint is polled by the CLI/wizard, and a per-call executor
     // is what leaked sshd sessions until OOM (#291).
@@ -464,10 +464,10 @@ export async function selfEdgePreflight(c: Context) {
         const scanned = await importSites(executor, detected);
         // Whether the edge that WILL serve these sites is a container. `docker` mode
         // is the obvious yes; but the bare wizard also installs a CONTAINER edge on any
-        // Docker-equipped host, and keying only on OPENSHIP_EDGE_MODE hid the unreachable
+        // Docker-equipped host, and keying only on KOVALIO_EDGE_MODE hid the unreachable
         // roots from exactly that path — so OR in a live Docker probe (#456).
         const containerEdge =
-          process.env.OPENSHIP_EDGE_MODE === "docker" || (await dockerAvailable(executor));
+          process.env.KOVALIO_EDGE_MODE === "docker" || (await dockerAvailable(executor));
         return { status: detected, sites: scanned.sites, warnings: scanned.warnings, containerEdge };
       },
     );
@@ -486,7 +486,7 @@ export async function selfEdgePreflight(c: Context) {
  * POST /api/system/edge/import-sites — register sites parsed from a foreign proxy
  * as routes on THIS box's CONTAINER edge (internal-token gated, docker-edge mode).
  *
- * `openship up` (compose) detects + stops the foreign proxy on the HOST and parses
+ * `kovalio up` (compose) detects + stops the foreign proxy on the HOST and parses
  * its vhosts BEFORE `docker compose up` (the host-net edge container can't bind
  * :80/:443 otherwise, and it can't read the host filesystem). It then hands the
  * parsed sites here — plus any cert PEMs it read host-side (`certPems`, keyed by
@@ -494,7 +494,7 @@ export async function selfEdgePreflight(c: Context) {
  *
  * No new routing machinery: we drive the SAME provider the deploy pipeline uses,
  * resolved from the local platform (a `NginxProvider` on the `DockerEdgeExecutor`
- * when `OPENSHIP_EDGE_MODE=docker`), via the shared `registerImportedSites`.
+ * when `KOVALIO_EDGE_MODE=docker`), via the shared `registerImportedSites`.
  */
 export async function edgeImportSites(c: Context) {
   const guard = assertNotCloud(c); if (guard) return guard;

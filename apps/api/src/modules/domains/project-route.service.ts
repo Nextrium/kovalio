@@ -373,7 +373,7 @@ export async function reapplyProjectLiveRoutes(
     .map((hostname) => ({ hostname, isCustomDomain: !managedHostnameToSlug(hostname) }));
 
   // Self-hosted: a dropped free (*.opsh.io) hostname leaves a stale slug→target
-  // route on Openship Cloud's edge. Deregister it (best-effort) so the freed
+  // route on Kovalio Cloud's edge. Deregister it (best-effort) so the freed
   // slug is reusable and the old URL stops resolving. Cloud projects route their
   // managed subdomain INTERNALLY (page/workspace), reconciled by the cloud
   // branch below — so this teardown is self-hosted only.
@@ -432,7 +432,7 @@ export async function reapplyProjectLiveRoutes(
   const { effectiveTarget, serverId } = resolved;
   try {
     // Register the managed (*.opsh.io) hostnames that are NEW in this edit on
-    // Openship Cloud's edge — the "add" half. Oblien's edge has NO route EDIT
+    // Kovalio Cloud's edge — the "add" half. Oblien's edge has NO route EDIT
     // (only sync + deregister), so a slug change is drop-old (deregistered above)
     // + add-new (here). PER-ROUTE by design: only hostnames absent from
     // `previousHostnames` are synced — symmetric with the dropped-slug deregister

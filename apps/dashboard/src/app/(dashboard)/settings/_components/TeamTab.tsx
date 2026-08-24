@@ -381,13 +381,13 @@ export function TeamTab() {
   // so a teammate couldn't reach it. There we hide the button and show the
   // "shared location" hint (TeamWorkspaceCard) instead of a dead action.
   // Smart gate: invites are allowed once the instance is actually REACHABLE
-  // (a real public URL — env `--public-url` or the Openship app's verified
+  // (a real public URL — env `--public-url` or the Kovalio app's verified
   // domain), not gated on the migration-wizard flag. So adding a domain to the
-  // Openship app turns invites on directly.
+  // Kovalio app turns invites on directly.
   const canInvite = isAdminOrOwner && (!selfHosted || !!reachability?.configured);
 
   // Not reachable yet (self-hosted, no public URL) → show inline guidance
-  // (add a domain to Openship / install it) + the migrate-elsewhere option,
+  // (add a domain to Kovalio / install it) + the migrate-elsewhere option,
   // instead of a dead-ended invite button.
   const showWorkspaceMigration = selfHosted && !reachability?.configured;
 
@@ -614,7 +614,7 @@ export function TeamTab() {
         </>
       )}
 
-      {/* Not reachable yet: inline guidance (add a domain to Openship / install
+      {/* Not reachable yet: inline guidance (add a domain to Kovalio / install
           it) is the primary path; the migrate-elsewhere card is the alternative.
           Last in the tab so the members UI leads. */}
       {showWorkspaceMigration && (

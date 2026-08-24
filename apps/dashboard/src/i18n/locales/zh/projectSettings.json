@@ -122,7 +122,7 @@
     },
     "statusActive": "已激活",
     "statusDisabled": "已禁用",
-    "hostedCloud": "Openship Cloud",
+    "hostedCloud": "Kovalio Cloud",
     "hostedServer": "服务器",
     "hostedLocal": "本地",
     "projectStatus": {
@@ -143,7 +143,7 @@
       "currentServer": "当前服务器",
       "migrate": "迁移",
       "noOtherServers": "请先添加第二台服务器作为迁移目标。",
-      "cloudLater": "服务器之间迁移。暂不支持与 Openship Cloud 之间的迁移。",
+      "cloudLater": "服务器之间迁移。暂不支持与 Kovalio Cloud 之间的迁移。",
       "startFailed": "无法开始迁移",
       "confirmTitle": "将 {project} 迁移到 {server}",
       "confirmSubtitle": "在你开始迁移前，不会有任何更改。",
@@ -188,7 +188,7 @@
       "anotherServer": "另一台服务器",
       "targetLocal": "本地机器",
       "targetServer": "自托管服务器",
-      "targetCloud": "Openship Cloud"
+      "targetCloud": "Kovalio Cloud"
     },
     "danger": {
       "title": "危险操作区",
@@ -291,7 +291,7 @@
   "build": {
     "edit": "编辑",
     "webmail": {
-      "title": "由 openship 管理",
+      "title": "由 kovalio 管理",
       "description": "Webmail 使用固定的构建和启动流程——安装、构建和运行命令均不可配置。如需应用上游更改，请从邮件概览中重新部署。"
     },
     "services": {
@@ -422,12 +422,12 @@
     },
     "appBanner": {
       "title": "尚未安装 GitHub App",
-      "description": "在你的账户或组织上安装 Openship GitHub App，以便为云端项目启用自动部署和由 webhook 触发的部署。",
+      "description": "在你的账户或组织上安装 Kovalio GitHub App，以便为云端项目启用自动部署和由 webhook 触发的部署。",
       "install": "安装 GitHub App"
     },
     "webhookBanner": {
       "title": "启用自动部署",
-      "description": "自动部署需要一个直接的 webhook 端点。请将此 Openship API 暴露在公网 URL 上，或配置一个已验证的 webhook 域名以进行直接投递。"
+      "description": "自动部署需要一个直接的 webhook 端点。请将此 Kovalio API 暴露在公网 URL 上，或配置一个已验证的 webhook 域名以进行直接投递。"
     },
     "source": {
       "title": "源仓库",
@@ -457,7 +457,7 @@
       "active": "活跃",
       "inactive": "未活跃",
       "descDirect": "事件通过 {domain} 直接投递",
-      "descActive": "仓库事件正在到达 Openship",
+      "descActive": "仓库事件正在到达 Kovalio",
       "descInactive": "Webhook 尚未配置或未响应"
     },
     "rollbackStrategy": {

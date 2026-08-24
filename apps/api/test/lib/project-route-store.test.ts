@@ -263,7 +263,7 @@ describe("syncProjectPublicRoutes", () => {
       id: "dom_api",
       projectId: "proj_123",
       serviceId: null,
-      hostname: "api.openship.io",
+      hostname: "api.nextrium.org",
       targetPort: 4000,
       targetPath: null,
       domainType: "custom",
@@ -311,7 +311,7 @@ describe("syncProjectPublicRoutes", () => {
     it("does NOT protect a FREE domain — the guard is custom-only", async () => {
       await syncProjectPublicRoutes({
         projectId: "proj_123",
-        endpoints: [{ port: 3000, customDomain: "api.openship.io", domainType: "custom" }],
+        endpoints: [{ port: 3000, customDomain: "api.nextrium.org", domainType: "custom" }],
         currentDomains: [{
           ...verifiedCustom,
           id: "dom_free",
@@ -331,7 +331,7 @@ describe("syncProjectPublicRoutes", () => {
       await syncProjectPublicRoutes({
         projectId: "proj_123",
         // Desired route survives normalization (has a path) but carries no port.
-        endpoints: [{ targetPath: "/api", customDomain: "api.openship.io", domainType: "custom" }],
+        endpoints: [{ targetPath: "/api", customDomain: "api.nextrium.org", domainType: "custom" }],
         currentDomains: [verifiedCustom],
         preserveCustomDomains: true,
       });
@@ -345,7 +345,7 @@ describe("syncProjectPublicRoutes", () => {
     it("does NOT null a pending custom domain's port during deployment reconciliation", async () => {
       await syncProjectPublicRoutes({
         projectId: "proj_123",
-        endpoints: [{ targetPath: "/api", customDomain: "api.openship.io", domainType: "custom" }],
+        endpoints: [{ targetPath: "/api", customDomain: "api.nextrium.org", domainType: "custom" }],
         currentDomains: [{ ...verifiedCustom, verified: false, status: "pending" }],
         preserveCustomDomains: true,
       });
@@ -359,7 +359,7 @@ describe("syncProjectPublicRoutes", () => {
     it("DOES null that port for the editor (flag off)", async () => {
       await syncProjectPublicRoutes({
         projectId: "proj_123",
-        endpoints: [{ targetPath: "/api", customDomain: "api.openship.io", domainType: "custom" }],
+        endpoints: [{ targetPath: "/api", customDomain: "api.nextrium.org", domainType: "custom" }],
         currentDomains: [verifiedCustom],
       });
 

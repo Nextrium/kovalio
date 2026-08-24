@@ -115,7 +115,7 @@ describe("DockerRuntime build cancellation", () => {
       { signal: expect.any(AbortSignal) },
     );
     expect(executor.exec).toHaveBeenCalledWith(
-      expect.stringContaining("/tmp/openship-build-session-1"),
+      expect.stringContaining("/tmp/kovalio-build-session-1"),
     );
     expect(verifyImageBuilt).not.toHaveBeenCalled();
   });
@@ -156,9 +156,9 @@ describe("DockerRuntime build cancellation", () => {
     // The build's own cleanup rm -rf's the context dir, so by the time the sweep
     // runs Linux reports the cwd as "<dir> (deleted)" — matching only the plain
     // dir would find nothing, which is what made the kill a no-op.
-    expect(sweep).toContain(`'/tmp/openship-build-session-sweep'" (deleted)"`);
+    expect(sweep).toContain(`'/tmp/kovalio-build-session-sweep'" (deleted)"`);
     // Compose services build in `<parent>-<serviceId>` dirs off the same cancel.
-    expect(sweep).toContain(`'/tmp/openship-build-session-sweep'-*`);
+    expect(sweep).toContain(`'/tmp/kovalio-build-session-sweep'-*`);
   });
 
   it("cancels every compose service build under the parent session id", async () => {
@@ -244,7 +244,7 @@ describe("DockerRuntime build cancellation", () => {
           config: {
             ...buildConfig("parent-static-svc-a"),
             staticExtractOnly: true,
-            staticOutDir: "/var/lib/openship/static/.builds/parent-static-svc-a",
+            staticOutDir: "/var/lib/kovalio/static/.builds/parent-static-svc-a",
           },
           serviceName: "svc-a",
           logger: new BuildLogger(),
@@ -275,7 +275,7 @@ describe("DockerRuntime build cancellation", () => {
       build: vi.fn(async () => ({
         sessionId: "session-static-solo",
         status: "deploying" as const,
-        imageRef: "openship/static:session-static-solo",
+        imageRef: "kovalio/static:session-static-solo",
         durationMs: 1,
       })),
     });
@@ -283,7 +283,7 @@ describe("DockerRuntime build cancellation", () => {
 
     const result = await buildRuntime.buildStaticToHost(
       buildConfig("session-static-solo"),
-      "/var/lib/openship/static/session-static-solo",
+      "/var/lib/kovalio/static/session-static-solo",
     );
 
     expect(moveStaticBuildToHost).toHaveBeenCalledTimes(1);
@@ -302,7 +302,7 @@ describe("DockerRuntime build cancellation — dockerode path", () => {
   });
 
   it("returns cancelled instead of deploying when the daemon build is aborted", async () => {
-    contextDir = await mkdtemp(join(tmpdir(), "openship-cancel-"));
+    contextDir = await mkdtemp(join(tmpdir(), "kovalio-cancel-"));
     await writeFile(join(contextDir, "Dockerfile"), "FROM scratch\n");
     fakeBuildContext.current = { contextDir, cleanup: async () => {} };
 
@@ -347,7 +347,7 @@ describe("DockerRuntime build cancellation — dockerode path", () => {
   });
 
   it("returns cancelled when the abort lands after the daemon already finished", async () => {
-    contextDir = await mkdtemp(join(tmpdir(), "openship-cancel-"));
+    contextDir = await mkdtemp(join(tmpdir(), "kovalio-cancel-"));
     await writeFile(join(contextDir, "Dockerfile"), "FROM scratch\n");
     fakeBuildContext.current = { contextDir, cleanup: async () => {} };
 
@@ -395,7 +395,7 @@ describe("packBuildContext", () => {
   });
 
   it("aborts the daemon request when the build's cancel signal fires", async () => {
-    contextDir = await mkdtemp(join(tmpdir(), "openship-pack-"));
+    contextDir = await mkdtemp(join(tmpdir(), "kovalio-pack-"));
     await writeFile(join(contextDir, "Dockerfile"), "FROM scratch\n");
 
     const cancel = new AbortController();
@@ -408,7 +408,7 @@ describe("packBuildContext", () => {
   });
 
   it("starts aborted when the build was already cancelled", async () => {
-    contextDir = await mkdtemp(join(tmpdir(), "openship-pack-"));
+    contextDir = await mkdtemp(join(tmpdir(), "kovalio-pack-"));
     await writeFile(join(contextDir, "Dockerfile"), "FROM scratch\n");
 
     const packed = packBuildContext(contextDir, ["Dockerfile"], AbortSignal.abort());

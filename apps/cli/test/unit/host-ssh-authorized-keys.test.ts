@@ -34,8 +34,8 @@ import {
  * channel didn't come out working (#509).
  */
 
-const PUB = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIexample openship-host-executor";
-const OTHER_PUB = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIold openship-host-executor";
+const PUB = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIexample kovalio-host-executor";
+const OTHER_PUB = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIold kovalio-host-executor";
 const OPERATOR_KEY = "ssh-rsa AAAAB3NzaC1yc2EAAAA operator@laptop";
 
 describe("rewriteHostAuthorizedKeys", () => {
@@ -61,14 +61,14 @@ describe("rewriteHostAuthorizedKeys", () => {
     expect(rewriteHostAuthorizedKeys("", PUB)).toContain("port-forwarding");
   });
 
-  // Re-running `openship up` is the repair path for an install provisioned before that
+  // Re-running `kovalio up` is the repair path for an install provisioned before that
   // fix, so the revoke-and-replace must actually swap a forwarding-less line.
   it("replaces a forwarding-less line from an earlier install", () => {
     const out = rewriteHostAuthorizedKeys(
       `from="172.16.0.0/12,192.168.0.0/16,10.0.0.0/8,127.0.0.1",restrict,pty ${PUB}\n`,
       PUB,
     );
-    const ourLines = out.split("\n").filter((l) => l.includes("openship-host-executor"));
+    const ourLines = out.split("\n").filter((l) => l.includes("kovalio-host-executor"));
     expect(ourLines).toHaveLength(1);
     expect(ourLines[0]).toContain("port-forwarding");
   });
@@ -86,7 +86,7 @@ describe("rewriteHostAuthorizedKeys", () => {
     expect(out).toContain(PUB);
   });
 
-  // A wiped ~/.openship generates a NEW keypair; the old public key used to stay
+  // A wiped ~/.kovalio generates a NEW keypair; the old public key used to stay
   // authorized forever, so no amount of re-running could revoke it.
   it("revokes a previous host-executor key when a new one is generated", () => {
     const out = rewriteHostAuthorizedKeys(`${OPERATOR_KEY}\n${hardened(OTHER_PUB)}\n`, PUB);
@@ -99,7 +99,7 @@ describe("rewriteHostAuthorizedKeys", () => {
   // the new one, sshd would still honour the wide grant.
   it("replaces a legacy UNRESTRICTED host-executor line rather than adding beside it", () => {
     const out = rewriteHostAuthorizedKeys(`${PUB}\n`, PUB);
-    const ourLines = out.split("\n").filter((l) => l.includes("openship-host-executor"));
+    const ourLines = out.split("\n").filter((l) => l.includes("kovalio-host-executor"));
     expect(ourLines).toHaveLength(1);
     expect(ourLines[0]).toContain("restrict");
   });
@@ -135,7 +135,7 @@ describe("stripHostAuthorizedKeys", () => {
     const out = stripHostAuthorizedKeys(
       `${hardened(OTHER_PUB)}\n${OPERATOR_KEY}\n${hardened(PUB)}\n`,
     );
-    expect(out).not.toContain("openship-host-executor");
+    expect(out).not.toContain("kovalio-host-executor");
     expect(out).toContain(OPERATOR_KEY);
   });
 
@@ -164,7 +164,7 @@ function hardened(pub: string): string {
  * mistake, and `elevation` is what keeps both from recurring).
  */
 describe("chooseHostChannelUser", () => {
-  it("tries root FIRST when invoked as root — `sudo openship up` is how you ask for one", () => {
+  it("tries root FIRST when invoked as root — `sudo kovalio up` is how you ask for one", () => {
     const out = chooseHostChannelUser({
       invokerUid: 0,
       invokerName: "root",
@@ -343,7 +343,7 @@ describe("sshdRefusesRootLogin", () => {
 
 /**
  * #509, one layer along: `ssh-keygen` is the openssh CLIENT and `authorized_keys` is just
- * a file, so provisioning "succeeds" and writes all five OPENSHIP_HOST_* keys on a host
+ * a file, so provisioning "succeeds" and writes all five KOVALIO_HOST_* keys on a host
  * with no SSH SERVER at all. This is the prerequisite check, and a false negative here
  * would tell an operator their working host has no sshd — so it is read off a listing we
  * actually got, and matched on a whole address column.
@@ -395,8 +395,8 @@ describe("listensOnPort", () => {
 
 /**
  * The reason a channel is missing exists ONLY at provisioning time: every later surface
- * (the install preflight, the API banner, the dashboard, `openship doctor`) sees an unset
- * OPENSHIP_HOST_SSH_HOST and can't tell a failed keygen from an operator who opted out.
+ * (the install preflight, the API banner, the dashboard, `kovalio doctor`) sees an unset
+ * KOVALIO_HOST_SSH_HOST and can't tell a failed keygen from an operator who opted out.
  * So this warning is the whole account of the cause — and the framing around it comes
  * from @repo/core so it reads as the same story those surfaces tell.
  */
@@ -418,7 +418,7 @@ describe("renderHostChannelIssue", () => {
 
   it("says host operations refuse rather than target the container", () => {
     const out = renderHostChannelIssue({ code: "empty-key" }, AT);
-    expect(out).toContain("OPENSHIP_HOST_SSH_HOST");
+    expect(out).toContain("KOVALIO_HOST_SSH_HOST");
     expect(out).toContain("refuse");
   });
 
@@ -529,7 +529,7 @@ describe("renderHostChannelIssue", () => {
       expect(out, issue.code).toContain("Ordinary deploys to this box still work");
       expect(out, issue.code).toContain("the host terminal");
       expect(out, issue.code).toContain("installing or updating the mail engine");
-      expect(out, issue.code).toContain("`openship doctor`");
+      expect(out, issue.code).toContain("`kovalio doctor`");
     }
   });
 });

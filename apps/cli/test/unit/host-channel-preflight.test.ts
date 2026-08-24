@@ -9,7 +9,7 @@ import {
 import { hostControlRow } from "../../src/lib/repair";
 
 /**
- * #490: `openship up --compose` provisions a container→host SSH channel and never
+ * #490: `kovalio up --compose` provisions a container→host SSH channel and never
  * dials it. On a default-deny host the channel is dead and the install still
  * reports success, so every host operation afterwards fails looking exactly like a
  * bad key. These tests pin the two properties that make the preflight worth having:
@@ -24,7 +24,7 @@ function deps(over: Partial<HostChannelPreflightDeps> = {}): HostChannelPrefligh
     interactive: true,
     channel: vi.fn(() => CHANNEL),
     // Only consulted when `channel()` is null; never left to the real reader, which
-    // would put a test at the mercy of whatever is in this machine's ~/.openship.
+    // would put a test at the mercy of whatever is in this machine's ~/.kovalio.
     expected: vi.fn(() => false),
     probe: vi.fn(async (): Promise<ProbeResult> => ({ code: "open" })),
     sourceCidrs: vi.fn(() => ["172.18.0.0/16"]),
@@ -93,7 +93,7 @@ describe("verifyHostChannel", () => {
     expect(d.applyRule).not.toHaveBeenCalled();
     const out = output(d);
     expect(out).toContain("not provisioned");
-    expect(out).toContain("openship up");
+    expect(out).toContain("kovalio up");
     expect(out).not.toContain("ufw");
   });
 
@@ -107,7 +107,7 @@ describe("verifyHostChannel", () => {
     for (const item of HOST_CHANNEL_BLOCKED) expect(out).toContain(item);
     // Fix before opt-out, as everywhere else: the fastest way to silence the warning
     // must not be the first thing on the screen.
-    expect(out.indexOf("openship up")).toBeLessThan(out.indexOf("--no-host-control"));
+    expect(out.indexOf("kovalio up")).toBeLessThan(out.indexOf("--no-host-control"));
   });
 
   it("reports ok and stays silent when the channel answers", async () => {
@@ -374,7 +374,7 @@ describe("failures that are not the firewall are not treated as one", () => {
 
 /**
  * Five different failures leave the channel blocked, and each used to end with its own
- * ad-hoc footer: some named `openship doctor`, some named `--no-host-control`, none
+ * ad-hoc footer: some named `kovalio doctor`, some named `--no-host-control`, none
  * named both. The one that mattered least — the switch that turns the feature off —
  * was the last word on the paths an operator is most likely to hit.
  */
@@ -394,7 +394,7 @@ describe("what a blocked exit leaves the operator with", () => {
     const report = await verifyHostChannel({ openFirewall: true }, d);
     expect(report.status).toBe("blocked");
     const out = output(d);
-    expect(out).toContain("openship doctor");
+    expect(out).toContain("kovalio doctor");
     expect(out).toContain("--no-host-control");
   });
 
@@ -432,7 +432,7 @@ describe("what a blocked exit leaves the operator with", () => {
 
 /**
  * The install-time preflight runs once and tells the operator to come back to
- * `openship doctor`. That promise is only worth anything if doctor asks the same
+ * `kovalio doctor`. That promise is only worth anything if doctor asks the same
  * question the same way, so these pin the read-only half against the same deps —
  * and pin that it stays read-only: a health readout that edits the host firewall
  * while someone is looking at a status list would be its own incident.
@@ -482,7 +482,7 @@ describe("checkHostChannel — the read-only probe doctor uses", () => {
 describe("the doctor row", () => {
   it("is absent when this box wanted no channel", async () => {
     // A row about a channel nobody wanted is noise on every bare install and every
-    // mac, and a `fail` there would make `openship doctor` exit 1 for nothing.
+    // mac, and a `fail` there would make `kovalio doctor` exit 1 for nothing.
     expect(hostControlRow({ configured: false })).toBeNull();
     expect(hostControlRow({ configured: false, unprovisioned: false })).toBeNull();
     expect(hostControlRow(null)).toBeNull();
@@ -490,7 +490,7 @@ describe("the doctor row", () => {
 
   /**
    * #509 closed its remedy loop the wrong way round: the error an operator reads when a
-   * host operation dies names `openship doctor` as the way to check this, and doctor
+   * host operation dies names `kovalio doctor` as the way to check this, and doctor
    * printed NO row for the state that produces that error. A channel that was never
    * provisioned is exactly as broken as one that's firewalled off.
    */
@@ -498,7 +498,7 @@ describe("the doctor row", () => {
     const row = hostControlRow({ configured: false, unprovisioned: true })!;
     expect(row.id).toBe("host-control");
     expect(row.state).toBe("fail");
-    expect(row.detail).toContain("openship up");
+    expect(row.detail).toContain("kovalio up");
     // Nothing was dialed, so no packet filter has been established — offering the
     // firewall flag here is the wrong-cause mistake the whole preflight exists to avoid.
     expect(row.detail).not.toContain("--open-host-firewall");
@@ -545,7 +545,7 @@ describe("the doctor row", () => {
 /**
  * The install shape the LOCAL probe cannot see: a stack brought up by running
  * `docker/docker-compose.yml` by hand. `composeHostChannelExpected` needs
- * `~/.openship/compose/docker-compose.yml` to exist, so on that box `checkHostChannel`
+ * `~/.kovalio/compose/docker-compose.yml` to exist, so on that box `checkHostChannel`
  * reports neither `configured` nor `unprovisioned` and doctor printed nothing at all —
  * from the one command #509's error text names. The API knows its own env on every
  * shape, so `/api/system/health`'s `hostChannel` is the fallback.
@@ -559,7 +559,7 @@ describe("the doctor row — API fallback for an install the local probe can't s
     expect(row.state).toBe("fail");
     // Byte-identical to the local path's row: same state, same remedy, either route.
     expect(row.detail).toBe(hostControlRow({ configured: false, unprovisioned: true })!.detail);
-    expect(row.detail).toContain("openship up");
+    expect(row.detail).toContain("kovalio up");
     expect(row.detail).not.toContain("--open-host-firewall");
   });
 

@@ -1,16 +1,16 @@
 /**
  * DNS provider abstraction — automated record management for custom domains.
  *
- * Openship already computes the exact records a domain needs (`buildRecords` in
+ * Kovalio already computes the exact records a domain needs (`buildRecords` in
  * the domains module). A connected provider turns that list from instructions
- * into an action: we write the A/CNAME and `_openship-challenge` TXT ourselves,
+ * into an action: we write the A/CNAME and `_kovalio-challenge` TXT ourselves,
  * and the domain verifies without the operator leaving the page.
  *
  * The authority involved is real — a Zone:Read + DNS:Edit token can rewrite
  * every record in every zone it can see — so two rules hold throughout:
  *
  *   1. We only ever DELETE records we created. Ownership is proven by the
- *      provider-side comment marker (`OPENSHIP_RECORD_COMMENT`), never by name
+ *      provider-side comment marker (`KOVALIO_RECORD_COMMENT`), never by name
  *      matching: a custom domain's apex IS the zone apex, and "delete every
  *      record at the apex" takes the operator's MX and SPF with it. Repointing an
  *      existing record is allowed — that is what connecting a domain means — but
@@ -28,16 +28,16 @@ export type DnsProviderName = "cloudflare";
 export type DnsRecordType = "A" | "AAAA" | "CNAME" | "TXT" | "MX" | "NS" | "SRV";
 
 /**
- * Written into the provider's record comment so cleanup can tell "Openship put
+ * Written into the provider's record comment so cleanup can tell "Kovalio put
  * this here" from "the operator has run their mail on this zone for six years".
  * Changing this string orphans every record written under the old one.
  */
-export const OPENSHIP_RECORD_COMMENT = "Managed by Openship";
+export const KOVALIO_RECORD_COMMENT = "Managed by Kovalio";
 
 export interface DnsRecordInput {
   /** Record type: A, CNAME, TXT, etc. */
   type: DnsRecordType;
-  /** Fully-qualified name (e.g. "app.example.com", "_openship-challenge.example.com"). */
+  /** Fully-qualified name (e.g. "app.example.com", "_kovalio-challenge.example.com"). */
   name: string;
   /** Value / target (IPv4 address, target hostname, TXT string). */
   content: string;
@@ -48,7 +48,7 @@ export interface DnsRecordInput {
   /** Preference for MX/SRV records. Required by the provider on an MX create;
    *  omitted (and ignored) for A/CNAME/TXT. */
   priority?: number;
-  /** Ownership marker. Defaults to `OPENSHIP_RECORD_COMMENT`. */
+  /** Ownership marker. Defaults to `KOVALIO_RECORD_COMMENT`. */
   comment?: string;
 }
 
@@ -147,8 +147,8 @@ export interface DnsProvider {
 }
 
 /** True when this record carries our ownership marker, i.e. we wrote it. */
-export function isOpenshipManaged(record: DnsRecord): boolean {
-  return record.comment?.trim() === OPENSHIP_RECORD_COMMENT;
+export function isKovalioManaged(record: DnsRecord): boolean {
+  return record.comment?.trim() === KOVALIO_RECORD_COMMENT;
 }
 
 /* ────── Typed errors ───────────────────────────────────────────── */
@@ -187,7 +187,7 @@ export class DnsRecordConflictError extends AppError {
   ) {
     super(
       `${existingCount} existing ${recordType} records already answer for "${recordName}". ` +
-        `Openship won't rewrite records it didn't create — remove or consolidate them first.`,
+        `Kovalio won't rewrite records it didn't create — remove or consolidate them first.`,
       409,
       "DNS_RECORD_CONFLICT",
     );

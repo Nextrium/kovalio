@@ -1,5 +1,5 @@
 /**
- * openship#623 on the BARE start surface.
+ * kovalio#623 on the BARE start surface.
  *
  * The registry's start defaults for nextjs / remix / gatsby are bare dependency
  * binaries (`next start`, `remix-serve`, `gatsby serve`), and both supervisors
@@ -32,7 +32,7 @@ import { droppedRuntimeEnvMessage } from "../src/runtime/runtime-env";
 import type { CommandExecutor, DeployConfig, LogEntry } from "../src/types";
 import type { ProcessSupervisor, SupervisorDeployOpts } from "../src/runtime/supervisor/types";
 
-const WORK_DIR = "/opt/openship";
+const WORK_DIR = "/opt/kovalio";
 const PROJECT_ID = "prj_web";
 /** With no `imageRef` there is nothing to promote, so the release dir the
  *  supervisor is given is the project dir verbatim — and it is the root the

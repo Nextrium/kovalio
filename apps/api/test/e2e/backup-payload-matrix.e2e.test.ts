@@ -164,7 +164,7 @@ describeDockerE2E("backup payload matrix — every way, round-tripped", () => {
     await runtime.docker.createVolume({ Name: dataVolume });
     await runtime.docker.createVolume({ Name: cacheVolume });
 
-    folderPath = await mkdtemp(join(homedir(), ".openship-e2e-folder-"));
+    folderPath = await mkdtemp(join(homedir(), ".kovalio-e2e-folder-"));
     await writeFile(join(folderPath, FOLDER_FILE), FOLDER_BODY);
 
     const service = await seedService(projectId, {
@@ -183,7 +183,7 @@ describeDockerE2E("backup payload matrix — every way, round-tripped", () => {
     const container = await runtime.docker.createContainer({
       Image: IMAGE,
       Cmd: ["sleep", "600"],
-      Labels: { "openship.project": projectId, "openship.service": "app" },
+      Labels: { "kovalio.project": projectId, "kovalio.service": "app" },
       HostConfig: {
         Binds: [`${dataVolume}:/data`, `${cacheVolume}:/cache`, `${folderPath}:/folder`],
         AutoRemove: false,

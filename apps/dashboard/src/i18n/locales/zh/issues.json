@@ -1,6 +1,6 @@
 {
   "title": "问题",
-  "subtitle": "Openship 在你的项目、服务器和域名中发现的所有问题。",
+  "subtitle": "Kovalio 在你的项目、服务器和域名中发现的所有问题。",
   "tabs": {
     "open": "未解决",
     "resolved": "已解决"
@@ -17,7 +17,7 @@
     "clear": "清除筛选"
   },
   "scopes": {
-    "platform": "Openship",
+    "platform": "Kovalio",
     "server": "服务器",
     "project": "项目",
     "domain": "域名"

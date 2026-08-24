@@ -1,5 +1,5 @@
 /**
- * Openship Cloud (Oblien) resource tiers.
+ * Kovalio Cloud (Oblien) resource tiers.
  *
  * The dashboard's `CLOUD_RESOURCE_TIERS` picker (DeployTargetStep.tsx) shows
  * matching labels; the numbers below are the concrete cpu/memory/disk they map
@@ -51,7 +51,7 @@ const TIER_RESOURCES: Record<FixedResourceTier, ResourceConfig> = RESOURCE_TIER_
  */
 export function resolveCloudResourceConfig(
   /** Accepts the FULL tier union, not just the cloud subset: this value can come
-   *  from a repo's `openship.json`, so "unlimited" is reachable input even though
+   *  from a repo's `kovalio.json`, so "unlimited" is reachable input even though
    *  it isn't a cloud option. Narrowing the parameter would only move the problem
    *  to a cast at the call site. */
   tier: ResourceTier,

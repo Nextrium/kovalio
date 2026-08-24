@@ -26,7 +26,7 @@ declare const ROOT_CHECKED: unique symbol;
 /**
  * An executor the privilege question has been ASKED about.
  *
- * Deliberately "checked", not "capable". A host Openship refuses to provision can still
+ * Deliberately "checked", not "capable". A host Kovalio refuses to provision can still
  * be proceeded on (`onRefusedHost: "proceed"`), and if its login is neither root nor
  * sudo-capable the executor that comes back has no privilege at all. A brand promising
  * root would be a lie on that arm, and a brand that lies is worse than none: it makes
@@ -77,7 +77,7 @@ export interface Privileged {
 
 export interface PrivilegeOptions {
   /**
-   * What a host Openship has REFUSED means here — the one axis on which real callers
+   * What a host Kovalio has REFUSED means here — the one axis on which real callers
    * legitimately differ, so it is stated rather than defaulted silently. Covers both a
    * box we could not measure (a banner, a forced command) and one we measured and won't
    * drive (zypper, pacman, an unknown arch).
@@ -94,7 +94,7 @@ export interface PrivilegeOptions {
    * elevate", which was the bug: sudo has nothing to do with whether we recognize the
    * distro, so an Arch box with a `deploy` user silently got an unprivileged executor
    * for root-owned paths — a `cat` of an unreadable file returns "", which `scan` reads
-   * as "this server has no Openship state".
+   * as "this server has no Kovalio state".
    */
   onRefusedHost?: "refuse" | "proceed";
 }
@@ -112,7 +112,7 @@ const REFUSES_HOST: Record<NonNullable<PrivilegeOptions["onRefusedHost"]>, boole
  * Resolve the host and pick the executor for root-owned work.
  *
  * `purpose` is rendered into the refusal, so pass the operator's noun ("Installing
- * docker", "Writing Openship server state") — this string is the whole diagnosis on a
+ * docker", "Writing Kovalio server state") — this string is the whole diagnosis on a
  * host that cannot be provisioned.
  *
  * Elevation is NOT free of caveats and the choice is per-caller: `elevatedExecutor`'s

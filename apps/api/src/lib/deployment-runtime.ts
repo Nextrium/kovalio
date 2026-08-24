@@ -53,7 +53,7 @@ export interface DeploymentMeta {
   serverId?: string;
   /**
    * Adopt an already-running, externally-supervised process instead of building
-   * + starting one. Set for the self-deployed control plane (the "openship"
+   * + starting one. Set for the self-deployed control plane (the "kovalio"
    * self-app): the deployment is real (row + activeDeploymentId + routes/SSL via
    * the normal pipeline) but the bare runtime never starts a unit. Inert for
    * `resolveEffectiveTarget`; only the runtime's deploy step reads it (via the
@@ -262,8 +262,8 @@ async function resolveOrgServer(
       // revealing whether the id exists elsewhere.
       throw new Error(
         "This project's deploy target is no longer available. That server may have been " +
-          "removed from Openship (deleting one unbinds its projects), or this is a stale " +
-          "session after re-deploying Openship at the same URL, or your active organization " +
+          "removed from Kovalio (deleting one unbinds its projects), or this is a stale " +
+          "session after re-deploying Kovalio at the same URL, or your active organization " +
           "differs from the project's. Re-open the deploy target picker and reselect a " +
           "server, or switch your active organization to match, then redeploy.",
       );
@@ -338,7 +338,7 @@ export function resolveEffectiveTarget(
     // UI chose "server" target but serverId may be missing → still route to SSH
     if (snapshot.deployTarget === "server") return "server";
     // Local-orchestrated cloud deploy: build on THIS host, upload the output to
-    // an Openship Cloud workspace, and run it there — the project stays
+    // an Kovalio Cloud workspace, and run it there — the project stays
     // local-canonical (no promote/transfer). This is the ONLY combo that keeps
     // the cloud target on a self-hosted box; a server-build cloud deploy is
     // promoted to the SaaS earlier (deployment.controller) and never reaches here.
@@ -365,7 +365,7 @@ export function usesManagedRouting(
  * Resolve a cloud-target Platform using ANY cloud-linked org member's
  * token. The deployment doesn't carry a user_id anymore — its
  * `organization_id` is the source of truth. We pick whichever member
- * has linked their Openship Cloud account and use their token to mint
+ * has linked their Kovalio Cloud account and use their token to mint
  * cloud requests on behalf of the org.
  */
 async function resolveCloudPlatformForOrg(organizationId?: string): Promise<Platform> {
@@ -382,8 +382,8 @@ async function resolveCloudPlatformForOrg(organizationId?: string): Promise<Plat
     const linkedUserId = await resolveOrgCloudUserId(organizationId).catch(() => null);
     throw new Error(
       linkedUserId
-        ? "Openship Cloud is unreachable right now — couldn't validate the linked session. Check the connection in Settings and try again."
-        : "No member of this organization has linked Openship Cloud. Connect via Settings.",
+        ? "Kovalio Cloud is unreachable right now — couldn't validate the linked session. Check the connection in Settings and try again."
+        : "No member of this organization has linked Kovalio Cloud. Connect via Settings.",
     );
   }
 
@@ -519,7 +519,7 @@ async function createPlatformForResolvedServer(
   const resolveRegistryAuth = organizationId ? registryAuthResolver(organizationId) : undefined;
   const { id, executor, isLocal, ssh } = resolved;
 
-  // The auto-registered "This Server" row IS the OpenShip host (VPS /
+  // The auto-registered "This Server" row IS the Kovalio host (VPS /
   // server-host mode): local host executor, host docker socket (DooD),
   // everything on-box.
   if (isLocal) {
@@ -619,7 +619,7 @@ export async function resolveTargetPlatform(
 
 /**
  * Build a DockerRuntime pointed at an org server's Docker daemon over SSH, for
- * READ-ONLY inspection (migrating an existing Docker deployment into Openship).
+ * READ-ONLY inspection (migrating an existing Docker deployment into Kovalio).
  *
  * Unlike `resolveTargetPlatform`, this skips routing/ssl/system managers and the
  * provision lock — inspection never provisions. The dockerode calls multiplex

@@ -254,7 +254,7 @@ describe("port-only host is never invented", () => {
     },
   );
 
-  it("does not substitute the openship instance's own hostname when no server is known", async () => {
+  it("does not substitute the kovalio instance's own hostname when no server is known", async () => {
     resolveProjectServerHost.mockResolvedValue(null);
 
     const { outputs } = await getAppConnectionView(ctx, "proj1");

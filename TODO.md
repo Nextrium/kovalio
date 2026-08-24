@@ -109,7 +109,7 @@ What's already there:
 - better-auth with the org plugin in `apps/api/src/lib/auth.ts`. The installed
   plugin set includes **`generic-oauth`** — arbitrary OIDC/OAuth2 issuers, no new
   dependency. That's the cheap path.
-- Not `better-auth/plugins/oidc-provider` — that makes Openship *an* IdP, the
+- Not `better-auth/plugins/oidc-provider` — that makes Kovalio *an* IdP, the
   opposite direction. Per-org IdPs and SAML live in the separate
   `@better-auth/sso` package, which is **not** installed; only pull it in if
   per-org IdPs or SAML are genuinely required.
@@ -146,7 +146,7 @@ Decisions to settle before coding:
       (`apps/api/src/lib/auth-mode.ts`) have no login at all. SSO must be inert
       there, not a second door into a box that deliberately has none.
 - [ ] **Deprovisioning.** Removing someone from the IdP does not end their
-      Openship session or membership. `session.expiresIn` is 30 days — either
+      Kovalio session or membership. `session.expiresIn` is 30 days — either
       shorten it when SSO is on, or document the gap honestly. There's no SCIM
       and shouldn't be one for v1.
 - [ ] Gate on explicit env vars validated in `apps/api/src/config/env.ts`, and
@@ -264,14 +264,14 @@ Decisions to settle before coding:
 ## Mail
 
 The end state is sketched in `apps/email/ARCHITECTURE.md` ("target state, not
-current"): openship provisions and talks to the mail server over an **HTTP admin
+current"): kovalio provisions and talks to the mail server over an **HTTP admin
 API**, and stops reaching into the box. Fold changes into that doc rather than
 writing a competing blueprint.
 
 ### Already shipped — do not re-plan it
 
 Mail is **no longer a host takeover**; it ships as an image and the API no longer
-transfers the engine tree or shells `iRedMail.sh`. `openship-mail` + a pinned
+transfers the engine tree or shells `iRedMail.sh`. `kovalio-mail` + a pinned
 `postgres:16-alpine` sidecar, launched by raw `docker run` on `--network host`
 (`infra/mail-container.ts`, `system/mail/ensure-container-mail.ts`), in the
 `docker-images.yml` matrix alongside `webmail`. Host ports, host-bind-mount state
@@ -305,11 +305,11 @@ and `/etc/letsencrypt` cert sharing are all settled there. Two consequences rema
 
 ### Standalone mail admin dashboard
 
-The admin panel is currently **inseparable from openship**:
+The admin panel is currently **inseparable from kovalio**:
 `apps/api/src/modules/mail/admin/*` drives the box over SSH and `psql`
 (`admin/psql-runner.ts` — "All vmail.* reads and writes go through this module"),
 and the UI lives at `apps/dashboard/src/app/(dashboard)/emails/`. So the mail
-server has no administration at all without an openship control plane attached —
+server has no administration at all without an kovalio control plane attached —
 we deleted iRedAdmin and put nothing self-contained in its place.
 
 Goal: mail ships as **server image + admin image**, administrable on its own.
@@ -320,13 +320,13 @@ Goal: mail ships as **server image + admin image**, administrable on its own.
       and `/admin` — which is **branding only**
       (`routes/branding-admin.ts`, token-gated by `BRANDING_ADMIN_TOKEN`). None of
       mailboxes, domains, DNS, relay, stats or test-send has a mail-side endpoint;
-      every one is still an SSH+psql call from openship. `ARCHITECTURE.md` still
+      every one is still an SSH+psql call from kovalio. `ARCHITECTURE.md` still
       states the as-built position: "There is intentionally **no public admin
       subdomain** … No HTTP admin surface to firewall, no token to rotate" — so
       this item is a reversal of a deliberate decision, and should be argued as
       one.
-- [ ] **Then openship's `/emails` becomes a client of that API**, not a second
-      implementation. (Today there is exactly ONE implementation — openship's
+- [ ] **Then kovalio's `/emails` becomes a client of that API**, not a second
+      implementation. (Today there is exactly ONE implementation — kovalio's
       SSH+psql — so the drift this warns about is prospective, not current.)
 - [ ] **Auth for the standalone case.** Mail-side auth is mailbox auth only
       ("the IMAP server is the identity provider"); there is no admin identity,
@@ -421,7 +421,7 @@ deploy on error. `queue:work`, `schedule:run`, `migrate --force`, `optimize` and
 `storage:link` appear nowhere in the tree today, so migrations, scheduled tasks
 and queued jobs silently never run.
 
-- [ ] Add release commands to the project + `openship.json`, snapshot them onto
+- [ ] Add release commands to the project + `kovalio.json`, snapshot them onto
       the deployment, and run them from the deploy pipeline between build and
       activate (`apps/api/src/modules/deployments/build-pipeline.ts` — the same
       seam `deployConfig` is assembled in).
@@ -575,10 +575,10 @@ Re-verified against the tree 2026-08-20.
       promoting into `releases/<dep>-<svc>`; the output audit making one real HTTP
       request through the edge). Still unverified on a real box: the promote+audit
       over an SSH executor, and the docker-edge static serve path — which is a
-      shared host bind mount, NOT an `openship_static` volume (the volume survives
+      shared host bind mount, NOT an `kovalio_static` volume (the volume survives
       only as a one-time legacy migration in `compose.ts`).
 - [ ] **ARM64**: the Linux arm64 AppImage IS built (`release.yml` adds an
-      `ubuntu-24.04-arm` matrix entry producing `Openship-arm64.AppImage`, with x64
+      `ubuntu-24.04-arm` matrix entry producing `Kovalio-arm64.AppImage`, with x64
       keeping the legacy name for auto-update compatibility, and both the updater
       and the CLI installer are arch-aware). What remains: CI verification that the
       arm runner's AppImage actually works, plus **Windows arm64 desktop is not

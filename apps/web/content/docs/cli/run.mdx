@@ -1,18 +1,18 @@
 ---
 title: Running & updating
-description: Start, stop, update, and health-check the Openship server itself from the terminal — up, stop, reset-admin-password, update, install, open, status, and doctor.
+description: Start, stop, update, and health-check the Kovalio server itself from the terminal — up, stop, reset-admin-password, update, install, open, status, and doctor.
 ---
 
-These commands run and maintain **Openship itself** — the server that everything else talks to — rather than
+These commands run and maintain **Kovalio itself** — the server that everything else talks to — rather than
 your deployed apps. Start the server, keep it up to date, and check that it's healthy.
 
 <Callout title="Two different things called “install”" type="info">
-There are two ways to run Openship, and they don't overlap:
+There are two ways to run Kovalio, and they don't overlap:
 
-- **`openship`** (no arguments) is how most self-hosters run the **server** (API + dashboard) — a guided setup
-  that creates your admin and installs it as a service. `openship up` is the same install *without* the prompts
-  (headless / CI); `openship update` keeps either current.
-- **`openship install`** downloads the desktop **app** (a `.dmg` / `.AppImage` / `.zip`) — a packaged,
+- **`kovalio`** (no arguments) is how most self-hosters run the **server** (API + dashboard) — a guided setup
+  that creates your admin and installs it as a service. `kovalio up` is the same install *without* the prompts
+  (headless / CI); `kovalio update` keeps either current.
+- **`kovalio install`** downloads the desktop **app** (a `.dmg` / `.AppImage` / `.zip`) — a packaged,
   double-click version for a single machine. It's a separate artifact from the CLI.
 </Callout>
 
@@ -20,67 +20,67 @@ The reporting commands — `status`, `doctor`, `update`, `install`, and `install
 global `--json` flag for machine-readable output:
 
 ```bash
-openship status --json
+kovalio status --json
 ```
 
 ## Command summary
 
 | Command | Purpose |
 |---|---|
-| `openship` (no args) | Guided first-run setup: deploy Openship, create your admin, print the login URL. |
-| `openship up` | Start the server as a persistent, auto-restarting service. |
-| `openship stop` | Stop that service (and clear a stale database lock). |
-| `openship reset-admin-password` | Reset the local admin login on this machine, without signing in. |
-| `openship update` | Update the CLI + bundled server to the latest release. |
-| `openship install` | Download and install the Openship desktop app. |
-| `openship install cache` | Inspect and clean the desktop-app download cache. |
-| `openship open` | Open the dashboard in your browser. |
-| `openship status` | Show the local service (running? ports) and the active context's API health. |
-| `openship doctor` | Diagnose the CLI setup (config, context, runtime). |
+| `kovalio` (no args) | Guided first-run setup: deploy Kovalio, create your admin, print the login URL. |
+| `kovalio up` | Start the server as a persistent, auto-restarting service. |
+| `kovalio stop` | Stop that service (and clear a stale database lock). |
+| `kovalio reset-admin-password` | Reset the local admin login on this machine, without signing in. |
+| `kovalio update` | Update the CLI + bundled server to the latest release. |
+| `kovalio install` | Download and install the Kovalio desktop app. |
+| `kovalio install cache` | Inspect and clean the desktop-app download cache. |
+| `kovalio open` | Open the dashboard in your browser. |
+| `kovalio status` | Show the local service (running? ports) and the active context's API health. |
+| `kovalio doctor` | Diagnose the CLI setup (config, context, runtime). |
 
-## `openship` — guided setup
+## `kovalio` — guided setup
 
-Run `openship` with **no arguments** for the interactive first-run setup. It first asks for your **admin name,
+Run `kovalio` with **no arguments** for the interactive first-run setup. It first asks for your **admin name,
 email, and password** — this is your instance login, created before anything else. Then it configures the
 settings that hang off that account: whether the instance is private (this machine only) or public (a domain +
 HTTPS, reachable from anywhere), and — on the public path — the domain and whether an HTTPS reverse proxy is in
-front. It then deploys via the same pipeline as `openship up`, creates your admin account, and prints the URL
-to sign in. Connecting Openship Cloud (for a free `.opsh.io` domain + mail) is a separate link step that never
+front. It then deploys via the same pipeline as `kovalio up`, creates your admin account, and prints the URL
+to sign in. Connecting Kovalio Cloud (for a free `.opsh.io` domain + mail) is a separate link step that never
 becomes your sign-in. This is the recommended way to stand up a new instance.
 
 ```bash
-openship
+kovalio
 ```
 
-## `openship up`
+## `kovalio up`
 
-Starts Openship as a **persistent service** that starts on boot and auto-restarts if it crashes, then keeps
-running until you `openship stop`. The API is served at `/api` (default port `4000`) and the dashboard on
+Starts Kovalio as a **persistent service** that starts on boot and auto-restarts if it crashes, then keeps
+running until you `kovalio stop`. The API is served at `/api` (default port `4000`) and the dashboard on
 port `3001`.
 
 <Callout title="Ports are dynamic — there's no fixed port">
 `4000`/`3001` are only preferences. If a port is already taken (a second instance, another app, a leftover
-process), Openship automatically picks a free one instead, keeps the API and dashboard distinct, and
-**remembers the chosen pair** in `~/.openship/ports.json` so restarts reuse the same origin (that's what keeps
-you logged in across restarts). `openship status` shows the resolved ports. Pass `--port` / `--dashboard-port`
+process), Kovalio automatically picks a free one instead, keeps the API and dashboard distinct, and
+**remembers the chosen pair** in `~/.kovalio/ports.json` so restarts reuse the same origin (that's what keeps
+you logged in across restarts). `kovalio status` shows the resolved ports. Pass `--port` / `--dashboard-port`
 to state a preference; it's still moved if occupied.
 </Callout>
 
 <Callout title="CLI instances always require login" type="info">
 Unlike the desktop app (which uses loopback zero-auth), an instance started from the CLI **always requires an
-email + password login**. Create the first admin with the `openship` guided setup above (or
-`openship system upgrade-to-auth`). Zero-auth is desktop-only.
+email + password login**. Create the first admin with the `kovalio` guided setup above (or
+`kovalio system upgrade-to-auth`). Zero-auth is desktop-only.
 </Callout>
 
 ```bash
 # Start the service (API on :4000, dashboard on :3001)
-openship up
+kovalio up
 
 # Run attached in this terminal instead (Ctrl-C to stop)
-openship up --foreground
+kovalio up --foreground
 
 # Preview the service definition without installing it
-openship up --dry-run
+kovalio up --dry-run
 ```
 
 | Flag | Purpose | Default |
@@ -88,9 +88,9 @@ openship up --dry-run
 | `--compose` | Install via Docker Compose (published images: postgres + redis + api + dashboard + edge on `:80/:443`). | default when Docker is present on Linux |
 | `--bare` | Install as the bare process service (embedded DB, no Docker). Required today for a fully headless **custom**-domain install. | default off Linux / without Docker |
 | `--port <port>` | API port to listen on. | `4000` |
-| `--data-dir <dir>` | Directory for the embedded database. | `~/.openship/data` |
+| `--data-dir <dir>` | Directory for the embedded database. | `~/.kovalio/data` |
 | `--dashboard-port <port>` | Dashboard port. | `3001` |
-| `--host <addr>` | Bind the dashboard to this interface so an upstream reverse proxy or another LAN host can reach it (e.g. `0.0.0.0` or a LAN IP). The API stays on loopback. A concrete IP auto-trusts that browser origin for login; for `0.0.0.0` or a domain also pass `--public-url` (or set `OPENSHIP_EXTRA_TRUSTED_ORIGINS`). | `127.0.0.1` |
+| `--host <addr>` | Bind the dashboard to this interface so an upstream reverse proxy or another LAN host can reach it (e.g. `0.0.0.0` or a LAN IP). The API stays on loopback. A concrete IP auto-trusts that browser origin for login; for `0.0.0.0` or a domain also pass `--public-url` (or set `KOVALIO_EXTRA_TRUSTED_ORIGINS`). | `127.0.0.1` |
 | `--no-ui` | Run the API only — don't download or serve the dashboard. | — |
 | `--ui-version <tag>` | Dashboard release tag to run. | this CLI's version |
 | `-f`, `--foreground` | Run attached in this terminal instead of as a background service. | — |
@@ -102,7 +102,7 @@ openship up --dry-run
 | `--non-interactive`, `--yes` | Headless install: after the service starts, create the admin + register the domain from the flags below — no prompts. Missing/invalid flags exit non-zero. | — |
 | `--admin-email <email>` | Admin email — **required** for a headless install. | — |
 | `--admin-name <name>` | Admin display name. | email local-part |
-| `--admin-password <pw>` | Admin password (min 8). Prefer the `OPENSHIP_ADMIN_PASSWORD` env var (keeps it out of shell history). | — |
+| `--admin-password <pw>` | Admin password (min 8). Prefer the `KOVALIO_ADMIN_PASSWORD` env var (keeps it out of shell history). | — |
 | `--domain-kind <kind>` | Headless domain: `byo` · `custom` · `free` · `none`. | `byo` if `--public-url`, else `none` |
 | `--hostname <host>` | Hostname for `byo`/`custom` (or derived from `--public-url`). | — |
 | `--slug <slug>` | Free `.opsh.io` subdomain for `--domain-kind free` (box must already be Cloud-connected). | — |
@@ -111,48 +111,48 @@ openship up --dry-run
 
 <Callout title="The dashboard is downloaded on first run">
 Unless you pass `--no-ui`, the dashboard bundle is lazy-downloaded from GitHub releases the first time you run
-`openship up` and pinned to match the CLI version. If it can't be fetched, the API keeps serving on its own —
-retry `openship up`, pass `--no-ui`, or use `openship install` for the desktop app.
+`kovalio up` and pinned to match the CLI version. If it can't be fetched, the API keeps serving on its own —
+retry `kovalio up`, pass `--no-ui`, or use `kovalio install` for the desktop app.
 </Callout>
 
 <Callout title="Serving to the internet" type="info">
 `--public-url https://ops.example.com` makes the dashboard reachable from other machines while keeping the API
 bound to loopback (only the dashboard's same-origin proxy reaches it — nothing but the dashboard is exposed).
 Put an HTTPS reverse proxy (Caddy, nginx, Cloudflare) in front of the dashboard port and add `--trust-proxy`.
-The guided `openship` setup walks you through all of this.
+The guided `kovalio` setup walks you through all of this.
 </Callout>
 
 <Callout title="Re-running `up` over a Compose install keeps its secrets — or stops" type="warn">
 A Compose install's generated secrets (`POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `INTERNAL_TOKEN`) live only in
-`~/.openship/compose/.env`, and re-running `openship up` reuses whatever it reads there. If that file can't be
+`~/.kovalio/compose/.env`, and re-running `kovalio up` reuses whatever it reads there. If that file can't be
 read (deleted, restored from a partial backup, or you're running as a **different user** — `sudo` reads
-`/root/.openship`, not your own) while the database volume is still present, `up` **refuses and changes nothing**:
+`/root/.kovalio`, not your own) while the database volume is still present, `up` **refuses and changes nothing**:
 a new `POSTGRES_PASSWORD` can never match a volume Postgres already initialised, and a new `BETTER_AUTH_SECRET`
 can't decrypt the environment variables in the database. Put the original `.env` back — each run keeps the file it
-replaced at `~/.openship/compose/.env.bak` — or re-run as the user that owns it. `--reset-secrets` overrides the
-refusal and accepts the loss. `openship up --dry-run` names every secret it would generate rather than preserve.
+replaced at `~/.kovalio/compose/.env.bak` — or re-run as the user that owns it. `--reset-secrets` overrides the
+refusal and accepts the loss. `kovalio up --dry-run` names every secret it would generate rather than preserve.
 </Callout>
 
 <Callout title="Login rejected after binding remotely?" type="warn">
-Openship checks the browser's `Origin` against a trusted list. When you bind to `0.0.0.0` or a domain **without**
+Kovalio checks the browser's `Origin` against a trusted list. When you bind to `0.0.0.0` or a domain **without**
 `--public-url`, the login `POST` is rejected (403) because that origin isn't trusted. Fix it by passing
 `--public-url` (its origin is trusted automatically), binding `--host` to a **concrete** LAN IP (that exact
-`http://IP:port` origin is trusted automatically), or setting `OPENSHIP_EXTRA_TRUSTED_ORIGINS` to the exact
+`http://IP:port` origin is trusted automatically), or setting `KOVALIO_EXTRA_TRUSTED_ORIGINS` to the exact
 browser origin(s) you use, comma-separated.
 </Callout>
 
-## `openship stop`
+## `kovalio stop`
 
-Stops the service started by `openship up`. Once stopped it will **not** auto-restart or come back on reboot.
+Stops the service started by `kovalio up`. Once stopped it will **not** auto-restart or come back on reboot.
 Takes no flags. It also **clears a stale database lock** left behind by the stopped service (only when no live
-process still holds it) so a later `openship up` — or a `bun dev` against the same `~/.openship/data` — isn't
+process still holds it) so a later `kovalio up` — or a `bun dev` against the same `~/.kovalio/data` — isn't
 blocked by a phantom "locked by another process".
 
 ```bash
-openship stop
+kovalio stop
 ```
 
-## `openship reset-admin-password`
+## `kovalio reset-admin-password`
 
 Resets the **local admin login on this machine without signing in** — the recovery path when you've forgotten
 the password (or a cloud login got stuck). It talks to the loopback API using the local internal token the
@@ -162,10 +162,10 @@ password) login.
 
 ```bash
 # Prompts for the new password (twice)
-openship reset-admin-password
+kovalio reset-admin-password
 
 # Non-interactive; optionally also correct the email / name
-openship reset-admin-password --password 'new-strong-pass' --email you@example.com
+kovalio reset-admin-password --password 'new-strong-pass' --email you@example.com
 ```
 
 | Flag | Purpose | Default |
@@ -177,25 +177,25 @@ openship reset-admin-password --password 'new-strong-pass' --email you@example.c
 
 <Callout title="Runs from the machine itself" type="info">
 This is deliberately local-only: the reset endpoint is gated by the loopback internal token, so it can only be
-driven from the box running Openship — not over the network. If the service is on a non-default port, pass
-`--port` (see `openship status`).
+driven from the box running Kovalio — not over the network. If the service is on a non-default port, pass
+`--port` (see `kovalio status`).
 </Callout>
 
-## `openship update`
+## `kovalio update`
 
 Updates the globally-installed CLI — which bundles the self-hosted server — to the latest published release,
 then **restarts the running service** so you're immediately on the new version. It checks GitHub releases
-(not your Openship API) and re-installs the global package with your package manager.
+(not your Kovalio API) and re-installs the global package with your package manager.
 
 ```bash
 # Update to the latest release
-openship update
+kovalio update
 
 # Just report current vs. latest — install nothing
-openship update --check
+kovalio update --check
 
 # Force a package manager
-openship update --via npm
+kovalio update --via npm
 ```
 
 | Flag | Purpose |
@@ -204,23 +204,23 @@ openship update --via npm
 | `--via <manager>` | Package manager to update with: `bun` or `npm` (default: `bun` if present, else `npm`). |
 
 <Callout title="Automatic restart">
-`openship update` restarts the installed service for you after updating, so you land on the new version
-immediately. If you're running attached with `openship up --foreground` (no service installed), it can't
+`kovalio update` restarts the installed service for you after updating, so you land on the new version
+immediately. If you're running attached with `kovalio up --foreground` (no service installed), it can't
 restart you — relaunch it yourself.
 </Callout>
 
-## `openship install`
+## `kovalio install`
 
-Downloads the Openship **desktop app** for your OS and architecture (macOS `.dmg`, Linux `.AppImage`, or
+Downloads the Kovalio **desktop app** for your OS and architecture (macOS `.dmg`, Linux `.AppImage`, or
 Windows `.zip`), verifies it against its published `.sha256` checksum, installs it, and launches it. This is
 separate from the CLI/server — see the callout at the top of this page.
 
 ```bash
 # Install the latest desktop release and launch it
-openship install
+kovalio install
 
 # Pin a specific release, and don't open it after installing
-openship install --version v1.2.3 --no-launch
+kovalio install --version v1.2.3 --no-launch
 ```
 
 | Flag | Purpose |
@@ -233,13 +233,13 @@ openship install --version v1.2.3 --no-launch
 
 <Callout title="Checksums are enforced by default" type="warn">
 Downloads are verified against a published `.sha256` sidecar and the install is **fail-closed**: if the
-sidecar is missing, Openship refuses to install unless you pass `--no-verify`. A checksum mismatch always
+sidecar is missing, Kovalio refuses to install unless you pass `--no-verify`. A checksum mismatch always
 aborts — the download may be corrupt or tampered with.
 </Callout>
 
-### `openship install cache`
+### `kovalio install cache`
 
-Manages `~/.openship/cache`, where `openship install` stores downloaded release assets and their checksum
+Manages `~/.kovalio/cache`, where `kovalio install` stores downloaded release assets and their checksum
 sidecars. Runs entirely offline — no API calls. Call it with a subcommand:
 
 | Subcommand | Purpose |
@@ -250,48 +250,48 @@ sidecars. Runs entirely offline — no API calls. Call it with a subcommand:
 | `clean [tag]` | Delete cached assets (one tag, or all if omitted). |
 
 ```bash
-openship install cache list
-openship install cache verify v1.2.3
-openship install cache clean          # remove everything
+kovalio install cache list
+kovalio install cache verify v1.2.3
+kovalio install cache clean          # remove everything
 ```
 
-## `openship open`
+## `kovalio open`
 
-Opens the Openship dashboard in your default browser. For a local dashboard it first checks that the API is
+Opens the Kovalio dashboard in your default browser. For a local dashboard it first checks that the API is
 responding, and warns (without blocking) if it isn't yet.
 
 ```bash
 # Open the active context's dashboard
-openship open
+kovalio open
 
 # Open a specific page on the hosted cloud dashboard
-openship open --cloud --path /settings
+kovalio open --cloud --path /settings
 ```
 
 | Flag | Purpose |
 |---|---|
-| `--cloud` | Open the hosted cloud dashboard (`app.openship.io`). |
+| `--cloud` | Open the hosted cloud dashboard (`kovalio.nextrium.org`). |
 | `--dashboard-url <url>` | Dashboard base URL to open. |
 | `--context <name>` | Context whose dashboard URL to open. |
 | `--path <path>` | Path to open on the dashboard (e.g. `/settings`). |
 
-## `openship status`
+## `kovalio status`
 
-Shows two things: the **local Openship service** on this machine — whether it's installed and running, which
-service manager runs it, and the resolved API/dashboard ports (from `~/.openship/ports.json`) — and the
+Shows two things: the **local Kovalio service** on this machine — whether it's installed and running, which
+service manager runs it, and the resolved API/dashboard ports (from `~/.kovalio/ports.json`) — and the
 **active context's** API health and config (self-hosted vs. cloud, deploy/auth/team mode, host/machine when
 present). The service section is shown even when the API is down, so you can tell "stopped" from "up but
 unreachable". Exits non-zero if the API can't be reached.
 
 ```bash
-openship status
-openship status --json
+kovalio status
+kovalio status --json
 ```
 
-Contexts and which one is active are managed with `openship context`; sign-in lives under
+Contexts and which one is active are managed with `kovalio context`; sign-in lives under
 [the auth commands](/docs/cli/access).
 
-## `openship doctor`
+## `kovalio doctor`
 
 Runs preflight checks so you can confirm the CLI is set up before relying on it — handy in scripts, which can
 gate on its exit code (non-zero if any check fails). Takes no flags.
@@ -307,11 +307,11 @@ It checks:
 | `bun` | The Bun runtime version (optional). |
 
 ```bash
-openship doctor
-openship doctor --json
+kovalio doctor
+kovalio doctor --json
 ```
 
 <Callout title="Fixing failed checks">
 If `context` or `api` don't pass, you usually just need to sign in or point at a running server —
-see [the auth commands](/docs/cli/access) and `openship up` above.
+see [the auth commands](/docs/cli/access) and `kovalio up` above.
 </Callout>

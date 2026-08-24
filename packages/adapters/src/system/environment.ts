@@ -197,10 +197,10 @@ const MAX_INTERCEPT_CHARS = 400;
  *
  * A profile used to live exactly as long as the executor OBJECT did, which is a lifetime
  * nobody chose: a warm server connection is pooled for days, so a box measured once at
- * process start is driven on that answer until the API restarts. Nothing Openship installs
+ * process start is driven on that answer until the API restarts. Nothing Kovalio installs
  * changes a field here — but the operator does. Adding their login to a sudo group,
  * enabling ufw, installing a package manager on a bare image: all invisible, and all
- * things they do specifically BECAUSE Openship told them to, then retry.
+ * things they do specifically BECAUSE Kovalio told them to, then retry.
  *
  * Five minutes is chosen from that retry loop, not from a cost model. Re-measuring is one
  * `sh -c` on an already-open channel, so the ceiling on the other side is "wait a moment
@@ -532,7 +532,7 @@ export async function resolveEnvironment(
     const profile = parseEnvironmentProbe(await runProbe(key));
     // A refresh that could not MEASURE the box must not overwrite one that did: a
     // `probeError` renders as `supported: false`, so a single slow moment would otherwise
-    // turn a host that has been deploying happily for an hour into "Openship cannot
+    // turn a host that has been deploying happily for an hour into "Kovalio cannot
     // provision this machine" halfway through the next deploy. Expiry exists to let a good
     // answer improve, never to let a not-an-answer arrive.
     //
@@ -591,7 +591,7 @@ export function cacheEnvironment(
  * Forget a host's profile, so the next `resolveEnvironment` re-probes it.
  *
  * Deliberately has no caller inside provisioning, and that is a property rather than an
- * omission: nothing Openship installs changes a field this profile carries. It does not
+ * omission: nothing Kovalio installs changes a field this profile carries. It does not
  * install a package manager, an init system or a firewall, so a profile measured before a
  * Docker install is still true after one. The one staleness that DID bite — a probe that
  * timed out being kept as though it were a measurement — is handled at the source in

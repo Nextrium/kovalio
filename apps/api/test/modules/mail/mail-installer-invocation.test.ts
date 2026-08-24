@@ -3,16 +3,16 @@ import { describe, expect, test, vi } from "vitest";
 
 /**
  * Step 9 used to run the host-native `iRedMail.sh`. It now DEPLOYS the mail engine
- * as the `openship-mail` container (+ postgres sidecar) via `ensureContainerMail`,
+ * as the `kovalio-mail` container (+ postgres sidecar) via `ensureContainerMail`,
  * so the assertions flipped: it must call the container launcher with the domain +
  * generated secrets, and must NOT shell out to `iRedMail.sh` anywhere.
  */
 // Hoisted so the vi.mock factory (itself hoisted above imports) can reference it.
 const { ensureContainerMail } = vi.hoisted(() => ({
   ensureContainerMail: vi.fn(async () => ({
-    container: "openship-mail",
-    dbContainer: "openship-mail-db",
-    image: "ghcr.io/oblien/openship-mail:test",
+    container: "kovalio-mail",
+    dbContainer: "kovalio-mail-db",
+    image: "ghcr.io/oblien/kovalio-mail:test",
   })),
 }));
 
@@ -52,7 +52,7 @@ function engineExecutor() {
 }
 
 describe("step 5 engine deploy", () => {
-  test("deploys the openship-mail container with the domain + secrets", async () => {
+  test("deploys the kovalio-mail container with the domain + secrets", async () => {
     ensureContainerMail.mockClear();
     const { executor } = engineExecutor();
 

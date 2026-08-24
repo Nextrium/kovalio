@@ -226,7 +226,7 @@ describe("bindObjectStorage — choosing internal vs public with no mode given",
 
   it("wires public — not internal — when the endpoint has no internal address", async () => {
     // e.g. the storage app runs on another server, or on Oblien cloud: the
-    // per-host `openship-<slug>` network isn't joinable, so an alias would
+    // per-host `kovalio-<slug>` network isn't joinable, so an alias would
     // resolve nowhere while the bind still reported success.
     h.internalAvailable = false;
     await bindObjectStorage(ctx, "app", input);

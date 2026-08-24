@@ -1,12 +1,12 @@
 /**
- * `openship doctor` — diagnose and repair a local Openship instance.
+ * `kovalio doctor` — diagnose and repair a local Kovalio instance.
  *
  * For a LOCAL self-hosted box (the active context points at localhost) this is a
  * real health surface: service state, database liveness/migrations, deployed-
  * service containers, and system components — and, when the embedded database is
  * corrupt (the crash-loop-on-boot case), an interactive backup → heal → verify
  * repair. Interactive by default (a `@clack/prompts` panel + menu, like the bare
- * `openship` control panel); `--json` / non-TTY prints a machine-readable report
+ * `kovalio` control panel); `--json` / non-TTY prints a machine-readable report
  * with a non-zero exit on failure; `--fix` runs the light repair with no prompts.
  *
  * For a REMOTE context it falls back to the original lightweight preflight
@@ -128,11 +128,11 @@ function bunVersion(): string | null {
 async function remotePreflight(): Promise<void> {
   const checks: Array<{ name: string; status: CheckState; detail: string }> = [];
   const hasConfig = existsSync(CONFIG_PATH);
-  checks.push({ name: "config", status: hasConfig ? "pass" : "warn", detail: hasConfig ? CONFIG_PATH : `not found; run \`openship login\`` });
+  checks.push({ name: "config", status: hasConfig ? "pass" : "warn", detail: hasConfig ? CONFIG_PATH : `not found; run \`kovalio login\`` });
   const context = getActiveContext();
   const apiUrl = getApiUrl();
   const hasToken = Boolean(getContext(context).token);
-  checks.push({ name: "context", status: hasToken ? "pass" : "warn", detail: hasToken ? `${context} (${apiUrl})` : `${context} has no token; run \`openship login\`` });
+  checks.push({ name: "context", status: hasToken ? "pass" : "warn", detail: hasToken ? `${context} (${apiUrl})` : `${context} has no token; run \`kovalio login\`` });
   let reachable = false;
   try {
     const res = await apiRaw("/health", { signal: AbortSignal.timeout(6000) });
@@ -148,7 +148,7 @@ async function remotePreflight(): Promise<void> {
   if (isJsonMode()) {
     printJson({ context, apiUrl, reachable, checks });
   } else {
-    process.stdout.write(chalk.bold("\n  Openship doctor\n\n"));
+    process.stdout.write(chalk.bold("\n  Kovalio doctor\n\n"));
     for (const c of checks) process.stdout.write(`  ${GLYPH[c.status]} ${chalk.bold(c.name.padEnd(8))} ${c.detail}\n`);
     process.stdout.write("\n");
   }
@@ -176,12 +176,12 @@ async function reportOnce(): Promise<void> {
       lastError: s.lastError,
     });
   } else {
-    process.stdout.write(chalk.bold("\n  Openship doctor\n\n"));
+    process.stdout.write(chalk.bold("\n  Kovalio doctor\n\n"));
     process.stdout.write(`  ${GLYPH[svc.state]} ${chalk.bold("Service".padEnd(10))} ${svc.detail}\n`);
     process.stdout.write(`  ${GLYPH[db.state]} ${chalk.bold("Database".padEnd(10))} ${db.detail}\n`);
     for (const c of s.components) process.stdout.write(`  ${GLYPH[c.state]} ${chalk.bold(c.name.padEnd(10))} ${c.detail}\n`);
     process.stdout.write(`  ${GLYPH[services.state]} ${chalk.bold("Services".padEnd(10))} ${services.detail}\n`);
-    if (s.corrupted) process.stdout.write(chalk.yellow(`\n  Database looks corrupted — run \`openship doctor\` (interactive) or \`openship doctor --fix\`.\n`));
+    if (s.corrupted) process.stdout.write(chalk.yellow(`\n  Database looks corrupted — run \`kovalio doctor\` (interactive) or \`kovalio doctor --fix\`.\n`));
     process.stdout.write("\n");
   }
   const failed = svc.state === "fail" || db.state === "fail" || services.state === "fail" || s.components.some((c) => c.state === "fail");
@@ -214,7 +214,7 @@ async function autoFix(): Promise<void> {
   if (verified) {
     out(chalk.green("Database is healthy again. Your data is intact."));
   } else {
-    out(chalk.red(`Still not healthy. Backup preserved at ${backup}. Run \`openship doctor\` for guided recovery.`));
+    out(chalk.red(`Still not healthy. Backup preserved at ${backup}. Run \`kovalio doctor\` for guided recovery.`));
     process.exit(1);
   }
 }
@@ -222,7 +222,7 @@ async function autoFix(): Promise<void> {
 /* ── Interactive doctor (TTY, local) ─────────────────────────────────────── */
 
 async function interactiveDoctor(): Promise<void> {
-  intro(`${chalk.bgCyan(chalk.black(" Openship "))}${chalk.dim(" doctor")}`);
+  intro(`${chalk.bgCyan(chalk.black(" Kovalio "))}${chalk.dim(" doctor")}`);
 
   // Menu loop — re-gather status each pass so a repair/restart reflects live.
   for (;;) {
@@ -236,7 +236,7 @@ async function interactiveDoctor(): Promise<void> {
     // Only when host control is actually broken — the row is absent when this box wants
     // no channel. This action re-runs the install-time preflight for an operator who got
     // here after the fact: it opens the firewall for a dropped dial (#490), and for a
-    // channel that was never provisioned it prints the state and the `openship up` that
+    // channel that was never provisioned it prints the state and the `kovalio up` that
     // repairs it (#509), which is not something doctor can do on the operator's behalf.
     if (s.components.some((c) => c.id === "host-control" && c.state === "fail")) {
       options.push({ value: "host-control", label: "Fix host control", hint: "probe the channel, print the fix" });

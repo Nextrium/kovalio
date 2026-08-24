@@ -25,7 +25,7 @@ interface LibrarySidebarProps {
   selfHosted: boolean;
   /** Canonical GitHub connection state — the only thing this card needs. */
   state: GitHubConnectionState;
-  /** Whether the local instance is connected to Openship Cloud. Drives
+  /** Whether the local instance is connected to Kovalio Cloud. Drives
    *  the "safer remote cloning" CTA card. */
   cloudConnected: boolean;
   /** Authoritative owner-wide counts from the server (GitHub's real totals).
@@ -56,8 +56,8 @@ export function LibrarySidebar({
   return (
     <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
       {/* ── Connection status ─────────────────────────────────────
-          SaaS mode (!selfHosted) → single card: Openship GitHub App.
-          Self-hosted/desktop → gh CLI primary + Openship Cloud optional. */}
+          SaaS mode (!selfHosted) → single card: Kovalio GitHub App.
+          Self-hosted/desktop → gh CLI primary + Kovalio Cloud optional. */}
       {selfHosted ? (
         <SelfHostedConnectionCard
           state={state}
@@ -125,7 +125,7 @@ export function LibrarySidebar({
 // ─── Connection cards ───────────────────────────────────────────────────────
 
 /**
- * SaaS connection card. In CLOUD_MODE the Openship GitHub App is the
+ * SaaS connection card. In CLOUD_MODE the Kovalio GitHub App is the
  * only credential source — there's no gh CLI on the SaaS server.
  */
 function SaasConnectionCard({
@@ -136,7 +136,7 @@ function SaasConnectionCard({
   selectedOwner: string;
 }) {
   const { t } = useI18n();
-  const connected = state.sources.openshipApp.connected;
+  const connected = state.sources.kovalioApp.connected;
   return (
     <div className="bg-card rounded-2xl border border-border/50 p-5">
       <div className="flex items-center gap-2 mb-4">
@@ -145,10 +145,10 @@ function SaasConnectionCard({
       </div>
       <SourceRow
         icon={Github}
-        label={t.library.sidebar.openshipGithubApp}
+        label={t.library.sidebar.kovalioGithubApp}
         sublabel={
           connected
-            ? state.sources.openshipApp.login ?? selectedOwner ?? t.library.sidebar.connected
+            ? state.sources.kovalioApp.login ?? selectedOwner ?? t.library.sidebar.connected
             : t.library.sidebar.notConnected
         }
         connected={connected}
@@ -160,7 +160,7 @@ function SaasConnectionCard({
 /**
  * Self-hosted / desktop connection card. Per the architecture rules:
  *   - gh CLI is the PRIMARY source of truth for listing.
- *   - Openship Cloud App is the OPTIONAL secondary source that mints
+ *   - Kovalio Cloud App is the OPTIONAL secondary source that mints
  *     safer short-lived install tokens for remote cloning.
  *
  * Both rows read straight from the canonical state — no derivation,
@@ -220,7 +220,7 @@ function SelfHostedConnectionCard({
       .getStatusDeduped<any>()
       .then((res) => {
         if (cancelled) return;
-        const app = res?.state?.sources?.openshipApp;
+        const app = res?.state?.sources?.kovalioApp;
         setAppStatus({ connected: Boolean(app?.connected), login: app?.login ?? null });
       })
       .catch(() => {
@@ -258,15 +258,15 @@ function SelfHostedConnectionCard({
           tone="primary"
         />
 
-        {/* SECONDARY: Openship Cloud App — rendered ONLY when it is actually
-            connected. A permanent "Openship Cloud App · Not connected" row on a
+        {/* SECONDARY: Kovalio Cloud App — rendered ONLY when it is actually
+            connected. A permanent "Kovalio Cloud App · Not connected" row on a
             self-hosted install is an advert, not status: nothing here needs it,
             and sitting next to the working connection it read like something was
             half-configured. Connecting it lives in Settings. */}
         {appStatus?.connected && (
           <SourceRow
             icon={Cloud}
-            label={t.library.sidebar.openshipCloudApp}
+            label={t.library.sidebar.kovalioCloudApp}
             sublabel={appSublabel}
             connected
             tone="secondary"

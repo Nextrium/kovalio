@@ -77,7 +77,7 @@ vi.mock("../../src/lib/compose", () => ({
   sourceBuildDir: () => null,
 }));
 // The token the loopback calls authenticate with. Mocked because the resolver reads
-// real files (compose/.env, ~/.openship/internal-token) and this box's own install
+// real files (compose/.env, ~/.kovalio/internal-token) and this box's own install
 // must not decide what the site import sends — the resolution rules themselves are
 // pinned in unit/internal-token.test.ts.
 vi.mock("../../src/lib/internal-token", () => ({
@@ -217,7 +217,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("openship up --compose (edge chain)", () => {
+describe("kovalio up --compose (edge chain)", () => {
   it("exits before the edge preflight when docker/compose is missing", async () => {
     h.hasDocker = false;
     const r = await runCommand(upCommand, ["--compose"]);
@@ -251,7 +251,7 @@ describe("openship up --compose (edge chain)", () => {
   // has to land ahead of it — once the file is replaced the original secrets are
   // gone and the operator has nothing left to restore from.
   it("exits before the prefetch when the run would regenerate an install's secrets", async () => {
-    h.secretRotation = { volume: "openship_postgres_data", keys: ["POSTGRES_PASSWORD"] };
+    h.secretRotation = { volume: "kovalio_postgres_data", keys: ["POSTGRES_PASSWORD"] };
     const r = await runCommand(upCommand, ["--compose"]);
     expect(r.code).toBe(1);
     expect(h.prefetchCalls).toBe(0);
@@ -261,23 +261,23 @@ describe("openship up --compose (edge chain)", () => {
   });
 
   it("--reset-secrets waives that stop and brings the stack up", async () => {
-    h.secretRotation = { volume: "openship_postgres_data", keys: ["POSTGRES_PASSWORD"] };
+    h.secretRotation = { volume: "kovalio_postgres_data", keys: ["POSTGRES_PASSWORD"] };
     const r = await runCommand(upCommand, ["--compose", "--reset-secrets"]);
     expect(r.code).toBe(0);
     expect(h.prefetchCalls).toBe(1);
     expect(h.composeUpCalls).toBe(1);
   });
 
-  // #487: same fetch-first hazard — the prefetch would write a guessed OPENSHIP_PGDATA,
+  // #487: same fetch-first hazard — the prefetch would write a guessed KOVALIO_PGDATA,
   // so a volume whose cluster we can't locate has to stop the run ahead of it.
   it("exits before the prefetch when the data volume's Postgres layout is ambiguous", async () => {
-    h.pgDataRisk = { volume: "openship_postgres_data" };
+    h.pgDataRisk = { volume: "kovalio_postgres_data" };
     const r = await runCommand(upCommand, ["--compose"]);
     expect(r.code).toBe(1);
     expect(h.prefetchCalls).toBe(0);
     expect(h.composeUpCalls).toBe(0);
     expect(e.calls).toBe(0);
-    expect(con.text()).toContain("openship_postgres_data");
+    expect(con.text()).toContain("kovalio_postgres_data");
   });
 
   // The whole point of prefetching: a ~500MB pull must not happen with the

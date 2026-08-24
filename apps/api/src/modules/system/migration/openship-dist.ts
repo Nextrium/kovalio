@@ -1,9 +1,9 @@
 /**
- * Locate the prebuilt Openship release dist that the migration wizard streams
+ * Locate the prebuilt Kovalio release dist that the migration wizard streams
  * to the operator's remote server. Thin wrapper over the shared release-dist
  * resolver (apps/api/src/lib/release-dist.ts) — this file only pins the
- * openship-specific spec (repo, asset name, repo-local dev path) and preserves
- * the typed OpenshipReleaseDistMissingError the wizard controller catches.
+ * kovalio-specific spec (repo, asset name, repo-local dev path) and preserves
+ * the typed KovalioReleaseDistMissingError the wizard controller catches.
  */
 
 import type { ReleaseSource } from "@repo/core";
@@ -19,50 +19,50 @@ import {
 /**
  * The asset name is a literal, and `linux-amd64` in it is NOT a host assumption.
  *
- * `.github/workflows/release.yml` packages exactly one openship artifact per tag —
- * `openship-${TAG}-linux-amd64.tar.gz` — and its payload is architecture-agnostic:
+ * `.github/workflows/release.yml` packages exactly one kovalio artifact per tag —
+ * `kovalio-${TAG}-linux-amd64.tar.gz` — and its payload is architecture-agnostic:
  * TypeScript the target runs under Bun, plus a prebuilt Next standalone. The only
  * native resolution happens in `bun install --production` on the target itself
- * (see OPENSHIP_CONFIG in openship-project.service.ts). So the suffix is the
+ * (see KOVALIO_CONFIG in kovalio-project.service.ts). So the suffix is the
  * publisher's naming, and templating `{os}-{arch}` here would ask GitHub for
- * `openship-v0.6.1-linux-arm64.tar.gz` — a file no release contains — turning a
+ * `kovalio-v0.6.1-linux-arm64.tar.gz` — a file no release contains — turning a
  * working arm64 install into `ReleaseDistMissingError`.
  *
- * If openship ever ships per-arch artifacts, the template and the workflow's
+ * If kovalio ever ships per-arch artifacts, the template and the workflow's
  * ARTIFACT name change together; `renderAssetName` already supports the placeholders.
  */
-const OPENSHIP_SOURCE: ReleaseSource = {
+const KOVALIO_SOURCE: ReleaseSource = {
   mode: "github",
-  repo: "oblien/openship",
-  assetTemplate: "openship-{tag}-linux-amd64.tar.gz",
+  repo: "oblien/kovalio",
+  assetTemplate: "kovalio-{tag}-linux-amd64.tar.gz",
 };
 
-function openshipDistSpec(): ReleaseDistSpec {
+function kovalioDistSpec(): ReleaseDistSpec {
   return {
-    name: "openship",
+    name: "kovalio",
     version: readApiVersion(),
-    source: OPENSHIP_SOURCE,
-    envOverride: "OPENSHIP_RELEASE_DIST_PATH",
+    source: KOVALIO_SOURCE,
+    envOverride: "KOVALIO_RELEASE_DIST_PATH",
     repoLocalPath: apiRootPath("release-dist"),
   };
 }
 
-export class OpenshipReleaseDistMissingError extends Error {
-  readonly code = "OPENSHIP_RELEASE_DIST_MISSING" as const;
+export class KovalioReleaseDistMissingError extends Error {
+  readonly code = "KOVALIO_RELEASE_DIST_MISSING" as const;
   constructor(message: string, options?: { cause?: unknown }) {
     super(message, options);
-    this.name = "OpenshipReleaseDistMissingError";
+    this.name = "KovalioReleaseDistMissingError";
   }
 }
 
-/** Resolve (download on miss) the Openship release dist directory. */
-export async function resolveOpenshipDistDir(): Promise<string> {
+/** Resolve (download on miss) the Kovalio release dist directory. */
+export async function resolveKovalioDistDir(): Promise<string> {
   try {
-    return (await resolveReleaseDist(openshipDistSpec())).dir;
+    return (await resolveReleaseDist(kovalioDistSpec())).dir;
   } catch (err) {
     if (err instanceof ReleaseDistMissingError) {
-      throw new OpenshipReleaseDistMissingError(
-        `${err.message} Build it with \`bun run --cwd apps/api build-release\` or set OPENSHIP_RELEASE_DIST_PATH.`,
+      throw new KovalioReleaseDistMissingError(
+        `${err.message} Build it with \`bun run --cwd apps/api build-release\` or set KOVALIO_RELEASE_DIST_PATH.`,
         { cause: (err as { cause?: unknown }).cause },
       );
     }
@@ -71,6 +71,6 @@ export async function resolveOpenshipDistDir(): Promise<string> {
 }
 
 /** Non-throwing, no-download variant for preflight. */
-export function resolveOpenshipDistDirOrNull(): string | null {
-  return resolveReleaseDistOrNull(openshipDistSpec());
+export function resolveKovalioDistDirOrNull(): string | null {
+  return resolveReleaseDistOrNull(kovalioDistSpec());
 }

@@ -40,7 +40,7 @@ import {
 import { mailEngineCommand, runMailCommand, type MailTarget } from "../mail-engine";
 
 /** The local part every collector mailbox uses. One per domain. */
-export const COLLECTOR_LOCAL_PART = "openship-hook";
+export const COLLECTOR_LOCAL_PART = "kovalio-hook";
 
 /**
  * How a token is recognised as OURS in the single BCC slot.
@@ -56,7 +56,7 @@ const COLLECTOR_PREFIX = `${COLLECTOR_LOCAL_PART}+`;
  * NOT the extension, while the userdb query LOWER()s the whole home path. A mixed-case
  * token would name a folder that the path we compute cannot find.
  *
- * It is also a bearer secret. `openship-hook+<token>@<domain>` is a real, externally
+ * It is also a bearer secret. `kovalio-hook+<token>@<domain>` is a real, externally
  * addressable mailbox on the public MX and nothing in the shipped config restricts who
  * may send to it, so anyone who learns a token can post into the collector and fire
  * notifications. 24 chars of base32-ish alphabet is ~120 bits.
@@ -182,7 +182,7 @@ export async function ensureCollectorMailbox(
     buildUpsertMailboxSql({
       username,
       passwordHash: hash,
-      name: "Openship inbound capture",
+      name: "Kovalio inbound capture",
       domain: d,
       storagebasedirectory: layout.storagebasedirectory,
       storagenode: layout.storagenode,

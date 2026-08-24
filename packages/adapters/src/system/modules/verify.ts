@@ -1,9 +1,9 @@
 /**
  * Verify-before-execute gate for the native-module migration catalog.
  *
- * Trust model (asymmetric): Openship holds the ed25519 PRIVATE key (CI/offline);
+ * Trust model (asymmetric): Kovalio holds the ed25519 PRIVATE key (CI/offline);
  * only PUBLIC keys are baked here. A signed catalog can therefore be authored
- * only by Openship, while any self-hosted instance can verify it — a compromised
+ * only by Kovalio, while any self-hosted instance can verify it — a compromised
  * box can read the pubkeys but cannot forge a catalog the rest of the fleet would
  * execute as root. This is the apt `signed-by=` trust bootstrap generalized to
  * our own catalog.
@@ -36,7 +36,7 @@ export function sha256Hex(bytes: Buffer): string {
 }
 
 /**
- * Dev-only escape hatch. Set OPENSHIP_MODULE_CATALOG_INSECURE=1 to skip signature
+ * Dev-only escape hatch. Set KOVALIO_MODULE_CATALOG_INSECURE=1 to skip signature
  * + hash verification while developing against an unsigned local catalog. HARD
  * fail-safe: ignored (stays secure) whenever NODE_ENV=production, so it can never
  * weaken a real deployment even if the env leaks in. Reads process.env directly
@@ -44,7 +44,7 @@ export function sha256Hex(bytes: Buffer): string {
  */
 export function insecureCatalogAllowed(): boolean {
   if (process.env.NODE_ENV === "production") return false;
-  const v = process.env.OPENSHIP_MODULE_CATALOG_INSECURE;
+  const v = process.env.KOVALIO_MODULE_CATALOG_INSECURE;
   return v === "1" || v === "true";
 }
 

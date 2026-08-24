@@ -60,7 +60,7 @@ export function DomainsTab({
   const { showModal, hideModal } = useModal();
   const { showToast } = useToast();
   const { t } = useI18n();
-  // In Openship Mail the page header already reads "Domains" + this description
+  // In Kovalio Mail the page header already reads "Domains" + this description
   // (the rail names the section), so printing them again here is the same heading
   // twice down the page. See ../../_lib/mail-section.
   const hoisted = useMailRailOwnsTabs(serverId);

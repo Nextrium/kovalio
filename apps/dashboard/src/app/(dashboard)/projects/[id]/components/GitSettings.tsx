@@ -48,7 +48,7 @@ export const GitSettings = () => {
   // no Git clone/branch at all, so route them to the source editor before the
   // Git component mounts and starts any disconnected Git requests.
   if (projectData.isApp) {
-    if (projectData.appTemplateId === "openship") {
+    if (projectData.appTemplateId === "kovalio") {
       return (
         <div className="rounded-2xl border border-border/50 bg-card p-5">
           <p className="text-sm leading-relaxed text-muted-foreground">

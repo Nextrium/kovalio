@@ -66,13 +66,13 @@ describe("webmail persistent state", () => {
   });
 
   it("survives namespacing as this project's own volume", () => {
-    // scopeVolumeBinds rewrites a NAMED source to `openship-<slug>-<name>`, which
+    // scopeVolumeBinds rewrites a NAMED source to `kovalio-<slug>-<name>`, which
     // is what keeps two webmails on one host off each other's zero.db. A bind
     // that came out unscoped would be shared state.
     const binds = bindsFor(slug);
     expect(binds.length).toBe(declaredMountPoints().length);
     for (const bind of binds) {
-      expect(bind.startsWith(`openship-${slug}-`)).toBe(true);
+      expect(bind.startsWith(`kovalio-${slug}-`)).toBe(true);
     }
   });
 

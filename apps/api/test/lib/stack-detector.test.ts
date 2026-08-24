@@ -1371,7 +1371,7 @@ describe("detectStack - productionPaths reflect the stack registry", () => {
  * into `undefined`. When only the parsed half is lost, dependency matching still
  * identifies the framework (it reads the text) while command derivation used to
  * fall through to the registry's bare `next build` / `next start`. That pairing is
- * openship#623: a `bun install` that succeeded followed by `next: not found`.
+ * kovalio#623: a `bun install` that succeeded followed by `next: not found`.
  */
 const NEXT_PACKAGE_JSON = JSON.stringify({
   name: "my-next-app",

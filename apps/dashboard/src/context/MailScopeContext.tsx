@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * "Which mail server is the rail talking about?" — mounted only in Openship Mail
+ * "Which mail server is the rail talking about?" — mounted only in Kovalio Mail
  * view, so a platform-mode dashboard never pays for the fetch.
  *
  * The URL wins: /emails already treats `?serverId=` as the single source of truth

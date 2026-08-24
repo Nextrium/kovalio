@@ -61,7 +61,7 @@
       "title": "Verificações de saúde",
       "subtitle": "Desligadas — o deploy termina assim que a app está a correr",
       "subtitleOn": "Ligadas — o deploy espera pela tua app antes de ficar no ar",
-      "description": "O Openship não espera pela tua app depois de a arrancar, por isso um arranque lento nunca atrasa nem falha um deploy. Depois de estar no ar, a porta é verificada de qualquer forma e reportada sem bloquear nada. Liga isto só se quiseres que o próprio deploy se recuse a ficar verde.",
+      "description": "O Kovalio não espera pela tua app depois de a arrancar, por isso um arranque lento nunca atrasa nem falha um deploy. Depois de estar no ar, a porta é verificada de qualquer forma e reportada sem bloquear nada. Liga isto só se quiseres que o próprio deploy se recuse a ficar verde.",
       "probeLabel": "Esperar que a app responda",
       "probeDesc": "Depois de o contentor arrancar, contactar a porta da app e esperar que aceite uma ligação.",
       "pathLabel": "Caminho HTTP",
@@ -288,7 +288,7 @@
     "deploymentModeDesc": "{mode} · Alterne entre runtimes por aplicação e tratamento de aplicação única."
   },
   "deploymentProcessing": {
-    "targetOpenshipCloud": "Openship Cloud",
+    "targetKovalioCloud": "Kovalio Cloud",
     "targetServerNamed": "Servidor · {name}",
     "targetServer": "Servidor",
     "targetLocal": "Máquina local",
@@ -300,9 +300,9 @@
       "port": "Porta",
       "process": "Processo",
       "unitDescription": "Descrição da Unidade",
-      "openshipDeployment": "Implantação Openship",
+      "kovalioDeployment": "Implantação Kovalio",
       "sites": {
-        "lead": "O proxy existente serve atualmente {count} site(s). A migração os importa para o Openship antes de assumir as portas 80/443:",
+        "lead": "O proxy existente serve atualmente {count} site(s). A migração os importa para o Kovalio antes de assumir as portas 80/443:",
         "tlsBadge": "TLS",
         "staticLabel": "estático:",
         "warningsTitle": "Não puderam ser migrados automaticamente — adicione-os manualmente:"
@@ -416,12 +416,12 @@
     "rowType": "Tipo"
   },
   "configDiagnostics": {
-    "title": "Parte do openship.json deste repositório não foi aplicada",
+    "title": "Parte do kovalio.json deste repositório não foi aplicada",
     "description": "Os campos listados abaixo foram ignorados; o resto do arquivo foi aplicado. O deploy vai continuar.",
-    "titleWholeFile": "O openship.json deste repositório foi ignorado",
-    "descriptionWholeFile": "Nada do arquivo foi aplicado. O deploy vai continuar com as configurações que o Openship detectou.",
+    "titleWholeFile": "O kovalio.json deste repositório foi ignorado",
+    "descriptionWholeFile": "Nada do arquivo foi aplicado. O deploy vai continuar com as configurações que o Kovalio detectou.",
     "refused": "Recusado",
     "unrecognized": "Não reconhecido",
-    "hint": "Execute `openship config validate` no repositório para verificar o arquivo antes do próximo deploy."
+    "hint": "Execute `kovalio config validate` no repositório para verificar o arquivo antes do próximo deploy."
   }
 }

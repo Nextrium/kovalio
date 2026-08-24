@@ -170,7 +170,7 @@ export class BareBackupExecutor implements BackupExecutor {
     const prelude = [
       `mkdir -p ${shellQuote(targetSourceId)}`,
       tool
-        ? `command -v ${tool} >/dev/null 2>&1 || { echo "openship: '${tool}' is not installed ` +
+        ? `command -v ${tool} >/dev/null 2>&1 || { echo "kovalio: '${tool}' is not installed ` +
           `on this host, so the artifact cannot be decompressed. Refusing to clear the ` +
           `target: nothing was written and your data is untouched." >&2; exit 90; }`
         : null,
@@ -216,9 +216,9 @@ export class BareBackupExecutor implements BackupExecutor {
   ): Promise<ExecExitInfo> {
     const exec = this.executor();
     const id = randomBytes(6).toString("hex");
-    const localDir = join(tmpdir(), `openship-bare-restore-${id}`);
+    const localDir = join(tmpdir(), `kovalio-bare-restore-${id}`);
     const localFile = join(localDir, "artifact.bin");
-    const remoteDir = `/tmp/openship-bare-restore-${id}`;
+    const remoteDir = `/tmp/kovalio-bare-restore-${id}`;
     const remoteFile = `${remoteDir}/artifact.bin`;
 
     // Every restore through this executor now gets a ceiling whether or not the caller

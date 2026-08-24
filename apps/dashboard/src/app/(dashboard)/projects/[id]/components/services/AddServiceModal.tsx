@@ -35,7 +35,7 @@ import { useI18n, interpolate } from "@/components/i18n-provider";
 interface AddServiceModalProps {
   open: boolean;
   projectName: string;
-  // True when the *project itself* deploys to openship cloud, regardless of
+  // True when the *project itself* deploys to kovalio cloud, regardless of
   // the dashboard install mode. A self-hosted dashboard can still manage a
   // cloud project — in that case only cloud (Oblien) images are valid and
   // the local upstream-image catalog must be hidden.
@@ -216,7 +216,7 @@ export function AddServiceModal({ open, projectName, isCloudProject, onClose, on
   const newEndpointDomainType = defaultDomainType(cloud.connected);
   // Cloud-only catalog when EITHER the install is the SaaS dashboard
   // (deployMode === "cloud") OR this specific project is deployed to
-  // openship cloud (isCloudProject). In either case the local upstream-
+  // kovalio cloud (isCloudProject). In either case the local upstream-
   // image catalog isn't applicable and we pin the source to "cloud".
   const cloudOnly = deployMode === "cloud" || !!isCloudProject;
 
@@ -603,7 +603,7 @@ function CatalogPickStep({
   const m = t.projectDetail.services.addModal;
   const hasNoResults = !loading && catalog.length === 0 && !showCustomTile;
 
-  // Cloud catalog picked but the instance isn't linked to Openship Cloud yet —
+  // Cloud catalog picked but the instance isn't linked to Kovalio Cloud yet —
   // there's nothing to browse, so lead with a connect CTA instead of an empty
   // pane. Connecting flips `cloud.connected`, which re-fetches the catalog.
   if (source === "cloud" && cloudConnected === false && !loading) {
@@ -754,7 +754,7 @@ function SourceSwitcher({
   const { t } = useI18n();
   const options: Array<{ value: "local" | "cloud"; label: string; icon: React.ElementType }> = [
     { value: "local", label: t.projectDetail.services.addModal.localImages, icon: Cpu },
-    { value: "cloud", label: t.projectDetail.services.addModal.openshipCloud, icon: Cloud },
+    { value: "cloud", label: t.projectDetail.services.addModal.kovalioCloud, icon: Cloud },
   ];
   return (
     <div className="inline-flex w-fit items-center gap-0.5 rounded-xl border border-border/60 bg-muted/60 p-0.5">
@@ -1160,7 +1160,7 @@ function ModeBadge({ mode }: { mode: "cloud" | "local" }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
       <Icon className="size-3" />
-      {mode === "cloud" ? t.projectDetail.services.addModal.openshipCloud : t.projectDetail.services.addModal.localDocker}
+      {mode === "cloud" ? t.projectDetail.services.addModal.kovalioCloud : t.projectDetail.services.addModal.localDocker}
     </span>
   );
 }

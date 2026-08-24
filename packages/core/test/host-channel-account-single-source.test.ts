@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
  *
  * #527's visible symptom was a server row rendering `admin@<ip>` while the channel dialed
  * `root@host.docker.internal`. The cause was not the default — it was that five files each
- * carried their own `OPENSHIP_HOST_SSH_USER?.trim() || "root"`, so "the account" was five
+ * carried their own `KOVALIO_HOST_SSH_USER?.trim() || "root"`, so "the account" was five
  * facts that happened to agree until one of them didn't. Consolidating them fixes today;
  * this test is what stops the sixth copy, which would reopen the same class silently.
  *
@@ -30,7 +30,7 @@ describe("hostChannelAccount is the only place that spells the channel-account f
    * The expression in any of its spellings: `|| "root"` / `?? "root"` applied to the env
    * var, with or without `.trim()`, single or double quoted.
    */
-  const LOCAL_COPY = /OPENSHIP_HOST_SSH_USER[^\n;]*(\|\||\?\?)\s*["']root["']/;
+  const LOCAL_COPY = /KOVALIO_HOST_SSH_USER[^\n;]*(\|\||\?\?)\s*["']root["']/;
 
   it.each(CONSUMERS)("%s reads the account through the resolver, not a local copy", (rel) => {
     const src = readFileSync(join(REPO, rel), "utf8");
@@ -44,9 +44,9 @@ describe("hostChannelAccount is the only place that spells the channel-account f
 
   it("catches the pattern it claims to catch", () => {
     // The regex is the whole test; a typo in it would make every case above pass forever.
-    expect('process.env.OPENSHIP_HOST_SSH_USER?.trim() || "root"').toMatch(LOCAL_COPY);
-    expect("prev.OPENSHIP_HOST_SSH_USER?.trim() || 'root'").toMatch(LOCAL_COPY);
-    expect('env.OPENSHIP_HOST_SSH_USER ?? "root"').toMatch(LOCAL_COPY);
+    expect('process.env.KOVALIO_HOST_SSH_USER?.trim() || "root"').toMatch(LOCAL_COPY);
+    expect("prev.KOVALIO_HOST_SSH_USER?.trim() || 'root'").toMatch(LOCAL_COPY);
+    expect('env.KOVALIO_HOST_SSH_USER ?? "root"').toMatch(LOCAL_COPY);
     expect("hostChannelAccount(process.env)").not.toMatch(LOCAL_COPY);
   });
 });

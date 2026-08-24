@@ -32,7 +32,7 @@ import {
   safeErrorMessage,
   type AppTemplate,
   type ComposeAdvanced,
-  type OpenshipReadiness, mailHostname } from "@repo/core";
+  type KovalioReadiness, mailHostname } from "@repo/core";
 import { repos, type Domain, type Project } from "@repo/db";
 import { assertResourceInOrg } from "../../../lib/controller-helpers";
 import { pickCanonicalDomainRow, resolveServicePublicEndpoints } from "../../../lib/public-endpoints";
@@ -74,7 +74,7 @@ const LEGACY_WEBMAIL_TEMPLATE_ID = "mail-webmail";
 export const LEGACY_WEBMAIL_ERROR_CODE = "LEGACY_WEBMAIL";
 
 /** Where a legacy webmail kept its session DB + branding, per project slug. */
-const LEGACY_PERSIST_ROOT = "/var/lib/openship-webmail";
+const LEGACY_PERSIST_ROOT = "/var/lib/kovalio-webmail";
 
 /**
  * The env keys the catalog app exposes as settings, in one place, because they
@@ -182,7 +182,7 @@ async function requireWebmailTemplate(organizationId: string): Promise<AppTempla
   const template = await getTemplateForOrg(organizationId, WEBMAIL_TEMPLATE_ID);
   if (!template) {
     throw new AppError(
-      "The webmail app isn't in this instance's app catalog. Update Openship, then install webmail again.",
+      "The webmail app isn't in this instance's app catalog. Update Kovalio, then install webmail again.",
       409,
     );
   }
@@ -312,7 +312,7 @@ async function runWebmailInstall(
  * "started but unhealthy" — for a container that is bouncing, `failed` is the only
  * honest verdict, and a warn would leave the deploy green.
  */
-const WEBMAIL_READINESS: OpenshipReadiness = { stabilization: true, onFailure: "fail" };
+const WEBMAIL_READINESS: KovalioReadiness = { stabilization: true, onFailure: "fail" };
 
 /**
  * Opt the webmail service into the restart-loop watch, once.
@@ -778,7 +778,7 @@ async function resolveMailVpsPlatform(mailServerId: string, organizationId: stri
  */
 function legacyReplaceConsentRequired(project: Pick<Project, "name">): AppError {
   return new AppError(
-    `"${project.name}" was deployed by an older Openship that shipped webmail as a prebuilt bundle instead of an image, so it can't be redeployed — it has to be replaced by the webmail app. Retry with replaceLegacy to do that now: the old webmail is removed and reinstalled from the image at the same hostname. Mailboxes and mail data live on the mail server and are untouched; the old webmail's sign-in sessions and per-user settings are not.`,
+    `"${project.name}" was deployed by an older Kovalio that shipped webmail as a prebuilt bundle instead of an image, so it can't be redeployed — it has to be replaced by the webmail app. Retry with replaceLegacy to do that now: the old webmail is removed and reinstalled from the image at the same hostname. Mailboxes and mail data live on the mail server and are untouched; the old webmail's sign-in sessions and per-user settings are not.`,
     409,
     LEGACY_WEBMAIL_ERROR_CODE,
   );

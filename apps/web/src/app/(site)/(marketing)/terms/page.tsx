@@ -3,21 +3,21 @@ import { Navbar, Footer } from "@/components/landing";
 
 const PAGE_TITLE = "Terms of Service";
 const PAGE_DESCRIPTION =
-  "Terms governing Openship Cloud and Openship Business. The self-hosted platform itself is governed by the Apache 2.0 license. Plain language, no surprises.";
+  "Terms governing Kovalio Cloud and Kovalio Business. The self-hosted platform itself is governed by the Apache 2.0 license. Plain language, no surprises.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,
   description: PAGE_DESCRIPTION,
   alternates: { canonical: "/terms" },
   openGraph: {
-    title: `${PAGE_TITLE} - Openship`,
+    title: `${PAGE_TITLE} - Kovalio`,
     description: PAGE_DESCRIPTION,
     url: "/terms",
     type: "article",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${PAGE_TITLE} - Openship`,
+    title: `${PAGE_TITLE} - Kovalio`,
     description: PAGE_DESCRIPTION,
   },
 };
@@ -27,8 +27,8 @@ const SECTIONS = [
     id: "agreement",
     title: "Agreement",
     body: [
-      "These terms govern your use of Openship Cloud (the hosted service) and Openship Business (cloud + your servers + SLA). The self-hosted platform itself is governed by the Apache 2.0 license that ships with the source.",
-      "By creating an account you agree to these terms. If you're using Openship on behalf of an organisation, you confirm you have authority to bind that organisation.",
+      "These terms govern your use of Kovalio Cloud (the hosted service) and Kovalio Business (cloud + your servers + SLA). The self-hosted platform itself is governed by the Apache 2.0 license that ships with the source.",
+      "By creating an account you agree to these terms. If you're using Kovalio on behalf of an organisation, you confirm you have authority to bind that organisation.",
     ],
   },
   {
@@ -36,7 +36,7 @@ const SECTIONS = [
     title: "The service",
     body: [
       "We provide infrastructure to build, ship, and run your applications - managed databases, mail, storage, routing, and the platform tooling around it.",
-      "Openship Cloud is offered on published subscription plans, listed on our pricing page, with usage-based credits on top. Self-hosted use is free under the Apache 2.0 license.",
+      "Kovalio Cloud is offered on published subscription plans, listed on our pricing page, with usage-based credits on top. Self-hosted use is free under the Apache 2.0 license.",
       "We may improve the service, fix bugs, or evolve features at any time. Material breaking changes get at least 30 days' notice.",
     ],
   },
@@ -69,7 +69,7 @@ const SECTIONS = [
     id: "billing",
     title: "Billing",
     body: [
-      "Openship Cloud plan prices are published on our pricing page. Paid plans are billed monthly in advance and you may cancel at any time; cancellation takes effect at the end of the period you have already paid for. Self-hosted use is free.",
+      "Kovalio Cloud plan prices are published on our pricing page. Paid plans are billed monthly in advance and you may cancel at any time; cancellation takes effect at the end of the period you have already paid for. Self-hosted use is free.",
       "We accept major cards via Stripe. Price changes to a plan you are on are announced at least 30 days in advance and apply from your next billing period. A failed payment triggers retries and email notice before any suspension.",
     ],
   },
@@ -77,7 +77,7 @@ const SECTIONS = [
     id: "uptime-sla",
     title: "Uptime and SLA",
     body: [
-      "Openship Cloud targets 99.9% monthly uptime on a best-effort basis, with contractual SLAs and service credits available on eligible paid plans.",
+      "Kovalio Cloud targets 99.9% monthly uptime on a best-effort basis, with contractual SLAs and service credits available on eligible paid plans.",
       "Scheduled maintenance is announced at least 7 days in advance and excluded from uptime calculations.",
     ],
   },
@@ -85,7 +85,7 @@ const SECTIONS = [
     id: "data-portability",
     title: "Data portability",
     body: [
-      "Every deployment on Openship is a plain container image and standard manifests. You can leave any day and re-run on your own infrastructure without rewriting code.",
+      "Every deployment on Kovalio is a plain container image and standard manifests. You can leave any day and re-run on your own infrastructure without rewriting code.",
       "On request we provide a full export of your databases, secrets, and configuration in standard formats. We do not charge for exports.",
     ],
   },
@@ -145,7 +145,7 @@ export default function TermsPage() {
             <p className="legal-meta">
               Last updated <time dateTime="2026-05-18">May&nbsp;18, 2026</time>
               <span className="legal-meta-sep">·</span>
-              <a href="https://github.com/oblien/openship/commits/main/TERMS.md" className="legal-meta-link" target="_blank" rel="noreferrer">
+              <a href="https://github.com/Nextrium/kovalio/commits/main/TERMS.md" className="legal-meta-link" target="_blank" rel="noreferrer">
                 Version history on GitHub
               </a>
             </p>
@@ -185,7 +185,7 @@ export default function TermsPage() {
                 <footer className="legal-foot">
                   <p>
                     Questions? Email{" "}
-                    <a href="mailto:legal@openship.io">legal@openship.io</a>.
+                    <a href="mailto:legal@nextrium.org">legal@nextrium.org</a>.
                   </p>
                 </footer>
               </article>

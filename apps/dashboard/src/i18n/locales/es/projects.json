@@ -21,14 +21,14 @@
   },
   "serverCta": {
     "title": "Despliega en tu propio servidor",
-    "description": "Conecta un servidor por SSH para ejecutar proyectos en tu propia infraestructura junto a Openship Cloud.",
+    "description": "Conecta un servidor por SSH para ejecutar proyectos en tu propia infraestructura junto a Kovalio Cloud.",
     "button": "Conectar un servidor"
   },
   "filters": {
     "title": "Filtrar por destino",
     "subtitle": "Dónde se despliegan los proyectos",
     "allProjects": "Todos los proyectos",
-    "cloud": "Openship Cloud",
+    "cloud": "Kovalio Cloud",
     "local": "Local"
   },
   "card": {
@@ -106,7 +106,7 @@
     "cleanupFailedTitle": "Falló la limpieza",
     "alreadyDeleted": "El proyecto ya fue eliminado",
     "forceModalTitle": "No se pudo eliminar en el origen",
-    "forceModalBody": "No se pudo alcanzar el runtime (o siguió fallando), así que este proyecto no se desmontó. Puedes eliminarlo de Openship igualmente: el registro se borra ahora y los recursos restantes se reclaman automáticamente cuando el servidor vuelva a estar accesible.",
+    "forceModalBody": "No se pudo alcanzar el runtime (o siguió fallando), así que este proyecto no se desmontó. Puedes eliminarlo de Kovalio igualmente: el registro se borra ahora y los recursos restantes se reclaman automáticamente cuando el servidor vuelva a estar accesible.",
     "forceModalConfirm": "Eliminar del almacenamiento",
     "forceModalCancel": "Cancelar",
     "unlinked": "Se desvinculó de {projects}: vuelve a desplegarlos para aplicarlo.",
@@ -192,7 +192,7 @@
     "typeProject": "Proyecto"
   },
   "overview": {
-    "platformCloud": "Openship Cloud",
+    "platformCloud": "Kovalio Cloud",
     "platformServer": "Autoalojado (Servidor)",
     "platformLocal": "Autoalojado (Local)",
     "modeStatic": "Sitio estático",
@@ -495,7 +495,7 @@
     "watchOffTitle": "La supervisión de estado de los contenedores está desactivada",
     "watchOffBody": "No se registran incidencias ni se envían alertas, así que una lista vacía aquí no significa que todo esté bien.",
     "watchOffCta": "Actívala en Trabajos",
-    "serverDownTitle": "Openship no puede acceder al servidor de este proyecto",
+    "serverDownTitle": "Kovalio no puede acceder al servidor de este proyecto",
     "serverDownBody": "No se ha observado nada en esta máquina desde hace {duration}, por lo que las incidencias de abajo pueden estar desactualizadas.",
     "loadFailed": "No se pudieron cargar las incidencias.",
     "ongoing": "en curso desde hace {duration}",

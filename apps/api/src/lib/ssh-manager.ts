@@ -154,7 +154,7 @@ export async function buildSshConfig(
     } else {
       // Path on the API host. Centralised allowlist + traversal check — see
       // lib/ssh-key-path.ts. operatorSshKeyRoots() is the operator's home, used
-      // as the default convenient root so `~/.ssh/openship` works without config.
+      // as the default convenient root so `~/.ssh/kovalio` works without config.
       let keyPath: string;
       try {
         keyPath = resolveSafeSshKeyPath(settings.sshKeyPath!, {
@@ -255,7 +255,7 @@ export interface ReachabilityDiagnosis {
    * Refines the code rather than splitting it: to the server list and the breaker
    * this is one state ("can't drive its host"), but the REMEDY differs — a channel
    * that was dialed and dropped wants a firewall rule, one that was never
-   * provisioned wants `openship up` and no rule at all. Absent on a remote row,
+   * provisioned wants `kovalio up` and no rule at all. Absent on a remote row,
    * which has no channel.
    */
   channel?: HostChannelCode;
@@ -384,14 +384,14 @@ interface ServerConnection {
 }
 
 /**
- * Reserved pool key for the HOST channel — the machine Openship itself runs on.
+ * Reserved pool key for the HOST channel — the machine Kovalio itself runs on.
  *
  * Not a server id: the host channel is needed before any server row exists
  * (startup self-deploy, `selfEdgePreflight`) and is the same connection no matter
  * which local row asks for it. A reserved key keeps it in the one cache that has
  * idle cleanup, instead of a second lifecycle nobody remembers to close.
  */
-const HOST_CHANNEL_KEY = "__openship_host__";
+const HOST_CHANNEL_KEY = "__kovalio_host__";
 
 // ─── Manager ─────────────────────────────────────────────────────────────────
 
@@ -547,7 +547,7 @@ export class SshConnectionManager {
   }
 
   /**
-   * The pooled HOST channel — one connection to the machine Openship runs on,
+   * The pooled HOST channel — one connection to the machine Kovalio runs on,
    * reused by every caller and reclaimed by the same idle timer as a server.
    *
    * Public, and that is the point: this is the ONLY way to obtain this box's
@@ -627,7 +627,7 @@ export class SshConnectionManager {
     // firewall rule reaches the dashboard banner and never the deploy log, which is
     // exactly where an operator is standing when a host op dies.
     const hint =
-      health.hint ?? `Openship can't reach the host channel at ${health.target ?? "this machine"}.`;
+      health.hint ?? `Kovalio can't reach the host channel at ${health.target ?? "this machine"}.`;
     throw new HostChannelUnavailableError(
       "unreachable",
       health.rule ? `${hint}\n${health.rule}` : hint,
@@ -1126,7 +1126,7 @@ export class SshConnectionManager {
    * layers its pool + circuit breaker around it via the acquire/hooks.
    */
   private executeJournaledOp(serverId: string, op: QueuedOp): Promise<RunResult> {
-    // No `baseDir`: it used to pin every server in the fleet to `/root/.openship`, which
+    // No `baseDir`: it used to pin every server in the fleet to `/root/.kovalio`, which
     // is unwritable over SFTP on a non-root login. `runReliable` asks each host instead.
     return runReliable(() => this.acquire(serverId), op.opId, op.command, {
       timeoutMs: op.opts.timeoutMs ?? DEFAULT_RUN_TIMEOUT_MS,

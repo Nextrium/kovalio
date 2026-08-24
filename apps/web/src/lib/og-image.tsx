@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 export const OG_ALT =
-  "Openship - Open Source, Self-Hostable Deployment Platform";
+  "Kovalio - Open Source, Self-Hostable Deployment Platform";
 
 /** Accent palette for the aurora glow, footer dot, and eyebrow tint.
  *  `glow` is a bare "r,g,b" triple (used inside rgba()). Defaults to brand green. */
@@ -68,7 +68,7 @@ export function renderOgImage({
             }}
           />
           <div style={{ fontSize: 36, fontWeight: 600, letterSpacing: -0.5 }}>
-            Openship
+            Kovalio
           </div>
         </div>
 
@@ -137,10 +137,10 @@ export function renderOgImage({
                 background: accent.solid,
               }}
             />
-            openship.io
+            nextrium.org
           </div>
           <div style={{ display: "flex", gap: 28 }}>
-            <span>github.com/oblien/openship</span>
+            <span>github.com/oblien/kovalio</span>
           </div>
         </div>
       </div>

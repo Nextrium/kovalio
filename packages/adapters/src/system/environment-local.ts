@@ -45,11 +45,11 @@ function unmeasurable(reason: string): EnvironmentProfile {
 }
 
 function probeLocalHost(): EnvironmentProfile {
-  // No POSIX shell on Windows, and nothing below would mean anything there. Openship
+  // No POSIX shell on Windows, and nothing below would mean anything there. Kovalio
   // provisions Linux and macOS hosts; a Windows box can drive them but cannot be one.
   if (process.platform === "win32") {
     return unmeasurable(
-      "Openship cannot provision this machine: it runs Windows, and Openship's host " +
+      "Kovalio cannot provision this machine: it runs Windows, and Kovalio's host " +
         "provisioning is POSIX-only. Deploying to a remote Linux server from here works.",
     );
   }
@@ -65,7 +65,7 @@ function probeLocalHost(): EnvironmentProfile {
 
   if (result.error) {
     return unmeasurable(
-      `Openship could not run a shell on this machine to detect it: ` +
+      `Kovalio could not run a shell on this machine to detect it: ` +
         `${safeErrorMessage(result.error)}`,
     );
   }
@@ -78,7 +78,7 @@ function probeLocalHost(): EnvironmentProfile {
   // reported `opsh_begin=1` back as this machine's forced-command banner.
   if (result.signal || typeof result.status !== "number") {
     return unmeasurable(
-      `Openship could not measure this machine: the detection probe was killed` +
+      `Kovalio could not measure this machine: the detection probe was killed` +
         `${result.signal ? ` by ${result.signal}` : ""} before it finished.`,
     );
   }

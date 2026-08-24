@@ -55,14 +55,14 @@ describe("local backup destinations are gated at the consumer", () => {
     // is load-bearing. Must also be guarded by the local-kind check.
     const gateAt = src.search(/assertLocalDestinationAllowed\s*\(/);
     const localBranchAt = src.search(/row\.kind\s*===\s*["']local["']/);
-    const serverBranchAt = src.indexOf('row.kind === "openship_server"');
+    const serverBranchAt = src.indexOf('row.kind === "kovalio_server"');
     const passThroughAt = src.indexOf("return {");
 
     expect(gateAt, "toAdapterRow no longer CALLS the local-destination gate").toBeGreaterThan(-1);
     expect(localBranchAt, "the gate is no longer scoped to kind local").toBeGreaterThan(-1);
     expect(localBranchAt).toBeLessThan(gateAt);
     expect(serverBranchAt).toBeGreaterThan(-1);
-    // Before BOTH exits — the openship_server branch and the pass-through return.
+    // Before BOTH exits — the kovalio_server branch and the pass-through return.
     // A gate after the return is not a gate.
     expect(gateAt).toBeLessThan(serverBranchAt);
     expect(gateAt).toBeLessThan(passThroughAt);
@@ -106,20 +106,20 @@ describe("assertLocalDestinationAllowed", () => {
   it("refuses in cloud mode regardless of the allow flag", async () => {
     process.env.CLOUD_MODE = "true";
     process.env.BACKUP_ALLOW_LOCAL_DESTINATION = "true";
-    process.env.BACKUP_LOCAL_ROOT = "/var/lib/openship/backups";
+    process.env.BACKUP_LOCAL_ROOT = "/var/lib/kovalio/backups";
     vi.resetModules();
     const { assertLocalDestinationAllowed } = await import(
       "../../../src/modules/backup-destinations/local-gate"
     );
     await expect(
-      assertLocalDestinationAllowed("/var/lib/openship/backups/x"),
+      assertLocalDestinationAllowed("/var/lib/kovalio/backups/x"),
     ).rejects.toThrow(/disabled in cloud mode/i);
   });
 
   it("refuses a local row with no endpoint rather than resolving against CWD", async () => {
     process.env.CLOUD_MODE = "";
     process.env.BACKUP_ALLOW_LOCAL_DESTINATION = "true";
-    process.env.BACKUP_LOCAL_ROOT = "/var/lib/openship/backups";
+    process.env.BACKUP_LOCAL_ROOT = "/var/lib/kovalio/backups";
     vi.resetModules();
     const { assertLocalDestinationAllowed } = await import(
       "../../../src/modules/backup-destinations/local-gate"

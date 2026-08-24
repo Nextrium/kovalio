@@ -1,17 +1,17 @@
 import { DEFAULT_IMAGE_REGISTRY } from "./constants";
 
 /**
- * Shared precedence for an Openship container image reference (edge, mail, …).
+ * Shared precedence for an Kovalio container image reference (edge, mail, …).
  * ONE resolver so a per-image wrapper can't drift on the order:
  *
  *   explicit → <image env override> → injectedDefault → `<registry>/<image>:<tag>`
  *
- * where `registry = OPENSHIP_IMAGE_REGISTRY || DEFAULT_IMAGE_REGISTRY` and
- *       `tag      = <tag env override> || OPENSHIP_VERSION || fallbackTag || "latest"`.
+ * where `registry = KOVALIO_IMAGE_REGISTRY || DEFAULT_IMAGE_REGISTRY` and
+ *       `tag      = <tag env override> || KOVALIO_VERSION || fallbackTag || "latest"`.
  *
  * The image name and the two env overrides are the ONLY per-image differences, so
  * each caller passes them in. Callers read their env vars by LITERAL name (below)
- * and hand the values here, so `OPENSHIP_EDGE_IMAGE`/`OPENSHIP_MAIL_TAG`/etc. stay
+ * and hand the values here, so `KOVALIO_EDGE_IMAGE`/`KOVALIO_MAIL_TAG`/etc. stay
  * greppable — the resolver never does a dynamic `process.env[name]` lookup.
  */
 export function buildImageRef(
@@ -24,10 +24,10 @@ export function buildImageRef(
   if (override) return override;
   const injected = opts?.injectedDefault?.trim();
   if (injected) return injected;
-  const registry = process.env.OPENSHIP_IMAGE_REGISTRY?.trim() || DEFAULT_IMAGE_REGISTRY;
+  const registry = process.env.KOVALIO_IMAGE_REGISTRY?.trim() || DEFAULT_IMAGE_REGISTRY;
   const tag =
     image.tagOverride?.trim() ||
-    process.env.OPENSHIP_VERSION?.trim() ||
+    process.env.KOVALIO_VERSION?.trim() ||
     opts?.fallbackTag?.trim() ||
     "latest";
   return `${registry}/${image.name}:${tag}`;

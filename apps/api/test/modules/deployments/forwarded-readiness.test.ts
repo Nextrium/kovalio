@@ -175,7 +175,7 @@ describe("buildHostProbeCommand", () => {
 
 describe("parseHostProbeOutput", () => {
   it("reads the status and the connect count back", () => {
-    expect(parseHostProbeOutput("OPENSHIP_PROBE 204 1\n")).toEqual({
+    expect(parseHostProbeOutput("KOVALIO_PROBE 204 1\n")).toEqual({
       kind: "result",
       status: 204,
       connects: 1,
@@ -185,7 +185,7 @@ describe("parseHostProbeOutput", () => {
   // curl still writes `-w` when the transfer failed, so "no HTTP response, no connection"
   // arrives as a readable result rather than as unparsed output.
   it("reads a total failure as status 0 with no connects", () => {
-    expect(parseHostProbeOutput("OPENSHIP_PROBE 000 0\n")).toEqual({
+    expect(parseHostProbeOutput("KOVALIO_PROBE 000 0\n")).toEqual({
       kind: "result",
       status: 0,
       connects: 0,
@@ -193,7 +193,7 @@ describe("parseHostProbeOutput", () => {
   });
 
   it("detects a host with no HTTP client", () => {
-    expect(parseHostProbeOutput("OPENSHIP_PROBE_NO_CLIENT\n")).toEqual({ kind: "no-client" });
+    expect(parseHostProbeOutput("KOVALIO_PROBE_NO_CLIENT\n")).toEqual({ kind: "no-client" });
   });
 
   it("reports unreadable output rather than guessing", () => {
@@ -235,7 +235,7 @@ describe("waitForReadyFromExecutor", () => {
         forward: async () => {
           throw prohibited();
         },
-        exec: async () => "OPENSHIP_PROBE 200 1",
+        exec: async () => "KOVALIO_PROBE 200 1",
       }),
       "127.0.0.1",
       20_000,
@@ -252,7 +252,7 @@ describe("waitForReadyFromExecutor", () => {
           throw prohibited();
         },
         // No HTTP response and no connection: nothing is listening.
-        exec: async () => "OPENSHIP_PROBE 000 0",
+        exec: async () => "KOVALIO_PROBE 000 0",
       }),
       "127.0.0.1",
       20_000,
@@ -272,7 +272,7 @@ describe("waitForReadyFromExecutor", () => {
         forward: async () => {
           throw prohibited();
         },
-        exec: async () => "OPENSHIP_PROBE 000 1",
+        exec: async () => "KOVALIO_PROBE 000 1",
       }),
       "127.0.0.1",
       20_000,
@@ -293,7 +293,7 @@ describe("waitForReadyFromExecutor", () => {
           throw prohibited();
         },
         // curl exit 28 with nothing connected — the SYN went unanswered.
-        exec: async () => "OPENSHIP_PROBE 000 0",
+        exec: async () => "KOVALIO_PROBE 000 0",
       }),
       "10.0.0.9",
       8080,
@@ -316,7 +316,7 @@ describe("waitForReadyFromExecutor", () => {
         },
         exec: async (command) => {
           lastMaxTime = /--max-time '(\d+)'/.exec(command)?.[1] ?? "";
-          return "OPENSHIP_PROBE 000 0";
+          return "KOVALIO_PROBE 000 0";
         },
       }),
       "127.0.0.1",
@@ -337,7 +337,7 @@ describe("waitForReadyFromExecutor", () => {
         forward: async () => {
           throw prohibited();
         },
-        exec: async () => "OPENSHIP_PROBE_NO_CLIENT",
+        exec: async () => "KOVALIO_PROBE_NO_CLIENT",
       }),
       "127.0.0.1",
       20_000,

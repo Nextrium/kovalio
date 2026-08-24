@@ -120,7 +120,7 @@ describe("one-time direct instance transfer", () => {
 
   it("validates a decrypted credential bundle before the first restore operation", async () => {
     const file = {
-      kind: "openship-instance-export",
+      kind: "kovalio-instance-export",
       envelopeVersion: 1,
       dump: { scope: { kind: "instance" }, tables: {} },
     } as unknown as DataTransferFile;

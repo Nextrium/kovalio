@@ -34,7 +34,7 @@ describe("routeIssuesWarning", () => {
   // dead OpenResty costs them the whole debugging session.
   it("says the EDGE is down when that's what failed, and never mentions DNS", () => {
     const msg = routeIssuesWarning([
-      `test.hekai.org: the edge container is not running ("openship-edge") (restarting) — it is ` +
+      `test.hekai.org: the edge container is not running ("kovalio-edge") (restarting) — it is ` +
         `crash-looping, so nothing that runs through the edge on this server can work.`,
     ]);
     expect(msg).toMatch(/the edge on this server is down/);

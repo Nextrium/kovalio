@@ -4,7 +4,7 @@ import type {
   RoutingConfig,
   RouteRuleSpec,
   ProxySettings,
-  OpenshipReadiness,
+  KovalioReadiness,
   WorkloadType,
 } from "@repo/core";
 import { endpoints } from "./endpoints";
@@ -313,7 +313,7 @@ export const projectsApi = {
      * Deploy-time readiness gate. Omitted/null = OFF (the default) — the deploy
      * does no post-start waiting. Opaque passthrough to the project column.
      */
-    readiness?: OpenshipReadiness | null;
+    readiness?: KovalioReadiness | null;
   }) => api.post<any>(endpoints.projects.ensure, body),
 
   /** List local projects only */
@@ -382,7 +382,7 @@ export const projectsApi = {
       wipeVolumes?: boolean;
       force?: boolean;
       forceOrphan?: boolean;
-      /** Record-only: drop the Openship row, keep the server workload (self-hosted). */
+      /** Record-only: drop the Kovalio row, keep the server workload (self-hosted). */
       recordOnly?: boolean;
     } = {},
   ) => {

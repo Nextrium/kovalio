@@ -5,14 +5,14 @@ description: Connect a GitHub repository and put it online — the step-by-step 
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-This is the most common thing people do with Openship: take some code that lives on GitHub and make it a
-real, working website with its own address. Think of it like this — your code is a recipe, and Openship is
-the kitchen that cooks it and serves the meal. You point Openship at the recipe once, and it does the rest.
+This is the most common thing people do with Kovalio: take some code that lives on GitHub and make it a
+real, working website with its own address. Think of it like this — your code is a recipe, and Kovalio is
+the kitchen that cooks it and serves the meal. You point Kovalio at the recipe once, and it does the rest.
 
 <Callout title="What you need first">
-- An Openship account (you're already in if you can see the dashboard).
+- An Kovalio account (you're already in if you can see the dashboard).
 - A GitHub repository with your app in it.
-- That's it. You do **not** need Docker, a server, or any config files — Openship figures those out.
+- That's it. You do **not** need Docker, a server, or any config files — Kovalio figures those out.
 </Callout>
 
 ## The click-by-click way
@@ -23,29 +23,29 @@ the kitchen that cooks it and serves the meal. You point Openship at the recipe 
 
 ### Connect your GitHub account (once)
 
-Openship needs permission to read your repository. You only do this one time.
+Kovalio needs permission to read your repository. You only do this one time.
 
 Go to **Settings → General** and press **Connect GitHub**. A GitHub window pops up asking "do you allow
 this?" — say yes. When it closes, you're connected.
 
 <Callout title="Screenshot">Settings → General tab, the "GitHub" card with a **Connect GitHub** button. *(screenshot pending)*</Callout>
 
-<Callout title="Self-hosted: two ways to connect (no Openship account required)" type="info">
-On a self-hosted instance you're never forced through Openship Cloud. The **GitHub** card in
+<Callout title="Self-hosted: two ways to connect (no Kovalio account required)" type="info">
+On a self-hosted instance you're never forced through Kovalio Cloud. The **GitHub** card in
 **Settings → General** offers:
 
-- **Openship Cloud GitHub App** — the managed App (short-lived tokens, great for remote-server deploys).
-  Optional; it needs an Openship Cloud connection.
-- **Manual** — connect with your **own** GitHub identity, no Openship in the middle:
+- **Kovalio Cloud GitHub App** — the managed App (short-lived tokens, great for remote-server deploys).
+  Optional; it needs an Kovalio Cloud connection.
+- **Manual** — connect with your **own** GitHub identity, no Kovalio in the middle:
   - **`gh` CLI on the instance** — press **Log in with GitHub**; if the instance has `gh` authenticated
     it's picked up immediately, otherwise run the shown `gh auth login` on the box and the page detects it
     automatically.
   - **Your own GitHub OAuth/App (device login)** — set **`GITHUB_CLIENT_ID`** (a public client id from a
     GitHub App/OAuth app *you* register, with device flow enabled) and **Log in with GitHub** shows a
-    one-time code + `github.com/login/device` link right in the UI — no terminal, no Openship client id.
+    one-time code + `github.com/login/device` link right in the UI — no terminal, no Kovalio client id.
   - **A clone token** — or just add a personal access token under **Clone credentials**.
 
-Pick whichever fits; Openship never substitutes its own GitHub identity for yours on a self-hosted box.
+Pick whichever fits; Kovalio never substitutes its own GitHub identity for yours on a self-hosted box.
 </Callout>
 
 </Step>
@@ -65,11 +65,11 @@ you'll see a list of your GitHub repos. Click the one you want.
 
 ### Choose where it should run
 
-Openship asks where to run your app. Pick the one that fits:
+Kovalio asks where to run your app. Pick the one that fits:
 
 - **Local** — on this computer (great for trying things out on the desktop app).
 - **Server** — on one of your own connected servers.
-- **Cloud** — on Openship Cloud, where we run it for you.
+- **Cloud** — on Kovalio Cloud, where we run it for you.
 
 If you're just starting, the default choice is fine — you can move it later.
 
@@ -79,13 +79,13 @@ If you're just starting, the default choice is fine — you can move it later.
 
 ### Check the settings and press Deploy
 
-Openship shows a summary: which framework it detected, the build command, and the web address it will use.
+Kovalio shows a summary: which framework it detected, the build command, and the web address it will use.
 For most apps you don't change anything here.
 
 Press **Deploy**.
 
 <Callout title="Tip" type="info">
-See a field you don't recognize? Leave it. Openship's detected defaults are correct for the large majority
+See a field you don't recognize? Leave it. Kovalio's detected defaults are correct for the large majority
 of apps — you only override things when you have a specific reason.
 </Callout>
 
@@ -106,7 +106,7 @@ When it finishes, you get a link. Click it, and your app is online. 🎉
 
 ## Turn on auto-deploy (optional but great)
 
-By default you deploy when you choose to. If you'd like Openship to **redeploy every time you push to
+By default you deploy when you choose to. If you'd like Kovalio to **redeploy every time you push to
 GitHub**, turn on auto-deploy:
 
 Open your project → **Source** tab → switch on **Auto-deploy**. From now on, every `git push` to your
@@ -118,19 +118,19 @@ Everything above works from the CLI too:
 
 ```bash
 # Create a project pointing at your repo
-openship project create --name my-app --git-owner your-name --git-repo my-app
+kovalio project create --name my-app --git-owner your-name --git-repo my-app
 
 # Ship it
-openship deploy
+kovalio deploy
 
 # Optional: redeploy on every push
-openship project git auto-deploy my-app --enable
+kovalio project git auto-deploy my-app --enable
 ```
 
 ## If something goes wrong
 
 <Callout title="“Connect GitHub” does nothing / no repos show up" type="warn">
-Your GitHub connection didn't finish, or Openship has no permission for that repo. Go back to
+Your GitHub connection didn't finish, or Kovalio has no permission for that repo. Go back to
 **Settings → General**, disconnect, and connect again — and when GitHub asks which repositories to grant,
 make sure your repo is included.
 </Callout>

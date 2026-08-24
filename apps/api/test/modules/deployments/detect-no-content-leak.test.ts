@@ -47,7 +47,7 @@ function infoWithSecrets() {
     productionPaths: ["dist"],
     port: 3000,
     rootEnv: { DATABASE_URL: SENTINELS.rootEnv, PUBLIC_NAME: "fine" },
-    // #641: what the openship.json parse refused. These are field paths and enum
+    // #641: what the kovalio.json parse refused. These are field paths and enum
     // lists, never file values — but the whole payload is scanned above, so a
     // future change that started quoting the file back would fail here.
     configDiagnostics: {
@@ -115,7 +115,7 @@ describe("detect cannot leak file content through env values", () => {
     expect(services.map((s) => s.name)).toEqual(["api", "db"]);
   });
 
-  it("echoes configDiagnostics so a refused openship.json field is visible (#641)", () => {
+  it("echoes configDiagnostics so a refused kovalio.json field is visible (#641)", () => {
     // The counterpart of the scan above: this field has to survive masking, or
     // #641 is not fixed — a silently-ignored config stays silently ignored.
     const out = projectInfoToScanResponse(infoWithSecrets()) as {

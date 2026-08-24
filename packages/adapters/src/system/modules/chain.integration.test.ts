@@ -60,7 +60,7 @@ describe("catalog chain (real OpenResty catalog)", () => {
     expect(built.catalog?.catalog.latest).toBe("1.1.0");
 
     // Box seeded at baseline 1.0.0 via the legacy lua marker → 1.1.0 pending.
-    const marker = "/usr/local/openresty/site/lualib/openship/.openship-lua-version";
+    const marker = "/usr/local/openresty/site/lualib/kovalio/.kovalio-lua-version";
     const executor = fakeExecutor({ [marker]: "deadbeef" });
 
     // auto mode: the migration is consent-tier → gated, nothing applied.

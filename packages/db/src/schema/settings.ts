@@ -11,7 +11,7 @@ import { user } from "./auth";
 // ─── Instance Settings ───────────────────────────────────────────────────────
 
 /**
- * Machine-level configuration for this Openship installation.
+ * Machine-level configuration for this Kovalio installation.
  *
  * Single row - not per-user. Set by the desktop app (or installer) during
  * onboarding via the internal API.
@@ -27,7 +27,7 @@ export const instanceSettings = pgTable("instance_settings", {
 
   /**
    * Tunnel provider:
-   *   "edge"       → Openship Edge (zero-config, managed)
+   *   "edge"       → Kovalio Edge (zero-config, managed)
    *   "cloudflare" → Cloudflare Tunnel (user's account)
    *   "ngrok"      → ngrok tunnel
    *   null         → public IP, no tunnel needed
@@ -40,7 +40,7 @@ export const instanceSettings = pgTable("instance_settings", {
   /**
    * Auth strategy for this instance:
    *   "none"  → zero-auth, auto-provisioned local user (desktop default)
-   *   "cloud" → external auth on Openship Cloud (desktop + cloud)
+   *   "cloud" → external auth on Kovalio Cloud (desktop + cloud)
    *   "local" → local Better Auth (self-hosted / SaaS)
    */
   authMode: text("auth_mode").notNull().default("none"),
@@ -48,11 +48,11 @@ export const instanceSettings = pgTable("instance_settings", {
   /**
    * Which PRODUCT this instance presents itself as:
    *   "platform" → the full deploy platform (default)
-   *   "mail"     → Openship Mail: the dashboard's left rail becomes the mail
+   *   "mail"     → Kovalio Mail: the dashboard's left rail becomes the mail
    *                control plane and the platform nav (Projects, Apps,
    *                Deployments, Library) is hidden.
    *
-   * Nullable ON PURPOSE: null means "no instance override, use OPENSHIP_PRODUCT".
+   * Nullable ON PURPOSE: null means "no instance override, use KOVALIO_PRODUCT".
    * A notNull default would make the env var permanently unreachable, since the
    * row exists on every instance. Resolved by lib/product-mode.ts — never read
    * directly, so the CLOUD_MODE rule stays in one place.
@@ -73,7 +73,7 @@ export const instanceSettings = pgTable("instance_settings", {
   /**
    * Source that drives `sendInvitationEmail` in `lib/auth.ts`:
    *   "platform" → use the provisioned mail server (preferSource="platform")
-   *   "cloud"    → relay through Openship Cloud (stub today; falls back to
+   *   "cloud"    → relay through Kovalio Cloud (stub today; falls back to
    *                env-based SMTP via lib/mail.ts until the cloud
    *                send-invitation endpoint exists)
    *
@@ -89,13 +89,13 @@ export const instanceSettings = pgTable("instance_settings", {
   // ── Team-mode migration ────────────────────────────────────────────────────
   //
   // Tracks whether this instance has been migrated to a multi-user
-  // deployment (operator's VPS or Openship Cloud). When non-default,
+  // deployment (operator's VPS or Kovalio Cloud). When non-default,
   // the dashboard becomes a launcher pointing at `migrationTargetUrl`
   // and the API only serves a minimal surface (auth + switch-back).
   //
   //   "single_user"          → default, normal operation
   //   "self_hosted_remote"   → migrated to operator's own VPS (URL set)
-  //   "cloud_hosted"         → migrated to Openship Cloud (URL set)
+  //   "cloud_hosted"         → migrated to Kovalio Cloud (URL set)
   //   "tunneled"             → exposed via an Oblien edge tunnel routed at
   //                            this machine's dashboard port (no data move)
   //
@@ -156,7 +156,7 @@ export const instanceSettings = pgTable("instance_settings", {
   smtpPort: integer("smtp_port"),
   smtpUser: text("smtp_user"),
   smtpPasswordEncrypted: text("smtp_password_encrypted"),
-  /** From header, e.g. "Openship <no-reply@example.com>". Falls back to smtpUser. */
+  /** From header, e.g. "Kovalio <no-reply@example.com>". Falls back to smtpUser. */
   smtpFrom: text("smtp_from"),
 
   // ── GitHub device sign-in ───────────────────────────────────────────────────
@@ -186,14 +186,14 @@ export const instanceSettings = pgTable("instance_settings", {
    * connection, which is simply not what happened. It also decides whether the
    * library's first-run consent prompt applies: probing the host's pre-existing
    * gh login warrants asking before enumerating repos; a credential the operator
-   * just typed into Openship is already consent.
+   * just typed into Kovalio is already consent.
    */
   ghDeviceTokenMethod: text("gh_device_token_method").$type<"device" | "token" | null>(),
 
   // ── Remote infra (edge / mail container) updates ────────────────────────────
   //
   // When the control plane's APP_VERSION moves forward (desktop self-update or
-  // `openship update`), the edge/mail containers already deployed on remote
+  // `kovalio update`), the edge/mail containers already deployed on remote
   // servers stay on their old image tag. These two columns drive the
   // "monitor → advise → apply" loop for that drift (server-containers.service):
   //
@@ -216,11 +216,11 @@ export const instanceSettings = pgTable("instance_settings", {
   // ── Host control ─────────────────────────────────────────────────────────────
 
   /**
-   * May OpenShip deploy to the machine it runs on ("This Server")?
+   * May Kovalio deploy to the machine it runs on ("This Server")?
    *
    * Nullable ON PURPOSE — the exact contract as productMode above: null means
-   * "no instance override, use the OPENSHIP_HOST_CONTROL env default" (which the
-   * `openship up --no-host-control` install flag writes). A notNull default would
+   * "no instance override, use the KOVALIO_HOST_CONTROL env default" (which the
+   * `kovalio up --no-host-control` install flag writes). A notNull default would
    * write a concrete value on every instance and permanently shadow that env var.
    * Resolved by apps/api/src/lib/host-control.ts, never read directly, so the
    * env-fallback + selfhosted-target rules live in one place.
@@ -242,7 +242,7 @@ export const instanceSettings = pgTable("instance_settings", {
 // ─── User Platform Settings ──────────────────────────────────────────────────
 
 /**
- * Per-user platform preferences - syncs across devices & to Openship Cloud.
+ * Per-user platform preferences - syncs across devices & to Kovalio Cloud.
  *
  * Each user gets one row (1:1 with `user`).
  * Build mode defaults to the instance default if not set.
@@ -270,8 +270,8 @@ export const userSettings = pgTable("user_settings", {
   routeStrategy: text("route_strategy").notNull().default("auto"),
 
   /**
-   * Encrypted session token for the user's Openship Cloud account.
-   * Used by local instances to fetch namespace tokens from api.openship.io.
+   * Encrypted session token for the user's Kovalio Cloud account.
+   * Used by local instances to fetch namespace tokens from api.nextrium.org.
    * Null if the user hasn't linked their cloud account.
    */
   cloudSessionToken: text("cloud_session_token"),
@@ -280,7 +280,7 @@ export const userSettings = pgTable("user_settings", {
    * Default deploy target seeded into new deployments:
    *   "local"  → this machine
    *   "server" → a configured server (pair with `defaultServerId`)
-   *   "cloud"  → Openship Cloud
+   *   "cloud"  → Kovalio Cloud
    *   null     → no preference, the deploy picker chooses (auto-selected
    *              when only one target is available)
    * The user can always override per-deployment from the picker on /deploy.

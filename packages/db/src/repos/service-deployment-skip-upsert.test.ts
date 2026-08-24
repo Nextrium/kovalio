@@ -81,7 +81,7 @@ async function seedCarriedForwardRow() {
     status: "skipped",
     reason: "unchanged",
     reasonSkipped: "unchanged",
-    imageRef: "openship/worker:v3",
+    imageRef: "kovalio/worker:v3",
     imageDigest: "sha256:deadbeef",
     containerId: "container_abc",
     hostPort: 9411,
@@ -140,7 +140,7 @@ describe("markServiceDeploymentSkipped", () => {
 
     const row = await readRow();
     expect(row?.containerId).toBe("container_abc");
-    expect(row?.imageRef).toBe("openship/worker:v3");
+    expect(row?.imageRef).toBe("kovalio/worker:v3");
     expect(row?.imageDigest).toBe("sha256:deadbeef");
     expect(row?.hostPort).toBe(9411);
     expect(row?.hostPorts).toEqual({ "9411": 19411, "9412": 19412 });
@@ -178,7 +178,7 @@ describe("upsertServiceDeployment over a pre-created skipped row", () => {
         serviceName: "worker",
         containerId: "container_new",
         status: "success",
-        imageRef: "openship/worker:v4",
+        imageRef: "kovalio/worker:v4",
         imageDigest: "sha256:cafebabe",
         hostPort: 9411,
         hostPorts: { "3000": 9411, "3001": 9412 },
@@ -207,7 +207,7 @@ describe("upsertServiceDeployment over a pre-created skipped row", () => {
         serviceName: "worker",
         containerId: "container_started",
         status: "indeterminate",
-        imageRef: "openship/worker:v4",
+        imageRef: "kovalio/worker:v4",
       }),
     ).resolves.not.toThrow();
 

@@ -158,7 +158,7 @@ describe("UpdatesCard", () => {
 
   it("offers the CLI command for the control plane, never an Update button", () => {
     const html = updates(ISSUE_FIXTURES.advisory!.filter((i) => i.scope === "platform"));
-    expect(html).toContain("openship update");
+    expect(html).toContain("kovalio update");
     expect(html).toContain("updates itself from the command line");
   });
 

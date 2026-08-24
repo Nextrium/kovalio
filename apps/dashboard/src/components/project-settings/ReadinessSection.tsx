@@ -17,11 +17,11 @@ import React, { useState } from "react";
 import { Activity, ChevronDown, ChevronUp } from "lucide-react";
 import { Toggle } from "@/components/project-settings/ServerSideSwitch";
 import { useI18n } from "@/components/i18n-provider";
-import type { OpenshipReadiness } from "@repo/core";
+import type { KovalioReadiness } from "@repo/core";
 
 interface Props {
-  value: OpenshipReadiness | null | undefined;
-  onChange: (next: OpenshipReadiness | undefined) => void;
+  value: KovalioReadiness | null | undefined;
+  onChange: (next: KovalioReadiness | undefined) => void;
   /** Render open on mount. Defaults to closed — see the module note. */
   defaultOpen?: boolean;
   disabled?: boolean;
@@ -57,8 +57,8 @@ const ReadinessSection: React.FC<Props> = ({
    * turning both toggles off is indistinguishable from never having touched the
    * section. Without this an all-false object would persist and read as "configured".
    */
-  const patch = (next: Partial<OpenshipReadiness>) => {
-    const merged: OpenshipReadiness = { ...(value ?? {}), ...next };
+  const patch = (next: Partial<KovalioReadiness>) => {
+    const merged: KovalioReadiness = { ...(value ?? {}), ...next };
     if (merged.enabled !== true && merged.stabilization !== true) {
       onChange(undefined);
       return;

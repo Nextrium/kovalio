@@ -14,14 +14,14 @@
  *
  * State model:
  *   - Durable state ("what HAS been installed") lives on the target VPS at
- *     /root/.openship/mail-state.json. Purge the VPS, state goes with it.
+ *     /root/.kovalio/mail-state.json. Purge the VPS, state goes with it.
  *   - Ephemeral state ("is an install running RIGHT NOW") lives as one
  *     `activeSession` variable in this process. Lost on API restart, which
- *     is fine - if openship restarts mid-install, the on-server state file
+ *     is fine - if kovalio restarts mid-install, the on-server state file
  *     still has the completed steps, the SSE caller can retry from where
  *     it left off via the regular Resume button.
  *
- * No openship DB tables involved.
+ * No kovalio DB tables involved.
  */
 
 import type { Context } from "hono";
@@ -313,11 +313,11 @@ export async function getStatus(c: Context) {
 }
 
 /**
- * GET /mail/servers - list every server openship has provisioned (or is
+ * GET /mail/servers - list every server kovalio has provisioned (or is
  * provisioning) the mail stack on.
  *
  * Reads from the `mail_servers` table - the single source of truth in
- * openship's DB. Fast (one query, no SSH), survives unreachable hosts,
+ * kovalio's DB. Fast (one query, no SSH), survives unreachable hosts,
  * and stays consistent with the install lifecycle (rows inserted on
  * install start, stamped on completion, removed on reset).
  *
@@ -452,9 +452,9 @@ export async function scanMailInstall(c: Context) {
       MAIL_SETUP_STEPS.every(
         (step) => state.completedSteps[String(step.id)]?.success === true,
       );
-    // Informational: does openship already manage a webmail for this server?
+    // Informational: does kovalio already manage a webmail for this server?
     // Read from the DB, since the webmail is a project — a re-adopted box whose
-    // openship DB was rebuilt correctly reads "not deployed": the container may
+    // kovalio DB was rebuilt correctly reads "not deployed": the container may
     // still be running, but nothing here manages or can redeploy it.
     const mailRecord = await repos.mailServer.get(serverId).catch(() => undefined);
     const webmailProject = await resolveLinkedWebmailProject(
@@ -513,7 +513,7 @@ export async function adoptMailServer(c: Context) {
       return c.json(
         {
           error: iredmailInstalled
-            ? "A mail stack is running but no Openship state file was found — re-run setup to manage it."
+            ? "A mail stack is running but no Kovalio state file was found — re-run setup to manage it."
             : "No mail server found on this server.",
         },
         404,
@@ -526,7 +526,7 @@ export async function adoptMailServer(c: Context) {
       );
     // Mark it installed when the stack is actually LIVE, not only when every
     // current step id is recorded success. An adopted server set up by an
-    // older openship (or with step-id drift) has a running iRedMail stack but
+    // older kovalio (or with step-id drift) has a running iRedMail stack but
     // may not satisfy the exact per-step check — treating it as installed keeps
     // the dashboard on the admin panel instead of bouncing to the setup wizard.
     const completed = iredmailInstalled || installComplete;
@@ -543,7 +543,7 @@ export async function adoptMailServer(c: Context) {
 
 /**
  * If the state file's `dnsRecords` is missing the `a` (and optionally
- * `aaaa`) entries, derive them from openship's stored sshHost - either
+ * `aaaa`) entries, derive them from kovalio's stored sshHost - either
  * it's already an IP literal, or it's a hostname we resolve via DNS.
  *
  * This is a read-time augmentation only: we DON'T write back to the
@@ -1066,20 +1066,20 @@ export async function startSetup(c: Context) {
       // transactional mail (welcome emails, alerts, future user-invite sends).
       // Same try/catch shape as markInstalled — a hiccup here must not poison
       // the wizard's terminal success state; the operator (or the first
-      // sendTestEmail call) will trigger ensureOpenshipPlatformMailbox again
+      // sendTestEmail call) will trigger ensureKovalioPlatformMailbox again
       // later via its on-demand backfill path.
       //
       // Dynamic import mirrors the pattern domains.service.ts uses to dodge a
       // load-time cycle (mail-state ↔ mail.controller ↔ admin services).
       try {
-        const { ensureOpenshipPlatformMailbox } = await import(
+        const { ensureKovalioPlatformMailbox } = await import(
           "./admin/platform-mailbox.service"
         );
         // Clear any cached "platform mailbox unavailable" marker from BEFORE the
         // install finished — otherwise the send path keeps skipping this server
         // for the rest of the failure window right after a successful install.
         invalidatePlatformTransport(serverId);
-        const creds = await ensureOpenshipPlatformMailbox(serverId);
+        const creds = await ensureKovalioPlatformMailbox(serverId);
         await stream.writeSSE({
           event: "log",
           data: JSON.stringify({
@@ -1089,7 +1089,7 @@ export async function startSetup(c: Context) {
         });
       } catch (err) {
         console.warn(
-          `[mail.install] ensureOpenshipPlatformMailbox failed for ${serverId}:`,
+          `[mail.install] ensureKovalioPlatformMailbox failed for ${serverId}:`,
           err,
         );
         await stream.writeSSE({
@@ -1220,7 +1220,7 @@ export async function acknowledgeDns(c: Context) {
  * then the dashboard re-POSTs to /mail/setup with the resume step to
  * continue past the PTR gate.
  *
- * We deliberately don't verify the PTR with `dig -x` from openship's host:
+ * We deliberately don't verify the PTR with `dig -x` from kovalio's host:
  * many VPS providers (Hostinger included) take 5-15 minutes to propagate
  * rDNS changes, and blocking on that would frustrate users. If they lie
  * about having set it, mail-to-Gmail just goes to spam - recoverable.
@@ -1266,7 +1266,7 @@ export async function acknowledgePtr(c: Context) {
  *
  * Useful after the operator has purged or reimaged the VPS - clears any
  * stale state without manually SSHing to delete the JSON. Does NOT touch
- * iRedMail or any installed daemons; just removes openship's record.
+ * iRedMail or any installed daemons; just removes kovalio's record.
  */
 export async function resetSetup(c: Context) {
   if (env.CLOUD_MODE) return c.json({ error: "Not available" }, 404);
@@ -1298,7 +1298,7 @@ export async function resetSetup(c: Context) {
       500,
     );
   }
-  // Drop openship's record of "this server is a mail server" the moment the
+  // Drop kovalio's record of "this server is a mail server" the moment the
   // on-host state file goes. Best-effort - losing the row is recoverable on
   // the next install start, but losing them out of sync would let /emails
   // claim a stale mail server.

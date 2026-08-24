@@ -39,7 +39,7 @@
 local cjson = require "cjson.safe"
 
 -- SAFE LOAD: GeoIP Module (per-worker, cached by require)
-local geo_ok, geo = pcall(require, "openship.geo_country")
+local geo_ok, geo = pcall(require, "kovalio.geo_country")
 if not geo_ok then
     geo = nil
     ngx.log(ngx.WARN, "[site_logger] geo_country module not available. GeoIP disabled.")

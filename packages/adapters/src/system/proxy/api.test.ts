@@ -58,14 +58,14 @@ describe("edgeProxyFor", () => {
             }`;
         }
         if (cmd.includes("docker ps -a")) {
-          return "openship-edge\tghcr.io/openship/edge:latest\trunning";
+          return "kovalio-edge\tghcr.io/kovalio/edge:latest\trunning";
         }
         return "";
       }),
     } as unknown as CommandExecutor;
     const api = edgeProxyFor(ownEdge, "openresty", {
       ours: true,
-      container: "openship-edge",
+      container: "kovalio-edge",
     });
 
     expect(await api.listLoopbackUpstreamPortsStrict()).toEqual(
@@ -87,14 +87,14 @@ describe("edgeProxyFor", () => {
           }`;
         }
         if (cmd.includes("docker ps -a")) {
-          return "openship-edge\tghcr.io/openship/edge:latest\trunning";
+          return "kovalio-edge\tghcr.io/kovalio/edge:latest\trunning";
         }
         return "";
       }),
     } as unknown as CommandExecutor;
     const api = edgeProxyFor(ownEdge, "openresty", {
       ours: true,
-      container: "openship-edge",
+      container: "kovalio-edge",
     });
 
     expect(await api.listLoopbackUpstreamPortsStrict()).toEqual(new Set([23_000]));
@@ -119,14 +119,14 @@ describe("edgeProxyFor", () => {
           }`;
         }
         if (cmd.includes("docker ps -a")) {
-          return "openship-edge\tghcr.io/openship/edge:latest\trunning";
+          return "kovalio-edge\tghcr.io/kovalio/edge:latest\trunning";
         }
         return "";
       }),
     } as unknown as CommandExecutor;
     const api = edgeProxyFor(ownEdge, "openresty", {
       ours: true,
-      container: "openship-edge",
+      container: "kovalio-edge",
     });
 
     expect(await api.listLoopbackUpstreamPortsStrict()).toEqual(new Set([23_000]));
@@ -153,14 +153,14 @@ describe("edgeProxyFor", () => {
             }`;
         }
         if (cmd.includes("docker ps -a")) {
-          return "openship-edge\tghcr.io/openship/edge:latest\trunning";
+          return "kovalio-edge\tghcr.io/kovalio/edge:latest\trunning";
         }
         return "";
       }),
     } as unknown as CommandExecutor;
     const api = edgeProxyFor(ownEdge, "openresty", {
       ours: true,
-      container: "openship-edge",
+      container: "kovalio-edge",
     });
 
     expect(await api.listLoopbackUpstreamPortsStrict()).toEqual(new Set([23_000, 24_000]));
@@ -180,12 +180,12 @@ describe("edgeProxyFor", () => {
     expect((await api.listSites()).sites).toEqual([]);
   });
 
-  it("refuses to treat a host with no Openship edge as an empty inventory", async () => {
+  it("refuses to treat a host with no Kovalio edge as an empty inventory", async () => {
     const emptyHost = { exec: vi.fn(async () => "") } as unknown as CommandExecutor;
     const api = edgeProxyFor(emptyHost, "openresty", { ours: true });
 
     await expect(api.listLoopbackUpstreamPortsStrict()).rejects.toThrow(
-      "no running Openship edge or bare OpenResty inventory",
+      "no running Kovalio edge or bare OpenResty inventory",
     );
     expect(
       (emptyHost.exec as ReturnType<typeof vi.fn>).mock.calls.some(([cmd]) =>
@@ -194,7 +194,7 @@ describe("edgeProxyFor", () => {
     ).toBe(true);
   });
 
-  it("does not trust leftover Openship vhosts when no Openship edge is running", async () => {
+  it("does not trust leftover Kovalio vhosts when no Kovalio edge is running", async () => {
     const staleFiles = {
       exec: vi.fn(async (cmd: string) => {
         if (cmd.includes("if [ -e")) return NGINX_CONF("/c.pem", "/k.pem");
@@ -205,7 +205,7 @@ describe("edgeProxyFor", () => {
     const api = edgeProxyFor(staleFiles, "openresty", { ours: true });
 
     await expect(api.listLoopbackUpstreamPortsStrict()).rejects.toThrow(
-      "no running Openship edge or bare OpenResty inventory",
+      "no running Kovalio edge or bare OpenResty inventory",
     );
   });
 
@@ -219,7 +219,7 @@ describe("edgeProxyFor", () => {
           );
         }
         if (cmd.includes("docker ps -a")) {
-          return "openship-edge\tghcr.io/openship/edge:latest\trunning";
+          return "kovalio-edge\tghcr.io/kovalio/edge:latest\trunning";
         }
         return "";
       }),

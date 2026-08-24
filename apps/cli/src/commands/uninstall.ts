@@ -1,10 +1,10 @@
 /**
- * `openship uninstall` — remove Openship from this machine.
+ * `kovalio uninstall` — remove Kovalio from this machine.
  *
- * The counterpart to `openship up`. Where `stop` just halts things (compose down /
+ * The counterpart to `kovalio up`. Where `stop` just halts things (compose down /
  * unload the service, keeping data), uninstall is the DESTRUCTIVE version: it also
  * drops the stack's volumes (database, issued certificates, edge vhosts), deletes
- * the images we own, and removes ~/.openship.
+ * the images we own, and removes ~/.kovalio.
  *
  * Two things it deliberately does NOT do, because this box is usually shared with
  * the operator's own workloads:
@@ -30,11 +30,11 @@ import { startUnitHint } from "../lib/this-host";
 
 export const uninstallCommand = new Command("uninstall")
   .description(
-    "Remove Openship from this machine: stop it, delete its data (database, certs, edge config), its images, and ~/.openship. Deployed apps are left running.",
+    "Remove Kovalio from this machine: stop it, delete its data (database, certs, edge config), its images, and ~/.kovalio. Deployed apps are left running.",
   )
   .option("-y, --yes", "Skip the confirmation prompt (for scripts)")
-  .option("--keep-data", "Keep the database/certs volumes and ~/.openship — remove only the running stack")
-  .option("--keep-images", "Don't delete the Openship container images")
+  .option("--keep-data", "Keep the database/certs volumes and ~/.kovalio — remove only the running stack")
+  .option("--keep-images", "Don't delete the Kovalio container images")
   .action(async (opts: { yes?: boolean; keepData?: boolean; keepImages?: boolean }) => {
     const method = readInstallMethod();
     const destructive = !opts.keepData;
@@ -43,15 +43,15 @@ export const uninstallCommand = new Command("uninstall")
       const lines = [
         method === "compose"
           ? "  • stop the Docker Compose stack (api, dashboard, postgres, redis, edge)"
-          : "  • stop and remove the Openship service",
+          : "  • stop and remove the Kovalio service",
         destructive ? "  • DELETE its data: database, issued certificates, edge vhosts" : null,
         destructive ? `  • DELETE ${OS_DIR} (config, tokens, local database)` : null,
-        !opts.keepImages && method === "compose" ? "  • delete the Openship container images" : null,
+        !opts.keepImages && method === "compose" ? "  • delete the Kovalio container images" : null,
         "  • leave your DEPLOYED apps and their data untouched",
       ].filter(Boolean);
       console.log(chalk.yellow("\n  This will:\n") + lines.join("\n") + "\n");
       const go = await confirm({
-        message: destructive ? "Permanently remove Openship and its data?" : "Remove Openship (keeping data)?",
+        message: destructive ? "Permanently remove Kovalio and its data?" : "Remove Kovalio (keeping data)?",
         initialValue: false,
       });
       if (isCancel(go) || !go) {
@@ -64,7 +64,7 @@ export const uninstallCommand = new Command("uninstall")
     // never completed, put it back. Best-effort and a no-op when there's no
     // unfinished journal (a COMPLETED takeover cleared it — see the hint below).
     const restored = await rollbackHostEdge().catch(() => false);
-    if (restored) console.log(chalk.green("  Restored the proxy that was running before Openship."));
+    if (restored) console.log(chalk.green("  Restored the proxy that was running before Kovalio."));
 
     if (method === "compose") {
       const { ok, removedImages } = composeUninstall({ removeImages: !opts.keepImages });
@@ -100,13 +100,13 @@ export const uninstallCommand = new Command("uninstall")
     // printed by `up` and by the edge import, and all three read it from one place.
     const back = startUnitHint("nginx");
     console.log(
-      chalk.green("\n  ✔ Openship uninstalled.\n") +
+      chalk.green("\n  ✔ Kovalio uninstalled.\n") +
         // A takeover that SUCCEEDED cleared its journal, so we have no record of
         // what to restart — say so rather than leaving :80/:443 quietly dark.
         (restored
           ? ""
           : chalk.dim(
-              "  If Openship took over :80/:443 from another proxy, re-enable it:\n" +
+              "  If Kovalio took over :80/:443 from another proxy, re-enable it:\n" +
                 (back
                   ? `    ${back}   (or caddy / apache2)\n`
                   : "    start it the way this host starts services (nginx / caddy / apache2)\n"),

@@ -25,7 +25,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 function dataDir(): string {
-  return process.env.PGLITE_DATA_DIR ?? join(homedir(), ".openship", "data");
+  return process.env.PGLITE_DATA_DIR ?? join(homedir(), ".kovalio", "data");
 }
 
 function suffix(): string {

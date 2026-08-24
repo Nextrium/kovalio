@@ -7,7 +7,7 @@ import { isCloudManagedHostname, managedHostnameToSlug } from "./public-endpoint
 import { ensureTargetVerified } from "./edge-target-verify";
 
 const NO_CLOUD_MEMBER =
-  "Cannot sync edge proxy: no member of this organization has linked Openship Cloud";
+  "Cannot sync edge proxy: no member of this organization has linked Kovalio Cloud";
 
 /**
  * A managed-edge failure the caller has to answer differently.
@@ -29,7 +29,7 @@ export class ManagedEdgeError extends Error {
 }
 
 /**
- * Ensure an Openship Cloud edge proxy exists for a managed deploy slug.
+ * Ensure an Kovalio Cloud edge proxy exists for a managed deploy slug.
  *
  * THE one funnel. Sends slug + target host to the SaaS, which forwards to Cloud with
  * the org's namespace token; Cloud scopes the slug to the namespace and pins the
@@ -94,7 +94,7 @@ export async function ensureManagedEdgeProxy(
     }
     // Prove control, then retry once. `canonicalEdgeTarget` is the SAME normalizer
     // the SaaS applies before calling Cloud, so what we verify is what gets routed.
-    opts?.onLog?.(`Proving this server controls ${host} for Openship Cloud routing...\n`);
+    opts?.onLog?.(`Proving this server controls ${host} for Kovalio Cloud routing...\n`);
     const verdict = await ensureTargetVerified(organizationId, canonicalEdgeTarget(host), {
       ...(opts?.serverId ? { serverId: opts.serverId } : {}),
       ...(opts?.routing ? { routing: opts.routing } : {}),
@@ -102,7 +102,7 @@ export async function ensureManagedEdgeProxy(
     });
     if (!verdict.verified) {
       throw new ManagedEdgeError(
-        `Openship Cloud won't route to ${host} until it can confirm this server controls it: ` +
+        `Kovalio Cloud won't route to ${host} until it can confirm this server controls it: ` +
           `${verdict.reason ?? "verification did not complete"}`,
         502,
       );
@@ -145,7 +145,7 @@ export async function syncManagedEdgeRoutes(
       });
       // Name the target. It's the one fact that explains whether this URL will
       // serve the app, and the operator could not see it anywhere before.
-      opts.onLog?.(`  ${tgt.hostname} → http://${target} (Openship Cloud edge → this server)\n`);
+      opts.onLog?.(`  ${tgt.hostname} → http://${target} (Kovalio Cloud edge → this server)\n`);
       if (warning) opts.onLog?.(`Note: ${tgt.hostname} is ${warning}\n`, "warn");
     } catch (err) {
       const reason = safeErrorMessage(err);
@@ -163,7 +163,7 @@ export async function syncManagedEdgeRoutes(
 /**
  * Tear down every managed (*.opsh.io) edge route for a set of freed slugs,
  * best-effort. The delete-side counterpart to `syncManagedEdgeRoutes`: dropping
- * a free domain must release its slug→target route on Openship Cloud's edge, or
+ * a free domain must release its slug→target route on Kovalio Cloud's edge, or
  * the old URL keeps resolving and the slug stays taken. Never throws — a stale
  * edge route is cosmetic and must never fail a domain edit; returns per-slug
  * failures for the caller to log.
@@ -228,6 +228,6 @@ export function edgeUnsyncedWarning(failures: string[], retryHint: string): stri
   return (
     `Deployed, but the free domain routing didn't sync for ${failures.join(", ")}. ` +
     `The app is live on the server; the free .opsh.io URL won't resolve until the edge route is created. ` +
-    `Check that the server is reachable from Openship Cloud on port 80, then ${retryHint}.`
+    `Check that the server is reachable from Kovalio Cloud on port 80, then ${retryHint}.`
   );
 }

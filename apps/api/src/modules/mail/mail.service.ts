@@ -8,7 +8,7 @@
  * (remote VPS, ssh2). This file does not know — or care — which.
  *
  * The install is a CONTAINER PULL, not a host takeover: `stepDeployEngine` runs
- * the `openship-mail` image plus its pinned postgres sidecar via
+ * the `kovalio-mail` image plus its pinned postgres sidecar via
  * `ensureContainerMail`. Nothing here transfers the engine tree or executes
  * `iRedMail.sh` on the target any more — that installer now runs at image BUILD
  * time (`apps/email/Dockerfile`), and `MAIL_SERVER_ENGINE_DIR` is vestigial.
@@ -134,7 +134,7 @@ function amavisConf(
   if (found) return { write: found, engine: found };
   throw new Error(
     `Could not find amavis's configuration on this mail server. Looked for ` +
-      `${HOST_AMAVIS_CONF_CANDIDATES.map((c) => c.path).join(", ")}. Openship will not ` +
+      `${HOST_AMAVIS_CONF_CANDIDATES.map((c) => c.path).join(", ")}. Kovalio will not ` +
       `write DKIM directives to a path amavis doesn't read — that signs nothing and ` +
       `reports success.`,
   );
@@ -186,11 +186,11 @@ export const DEFAULT_STEP_TIMEOUT_MS = 10 * 60_000;
 // host. What remains is either runtime-specific (firewall, DKIM/DNS, cert) or
 // per-install (domain + secrets, injected into the engine's first boot).
 export const MAIL_SETUP_STEPS: MailSetupStep[] = [
-  { id: 1, key: "ensure_components",    label: "Ensure System Components",  description: "Install Docker and bring up the openship edge" },
+  { id: 1, key: "ensure_components",    label: "Ensure System Components",  description: "Install Docker and bring up the kovalio edge" },
   { id: 2, key: "check_port_25",        label: "Check Port 25",             description: "Verify outbound SMTP port is open" },
-  { id: 3, key: "ensure_reverse_proxy", label: "Ensure Reverse Proxy",      description: "Confirm the openship edge owns ports 80/443" },
+  { id: 3, key: "ensure_reverse_proxy", label: "Ensure Reverse Proxy",      description: "Confirm the kovalio edge owns ports 80/443" },
   { id: 4, key: "open_firewall",        label: "Open Mail Firewall",        description: "Open inbound SMTP/IMAP/submission ports on the host firewall" },
-  { id: 5, key: "deploy_engine",        label: "Deploy Mail Engine",        description: "Pull and run the openship-mail engine container + database sidecar" },
+  { id: 5, key: "deploy_engine",        label: "Deploy Mail Engine",        description: "Pull and run the kovalio-mail engine container + database sidecar" },
   { id: 6, key: "dkim_keys",            label: "Retrieve DKIM Keys",        description: "Get DKIM keys and DNS records" },
   { id: 7, key: "request_ssl",          label: "Request SSL Certificate",   description: "Obtain Let's Encrypt SSL for mail domain" },
   { id: 8, key: "configure_ssl",        label: "Configure SSL",             description: "Link certificates and reload mail daemons" },
@@ -274,11 +274,11 @@ export async function stepCheckPort25(
 }
 
 /**
- * Step 1: Ensure Docker and the openship edge are on the target.
+ * Step 1: Ensure Docker and the kovalio edge are on the target.
  *
  *   - Docker → the mail engine + edge are container images, so it's a hard prereq
  *   - edge   → routing + TLS for this box: OpenResty, its Lua, and certbot, all
- *              inside the `openship-edge` image
+ *              inside the `kovalio-edge` image
  *
  * There is ONE edge on a box and it is the container. This step used to
  * apt-install a HOST OpenResty and certbot, which made mail the only flow with
@@ -323,7 +323,7 @@ export async function stepEnsureComponents(
     log(stepId, "info", `${name} ready${r.version ? ` (${r.version})` : ""}`);
   }
 
-  log(stepId, "info", "Ensuring the openship edge (OpenResty + certbot, containerized)...");
+  log(stepId, "info", "Ensuring the kovalio edge (OpenResty + certbot, containerized)...");
   const edge = await ensureEdge(
     exec,
     (promptUser) => installContainerEdge(exec, sysLog, { promptUser }),
@@ -355,7 +355,7 @@ export async function stepEnsureComponents(
   return {
     stepId,
     success: true,
-    message: "Docker and the openship edge are ready",
+    message: "Docker and the kovalio edge are ready",
   };
 }
 
@@ -400,13 +400,13 @@ export async function stepEnsureReverseProxy(
       stepId,
       success: false,
       message:
-        "Nothing is listening on :80 / :443 - the openship edge isn't running. " +
+        "Nothing is listening on :80 / :443 - the kovalio edge isn't running. " +
         "Rerun from \"Ensure System Components\" to bring it up.",
     };
   }
 
-  log(stepId, "info", "The openship edge holds :80 / :443");
-  return { stepId, success: true, message: "The openship edge is the active reverse proxy" };
+  log(stepId, "info", "The kovalio edge holds :80 / :443");
+  return { stepId, success: true, message: "The kovalio edge is the active reverse proxy" };
 }
 
 /**
@@ -477,7 +477,7 @@ export async function stepOpenMailFirewall(
     rules.push({ port, script: opScript(op.value) });
   }
 
-  // The same gate `openship up` applies before touching a host firewall. A rule that
+  // The same gate `kovalio up` applies before touching a host firewall. A rule that
   // lives only in the running ruleset disappears at the next reboot, and one surface
   // adding it while the other refuses is how the same box got two answers.
   if (!ops.firewallPersists()) {
@@ -486,7 +486,7 @@ export async function stepOpenMailFirewall(
       stepId,
       "warn",
       `This host filters with ${profile.firewall}, whose rules live in the running ruleset ` +
-        `only — Openship won't add one that quietly disappears at the next reboot. Run these ` +
+        `only — Kovalio won't add one that quietly disappears at the next reboot. Run these ` +
         `yourself, wherever this box restores its ruleset from:\n${script}`,
     );
     return {
@@ -545,7 +545,7 @@ export function genSecret(bytes = 24): string {
 }
 
 /**
- * Step 5: Deploy the mail engine as the `openship-mail` container + pg sidecar.
+ * Step 5: Deploy the mail engine as the `kovalio-mail` container + pg sidecar.
  *
  * The iRedMail install itself is baked into the prebuilt image, so this step no
  * longer runs `iRedMail.sh` — it generates the per-install secrets, hands them +
@@ -607,7 +607,7 @@ export async function stepDeployEngine(
   // account with it. Referenced via `secrets` below.
   void finalAdminPassword;
 
-  // Deploy the engine as the `openship-mail` container (+ postgres sidecar).
+  // Deploy the engine as the `kovalio-mail` container (+ postgres sidecar).
   // Idempotent: a container already running the pinned image is left as-is (the
   // env-file secrets are only consumed on first boot, so a re-run never rotates a
   // live DB); a different image triggers a rollback-guarded swap. This REPLACES the
@@ -790,7 +790,7 @@ export async function stepDkimKeys(
   // their DNS or migrating providers.
   //
   // We intentionally do NOT recommend autodiscover/autoconfig CNAMEs:
-  // they only help when paired with an XML responder, which openship
+  // they only help when paired with an XML responder, which kovalio
   // doesn't ship; without it they only mislead. SRV records (RFC 6186)
   // are similarly omitted - `_imaps._tcp` / `_submission._tcp` are
   // honoured by ~nobody in practice.
@@ -988,7 +988,7 @@ export function spliceAmavisConf(
  * Delegates to the SAME `platform.ssl` every other certificate in the system goes
  * through — the pattern `registerWebmailCloudProxy` already uses against this very
  * mail VPS. This used to invoke `certbot certonly --standalone` itself, with a
- * comment saying it was "the same ACME mechanism the rest of openship uses": it
+ * comment saying it was "the same ACME mechanism the rest of kovalio uses": it
  * imitated `NginxProvider.provisionCert` instead of calling it, so the two could
  * drift, and it ran certbot on the HOST — which broke outright once the edge became
  * a container, because certbot then lives inside the image and the host has none.

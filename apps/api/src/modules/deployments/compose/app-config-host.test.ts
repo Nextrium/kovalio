@@ -111,7 +111,7 @@ describe("writeAppConfigFile", () => {
     } as unknown as CommandExecutor;
 
     await expect(
-      writeAppConfigFile(writer, "/var/lib/openship/app-config/p/kong/kong.yml", "x", "kong", "/kong.yml"),
+      writeAppConfigFile(writer, "/var/lib/kovalio/app-config/p/kong/kong.yml", "x", "kong", "/kong.yml"),
     ).rejects.toThrow(
       /Service "kong".*\/kong\.yml.*HOST path.*Timed out while waiting for handshake/s,
     );

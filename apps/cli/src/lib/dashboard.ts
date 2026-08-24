@@ -1,8 +1,8 @@
 /**
- * Lazy-download of the Openship dashboard (Next standalone) so `openship up`
+ * Lazy-download of the Kovalio dashboard (Next standalone) so `kovalio up`
  * can serve a local browser UI without bloating the npm package. Mirrors the
- * desktop-app download in `openship install`: fetch the release asset, verify
- * its sha256 sidecar, extract, and cache under ~/.openship/cache/dashboard/<tag>/.
+ * desktop-app download in `kovalio install`: fetch the release asset, verify
+ * its sha256 sidecar, extract, and cache under ~/.kovalio/cache/dashboard/<tag>/.
  *
  * The bundle has NO native deps (dashboard `output: "standalone"`, no
  * sharp/etc.), so a single Linux-built tarball runs cross-platform under Node.
@@ -18,7 +18,7 @@ import { assetUrl, expectedSha256, resolveLatestTag } from "./github-releases";
 export const DASHBOARD_CACHE = join(CACHE_DIR, "dashboard");
 
 function assetName(tag: string): string {
-  return `openship-dashboard-${tag}.tar.gz`;
+  return `kovalio-dashboard-${tag}.tar.gz`;
 }
 
 export interface DashboardBundle {
@@ -55,13 +55,13 @@ export async function ensureDashboard(
   // point at a locally-built Next standalone dir instead of downloading from
   // GitHub. Expects the monorepo-rooted layout <dir>/apps/dashboard/server.js
   // (i.e. apps/dashboard/.next/standalone). No checksum — it's your own build.
-  const override = process.env.OPENSHIP_DASHBOARD_DIR?.trim();
+  const override = process.env.KOVALIO_DASHBOARD_DIR?.trim();
   if (override) {
     const cwd = join(override, "apps", "dashboard");
     const serverJs = join(cwd, "server.js");
     if (!existsSync(serverJs)) {
       throw new Error(
-        `OPENSHIP_DASHBOARD_DIR=${override} but ${serverJs} is missing — build the dashboard standalone first (see docs).`,
+        `KOVALIO_DASHBOARD_DIR=${override} but ${serverJs} is missing — build the dashboard standalone first (see docs).`,
       );
     }
     return { tag: "local", entry: resolveDashboardEntry(cwd), cwd };

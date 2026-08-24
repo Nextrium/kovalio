@@ -43,7 +43,7 @@ describe("DockerEdgeExecutor — exec transport", () => {
     // failed with `(HTTP code 101) unexpected`. Config reloads, certbot and site
     // registration all silently died while the edge container looked healthy.
     const { docker, startOpts } = fakeDocker({ stdout: "ok" });
-    const ex = new DockerEdgeExecutor({ containerName: "openship-edge", docker });
+    const ex = new DockerEdgeExecutor({ containerName: "kovalio-edge", docker });
     await ex.exec("openresty -t");
     expect(startOpts).toHaveLength(1);
     expect(startOpts[0].hijack).toBeFalsy();
@@ -51,20 +51,20 @@ describe("DockerEdgeExecutor — exec transport", () => {
 
   it("returns stdout for a successful command", async () => {
     const { docker } = fakeDocker({ stdout: "configuration file test is successful\n" });
-    const ex = new DockerEdgeExecutor({ containerName: "openship-edge", docker });
+    const ex = new DockerEdgeExecutor({ containerName: "kovalio-edge", docker });
     await expect(ex.exec("openresty -t")).resolves.toContain("test is successful");
   });
 
   it("throws with BOTH streams folded in on a non-zero exit", async () => {
     // certbot prints its real cause to stdout while stderr carries boilerplate.
     const { docker } = fakeDocker({ exitCode: 1, stdout: "DNS problem: NXDOMAIN", stderr: "error" });
-    const ex = new DockerEdgeExecutor({ containerName: "openship-edge", docker });
+    const ex = new DockerEdgeExecutor({ containerName: "kovalio-edge", docker });
     await expect(ex.exec("certbot certonly ...")).rejects.toThrow(/NXDOMAIN/);
   });
 
   it("does not read a null ExitCode as success", async () => {
     const { docker } = fakeDocker({ exitCode: undefined as unknown as number });
-    const ex = new DockerEdgeExecutor({ containerName: "openship-edge", docker });
+    const ex = new DockerEdgeExecutor({ containerName: "kovalio-edge", docker });
     // ExitCode null + not Running → 0; the guard that matters is Running:true,
     // covered by the poll loop. Here we just assert it resolves rather than hanging.
     await expect(ex.exec("true")).resolves.toBeDefined();
@@ -109,7 +109,7 @@ describe("DockerEdgeExecutor — container file mode", () => {
   it("writes a file through the daemon, creating its directory first", async () => {
     const { docker, commands } = recordingDocker();
     const ex = new DockerEdgeExecutor({
-      containerName: "openship-edge",
+      containerName: "kovalio-edge",
       docker,
       fileMode: "container",
     });
@@ -127,7 +127,7 @@ describe("DockerEdgeExecutor — container file mode", () => {
   it("chunks a large write and appends after the first command", async () => {
     const { docker, commands } = recordingDocker();
     const ex = new DockerEdgeExecutor({
-      containerName: "openship-edge",
+      containerName: "kovalio-edge",
       docker,
       fileMode: "container",
     });
@@ -144,7 +144,7 @@ describe("DockerEdgeExecutor — container file mode", () => {
   it("truncates for empty content instead of emitting a base64 command", async () => {
     const { docker, commands } = recordingDocker();
     const ex = new DockerEdgeExecutor({
-      containerName: "openship-edge",
+      containerName: "kovalio-edge",
       docker,
       fileMode: "container",
     });
@@ -157,7 +157,7 @@ describe("DockerEdgeExecutor — container file mode", () => {
     // `test -e` answers by exit code — absence is an answer, not a failure.
     const { docker } = recordingDocker((cmd) => (cmd.startsWith("test -e") ? 1 : 0));
     const ex = new DockerEdgeExecutor({
-      containerName: "openship-edge",
+      containerName: "kovalio-edge",
       docker,
       fileMode: "container",
     });
@@ -167,7 +167,7 @@ describe("DockerEdgeExecutor — container file mode", () => {
   it("reads, mkdirs and removes through the daemon", async () => {
     const { docker, commands } = recordingDocker();
     const ex = new DockerEdgeExecutor({
-      containerName: "openship-edge",
+      containerName: "kovalio-edge",
       docker,
       fileMode: "container",
     });
@@ -184,7 +184,7 @@ describe("DockerEdgeExecutor — container file mode", () => {
   it("refuses transferIn — there is no local source across a remote daemon", async () => {
     const { docker } = recordingDocker();
     const ex = new DockerEdgeExecutor({
-      containerName: "openship-edge",
+      containerName: "kovalio-edge",
       docker,
       fileMode: "container",
     });
@@ -193,7 +193,7 @@ describe("DockerEdgeExecutor — container file mode", () => {
 
   it("defaults to mounted mode — unchanged for the compose-local edge", async () => {
     const { docker, commands } = recordingDocker();
-    const ex = new DockerEdgeExecutor({ containerName: "openship-edge", docker });
+    const ex = new DockerEdgeExecutor({ containerName: "kovalio-edge", docker });
     // node:fs on a path that doesn't exist → rejects WITHOUT touching the daemon.
     await expect(ex.readFile("/definitely/not/here.conf")).rejects.toThrow();
     expect(commands).toEqual([]);
@@ -258,7 +258,7 @@ function downDocker(opts: {
 /**
  * The dockerode half of the same fix. This transport used to report the condition as
  * `(HTTP code 409) … container <64-hex-id> is not running`: the resolved id, no name,
- * no cause — six identical 409s during an `openship up` migration while the edge was
+ * no cause — six identical 409s during an `kovalio up` migration while the edge was
  * still coming up, and from the cert flow a container the operator had no reason to
  * think was involved.
  */
@@ -269,10 +269,10 @@ describe("DockerEdgeExecutor — the edge container is down", () => {
 
   it("names the container, its state and the [emerg] when the daemon refuses the exec", async () => {
     const { docker, probes } = downDocker({ refuse: RESTARTING });
-    const ex = new DockerEdgeExecutor({ containerName: "openship-edge", docker });
+    const ex = new DockerEdgeExecutor({ containerName: "kovalio-edge", docker });
 
     await expect(ex.exec("certbot certonly")).rejects.toThrow(
-      /the edge container is not running \("openship-edge"\) \(restarting\)/,
+      /the edge container is not running \("kovalio-edge"\) \(restarting\)/,
     );
     await expect(ex.exec("certbot certonly")).rejects.toThrow(/cannot load certificate/);
     // Read through the daemon API, not a shell — the whole reason `edgeFailureReason`
@@ -286,7 +286,7 @@ describe("DockerEdgeExecutor — the edge container is down", () => {
     // which Bun's node:http doesn't surface the way modem expects. Diagnosing THAT as
     // "the edge is down" would send an operator to restart a perfectly healthy edge.
     const { docker, probes } = downDocker({ refuse: "(HTTP code 101) unexpected - upgrade failed" });
-    const ex = new DockerEdgeExecutor({ containerName: "openship-edge", docker });
+    const ex = new DockerEdgeExecutor({ containerName: "kovalio-edge", docker });
 
     await expect(ex.exec("openresty -t")).rejects.toThrow(/HTTP code 101/);
     await expect(ex.exec("openresty -t")).rejects.not.toThrow(/edge container is not running/);
@@ -303,7 +303,7 @@ describe("DockerEdgeExecutor — the edge container is down", () => {
         `nginx: configuration file /usr/local/openresty/nginx/conf/nginx.conf test is successful\n` +
         `nginx: [error] invalid PID number "" in "/usr/local/openresty/nginx/logs/nginx.pid"`,
     });
-    const ex = new DockerEdgeExecutor({ containerName: "openship-edge", docker });
+    const ex = new DockerEdgeExecutor({ containerName: "kovalio-edge", docker });
 
     await expect(ex.exec("openresty -s reload")).rejects.toThrow(
       /the edge container is not running.*cannot load certificate/s,
@@ -315,7 +315,7 @@ describe("DockerEdgeExecutor — the edge container is down", () => {
       exitCode: 1,
       stdout: "Detail: DNS problem: NXDOMAIN looking up A for test.hekai.org",
     });
-    const ex = new DockerEdgeExecutor({ containerName: "openship-edge", docker });
+    const ex = new DockerEdgeExecutor({ containerName: "kovalio-edge", docker });
 
     await expect(ex.exec("certbot certonly")).rejects.toThrow(/NXDOMAIN/);
     await expect(ex.exec("certbot certonly")).rejects.not.toThrow(/edge container is not running/);
@@ -324,7 +324,7 @@ describe("DockerEdgeExecutor — the edge container is down", () => {
 
   it("streams ONE explanation line so the caller's built error carries it", async () => {
     const { docker } = downDocker({ exitCode: 1, stdout: RESTARTING });
-    const ex = new DockerEdgeExecutor({ containerName: "openship-edge", docker });
+    const ex = new DockerEdgeExecutor({ containerName: "kovalio-edge", docker });
 
     const lines: string[] = [];
     const result = await ex.streamExec("certbot certonly", (log) => lines.push(log.message));
@@ -340,10 +340,10 @@ describe("DockerEdgeExecutor — the edge container is down", () => {
 
   it("still names the container when the diagnosis reads fail too", async () => {
     const { docker } = downDocker({ refuse: RESTARTING, probesFail: true });
-    const ex = new DockerEdgeExecutor({ containerName: "openship-edge", docker });
+    const ex = new DockerEdgeExecutor({ containerName: "kovalio-edge", docker });
 
     await expect(ex.exec("openresty -t")).rejects.toThrow(
-      /the edge container is not running \("openship-edge"\) — .*docker logs --tail 40 openship-edge/,
+      /the edge container is not running \("kovalio-edge"\) — .*docker logs --tail 40 kovalio-edge/,
     );
   });
 });

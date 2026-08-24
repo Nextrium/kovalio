@@ -157,7 +157,7 @@ export function useI18n() {
   return useContext(I18nContext) ?? I18N_FALLBACK;
 }
 
-/** Brand name for the current shell — "OpenShip" or "OpenShip Mail". */
+/** Brand name for the current shell — "Kovalio" or "Kovalio Mail". */
 export function useBrandName(): string {
   const { t, productView } = useI18n();
   return brandNameFor(t.brand, productView);

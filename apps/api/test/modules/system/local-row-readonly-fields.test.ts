@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
  *
  * `updateServer` refuses a connection edit on the row that represents this box, because
  * nothing dials with those fields — the container→host channel authenticates with
- * OPENSHIP_HOST_SSH_*, and `ensureLocalServer` reverts `ssh_user` on the next read anyway.
+ * KOVALIO_HOST_SSH_*, and `ensureLocalServer` reverts `ssh_user` on the next read anyway.
  * Storing them meant the UI displayed a credential that was neither used nor kept, which
  * is where #527's reporter spent most of a dozen messages.
  *

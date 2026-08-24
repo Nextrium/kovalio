@@ -79,7 +79,7 @@ beforeEach(() => {
   h.reapply.mockResolvedValue(undefined);
 });
 
-const SUSE = "Openship has no package manager for openSUSE (distro family suse).";
+const SUSE = "Kovalio has no package manager for openSUSE (distro family suse).";
 
 describe("provisionSelfAppEdge failure detail", () => {
   it("returns the infra layer's diagnosis alongside the code, and only when there is one", async () => {

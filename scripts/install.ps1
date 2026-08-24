@@ -1,20 +1,20 @@
-# Openship installer (Windows) — https://get.openship.io
+# Kovalio installer (Windows) — https://get.kovalio.nextrium.org
 #
-#   irm https://git.openship.io/windows | iex
+#   irm https://git.nextrium.org/windows | iex
 #
-# Installs the Openship CLI as a self-contained, sha256-verified payload that
+# Installs the Kovalio CLI as a self-contained, sha256-verified payload that
 # runs under NODE. Node is the shipped runtime: this prefers a system `node`
 # >= 22 and otherwise vendors an official Node 22 from nodejs.org into
-# ~\.openship\runtime — it NEVER installs, pins, or gates a global runtime (the
+# ~\.kovalio\runtime — it NEVER installs, pins, or gates a global runtime (the
 # source of the Bun-vs-ssh2 crash class, oven-sh/bun#18546).
 #
-# After install: `openship` (interactive) or `openship up` runs Openship locally
-# (API + dashboard); `openship install` fetches the desktop app.
+# After install: `kovalio` (interactive) or `kovalio up` runs Kovalio locally
+# (API + dashboard); `kovalio install` fetches the desktop app.
 #
 # Env overrides:
-#   $env:OPENSHIP_VERSION = "0.5.0"        pin a CLI version (default: latest)
-#   $env:OPENSHIP_HOME    = "..."          install root (data dir, runtime, launcher)
-#   $env:OPENSHIP_CLI_ASSET_URL = "..."    download the payload tarball from here
+#   $env:KOVALIO_VERSION = "0.5.0"        pin a CLI version (default: latest)
+#   $env:KOVALIO_HOME    = "..."          install root (data dir, runtime, launcher)
+#   $env:KOVALIO_CLI_ASSET_URL = "..."    download the payload tarball from here
 #                                          instead of GitHub (its .sha256 sidecar
 #                                          must sit beside it); for testing a build
 
@@ -23,21 +23,21 @@ $ProgressPreference = "SilentlyContinue"  # PS5.1's progress bar cripples downlo
 function Info($m) { Write-Host "==> $m" -ForegroundColor Cyan }
 function Fail($m) { Write-Error $m; exit 1 }
 
-$Repo      = "oblien/openship"
+$Repo      = "oblien/kovalio"
 $NodeMajor = 22
 $NodeDist  = "https://nodejs.org/dist"
 
-$HomeDir    = if ($env:OPENSHIP_HOME) { $env:OPENSHIP_HOME } else { Join-Path $env:USERPROFILE ".openship" }
+$HomeDir    = if ($env:KOVALIO_HOME) { $env:KOVALIO_HOME } else { Join-Path $env:USERPROFILE ".kovalio" }
 $CliDir     = Join-Path $HomeDir "cli"
 $RuntimeDir = Join-Path $HomeDir "runtime"
 $BinDir     = Join-Path $HomeDir "bin"
-$Launcher   = Join-Path $BinDir "openship.cmd"
+$Launcher   = Join-Path $BinDir "kovalio.cmd"
 
 if (-not (Get-Command tar -ErrorAction SilentlyContinue)) {
   Fail "tar is required (Windows 10 1803+ ships it). Update Windows, or install Git for Windows."
 }
 
-$Tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("openship-" + [System.IO.Path]::GetRandomFileName())
+$Tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("kovalio-" + [System.IO.Path]::GetRandomFileName())
 New-Item -ItemType Directory -Force -Path $Tmp | Out-Null
 
 function Sha256($path) { (Get-FileHash -Algorithm SHA256 -LiteralPath $path).Hash.ToLower() }
@@ -51,20 +51,20 @@ function Repoint($link, $target) {
 
 try {
   # ── 1. Resolve the release tag ──────────────────────────────────────────────
-  if ($env:OPENSHIP_VERSION) {
-    $Tag = if ($env:OPENSHIP_VERSION.StartsWith("v")) { $env:OPENSHIP_VERSION } else { "v$($env:OPENSHIP_VERSION)" }
+  if ($env:KOVALIO_VERSION) {
+    $Tag = if ($env:KOVALIO_VERSION.StartsWith("v")) { $env:KOVALIO_VERSION } else { "v$($env:KOVALIO_VERSION)" }
   } else {
     Info "Resolving the latest release..."
-    $rel = Invoke-RestMethod -Headers @{ "User-Agent" = "openship-cli" } "https://api.github.com/repos/$Repo/releases/latest"
+    $rel = Invoke-RestMethod -Headers @{ "User-Agent" = "kovalio-cli" } "https://api.github.com/repos/$Repo/releases/latest"
     $Tag = $rel.tag_name
     if (-not $Tag) { Fail "could not resolve the latest release tag from GitHub" }
   }
 
   # ── 2. Download + verify + extract the payload → cli\<tag> ───────────────────
-  $Asset = "openship-cli-$Tag.tar.gz"
-  $AssetUrl = if ($env:OPENSHIP_CLI_ASSET_URL) { $env:OPENSHIP_CLI_ASSET_URL } else { "https://github.com/$Repo/releases/download/$Tag/$Asset" }
+  $Asset = "kovalio-cli-$Tag.tar.gz"
+  $AssetUrl = if ($env:KOVALIO_CLI_ASSET_URL) { $env:KOVALIO_CLI_ASSET_URL } else { "https://github.com/$Repo/releases/download/$Tag/$Asset" }
 
-  Info "Downloading the Openship CLI ($Tag)..."
+  Info "Downloading the Kovalio CLI ($Tag)..."
   $AssetTmp = Join-Path $Tmp $Asset
   Invoke-WebRequest -UseBasicParsing -Uri $AssetUrl -OutFile $AssetTmp
   # Fail-closed: no sidecar → refuse to install an unverified payload.
@@ -107,7 +107,7 @@ try {
       default { Fail "unsupported CPU arch for vendored Node: $($env:PROCESSOR_ARCHITECTURE) — install Node $NodeMajor+ and re-run" }
     }
     Info "No system Node >= $NodeMajor — fetching an official Node $NodeMajor from nodejs.org..."
-    $idx = Invoke-RestMethod -Headers @{ "User-Agent" = "openship-cli" } "$NodeDist/index.json"
+    $idx = Invoke-RestMethod -Headers @{ "User-Agent" = "kovalio-cli" } "$NodeDist/index.json"
     $NodeVer = ($idx | Where-Object { $_.version -like "v$NodeMajor.*" -and $_.lts } | Select-Object -First 1).version
     if (-not $NodeVer) { $NodeVer = ($idx | Where-Object { $_.version -like "v$NodeMajor.*" } | Select-Object -First 1).version }
     if (-not $NodeVer) { Fail "could not resolve a Node $NodeMajor.x version from nodejs.org" }
@@ -131,7 +131,7 @@ try {
   }
 
   # ── 4. Write the stable launcher shim (POSIX twin: scripts/install.sh) ───────
-  # Location-independent: resolves ~\.openship from its own path, prefers a
+  # Location-independent: resolves ~\.kovalio from its own path, prefers a
   # system node >= 22, falls back to the vendored runtime. ASCII, no BOM (a BOM
   # breaks .cmd parsing). Regenerated on install; manual edits are overwritten.
   New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
@@ -152,25 +152,25 @@ if exist "%VENDORED%" (
   "%VENDORED%" "%CLI%" %*
   exit /b !errorlevel!
 )
-echo openship: no Node ^>= 22 found ^(system or vendored^). Reinstall: irm https://git.openship.io/windows ^| iex 1>&2
+echo kovalio: no Node ^>= 22 found ^(system or vendored^). Reinstall: irm https://git.nextrium.org/windows ^| iex 1>&2
 exit /b 127
 '@
   Set-Content -Path $Launcher -Value $LauncherBody -Encoding ASCII
 
-  # ── 5. Record the distribution marker (read by `openship update`) ────────────
+  # ── 5. Record the distribution marker (read by `kovalio update`) ────────────
   $marker = [ordered]@{ method = "tarball"; tag = $Tag; launcher = $Launcher; runtime = $NodeSource }
   ($marker | ConvertTo-Json) | Set-Content -Path (Join-Path $HomeDir "cli-install.json") -Encoding UTF8
 
   # ── 6. Migrate off any previous Bun-global install (never touch the user's Bun) ─
   if (Get-Command bun -ErrorAction SilentlyContinue) {
-    try { bun remove -g openship 2>$null | Out-Null } catch {}
+    try { bun remove -g kovalio 2>$null | Out-Null } catch {}
   }
-  foreach ($f in @("openship", "openship.cmd", "openship.exe", "openship.ps1")) {
+  foreach ($f in @("kovalio", "kovalio.cmd", "kovalio.exe", "kovalio.ps1")) {
     $p = Join-Path $env:USERPROFILE ".bun\bin\$f"
     if (Test-Path $p) { Remove-Item -Force $p -ErrorAction SilentlyContinue }
   }
 
-  # ── 7. Put openship on PATH (user scope) ─────────────────────────────────────
+  # ── 7. Put kovalio on PATH (user scope) ─────────────────────────────────────
   $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
   if (-not (($userPath -split ";") -contains $BinDir)) {
     $newPath = if ($userPath) { "$BinDir;$userPath" } else { $BinDir }
@@ -179,13 +179,13 @@ exit /b 127
   $env:Path = "$BinDir;$env:Path"
 
   Write-Host ""
-  Write-Host "Openship installed ($Tag, running under $NodeSource Node)." -ForegroundColor Green
+  Write-Host "Kovalio installed ($Tag, running under $NodeSource Node)." -ForegroundColor Green
   Write-Host ""
-  Write-Host "  openship            # set up + deploy Openship (interactive)"
-  Write-Host "  openship up         # or launch directly with defaults"
-  Write-Host "  openship --help     # all commands"
+  Write-Host "  kovalio            # set up + deploy Kovalio (interactive)"
+  Write-Host "  kovalio up         # or launch directly with defaults"
+  Write-Host "  kovalio --help     # all commands"
   Write-Host ""
-  Write-Host "If 'openship' isn't found, restart your terminal (PATH was updated)."
+  Write-Host "If 'kovalio' isn't found, restart your terminal (PATH was updated)."
 }
 finally {
   Remove-Item -Recurse -Force $Tmp -ErrorAction SilentlyContinue

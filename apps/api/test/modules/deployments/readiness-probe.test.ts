@@ -152,14 +152,14 @@ describe("probeDeployedReadiness", () => {
         forwardPort: async () => {
           throw prohibited;
         },
-        exec: async () => "OPENSHIP_PROBE_NO_CLIENT",
+        exec: async () => "KOVALIO_PROBE_NO_CLIENT",
       } as unknown as CommandExecutor,
       log: () => {},
     });
 
     expect(verdict.failure).toBeNull();
     expect(verdict.skipped).toContain("refuses port forwarding");
-    expect(verdict.skipped).toContain("openship up");
+    expect(verdict.skipped).toContain("kovalio up");
   });
 
   it("treats an unreachable dialing machine as skipped rather than a dead app", async () => {

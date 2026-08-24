@@ -1,6 +1,6 @@
 -- rules_lib.lua
 -- Per-worker helpers + parsed-rule cache for rules_guard.lua (access phase).
--- Loaded ONCE per worker via require("openship.rules_lib"). The access file is
+-- Loaded ONCE per worker via require("kovalio.rules_lib"). The access file is
 -- re-executed on every request, so all parsing/compiling/matching lives here to
 -- avoid re-creating closures and re-decoding JSON on the hot path.
 --

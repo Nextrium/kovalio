@@ -1,11 +1,11 @@
 ---
 title: DNS API
-description: Connect a DNS provider token so Openship writes your domains' records itself, instead of printing them for you to paste.
+description: Connect a DNS provider token so Kovalio writes your domains' records itself, instead of printing them for you to paste.
 ---
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-Adding a custom domain normally ends with Openship telling you which records to create and waiting for you
+Adding a custom domain normally ends with Kovalio telling you which records to create and waiting for you
 to go and create them. Connect a DNS provider here and it writes them itself: the domain verifies on its own
 and gets its certificate without you leaving the page. In the dashboard this is **Settings → DNS**.
 
@@ -15,7 +15,7 @@ dashboard, so `GET /api/dns/providers` is the authoritative answer to "what can 
 <Callout title="Base path & auth">
 All paths are relative to your instance, under **`/api`** — e.g. `https://your-host/api/dns/credentials`.
 Send a personal access token as a bearer header (`Authorization: Bearer <token>`), created with
-[`openship token create`](/docs/cli/access). The dashboard uses your session cookie instead. See the
+[`kovalio token create`](/docs/cli/access). The dashboard uses your session cookie instead. See the
 [API overview](/docs/api) for the full auth model.
 </Callout>
 
@@ -46,14 +46,14 @@ POST /api/dns/credentials
 
 ```bash
 curl -X POST https://your-host/api/dns/credentials \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"provider":"cloudflare","name":"Cloudflare production","apiToken":"cf-..."}'
 ```
 
 For Cloudflare, create a token at
 [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens) scoped to
-**Zone:Zone:Read** and **Zone:DNS:Edit**, limited to the zones you want Openship to manage.
+**Zone:Zone:Read** and **Zone:DNS:Edit**, limited to the zones you want Kovalio to manage.
 
 <Callout title="The token is write-only from here on" type="warn">
 It is encrypted at rest (AES-256-GCM, key derived from `BETTER_AUTH_SECRET`) and no endpoint returns it —
@@ -61,7 +61,7 @@ not in full and not as a prefix. `tokenMasked` is a fixed `•••••••
 token, disconnect the credential and connect a new one.
 
 Rotating `BETTER_AUTH_SECRET` makes stored tokens undecryptable. The credential then reports
-`status: "invalid"` the next time Openship tries to use it, and you re-connect it.
+`status: "invalid"` the next time Kovalio tries to use it, and you re-connect it.
 </Callout>
 
 ## Check a zone
@@ -87,7 +87,7 @@ The response separates four outcomes, because they call for different actions:
 
 ```bash
 curl -X POST https://your-host/api/dns/verify-zone \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"hostname":"app.example.com"}'
 ```
@@ -120,17 +120,17 @@ ten-minute grace window.
 
 ## Removing records
 
-Disconnecting a credential does not touch DNS. Removing a *domain* does — but only records Openship created,
-identified by the `Managed by Openship` comment it writes on every record.
+Disconnecting a credential does not touch DNS. Removing a *domain* does — but only records Kovalio created,
+identified by the `Managed by Kovalio` comment it writes on every record.
 
 <Callout title="Why ownership is tracked, not inferred" type="info">
 For an apex domain the record name *is* the zone apex, where your `MX`, SPF `TXT` and `CAA` records also
-live. Deleting "every record at this name" would take your mail with it, so Openship deletes only what it
+live. Deleting "every record at this name" would take your mail with it, so Kovalio deletes only what it
 can prove it wrote.
 
 Connecting a domain does repoint an existing record at that name — that is what connecting it means — but
-repointing is not adoption: Openship leaves such a record's comment untouched, so it never carries the
-`Managed by Openship` marker and removing the domain later will not delete it.
+repointing is not adoption: Kovalio leaves such a record's comment untouched, so it never carries the
+`Managed by Kovalio` marker and removing the domain later will not delete it.
 </Callout>
 
 ## Errors
@@ -139,5 +139,5 @@ repointing is not adoption: Openship leaves such a record's comment untouched, s
 |---|---|---|
 | `DNS_UNKNOWN_PROVIDER` | 400 | `provider` is not a name from `GET /api/dns/providers`. |
 | `DNS_PROVIDER_NOT_READY` | 400 | The provider rejected the token during the pre-store check. |
-| `DNS_RECORD_CONFLICT` | 409 | Several records already answer for that name and type and none are Openship's — a round-robin or multi-host set it will not rewrite. |
+| `DNS_RECORD_CONFLICT` | 409 | Several records already answer for that name and type and none are Kovalio's — a round-robin or multi-host set it will not rewrite. |
 | `DNS_API_ERROR` | 502 | The provider's API failed. The upstream status is in the message. |

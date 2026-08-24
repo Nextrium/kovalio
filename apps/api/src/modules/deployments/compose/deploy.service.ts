@@ -1323,10 +1323,10 @@ async function deployComposeServicesUnlocked(
   const allocatedHostPorts = new Set<number>();
 
   // #438: app-template config files (`advanced.files`) are host-side state living
-  // under `/var/lib/openship`, the root-owned tree the edge's own vhosts sit in.
+  // under `/var/lib/kovalio`, the root-owned tree the edge's own vhosts sit in.
   // The deploy executor connects to the host as an UNPRIVILEGED user (e.g.
   // `ubuntu` over host.docker.internal on a Compose install), which cannot
-  // `mkdir` under root-owned `/var/lib/openship` — so a plain `writeFile` fails
+  // `mkdir` under root-owned `/var/lib/kovalio` — so a plain `writeFile` fails
   // with the reported "No such file". Write these through an elevated (`sudo -n`)
   // executor when the target is a non-root user with passwordless sudo — exactly
   // how the edge writes its own root-owned config. Resolved lazily and cached, so
@@ -2280,7 +2280,7 @@ async function deployComposeServicesUnlocked(
               `Couldn't read live port occupancy on the target, so ${allocation.port} for ` +
                 `${svc.name} avoids database-pinned ports and ports this deploy already took. ` +
                 `If publishing it fails ` +
-                `as "already allocated", check that Openship can reach this host ` +
+                `as "already allocated", check that Kovalio can reach this host ` +
                 `(Servers → this box).\n`,
               "warn",
             );
@@ -2571,7 +2571,7 @@ async function deployComposeServicesUnlocked(
       // Sync the managed edge proxy for EACH free .opsh.io route (a multi-port
       // service has several). Best-effort: the container is already running and
       // any custom domain is routed locally; the edge proxy only wires up the
-      // free URL via Openship Cloud, so a failure here (403, slug taken,
+      // free URL via Kovalio Cloud, so a failure here (403, slug taken,
       // unreachable) must not flip a healthy service to "failed".
       const managedRoutes = proxyRoutes.filter((r) => r.isCloud && r.managedSubdomain);
       if (routeContext?.usesManagedRouting && managedRoutes.length > 0) {
@@ -2761,7 +2761,7 @@ async function deployComposeServicesUnlocked(
 
   // ── Cross-project service links (internal / shared-network mode) ────────────
   // Attach this consumer's containers to each internally-linked source app's
-  // `openship-<slug>` network so injected internal hosts resolve (see the shared
+  // `kovalio-<slug>` network so injected internal hosts resolve (see the shared
   // helper). Advisory — a link-networking failure never fails the deploy.
   await attachLinkedNetworks(project.id, runtime, (m, level) => logger.log(`${m}\n`, level));
 
@@ -3264,7 +3264,7 @@ async function deployComposeServicesUnlocked(
             `(port ${route.targetPort}, matched by ${resolved.owner.via}).\n`,
         );
         registeredRoutes.push(route);
-        // A free *.opsh.io hostname resolves ONLY through Openship Cloud's edge, so the
+        // A free *.opsh.io hostname resolves ONLY through Kovalio Cloud's edge, so the
         // local vhost above is half of it — the same pairing the per-service loop does
         // for its own free routes. Without this the project's free URL would have a
         // working origin and no route pointing at it.

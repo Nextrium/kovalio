@@ -106,7 +106,7 @@ type DeploymentRow = NonNullable<Awaited<ReturnType<typeof repos.deployment.find
  * pause/resume could never work through the runtime here: such a deployment's
  * `containerId` is a release DIRECTORY on the host (see
  * `resolveDeploymentStaticRoot`), so `runtime.stop()` dials
- * `/containers//opt/openship/static/releases/<id>/stop` and the daemon answers 301
+ * `/containers//opt/kovalio/static/releases/<id>/stop` and the daemon answers 301
  * to the doubled slash — measured, not assumed, and it is neither `isAbsent` nor
  * `isAlreadyInState`, so both actions died on "(HTTP code 301) unexpected".
  *
@@ -331,7 +331,7 @@ export async function retryProjectRouting(
 
   const serverId = p.serverId ?? (dep?.meta as { serverId?: string } | null)?.serverId ?? undefined;
 
-  // Route application reaches into openship-edge. Reconcile it BEFORE any route
+  // Route application reaches into kovalio-edge. Reconcile it BEFORE any route
   // read/write so a stopped or missing container is revived rather than leaving
   // docker exec/config reload calls to sit until the request timeout (#693).
   const edgeRecoveryWarning = await recoverProjectEdge(p, dep);

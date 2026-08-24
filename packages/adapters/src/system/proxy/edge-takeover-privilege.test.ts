@@ -56,7 +56,7 @@ const NON_ROOT_NO_SUDO: ProbeSpec = { ...NON_ROOT_SUDO, sudo: "n" };
 const STATUS: EdgeStatus = {
   classification: "known",
   canProceedClean: false,
-  occupants: [{ port: 80, systemdUnit: "nginx.service", proxy: "nginx", managedByOpenship: false }],
+  occupants: [{ port: 80, systemdUnit: "nginx.service", proxy: "nginx", managedByKovalio: false }],
 };
 /** A pre-accepted takeover — the non-interactive "Stop it & take over". */
 const TAKEOVER: InstallerConfig = { edgePolicy: { mode: "takeover", stopTargets: [] } };
@@ -110,7 +110,7 @@ describe("beginEdgeTakeover privilege", () => {
   });
 
   // The journal is the ONLY thing that lets the next boot repair a takeover that already
-  // stopped someone's proxy, and it lives in root-owned /var/lib/openship — so on a
+  // stopped someone's proxy, and it lives in root-owned /var/lib/kovalio — so on a
   // non-root login it was never written at all, silently.
   it("writes the journal into the root-owned dir as root", async () => {
     const { executor, commands } = host(NON_ROOT_SUDO);
@@ -118,7 +118,7 @@ describe("beginEdgeTakeover privilege", () => {
     await beginEdgeTakeover(executor, STATUS, noop);
 
     expect(
-      commands.some((c) => elevated(c) && c.includes("mkdir -p") && c.includes("/var/lib/openship")),
+      commands.some((c) => elevated(c) && c.includes("mkdir -p") && c.includes("/var/lib/kovalio")),
     ).toBe(true);
     // Staged as the login user, then published as root — never written straight to the
     // root-owned path, which is what silently failed.

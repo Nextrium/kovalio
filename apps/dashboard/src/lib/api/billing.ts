@@ -31,10 +31,10 @@ export interface BillingState {
   monthlyCreditLimit: number | null;
   /** Display-only: out of credits (Oblien is the real enforcer). */
   overQuota: boolean;
-  /** Build time this period in minutes (openship-derived; Oblien has no build meter). */
+  /** Build time this period in minutes (kovalio-derived; Oblien has no build meter). */
   buildTimeMinutes: number;
   /**
-   * Live resource capacity + consumption, sourced from Openship Cloud. Optional
+   * Live resource capacity + consumption, sourced from Kovalio Cloud. Optional
    * and additive: the self-hosted billing proxy forwards it verbatim when the
    * SaaS provides it, and the dashboard's Capacity panel falls back to the
    * tier's `limits` from the pricing catalog for any ceiling the cloud hasn't
@@ -46,7 +46,7 @@ export interface BillingState {
    */
   capacity?: BillingCapacity;
   /**
-   * MASTER billing-feature availability, decided by Openship Cloud
+   * MASTER billing-feature availability, decided by Kovalio Cloud
    * (`BILLING_ENABLED`). When `enabled` is false the whole billing feature is
    * pre-launch: the UI shows a "coming soon" surface and every Stripe-mutating
    * endpoint is refused server-side. Optional/defensive: treated as NOT enabled
@@ -55,7 +55,7 @@ export interface BillingState {
    */
   billing?: BillingFeature;
   /**
-   * One-time credit top-up availability, decided by Openship Cloud. Requires
+   * One-time credit top-up availability, decided by Kovalio Cloud. Requires
    * the master `billing.enabled` AND the top-ups sub-switch. The UI enables the
    * buy flow only when `available` is true; otherwise it shows the "coming soon"
    * preview. Optional/defensive: treated as NOT available when absent.
@@ -99,7 +99,7 @@ export interface BillingCapacity {
   /** Concurrently running services (one Oblien workspace each) vs
    *  `limits.runningServices` — the ceiling a customer actually feels. */
   services?: CapacityMeter;
-  /** Projects vs `limits.maxProjects`. Openship-enforced; Oblien has no project
+  /** Projects vs `limits.maxProjects`. Kovalio-enforced; Oblien has no project
    *  concept, so this ceiling exists only on our side. */
   projects?: CapacityMeter;
   /**

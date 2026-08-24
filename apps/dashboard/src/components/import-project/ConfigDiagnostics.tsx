@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * #641: an `openship.json` with a typo used to apply nothing — or only some of
+ * #641: an `kovalio.json` with a typo used to apply nothing — or only some of
  * itself — and say nothing anywhere. The deploy fell back to heuristic detection
  * and succeeded, so the wizard looked exactly as if the file weren't there. The
  * leniency is right (a bad config must not refuse a repo); the silence wasn't.

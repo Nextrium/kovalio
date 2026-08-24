@@ -15,8 +15,8 @@ import { organization } from "./organization";
 /**
  * Mail-server install record.
  *
- * A row here is openship's fast answer to "is this server a mail server?".
- * The state file on the host (/root/.openship-mail-state.json) remains the
+ * A row here is kovalio's fast answer to "is this server a mail server?".
+ * The state file on the host (/root/.kovalio-mail-state.json) remains the
  * source of truth for STEP-level progress; this table just lets the
  * dashboard skip an SSH round-trip on every /emails page load.
  *
@@ -59,7 +59,7 @@ export const mailServers = pgTable("mail_servers", {
   /**
    * The webmail project serving this mail server, when one was installed from
    * the app catalog (`catalog/webmail.json`). Null = no webmail, or one an
-   * operator runs outside openship.
+   * operator runs outside kovalio.
    *
    * A stored FK, not a naming convention: webmail installs through the SAME
    * generic catalog installer as every other app, so its slug comes from the

@@ -1,10 +1,10 @@
 /**
  * The master Oblien SDK client — a LEAF module by design.
  *
- * It exists on its own so nothing has to import `openship-cloud.ts` just to get a
+ * It exists on its own so nothing has to import `kovalio-cloud.ts` just to get a
  * client. That file both needs the client and needs the billing module's
  * `setQuotaForTier`, while the billing module needs the client — routing the client
- * through `openship-cloud` therefore made `openship-cloud ⇄ billing-oblien-quota`
+ * through `kovalio-cloud` therefore made `kovalio-cloud ⇄ billing-oblien-quota`
  * a genuine import cycle, which was previously papered over with a dynamic
  * `await import()` inside the spend path.
  *

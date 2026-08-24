@@ -130,7 +130,7 @@ export function DesktopChrome() {
   return (
     <header className="app-titlebar" onDoubleClick={onDoubleClick}>
       {/* Start — navigation, after the macOS traffic-light inset. No brand: the
-          sidebar header renders the mark + "Openship" directly below, and having
+          sidebar header renders the mark + "Kovalio" directly below, and having
           both read as the same logo twice within ~40px. */}
       <nav className="app-titlebar-nav" aria-label={w.navigation}>
         <button

@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://openship.io/app.schema.json",
-  "title": "Openship App definition",
-  "description": "An Openship App catalog entry — the JSON that turns a set of containers into a one-click install, with generated secrets, a curated settings form, and a connection card. Full reference: https://openship.io/docs/reference/app-catalog",
+  "$id": "https://nextrium.org/app.schema.json",
+  "title": "Kovalio App definition",
+  "description": "An Kovalio App catalog entry — the JSON that turns a set of containers into a one-click install, with generated secrets, a curated settings form, and a connection card. Full reference: https://nextrium.org/docs/reference/app-catalog",
   "type": "object",
   "required": ["id", "name", "description", "kind", "logo", "category"],
   "properties": {
@@ -131,7 +131,7 @@
       "type": "number"
     },
     "minEngine": {
-      "description": "Minimum Openship version required to install this app. Set it to the release that introduced whatever capability the definition uses.",
+      "description": "Minimum Kovalio version required to install this app. Set it to the release that introduced whatever capability the definition uses.",
       "type": "string"
     },
     "updatedAt": { "description": "Informational last-updated stamp.", "type": "string" },

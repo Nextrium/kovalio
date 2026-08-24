@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * Renaming a project changes its DISPLAY NAME and nothing else.
  *
  * `updateProject` used to recompute `slug = slugify(name)` on every rename, and the
- * slug is this project's infrastructure identity — it names the `openship-<slug>`
- * network, the `openship-<slug>-<svc>` containers, the `openship-<slug>-<vol>` named
+ * slug is this project's infrastructure identity — it names the `kovalio-<slug>`
+ * network, the `kovalio-<slug>-<svc>` containers, the `kovalio-<slug>-<vol>` named
  * volumes, and the monorepo app row (matched by `service.name === project.slug`).
  * Two things broke at once:
  *

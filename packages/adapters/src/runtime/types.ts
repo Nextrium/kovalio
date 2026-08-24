@@ -84,13 +84,13 @@ export type RuntimeCapability =
    * by label, independent of DB tracking. Powers the project-deletion
    * orphan sweep: a container started by a deploy that later failed (or
    * whose row was lost) has no DB record, but it still carries the
-   * `openship.project=<id>` label — so teardown can reclaim it. Docker
+   * `kovalio.project=<id>` label — so teardown can reclaim it. Docker
    * implements this; Bare/Cloud don't (no label-queryable container set).
    */
   | "projectContainerSweep"
   /**
    * Runtime can enumerate the containers for a specific DEPLOYMENT by its
-   * `openship.deployment=<id>` label and report their live state. Powers
+   * `kovalio.deployment=<id>` label and report their live state. Powers
    * reconciliation: after a connection-loss deploy, we read back what's
    * actually running to resolve `reconciling` → ready/failed and detect
    * drift. Docker implements this; Bare/Cloud don't (no label-queryable set)
@@ -100,7 +100,7 @@ export type RuntimeCapability =
   /**
    * Runtime can enumerate EVERY container on its host, label-agnostic, with
    * live state — `docker ps -a`. Unlike `deploymentContainerQuery` this is not
-   * scoped by an `openship.*` label, which is exactly why the live service-state
+   * scoped by an `kovalio.*` label, which is exactly why the live service-state
    * read needs it: a migration-attached container keeps its ORIGINAL labels
    * (immutable in place), so a label-filtered query can never see it. Docker
    * implements this; Cloud/Bare don't (no host container set).
@@ -233,7 +233,7 @@ export interface RuntimeAdapter {
 
   /**
    * List the IDs of every container this runtime owns for `projectId`,
-   * matched by the `openship.project` label (includes stopped ones).
+   * matched by the `kovalio.project` label (includes stopped ones).
    * Used by project teardown to reclaim orphans with no DB row. Only
    * present when `supports("projectContainerSweep")`.
    */
@@ -241,7 +241,7 @@ export interface RuntimeAdapter {
 
   /**
    * List the containers this runtime owns for `deploymentId`, matched by the
-   * `openship.deployment` label, with their live status + service name. Used
+   * `kovalio.deployment` label, with their live status + service name. Used
    * by reconciliation to read back the true state of a connection-loss deploy.
    * Only present when `supports("deploymentContainerQuery")`.
    */
@@ -253,7 +253,7 @@ export interface RuntimeAdapter {
    * Every container on this runtime's host (running or not), label-agnostic —
    * the raw `docker ps -a` view. The live service-state read matches these
    * against the project's service rows by identity (labels, container name,
-   * tracked id), so a container Openship adopted in place — carrying another
+   * tracked id), so a container Kovalio adopted in place — carrying another
    * project's labels — still reports its true state. Only present when
    * `supports("hostContainerQuery")`.
    */
@@ -332,21 +332,21 @@ export interface RuntimeAdapter {
   /**
    * Attach this project's containers to additional networks (by name) — for
    * cross-project service links, so a consumer joins a linked database app's
-   * `openship-<slug>` network and resolves its service alias with no public
+   * `kovalio-<slug>` network and resolves its service alias with no public
    * port. Best-effort + idempotent. Optional (docker only; cloud/bare skip —
    * cloud uses public host:port, its private-link mesh is group-scoped).
    */
   attachToExternalNetworks?(
     projectId: string,
     networkNames: string[],
-    /** Containers to include BEYOND the `openship.project` label match — an adopted
+    /** Containers to include BEYOND the `kovalio.project` label match — an adopted
      *  container keeps its original labels, so the filter cannot see it. */
     extraContainerIds?: string[],
   ): Promise<void>;
 
   /**
    * Join already-running containers (migration attach-live reuse) to a project's
-   * `openship-<slug>` network with a DNS alias each, so a natively-deployed
+   * `kovalio-<slug>` network with a DNS alias each, so a natively-deployed
    * service in the SAME project resolves them by name (reused `postgres` reachable
    * from a freshly-built `web`). Additive network-connect — no restart, no volume
    * touch. Best-effort + idempotent. Optional (docker only). */
@@ -498,7 +498,7 @@ export interface MultiServiceDeployConfig {
   ports: string[];
   environment: Record<string, string>;
   volumes: string[];
-  /** When true, NAMED volumes are project-scoped (openship-<slug>-<name>) at
+  /** When true, NAMED volumes are project-scoped (kovalio-<slug>-<name>) at
    *  create time. False for grandfathered pre-migration services (bare names). */
   namespaceVolumes: boolean;
   command?: string;
@@ -678,10 +678,10 @@ export function isMultiServiceRuntime(
 
 // ─── Docker discovery (label-agnostic inspection) ─────────────────────────────
 //
-// DTOs for MIGRATING an existing Docker deployment into Openship. The
-// label-scoped queries elsewhere in DockerRuntime only see `openship.*`
+// DTOs for MIGRATING an existing Docker deployment into Kovalio. The
+// label-scoped queries elsewhere in DockerRuntime only see `kovalio.*`
 // containers; these enumerate the WHOLE daemon so we can adopt containers
-// Openship never created (a hand-run `docker run`, or a `docker compose` stack).
+// Kovalio never created (a hand-run `docker run`, or a `docker compose` stack).
 // All fields are plain/serializable — they cross the API→dashboard boundary.
 
 export interface DockerMount {

@@ -23,7 +23,7 @@ export const loginCommand = new Command("login")
     if (!token) {
       const settingsUrl = `${dashboardUrl}/settings`;
       console.log(
-        chalk.bold("\n  Openship login\n") +
+        chalk.bold("\n  Kovalio login\n") +
           chalk.dim("  Create a Personal Access Token in Settings → Personal Access Tokens,\n") +
           chalk.dim("  then paste it here.\n"),
       );
@@ -49,7 +49,7 @@ export const loginCommand = new Command("login")
     }
     if (!token.startsWith("opsh_pat_")) {
       console.error(
-        chalk.red("\n  That doesn't look like an Openship token (expected opsh_pat_…).\n"),
+        chalk.red("\n  That doesn't look like an Kovalio token (expected opsh_pat_…).\n"),
       );
       process.exit(1);
     }
@@ -91,7 +91,7 @@ export const loginCommand = new Command("login")
 
     console.log(
       chalk.green(`\n  Logged in`) +
-        chalk.dim(` (context "${contextName}"). Token saved to ~/.openship/config.json\n`),
+        chalk.dim(` (context "${contextName}"). Token saved to ~/.kovalio/config.json\n`),
     );
     if (scoped) {
       console.log(

@@ -42,13 +42,13 @@ export function createExecutor(ssh?: SshConfig): CommandExecutor {
 }
 
 /**
- * Executor for HOST-OS operations ("this machine") that works whether openship
+ * Executor for HOST-OS operations ("this machine") that works whether kovalio
  * runs bare OR in a container.
  *
  * Bare: `LocalExecutor` — commands run on the host directly.
  *
  * Containerized: a container can't apt/systemctl/edit files on its HOST, so when
- * `OPENSHIP_HOST_SSH_HOST` is set (the `openship up` CLI provisions this + a key
+ * `KOVALIO_HOST_SSH_HOST` is set (the `kovalio up` CLI provisions this + a key
  * + the compose `extra_hosts: host.docker.internal:host-gateway`) we reach the
  * host over SSH via `host.docker.internal` — the docker-bridge gateway, an
  * INTERNAL address, never the public IP. Reuses the standard remote-server
@@ -58,7 +58,7 @@ export function createExecutor(ssh?: SshConfig): CommandExecutor {
 /**
  * Runtime override of the env default, pushed in from apps/api.
  *
- * `null` → no override, fall back to OPENSHIP_HOST_CONTROL (the install-time
+ * `null` → no override, fall back to KOVALIO_HOST_CONTROL (the install-time
  * default). `true`/`false` → the operator's Settings toggle wins. adapters is a
  * leaf package and MUST NOT import @repo/db, so the resolved value is PUSHED here
  * (the same injector pattern as {@link setDefaultEdgeImage} /
@@ -80,7 +80,7 @@ export function setHostControlOverride(disabled: boolean | null): void {
 export function hostControlDisabled(): boolean {
   return (
     hostControlOverride ??
-    process.env.OPENSHIP_HOST_CONTROL?.trim().toLowerCase() === "false"
+    process.env.KOVALIO_HOST_CONTROL?.trim().toLowerCase() === "false"
   );
 }
 
@@ -98,7 +98,7 @@ export function hostControlDisabled(): boolean {
  * because callers are synchronous, and both are single small local files.
  */
 function runningInContainer(): boolean {
-  if (process.env.OPENSHIP_IN_CONTAINER?.trim().toLowerCase() === "true") return true;
+  if (process.env.KOVALIO_IN_CONTAINER?.trim().toLowerCase() === "true") return true;
   try {
     if (existsSync("/.dockerenv")) return true;
   } catch {
@@ -113,7 +113,7 @@ function runningInContainer(): boolean {
 }
 
 function hostChannelPort(): number {
-  const raw = Number(process.env.OPENSHIP_HOST_SSH_PORT || "22");
+  const raw = Number(process.env.KOVALIO_HOST_SSH_PORT || "22");
   return Number.isInteger(raw) && raw > 0 && raw < 65536 ? raw : 22;
 }
 
@@ -179,7 +179,7 @@ export type HostChannelCode =
   | "not_applicable"
   /** `--no-host-control`. */
   | "disabled"
-  /** Containerized with no `OPENSHIP_HOST_SSH_HOST`. */
+  /** Containerized with no `KOVALIO_HOST_SSH_HOST`. */
   | "not_configured"
   | "key_unreadable"
   /** Configured, but the TCP connection to the host SSH port never completed. */
@@ -286,7 +286,7 @@ export function invalidateHostChannelAuth(): void {
  * Can this channel carry a TCP forward, as distinct from a command?
  *
  * A separate axis from `ok` ON PURPOSE. `restrict` in `authorized_keys` (what
- * `openship up` wrote before GH-583) denies forwarding while leaving exec untouched, so
+ * `kovalio up` wrote before GH-583) denies forwarding while leaving exec untouched, so
  * such a channel is genuinely healthy for everything the platform does EXCEPT the
  * deploy-time readiness probe — which is why "host control reachable" was a true
  * statement that still misled two rounds of qualification. Folding it into `ok` would
@@ -438,11 +438,11 @@ export async function hostChannelHealth(timeoutMs = 2_500): Promise<HostChannelH
     return {
       ok: false,
       code: "disabled",
-      hint: "Host control is off (OPENSHIP_HOST_CONTROL=false). Re-run `openship up` without --no-host-control.",
+      hint: "Host control is off (KOVALIO_HOST_CONTROL=false). Re-run `kovalio up` without --no-host-control.",
     };
   }
 
-  const host = process.env.OPENSHIP_HOST_SSH_HOST?.trim();
+  const host = process.env.KOVALIO_HOST_SSH_HOST?.trim();
   if (!host) {
     if (runningInContainer()) {
       // No endpoint, so nothing is dialed and there is no `target` — the observation
@@ -459,7 +459,7 @@ export async function hostChannelHealth(timeoutMs = 2_500): Promise<HostChannelH
 
   const port = hostChannelPort();
   const target = `${hostChannelUser()}@${host}:${port}`;
-  const keyPath = process.env.OPENSHIP_HOST_SSH_KEY?.trim();
+  const keyPath = process.env.KOVALIO_HOST_SSH_KEY?.trim();
   // Kept rather than discarded: the auth probe below needs the same material the real
   // dial uses, and reading it twice would let the two disagree.
   let privateKey: string | undefined;
@@ -570,11 +570,11 @@ export function createHostExecutor(): CommandExecutor {
   if (hostControlDisabled()) {
     throw new HostChannelUnavailableError(
       "disabled",
-      "Host control is disabled on this instance (OPENSHIP_HOST_CONTROL=false). " +
-        "Re-run `openship up` without --no-host-control to allow host operations.",
+      "Host control is disabled on this instance (KOVALIO_HOST_CONTROL=false). " +
+        "Re-run `kovalio up` without --no-host-control to allow host operations.",
     );
   }
-  const host = process.env.OPENSHIP_HOST_SSH_HOST?.trim();
+  const host = process.env.KOVALIO_HOST_SSH_HOST?.trim();
   if (!host) {
     // The hazard the comment above names, for the UNCONFIGURED case rather than the
     // disabled one — and it used to fall through here silently.
@@ -595,23 +595,23 @@ export function createHostExecutor(): CommandExecutor {
       throw new HostChannelUnavailableError(
         "not_configured",
         "This operation targets the HOST machine, but no host channel is configured " +
-          "(OPENSHIP_HOST_SSH_HOST is unset) and Openship is running in a container — " +
+          "(KOVALIO_HOST_SSH_HOST is unset) and Kovalio is running in a container — " +
           "so it would have run inside the container instead, against the wrong " +
           `filesystem. ${HOST_CHANNEL_NOT_PROVISIONED}`,
       );
     }
     return localExecutor;
   }
-  const keyPath = process.env.OPENSHIP_HOST_SSH_KEY?.trim();
+  const keyPath = process.env.KOVALIO_HOST_SSH_KEY?.trim();
   if (!keyPath) {
     // Refused here rather than by SshExecutor's own credential check, which throws a BARE
     // Error — the shape the paragraph below is about. Nothing is denied by refusing early:
     // this function authenticates by key and only by key, so there was no agent or
-    // password route left to try. `openship up` writes host and key together; a `.env`
+    // password route left to try. `kovalio up` writes host and key together; a `.env`
     // edited by hand is where they come apart.
     throw new HostChannelUnavailableError(
       "not_configured",
-      "A host channel is configured (OPENSHIP_HOST_SSH_HOST) but OPENSHIP_HOST_SSH_KEY is " +
+      "A host channel is configured (KOVALIO_HOST_SSH_HOST) but KOVALIO_HOST_SSH_KEY is " +
         `unset, so there is no credential to connect to the host with. ${HOST_CHANNEL_NOT_PROVISIONED}`,
     );
   }
@@ -625,7 +625,7 @@ export function createHostExecutor(): CommandExecutor {
     //
     // `not_configured` rather than a state of its own: a channel whose key can't be
     // read is not a configured channel and the remedy is identical. The precise state
-    // stays on the health `code`, which is what the banner and `openship doctor` read.
+    // stays on the health `code`, which is what the banner and `kovalio doctor` read.
     throw new HostChannelUnavailableError(
       "not_configured",
       `${read.reason} ${HOST_CHANNEL_NOT_PROVISIONED}`,

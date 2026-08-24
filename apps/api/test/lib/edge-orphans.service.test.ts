@@ -55,7 +55,7 @@ vi.mock("../../src/lib/controller-helpers", () => ({
 
 vi.mock("../../src/config/env", () => ({
   get env() {
-    return { OPENSHIP_PUBLIC_URL: h.publicUrl };
+    return { KOVALIO_PUBLIC_URL: h.publicUrl };
   },
 }));
 
@@ -69,7 +69,7 @@ import {
 const staticSite = (host: string) => ({
   serverNames: [host],
   ssl: true,
-  target: { kind: "static" as const, root: "/opt/openship/static/releases/dep_old" },
+  target: { kind: "static" as const, root: "/opt/kovalio/static/releases/dep_old" },
 });
 const proxySite = (host: string) => ({
   serverNames: [host],
@@ -96,12 +96,12 @@ describe("collectKnownHostnames", () => {
     expect(known).toContain("autodiscover.example.com");
   });
 
-  it("includes the managed-edge dashboard hostname from OPENSHIP_PUBLIC_URL", async () => {
+  it("includes the managed-edge dashboard hostname from KOVALIO_PUBLIC_URL", async () => {
     h.publicUrl = "https://panel.example.com:8443";
     expect(await collectKnownHostnames()).toContain("panel.example.com");
   });
 
-  it("survives a junk OPENSHIP_PUBLIC_URL instead of throwing mid-sweep", async () => {
+  it("survives a junk KOVALIO_PUBLIC_URL instead of throwing mid-sweep", async () => {
     h.publicUrl = "not a url";
     await expect(collectKnownHostnames()).resolves.toBeInstanceOf(Array);
   });

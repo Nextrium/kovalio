@@ -162,14 +162,14 @@ describe("retryProjectRouting — safe self-heal", () => {
       converted: false,
       updated: false,
       edgeDown: true,
-      error: "docker start openship-edge failed",
+      error: "docker start kovalio-edge failed",
     });
 
     const result = await retryProjectRouting("proj_1", "org_1");
 
     expect(result).toEqual({
       ok: false,
-      warning: "Couldn't restore the edge before retrying routing: docker start openship-edge failed",
+      warning: "Couldn't restore the edge before retrying routing: docker start kovalio-edge failed",
     });
     expect(reapplyProjectLiveRoutes).not.toHaveBeenCalled();
     expect(applyProjectRouting).not.toHaveBeenCalled();
@@ -242,7 +242,7 @@ describe("retryProjectRouting — safe self-heal", () => {
       name: "edge",
       healthy: false,
       message:
-        "The edge container openship-edge is not serving — nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)",
+        "The edge container kovalio-edge is not serving — nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)",
     });
 
     const result = await retryProjectRouting("proj_1", "org_1");

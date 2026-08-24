@@ -14,7 +14,7 @@ describe("mcp prompts catalog", () => {
     const names = prompts.map((p) => p.name);
     expect(names).toEqual(
       expect.arrayContaining([
-        "openship-overview",
+        "kovalio-overview",
         "deploy-from-git",
         "deploy-a-folder",
         "install-catalog-app",
@@ -46,7 +46,7 @@ describe("mcp prompts catalog", () => {
     for (const p of listPrompts()) {
       const res = getPrompt(p.name, {});
       const text = (res!.messages[0] as { content: { text: string } }).content.text;
-      expect(text).toContain("https://github.com/oblien/openship/issues");
+      expect(text).toContain("https://github.com/Nextrium/kovalio/issues");
     }
   });
 

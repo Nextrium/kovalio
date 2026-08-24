@@ -144,7 +144,7 @@ export async function getHome(c: Context) {
     accounts,
     repos,
     installUrl,
-    // cloud-app mode + SaaS down: the card shows "Openship Cloud
+    // cloud-app mode + SaaS down: the card shows "Kovalio Cloud
     // unreachable" instead of a dead install button (installUrl is "").
     cloudUnreachable,
     capabilities,
@@ -153,14 +153,14 @@ export async function getHome(c: Context) {
 
 /**
  * Returned with HTTP 503 when a cloud-app connect step needs the SaaS
- * (OAuth handoff or install URL) but openship.io is unreachable. The
+ * (OAuth handoff or install URL) but nextrium.org is unreachable. The
  * dashboard surfaces `message` via getApiErrorMessage → toast, so the
  * user learns the real cause instead of being handed a dead install link.
  */
 const CLOUD_UNREACHABLE_CONNECT = {
   error: "cloud_unreachable",
   message:
-    "Openship Cloud is unreachable, so GitHub can't be connected right now. GitHub connection runs through Openship Cloud — reconnect it in Settings or check your network, then try again.",
+    "Kovalio Cloud is unreachable, so GitHub can't be connected right now. GitHub connection runs through Kovalio Cloud — reconnect it in Settings or check your network, then try again.",
 } as const;
 
 /** POST /github/connect - Normalized connection flow.
@@ -193,8 +193,8 @@ export async function connect(c: Context) {
   const mode = await githubAuth.resolveGitHubAuthMode(ctx);
 
   // Optional `source` discriminator from the dashboard's dual-source
-  // (Openship App vs gh CLI) settings panel. When the user explicitly
-  // clicks "Connect Openship App", source="oauth" forces the App
+  // (Kovalio App vs gh CLI) settings panel. When the user explicitly
+  // clicks "Connect Kovalio App", source="oauth" forces the App
   // install flow regardless of whether gh CLI is already authenticated;
   // otherwise the two buttons would be indistinguishable to the server
   // and both would short-circuit on the cli token.
@@ -205,7 +205,7 @@ export async function connect(c: Context) {
 
   // ── Explicit CLI un-suppress (applies in any mode) ───────────────
   // User clicked "Use gh CLI" — they want the prior Disconnect
-  // suppression flag cleared so openship reads `gh auth token` again.
+  // suppression flag cleared so kovalio reads `gh auth token` again.
   // This MUST run before the mode-based branches below; otherwise in
   // cloud-app mode it would never fire (we'd return the App install
   // URL and the flag would stay set forever).
@@ -230,7 +230,7 @@ export async function connect(c: Context) {
   // ── Cloud-app (self-hosted + cloud-connected) ────────────────────
   // SaaS-only architecture: the local instance never holds GitHub OAuth
   // credentials and never runs the OAuth round-trip itself. All GitHub
-  // auth flows through api.openship.io.
+  // auth flows through api.nextrium.org.
   //
   // Two-step flow:
   //   1. If the SaaS doesn't yet have a `account` row with
@@ -260,7 +260,7 @@ export async function connect(c: Context) {
           step: "oauth" as const,
         });
       }
-      // SaaS-only mode: the OAuth handoff URL comes from openship.io. A
+      // SaaS-only mode: the OAuth handoff URL comes from nextrium.org. A
       // null here means the SaaS is unreachable. We must NOT degrade to a
       // stateless github.com install link — that skips the OAuth step the
       // webhook needs and orphans the install. Tell the user the truth.
@@ -563,7 +563,7 @@ export async function pollConnect(c: Context) {
  */
 export async function setInstanceToken(c: Context) {
   if (env.CLOUD_MODE) {
-    return c.json({ error: "Not available on Openship Cloud", code: "NOT_SUPPORTED" }, 400);
+    return c.json({ error: "Not available on Kovalio Cloud", code: "NOT_SUPPORTED" }, 400);
   }
   const ctx = getRequestContext(c);
   const body = await c.req.json<{ token?: string }>().catch(() => null);
@@ -599,7 +599,7 @@ export async function setInstanceToken(c: Context) {
   // …and record the operator opt-in `tokenFor` gates the stored-credential branch
   // on. Nothing ever set that flag, so a pasted token was stored, the UI said
   // "Connected", and the next deploy still reported "no App/PAT token is
-  // available". Pasting a credential into Openship IS the explicit act the flag
+  // available". Pasting a credential into Kovalio IS the explicit act the flag
   // was designed to capture.
   await settingsService.setGhCliOperatorOptedIn(ctx.userId, true);
 
@@ -795,7 +795,7 @@ export async function getCloneToken(c: Context) {
     return c.json(
       {
         error:
-          "No GitHub App installation token is available for this owner. Connect the Openship GitHub App (cloud) for this account to use a clone token.",
+          "No GitHub App installation token is available for this owner. Connect the Kovalio GitHub App (cloud) for this account to use a clone token.",
       },
       409,
     );

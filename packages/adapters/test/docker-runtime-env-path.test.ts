@@ -6,7 +6,7 @@ import type { DeployConfig, LogEntry } from "../src/types";
 import type { MultiServiceDeployConfig, MultiServiceGroupHandle } from "../src/runtime/types";
 
 /**
- * A project env var named PATH must never reach a container's `Env` (openship#623).
+ * A project env var named PATH must never reach a container's `Env` (kovalio#623).
  *
  * Docker performs NO expansion on `Env`: the value is an absolute literal that
  * REPLACES the image's own `ENV PATH`, including the `node_modules/.bin` entry the
@@ -70,7 +70,7 @@ function recordingDaemon() {
 
 async function runtimeWith(docker: unknown): Promise<DockerRuntime> {
   const runtime = await DockerRuntime.create({
-    dockerSocketPath: "/tmp/openship-test-absent.sock",
+    dockerSocketPath: "/tmp/kovalio-test-absent.sock",
   });
   (runtime as unknown as { _docker: unknown })._docker = docker;
   return runtime;
@@ -92,7 +92,7 @@ async function deployRun(envVars: Record<string, string>): Promise<Run> {
       deploymentId: "dep-1",
       projectId: "proj-1",
       buildSessionId: "sess-1",
-      imageRef: "openship/app:sess-1",
+      imageRef: "kovalio/app:sess-1",
       environment: "production",
       port: 8000,
       envVars,
@@ -109,7 +109,7 @@ async function deployRun(envVars: Record<string, string>): Promise<Run> {
 async function serviceRun(environment: Record<string, string>): Promise<Run> {
   const { docker, creates } = recordingDaemon();
   const runtime = await runtimeWith(docker);
-  const group: MultiServiceGroupHandle = { id: "net-openship-demo" };
+  const group: MultiServiceGroupHandle = { id: "net-kovalio-demo" };
   const logs: LogEntry[] = [];
   await runtime.deployServiceWorkload(
     group,
@@ -118,8 +118,8 @@ async function serviceRun(environment: Record<string, string>): Promise<Run> {
       projectId: "proj-1",
       slug: "demo",
       serviceName: "web",
-      // `openship/` prefix → locally built, so the pull path is skipped.
-      image: "openship/demo-web:sess-1",
+      // `kovalio/` prefix → locally built, so the pull path is skipped.
+      image: "kovalio/demo-web:sess-1",
       ports: [],
       environment,
       volumes: [],

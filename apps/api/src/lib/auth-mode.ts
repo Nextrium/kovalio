@@ -4,7 +4,7 @@
  * authMode decides whether a request needs a login at all, so it is read from one
  * place and never guessed. Two sources, in strict precedence:
  *
- *   1. OPENSHIP_AUTH_MODE — DECLARED by whoever launches the API. When set it is
+ *   1. KOVALIO_AUTH_MODE — DECLARED by whoever launches the API. When set it is
  *      authoritative: no DB read, no cache, no fallback. The desktop app sets
  *      "none" (see apps/desktop/src/main/services.ts).
  *   2. instanceSettings.authMode — only consulted when nothing was declared. This
@@ -27,8 +27,8 @@
  *     heuristic here was the problem rather than the fix.
  *
  * A declaration is NOT a bypass. zeroAuthAllowed() (middleware/zero-auth-guard.ts)
- * independently re-checks the deploy mode, OPENSHIP_REQUIRE_AUTH,
- * OPENSHIP_PUBLIC_URL, OPENSHIP_ALLOW_ZERO_AUTH and — last — that the TCP peer is
+ * independently re-checks the deploy mode, KOVALIO_REQUIRE_AUTH,
+ * KOVALIO_PUBLIC_URL, KOVALIO_ALLOW_ZERO_AUTH and — last — that the TCP peer is
  * loopback per the kernel. Declaring "none" on a network-reachable box grants
  * nothing on its own; it only makes this value honest about what the API enforces.
  *
@@ -46,7 +46,7 @@ export type AuthMode = (typeof AUTH_MODES)[number];
 
 /** The launcher-declared mode, or null when nothing was declared. */
 export function pinnedAuthMode(): AuthMode | null {
-  return env.OPENSHIP_AUTH_MODE ?? null;
+  return env.KOVALIO_AUTH_MODE ?? null;
 }
 
 /** True when the mode was declared, so the DB must not be able to contradict it. */

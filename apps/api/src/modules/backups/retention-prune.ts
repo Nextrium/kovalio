@@ -107,7 +107,7 @@ export async function prunePolicy(policy: BackupPolicy): Promise<PruneOutcome> {
   // destination adapter; they differ only in which column scopes the page and
   // where the owning org is read from. Mail used to bail out here — its runs
   // grew without a ceiling on a source whose whole point is message data, which
-  // is the largest thing openship backs up.
+  // is the largest thing kovalio backs up.
   const scope = policy.projectId
     ? ({ projectId: policy.projectId } as const)
     : policy.mailServerId

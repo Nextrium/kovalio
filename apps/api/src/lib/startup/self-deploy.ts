@@ -1,8 +1,8 @@
 /**
  * Deploy the control plane ITSELF as a real, deploy-only app.
  *
- * The Openship self-app (project `appTemplateId === "openship"`) runs as a bare
- * host process supervised by `openship up` (launchd/systemd). To make it a
+ * The Kovalio self-app (project `appTemplateId === "kovalio"`) runs as a bare
+ * host process supervised by `kovalio up` (launchd/systemd). To make it a
  * genuine deployment — real row + `activeDeploymentId` + routes/SSL owned by the
  * normal pipeline — without a SECOND process binding the port, we create an
  * ADOPT deployment: `meta:{deployTarget:"local", runtimeMode:"bare", adopt:true}`.
@@ -43,8 +43,8 @@ import { reapplyProjectLiveRoutes } from "../../modules/domains/project-route.se
 import { describeTlsIssuedElsewhere, manageDomainSsl, tlsIssuedElsewhere } from "../domain-ssl";
 import { refreshSelfAppPublicUrl } from "../public-url";
 
-const APP_SLUG = "openship";
-const APP_TEMPLATE_ID = "openship";
+const APP_SLUG = "kovalio";
+const APP_TEMPLATE_ID = "kovalio";
 const BOOT_BACKOFFS = [15_000, 45_000, 120_000];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -151,7 +151,7 @@ export async function ensureAdoptDeployment(
       // No caps: this is the control plane on the operator's own host, and
       // BareRuntime is a host process — it has no cgroup to apply them to
       // anyway. The old hardcoded 0.5-core/512 MB literal read like a real
-      // limit on Openship itself, which it never was.
+      // limit on Kovalio itself, which it never was.
       resources: { ...UNLIMITED_RESOURCES },
       adopt: true,
     });
@@ -165,7 +165,7 @@ export async function ensureAdoptDeployment(
     { containerId, durationMs: 0 },
   );
 
-  // A containerized install (`openship up` on Linux) runs Openship as a compose
+  // A containerized install (`kovalio up` on Linux) runs Kovalio as a compose
   // stack; link those containers to this project so its Apps & Services tab shows
   // the real thing instead of "No apps or services yet". Best-effort + idempotent
   // — a bare install has nothing to link and this no-ops.
@@ -202,7 +202,7 @@ async function foreignProxyBlocksEdge(
     const { foreignProxyOnEdge } = await import("@repo/adapters");
     const { sshManager } = await import("../ssh-manager");
     // Probe the HOST's :80/:443, not the api container's netns — the host channel is
-    // LocalExecutor bare, SSH→host when containerized (OPENSHIP_HOST_SSH_*). Pooled,
+    // LocalExecutor bare, SSH→host when containerized (KOVALIO_HOST_SSH_*). Pooled,
     // so there's nothing to dispose (see withHostExecutor).
     const { blocked, owner } = await sshManager.withHostExecutor((exec) =>
       foreignProxyOnEdge(exec),
@@ -211,7 +211,7 @@ async function foreignProxyBlocksEdge(
     // Returned as well as logged so the caller's structured failure carries the SAME
     // sentence the live log shows — not a second wording of it.
     const detail =
-      `Not issuing TLS: ${owner} still owns ports 80/443, so Openship isn't the reverse proxy yet — ` +
+      `Not issuing TLS: ${owner} still owns ports 80/443, so Kovalio isn't the reverse proxy yet — ` +
       `an ACME challenge would hit it, not us. Re-run setup (or Domains → migrate) to take over.`;
     log?.(detail, "error");
     return { blocked: true, owner, detail };
@@ -377,17 +377,17 @@ async function findSelfAppProject(): Promise<Project | null> {
 
 /**
  * Boot hook: reconcile the self-app deployment + route on every start.
- * Self-hosted only (register.ts modes). NOT gated on OPENSHIP_PUBLIC_URL so
+ * Self-hosted only (register.ts modes). NOT gated on KOVALIO_PUBLIC_URL so
  * free/byo boxes reconcile too. First boot (no self-app) is a clean no-op.
  */
 /**
  * Reconcile the self-app's domain ROWS with the hostname this box is actually
- * reached on (`OPENSHIP_PUBLIC_URL`, set by the CLI at install time).
+ * reached on (`KOVALIO_PUBLIC_URL`, set by the CLI at install time).
  *
  * Two jobs:
  *
  * 1. CREATE the row when the env hostname has none. An install that set
- *    OPENSHIP_PUBLIC_URL but never completed a self-register (the compose wizard
+ *    KOVALIO_PUBLIC_URL but never completed a self-register (the compose wizard
  *    used to skip the custom-domain call entirely) ends up reachable on that
  *    hostname with ZERO domain rows — so Domains & Routes reads "No domains yet"
  *    on a box that is plainly serving that domain, and none of the per-domain UI
@@ -408,7 +408,7 @@ async function findSelfAppProject(): Promise<Project | null> {
  * No-ops when the env URL is unset or unparseable.
  */
 async function reconcileSelfAppPrimaryDomain(projectId: string): Promise<void> {
-  const raw = env.OPENSHIP_PUBLIC_URL?.trim();
+  const raw = env.KOVALIO_PUBLIC_URL?.trim();
   if (!raw) return;
   let host: string;
   try {
@@ -436,7 +436,7 @@ async function reconcileSelfAppPrimaryDomain(projectId: string): Promise<void> {
       sslStatus: "external",
     });
     console.log(
-      `[self-deploy] recorded self-app domain ${host} from OPENSHIP_PUBLIC_URL ` +
+      `[self-deploy] recorded self-app domain ${host} from KOVALIO_PUBLIC_URL ` +
         `(no row existed — install did not register it)`,
     );
   }
@@ -445,7 +445,7 @@ async function reconcileSelfAppPrimaryDomain(projectId: string): Promise<void> {
   // The repo owns the promote+demote pair (one primary per project) — don't
   // re-implement the flag juggling here.
   await repos.domain.setPrimary(projectId, wanted.id);
-  console.log(`[self-deploy] primary domain set to ${wanted.hostname} (from OPENSHIP_PUBLIC_URL)`);
+  console.log(`[self-deploy] primary domain set to ${wanted.hostname} (from KOVALIO_PUBLIC_URL)`);
 }
 
 export function registerSelfAdoptReconcile(): void {
@@ -469,7 +469,7 @@ export function registerSelfAdoptReconcile(): void {
         } catch {}
       }
 
-      const dashPort = env.OPENSHIP_DASHBOARD_PORT || 3001;
+      const dashPort = env.KOVALIO_DASHBOARD_PORT || 3001;
 
       // (a) Backfill / ensure the adopt deployment (existing installs predate it).
       await ensureAdoptDeployment(project.id, dashPort).catch((err) =>
@@ -481,7 +481,7 @@ export function registerSelfAdoptReconcile(): void {
       //      ensureAdoptDeployment early-returns for an install that already has
       //      one, so an existing install would otherwise never get its services —
       //      which is exactly the "No apps or services yet" a CLI-installed box
-      //      showed while five Openship containers were running. Also keeps the
+      //      showed while five Kovalio containers were running. Also keeps the
       //      image tags current after an upgrade.
       const activeDeploymentId = (await repos.project.findById(project.id))?.activeDeploymentId ?? null;
       await linkSelfAppServices(project.id, activeDeploymentId).catch((err) =>

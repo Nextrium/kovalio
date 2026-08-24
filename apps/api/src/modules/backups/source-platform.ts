@@ -8,12 +8,12 @@
  *
  * Both orchestrators used to read the runtime straight off the active deployment's
  * snapshot: `runtimeMode: "docker"` → the Docker executor, anything else → the bare
- * one. That is right for a deployment Openship performed, because the snapshot
- * records how it performed it. It is wrong for a service Openship ADOPTED, where
+ * one. That is right for a deployment Kovalio performed, because the snapshot
+ * records how it performed it. It is wrong for a service Kovalio ADOPTED, where
  * the snapshot describes the adoption rather than the workload.
  *
- * The reported case is the control plane's own project ([#611](https://github.com/oblien/openship/issues/611)).
- * `openship up` runs Openship as a Docker compose stack, and the self-app's adopt
+ * The reported case is the control plane's own project ([#611](https://github.com/Nextrium/kovalio/issues/611)).
+ * `kovalio up` runs Kovalio as a Docker compose stack, and the self-app's adopt
  * deployment is stamped `runtimeMode: "bare"` — accurately, for what that adopt
  * did: it health-probed a port with `BareRuntime` and never started a container.
  * Its five service rows, though, are created from the running compose containers

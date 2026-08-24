@@ -1,4 +1,4 @@
-# Openship Actions — a local GitHub Actions runner
+# Kovalio Actions — a local GitHub Actions runner
 
 **Status:** proposed · **Owner:** TBD · **Target module:** `apps/api/src/modules/actions`
 
@@ -16,7 +16,7 @@ No new config format. The workflow file GitHub reads is the workflow file we rea
 | Question | Decision | Why |
 |---|---|---|
 | Config format | `.github/workflows/*.yml` verbatim | "Same files GitHub uses" is the whole point. A repo stays portable; a user can move off us. |
-| Per-project overrides | **DB rows, never a repo file** | An `.openship/actions.json` would fork the source of truth and force Openship-specific commits. Enable/disable, runner-image mapping and secret bindings live in `action_workflow` / project settings. |
+| Per-project overrides | **DB rows, never a repo file** | An `.kovalio/actions.json` would fork the source of truth and force Kovalio-specific commits. Enable/disable, runner-image mapping and secret bindings live in `action_workflow` / project settings. |
 | Home in the UI | **Its own project-level `Actions` tab** | Not the Jobs tab. See §2. |
 | Execution substrate | **Container substrate** (`DockerRuntime` + `docker-exec-stream`) | Not the jobs SSH executor. See §2. |
 | Step isolation | **One container per job, one `docker exec` per step** | Steps must share a filesystem, `$GITHUB_PATH` and installed packages. Container-per-step breaks `apt-get install` persistence. This is the model `act` uses. |
@@ -110,9 +110,9 @@ push / PR / dispatch / schedule
          → snapshot the resolved DAG into action_run.plan (jsonb)   ← pinned; a mid-run
                                                                       repo change cannot
                                                                       rewrite history
-  → create rollup check run  openship/actions/<workflow>            (in_progress)
+  → create rollup check run  kovalio/actions/<workflow>            (in_progress)
   → per ready job (respecting needs + max-parallel):
-       create per-job check run  openship/actions/<workflow>/<job (matrix)>
+       create per-job check run  kovalio/actions/<workflow>/<job (matrix)>
        create workspace volume + job network
        start job container (runs-on → image), detached, sleep infinity
        per step:

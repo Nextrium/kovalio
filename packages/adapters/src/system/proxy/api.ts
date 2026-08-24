@@ -29,8 +29,8 @@ import {
   canImportProxy,
   detectInstalledProxy,
   scanImportableSites,
-  scanOpenshipEdge,
-  scanOpenshipEdgeStrict,
+  scanKovalioEdge,
+  scanKovalioEdgeStrict,
 } from "./import";
 import { caddyStoreCert } from "./import/caddy-certs";
 import { traefikAcmeCert, traefikDeclaredCertPaths } from "./import/traefik-certs";
@@ -266,7 +266,7 @@ export function edgeProxyFor(
   // caller says otherwise. It used to default `kind === "openresty"` — the stale
   // bare-edge assumption ("an openresty IS our edge"), which is wrong now that our
   // edge is a container. That default made the one caller (harvesting certs from a
-  // proxy we're migrating FROM) read a foreign OpenResty through `scanOpenshipEdge`
+  // proxy we're migrating FROM) read a foreign OpenResty through `scanKovalioEdge`
   // instead of `scanForeignOpenResty`, so a legacy bare edge's vhost-declared certs
   // at non-default paths were silently not harvested — the sites migrated with no TLS.
   return makeApi(exec, kind, opts.ours ?? false, opts.container ?? null);
@@ -309,7 +309,7 @@ function makeApi(
   // One scan per instance backs sites / by-port / siteFor / certFor.
   let scan: Promise<ProxyScanResult> | null = null;
   const listSites = () => {
-    scan ??= (ours ? scanOpenshipEdge(exec) : scanImportableSites(exec, kind)).catch(() => ({
+    scan ??= (ours ? scanKovalioEdge(exec) : scanImportableSites(exec, kind)).catch(() => ({
       proxy: kind,
       sites: [],
       warnings: [`${kind}: config scan failed`],
@@ -321,11 +321,11 @@ function makeApi(
   const listLoopbackUpstreamPortsStrict = (opts: { refresh?: boolean } = {}) => {
     if (!ours) {
       return Promise.reject(
-        new Error("Strict loopback upstream inventory is only available for the Openship edge"),
+        new Error("Strict loopback upstream inventory is only available for the Kovalio edge"),
       );
     }
     if (opts.refresh || !strictLoopbackPorts) {
-      const nextScan = scanOpenshipEdgeStrict(exec, container).then(
+      const nextScan = scanKovalioEdgeStrict(exec, container).then(
         ({ loopbackUpstreamPorts }) => loopbackUpstreamPorts,
       );
       strictLoopbackPorts = nextScan;

@@ -6,7 +6,7 @@ import { organization } from "./organization";
 /**
  * Organization-scoped DNS provider credentials (Cloudflare today).
  *
- * Holding one of these lets Openship write the A/CNAME + `_openship-challenge`
+ * Holding one of these lets Kovalio write the A/CNAME + `_kovalio-challenge`
  * TXT records a custom domain needs, instead of printing them for the operator
  * to paste. That is a lot of authority — the token can rewrite every record in
  * every zone it can see — so:

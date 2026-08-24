@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
 import type { DockerContainerDetail } from "@repo/adapters";
-import type { ManifestProjectEntry } from "../../lib/openship-manifest";
+import type { ManifestProjectEntry } from "../../lib/kovalio-manifest";
 import {
-  reconcileOpenshipProjects,
+  reconcileKovalioProjects,
   isBuildHelper,
   discoveredServiceName,
-  openshipStackName,
+  kovalioStackName,
   splitEnvByProvenance,
   toDiscoveredService,
   parseComposePort,
@@ -14,25 +14,25 @@ import {
 import type { ComposeService } from "../../lib/compose-parser";
 
 describe("isBuildHelper", () => {
-  it("is true only for a transient builder (openship.build, no deployment/service)", () => {
-    expect(isBuildHelper({ "openship.project": "p", "openship.build": "s1" })).toBe(true);
+  it("is true only for a transient builder (kovalio.build, no deployment/service)", () => {
+    expect(isBuildHelper({ "kovalio.project": "p", "kovalio.build": "s1" })).toBe(true);
   });
 
-  it("is FALSE for a real app container that merely inherited openship.build from its bld_ image", () => {
-    // The bug: locally-built app containers carry openship.build (image-inherited)
-    // but also openship.deployment/service — they are NOT build helpers.
+  it("is FALSE for a real app container that merely inherited kovalio.build from its bld_ image", () => {
+    // The bug: locally-built app containers carry kovalio.build (image-inherited)
+    // but also kovalio.deployment/service — they are NOT build helpers.
     expect(
       isBuildHelper({
-        "openship.project": "p",
-        "openship.build": "s1",
-        "openship.deployment": "dep_1",
-        "openship.service": "svc_1",
+        "kovalio.project": "p",
+        "kovalio.build": "s1",
+        "kovalio.deployment": "dep_1",
+        "kovalio.service": "svc_1",
       }),
     ).toBe(false);
   });
 
-  it("is false for containers with no openship.build (registry images like redis/postgres)", () => {
-    expect(isBuildHelper({ "openship.project": "p" })).toBe(false);
+  it("is false for containers with no kovalio.build (registry images like redis/postgres)", () => {
+    expect(isBuildHelper({ "kovalio.project": "p" })).toBe(false);
     expect(isBuildHelper({})).toBe(false);
   });
 });
@@ -213,26 +213,26 @@ describe("toDiscoveredService — env import separates operator config from imag
   });
 });
 
-describe("reconcileOpenshipProjects", () => {
+describe("reconcileKovalioProjects", () => {
   it("recovers an orphaned project and enriches name/slug/domains from the manifest", () => {
     const details = [
       container({
         id: "c1",
         name: "web",
         image: "myapp:latest",
-        labels: { "openship.project": "proj_abc", "openship.service": "web", "openship.deployment": "dep_1" },
+        labels: { "kovalio.project": "proj_abc", "kovalio.service": "web", "kovalio.deployment": "dep_1" },
       }),
       container({
         id: "c2",
         name: "db",
-        labels: { "openship.project": "proj_abc", "openship.service": "db" },
+        labels: { "kovalio.project": "proj_abc", "kovalio.service": "db" },
       }),
     ];
     const manifestById = new Map<string, ManifestProjectEntry>([
       ["proj_abc", manifestEntry({ id: "proj_abc", name: "Shop", slug: "shop", domains: ["shop.example.com"] })],
     ]);
 
-    const out = reconcileOpenshipProjects({ managedDetails: details, manifestById, knownHereIds: new Set(), snapshotIds: new Set() });
+    const out = reconcileKovalioProjects({ managedDetails: details, manifestById, knownHereIds: new Set(), snapshotIds: new Set() });
     expect(out).toHaveLength(1);
     const p = out[0]!;
     expect(p).toMatchObject({ projectId: "proj_abc", knownHere: false, suggestedName: "Shop", slug: "shop" });
@@ -243,9 +243,9 @@ describe("reconcileOpenshipProjects", () => {
 
   it("flags a project already present in this DB as knownHere", () => {
     const details = [
-      container({ labels: { "openship.project": "proj_known", "openship.service": "web" } }),
+      container({ labels: { "kovalio.project": "proj_known", "kovalio.service": "web" } }),
     ];
-    const out = reconcileOpenshipProjects({
+    const out = reconcileKovalioProjects({
       managedDetails: details,
       manifestById: null,
       knownHereIds: new Set(["proj_known"]),
@@ -254,12 +254,12 @@ describe("reconcileOpenshipProjects", () => {
     expect(out[0]!.knownHere).toBe(true);
   });
 
-  it("excludes build-helper containers (openship.build) from services", () => {
+  it("excludes build-helper containers (kovalio.build) from services", () => {
     const details = [
-      container({ id: "c1", name: "web", labels: { "openship.project": "proj_x", "openship.service": "web" } }),
-      container({ id: "c2", name: "build", labels: { "openship.project": "proj_x", "openship.build": "sess_1" } }),
+      container({ id: "c1", name: "web", labels: { "kovalio.project": "proj_x", "kovalio.service": "web" } }),
+      container({ id: "c2", name: "build", labels: { "kovalio.project": "proj_x", "kovalio.build": "sess_1" } }),
     ];
-    const out = reconcileOpenshipProjects({ managedDetails: details, manifestById: null, knownHereIds: new Set(), snapshotIds: new Set() });
+    const out = reconcileKovalioProjects({ managedDetails: details, manifestById: null, knownHereIds: new Set(), snapshotIds: new Set() });
     expect(out).toHaveLength(1);
     expect(out[0]!.services).toHaveLength(1);
     expect(out[0]!.services[0]!.name).toBe("web");
@@ -267,40 +267,40 @@ describe("reconcileOpenshipProjects", () => {
 
   it("falls back to a derived name when no manifest entry exists", () => {
     const details = [
-      container({ name: "api", labels: { "openship.project": "proj_deadbeef00", "openship.service": "api" } }),
+      container({ name: "api", labels: { "kovalio.project": "proj_deadbeef00", "kovalio.service": "api" } }),
     ];
-    const out = reconcileOpenshipProjects({ managedDetails: details, manifestById: null, knownHereIds: new Set(), snapshotIds: new Set() });
-    expect(out[0]!.suggestedName).toBe("openship-deadbeef");
+    const out = reconcileKovalioProjects({ managedDetails: details, manifestById: null, knownHereIds: new Set(), snapshotIds: new Set() });
+    expect(out[0]!.suggestedName).toBe("kovalio-deadbeef");
     expect(out[0]!.slug).toBeUndefined();
   });
 
-  it("recovers a single-app container that carries no openship.service label", () => {
+  it("recovers a single-app container that carries no kovalio.service label", () => {
     const details = [
-      container({ id: "c1", name: "web-1", labels: { "openship.project": "proj_single", "openship.deployment": "dep_9" } }),
+      container({ id: "c1", name: "web-1", labels: { "kovalio.project": "proj_single", "kovalio.deployment": "dep_9" } }),
     ];
-    const out = reconcileOpenshipProjects({ managedDetails: details, manifestById: null, knownHereIds: new Set(), snapshotIds: new Set() });
+    const out = reconcileKovalioProjects({ managedDetails: details, manifestById: null, knownHereIds: new Set(), snapshotIds: new Set() });
     expect(out[0]!.services).toHaveLength(1);
     // No service label → the service name falls back to the container name.
     expect(out[0]!.services[0]!.name).toBe("web-1");
   });
 
-  it("ignores containers with no openship.project label", () => {
-    const details = [container({ labels: { "openship.network": "shop" } })];
-    const out = reconcileOpenshipProjects({ managedDetails: details, manifestById: null, knownHereIds: new Set(), snapshotIds: new Set() });
+  it("ignores containers with no kovalio.project label", () => {
+    const details = [container({ labels: { "kovalio.network": "shop" } })];
+    const out = reconcileKovalioProjects({ managedDetails: details, manifestById: null, knownHereIds: new Set(), snapshotIds: new Set() });
     expect(out).toEqual([]);
   });
 });
 
 describe("discoveredServiceName — migrated container → compose-service mapping", () => {
-  it("maps an Openship-deployed container to its openship.service name (no compose label)", () => {
-    // The exact same-server migration case: container named openship-openship-web
-    // carrying openship.service=web MUST adopt as "web", so the git-compose
+  it("maps an Kovalio-deployed container to its kovalio.service name (no compose label)", () => {
+    // The exact same-server migration case: container named kovalio-kovalio-web
+    // carrying kovalio.service=web MUST adopt as "web", so the git-compose
     // reconcile updates it in place instead of creating a duplicate bare-name row.
     expect(
       discoveredServiceName(
         {
-          name: "openship-openship-web",
-          labels: { "openship.project": "p1", "openship.service": "web", "openship.deployment": "d1" },
+          name: "kovalio-kovalio-web",
+          labels: { "kovalio.project": "p1", "kovalio.service": "web", "kovalio.deployment": "d1" },
         },
         undefined,
       ),
@@ -310,15 +310,15 @@ describe("discoveredServiceName — migrated container → compose-service mappi
   it("prefers an explicit compose-file declaration over any label", () => {
     expect(
       discoveredServiceName(
-        { name: "c", composeService: "api", labels: { "openship.service": "web" } },
+        { name: "c", composeService: "api", labels: { "kovalio.service": "web" } },
         { name: "declared" },
       ),
     ).toBe("declared");
   });
 
-  it("uses the real com.docker.compose.service label before openship.service", () => {
+  it("uses the real com.docker.compose.service label before kovalio.service", () => {
     expect(
-      discoveredServiceName({ name: "c", composeService: "db", labels: { "openship.service": "x" } }, undefined),
+      discoveredServiceName({ name: "c", composeService: "db", labels: { "kovalio.service": "x" } }, undefined),
     ).toBe("db");
   });
 
@@ -328,24 +328,24 @@ describe("discoveredServiceName — migrated container → compose-service mappi
   });
 });
 
-describe("openshipStackName — group Openship-deployed containers by their stack", () => {
-  it("derives the stack slug from openship-<slug>-<service>", () => {
-    expect(openshipStackName("openship-supabase-kong", "kong")).toBe("supabase");
-    expect(openshipStackName("openship-openship-web", "web")).toBe("openship");
-    expect(openshipStackName("openship-clincai-api", "api")).toBe("clincai");
+describe("kovalioStackName — group Kovalio-deployed containers by their stack", () => {
+  it("derives the stack slug from kovalio-<slug>-<service>", () => {
+    expect(kovalioStackName("kovalio-supabase-kong", "kong")).toBe("supabase");
+    expect(kovalioStackName("kovalio-kovalio-web", "web")).toBe("kovalio");
+    expect(kovalioStackName("kovalio-clincai-api", "api")).toBe("clincai");
   });
 
   it("handles hyphenated service names via the exact service label", () => {
     // Without the exact label, naive splitting would mis-derive "mongodb-mongo".
-    expect(openshipStackName("openship-mongodb-mongo-express", "mongo-express")).toBe("mongodb");
-    expect(openshipStackName("openship-mongodb-mongo", "mongo")).toBe("mongodb");
+    expect(kovalioStackName("kovalio-mongodb-mongo-express", "mongo-express")).toBe("mongodb");
+    expect(kovalioStackName("kovalio-mongodb-mongo", "mongo")).toBe("mongodb");
   });
 
-  it("returns null for a non-Openship / unidentifiable container (→ standalone)", () => {
-    expect(openshipStackName("my-random-container", undefined)).toBeNull();
-    expect(openshipStackName(undefined, "web")).toBeNull();
+  it("returns null for a non-Kovalio / unidentifiable container (→ standalone)", () => {
+    expect(kovalioStackName("my-random-container", undefined)).toBeNull();
+    expect(kovalioStackName(undefined, "web")).toBeNull();
     // Name that doesn't end in the service label → not our pattern.
-    expect(openshipStackName("openship-supabase-kong", "web")).toBeNull();
+    expect(kovalioStackName("kovalio-supabase-kong", "web")).toBeNull();
   });
 });
 

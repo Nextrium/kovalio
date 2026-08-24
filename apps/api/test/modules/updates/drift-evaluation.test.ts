@@ -54,10 +54,10 @@ const gitProject = (over: Partial<Project> = {}) =>
   ({
     id: "proj_1",
     organizationId: "org_1",
-    name: "openship",
+    name: "kovalio",
     gitProvider: "github",
     gitOwner: "oblien",
-    gitRepo: "openship",
+    gitRepo: "kovalio",
     gitBranch: "main",
     appTemplateId: null,
     releaseSource: null,
@@ -113,7 +113,7 @@ describe("commit drift — the deployed side is live", () => {
 
   it("reads an abbreviated deployed sha as the same commit, not a new one", async () => {
     // The reported case: `POST /deployments` accepts any ref as `commitSha` (an
-    // `openship deploy --commit 1314074`, an MCP call, a CI script), git checks it
+    // `kovalio deploy --commit 1314074`, an MCP call, a CI script), git checks it
     // out, and the row keeps the abbreviation. Compared by bytes against the
     // 40-char HEAD it is a second commit forever — and since both sides render
     // slice(0, 7), the operator was told "new commit 1314074 available — you're
@@ -187,7 +187,7 @@ describe("cache keys — a repointed source is a miss, not stale drift", () => {
 
   it("ignores a HEAD polled for a different repo", async () => {
     const upstream = commitUpstream(gitProject(), NEWER);
-    const now = gitProject({ gitRepo: "openship-fork" });
+    const now = gitProject({ gitRepo: "kovalio-fork" });
     deploymentRepo.findById.mockResolvedValue({ id: "dep_live", commitSha: SHIPPED });
 
     expect(await evaluateDrift(now, upstream)).toMatchObject({ behind: false, latestSha: null });
@@ -196,7 +196,7 @@ describe("cache keys — a repointed source is a miss, not stale drift", () => {
   it("ignores a version polled from a different release source", async () => {
     const polledOn = gitProject({
       gitProvider: "release",
-      releaseSource: { mode: "github", repo: "oblien/openship" } as never,
+      releaseSource: { mode: "github", repo: "oblien/kovalio" } as never,
     });
     const upstream: UpstreamDrift = {
       supported: true,
@@ -220,7 +220,7 @@ describe("cache keys — a repointed source is a miss, not stale drift", () => {
   it("still reports real release drift when the source matches", async () => {
     const p = gitProject({
       gitProvider: "release",
-      releaseSource: { mode: "github", repo: "oblien/openship" } as never,
+      releaseSource: { mode: "github", repo: "oblien/kovalio" } as never,
     });
     deploymentRepo.findById.mockResolvedValue({ id: "dep_live", releaseVersion: "0.5.0" });
 

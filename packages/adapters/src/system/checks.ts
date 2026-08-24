@@ -155,7 +155,7 @@ export async function checkRsync(
 }
 
 /**
- * The edge: is our openship-edge container SERVING.
+ * The edge: is our kovalio-edge container SERVING.
  *
  * The edge is a Docker image whose serving path is host-side (host networking, host
  * bind mounts for vhosts/certs/ACME), so there is no host binary, no unit and no Lua
@@ -179,7 +179,7 @@ export async function checkEdge(executor: CommandExecutor): Promise<ComponentSta
     systemDebug("checks", `edge:missing (${formatDuration(startedAt)})`);
     return unhealthy(
       "edge",
-      "No edge on this server. The edge is the openship-edge container — install it (requires Docker).",
+      "No edge on this server. The edge is the kovalio-edge container — install it (requires Docker).",
     );
   }
 

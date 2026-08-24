@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   if (!entry) return { title: "Changelog" };
 
   const title = entry.displayVersion;
-  const description = entry.summary || "Features, fixes, and improvements shipping in Openship.";
+  const description = entry.summary || "Features, fixes, and improvements shipping in Kovalio.";
   const url = `/changelog/${slug}`;
 
   return {
@@ -31,17 +31,17 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     description,
     alternates: { canonical: url },
     openGraph: {
-      title: `${title} - Openship`,
+      title: `${title} - Kovalio`,
       description,
       url,
       type: "article",
-      siteName: "Openship",
+      siteName: "Kovalio",
       locale: "en_US",
       publishedTime: entry.date,
     },
     twitter: {
       card: "summary_large_image",
-      title: `${title} - Openship`,
+      title: `${title} - Kovalio`,
       description,
     },
   };
@@ -71,7 +71,7 @@ export default async function ChangelogEntryPage({ params }: { params: Params })
             {target.displayVersion}
           </h1>
           <p className="th-text-body mt-5 text-lg leading-relaxed">
-            {target.summary || "Features, fixes, and improvements shipping in Openship."}
+            {target.summary || "Features, fixes, and improvements shipping in Kovalio."}
           </p>
         </header>
 

@@ -70,7 +70,7 @@ const AdvancedSchema = Type.Object(
     healthcheck: Type.Optional(Type.Union([HealthcheckSchema, Type.Null()])),
     /**
      * Per-service DEPLOY-TIME readiness gate, overriding the project's for this
-     * service (mirrors OpenshipReadiness in @repo/core). Absent ⇒ inherit the
+     * service (mirrors KovalioReadiness in @repo/core). Absent ⇒ inherit the
      * project's; neither ⇒ off, which is the default.
      *
      * Not `healthcheck` above: that's the daemon-run Docker HEALTHCHECK (a custom

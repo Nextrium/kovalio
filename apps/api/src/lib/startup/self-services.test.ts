@@ -16,7 +16,7 @@ const container = (
   ...over,
 });
 
-const stackMember = (service: string, project = "openship") =>
+const stackMember = (service: string, project = "kovalio") =>
   container({
     id: `c_${project}_${service}`,
     names: [`${project}-${service}-1`],
@@ -52,7 +52,7 @@ describe("findOwnStack", () => {
       stackMember("api"),
       stackMember("dashboard"),
     ]);
-    expect(own.every((c) => c.composeProject === "openship")).toBe(true);
+    expect(own.every((c) => c.composeProject === "kovalio")).toBe(true);
     expect(own).toHaveLength(2);
   });
 
@@ -69,7 +69,7 @@ describe("findOwnStack", () => {
   });
 
   it("returns nothing for containers with no compose labels (bare install)", () => {
-    expect(findOwnStack([container({ id: "c1", names: ["openship-api"] })])).toEqual([]);
+    expect(findOwnStack([container({ id: "c1", names: ["kovalio-api"] })])).toEqual([]);
   });
 });
 

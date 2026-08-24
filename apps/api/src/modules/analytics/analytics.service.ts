@@ -11,7 +11,7 @@
  *   - No overlap, no duplication, no data loss on OpenResty restart
  *
  * Source selection is deployment-mode aware:
- *   - SaaS / OpenShip Cloud: Oblien analytics is the source of truth
+ *   - SaaS / Kovalio Cloud: Oblien analytics is the source of truth
  *   - Self-hosted: DB archive + live OpenResty tail are merged
  */
 
@@ -326,7 +326,7 @@ function assertCloudTimeseriesOk(raw: unknown): void {
         (typeof obj.error === "string" && obj.error) ||
         (typeof obj.message === "string" && obj.message) ||
         "request rejected";
-      throw new Error(`Openship Cloud analytics: ${detail}`);
+      throw new Error(`Kovalio Cloud analytics: ${detail}`);
     }
     if (Array.isArray(obj.data)) return; // reached the bucket array — done
     node = obj.data ?? obj.result;
@@ -429,7 +429,7 @@ export interface ContainerUsageSnapshot {
 /**
  * Get cumulative analytics summary for a project.
  *
- * SaaS/OpenShip Cloud projects read from Oblien only.
+ * SaaS/Kovalio Cloud projects read from Oblien only.
  * Self-hosted projects combine DB history with the live OpenResty tail.
  */
 /**
@@ -480,7 +480,7 @@ export async function getAnalyticsOverview(
     if (ok.length === 0) {
       const reason = settled.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
       throw new AppError(
-        `Analytics upstream (Openship Cloud) is unavailable${reason ? `: ${safeErrorMessage(reason.reason)}` : ""}`,
+        `Analytics upstream (Kovalio Cloud) is unavailable${reason ? `: ${safeErrorMessage(reason.reason)}` : ""}`,
         502,
         "ANALYTICS_UPSTREAM_UNAVAILABLE",
       );

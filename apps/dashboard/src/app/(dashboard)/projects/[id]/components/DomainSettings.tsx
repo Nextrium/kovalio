@@ -155,7 +155,7 @@ function toEditablePublicEndpoint(endpoint: any): PublicEndpoint {
  * "auto-generate" one: the phantom rendered as a real card (Pending / Included
  * by host, with no DB row behind it so it couldn't be removed), and — because it
  * carried `domainType: "free"` — it also tripped the free-subdomain cloud gate on
- * the next save, refusing to add ANY domain with "Connect Openship Cloud…".
+ * the next save, refusing to add ANY domain with "Connect Kovalio Cloud…".
  *
  * The seed only applies when endpoints haven't loaded yet (undefined), and only
  * when a free managed subdomain is actually available (`freeAvailable`): on a
@@ -282,12 +282,12 @@ export const DomainSettings = () => {
   const router = useRouter();
   const { baseDomain, selfHosted } = usePlatform();
   // `selfHosted` is INSTANCE-level (this install runs self-hosted). A cloud-OWNED
-  // project (deployTarget "cloud") is canonical on Openship Cloud and uses the
+  // project (deployTarget "cloud") is canonical on Kovalio Cloud and uses the
   // Oblien edge — the self-hosted edge features (edge-status, route-rules) aren't
   // proxied for it, so their local endpoints 404. Gate those on the PROJECT being
   // non-cloud, not on the instance flag.
   const isCloudProject = projectData.deployTarget === "cloud";
-  // Free .<baseDomain> subdomains route through the Openship Cloud edge, so
+  // Free .<baseDomain> subdomains route through the Kovalio Cloud edge, so
   // choosing "free" without a cloud connection opens the connect-cloud modal
   // (requireCloud returns true immediately on SaaS / when already connected).
   const { requireCloud, connected: cloudConnected } = useCloud();
@@ -400,7 +400,7 @@ export const DomainSettings = () => {
   // "Add route" form (services projects): a generic domain → port entry. The
   // port is matched to the service that owns it; that service is then exposed.
   const [showAddRoute, setShowAddRoute] = useState(false);
-  // A free *.<baseDomain> subdomain only routes through the Openship Cloud edge,
+  // A free *.<baseDomain> subdomain only routes through the Kovalio Cloud edge,
   // so it's a usable default only on a cloud-connected (or SaaS) instance.
   const freeDomainsAvailable = !selfHosted || cloudConnected;
   const emptyAddRouteDraft = {
@@ -1274,7 +1274,7 @@ export const DomainSettings = () => {
   };
 
   const handleSavePublicEndpoints = async () => {
-    // Free .<baseDomain> domains route through the Openship Cloud edge — block
+    // Free .<baseDomain> domains route through the Kovalio Cloud edge — block
     // the save (opening the connect-cloud modal) when one is present without a
     // cloud connection, so an edit can't persist a domain that can't route.
     if (publicEndpoints.some((e) => e.domainType === "free") && !(await freeNeedsCloud())) return;
@@ -1473,7 +1473,7 @@ export const DomainSettings = () => {
   const handleAddRoute = async () => {
     setAddRouteError(null);
     const { domainType, domain, port } = addRouteDraft;
-    // Free *.opsh.io routes only resolve behind the Openship Cloud edge — gate
+    // Free *.opsh.io routes only resolve behind the Kovalio Cloud edge — gate
     // the add on a cloud connection, identical to handleSaveRoute /
     // handleSavePublicEndpoints. requireCloud opens the connect modal and
     // returns false when not connected, so the free route is never persisted.
@@ -1565,7 +1565,7 @@ export const DomainSettings = () => {
    * while the very same rows were driving the Production URL in the sidebar — the
    * domain was live, and invisible: unverifiable, un-editable, un-deletable here.
    *
-   * The control-plane "Openship" project is the guaranteed case (it's an adopted
+   * The control-plane "Kovalio" project is the guaranteed case (it's an adopted
    * deployment with domain rows and no service rows), but any project whose domain
    * isn't attached to an exposed service hits it. A domain the project owns has to
    * be listed by the page that owns domains, whether or not a service claims it.

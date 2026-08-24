@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
  * container also cannot see the host's, so a private-image pull went out anonymous even
  * on a `docker login`-ed host.
  *
- * `openship up` therefore mounts an existing host config into the API service only,
+ * `kovalio up` therefore mounts an existing host config into the API service only,
  * read-only. What is pinned here is the three ways that goes wrong: mounting a config
  * that does not exist (Docker would create a DIRECTORY at the source and every read
  * inside the container fails EISDIR), mounting it into more than the API, and emitting
@@ -109,12 +109,12 @@ afterEach(() => {
   else process.env.DOCKER_CONFIG = ORIGINAL_DOCKER_CONFIG;
 });
 
-describe("openship up — host Docker config mount (#581)", () => {
+describe("kovalio up — host Docker config mount (#581)", () => {
   it("omits the mount entirely when the host has no Docker config", async () => {
     await composeUp({ version: "0.3.0" });
     expect(composeYaml()).not.toContain(".docker/config.json");
     // The marker must never survive into the written file.
-    expect(composeYaml()).not.toContain("__OPENSHIP_DOCKER_CONFIG_MOUNT__");
+    expect(composeYaml()).not.toContain("__KOVALIO_DOCKER_CONFIG_MOUNT__");
   });
 
   it("mounts an existing config read-only into the api service", async () => {

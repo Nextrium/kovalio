@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * Untracked edge routes — hostnames this machine serves with no Openship record.
+ * Untracked edge routes — hostnames this machine serves with no Kovalio record.
  *
  * Edge config lives on the host and outlives its DB rows on purpose: record-only
- * delete ("Remove from Openship only") keeps the workload AND its route running.
+ * delete ("Remove from Kovalio only") keeps the workload AND its route running.
  * The leftover then has two very different failure modes, which is the whole
  * reason this card exists:
  *

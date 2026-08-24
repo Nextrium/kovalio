@@ -29,7 +29,7 @@ const connection = {
 };
 
 describe("host-port target identity", () => {
-  it("validates OS and OpenShip target ids before trusting them", () => {
+  it("validates OS and Kovalio target ids before trusting them", () => {
     expect(normalizeTargetMachineId("0123456789ABCDEF0123456789ABCDEF\n")).toBe(
       "0123456789abcdef0123456789abcdef",
     );
@@ -63,13 +63,13 @@ describe("host-port target identity", () => {
     expect(second.legacyTargetKeys).toEqual(["server:server-two"]);
   });
 
-  it("uses an existing OpenShip host id when machine-id is unavailable", async () => {
+  it("uses an existing Kovalio host id when machine-id is unavailable", async () => {
     const result = await resolveHostPortTargetIdentity({
       localHost: false,
       serverId: "server-one",
       executor: executorWithFiles({
         "/etc/machine-id": new Error("unreadable"),
-        "/var/lib/openship/host-id": "550e8400-e29b-41d4-a716-446655440000\n",
+        "/var/lib/kovalio/host-id": "550e8400-e29b-41d4-a716-446655440000\n",
       }),
       connection,
     });
@@ -87,7 +87,7 @@ describe("host-port target identity", () => {
       serverId: "one",
       executor: executorWithFiles({
         "/etc/machine-id": "invalid",
-        "/var/lib/openship/host-id": "invalid",
+        "/var/lib/kovalio/host-id": "invalid",
       }),
       connection,
     });
@@ -108,10 +108,10 @@ describe("host-port target identity", () => {
     expect(second.stable).toBe(false);
   });
 
-  it("atomically creates a stable OpenShip host id before using the locator fallback", async () => {
+  it("atomically creates a stable Kovalio host id before using the locator fallback", async () => {
     const executor = executorWithFiles({
       "/etc/machine-id": new Error("missing"),
-      "/var/lib/openship/host-id": new Error("missing"),
+      "/var/lib/kovalio/host-id": new Error("missing"),
     });
     executor.exec = vi.fn(async () => "550e8400-e29b-41d4-a716-446655440000\n");
 

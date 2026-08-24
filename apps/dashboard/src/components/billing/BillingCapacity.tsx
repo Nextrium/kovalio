@@ -16,7 +16,7 @@ export type { BillingState };
 /*  in the pricing catalog — the same numbers enforcement reads — so   */
 /*  the panel is meaningful immediately; live consumption (and         */
 /*  cloud-only ceilings like free routes) fills in from               */
-/*  `state.capacity` once Openship Cloud reports it. Any meter still   */
+/*  `state.capacity` once Kovalio Cloud reports it. Any meter still   */
 /*  awaiting cloud data shows a "syncing" hint rather than a fake zero.*/
 /*                                                                    */
 /*  EVERY METER HERE CAN FILL. The vCPU / RAM / disk rows this panel   */
@@ -194,7 +194,7 @@ export const BillingCapacity: React.FC<{ state: BillingState }> = ({ state }) =>
     format: fmtInt,
   });
 
-  // Projects — Openship-enforced; Oblien has no project concept at all.
+  // Projects — Kovalio-enforced; Oblien has no project concept at all.
   rows.push({
     key: "projects",
     label: c.projects,

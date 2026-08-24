@@ -3,7 +3,7 @@ import { runBuildPipeline, BuildLogger, type BuildEnvironment } from "./build-pi
 import type { BuildConfig } from "../types";
 
 /**
- * openship#623 on the pipeline surface: a detected command that names a
+ * kovalio#623 on the pipeline surface: a detected command that names a
  * DEPENDENCY binary (`next build`, `vite build`, `tsc`) is handed to a bare
  * `sh -c`, which — unlike `npm run` — does NOT prepend `node_modules/.bin`.
  * The fix is a `nodeBinPathExport` prelude chained onto the install and build
@@ -14,7 +14,7 @@ import type { BuildConfig } from "../types";
  * what's under test.
  */
 
-const PROJECT_DIR = "/tmp/openship/proj-1";
+const PROJECT_DIR = "/tmp/kovalio/proj-1";
 
 /** Records every command the pipeline executes, in order. */
 function recordingEnv(commands: string[], over: Partial<BuildEnvironment> = {}): BuildEnvironment {

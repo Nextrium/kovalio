@@ -8,11 +8,11 @@ import { useI18n } from "@/components/i18n-provider";
 /**
  * How a self-hosted box upgrades its own control plane: the CLI reinstalls the
  * global package (CLI + bundled API + compose template), then — on a compose
- * install — repins `OPENSHIP_VERSION` and pulls the new api/dashboard/edge
+ * install — repins `KOVALIO_VERSION` and pulls the new api/dashboard/edge
  * images; on a bare install it restarts the service. One string, so every
  * surface that can't offer a working button points at the same command.
  */
-export const SELF_UPDATE_COMMAND = "openship update";
+export const SELF_UPDATE_COMMAND = "kovalio update";
 
 /**
  * A command the operator has to run themselves, as a click-to-copy chip.

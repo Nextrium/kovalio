@@ -323,8 +323,8 @@ describe("a volume restore never destroys the target before it can write", () =>
     // directory holding a real file, because the property is "the bytes survive" and no
     // amount of reading the string proves that.
     const script = (await helperScript("zstd")).replace(/\/mnt/g, "$TARGET");
-    const target = mkdtempSync(join(tmpdir(), "openship-restore-"));
-    const bin = mkdtempSync(join(tmpdir(), "openship-restore-bin-"));
+    const target = mkdtempSync(join(tmpdir(), "kovalio-restore-"));
+    const bin = mkdtempSync(join(tmpdir(), "kovalio-restore-bin-"));
     writeFileSync(join(target, "precious.txt"), "PRECIOUS");
 
     const res = spawnSync("/bin/sh", ["-c", script], {

@@ -154,9 +154,9 @@ export interface MailWebmailSummary {
   routingUnknown?: boolean;
   /**
    * The webmail catalog project that owns this deploy — webmail is an ordinary
-   * openship app, and the projects UI is where it's managed.
+   * kovalio app, and the projects UI is where it's managed.
    *
-   * NULL when the webmail was adopted or deployed outside openship: it's running
+   * NULL when the webmail was adopted or deployed outside kovalio: it's running
    * on the box, but there is no project row to link to. That's an offer to install
    * — never a dead end, and never a claim that webmail is down: `installed` alone
    * says that, and an older API that doesn't send this field would otherwise read
@@ -164,7 +164,7 @@ export interface MailWebmailSummary {
    */
   projectId?: string | null;
   /**
-   * Deployed by a pre-catalog Openship (webmail as a shipped bundle, not an image).
+   * Deployed by a pre-catalog Kovalio (webmail as a shipped bundle, not an image).
    * It runs and reports `installed`, but it can only be REPLACED — a redeploy has
    * no pipeline to run — so the UI offers the upgrade instead of staying silent.
    */
@@ -216,7 +216,7 @@ export interface MailSetupStatus {
   webmail?: MailWebmailSummary;
   /**
    * Live mail-engine topology, probed on the same connection that read the state
-   * file. `container` = the openship-mail engine; `host` = a LEGACY systemd
+   * file. `container` = the kovalio-mail engine; `host` = a LEGACY systemd
    * Postfix/Dovecot install (every mail box provisioned before the engine image);
    * `none` = nothing serving mail on the box at all.
    *
@@ -402,7 +402,7 @@ export const mailApi = {
 
   /**
    * Get current setup status for a server. State lives ON the target
-   * VPS now (not in openship's DB), so a serverId is required to know
+   * VPS now (not in kovalio's DB), so a serverId is required to know
    * whose state we're reading. Returns the "no install" shape if the
    * server can't be reached or the state file doesn't exist.
    */
@@ -658,7 +658,7 @@ export const mailApi = {
 
   // ── Webmail deploy ────────────────────────────────────────────────────────
   webmail: {
-    /** Hosts the webmail can be deployed to (mail server + other openship servers). */
+    /** Hosts the webmail can be deployed to (mail server + other kovalio servers). */
     listTargets: (serverId: string) =>
       api.get<{ options: WebmailTargetOption[] }>(
         `${endpoints.mail.webmail.targets}?serverId=${encodeURIComponent(serverId)}`,
@@ -670,7 +670,7 @@ export const mailApi = {
      * /build/[deploymentId] and subscribes to the standard SSE endpoint.
      *
      * `target` discriminator:
-     *   { kind: "self", serverId } - host on an openship-managed server
+     *   { kind: "self", serverId } - host on an kovalio-managed server
      *   { kind: "cloud" }          - host on Opshcloud
      *
      * A pre-catalog webmail (`MailWebmailSummary.legacy`) can't be redeployed:

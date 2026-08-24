@@ -967,7 +967,7 @@ export function useDeploymentBuild(
       // resolves TRUE immediately when the dashboard already believes it is
       // connected, opening no modal and asking nothing — and `if (!connected)` then
       // skipped the toast, so a 403 the server was perfectly clear about
-      // ("Free subdomain … requires Openship Cloud") reached the user as nothing at
+      // ("Free subdomain … requires Kovalio Cloud") reached the user as nothing at
       // all, visible only in the network tab.
       const cloudCapability = deployErrorCloudCapability(errorCode);
       if (shouldPromptCloudConnect({ errorCode, canConnectCloud, cloudConnected }) && cloudCapability) {

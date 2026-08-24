@@ -1,9 +1,9 @@
 /**
- * Bring up the mail ENGINE as a container on a box, beside `openship-edge`.
+ * Bring up the mail ENGINE as a container on a box, beside `kovalio-edge`.
  *
  * Mirrors `ensureContainerEdge` (host-networked container, raw `docker run` over
  * the target executor, all mutable state on host bind mounts) but for the mail
- * stack: an `openship-mail` engine image (Postfix/Dovecot/Amavis/…/supervisord)
+ * stack: an `kovalio-mail` engine image (Postfix/Dovecot/Amavis/…/supervisord)
  * plus a pinned `postgres:16-alpine` SIDECAR holding the vmail DB.
  *
  * Boundary that will NOT change: SMTP/IMAP are L4 protocols the HTTP edge cannot
@@ -69,7 +69,7 @@ export function resolveMailImage(explicit?: string): string {
 }
 
 /** Postgres sidecar image; overridable but pinned by default so pg-major is stable. */
-export const MAIL_DB_IMAGE = process.env.OPENSHIP_MAIL_DB_IMAGE?.trim() || "postgres:16-alpine";
+export const MAIL_DB_IMAGE = process.env.KOVALIO_MAIL_DB_IMAGE?.trim() || "postgres:16-alpine";
 
 export interface ContainerMailResult {
   container: string;
@@ -134,13 +134,13 @@ function pullFailureMessage(image: string, output: string): string {
     return (
       `The mail engine image ${image} isn't in the registry. ` +
       "The engine image isn't published yet, so a server can only run it from a local " +
-      "build — build it on this box (or point OPENSHIP_MAIL_IMAGE at your own registry) and retry."
+      "build — build it on this box (or point KOVALIO_MAIL_IMAGE at your own registry) and retry."
     );
   }
   if (/unauthorized|denied|authentication required|forbidden/.test(text)) {
     return (
       `The registry refused the mail engine image ${image} (${lastLine || "access denied"}). ` +
-      "Log this server's Docker into that registry, or set OPENSHIP_MAIL_IMAGE to one it can read."
+      "Log this server's Docker into that registry, or set KOVALIO_MAIL_IMAGE to one it can read."
     );
   }
   if (/timeout|timed out|no such host|temporary failure|network is unreachable|connection refused|i\/o timeout|tls|certificate/.test(text)) {
@@ -173,7 +173,7 @@ function mountArg(m: MailMount): string {
  *     rejects an empty key or whitespace IN the key, so `%%` sails through.
  *   - shadowing a legitimate key: duplicates are last-wins, and `...opts.secrets`
  *     is spread last, so an injected record overrides FIRST_DOMAIN /
- *     OPENSHIP_MAIL_DB_* (repoint the first-boot DB client, or reach the
+ *     KOVALIO_MAIL_DB_* (repoint the first-boot DB client, or reach the
  *     superuser SQL load that templates FIRST_DOMAIN in).
  *
  * So: validate the record shape and FAIL CLOSED. Rejecting beats sanitizing —
@@ -225,7 +225,7 @@ const DB_ENV_FILE = `${MAIL_HOST_STATE_DIR}/db.env`;
  * elevated write publishes these root:root (`writeFile` chowns 0:0 so the `mv` cannot leave
  * the file writable by the login user) and `writeEnvFile` chmods 600, which on a non-root
  * login is exactly unreadable. Setting up mail died with `docker: --env-file: open
- * /var/lib/openship/mail/db.env: permission denied`, surfaced as the unrelated-sounding
+ * /var/lib/kovalio/mail/db.env: permission denied`, surfaced as the unrelated-sounding
  * "the mail database container failed to become ready".
  *
  * Moving the FILE rather than elevating the LAUNCH is the load-bearing choice. The docker
@@ -263,8 +263,8 @@ const DB_ENV_FILE = `${MAIL_HOST_STATE_DIR}/db.env`;
  * Confidentiality is unchanged, and provably so from two directions: the account gaining
  * ownership already held the plaintext, because `elevatedExecutor.writeFile` stages the
  * content unelevated as that same login before publishing it; and it provably has arbitrary
- * root, because the chown only lands if `sudo -n sh -c` does. It is the account Openship
- * drives THIS SERVER as — a remote box's SSH login, not necessarily the one Openship itself
+ * root, because the chown only lands if `sudo -n sh -c` does. It is the account Kovalio
+ * drives THIS SERVER as — a remote box's SSH login, not necessarily the one Kovalio itself
  * runs under.
  *
  * `canSudo` is the exact condition, and it is a property of the writer rather than a guess: a
@@ -569,7 +569,7 @@ export async function ensureContainerMail(
 
   // 2. Host state dirs (engine mounts + DB data dir). Through the privilege gate, and
   //    reported rather than swallowed: these are root-owned paths under
-  //    /var/lib/openship/mail, so on a box we log into as a non-root sudo user the
+  //    /var/lib/kovalio/mail, so on a box we log into as a non-root sudo user the
   //    unelevated `mkdir` fails. The comment here already named the consequence — "a
   //    missing host dir silently becomes an empty bind and loses data" — and then
   //    `.catch(() => {})` made it silent, so the one outcome worth an operator's
@@ -622,10 +622,10 @@ export async function ensureContainerMail(
   await handOverEnvFile(executor, DB_ENV_FILE, onLog);
   await writeEnvFile(hostState, ENGINE_ENV_FILE, {
     FIRST_DOMAIN: opts.domain,
-    OPENSHIP_MAIL_DB_HOST: MAIL_DB_HOST_BIND,
-    OPENSHIP_MAIL_DB_PORT: String(MAIL_DB_PORT),
-    OPENSHIP_MAIL_DB_NAME: MAIL_DB_NAME,
-    OPENSHIP_MAIL_DB_USER: MAIL_DB_USER,
+    KOVALIO_MAIL_DB_HOST: MAIL_DB_HOST_BIND,
+    KOVALIO_MAIL_DB_PORT: String(MAIL_DB_PORT),
+    KOVALIO_MAIL_DB_NAME: MAIL_DB_NAME,
+    KOVALIO_MAIL_DB_USER: MAIL_DB_USER,
     ...opts.secrets,
     // Spread LAST so the retained value wins: the engine's first-boot bootstrap connects
     // as the superuser, and it has to use the password the cluster actually has, not the

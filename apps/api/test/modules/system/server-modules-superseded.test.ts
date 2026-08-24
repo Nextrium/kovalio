@@ -99,7 +99,7 @@ describe("openresty module vs the container edge", () => {
     mocked.edgeContainer.mockResolvedValue(true);
 
     await expect(applyServerModule(server, "openresty", "all")).rejects.toThrow(
-      /do not apply here.*openship-edge container/s,
+      /do not apply here.*kovalio-edge container/s,
     );
     // The gate is BEFORE the runner, so nothing is written and nothing is stamped.
     expect(mocked.reconcile).not.toHaveBeenCalled();

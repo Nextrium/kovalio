@@ -14,8 +14,8 @@ them at any time.
 
 <Callout title="What you need first">
 - A project you've already deployed (see [Your first deployment](/docs/getting-started/first-deployment) if not).
-- For the CLI examples, the `openship` command installed and logged in.
-- The **project ID** for the CLI/API bits. Run `openship project list` to find it.
+- For the CLI examples, the `kovalio` command installed and logged in.
+- The **project ID** for the CLI/API bits. Run `kovalio project list` to find it.
 </Callout>
 
 ## The two settings, in plain words
@@ -25,7 +25,7 @@ them at any time.
   once, but costs more.
 - **Sleep mode** — what happens when your app is idle:
   - **Auto Sleep** (the default) — the app stops when no one is using it and wakes up on the next request.
-    Cheaper to run, and Openship wakes it instantly, so visitors don't wait.
+    Cheaper to run, and Kovalio wakes it instantly, so visitors don't wait.
   - **Always On** — the app never stops. Highest availability, but it's running (and costing) around the clock.
 
 <Callout title="Which sleep mode should I pick?" type="info">
@@ -37,7 +37,7 @@ app that can't tolerate the brief wake-up on the very first request after a quie
 ## Set resources
 
 Resource sizing lives in the **deploy screen**, under a section called **Power**, when you deploy to
-**Openship Cloud** — and on any existing project under **Machine Power** (Configuration tab, or the
+**Kovalio Cloud** — and on any existing project under **Machine Power** (Configuration tab, or the
 Services tab for a multi-service project). You can also set it from the API.
 
 <Callout title="Self-hosted: no limits by default" type="info">
@@ -49,7 +49,7 @@ can hand a container 64 GB.
 Builds are uncapped too. Capping a build is opt-in via the `build` field below, and is really only
 useful on a small box where an unbounded production build would otherwise take the whole host down.
 
-Openship Cloud is the opposite: a workspace is metered and must be sized, so there's no "no limits"
+Kovalio Cloud is the opposite: a workspace is metered and must be sized, so there's no "no limits"
 option there and an unset project falls back to the **Low** tier.
 </Callout>
 
@@ -61,9 +61,9 @@ option there and an unset project falls back to the **Low** tier.
 
 <Step>
 
-### Start a deploy and choose Openship Cloud
+### Start a deploy and choose Kovalio Cloud
 
-Begin a deployment as usual. When you reach the "Where do you want to deploy?" choice, pick **Openship
+Begin a deployment as usual. When you reach the "Where do you want to deploy?" choice, pick **Kovalio
 Cloud**. A **Power** section appears next to it — this is where you pick the machine size.
 
 </Step>
@@ -88,7 +88,7 @@ Smaller apps and side projects are happy on **Micro** or **Low**. **Medium** sui
 Reach for **High** only for heavy traffic or slow builds. You can change size later, so start small.
 </Callout>
 
-<Callout title="Screenshot">The deploy screen with Openship Cloud selected and the **Power** section showing the Micro / Low / Medium / High / Custom size cards. *(screenshot pending)*</Callout>
+<Callout title="Screenshot">The deploy screen with Kovalio Cloud selected and the **Power** section showing the Micro / Low / Medium / High / Custom size cards. *(screenshot pending)*</Callout>
 
 </Step>
 
@@ -113,7 +113,7 @@ project shape has no single-app Configuration.
 The card shows the target machine's detected capacity in its header, and offers:
 
 - **No limits** — the self-hosted default. The container gets the whole machine.
-- **Micro / Low / Medium / High** — the same presets Openship Cloud offers. A preset larger than the
+- **Micro / Low / Medium / High** — the same presets Kovalio Cloud offers. A preset larger than the
   machine is greyed out rather than silently unhonored.
 - **Custom** — type your own vCPU and MB. `0` in either field means no limit for that dimension, so
   you can cap memory while leaving CPU free.
@@ -131,7 +131,7 @@ A service in a compose project can override the project value for itself — see
 
 Update an existing project's resources with a `PATCH` to its resources endpoint. All paths are under `/api`
 on your instance (for example `https://your-host/api/...`). Authenticate with a personal access token in the
-`Authorization` header — create one from **Settings → Tokens** or with `openship token create`. See
+`Authorization` header — create one from **Settings → Tokens** or with `kovalio token create`. See
 [Authentication](/docs/security/auth) for the full token model.
 
 You can set the **production** size (what your live app runs on) and, separately, the **build** size (the
@@ -139,7 +139,7 @@ temporary machine that compiles your app). Sizes are given as `cpuCores`, `memor
 
 ```bash
 curl -X PATCH https://your-host/api/projects/PROJECT_ID/resources \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "production": { "cpuCores": 1, "memoryMb": 1024, "diskMb": 16384 },
@@ -167,7 +167,7 @@ machine `capacity` (the ceiling) plus `requiresLimit` (true on cloud, where unsi
 In a multi-service project the project-wide value applies to **each** service container — it's a
 per-container cap, not a budget split across them.
 
-A single service can override it. Openship reads a compose file's own limits, in either spelling, and
+A single service can override it. Kovalio reads a compose file's own limits, in either spelling, and
 applies them over the project value **field by field** — so a service that declares only memory keeps
 the project's CPU setting:
 
@@ -186,8 +186,8 @@ services:
           cpus: "1.5"
 ```
 
-The same override is available declaratively in `openship.json` under
-[`services[].resources`](/docs/reference/openship-json#services-compose).
+The same override is available declaratively in `kovalio.json` under
+[`services[].resources`](/docs/reference/kovalio-json#services-compose).
 
 <Callout title="Adopted containers keep their limits" type="info">
 Importing an existing Docker container reads the caps it's actually running with — including one you
@@ -204,13 +204,13 @@ Sleep mode has two values: `auto_sleep` (the default) and `always_on`. Set it fr
 
 ```bash
 # Let the app sleep when idle (the default, cheapest)
-openship project sleep-mode PROJECT_ID auto_sleep
+kovalio project sleep-mode PROJECT_ID auto_sleep
 
 # Keep it running around the clock
-openship project sleep-mode PROJECT_ID always_on
+kovalio project sleep-mode PROJECT_ID always_on
 ```
 
-Don't know your project ID? `openship project list` shows every project with its ID.
+Don't know your project ID? `kovalio project list` shows every project with its ID.
 
 </Tab>
 
@@ -218,7 +218,7 @@ Don't know your project ID? `openship project list` shows every project with its
 
 ```bash
 curl -X POST https://your-host/api/projects/PROJECT_ID/sleep-mode \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ "sleep_mode": "always_on" }'
 ```
@@ -241,24 +241,24 @@ to sleep — it's just files being served — so the setting has no visible effe
 A cap larger than the target machine is refused with the real numbers, e.g.
 `Memory limit 8192 MB exceeds the machine's 2048 MB`. Lower the value, or use `0` / the `unlimited`
 tier to remove the cap. A non-zero value below the workable floor is refused too (`at least 0.25
-cores`, `at least 128 MB`). If Openship couldn't reach the machine to read its capacity, no ceiling is
+cores`, `at least 128 MB`). If Kovalio couldn't reach the machine to read its capacity, no ceiling is
 enforced at all — the value you send is accepted as-is.
 </Callout>
 
 <Callout title="Sleep mode command is rejected" type="warn">
 The mode must be exactly `auto_sleep` or `always_on` — nothing else. Check the spelling (both use an
-underscore), and make sure the project ID is right. `openship project list` confirms both.
+underscore), and make sure the project ID is right. `kovalio project list` confirms both.
 </Callout>
 
 <Callout title="I made it Always On but costs went up" type="info">
 That's expected — **Always On** keeps the machine running 24/7. If you don't need constant availability,
-switch back with `openship project sleep-mode PROJECT_ID auto_sleep` and the app will sleep when idle again.
+switch back with `kovalio project sleep-mode PROJECT_ID auto_sleep` and the app will sleep when idle again.
 </Callout>
 
 ## What next?
 
 <Cards>
-  <Card title="Deploy to your own server" href="/docs/guides/custom-servers" description="Run your app on a machine you control instead of Openship Cloud." />
+  <Card title="Deploy to your own server" href="/docs/guides/custom-servers" description="Run your app on a machine you control instead of Kovalio Cloud." />
   <Card title="Logs & monitoring" href="/docs/guides/logs-monitoring" description="Watch how your app behaves so you know when to size it up or down." />
   <Card title="Rollback & redeploy" href="/docs/guides/rollback-redeploy" description="Ship a new version, or go back to a working one, in seconds." />
 </Cards>

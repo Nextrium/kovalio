@@ -79,7 +79,7 @@ export function createDomainRepo(db: Database) {
     },
 
     /**
-     * Every hostname Openship tracks, instance-wide.
+     * Every hostname Kovalio tracks, instance-wide.
      *
      * Deliberately NOT org-scoped: the only caller is the edge-orphan sweep,
      * which asks "does the box serve a vhost nobody has a record of". One edge
@@ -414,7 +414,7 @@ export function createDomainRepo(db: Database) {
      * row that read `verified` with no active SSL, or verified-and-active but not
      * primary. The infra work (the cert on disk) has already succeeded by the time
      * this runs, so a half-applied row is pure drift: the box serves the domain
-     * while Openship shows it pending.
+     * while Kovalio shows it pending.
      *
      * `promote` demotes the project's other primaries first, and is skipped when
      * the caller has decided this row shouldn't take primary.
@@ -520,7 +520,7 @@ export function createDomainRepo(db: Database) {
      *
      * As separate awaits, a failure after the delete left the service still
      * configured for a hostname whose row is gone — and that stale
-     * `*.opsh.io` slug then made preflight demand an Openship Cloud connection
+     * `*.opsh.io` slug then made preflight demand an Kovalio Cloud connection
      * for every later action on the project, with nothing left to retry against.
      */
     async removeWithServiceRouting(

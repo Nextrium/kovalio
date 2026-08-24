@@ -1,6 +1,6 @@
 -- Continuous container health monitoring: the durable memory behind the alerts.
 --
--- Openship knew a container had crashed at exactly ONE moment — the ~15s post-deploy
+-- Kovalio knew a container had crashed at exactly ONE moment — the ~15s post-deploy
 -- stabilization watch. After that nobody looked again, so an OOM-kill at 3am or a
 -- Postgres that starts bouncing after a host reboot reached the operator only when a
 -- user complained. The health watch closes that, but a poller that alerts on "the

@@ -1,5 +1,5 @@
 /**
- * `openship up --dry-run`: what the run WOULD do, computed without doing any of it.
+ * `kovalio up --dry-run`: what the run WOULD do, computed without doing any of it.
  *
  * The flag used to mean "print the systemd unit and exit" — but the decision about
  * which unit to print came AFTER the install-method choice, and on Linux that
@@ -56,7 +56,7 @@ export interface UpPlanOpts {
   hostSshHost?: string;
   hostSshPort?: string;
   hostSshUser?: string;
-  /** Openship Mail install (OPENSHIP_PRODUCT=mail / `--mail` in the unit's argv). */
+  /** Kovalio Mail install (KOVALIO_PRODUCT=mail / `--mail` in the unit's argv). */
   mail?: boolean;
   /** Already normalized + merged with the install's saved URL by the caller. */
   publicUrl?: string;
@@ -87,7 +87,7 @@ export interface UpPlan {
 
 /**
  * Which install method a service-mode `up` lands on, given whether Docker is (or
- * could be made) usable. THE decision — `openship up` calls this too, with
+ * could be made) usable. THE decision — `kovalio up` calls this too, with
  * `dockerUsable` from a real `ensureDocker()`, so the preview can never name a
  * different method than the run.
  */
@@ -281,7 +281,7 @@ export function renderUpPlan(plan: UpPlan): string {
     item(chalk.yellow(`${docker.gap.summary}. A real run WOULD install it:`));
     item(`  ${docker.installCommand}`);
     item("~150 MB of packages, and it enables the docker service on this box.");
-    if (plan.method === "compose") item("`openship up --bare` installs without Docker (embedded database).");
+    if (plan.method === "compose") item("`kovalio up --bare` installs without Docker (embedded database).");
   } else {
     item(`${docker.gap.summary} — a real run would NOT install it.`);
     if (docker.gap.hint) item(docker.gap.hint);
@@ -321,7 +321,7 @@ export function renderUpPlan(plan: UpPlan): string {
       L.push(chalk.yellow(renderSecretRotationRefusal(secretRotation, { dryRun: true })));
     }
     // #487: same for a data volume whose cluster we can't place — a real run refuses
-    // rather than write a guessed OPENSHIP_PGDATA, so say so instead of implying a write.
+    // rather than write a guessed KOVALIO_PGDATA, so say so instead of implying a write.
     if (pgDataRisk) {
       L.push(chalk.yellow(renderPgDataRefusal(pgDataRisk, { dryRun: true })));
     }
@@ -331,13 +331,13 @@ export function renderUpPlan(plan: UpPlan): string {
     head("Ports 80/443");
     if (!plan.edge.blocked) {
       // `blocked` is false exactly when nothing FOREIGN holds them, so this covers
-      // both "free" and "already Openship's edge" — neither needs a decision.
-      item("free (or already Openship's edge) — the edge container binds them.");
+      // both "free" and "already Kovalio's edge" — neither needs a decision.
+      item("free (or already Kovalio's edge) — the edge container binds them.");
     } else {
       item(chalk.yellow(`held by ${plan.edge.owner}.`));
       item(
         plan.edge.sites.length
-          ? `A real run would ask before touching it: migrate its ${plan.edge.sites.length} site(s) into Openship's edge, take over (its sites stop serving), or cancel.`
+          ? `A real run would ask before touching it: migrate its ${plan.edge.sites.length} site(s) into Kovalio's edge, take over (its sites stop serving), or cancel.`
           : "A real run would ask before stopping it (--edge=migrate|takeover|cancel).",
       );
       for (const site of plan.edge.sites.slice(0, 8)) {

@@ -9,7 +9,7 @@ export function TemplateGrid() {
   const router = useRouter();
 
   const handleSelect = (fw: { id: string; name: string }) => {
-    const slug = encodeRepoSlug("openship", `template-${fw.id}`);
+    const slug = encodeRepoSlug("kovalio", `template-${fw.id}`);
     router.push(`/deploy/${slug}?template=${fw.id}`);
   };
 

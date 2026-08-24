@@ -32,7 +32,7 @@ function frame(stdout: boolean, text: string): Buffer {
 
 /** A real docker-modem (never dialed) so demux assertions measure OUR framing
  *  handling, not a hand-rolled fake of the daemon's wire format. */
-const realModem = new Dockerode({ socketPath: "/tmp/openship-test-absent.sock" }).modem;
+const realModem = new Dockerode({ socketPath: "/tmp/kovalio-test-absent.sock" }).modem;
 
 function fakeDaemon(opts: {
   chunks?: Buffer[];
@@ -104,7 +104,7 @@ function runWatchdog(
 
 async function runtimeWith(docker: unknown): Promise<DockerRuntime> {
   const runtime = await DockerRuntime.create({
-    dockerSocketPath: "/tmp/openship-test-absent.sock",
+    dockerSocketPath: "/tmp/kovalio-test-absent.sock",
   });
   (runtime as unknown as { _docker: unknown })._docker = docker;
   return runtime;

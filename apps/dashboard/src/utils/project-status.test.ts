@@ -126,7 +126,7 @@ describe("getProjectStatus — a failed latest deploy is never Live", () => {
   });
 
   it("still reports live for the self-app, which has no deployment at all", () => {
-    expect(getProjectStatus({ appTemplateId: "openship", latestDeploymentStatus: "failed" })).toBe(
+    expect(getProjectStatus({ appTemplateId: "kovalio", latestDeploymentStatus: "failed" })).toBe(
       "live",
     );
   });
@@ -212,7 +212,7 @@ describe("getProjectStatus — paused", () => {
   });
 
   it("never applies to the control plane, which cannot be paused", () => {
-    expect(getProjectStatus({ ...paused, appTemplateId: "openship" })).toBe("live");
+    expect(getProjectStatus({ ...paused, appTemplateId: "kovalio" })).toBe("live");
   });
 
   it("wins over a paused project's stale deploy flags, so the pill matches what the operator did", () => {

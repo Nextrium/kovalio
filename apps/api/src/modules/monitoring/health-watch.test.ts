@@ -413,7 +413,7 @@ function seedApp(opts: SeedOpts = {}) {
   h.containerBox.set(containerId, opts.hostBox ?? box);
   h.containers.set(containerId, {
     id: containerId,
-    names: [`/openship-app-${n}-${depId}`],
+    names: [`/kovalio-app-${n}-${depId}`],
     state: "running",
     status: "Up 3 hours",
     labels: {},
@@ -421,7 +421,7 @@ function seedApp(opts: SeedOpts = {}) {
   return { projectId, depId, containerId };
 }
 
-/** A compose project, matched by its `openship.*` labels. One service by default. */
+/** A compose project, matched by its `kovalio.*` labels. One service by default. */
 function seedComposeService(
   opts: { serviceStatus?: string; enabled?: boolean; serverId?: string; services?: number } = {},
 ) {
@@ -472,10 +472,10 @@ function seedComposeService(
     h.containerBox.set(s.containerId, box);
     h.containers.set(s.containerId, {
       id: s.containerId,
-      names: [`/openship-stack-${n}-${s.name}`],
+      names: [`/kovalio-stack-${n}-${s.name}`],
       state: "running",
       status: "Up 3 hours",
-      labels: { "openship.project": projectId, "openship.service": s.name },
+      labels: { "kovalio.project": projectId, "kovalio.service": s.name },
     });
   }
   return { projectId, serviceId, containerId, all };

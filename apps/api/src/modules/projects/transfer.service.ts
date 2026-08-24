@@ -1,5 +1,5 @@
 /**
- * Project transfer service — local <-> Openship Cloud mobility.
+ * Project transfer service — local <-> Kovalio Cloud mobility.
  *
  * Thin wrapper around dumpSubgraph / restoreSubgraph + the unified
  * cloudClient.{ingestSubgraph,exportSubgraph} primitives. Both directions:
@@ -65,7 +65,7 @@ export class TransferConflictError extends Error {
 export class TransferNotConnectedError extends Error {
   readonly code = "TRANSFER_NOT_CONNECTED" as const;
   constructor() {
-    super("This organization is not connected to Openship Cloud.");
+    super("This organization is not connected to Kovalio Cloud.");
     this.name = "TransferNotConnectedError";
   }
 }
@@ -206,7 +206,7 @@ export interface PromoteToCloudResult {
 }
 
 /**
- * PROMOTE a local project to Openship Cloud: ingest its subgraph to the SaaS
+ * PROMOTE a local project to Kovalio Cloud: ingest its subgraph to the SaaS
  * (which becomes the source of truth), then tear down the local runtime + rows
  * via the tested teardown path (keeping the GitHub webhook, since the cloud
  * copy still auto-deploys). Single orchestration reused by BOTH the explicit

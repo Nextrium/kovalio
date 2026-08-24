@@ -61,7 +61,7 @@
       "title": "Sağlık kontrolleri",
       "subtitle": "Kapalı — uygulama çalışmaya başlar başlamaz dağıtım tamamlanır",
       "subtitleOn": "Açık — dağıtım yayına almadan önce uygulamanı bekler",
-      "description": "Openship uygulamanı başlattıktan sonra beklemez; bu yüzden yavaş bir açılış bir dağıtımı asla geciktirmez veya başarısız kılmaz. Yayına girdikten sonra port yine de kontrol edilir ve hiçbir şeyi engellemeden bildirilir. Bunları yalnızca dağıtımın kendisinin yeşile geçmeyi reddetmesini istiyorsan aç.",
+      "description": "Kovalio uygulamanı başlattıktan sonra beklemez; bu yüzden yavaş bir açılış bir dağıtımı asla geciktirmez veya başarısız kılmaz. Yayına girdikten sonra port yine de kontrol edilir ve hiçbir şeyi engellemeden bildirilir. Bunları yalnızca dağıtımın kendisinin yeşile geçmeyi reddetmesini istiyorsan aç.",
       "probeLabel": "Uygulamanın yanıt vermesini bekle",
       "probeDesc": "Konteyner başladıktan sonra uygulamanın portuna bağlanıp bağlantıyı kabul etmesini bekle.",
       "pathLabel": "HTTP yolu",
@@ -291,7 +291,7 @@
     "deploymentModeDesc": "{mode} · Uygulama başına çalışma zamanları ile tek uygulama yönetimi arasında geçiş yapın."
   },
   "deploymentProcessing": {
-    "targetOpenshipCloud": "Openship Bulut",
+    "targetKovalioCloud": "Kovalio Bulut",
     "targetServerNamed": "Sunucu · {name}",
     "targetServer": "Sunucu",
     "targetLocal": "Yerel bilgisayar",
@@ -303,9 +303,9 @@
       "port": "Port",
       "process": "Süreç",
       "unitDescription": "Birim Açıklaması",
-      "openshipDeployment": "Openship Dağıtımı",
+      "kovalioDeployment": "Kovalio Dağıtımı",
       "sites": {
-        "lead": "{count} site şu anda mevcut proxy tarafından sunuluyor. Openship, 80/443 portlarını devralmadan önce bu siteleri içe aktarır:",
+        "lead": "{count} site şu anda mevcut proxy tarafından sunuluyor. Kovalio, 80/443 portlarını devralmadan önce bu siteleri içe aktarır:",
         "tlsBadge": "TLS",
         "staticLabel": "statik:",
         "warningsTitle": "Otomatik aktarılamadı — bunları manuel olarak tekrar ekleyin:"
@@ -432,12 +432,12 @@
     "rowType": "Tür"
   },
   "configDiagnostics": {
-    "title": "Bu deponun openship.json dosyasının bir kısmı uygulanmadı",
+    "title": "Bu deponun kovalio.json dosyasının bir kısmı uygulanmadı",
     "description": "Aşağıda listelenen alanlar atlandı; dosyanın kalanı uygulandı. Dağıtım devam edecek.",
-    "titleWholeFile": "Bu deponun openship.json dosyası yok sayıldı",
-    "descriptionWholeFile": "Dosyanın hiçbir kısmı uygulanmadı. Dağıtım, Openship'in algıladığı ayarlarla devam edecek.",
+    "titleWholeFile": "Bu deponun kovalio.json dosyası yok sayıldı",
+    "descriptionWholeFile": "Dosyanın hiçbir kısmı uygulanmadı. Dağıtım, Kovalio'in algıladığı ayarlarla devam edecek.",
     "refused": "Reddedildi",
     "unrecognized": "Tanınmadı",
-    "hint": "Sonraki dağıtımdan önce dosyayı denetlemek için depoda `openship config validate` komutunu çalıştırın."
+    "hint": "Sonraki dağıtımdan önce dosyayı denetlemek için depoda `kovalio config validate` komutunu çalıştırın."
   }
 }

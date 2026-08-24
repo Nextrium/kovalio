@@ -75,7 +75,7 @@ export type TlsIssuedElsewhere = "external_ingress" | "manual_cert" | "managed_e
  *   manualSsl       → operator-uploaded cert (BYO / Cloudflare Origin CA). certbot
  *                     never issued it, so `renew` would error and flip it to
  *                     "error".
- *   free            → a managed `*.opsh.io` host: Openship Cloud's edge terminates
+ *   free            → a managed `*.opsh.io` host: Kovalio Cloud's edge terminates
  *                     TLS and forwards to plain :80 here. The box usually has no
  *                     public A record for the name at all, so HTTP-01 cannot pass.
  */
@@ -101,7 +101,7 @@ export function describeTlsIssuedElsewhere(
     case "manual_cert":
       return `${hostname} serves an uploaded certificate — certbot is not run for it.`;
     default:
-      return `TLS for ${hostname} is handled by Openship Cloud — no local certificate needed.`;
+      return `TLS for ${hostname} is handled by Kovalio Cloud — no local certificate needed.`;
   }
 }
 
@@ -414,7 +414,7 @@ async function resolveSslProvider(owner: SslOwner): Promise<ResolvedSslProvider>
 
   // Fallback anchor. `platform().ssl` is the API's OWN context — for a
   // containerized API that's the API container (no edge/OpenResty there) or a
-  // DockerEdgeExecutor for a non-existent `openship-edge`, so certbot's HTTP-01
+  // DockerEdgeExecutor for a non-existent `kovalio-edge`, so certbot's HTTP-01
   // never resolves and issuance/verify silently fails. Resolve the self-hosted
   // instance's LOCAL host-server instead (createHostExecutor → the bare host's
   // OpenResty + /etc/letsencrypt), which is where the edge actually lives.

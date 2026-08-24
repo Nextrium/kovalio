@@ -2,7 +2,7 @@
  * Docker discovery for the "migrate an existing deployment" flow — the IO shell.
  *
  * Read-only. Points a DockerRuntime at a server's daemon over SSH, enumerates
- * every container/volume/network (label-agnostic — not just openship.*), reads
+ * every container/volume/network (label-agnostic — not just kovalio.*), reads
  * any docker-compose files those containers were started from, and hands the
  * raw data to the pure `reconcileStack` (docker-reconcile.ts) which merges it
  * into one normalized `DiscoveredStack`. Nothing here mutates the server.
@@ -13,12 +13,12 @@ import { safeErrorMessage, withTimeout } from "@repo/core";
 import { repos } from "@repo/db";
 import { createServerDockerRuntime } from "../../lib/deployment-runtime";
 import { sshManager } from "../../lib/ssh-manager";
-import { pruneOrphanManifestArtifacts } from "../../lib/openship-manifest-sync";
+import { pruneOrphanManifestArtifacts } from "../../lib/kovalio-manifest-sync";
 import { parseComposeFile, type ComposeService } from "../../lib/compose-parser";
-import { readManifest, projectSnapshotExists, type ManifestProjectEntry } from "../../lib/openship-manifest";
+import { readManifest, projectSnapshotExists, type ManifestProjectEntry } from "../../lib/kovalio-manifest";
 import {
   reconcileStack,
-  reconcileOpenshipProjects,
+  reconcileKovalioProjects,
   isBuildHelper,
   imageRefKey,
   toDiscoveredService,
@@ -29,15 +29,15 @@ import { scanProxyRoutes } from "./proxy-route-scan";
 import { findOwnStack } from "../../lib/startup/self-services";
 import { mapWithLimit } from "../../lib/map-with-limit";
 
-/** Openship project-id shape — used to reject crafted `openship.project` labels
+/** Kovalio project-id shape — used to reject crafted `kovalio.project` labels
  *  before they reach the remote snapshot probe (same shape migrate.service uses). */
-const OPENSHIP_PROJECT_ID_RE = /^proj_[A-Za-z0-9]+$/;
+const KOVALIO_PROJECT_ID_RE = /^proj_[A-Za-z0-9]+$/;
 
 export type {
   DiscoveredStack,
   DiscoveredService,
   DiscoveredVolumeMount,
-  OpenshipProjectGroup,
+  KovalioProjectGroup,
 } from "./docker-reconcile";
 export { reconcileStack } from "./docker-reconcile";
 
@@ -64,7 +64,7 @@ async function readComposeDeclarations(
   // Resolve absolute compose paths (relative ones join the project working dir),
   // remembering which COMPOSE PROJECT each file belongs to. A service name is unique
   // only within its project, so a flat name→declaration map let the first stack read
-  // win for every stack: on a host running Openship plus anything with a `postgres`,
+  // win for every stack: on a host running Kovalio plus anything with a `postgres`,
   // the user's container was reconciled against OUR declaration — importing our
   // depends_on, build and env provenance onto their service (same root cause as #584).
   const paths = new Map<string, string>(); // absolute path → compose project key
@@ -114,16 +114,16 @@ export async function discoverServerStack(
   organizationId: string,
   onProgress?: (message: string) => void,
   opts?: {
-    /** "Flat Docker" mode: ignore `openship.*` labels entirely so Openship-managed
+    /** "Flat Docker" mode: ignore `kovalio.*` labels entirely so Kovalio-managed
      *  deploy containers are adopted as PLAIN compose/standalone (no re-import,
-     *  no snapshot restore). The one filter (`isOpenshipOwned`) is bypassed. */
+     *  no snapshot restore). The one filter (`isKovalioOwned`) is bypassed. */
     flatDocker?: boolean;
     /**
      * PRE-SET SELECTION: consider only these container ids.
      *
      * The scan exists to answer "what is on this box?", which is the right question when the
      * operator is about to choose from a grid. A project move already knows its answer — the
-     * `openship.project` label names its containers exactly — so scanning the whole host to
+     * `kovalio.project` label names its containers exactly — so scanning the whole host to
      * throw most of it away is work the operator waits through ("Inspecting 20 container(s)…"
      * to keep 5), and on a busy box most of the elapsed time.
      *
@@ -193,12 +193,12 @@ export async function discoverServerStack(
           ? allContainers.filter((c) => scoped.has(c.id))
           : allContainers;
 
-        // OPENSHIP'S OWN STACK IS NEVER A CANDIDATE — structurally, not because the
+        // KOVALIO'S OWN STACK IS NEVER A CANDIDATE — structurally, not because the
         // database happens to remember it.
         //
-        // `openship up` runs the control plane as a compose stack (api, dashboard,
+        // `kovalio up` runs the control plane as a compose stack (api, dashboard,
         // edge, postgres, redis) and its template sets NO labels, so the label split
-        // below cannot see it and offered Openship's own database as adoptable. The
+        // below cannot see it and offered Kovalio's own database as adoptable. The
         // only thing that kept it out of a user's project was a service_deployment row
         // written best-effort at boot by `linkSelfAppServices` — absent if Docker was
         // unreachable then, or the box was never self-registered — and a name-based
@@ -210,29 +210,29 @@ export async function discoverServerStack(
         // one compose project, which is only conclusive about OUR host — on a remote
         // server that shape could be a user's app, and greying out their stack would be
         // its own bug. Not this machine ⇒ our stack is not in this list ⇒ exclude
-        // nothing. Applies in FLAT mode too: flat exists to adopt an Openship-managed
+        // nothing. Applies in FLAT mode too: flat exists to adopt an Kovalio-managed
         // WORKLOAD as a plain project, and the control plane is not a workload.
         const self = await repos.server.get(serverId).catch(() => undefined);
         const ownIds =
           self?.isLocal === true ? new Set(findOwnStack(containers).map((c) => c.id)) : new Set<string>();
-        if (ownIds.size > 0) step(`Excluding Openship's own ${ownIds.size} container(s)…`);
+        if (ownIds.size > 0) step(`Excluding Kovalio's own ${ownIds.size} container(s)…`);
         const adoptable = ownIds.size > 0 ? containers.filter((c) => !ownIds.has(c.id)) : containers;
 
-        // Split by ownership. GENERIC candidates (no openship.* label) feed the
-        // normal adopt grid. OPENSHIP-owned deploy containers are recovered as their
-        // own projects (re-import) — build helpers (`openship.build`) are neither.
+        // Split by ownership. GENERIC candidates (no kovalio.* label) feed the
+        // normal adopt grid. KOVALIO-owned deploy containers are recovered as their
+        // own projects (re-import) — build helpers (`kovalio.build`) are neither.
         //
-        // FLAT DOCKER mode ignores the openship.* namespace: every container (minus
-        // transient build helpers) is a generic candidate, so Openship-managed
+        // FLAT DOCKER mode ignores the kovalio.* namespace: every container (minus
+        // transient build helpers) is a generic candidate, so Kovalio-managed
         // workloads adopt as plain compose/standalone — no managed set, no re-import.
-        const isOpenshipOwned = (labels: Record<string, string>) =>
-          Object.keys(labels).some((k) => k === "openship" || k.startsWith("openship."));
-        const managed = flatDocker ? [] : adoptable.filter((c) => isOpenshipOwned(c.labels));
+        const isKovalioOwned = (labels: Record<string, string>) =>
+          Object.keys(labels).some((k) => k === "kovalio" || k.startsWith("kovalio."));
+        const managed = flatDocker ? [] : adoptable.filter((c) => isKovalioOwned(c.labels));
         const candidates = flatDocker
           ? adoptable.filter((c) => !isBuildHelper(c.labels))
-          : adoptable.filter((c) => !isOpenshipOwned(c.labels));
+          : adoptable.filter((c) => !isKovalioOwned(c.labels));
         const managedApp = managed.filter(
-          (c) => c.labels["openship.project"] && !isBuildHelper(c.labels),
+          (c) => c.labels["kovalio.project"] && !isBuildHelper(c.labels),
         );
 
         // Say WHICH containers, not just how many. A pre-set selection reporting a bare
@@ -274,7 +274,7 @@ export async function discoverServerStack(
         const proxyRoutesByPort = await scanProxyRoutes(serverId);
 
         // Fetch each distinct image's baked-in env + CMD once (candidates AND
-        // openship containers), so discovery can tell which env the OPERATOR set
+        // kovalio containers), so discovery can tell which env the OPERATOR set
         // from what the image merely bakes in (order matters — see
         // splitEnvByProvenance) and can drop a command that only restates the
         // image default. Keyed by CONTENT ID (imageRefKey), not the tag: a tag that
@@ -290,12 +290,12 @@ export async function discoverServerStack(
         const imageEnv = new Map(imageInfoPairs.map(([ref, v]) => [ref, v.env]));
         const imageCmds = new Map(imageInfoPairs.map(([ref, v]) => [ref, v.cmd]));
 
-        // Recover Openship projects: read the on-server manifest (rich, faithful
-        // recipe) and cross-reference each openship.project id against THIS org's DB.
+        // Recover Kovalio projects: read the on-server manifest (rich, faithful
+        // recipe) and cross-reference each kovalio.project id against THIS org's DB.
         // Present here = genuinely managed → counted; absent = orphaned → re-importable.
-        let openshipProjects: DiscoveredStack["openshipProjects"] = [];
+        let kovalioProjects: DiscoveredStack["kovalioProjects"] = [];
         let alreadyManaged = 0;
-        // SECURITY: `openship.project` is a container LABEL — attacker-controllable
+        // SECURITY: `kovalio.project` is a container LABEL — attacker-controllable
         // via a malicious image's LABEL, inherited onto the container. It flows into
         // a remote root shell (`projectSnapshotExists` → `test -f …snapshot-<id>…`),
         // so validate the id shape BEFORE the probe; a crafted `x$(cmd)` label is
@@ -303,14 +303,14 @@ export async function discoverServerStack(
         const projectIds = [
           ...new Set(
             managedApp
-              .map((c) => c.labels["openship.project"]!)
-              .filter((id) => id && OPENSHIP_PROJECT_ID_RE.test(id)),
+              .map((c) => c.labels["kovalio.project"]!)
+              .filter((id) => id && KOVALIO_PROJECT_ID_RE.test(id)),
           ),
         ];
 
         // Self-heal the on-server recovery state before recovering from it: every
         // re-migration mints a NEW project id, so dead entries + snapshots pile up
-        // in .openship/manifest.json (the file we're about to read) and it grows
+        // in .kovalio/manifest.json (the file we're about to read) and it grows
         // unbounded. Drop THIS org's entries that are neither a live DB project nor
         // backed by a running container — i.e. true orphans. A running container's
         // id is kept so a soft-deleted (record-only) workload stays re-importable.
@@ -341,7 +341,7 @@ export async function discoverServerStack(
         }
 
         if (projectIds.length > 0) {
-          step("Recovering Openship projects…");
+          step("Recovering Kovalio projects…");
           // One SSH session: read the manifest AND check which projects have a full
           // recovery snapshot (cheap `test -f`, no read — the dump is read only at
           // re-import time, for one project).
@@ -369,7 +369,7 @@ export async function discoverServerStack(
               if (row) knownHereIds.add(id);
             }),
           );
-          openshipProjects = reconcileOpenshipProjects({
+          kovalioProjects = reconcileKovalioProjects({
             managedDetails,
             manifestById,
             knownHereIds,
@@ -378,7 +378,7 @@ export async function discoverServerStack(
             imageCmds,
           });
           alreadyManaged = managedApp.filter((c) =>
-            knownHereIds.has(c.labels["openship.project"]!),
+            knownHereIds.has(c.labels["kovalio.project"]!),
           ).length;
         }
 
@@ -391,7 +391,7 @@ export async function discoverServerStack(
           alreadyManaged,
           imageEnv,
           imageCmds,
-          openshipProjects,
+          kovalioProjects,
           proxyRoutesByPort,
         });
       })(),

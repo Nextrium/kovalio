@@ -74,7 +74,7 @@ interface BareSystemManager {
 }
 
 export interface BareRuntimeOptions {
-  /** Base directory for project working directories (default: /opt/openship) */
+  /** Base directory for project working directories (default: /opt/kovalio) */
   workDir?: string;
   /** Max time for build commands in ms (default: 10 min) */
   buildTimeout?: number;
@@ -90,7 +90,7 @@ export interface BareRuntimeOptions {
   systemManager?: BareSystemManager;
 }
 
-const DEFAULT_WORK_DIR = "/opt/openship";
+const DEFAULT_WORK_DIR = "/opt/kovalio";
 const DEFAULT_BUILD_TIMEOUT = 10 * 60 * 1000;
 
 /**
@@ -102,7 +102,7 @@ const DEFAULT_BUILD_TIMEOUT = 10 * 60 * 1000;
  * BareRuntime is constructed with `workDir = STATIC_RELEASE_BASE` so its
  * releases/.builds subdirs confine here and promote stays same-FS.
  */
-export const STATIC_RELEASE_BASE = "/opt/openship/static";
+export const STATIC_RELEASE_BASE = "/opt/kovalio/static";
 
 
 
@@ -658,7 +658,7 @@ export class BareRuntime implements RuntimeAdapter {
 
   async deploy(config: DeployConfig, _onLog?: LogCallback): Promise<DeploymentResult> {
     // Adopt mode: attach to an already-running, externally-supervised process
-    // (e.g. the Openship control plane launched by `openship up`). We never
+    // (e.g. the Kovalio control plane launched by `kovalio up`). We never
     // promote a build artifact or start a supervisor unit — that would bind a
     // second process to the port. We only health-probe and return a running
     // result so the routing/SSL pipeline can own this deployment. containerId is
@@ -721,7 +721,7 @@ export class BareRuntime implements RuntimeAdapter {
     // `next start` / `gatsby serve` / `remix-serve` name a DEPENDENCY binary, and
     // the supervisor hands the command to a bare `sh -lc` — nothing prepends
     // `node_modules/.bin` the way `npm run` would, so the binary is unresolvable
-    // even though it sits right there in workDir. Exactly openship#623, one
+    // even though it sits right there in workDir. Exactly kovalio#623, one
     // surface later: that fix reached the two BUILD paths and no start path
     // outside docker. Reachable because the registry start defaults for nextjs /
     // remix / gatsby are bare binaries and the default `buildOnTarget` strategy

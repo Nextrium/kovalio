@@ -228,7 +228,7 @@
     },
     "statusActive": "Aktif",
     "statusDisabled": "Pasif",
-    "hostedCloud": "Openship Bulut",
+    "hostedCloud": "Kovalio Bulut",
     "hostedServer": "Sunucu",
     "hostedLocal": "Yerel",
     "projectStatus": {
@@ -249,7 +249,7 @@
       "currentServer": "Mevcut sunucu",
       "migrate": "Taşı",
       "noOtherServers": "Bu projeyi taşımak için ikinci bir sunucu ekleyin.",
-      "cloudLater": "Sunucudan sunucuya. Openship Cloud'a veya oradan taşıma henüz desteklenmiyor.",
+      "cloudLater": "Sunucudan sunucuya. Kovalio Cloud'a veya oradan taşıma henüz desteklenmiyor.",
       "startFailed": "Taşıma başlatılamadı",
       "confirmTitle": "{project} projesini {server} sunucusuna taşı",
       "confirmSubtitle": "Taşımayı başlatana kadar hiçbir şey değişmez.",
@@ -294,7 +294,7 @@
       "anotherServer": "Başka bir sunucu",
       "targetLocal": "Yerel Bilgisayar",
       "targetServer": "Self-Hosted Sunucu",
-      "targetCloud": "Openship Bulut"
+      "targetCloud": "Kovalio Bulut"
     },
     "danger": {
       "title": "Tehlikeli Bölge",
@@ -425,7 +425,7 @@
   "build": {
     "edit": "Düzenle",
     "webmail": {
-      "title": "Openship tarafından yönetilmektedir",
+      "title": "Kovalio tarafından yönetilmektedir",
       "description": "Webmail sabit bir derleme ve başlatma hattı kullanır — yükleme, derleme ve çalıştırma komutları yapılandırılamaz. Güncellemeleri almak için e-posta genel bakışından yeniden dağıtın."
     },
     "services": {
@@ -568,7 +568,7 @@
     },
     "webhookBanner": {
       "title": "Otomatik dağıtımı etkinleştirin",
-      "description": "Otomatik dağıtım doğrudan bir webhook uç noktasına ihtiyaç duyar. Bu Openship API'sini herkese açık bir URL'de kullanıma sunun veya doğrudan teslimat için doğrulanmış bir webhook alan adı yapılandırın."
+      "description": "Otomatik dağıtım doğrudan bir webhook uç noktasına ihtiyaç duyar. Bu Kovalio API'sini herkese açık bir URL'de kullanıma sunun veya doğrudan teslimat için doğrulanmış bir webhook alan adı yapılandırın."
     },
     "source": {
       "title": "Kaynak Depo",
@@ -598,7 +598,7 @@
       "active": "Aktif",
       "inactive": "Pasif",
       "descDirect": "Olaylar {domain} üzerinden doğrudan teslim edilir",
-      "descActive": "Depo olayları Openship'e ulaşıyor",
+      "descActive": "Depo olayları Kovalio'e ulaşıyor",
       "descInactive": "Webhook yapılandırılmadı veya yanıt vermiyor"
     },
     "rollbackStrategy": {
@@ -873,7 +873,7 @@
       "includeWwwDesc": "Ayrıca www.{domain} için de kayıtlar oluştur",
       "includeWwwFallback": "alanadiniz.com",
       "externalIngress": "Harici trafik girişi ve TLS",
-      "externalIngressDesc": "TLS upstream katmanında sonlandırılır (Cloudflare Tunnel veya yük dengeleyici). Yalnızca TXT kaydıyla doğrulayın — alan adının bu sunucuya yönlenmesi gerekmez ve Openship sertifika düzenlemez.",
+      "externalIngressDesc": "TLS upstream katmanında sonlandırılır (Cloudflare Tunnel veya yük dengeleyici). Yalnızca TXT kaydıyla doğrulayın — alan adının bu sunucuya yönlenmesi gerekmez ve Kovalio sertifika düzenlemez.",
       "noWww": "Alan adını \"www.\" olmadan girin — eklemek için aşağıdan \"www dahil et\" seçeneğini açın.",
       "adding": "Ekleniyor...",
       "submit": "Alan adı ekle"

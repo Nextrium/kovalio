@@ -11,14 +11,14 @@ const proxySite = (names: string[], url = "http://127.0.0.1:3000"): EdgeSiteInpu
   target: { kind: "proxy", url },
 });
 
-const staticSite = (names: string[], root = "/opt/openship/static/releases/dep_1"): EdgeSiteInput => ({
+const staticSite = (names: string[], root = "/opt/kovalio/static/releases/dep_1"): EdgeSiteInput => ({
   serverNames: names,
   ssl: true,
   target: { kind: "static", root },
 });
 
 describe("findUntrackedEdgeSites", () => {
-  it("reports a vhost whose hostname Openship has no record of", () => {
+  it("reports a vhost whose hostname Kovalio has no record of", () => {
     const out = findUntrackedEdgeSites({
       sites: [staticSite(["forgotten.example.com"])],
       knownHostnames: ["live.example.com"],
@@ -26,7 +26,7 @@ describe("findUntrackedEdgeSites", () => {
     expect(out).toHaveLength(1);
     expect(out[0]!.hostname).toBe("forgotten.example.com");
     expect(out[0]!.kind).toBe("static");
-    expect(out[0]!.target).toBe("/opt/openship/static/releases/dep_1");
+    expect(out[0]!.target).toBe("/opt/kovalio/static/releases/dep_1");
   });
 
   it("says nothing about a tracked vhost", () => {

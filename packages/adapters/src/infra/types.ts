@@ -61,7 +61,7 @@ export interface RoutingProvider {
   probeStaticRoot?(servedPath: string, opts?: StaticProbeOptions): Promise<OutputProbeResult>;
 
   /**
-   * Serve edge-target challenge tokens for `host`, so Openship Cloud's shared edge
+   * Serve edge-target challenge tokens for `host`, so Kovalio Cloud's shared edge
    * can prove this box controls a routing target it is asked to forward to.
    *
    * Optional for the same reason `probeStaticRoot` is: only a provider that owns an

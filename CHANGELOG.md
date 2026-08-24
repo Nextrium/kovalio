@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Openship. Versions follow [semver](https://semver.org);
+All notable changes to Kovalio. Versions follow [semver](https://semver.org);
 the in-app updater surfaces critical advisories from `release-advisories.json`.
 
 ## 0.6.8
@@ -42,13 +42,13 @@ Git credential boundaries, and edge recovery across Linux and macOS.
   and `${...}` expressions are stored per service and survive CLI sync,
   reconciliation, migration adoption, redeploy snapshots, and rollback. Docker
   socket, SSH, batch, and cloud builds all use the same argument resolver, and
-  Openship's build-command logging does not print argument values (#689).
+  Kovalio's build-command logging does not print argument values (#689).
 - **Removing Compose build arguments removes the stored arguments** — an empty
   `args` map or a deleted `args` key clears stale values and interpolation
   provenance, while snapshots created before build arguments existed remain
   non-destructive during rollback (#689).
 - **Unsupported Compose builds fail before deployment** — malformed arguments,
-  repository-escaping or remote contexts, and build features Openship cannot
+  repository-escaping or remote contexts, and build features Kovalio cannot
   reproduce no longer leave the old service shape running silently. A declared
   Compose project with no materialized rows is scanned once to bootstrap its
   topology, while an explicit single-app choice remains single-app.
@@ -76,7 +76,7 @@ Git credential boundaries, and edge recovery across Linux and macOS.
   deployed and upstream semver. Successful Docker releases freeze the immutable
   registry digest so rollback can reacquire the exact image after local retention
   expires; source changes apply atomically across environments and are available
-  in both the dashboard Source tab and `openship project release-image` (#694).
+  in both the dashboard Source tab and `kovalio project release-image` (#694).
 - **Apply really means restart without rebuild for a single app** — Docker and
   host-mode projects reuse the active deployment's retained artifact even though
   they have no service rows. Apply never fetches Git or silently turns into a
@@ -99,7 +99,7 @@ Git credential boundaries, and edge recovery across Linux and macOS.
   port through stopped and reconciling states. A stale vhost/TLS certificate can
   therefore never be repointed accidentally when a later deployment starts
   listening on the same number (#682, GHSA-284v-9jw3-jfhx).
-- **Retry routing repairs the edge first** — when `openship-edge` is stopped or
+- **Retry routing repairs the edge first** — when `kovalio-edge` is stopped or
   missing, Retry Routing reconciles and health-checks it before touching vhosts.
   An unrecoverable edge returns an actionable warning immediately instead of
   hanging until the route request times out (#693).
@@ -123,10 +123,10 @@ Git credential boundaries, and edge recovery across Linux and macOS.
 - **An explicit GitHub CLI config directory is an isolation boundary** — fallback
   token discovery reads exactly the `hosts.yml` selected by GitHub CLI precedence
   on Linux, macOS, and Windows. If `GH_CONFIG_DIR` or `XDG_CONFIG_HOME` is set but
-  missing or tokenless, Openship no longer falls through to another user's home
+  missing or tokenless, Kovalio no longer falls through to another user's home
   directory and borrows that credential (#687).
 
-### Openship Mail
+### Kovalio Mail
 
 - **Inbound SMTP has DNS inside Postfix's chroot** — every mail-engine boot now
   refreshes `resolv.conf` and the supporting NSS files inside the persistent
@@ -144,7 +144,7 @@ Git credential boundaries, and edge recovery across Linux and macOS.
 
 ## 0.6.6
 
-Mail learns to receive, and third-party secrets get one home. Openship Mail now
+Mail learns to receive, and third-party secrets get one home. Kovalio Mail now
 captures, filters and reads inbound messages, and an arriving message can raise a
 notification. Alongside it, a single org-scoped credential store replaces the
 one-off DNS token table and unlocks private image pulls on any host. The app
@@ -159,7 +159,7 @@ own page, and uploads stop failing at 1 MB.
   Editing and deleting a job now go through the same per-target server check that
   creating and running one already did, and a denial is indistinguishable from a
   job that doesn't exist. Reported externally; regression tests added.
-  Self-hosted instances with more than one trust level should upgrade; Openship
+  Self-hosted instances with more than one trust level should upgrade; Kovalio
   Cloud was never affected (the Jobs API is `localOnly`).
 
 ### Credentials
@@ -193,7 +193,7 @@ own page, and uploads stop failing at 1 MB.
 - **`mail.inbound_received` is a notification** — inbound mail can drive a
   channel, in a mail group that appears only on self-hosted instances.
 
-### Openship Mail
+### Kovalio Mail
 
 - **Mailbox creation runs in the engine, not on the host** — `doveadm` and `chown`
   ran on the host, where they don't exist, so creating a mailbox returned a 500
@@ -225,8 +225,8 @@ own page, and uploads stop failing at 1 MB.
   one pick, and a name matching something outside the selection could be adopted.
   A selection now carries container ids, falling back to names only for a service
   that has none.
-- **Openship's own stack is excluded, not a blocker** — the containers running
-  Openship are skipped with the reason named, instead of the whole migration
+- **Kovalio's own stack is excluded, not a blocker** — the containers running
+  Kovalio are skipped with the reason named, instead of the whole migration
   refusing to start.
 - **Two fixes to what a vhost scan imports** — nginx's own default vhost is skipped
   rather than adopted as a site, and prefix-relative document roots resolve
@@ -253,16 +253,16 @@ own page, and uploads stop failing at 1 MB.
 
 ### Fixes
 
-- **`openship reset-admin-password` works on a Compose install** — it
-  authenticated with `~/.openship/internal-token`, a file the Compose path never
+- **`kovalio reset-admin-password` works on a Compose install** — it
+  authenticated with `~/.kovalio/internal-token`, a file the Compose path never
   writes: the api container is booted with the `INTERNAL_TOKEN` from
-  `~/.openship/compose/.env`. So on a Compose box the command _minted_ a brand-new
+  `~/.kovalio/compose/.env`. So on a Compose box the command _minted_ a brand-new
   random token, sent that, and reported `Unauthorized` — the lockout-recovery
   command was unusable on exactly the install that needed it. Which token this box
   is running with is now resolved in one place, readers never mint, and a
   root-owned `.env` this user can't open says so (re-run with sudo) instead of
   reporting an authorization failure. Same fix reaches the control panel's "Reset
-  admin password", `openship doctor` (whose health readout came back empty on
+  admin password", `kovalio doctor` (whose health readout came back empty on
   every Compose stack), and a bare box's `:80/:443` takeover, which looked for the
   Compose token and skipped importing the migrated sites after stopping the
   operator's proxy.
@@ -281,7 +281,7 @@ own page, and uploads stop failing at 1 MB.
   proof the server row exists. So a hostname with no row yet rendered a live
   Verify button that 404'd, along with a DNS-records panel that couldn't load.
 - **An abbreviated commit is not a new commit** — `POST /deployments` takes
-  `commitSha` as whatever the caller sends (`openship deploy --commit 1eeaf76`, the
+  `commitSha` as whatever the caller sends (`kovalio deploy --commit 1eeaf76`, the
   MCP deploy tool, a CI script), and git checks an abbreviation out happily: the
   right code shipped while the row recorded a name no comparison could match. The
   drift check compared it against the 40-char branch HEAD, and since both sides
@@ -298,10 +298,10 @@ own page, and uploads stop failing at 1 MB.
 
 A hardening and reach release. Reported security issues are fixed (see Security
 below), the container→host control channel is provisioned and diagnosed end to end
-instead of failing quietly, and Openship now installs on any mainstream Linux — and on hosts
-where you don't log in as root. It also adds `openship edge` (the whole reverse
+instead of failing quietly, and Kovalio now installs on any mainstream Linux — and on hosts
+where you don't log in as root. It also adds `kovalio edge` (the whole reverse
 proxy from the terminal), real resource limits that respect the machine you own,
-an Openship Mail product shell with split outbound delivery, webmail rebuilt as an
+an Kovalio Mail product shell with split outbound delivery, webmail rebuilt as an
 ordinary catalog app, and five new one-click apps.
 
 ### Security
@@ -319,8 +319,8 @@ ordinary catalog app, and five new one-click apps.
 
 ### The host control channel
 
-- **`openship up` provisions the container→host channel, and tells you when it
-  can't** — when Openship runs in Docker, a handful of operations are genuinely
+- **`kovalio up` provisions the container→host channel, and tells you when it
+  can't** — when Kovalio runs in Docker, a handful of operations are genuinely
   host-level (freeing a foreign proxy off `:80`/`:443`, host system config, the
   mail engine, writing a catalog app's generated config), and they reach the host
   over SSH on the internal bridge. Install now generates the key, appends a
@@ -335,12 +335,12 @@ ordinary catalog app, and five new one-click apps.
   sshd listen address, key, and reachability are each probed and reported
   separately.
 - **One explanation, five surfaces** — the CLI preflight, the API's boot banner,
-  `openship doctor`, the dashboard's server banner, and the deploy log a host
+  `kovalio doctor`, the dashboard's server banner, and the deploy log a host
   operation dies in had drifted into different stories. They now read from one
   shared vocabulary, because every line is either "your install is fine, this one
   feature isn't" or "your install is broken" — and an operator who reads the
   wrong one either tears down a working box or ignores a dead feature for months.
-- **`openship update` repairs an unprovisioned channel** — an install from before
+- **`kovalio update` repairs an unprovisioned channel** — an install from before
   this work, or a raw `docker compose` install, can be fixed in place by updating,
   rather than re-running `up` and risking the environment. A deploy that needs the
   channel emits the notice once per deploy, before the fan-out, instead of once
@@ -351,12 +351,12 @@ ordinary catalog app, and five new one-click apps.
 - **Documented for hand-rolled installs** — `.env.example` spells out all five
   steps (key, restricted authorized_keys line, sshd listen address, firewall
   rule, recreate the api because `env_file:` is read at container creation), and a
-  new [troubleshooting page](https://openship.io/docs/troubleshooting/host-channel)
+  new [troubleshooting page](https://nextrium.org/docs/troubleshooting/host-channel)
   walks the repair.
 
 ### Any Linux, and hosts that aren't root
 
-- **Openship installs on the distros it always claimed to** — Docker installation
+- **Kovalio installs on the distros it always claimed to** — Docker installation
   was `curl get.docker.com | sh` on every Linux, a script that hard-refuses
   Amazon Linux, AlmaLinux, Oracle Linux and Alpine. Each call site had its own
   package-manager table (there were five, and they disagreed), its own systemd
@@ -380,7 +380,7 @@ ordinary catalog app, and five new one-click apps.
   build on a non-Debian box gets its runtime installed instead of a
   `not found` at build time.
 
-### `openship edge`
+### `kovalio edge`
 
 - **The whole reverse proxy, from the terminal** — a new top-level command:
   `edge up` stands the proxy up and serves `:80`/`:443`, `edge migrate` takes over
@@ -396,8 +396,8 @@ ordinary catalog app, and five new one-click apps.
   control-plane half works from any machine, including desktop, against whichever
   context is active.
 - **Documented as both reference and walkthrough** — a new
-  [The edge](https://openship.io/docs/guides/the-edge) guide for the tasks, and a
-  full [command reference](https://openship.io/docs/cli/edge).
+  [The edge](https://nextrium.org/docs/guides/the-edge) guide for the tasks, and a
+  full [command reference](https://nextrium.org/docs/cli/edge).
 
 ### Resource limits
 
@@ -417,10 +417,10 @@ ordinary catalog app, and five new one-click apps.
   allocate is rejected before any build work starts, with the machine's real
   numbers in the message.
 
-### Openship Mail
+### Kovalio Mail
 
 - **Run the instance as a mail product** — an instance can present itself as
-  Openship Mail (`OPENSHIP_PRODUCT`, or a toggle in Settings): the left rail
+  Kovalio Mail (`KOVALIO_PRODUCT`, or a toggle in Settings): the left rail
   becomes the mail control plane — the ten admin tabs promoted to nav entries
   across three headings, plus the host and settings rows an operator still needs —
   and the platform nav is hidden. This is presentation only, never an
@@ -445,7 +445,7 @@ ordinary catalog app, and five new one-click apps.
 - **A mail console** — live engine output in the dashboard, so a setup that stalls
   can be read rather than guessed at.
 - **Backups you can schedule** — the mail admin Backup tab gains a real schedule
-  and retention plan, wired to the same pruning the rest of Openship uses.
+  and retention plan, wired to the same pruning the rest of Kovalio uses.
 - **Setup fails earlier and clearer** — a preflight checks the things that used to
   surface mid-stream (password shape, firewall step, DNS), and setup errors render
   in a banner instead of vanishing into the stream.
@@ -456,7 +456,7 @@ ordinary catalog app, and five new one-click apps.
   generic installer, image, volume and routing pipeline as every other app, and
   installs from /apps just as well as from /emails. The mail-specific part is the
   only part that stayed: which IMAP/SMTP backend it belongs to — one of your
-  Openship mail servers, or an external provider.
+  Kovalio mail servers, or an external provider.
 - **The link is stored, not parsed out of a slug** — the old lookup read
   `webmail-<serverId>` back out of the project slug, which the generic installer
   never produces, and which mislinked any project someone happened to name
@@ -474,7 +474,7 @@ ordinary catalog app, and five new one-click apps.
   project over the internal network.
 - **Badges that tell you what you're installing** — verified, unverified and
   hosting-mode badges with explanatory tooltips, so a community template isn't
-  visually indistinguishable from one Openship has booted and checked.
+  visually indistinguishable from one Kovalio has booted and checked.
 - **Catalog schema updates** — the published `app.schema.json` gains the fields
   behind the above, and the reference docs and "Add an app" guide were rewritten
   around them.
@@ -505,13 +505,13 @@ ordinary catalog app, and five new one-click apps.
 
 ### DNS
 
-- **Cloudflare DNS, wired in** — connect a Cloudflare token and Openship writes the
+- **Cloudflare DNS, wired in** — connect a Cloudflare token and Kovalio writes the
   records a domain needs itself (#37), issues wildcard certificates over the
   DNS-01 challenge, and can route a domain through a tunnel instead of an open
   port.
 - **We only touch records we created** — the provider claims a record it wrote and
   leaves everything else in the zone alone, and it refuses to write a hostname it
-  hasn't claimed. Deleting a domain in Openship therefore cannot remove a record
+  hasn't claimed. Deleting a domain in Kovalio therefore cannot remove a record
   that was already there.
 
 ### Servers
@@ -564,7 +564,7 @@ ordinary catalog app, and five new one-click apps.
   workload — built like any other app, run as an always-restart container with no
   port and no route, and checked for a start command instead of a port. Choose it
   from a project's Server / Worker / Static switch, or set `workload: worker` in
-  `openship.json`.
+  `kovalio.json`.
 
 ### Compose & install
 
@@ -579,11 +579,11 @@ ordinary catalog app, and five new one-click apps.
   ahead of its images reaching the registry.
 - **A foreign Postgres data directory is refused, not adopted** — the volume's
   contents are probed before a cluster is started on top of them.
-- **`openship doctor` and `repair` cover more** — the host channel, an
+- **`kovalio doctor` and `repair` cover more** — the host channel, an
   unprovisioned install, and port conflicts, in the same run.
 - **Adopting a Compose stack no longer re-publishes its host ports** — a migrated
   `5432:5432` would bind host `5432` on the next deploy and collide with whatever
-  already held it (often Openship's own Postgres), aborting the deploy. Adoption
+  already held it (often Kovalio's own Postgres), aborting the deploy. Adoption
   keeps only the container port; the service is reached by name on the project
   network and re-exposed from the Domains tab. The warning tells apart a port that
   was published off-box — Docker's publish rule routes past the host firewall, so
@@ -633,7 +633,7 @@ ordinary catalog app, and five new one-click apps.
 
 ### Docs & site
 
-- **New and rewritten pages** — "The edge" guide, the `openship edge` command
+- **New and rewritten pages** — "The edge" guide, the `kovalio edge` command
   reference, host-channel troubleshooting, a rewritten "Add an app" guide and app
   catalog reference, plus notes on installation, updating and logs/monitoring.
 - **Docs get social previews** — generated OG images per page.
@@ -694,7 +694,7 @@ class.
 - **Give a service a custom internal hostname** — a service can carry a custom
   east-west DNS alias that resolves alongside its default name, set from the service's
   Settings tab and available to single-app, Compose, and monorepo services alike.
-  Openship normalizes it to a valid hostname and rejects one that collides with
+  Kovalio normalizes it to a valid hostname and rejects one that collides with
   another service on the same project network, and the internal-address card shows the
   alias its containers actually answer to. Self-hosted only.
 - **A clearer service Settings editor** — the service Settings tab groups fields into
@@ -706,7 +706,7 @@ class.
 
 ### Container health & incidents
 
-- **Openship watches your containers around the clock, not just at deploy** — until
+- **Kovalio watches your containers around the clock, not just at deploy** — until
   now a container was health-checked exactly once, during the ~15s window right after
   a deploy, and then never looked at again unless a human was staring at the project
   page. A new health watch polls every server's Docker daemon once a minute (and
@@ -722,7 +722,7 @@ class.
   before it notifies, and an in-flight deploy, an operator's own `docker stop`, or a
   disabled project never trips a false alarm.
 - **An unreachable server is one alert, not one per app on it** — when a box's Docker
-  daemon stops answering, Openship opens a single server-level incident that names how
+  daemon stops answering, Kovalio opens a single server-level incident that names how
   many projects it can no longer monitor, and freezes those projects' health rather
   than falsely marking them recovered. The record is durable, so a box that has been
   down for days does not re-page every time the control plane restarts.
@@ -809,11 +809,11 @@ class.
   Cloudflare's published ranges as the connecting peer.
 - **Per-route rules reach the edge even when it isn't on the API's loopback** —
   pushing a project's route rules to a local edge now goes through the same resolved
-  edge-management path as the rest of Openship instead of assuming the edge lives on
+  edge-management path as the rest of Kovalio instead of assuming the edge lives on
   the API host's own loopback. On setups where it doesn't — such as the containerized
   edge — rate-limit, ban, and country rules now actually take effect.
 - **The "Edge ready" pill matches the server's real state** — edge readiness is now
-  read from whether Openship's edge container is actually running, the same fact the
+  read from whether Kovalio's edge container is actually running, the same fact the
   Infrastructure tab and System Health use. Before, a leftover bare-host OpenResty
   install could make the pill claim "ready" while the server tab reported the edge as
   down.
@@ -821,14 +821,14 @@ class.
 ### Custom & free domains
 
 - **Free `.opsh.io` domains only route to a server whose control you've proven** —
-  Openship Cloud's shared edge now forwards a free subdomain to your server only after
+  Kovalio Cloud's shared edge now forwards a free subdomain to your server only after
   that server answers a challenge proving it owns the target, a proof that lasts 90
-  days and that Cloud re-checks about a week before it lapses. Openship prepares the
+  days and that Cloud re-checks about a week before it lapses. Kovalio prepares the
   box to answer the moment you set up its edge, so a free domain added later works
   without a redeploy, and a background sweep re-asserts, reads back over the server's
   own public address, and re-verifies anything expired — so a box left undeployed for
   months no longer silently loses its free URLs. A slug can't be pointed at someone
-  else's box, and a server that can't yet answer is told why. Requires Openship Cloud.
+  else's box, and a server that can't yet answer is told why. Requires Kovalio Cloud.
 - **Free and custom domains now work on static sites** — adding a free `.opsh.io`
   domain to a static project used to register nothing on the edge, so the URL fell
   through to the wildcard with no origin behind it; editing a static project's domain
@@ -838,7 +838,7 @@ class.
   ACME order completed but a later step failed (the vhost rewrite, the reload, or the
   read-back), the domain stayed stuck in "provisioning" with no expiry recorded, which
   made it invisible to the renewal sweep — a valid certificate then sat on the edge
-  and expired ~90 days later. Openship now re-reads the edge after a failed issuance
+  and expired ~90 days later. Kovalio now re-reads the edge after a failed issuance
   and records a certificate that's actually present, so renewal stays scheduled.
 - **Invalid custom domains are rejected at the door** — setting a custom domain to
   something that isn't a public hostname (`localhost`, a bare IP, a single label, or a
@@ -861,15 +861,15 @@ class.
 - **Mail runs as a self-contained engine instead of taking over your server** —
   setting up mail no longer installs iRedMail's daemons directly onto the host or
   reboots the box. Postfix, Dovecot, spam and virus filtering, and DKIM now run inside
-  a single `openship-mail` container with its vmail database in a Postgres sidecar,
+  a single `kovalio-mail` container with its vmail database in a Postgres sidecar,
   host-networked so mail still sees real client IPs and the edge stays out of the mail
   data path. Setup is down to eight steps whose only prerequisites are Docker and the
-  openship edge, and every piece of mail state (queue, maildirs, DKIM keys, config)
+  kovalio edge, and every piece of mail state (queue, maildirs, DKIM keys, config)
   lives on host bind mounts, so upgrading is a pull-and-recreate that keeps your data.
   Self-hosted only.
 - **Mail uses the same edge and TLS as everything else** — mail setup no longer stands
   up its own host OpenResty and certbot on the side. The certificate for
-  `mail.<domain>` is issued through the shared openship edge, the same path every other
+  `mail.<domain>` is issued through the shared kovalio edge, the same path every other
   domain's TLS takes, and it is now recorded for renewal like any other domain — a
   mail certificate on a containerized edge (no host certbot timer) used to simply
   expire ~90 days after install, silently; a failed renewal now raises a notification.
@@ -897,7 +897,7 @@ class.
   Restart stopped does the same across every server at once. Self-hosted only.
 - **Auto-update your remote infrastructure on upgrade** — a new instance-wide toggle
   lets the control plane update every remote edge and mail container automatically when
-  you upgrade Openship (its `APP_VERSION` moves forward), so your fleet's infra tracks
+  you upgrade Kovalio (its `APP_VERSION` moves forward), so your fleet's infra tracks
   the version you're running with no manual sweep. It's server-side, so it works on
   desktop too, distinct from the desktop app's own auto-update, and off by default.
   Self-hosted only.
@@ -972,7 +972,7 @@ class.
 
 - **Send alerts to Telegram** — Telegram joins email, Slack, Discord, and Teams as a
   notification channel: point a BotFather bot at a chat, group, or forum topic and
-  Openship delivers your deploy, health, and job alerts there. The bot token is stored
+  Kovalio delivers your deploy, health, and job alerts there. The bot token is stored
   encrypted, and the channel list shows which bot does the sending.
 - **Self-hosted notification settings drop the toggles that can never fire** — on a
   self-hosted box the billing notification categories are fed by the SaaS billing
@@ -981,19 +981,19 @@ class.
 
 ### Install & packaging
 
-- **Openship now installs and updates on Node, never a global Bun** — the `curl | sh`
+- **Kovalio now installs and updates on Node, never a global Bun** — the `curl | sh`
   and PowerShell installers download a self-contained, sha256-verified CLI payload that
   runs under Node: they use your system Node 22+ if you have one and otherwise vendor an
-  official Node 22 from nodejs.org into `~/.openship`, and they quietly migrate you off
-  any previous global-Bun install without touching your own Bun. `openship update` takes
+  official Node 22 from nodejs.org into `~/.kovalio`, and they quietly migrate you off
+  any previous global-Bun install without touching your own Bun. `kovalio update` takes
   the same path — re-download the verified payload, refresh the runtime first — so an
   upgrade that raises the Node floor heals itself instead of breaking. This retires the
   Bun-vs-ssh2 crash class that could take out remote SSH operations.
-- **The mail server ships as an official image** — Openship's official multi-arch
+- **The mail server ships as an official image** — Kovalio's official multi-arch
   (amd64 + arm64) image set, built and published to GHCR and Docker Hub each release,
-  now includes `openship-mail` alongside the api, dashboard and edge images, so a
+  now includes `kovalio-mail` alongside the api, dashboard and edge images, so a
   self-hosted mail engine no longer has to be built from source.
-- **`openship up` now works under rootless Docker instead of failing cryptically** —
+- **`kovalio up` now works under rootless Docker instead of failing cryptically** —
   bringing up the compose stack on a rootless daemon used to abort the install with
   Docker's opaque "error while creating mount source path … permission denied," because
   a rootless daemon can't create the edge's bind-mount directories under root-owned
@@ -1004,7 +1004,7 @@ class.
 
 - **A working deploy is never recorded as failed** — build output that carried a raw
   NUL byte or a broken Unicode character (as a failed `docker exec` does when it spills
-  its multiplexed stream, frame headers and all) made the log write fail, and Openship
+  its multiplexed stream, frame headers and all) made the log write fail, and Kovalio
   misread that rejected write as the deploy itself failing: a live, running deploy was
   marked failed and its containers torn down, while the deploy view stayed stuck on
   "Deploying." Stored build logs are now sanitized and size-capped, the outcome write
@@ -1022,7 +1022,7 @@ class.
   `.opsh.io` domain could finish onboarding with no servers listed and nothing to
   deploy to, because registering the local "This Server" row hung off a bootstrap step
   that path never runs. The box now materializes its own deploy-target row when servers
-  are first listed, when it connects to Openship Cloud, and on admin reset. Attaching a
+  are first listed, when it connects to Kovalio Cloud, and on admin reset. Attaching a
   free `.opsh.io` domain to a project later no longer needs a redeploy first, since
   every deploy now primes the box to answer the ownership check. Self-hosted only.
 - **Service domains honor your upload limit and proxy settings** — a compose service's
@@ -1060,7 +1060,7 @@ across the MCP integration and custom domains.
 - **Roll back any release, on every project** — the Rollback action used to be
   greyed out on projects using the default settings, because nothing marked their
   releases as restorable. It's now available on every successful release, and it
-  is a single action: Openship reuses the release's retained image when it's still
+  is a single action: Kovalio reuses the release's retained image when it's still
   on the server (seconds, no rebuild) and rebuilds that release's commit when it
   isn't. It can no longer dead-end — the "Redeploy this commit" fallback button is
   gone because the one action already covers it, and the confirmation tells you
@@ -1138,7 +1138,7 @@ per-service deployment table. Nothing read or wrote it.
   instead of reverse-engineering it from a flat list. Its write tools now carry
   typed request bodies end to end (projects, deployments, domains, webhooks,
   notifications, connections, apps), and every prompt points at
-  `github.com/oblien/openship/issues` when a client hits a platform bug.
+  `github.com/oblien/kovalio/issues` when a client hits a platform bug.
 - **Scoped tokens list the right tools** — a token granted a single GitHub repo
   (or the "create your own projects" scope) now correctly advertises the tools
   it can actually call. Previously the per-repo GitHub tools and the project
@@ -1168,7 +1168,7 @@ per-service deployment table. Nothing read or wrote it.
   "the connection closed before the operation reported a result — check the
   domain's status." The actual reason was discarded. The log now stays on screen in
   every outcome, with Copy log and Try again next to it. And if the connection
-  really does drop, Openship reads the domain's state back and tells you what
+  really does drop, Kovalio reads the domain's state back and tells you what
   happened instead of asking you to go and look.
 - **A finished run stops reporting itself as failed** — a keep-alive ping could
   race the final event of any live-log stream (verify, edge setup, deploys) and win,
@@ -1199,7 +1199,7 @@ release.
 ### CLI
 
 - **A finished install opens the control panel, not the setup wizard** — bare
-  `openship` (and the from-source `openship-dev`) now recognizes a Docker Compose
+  `kovalio` (and the from-source `kovalio-dev`) now recognizes a Docker Compose
   install (the default on Linux). Re-running after setup manages the running
   stack instead of walking you through name / email / domain from scratch again.
 - **Control-panel Start / Stop / Restart drive the actual stack** — on a compose
@@ -1233,8 +1233,8 @@ release.
   picker no longer flashes on entry. A sensible target is applied silently and
   stays one click away in the summary bar at the top.
 - **The control plane stops listing a phantom service** — the self-managed
-  "Openship" project no longer shows a bogus public `openship` service (and its
-  stray `openship-openship.opsh.io` route) that matched no container and read
+  "Kovalio" project no longer shows a bogus public `kovalio` service (and its
+  stray `kovalio-kovalio.opsh.io` route) that matched no container and read
   "Stopped" forever.
 
 ## 0.4.0
@@ -1265,8 +1265,8 @@ image`). The running image is reused only **once**, at cutover.
   project's network under its service-name alias, so a freshly-built app resolves
   `postgres:5432` by name, exactly like a native deploy.
 - **A migrated service reports the container it really runs as** — service state
-  is read live from the host and matched by identity (label → `openship-<slug>-<svc>`
-  name → tracked id → compose labels), so a container Openship adopted **in place**
+  is read live from the host and matched by identity (label → `kovalio-<slug>-<svc>`
+  name → tracked id → compose labels), so a container Kovalio adopted **in place**
   (its docker labels still name the previous project) no longer shows "Stopped"
   while it serves traffic. Each run's log now ends with the container, state and
   match for every service.
@@ -1280,7 +1280,7 @@ image`). The running image is reused only **once**, at cutover.
   the running one. A crash-looping container now reads **Restarting** instead of a
   green "Running", and an unreachable host reads **Unknown** instead of echoing the
   last deploy status.
-- **Removing a route never wrongly demands Openship Cloud** — the free-domain gate
+- **Removing a route never wrongly demands Kovalio Cloud** — the free-domain gate
   classifies by hostname, so removing a custom-domain route (or any route) is no
   longer blocked by an unrelated free subdomain still in the set.
 - **Deleting a service can't hang** — runtime teardown is time-bounded, so a slow
@@ -1308,14 +1308,14 @@ config, and a batch of self-hosting and reliability fixes.
   them over its own detection. A repo that already tells Railway or Vercel how to
   build it deploys the same way here, no reconfiguration. Every config source
   runs through one shared parser registry (no per-source special-casing).
-- **`openship.json`** — an optional repo-root config to declare build, routing,
+- **`kovalio.json`** — an optional repo-root config to declare build, routing,
   env, and domains up front; it's authoritative over auto-detection and rides the
   same engine, for the repo root and each monorepo sub-app.
 
 ### Self-hosting
 
 - **Deploys to your own server by default** — a self-hosted instance targets the
-  server it runs on, never Openship Cloud, unless you explicitly choose cloud.
+  server it runs on, never Kovalio Cloud, unless you explicitly choose cloud.
 - **Health checks work when the control plane is containerized** — the
   post-deploy probe reaches your app through the host gateway, so a containerized
   self-host no longer fail-reverts an otherwise-healthy deploy.
@@ -1325,7 +1325,7 @@ config, and a batch of self-hosting and reliability fixes.
 
 ### CLI
 
-- **`openship stop` actually stops** — the service and its children are reaped by
+- **`kovalio stop` actually stops** — the service and its children are reaped by
   process group and any ports it held are swept, so a restart can't strand the
   old process on a new port.
 
@@ -1357,7 +1357,7 @@ Backups get a real home, and a batch of delete/login/database reliability fixes.
   business-only setup that creates the project on confirm; the technical deploy
   wizard is now the "Advanced" path (no more orphaned draft projects from a
   half-finished install).
-- **Openship Mail is a first-class app** — it appears in the catalog alongside
+- **Kovalio Mail is a first-class app** — it appears in the catalog alongside
   Convex and n8n and hands off to the mail wizard. The rest of the catalog shows
   as **Coming soon** (dimmed, not installable) for this release.
 
@@ -1385,7 +1385,7 @@ Backups get a real home, and a batch of delete/login/database reliability fixes.
 
 ### Cloud
 
-- **Per-user project cap** — Openship Cloud enforces a hard cap on projects per
+- **Per-user project cap** — Kovalio Cloud enforces a hard cap on projects per
   user (env `CLOUD_MAX_PROJECTS_PER_USER`, default 2), at both create and
   folder-upload/ensure. Self-hosted is unmetered.
 
@@ -1456,7 +1456,7 @@ routing, servers, jobs, and the build toolchain.
 
 ### Add service
 
-- The **Openship Cloud** image tab shows a "Connect to Openship Cloud" CTA when
+- The **Kovalio Cloud** image tab shows a "Connect to Kovalio Cloud" CTA when
   the instance isn't linked, and the source switcher has clearer contrast.
 
 ### Other

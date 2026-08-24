@@ -200,7 +200,7 @@ export async function listTopupPacks(c: Context) {
  * The capacity meters answer "how much of my quota is gone"; this answers "gone
  * WHERE", which is the only version a user can do anything about. Before this
  * there was no way to find out: the dashboard's domains page is a stub,
- * `GET /api/domains` requires a `projectId`, and `openship domain list` requires
+ * `GET /api/domains` requires a `projectId`, and `kovalio domain list` requires
  * `--project` — so a free subdomain created by a CLI deploy into a since-forgotten
  * project silently consumed a slot with nothing to enumerate it.
  *

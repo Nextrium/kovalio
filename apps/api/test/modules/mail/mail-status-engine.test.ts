@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * admin panel, so it is where the live engine topology belongs: the panel can then
  * state "the engine is stopped, here's the fix" ONCE, above the tab bar, instead of
  * ten tabs each discovering it as a 409 (or, before the gate, as a raw
- * "No such container: openship-mail-db" 500) with nothing to press.
+ * "No such container: kovalio-mail-db" 500) with nothing to press.
  *
  * Two contracts are pinned here:
  *   1. The probe rides the SAME executor that reads the state file — no second
@@ -16,17 +16,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 vi.mock("@repo/adapters", () => ({
-  // Read at module scope by openship-server-store (imported transitively), so the
+  // Read at module scope by kovalio-server-store (imported transitively), so the
   // mock has to carry it or nothing under test loads. Its value is irrelevant here.
-  HOST_STATE_DIR: "/root/.openship",
+  HOST_STATE_DIR: "/root/.kovalio",
   detectMailEngine: vi.fn(),
-  MAIL_CONTAINER: "openship-mail",
-  MAIL_DB_CONTAINER: "openship-mail-db",
+  MAIL_CONTAINER: "kovalio-mail",
+  MAIL_DB_CONTAINER: "kovalio-mail-db",
   MAIL_DB_NAME: "vmail",
   MAIL_HOST_PATHS: {
-    saslPasswd: "/opt/openship/mail/postfix/sasl_passwd",
-    senderRelayhost: "/opt/openship/mail/postfix/sender_relayhost",
-    amavisUserConf: "/opt/openship/mail/amavis/50-user",
+    saslPasswd: "/opt/kovalio/mail/postfix/sasl_passwd",
+    senderRelayhost: "/opt/kovalio/mail/postfix/sender_relayhost",
+    amavisUserConf: "/opt/kovalio/mail/amavis/50-user",
   },
 }));
 
@@ -91,7 +91,7 @@ beforeEach(() => {
     flavor: "container",
     running: true,
     exists: true,
-    image: "ghcr.io/oblien/openship-mail:0.5.0",
+    image: "ghcr.io/oblien/kovalio-mail:0.5.0",
   });
 });
 

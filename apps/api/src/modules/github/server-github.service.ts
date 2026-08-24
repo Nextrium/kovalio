@@ -134,7 +134,7 @@ export async function ensureServerKey(ctx: RequestContext, serverId: string): Pr
   if (existing?.mode === "ssh-server-key" && existing.serverKeyPublic) {
     return { publicKey: existing.serverKeyPublic };
   }
-  const { privateKey, publicKey } = await generateEd25519(`openship-${serverId}`);
+  const { privateKey, publicKey } = await generateEd25519(`kovalio-${serverId}`);
   await repos.serverGithubAuth.upsert({
     serverId,
     organizationId: ctx.organizationId,
@@ -168,7 +168,7 @@ async function ensureDeployKey(
   const existing = await repos.githubDeployKey.getByRepo(serverId, owner, repo);
   if (existing) return { privateKey: decrypt(existing.privateKeyEncrypted) };
 
-  const { privateKey, publicKey } = await generateEd25519(`openship-${serverId}-${owner}/${repo}`);
+  const { privateKey, publicKey } = await generateEd25519(`kovalio-${serverId}-${owner}/${repo}`);
   // Register read-only. A 403 here means the resolved token lacks repo Admin —
   // surfaced to the operator (grant the App Administration permission or use a
   // repo-admin PAT).
@@ -176,7 +176,7 @@ async function ensureDeployKey(
     ctx,
     owner,
     repo,
-    `openship-${serverId.slice(0, 8)}`,
+    `kovalio-${serverId.slice(0, 8)}`,
     publicKey,
     true,
   );

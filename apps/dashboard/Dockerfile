@@ -9,7 +9,7 @@ COPY apps/ ./apps/
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_API_PROXY=true
-RUN bun install && cd apps/dashboard && bun run build
+RUN bun install --ignore-scripts && cd apps/dashboard && bun run build
 
 # ─── Production stage ──────────────────────────────────
 FROM node:22-alpine AS runner

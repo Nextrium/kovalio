@@ -43,7 +43,7 @@ import { installCommand } from "./commands/install";
 import { updateCommand } from "./commands/update";
 import { cacheCommand } from "./commands/cache";
 
-// Interactive setup / control (bare `openship`)
+// Interactive setup / control (bare `kovalio`)
 import { runWizard, runControl, isSetupInProgress } from "./commands/wizard";
 import { serviceStatus } from "./lib/service";
 import { readInstallMethod } from "./lib/compose";
@@ -57,14 +57,14 @@ declare const __CLI_VERSION__: string;
 const program = new Command();
 
 program
-  .name("openship")
-  .description("Openship CLI — install, run, and manage Openship from your terminal")
+  .name("kovalio")
+  .description("Kovalio CLI — install, run, and manage Kovalio from your terminal")
   .version(__CLI_VERSION__)
   .option("--json", "Machine-readable JSON output (stdout data only)")
   .hook("preAction", (thisCommand) => {
     if (thisCommand.opts().json) setJsonMode(true);
   })
-  // Bare `openship` (no subcommand): setup wizard on a fresh box, or the control
+  // Bare `kovalio` (no subcommand): setup wizard on a fresh box, or the control
   // panel once a service is already installed (manage instead of starting over).
   .action(async () => {
     // A service is installed AND setup finished → manage it. If a prior setup
@@ -74,7 +74,7 @@ program
     // "installed" must cover a Docker Compose install too: that path installs NO
     // systemd/launchd unit (the stack restarts via Docker's own policy), so
     // serviceStatus().installed is false for it. Without the readInstallMethod
-    // check, re-running `openship` after a finished compose install (the Linux
+    // check, re-running `kovalio` after a finished compose install (the Linux
     // default) drops back into the full setup wizard instead of the control panel.
     const installed = serviceStatus().installed || readInstallMethod() === "compose";
     if (installed && !isSetupInProgress()) await runControl();

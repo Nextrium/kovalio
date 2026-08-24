@@ -42,7 +42,7 @@ export function isRealContainerRef(ref: string | null | undefined): ref is strin
  * is issue #640.
  *
  * The test is a LEADING slash, not `includes("/")`: an image tag legitimately
- * contains slashes (`openship/my-app:bld_1`, `ghcr.io/org/img`) but can never
+ * contains slashes (`kovalio/my-app:bld_1`, `ghcr.io/org/img`) but can never
  * start with one, and every artifact path this codebase writes is absolute.
  */
 export function isArtifactRef(ref: string | null | undefined): boolean {

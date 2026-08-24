@@ -54,7 +54,7 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
  *   - docker → Docker + Git + Edge
  *   - bare   → Git + Edge
  *
- * "Edge" is ONE component (the openship-edge container: OpenResty + Lua +
+ * "Edge" is ONE component (the kovalio-edge container: OpenResty + Lua +
  * certbot). It used to be two rows, `openresty` and `certbot`, for one artifact
  * that is installed, checked and removed as a unit.
  *
@@ -106,8 +106,8 @@ export interface SystemManagerOptions {
   provisionLock?: ProvisionLock;
   /**
    * Treat every feature as already provisioned — `ensureFeature`/`ensureComponents`
-   * become no-ops. Used when openship runs containerized (compose): docker is the
-   * mounted socket and the edge is the `openship-edge` image, so the api must NOT
+   * become no-ops. Used when kovalio runs containerized (compose): docker is the
+   * mounted socket and the edge is the `kovalio-edge` image, so the api must NOT
    * try to install anything on its own container/host.
    */
   assumeInstalled?: boolean;
@@ -282,7 +282,7 @@ export class SystemManager {
     config?: InstallerConfig,
   ): Promise<void> {
     // Containerized (compose): prerequisites are provided by the stack (docker
-    // socket + the openship-edge image), not installable from inside the api — skip.
+    // socket + the kovalio-edge image), not installable from inside the api — skip.
     if (this.assumeInstalled) return;
 
     const logFn = onLog ?? (() => {});

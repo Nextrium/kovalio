@@ -1,10 +1,10 @@
 /**
- * `openship.json` — the native, declarative deploy config (à la vercel.json /
- * railway.toml). A repo-root file that tells Openship how to build, run, route,
+ * `kovalio.json` — the native, declarative deploy config (à la vercel.json /
+ * railway.toml). A repo-root file that tells Kovalio how to build, run, route,
  * and scale a project, covering the deploy wizard's options. It's an
  * AUTHORITATIVE OVERLAY: auto-detection runs first, then each field present here
  * overrides it (absent fields keep the detected value). It seeds the wizard and
- * is authoritative for headless deploys (auto-deploy on push, `openship deploy`).
+ * is authoritative for headless deploys (auto-deploy on push, `kovalio deploy`).
  *
  * This is the typed shape. `parse.ts` validates/coerces raw JSON into it; the
  * published JSON Schema (for editor autocomplete) is generated from the same
@@ -14,37 +14,37 @@
 
 import type { StackId } from "../stacks";
 import type { RoutingConfig } from "../metadata/types";
-import type { OpenshipReadiness } from "../types";
+import type { KovalioReadiness } from "../types";
 
-export type OpenshipRuntime = "bare" | "docker";
-export type OpenshipProductionMode = "host" | "static" | "standalone";
+export type KovalioRuntime = "bare" | "docker";
+export type KovalioProductionMode = "host" | "static" | "standalone";
 /** The runtime WORKLOAD (issue #538): a `web` app listens on a port and is
  *  routed, a `worker` is a portless long-running container reached by nothing, a
  *  `static` site is served as files. The modern spelling of the runtime axis;
  *  `productionMode` stays supported and maps onto it (host/standalone → web,
  *  static → static) so existing configs keep working. */
-export type OpenshipWorkload = "web" | "worker" | "static";
-export type OpenshipDomainType = "free" | "custom";
-export type OpenshipRestart = "no" | "always" | "on-failure" | "unless-stopped";
+export type KovalioWorkload = "web" | "worker" | "static";
+export type KovalioDomainType = "free" | "custom";
+export type KovalioRestart = "no" | "always" | "on-failure" | "unless-stopped";
 /** Cloud sizing presets, plus "unlimited" — no caps, the self-hosted default
  *  (the machine itself is the ceiling). */
-export type OpenshipResourceTier = "unlimited" | "micro" | "low" | "medium" | "high" | "xlarge";
+export type KovalioResourceTier = "unlimited" | "micro" | "low" | "medium" | "high" | "xlarge";
 
-export const OPENSHIP_RUNTIMES: readonly OpenshipRuntime[] = ["bare", "docker"];
-export const OPENSHIP_PRODUCTION_MODES: readonly OpenshipProductionMode[] = [
+export const KOVALIO_RUNTIMES: readonly KovalioRuntime[] = ["bare", "docker"];
+export const KOVALIO_PRODUCTION_MODES: readonly KovalioProductionMode[] = [
   "host",
   "static",
   "standalone",
 ];
-export const OPENSHIP_WORKLOADS: readonly OpenshipWorkload[] = ["web", "worker", "static"];
-export const OPENSHIP_DOMAIN_TYPES: readonly OpenshipDomainType[] = ["free", "custom"];
-export const OPENSHIP_RESTARTS: readonly OpenshipRestart[] = [
+export const KOVALIO_WORKLOADS: readonly KovalioWorkload[] = ["web", "worker", "static"];
+export const KOVALIO_DOMAIN_TYPES: readonly KovalioDomainType[] = ["free", "custom"];
+export const KOVALIO_RESTARTS: readonly KovalioRestart[] = [
   "no",
   "always",
   "on-failure",
   "unless-stopped",
 ];
-export const OPENSHIP_RESOURCE_TIERS: readonly OpenshipResourceTier[] = [
+export const KOVALIO_RESOURCE_TIERS: readonly KovalioResourceTier[] = [
   "unlimited",
   "micro",
   "low",
@@ -54,20 +54,20 @@ export const OPENSHIP_RESOURCE_TIERS: readonly OpenshipResourceTier[] = [
 ];
 
 /** Env value: a plain string, or `{ value, secret }` to encrypt it at rest. */
-export type OpenshipEnvValue = { value: string; secret?: boolean };
-export type OpenshipEnv = Record<string, string | OpenshipEnvValue>;
+export type KovalioEnvValue = { value: string; secret?: boolean };
+export type KovalioEnv = Record<string, string | KovalioEnvValue>;
 
-export interface OpenshipDomain {
+export interface KovalioDomain {
   /** Hostname. A `.opsh.io`-style label = a free subdomain; anything with a dot = custom. */
   domain: string;
   /** Which service/exposed port this hostname routes to (defaults to the app port). */
   port?: number;
   /** Path prefix on the target (defaults to "/"). */
   targetPath?: string;
-  type?: OpenshipDomainType;
+  type?: KovalioDomainType;
 }
 
-export interface OpenshipHealthcheck {
+export interface KovalioHealthcheck {
   test?: string | string[];
   interval?: string;
   timeout?: string;
@@ -79,13 +79,13 @@ export interface OpenshipHealthcheck {
 /**
  * The deploy-time readiness gate lives in ../types alongside ComposeHealthcheck,
  * because a compose SERVICE can carry one too (`service.advanced.readiness`) and
- * both surfaces must reference one definition. Re-exported here so `openship.json`
+ * both surfaces must reference one definition. Re-exported here so `kovalio.json`
  * authoring types stay importable from one place.
  */
-export type { OpenshipReadiness, OpenshipReadinessFailureAction } from "../types";
-export { OPENSHIP_READINESS_FAILURE_ACTIONS } from "../types";
+export type { KovalioReadiness, KovalioReadinessFailureAction } from "../types";
+export { KOVALIO_READINESS_FAILURE_ACTIONS } from "../types";
 
-export interface OpenshipService {
+export interface KovalioService {
   name: string;
   image?: string;
   build?: string;
@@ -93,13 +93,13 @@ export interface OpenshipService {
   ports?: string[];
   volumes?: string[];
   dependsOn?: string[];
-  env?: OpenshipEnv;
+  env?: KovalioEnv;
   command?: string;
-  restart?: OpenshipRestart;
+  restart?: KovalioRestart;
   exposed?: boolean;
   exposedPort?: string;
   domain?: string;
-  healthcheck?: OpenshipHealthcheck;
+  healthcheck?: KovalioHealthcheck;
   /**
    * Per-service DEPLOY-TIME readiness gate, overriding the top-level `readiness`
    * for this service. Absent ⇒ inherit the project's; neither ⇒ off.
@@ -108,11 +108,11 @@ export interface OpenshipService {
    * daemon runs on a loop, this is the pipeline's one-shot "did it come up?" and
    * the only one that can fail a deploy.
    */
-  readiness?: OpenshipReadiness;
+  readiness?: KovalioReadiness;
   /** Per-service cpu/memory caps, overriding the top-level `resources` field by
    *  field. Parity with compose `mem_limit` / `deploy.resources.limits`, which
    *  the compose parser now honors. `0` = no limit. */
-  resources?: OpenshipResources;
+  resources?: KovalioResources;
 }
 
 /**
@@ -121,7 +121,7 @@ export interface OpenshipService {
  * fields are supported in v1 — per-app `domain`/`env`/`exposed` are set in the
  * wizard, not here (declare shared vars under the top-level `env`/`domains`).
  */
-export interface OpenshipMonorepoApp {
+export interface KovalioMonorepoApp {
   name: string;
   rootDirectory: string;
   framework?: StackId;
@@ -134,20 +134,20 @@ export interface OpenshipMonorepoApp {
   port?: number;
 }
 
-export interface OpenshipMonorepo {
+export interface KovalioMonorepo {
   workspace?: { packageManager: string; prepareCommand?: string };
-  apps?: OpenshipMonorepoApp[];
+  apps?: KovalioMonorepoApp[];
 }
 
 /** Cloud sizing tier OR an explicit production resource allocation. */
-export interface OpenshipResources {
-  tier?: OpenshipResourceTier;
+export interface KovalioResources {
+  tier?: KovalioResourceTier;
   cpuCores?: number;
   memoryMb?: number;
   diskMb?: number;
 }
 
-export interface OpenshipConfig {
+export interface KovalioConfig {
   // ── Build ──
   framework?: StackId;
   packageManager?: string;
@@ -174,33 +174,33 @@ export interface OpenshipConfig {
    */
   volumes?: string[];
   // ── Runtime ──
-  runtime?: OpenshipRuntime;
-  productionMode?: OpenshipProductionMode;
+  runtime?: KovalioRuntime;
+  productionMode?: KovalioProductionMode;
   /**
    * The runtime workload: `web` (port + route), `worker` (portless long-running
    * container, no route), or `static` (files). The modern spelling of the runtime
    * axis; when both are set, `workload` wins over `productionMode` (#538).
    */
-  workload?: OpenshipWorkload;
+  workload?: KovalioWorkload;
   port?: number;
   // ── Env ──
-  env?: OpenshipEnv;
+  env?: KovalioEnv;
   // ── Domains + routing ──
-  domains?: OpenshipDomain[];
+  domains?: KovalioDomain[];
   routes?: RoutingConfig;
   // ── Resources ──
-  resources?: OpenshipResources;
+  resources?: KovalioResources;
   // ── Deploy-time readiness gate (all off by default) ──
-  readiness?: OpenshipReadiness;
+  readiness?: KovalioReadiness;
   // ── Services (compose) ──
-  services?: OpenshipService[];
+  services?: KovalioService[];
   // ── Monorepo ──
-  monorepo?: OpenshipMonorepo;
+  monorepo?: KovalioMonorepo;
 }
 
 export interface ParseResult {
   /** Valid fields, partial — only what parsed cleanly. null if `raw` isn't an object. */
-  config: OpenshipConfig | null;
+  config: KovalioConfig | null;
   /** Hard validation failures (bad type / unknown enum / out-of-range). */
   errors: string[];
   /** Soft issues (unknown keys) — non-fatal; the field is ignored. */

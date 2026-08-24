@@ -73,7 +73,7 @@ describe("getComponentLogs", () => {
     const logs = await getComponentLogs("srv_1", "clamav", 300);
 
     expect(logs.source).toBe(
-      "docker exec openship-mail tail -n 300 /var/log/supervisor/clamav-daemon.log",
+      "docker exec kovalio-mail tail -n 300 /var/log/supervisor/clamav-daemon.log",
     );
     expect(logs.source).not.toContain("journalctl");
     expect(logs.lines).toEqual(["line one", "line two"]);
@@ -83,7 +83,7 @@ describe("getComponentLogs", () => {
     replies("");
 
     expect((await getComponentLogs("srv_1", "postgresql")).source).toBe(
-      "docker logs --tail 200 openship-mail-db",
+      "docker logs --tail 200 kovalio-mail-db",
     );
   });
 });

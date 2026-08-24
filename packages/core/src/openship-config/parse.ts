@@ -1,9 +1,9 @@
 /**
- * Validate + coerce raw `openship.json` JSON into a typed {@link OpenshipConfig}.
+ * Validate + coerce raw `kovalio.json` JSON into a typed {@link KovalioConfig}.
  *
  * Hand-rolled (no schema dep — mirrors the metadata parsers). Two audiences:
  *   - the deploy prepare pipeline overlays `config` leniently (ignores `errors`);
- *   - `openship config validate` fails when `errors` is non-empty.
+ *   - `kovalio config validate` fails when `errors` is non-empty.
  * Every field is optional; unknown top-level keys are warnings, not errors.
  */
 
@@ -11,22 +11,22 @@ import { STACK_IDS } from "../stacks";
 import { ALL_PACKAGE_MANAGERS } from "../stacks";
 import type { RoutingConfig } from "../metadata/types";
 import {
-  OPENSHIP_DOMAIN_TYPES,
-  OPENSHIP_READINESS_FAILURE_ACTIONS,
-  OPENSHIP_PRODUCTION_MODES,
-  OPENSHIP_RESOURCE_TIERS,
-  OPENSHIP_RESTARTS,
-  OPENSHIP_RUNTIMES,
-  OPENSHIP_WORKLOADS,
-  type OpenshipConfig,
-  type OpenshipDomain,
-  type OpenshipEnv,
-  type OpenshipReadiness,
-  type OpenshipHealthcheck,
-  type OpenshipMonorepo,
-  type OpenshipMonorepoApp,
-  type OpenshipResources,
-  type OpenshipService,
+  KOVALIO_DOMAIN_TYPES,
+  KOVALIO_READINESS_FAILURE_ACTIONS,
+  KOVALIO_PRODUCTION_MODES,
+  KOVALIO_RESOURCE_TIERS,
+  KOVALIO_RESTARTS,
+  KOVALIO_RUNTIMES,
+  KOVALIO_WORKLOADS,
+  type KovalioConfig,
+  type KovalioDomain,
+  type KovalioEnv,
+  type KovalioReadiness,
+  type KovalioHealthcheck,
+  type KovalioMonorepo,
+  type KovalioMonorepoApp,
+  type KovalioResources,
+  type KovalioService,
   type ParseResult,
 } from "./schema";
 
@@ -117,13 +117,13 @@ class Ctx {
   }
 }
 
-function parseEnv(ctx: Ctx, v: unknown, path: string): OpenshipEnv | undefined {
+function parseEnv(ctx: Ctx, v: unknown, path: string): KovalioEnv | undefined {
   if (v === undefined) return undefined;
   if (!ctx.isObj(v)) {
     ctx.err(path, "must be an object of environment variables");
     return undefined;
   }
-  const out: OpenshipEnv = {};
+  const out: KovalioEnv = {};
   for (const [key, val] of Object.entries(v)) {
     if (typeof val === "string") {
       out[key] = val;
@@ -139,13 +139,13 @@ function parseEnv(ctx: Ctx, v: unknown, path: string): OpenshipEnv | undefined {
   return out;
 }
 
-function parseDomains(ctx: Ctx, v: unknown, path: string): OpenshipDomain[] | undefined {
+function parseDomains(ctx: Ctx, v: unknown, path: string): KovalioDomain[] | undefined {
   if (v === undefined) return undefined;
   if (!Array.isArray(v)) {
     ctx.err(path, "must be an array of hostnames or domain objects");
     return undefined;
   }
-  const out: OpenshipDomain[] = [];
+  const out: KovalioDomain[] = [];
   v.forEach((item, i) => {
     const p = `${path}[${i}]`;
     if (typeof item === "string") {
@@ -160,7 +160,7 @@ function parseDomains(ctx: Ctx, v: unknown, path: string): OpenshipDomain[] | un
         domain,
         port: ctx.int(item.port, `${p}.port`, 1, 65535),
         targetPath: ctx.str(item.targetPath, `${p}.targetPath`),
-        type: ctx.enumOf(item.type, `${p}.type`, OPENSHIP_DOMAIN_TYPES),
+        type: ctx.enumOf(item.type, `${p}.type`, KOVALIO_DOMAIN_TYPES),
       });
     } else {
       ctx.err(p, "must be a hostname string or a domain object");
@@ -231,7 +231,7 @@ function parseRoutes(ctx: Ctx, v: unknown, path: string): RoutingConfig | undefi
   return routes;
 }
 
-function parseResources(ctx: Ctx, v: unknown, path: string): OpenshipResources | undefined {
+function parseResources(ctx: Ctx, v: unknown, path: string): KovalioResources | undefined {
   if (v === undefined) return undefined;
   if (!ctx.isObj(v)) {
     ctx.err(path, "must be an object");
@@ -241,8 +241,8 @@ function parseResources(ctx: Ctx, v: unknown, path: string): OpenshipResources |
   // bounds are sanity rails only: the REAL ceiling is the target machine's
   // probed capacity, enforced server-side. A flat 4-core / 8192 MB max here made
   // a large self-hosted box impossible to describe.
-  const r: OpenshipResources = {
-    tier: ctx.enumOf(v.tier, `${path}.tier`, OPENSHIP_RESOURCE_TIERS),
+  const r: KovalioResources = {
+    tier: ctx.enumOf(v.tier, `${path}.tier`, KOVALIO_RESOURCE_TIERS),
     cpuCores: ctx.int(v.cpuCores, `${path}.cpuCores`, 0, 1024),
     memoryMb: ctx.int(v.memoryMb, `${path}.memoryMb`, 0, 4194304),
     diskMb: ctx.int(v.diskMb, `${path}.diskMb`, 0, 204800),
@@ -259,7 +259,7 @@ function parseResources(ctx: Ctx, v: unknown, path: string): OpenshipResources |
  * hold a deploy open for an hour is a mistake worth catching in the config
  * rather than at deploy time.
  */
-function parseReadiness(ctx: Ctx, v: unknown, path: string): OpenshipReadiness | undefined {
+function parseReadiness(ctx: Ctx, v: unknown, path: string): KovalioReadiness | undefined {
   if (v === undefined) return undefined;
   if (!ctx.isObj(v)) {
     ctx.err(path, "must be an object");
@@ -272,11 +272,11 @@ function parseReadiness(ctx: Ctx, v: unknown, path: string): OpenshipReadiness |
     timeoutSeconds: ctx.int(v.timeoutSeconds, `${path}.timeoutSeconds`, 1, 600),
     stabilization: ctx.bool(v.stabilization, `${path}.stabilization`),
     stabilizationSeconds: ctx.int(v.stabilizationSeconds, `${path}.stabilizationSeconds`, 1, 600),
-    onFailure: ctx.enumOf(v.onFailure, `${path}.onFailure`, OPENSHIP_READINESS_FAILURE_ACTIONS),
+    onFailure: ctx.enumOf(v.onFailure, `${path}.onFailure`, KOVALIO_READINESS_FAILURE_ACTIONS),
   };
 }
 
-function parseHealthcheck(ctx: Ctx, v: unknown, path: string): OpenshipHealthcheck | undefined {
+function parseHealthcheck(ctx: Ctx, v: unknown, path: string): KovalioHealthcheck | undefined {
   if (v === undefined) return undefined;
   if (!ctx.isObj(v)) {
     ctx.err(path, "must be an object");
@@ -300,13 +300,13 @@ function parseHealthcheck(ctx: Ctx, v: unknown, path: string): OpenshipHealthche
   };
 }
 
-function parseServices(ctx: Ctx, v: unknown, path: string): OpenshipService[] | undefined {
+function parseServices(ctx: Ctx, v: unknown, path: string): KovalioService[] | undefined {
   if (v === undefined) return undefined;
   if (!Array.isArray(v)) {
     ctx.err(path, "must be an array of service objects");
     return undefined;
   }
-  const out: OpenshipService[] = [];
+  const out: KovalioService[] = [];
   v.forEach((item, i) => {
     const p = `${path}[${i}]`;
     if (!ctx.isObj(item)) {
@@ -328,7 +328,7 @@ function parseServices(ctx: Ctx, v: unknown, path: string): OpenshipService[] | 
       dependsOn: ctx.strArray(item.dependsOn, `${p}.dependsOn`),
       env: parseEnv(ctx, item.env, `${p}.env`),
       command: ctx.str(item.command, `${p}.command`),
-      restart: ctx.enumOf(item.restart, `${p}.restart`, OPENSHIP_RESTARTS),
+      restart: ctx.enumOf(item.restart, `${p}.restart`, KOVALIO_RESTARTS),
       exposed: ctx.bool(item.exposed, `${p}.exposed`),
       exposedPort: ctx.str(item.exposedPort, `${p}.exposedPort`),
       domain: ctx.str(item.domain, `${p}.domain`),
@@ -340,13 +340,13 @@ function parseServices(ctx: Ctx, v: unknown, path: string): OpenshipService[] | 
   return out;
 }
 
-function parseMonorepo(ctx: Ctx, v: unknown, path: string): OpenshipMonorepo | undefined {
+function parseMonorepo(ctx: Ctx, v: unknown, path: string): KovalioMonorepo | undefined {
   if (v === undefined) return undefined;
   if (!ctx.isObj(v)) {
     ctx.err(path, "must be an object");
     return undefined;
   }
-  const mono: OpenshipMonorepo = {};
+  const mono: KovalioMonorepo = {};
   if (v.workspace !== undefined) {
     if (!ctx.isObj(v.workspace)) ctx.err(`${path}.workspace`, "must be an object");
     else {
@@ -367,7 +367,7 @@ function parseMonorepo(ctx: Ctx, v: unknown, path: string): OpenshipMonorepo | u
   if (v.apps !== undefined) {
     if (!Array.isArray(v.apps)) ctx.err(`${path}.apps`, "must be an array");
     else {
-      const apps: OpenshipMonorepoApp[] = [];
+      const apps: KovalioMonorepoApp[] = [];
       v.apps.forEach((a, i) => {
         const p = `${path}.apps[${i}]`;
         if (!ctx.isObj(a)) {
@@ -409,18 +409,18 @@ function parsePackageManager(ctx: Ctx, v: unknown, path: string): string | undef
   return s;
 }
 
-/** Parse + validate raw `openship.json` JSON (already `JSON.parse`d) into a config. */
-export function parseOpenshipConfig(raw: unknown): ParseResult {
+/** Parse + validate raw `kovalio.json` JSON (already `JSON.parse`d) into a config. */
+export function parseKovalioConfig(raw: unknown): ParseResult {
   const ctx = new Ctx();
   if (!ctx.isObj(raw)) {
-    return { config: null, errors: ["openship.json must be a JSON object"], warnings: [] };
+    return { config: null, errors: ["kovalio.json must be a JSON object"], warnings: [] };
   }
 
   for (const key of Object.keys(raw)) {
     if (!TOP_LEVEL_KEYS.has(key)) ctx.warnings.push(`Unknown field "${key}" (ignored)`);
   }
 
-  const config: OpenshipConfig = {
+  const config: KovalioConfig = {
     framework: ctx.enumOf(raw.framework, "framework", STACK_IDS),
     packageManager: parsePackageManager(ctx, raw.packageManager, "packageManager"),
     rootDirectory: ctx.str(raw.rootDirectory, "rootDirectory"),
@@ -432,9 +432,9 @@ export function parseOpenshipConfig(raw: unknown): ParseResult {
     buildImage: ctx.str(raw.buildImage, "buildImage"),
     productionPaths: ctx.strArray(raw.productionPaths, "productionPaths"),
     volumes: ctx.strArray(raw.volumes, "volumes"),
-    runtime: ctx.enumOf(raw.runtime, "runtime", OPENSHIP_RUNTIMES),
-    productionMode: ctx.enumOf(raw.productionMode, "productionMode", OPENSHIP_PRODUCTION_MODES),
-    workload: ctx.enumOf(raw.workload, "workload", OPENSHIP_WORKLOADS),
+    runtime: ctx.enumOf(raw.runtime, "runtime", KOVALIO_RUNTIMES),
+    productionMode: ctx.enumOf(raw.productionMode, "productionMode", KOVALIO_PRODUCTION_MODES),
+    workload: ctx.enumOf(raw.workload, "workload", KOVALIO_WORKLOADS),
     port: ctx.int(raw.port, "port", 1, 65535),
     env: parseEnv(ctx, raw.env, "env"),
     domains: parseDomains(ctx, raw.domains, "domains"),
@@ -446,7 +446,7 @@ export function parseOpenshipConfig(raw: unknown): ParseResult {
   };
 
   // Strip undefined so the overlay only carries fields the user actually declared.
-  for (const k of Object.keys(config) as (keyof OpenshipConfig)[]) {
+  for (const k of Object.keys(config) as (keyof KovalioConfig)[]) {
     if (config[k] === undefined) delete config[k];
   }
 
@@ -454,7 +454,7 @@ export function parseOpenshipConfig(raw: unknown): ParseResult {
 }
 
 /** Convenience: parse a raw JSON string. Returns a JSON-parse error in `errors`. */
-export function parseOpenshipConfigJson(text: string): ParseResult {
+export function parseKovalioConfigJson(text: string): ParseResult {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
@@ -465,5 +465,5 @@ export function parseOpenshipConfigJson(text: string): ParseResult {
       warnings: [],
     };
   }
-  return parseOpenshipConfig(raw);
+  return parseKovalioConfig(raw);
 }

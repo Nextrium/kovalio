@@ -3,7 +3,7 @@
  *
  * "What is waiting on a human here, and what exactly do they do about it?"
  *
- * Openship already knew all of this — it just never said it in one place. The
+ * Kovalio already knew all of this — it just never said it in one place. The
  * signals were scattered across an SSE session held in memory (a live decision
  * prompt), two flags derived from the active deployment's `meta`
  * (`awaitingDecision`, `routingUnsynced`), a failed deployment row, and the
@@ -121,14 +121,14 @@ type DeployMeta = {
  *
  * The copy branches on `isManagedDeployment`, which is the difference between an
  * action someone can take confidently and one they should think about: a stale
- * Openship deployment holding the port is ours to stop, while an unrelated
+ * Kovalio deployment holding the port is ours to stop, while an unrelated
  * process on the box is not something we should imply is safe to kill.
  *
  * The resolution is redeploy, not "resume" — `onFailure` destroys the build
  * artifact on every failure path, so there is nothing to resume. Redeploying
  * re-runs preflight, which raises the port prompt again; that prompt is then a
  * `prompt` item in this same list, carrying whichever action ids it actually offers —
- * `free_port` when there is something Openship may stop, `re_check` when the owner was
+ * `free_port` when there is something Kovalio may stop, `re_check` when the owner was
  * identified and refused (see `portStopTarget`), which is why this copy never names a
  * button of its own.
  */
@@ -138,7 +138,7 @@ function buildDeployBlocked(dep: Deployment): PendingAction | null {
     pid?: number;
     command?: string;
     isManagedDeployment?: boolean;
-    /** "none" = the port's owner was identified but is not something Openship will
+    /** "none" = the port's owner was identified but is not something Kovalio will
      *  stop, so redeploying will NOT offer to free it (see portStopTarget). */
     stopTarget?: PortStopTarget;
     containerName?: string;
@@ -152,9 +152,9 @@ function buildDeployBlocked(dep: Deployment): PendingAction | null {
   if (dep.errorCode === "PORT_IN_USE") {
     // `port` can be absent (a row classified before details were persisted), and
     // `isManagedDeployment` is THREE-valued: `undefined` means "we didn't probe
-    // ownership" — NOT "not ours". Claiming a process isn't Openship's when we
+    // ownership" — NOT "not ours". Claiming a process isn't Kovalio's when we
     // don't know would tell the operator it's unsafe to free something that is
-    // in fact a stale deployment of their own. A container with no `openship.*`
+    // in fact a stale deployment of their own. A container with no `kovalio.*`
     // label lands here too: it may be one adopted in place by the docker migration.
     const subject = details.port ? `Port ${details.port}` : "The port";
     const holder = details.containerName ?? details.command ?? "another process";
@@ -178,17 +178,17 @@ function buildDeployBlocked(dep: Deployment): PendingAction | null {
     const ownership =
       details.stopTarget === "none"
         ? (dep.errorMessage ??
-          `${subject} is held by ${holder}, which Openship will not stop for you. ` +
+          `${subject} is held by ${holder}, which Kovalio will not stop for you. ` +
             `Free the port on the server, or deploy on a different port, then redeploy.`)
         : details.isManagedDeployment === true
-        ? `${subject} is held by a previous Openship deployment (${holder}). ` +
-          `Redeploy and confirm the prompt, and Openship will ${offer} first.`
+        ? `${subject} is held by a previous Kovalio deployment (${holder}). ` +
+          `Redeploy and confirm the prompt, and Kovalio will ${offer} first.`
         : details.isManagedDeployment === false
-          ? `${subject} is held by ${holder}, which Openship does not manage. ` +
+          ? `${subject} is held by ${holder}, which Kovalio does not manage. ` +
             `Stop it on the server or change the app's port, then redeploy. ` +
             `Redeploying will offer to ${offer}, but that stops something ` +
-            `Openship didn't start.`
-          : `${subject} is held by ${holder}. Openship could not tell whether that is ` +
+            `Kovalio didn't start.`
+          : `${subject} is held by ${holder}. Kovalio could not tell whether that is ` +
             `one of its own previous deployments, so check before freeing it — ` +
             `redeploying will offer to ${offer} either way.`;
     return {
@@ -431,7 +431,7 @@ function buildPortAdvisories(dep: Deployment, isCompose: boolean): PendingAction
 function buildRoutingRulesDropped(project: ProjectRow): PendingAction | null {
   if (!project.routingConfig) return null;
   const { skipped } = compileVercelRouting(project.routingConfig, {
-    backendTargetUrl: "http://openship-backend.invalid",
+    backendTargetUrl: "http://kovalio-backend.invalid",
   });
   if (skipped.length === 0) return null;
   return {

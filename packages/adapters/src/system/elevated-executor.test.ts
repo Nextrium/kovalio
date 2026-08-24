@@ -99,7 +99,7 @@ describe("elevatedExecutor", () => {
     );
     // 96 bits from randomBytes: /tmp is world-LISTABLE even when our dir isn't, so the
     // visible name must be both unguessable and free of any hint about the target path.
-    expect(dir).toMatch(/^\/tmp\/\.openship-elev-[0-9a-f]{24}$/);
+    expect(dir).toMatch(/^\/tmp\/\.kovalio-elev-[0-9a-f]{24}$/);
     expect(staged).toBe(`${dir}/payload`);
     expect(writeFile.mock.calls[0]?.[1]).toBe("worker_processes 1;");
   });
@@ -233,7 +233,7 @@ describe("elevatedExecutor", () => {
  * because Docker created it for the edge's bind mount.
  */
 describe("ensureOwnedDir", () => {
-  const PATH = "/opt/openship/static";
+  const PATH = "/opt/kovalio/static";
 
   /** A target that denies unelevated writes unless the tree is already ours. */
   function target(opts: { canSudo: boolean; alreadyWritable?: boolean; loginUser?: string }) {
@@ -251,7 +251,7 @@ describe("ensureOwnedDir", () => {
         if (command === "id -un") return `${user}\n`;
         if (command.startsWith("sudo -n ")) return "";
         if (command.includes("mkdir -p") && !opts.alreadyWritable) {
-          throw new Error("mkdir: cannot create directory '/opt/openship': Permission denied");
+          throw new Error("mkdir: cannot create directory '/opt/kovalio': Permission denied");
         }
         return "";
       }),
@@ -304,7 +304,7 @@ describe("ensureOwnedDir", () => {
     const { executor } = target({ canSudo: false });
 
     await expect(ensureOwnedDir(executor, PATH)).rejects.toThrow(
-      /sudo mkdir -p \/opt\/openship\/static/,
+      /sudo mkdir -p \/opt\/kovalio\/static/,
     );
   });
 });

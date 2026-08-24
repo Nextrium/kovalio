@@ -146,7 +146,7 @@ describe("the manual cleanup action and rollback share one implementation", () =
  * Rollback cleaning up after itself only helps runs that recorded what they wrote. Anything
  * stranded by an earlier version, or by a crash between writing and recording, is invisible to
  * it — and the conflict guard then refuses forever, with `docker volume rm` on the box as the
- * only way out. `openship-<slug>-<vol>` is the name OUR deploy gives THIS project's volumes, so
+ * only way out. `kovalio-<slug>-<vol>` is the name OUR deploy gives THIS project's volumes, so
  * finding one on a server the project doesn't live on identifies debris precisely.
  *
  * The dangerous mistake here is a loose prefix test, which is why that is pinned hardest: this
@@ -154,17 +154,17 @@ describe("the manual cleanup action and rollback share one implementation", () =
  */
 describe("an unused volume carrying this project's own namespace is reused, not refused", () => {
   it("builds the prefix from scopedVolumeName rather than re-spelling it", () => {
-    // One place forms `openship-<slug>-…`; a hand-written "openship-" + slug here would drift
+    // One place forms `kovalio-<slug>-…`; a hand-written "kovalio-" + slug here would drift
     // from it silently.
     expect(src).toContain('scopedVolumeName(ourSlug, "")');
   });
 
-  it("requires the FULL project-slug prefix, not a bare openship- match", () => {
-    // A loose test would match `openship-clincai-staging-pgdata` while moving `clincai` — a
+  it("requires the FULL project-slug prefix, not a bare kovalio- match", () => {
+    // A loose test would match `kovalio-clincai-staging-pgdata` while moving `clincai` — a
     // different project's data, on a server we do not own, overwritten without asking.
     expect(src).toContain("name.startsWith(ourVolumePrefix!)");
     expect(src).toContain("name.length > ourVolumePrefix!.length");
-    expect(src).not.toContain('name.startsWith("openship-")');
+    expect(src).not.toContain('name.startsWith("kovalio-")');
   });
 
   it("claims nothing when the project could not be read", () => {
@@ -175,7 +175,7 @@ describe("an unused volume carrying this project's own namespace is reused, not 
 
   it("keys off the SOURCE project's slug, which a duplicate's run project is not", () => {
     // The gap this closes: for a copy, `projectId` is the new project (`clincai-copy`) while the
-    // volumes crossing are the source's (`openship-clincai-*`). Keyed off the run's project, the
+    // volumes crossing are the source's (`kovalio-clincai-*`). Keyed off the run's project, the
     // rule silently stopped applying to the flow that needs it most — a failed duplicate stayed
     // stuck in the loop the rule exists to break.
     expect(src).toContain("const ourSlug = sourceProjectSlug || projectSlug");

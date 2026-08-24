@@ -1,12 +1,12 @@
 /**
- * Per-domain test mailbox — provisions `openship@<domain>` as a real SMTP
+ * Per-domain test mailbox — provisions `kovalio@<domain>` as a real SMTP
  * identity inside `vmail.mailbox` for an additional domain (one already
- * present in `vmail.domain`). Sibling to `ensureOpenshipPlatformMailbox`:
+ * present in `vmail.domain`). Sibling to `ensureKovalioPlatformMailbox`:
  *
- *   - ensureOpenshipPlatformMailbox(serverId)               → openship@<state.domain>, the SINGLE
+ *   - ensureKovalioPlatformMailbox(serverId)               → kovalio@<state.domain>, the SINGLE
  *                                                             auth identity the API uses for all
  *                                                             transactional mail.
- *   - ensureOpenshipTestMailbox(serverId, domain)           → openship@<domain>, one per
+ *   - ensureKovalioTestMailbox(serverId, domain)           → kovalio@<domain>, one per
  *                                                             provisioned domain, used by the
  *                                                             admin panel's "send test mail
  *                                                             from this domain" flow to
@@ -63,13 +63,13 @@ import {
 } from "./maildir";
 import { recountDomain } from "./domains.service";
 
-export interface EnsureOpenshipTestMailboxOptions {
+export interface EnsureKovalioTestMailboxOptions {
   /** Force a fresh password even if cached creds exist. */
   rotate?: boolean;
 }
 
 /**
- * Provision (or reuse) `openship@<domain>` as a per-domain test mailbox.
+ * Provision (or reuse) `kovalio@<domain>` as a per-domain test mailbox.
  *
  * Fast path: `state.testMailboxes[domain].email` matches and `rotate` is
  * not set — pure read, decrypt cached password, return.
@@ -80,10 +80,10 @@ export interface EnsureOpenshipTestMailboxOptions {
  * plaintext into `state.testMailboxes[domain]`. State-file failure rolls
  * back the DB row + maildir (same pattern as the platform helper).
  */
-export async function ensureOpenshipTestMailbox(
+export async function ensureKovalioTestMailbox(
   serverId: string,
   domain: string,
-  opts?: EnsureOpenshipTestMailboxOptions,
+  opts?: EnsureKovalioTestMailboxOptions,
 ): Promise<PlatformMailboxCreds> {
   return sshManager.withExecutor(serverId, async (exec) => {
     const state = await readState(exec);
@@ -116,7 +116,7 @@ export async function ensureOpenshipTestMailbox(
         plaintext = decrypt(cached.password);
       } catch {
         console.warn(
-          `[ensureOpenshipTestMailbox] state.testMailboxes["${targetDomain}"].password failed to decrypt — treating as legacy plaintext. It will be re-encrypted on next rotation.`,
+          `[ensureKovalioTestMailbox] state.testMailboxes["${targetDomain}"].password failed to decrypt — treating as legacy plaintext. It will be re-encrypted on next rotation.`,
         );
         plaintext = cached.password;
       }
@@ -164,7 +164,7 @@ async function mintAndPersist(args: MintArgs): Promise<PlatformMailboxCreds> {
     buildUpsertMailboxSql({
       username: email,
       passwordHash: hash,
-      name: "Openship Test",
+      name: "Kovalio Test",
       domain,
       storagebasedirectory: layout.storagebasedirectory,
       storagenode: layout.storagenode,

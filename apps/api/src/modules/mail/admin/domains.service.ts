@@ -78,7 +78,7 @@ const SELECT_COLUMNS = `
  *
  * For now the UI doesn't differentiate "current count" vs "max" because
  * iRedMail conflates them. If we later split them apart we'd add an
- * `openship_meta` table on the mail VPS (NOT on openship's DB).
+ * `kovalio_meta` table on the mail VPS (NOT on kovalio's DB).
  */
 
 export function validateDomain(domain: string): void {

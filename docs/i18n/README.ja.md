@@ -1,4 +1,4 @@
-<h1 align="center">Openship</h1>
+<h1 align="center">Kovalio</h1>
 
 <p align="center">
   CI/CD を内蔵した、オープンソースでセルフホスト可能なデプロイプラットフォーム。<br>
@@ -6,9 +6,9 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/openship"><img src="https://img.shields.io/npm/v/openship?color=0b7285&label=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/kovalio"><img src="https://img.shields.io/npm/v/kovalio?color=0b7285&label=npm" alt="npm version" /></a>
   <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License" /></a>
-  <a href="https://openship.io"><img src="https://img.shields.io/badge/website-openship.io-0b7285" alt="Website" /></a>
+  <a href="https://nextrium.org"><img src="https://img.shields.io/badge/website-nextrium.org-0b7285" alt="Website" /></a>
 </p>
 
 <p align="center">
@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  <img src="../screenshots/screen.png" alt="Openship dashboard" width="800" />
+  <img src="../screenshots/screen.png" alt="Kovalio dashboard" width="800" />
 </p>
 
 ---
@@ -33,29 +33,29 @@
 ## クイックスタート
 
 ```bash
-npm i -g openship
-openship init
+npm i -g kovalio
+kovalio init
 ```
 
 これだけです。または Docker がお好みなら：
 
 ```bash
-git clone https://github.com/oblien/openship.git && cd openship
+git clone https://github.com/Nextrium/kovalio.git && cd kovalio
 cp .env.example .env
 docker compose up -d
 ```
 
-または [openship.io](https://openship.io) からデスクトップアプリをダウンロードしてください。
+または [nextrium.org](https://nextrium.org) からデスクトップアプリをダウンロードしてください。
 
 ---
 
 ## できること
 
-リポジトリを指定するだけ。Openship がスタックを検出し、ビルドし、すべてを設定してデプロイします — 設定ファイルなし、パイプラインなし、YAML なし。
+リポジトリを指定するだけ。Kovalio がスタックを検出し、ビルドし、すべてを設定してデプロイします — 設定ファイルなし、パイプラインなし、YAML なし。
 
 データベース、ドメイン、SSL、CDN、メール、バックアップ — すべてを一元管理。
 
-**Openship Cloud**（マネージド）でも、あなたが所有する**任意の Linux サーバー**でも動作します。個人開発者のサイドプロジェクトも、本番環境を運用するチームも、同じツールを使います。
+**Kovalio Cloud**（マネージド）でも、あなたが所有する**任意の Linux サーバー**でも動作します。個人開発者のサイドプロジェクトも、本番環境を運用するチームも、同じツールを使います。
 
 ---
 
@@ -79,7 +79,7 @@ docker compose up -d
 
 ## どこにでもデプロイ
 
-- **Openship Cloud** — マネージド、自動スケール、設定不要
+- **Kovalio Cloud** — マネージド、自動スケール、設定不要
 - **任意の VPS** — Hetzner、DigitalOcean、Linode、OVH など
 - **専用サーバー** — ベアメタル、コロケーション、ホームラボ
 - **マルチサーバー** — 複数のマシンに負荷を分散
@@ -94,7 +94,7 @@ docker compose up -d
 - **Web ダッシュボード** — ブラウザ上の同じ UI、チーム向け。
 - **CLI** — スクリプト可能で CI にやさしい。
 
-**REST API** と **MCP**（AI エージェントプロトコル）が、自動化とツール連携を締めくくります。コマンドと API の完全なリファレンスは [openship.io/docs](https://openship.io/docs) にあります。
+**REST API** と **MCP**（AI エージェントプロトコル）が、自動化とツール連携を締めくくります。コマンドと API の完全なリファレンスは [nextrium.org/docs](https://nextrium.org/docs) にあります。
 
 > [!NOTE]
 > ドキュメントはまだ作成中です — 現在積極的に拡充しています。不足や不明点があれば、[コントリビューション](../../CONTRIBUTING.md)を大歓迎します。完成が早まります。
@@ -117,6 +117,6 @@ docker compose up -d
 
 ## ライセンス
 
-Openship は **オープンソース** ソフトウェアで、[Apache License 2.0](../../LICENSE) の下でライセンスされています。
+Kovalio は **オープンソース** ソフトウェアで、[Apache License 2.0](../../LICENSE) の下でライセンスされています。
 
 Apache 2.0 ライセンスの条件の下で、商用・クローズドソース製品を含め、使用・実行・改変・セルフホスト・配布ができます。全文は [LICENSE](../../LICENSE) を参照してください。

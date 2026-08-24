@@ -1,5 +1,5 @@
 /**
- * `openship reset-admin-password` — recover the box login WITHOUT signing in.
+ * `kovalio reset-admin-password` — recover the box login WITHOUT signing in.
  *
  * The CLI owns the loopback internal token that the running service loaded at boot, so
  * it can hit the internal-token-gated /api/system/reset-admin-password on localhost —
@@ -24,7 +24,7 @@ export const resetAdminCommand = new Command("reset-admin-password")
   .option("--name <name>", "Also set the admin display name")
   .option("--password <password>", "New password (prompted if omitted)")
   .action(async (opts) => {
-    intro(chalk.cyan("Reset Openship admin password"));
+    intro(chalk.cyan("Reset Kovalio admin password"));
 
     let pw: string | undefined = opts.password;
     if (!pw) {
@@ -60,7 +60,7 @@ export const resetAdminCommand = new Command("reset-admin-password")
       body: JSON.stringify({ password: pw, email: opts.email, name: opts.name }),
     });
     if (call.kind === "unreachable") {
-      log.error(`Couldn't reach the Openship API on port ${port}. Is it running? (openship status)`);
+      log.error(`Couldn't reach the Kovalio API on port ${port}. Is it running? (kovalio status)`);
       log.info("If it's listening on another port, pass --port <n>.");
       process.exit(1);
     }

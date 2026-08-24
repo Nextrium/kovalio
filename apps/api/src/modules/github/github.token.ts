@@ -19,7 +19,7 @@
  *   block at the dispatcher):
  *     1. gh CLI                ← least config: just needs the operator's
  *                                 CLI present; opt-in gated for multi-user
- *     2. Openship App installation (org-scoped, short-lived, repo-scoped)
+ *     2. Kovalio App installation (org-scoped, short-lived, repo-scoped)
  *     3. Project clone token   (per-project user PAT override)
  *     4. User-global clone token (user PAT, when marked as default)
  *     5. User OAuth (Better-Auth)
@@ -28,7 +28,7 @@
  *   SaaS priority:
  *     1. Project clone token
  *     2. User-global clone token
- *     3. Openship App installation
+ *     3. Kovalio App installation
  *     4. User OAuth
  *     5. null
  *
@@ -45,11 +45,11 @@
  *   Self-hosted:
  *     1. Project clone token
  *     2. User-global clone token
- *     3. Openship App installation (short-lived, repo-scoped)
+ *     3. Kovalio App installation (short-lived, repo-scoped)
  *     4. null  ← caller throws "install App or set per-project token"
  *
  *   SaaS: same, plus a `user-oauth` tail. That token is scoped to the one user
- *   and the worker is Openship's own cloud workspace, so the boundary the gh-cli
+ *   and the worker is Kovalio's own cloud workspace, so the boundary the gh-cli
  *   refusal protects doesn't apply. (This paragraph used to claim SaaS remote
  *   ended at null; `tokenFor.test.ts` has always asserted otherwise.)
  *
@@ -81,7 +81,7 @@ export type GitHubTokenSource =
   | "project"          // per-project clone_token_encrypted
   | "user-pat"         // user_settings clone_token_encrypted (cloneTokenAsDefault=true)
   | "gh-cli"           // local gh CLI token
-  | "app-installation" // Openship App installation token (short-lived, scoped)
+  | "app-installation" // Kovalio App installation token (short-lived, scoped)
   | "user-oauth";      // Better-Auth GitHub OAuth (rare fallback)
 
 export interface TokenResult {
@@ -311,7 +311,7 @@ export const SPECS: Record<GitHubTokenSource, CredentialSpec> = {
     /**
      * Shippable, and the distinction from `gh-cli` is the interesting part:
      * `shippable` is really "may this go to a build worker WE hand it to". A user
-     * OAuth token is scoped to that one user and is only ever shipped to Openship's
+     * OAuth token is scoped to that one user and is only ever shipped to Kovalio's
      * own cloud workspace (SaaS remote — asserted by tokenFor.test.ts). The gh-cli
      * token is the INSTANCE OPERATOR's account-wide credential travelling to a box
      * the operator may not solely control; that is the hole. Same word, genuinely
@@ -501,8 +501,8 @@ export async function requireTokenFor(
 
   const hint =
     purpose === "remote"
-      ? "Install the Openship GitHub App on this owner, or set a per-project clone token in Settings."
-      : "Run `gh auth login`, connect Openship Cloud, or set a per-project clone token in Settings.";
+      ? "Install the Kovalio GitHub App on this owner, or set a per-project clone token in Settings."
+      : "Run `gh auth login`, connect Kovalio Cloud, or set a per-project clone token in Settings.";
 
   throw new AppError(
     `No GitHub token available for ${tokenCtx.owner ?? "this request"} (purpose: ${purpose}). ${hint}`,

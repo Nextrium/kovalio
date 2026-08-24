@@ -2,7 +2,7 @@ import { getCloudApiOrigin, getCloudDashboardUrl } from "@/lib/api/urls";
 import { sha256 } from "@noble/hashes/sha2.js";
 
 export const DESKTOP_CLOUD_FLOW = "desktop-cloud";
-const DEFAULT_APP_NAME = "Openship Desktop";
+const DEFAULT_APP_NAME = "Kovalio Desktop";
 const DEFAULT_POLL_INTERVAL_MS = 2000;
 
 type SearchParamsLike = {
@@ -35,9 +35,9 @@ export function buildDesktopAuthorizeUrl(options: {
 
 export function getCloudConnectHandoffUrl(
   callbackUrl: string,
-  // cloudApiUrl: the API-provided cloud origin (respects OPENSHIP_CLOUD_TARGET).
+  // cloudApiUrl: the API-provided cloud origin (respects KOVALIO_CLOUD_TARGET).
   // Pass it so self-hosted → cloud connect hits the configured cloud, not the
-  // static table default (api.openship.io).
+  // static table default (api.nextrium.org).
   options?: { state?: string | null; codeChallenge?: string | null; cloudApiUrl?: string },
 ) {
   const params = new URLSearchParams({ redirect: callbackUrl });
@@ -85,7 +85,7 @@ export function generateConnectFlowId(): string {
 /** Storage key for the in-flight verifier. localStorage (not sessionStorage)
  *  because the popup runs in a different tab/window and sessionStorage is
  *  per-tab — localStorage is shared across same-origin windows. */
-export const CONNECT_PKCE_STORAGE_PREFIX = "openship.cloud-connect.pkce.";
+export const CONNECT_PKCE_STORAGE_PREFIX = "kovalio.cloud-connect.pkce.";
 
 /**
  * Generate a fresh PKCE pair, stash the verifier under a random flow id

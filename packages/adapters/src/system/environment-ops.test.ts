@@ -111,18 +111,18 @@ const UNSUPPORTED: readonly HostName[] = [
 const CALLS: Readonly<Record<keyof HostCommands, (ops: EnvOps) => Answer<unknown>>> = {
   pkgInstall: (ops) => ops.pkgInstall(["git", "rsync"]),
   // Python is the real divergence: three package names on apt, two on dnf, and a name
-  // Openship hasn't picked on apk. The refusal is part of the fixture.
+  // Kovalio hasn't picked on apk. The refusal is part of the fixture.
   pkgInstallVariants: (ops) =>
     ops.pkgInstallVariants({
       apt: answered(["python3", "python3-pip", "python3-venv"]),
       dnf: answered(["python3", "python3-pip"]),
       yum: answered(["python3", "python3-pip"]),
-      apk: refused("Openship has no apk package set for Python."),
+      apk: refused("Kovalio has no apk package set for Python."),
       brew: answered(["python@3.12"]),
     }),
   pkgRemove: (ops) => ops.pkgRemove(["rsync"]),
   pkgAvailableVersion: (ops) => ops.pkgAvailableVersion("git"),
-  serviceEnableStart: (ops) => ops.serviceEnableStart("openship-api"),
+  serviceEnableStart: (ops) => ops.serviceEnableStart("kovalio-api"),
   serviceIsActive: (ops) => ops.serviceIsActive("docker"),
   firewallAllow: (ops) =>
     ops.firewallAllow({ cidrs: ["172.16.0.0/12"], port: 2222, proto: "tcp" }),
@@ -252,7 +252,7 @@ describe("envOps gating", () => {
     const ops = envOps(HOSTS.opensuse156);
     expect(ops.describe()).toContain("openSUSE Leap 15.6");
     expect(ops.home()).toBe("/root");
-    expect(ops.stateDir()).toBe("/root/.openship");
+    expect(ops.stateDir()).toBe("/root/.kovalio");
     expect(ops.sshdEnableHint()).toContain("sshd");
   });
 
@@ -512,8 +512,8 @@ describe("envOps packages", () => {
 describe("envOps services", () => {
   it("speaks systemd and OpenRC, and quotes the unit name", () => {
     const systemd = envOps(HOSTS.rhel9);
-    expect(steps(systemd.serviceEnableStart("openship-api"))).toEqual([
-      "systemctl enable --now 'openship-api'",
+    expect(steps(systemd.serviceEnableStart("kovalio-api"))).toEqual([
+      "systemctl enable --now 'kovalio-api'",
     ]);
     expect(steps(systemd.serviceIsActive("docker"))).toEqual(["systemctl is-active --quiet 'docker'"]);
 
@@ -604,23 +604,23 @@ describe("envOps firewall", () => {
 
 describe("envOps paths and arch", () => {
   it("derives the login user's own paths from their home, POSIX-style", () => {
-    expect(envOps(HOSTS.ubuntu2404).stateDir()).toBe("/root/.openship");
+    expect(envOps(HOSTS.ubuntu2404).stateDir()).toBe("/root/.kovalio");
     expect(envOps(HOSTS.macos).home()).toBe("/Users/dev");
-    expect(envOps(HOSTS.macos).stateDir()).toBe("/Users/dev/.openship");
-    expect(envOps(HOSTS.macos).scratchDir()).toBe("/Users/dev/.openship");
+    expect(envOps(HOSTS.macos).stateDir()).toBe("/Users/dev/.kovalio");
+    expect(envOps(HOSTS.macos).scratchDir()).toBe("/Users/dev/.kovalio");
   });
 
-  // `scratchDir` follows the login user; Openship's state does NOT. The journal's wrapper
+  // `scratchDir` follows the login user; Kovalio's state does NOT. The journal's wrapper
   // goes up over SFTP, which has no shell and so cannot be elevated at all — a
   // root-anchored base is simply unwritable there on a non-root login. Everything else
   // runs elevated against root-owned files, so deriving `stateDir` from `home()` would
-  // strand the existing /root/.openship the moment someone reconnected as a sudo user.
+  // strand the existing /root/.kovalio the moment someone reconnected as a sudo user.
   // On a root login the two coincide, which is why this only ever mattered off-root.
   it("keeps state under root on Linux even when the login user isn't root", () => {
     const sudoer = host({ uid: "1000", user: "ec2-user", home: "/home/ec2-user", sudo: "y" });
     expect(envOps(sudoer).home()).toBe("/home/ec2-user");
-    expect(envOps(sudoer).scratchDir()).toBe("/home/ec2-user/.openship");
-    expect(envOps(sudoer).stateDir()).toBe("/root/.openship");
+    expect(envOps(sudoer).scratchDir()).toBe("/home/ec2-user/.kovalio");
+    expect(envOps(sudoer).stateDir()).toBe("/root/.kovalio");
     expect(envOps(HOSTS.ubuntu2404).scratchDir()).toBe(envOps(HOSTS.ubuntu2404).stateDir());
   });
 

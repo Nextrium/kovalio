@@ -133,7 +133,7 @@ export class LocalGitHubSource implements GitHubSource {
       ]);
       const state: GitHubConnectionState = {
         sources: {
-          openshipApp: { connected: false },
+          kovalioApp: { connected: false },
           // `available` is pinned true on this path: the gh sub-source only
           // exists because a token was resolved at construction, and the library
           // is already committed to `primary: "gh-cli"` below. Left as-is (a
@@ -168,11 +168,11 @@ export class LocalGitHubSource implements GitHubSource {
       // credential that failed).
       this.gh ? this.gh.status() : Promise.resolve({ available: false, method: null } as const),
     ]);
-    const openshipApp = appState?.sources.openshipApp ?? { connected: false };
+    const kovalioApp = appState?.sources.kovalioApp ?? { connected: false };
     const ghCli = ghCliState(ghStatus);
     return {
-      sources: { openshipApp, ghCli },
-      primary: openshipApp.connected ? "openship-app" : ghCli.available ? "gh-cli" : null,
+      sources: { kovalioApp, ghCli },
+      primary: kovalioApp.connected ? "kovalio-app" : ghCli.available ? "gh-cli" : null,
     };
   }
 

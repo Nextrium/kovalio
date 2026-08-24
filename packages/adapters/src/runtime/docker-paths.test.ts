@@ -124,7 +124,7 @@ describe("resolveDockerfileCandidates", () => {
 });
 
 describe("resolveWithinDirectory", () => {
-  const base = "/tmp/openship-docker-context-abc";
+  const base = "/tmp/kovalio-docker-context-abc";
 
   it.each([...TRAVERSALS, ...WINDOWS_TRAVERSALS])("refuses to resolve %j", (value) => {
     expect(() => resolveWithinDirectory(base, value)).toThrow(/must not contain/);

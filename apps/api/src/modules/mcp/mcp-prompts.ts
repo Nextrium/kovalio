@@ -36,21 +36,21 @@ function toolRef(method: string, path: string): string {
 
 /**
  * Appended to every prompt: if the agent hits something that looks like an
- * Openship platform bug (not a user-input error), it should point the user at
+ * Kovalio platform bug (not a user-input error), it should point the user at
  * the issue tracker rather than silently working around it.
  */
 const BUG_REPORT =
-  "If you hit what looks like a bug in Openship itself — an unexpected 500, a tool that misbehaves, or a deploy that fails for a platform reason rather than your input — tell the user to open an issue at https://github.com/oblien/openship/issues, including the tool name, the arguments you sent, and any error text returned.";
+  "If you hit what looks like a bug in Kovalio itself — an unexpected 500, a tool that misbehaves, or a deploy that fails for a platform reason rather than your input — tell the user to open an issue at https://github.com/Nextrium/kovalio/issues, including the tool name, the arguments you sent, and any error text returned.";
 
 const PROMPTS: PromptDef[] = [
   {
-    name: "openship-overview",
-    title: "Openship: how to drive it via MCP",
+    name: "kovalio-overview",
+    title: "Kovalio: how to drive it via MCP",
     description:
       "Orientation: the main tool groups, the entry points for each flow, and how permission scoping (incl. per-repo GitHub grants) affects what you can see and do.",
     build: (_args, ref) =>
       [
-        "You are driving Openship (deploy/host platform) through its MCP tools. Everything you call re-runs the real API's auth + permission checks, so you can only do what this token allows — `tools/list` already hides what you can't use.",
+        "You are driving Kovalio (deploy/host platform) through its MCP tools. Everything you call re-runs the real API's auth + permission checks, so you can only do what this token allows — `tools/list` already hides what you can't use.",
         "",
         "Main tool groups:",
         `- Projects — ${ref("GET", "/api/projects")} (list), ${ref("GET", "/api/projects/:id")} (detail), config/env/resources/branch setters.`,
@@ -123,11 +123,11 @@ const PROMPTS: PromptDef[] = [
     build: (args, ref) => {
       const app = args.app ? ` Target app: ${args.app}.` : "";
       return [
-        `Install an app from the Openship catalog.${app}`,
+        `Install an app from the Kovalio catalog.${app}`,
         "",
         `1. Browse the catalog: ${ref("GET", "/api/apps/catalog")}. For one app's full template (services, config, endpoints): ${ref("GET", "/api/apps/catalog/:id")}.`,
         `2. Install it: ${ref("POST", "/api/apps")} with the app id and any required settings from the template.`,
-        "3. Read the response: a normal app installs as a project (you'll get a project id — watch it like any deployment). A 'flow' / wizard app instead returns { kind: 'flow', flowHref } — that multi-step wizard (e.g. mail provisioning) is finished in the Openship UI at flowHref, not through MCP.",
+        "3. Read the response: a normal app installs as a project (you'll get a project id — watch it like any deployment). A 'flow' / wizard app instead returns { kind: 'flow', flowHref } — that multi-step wizard (e.g. mail provisioning) is finished in the Kovalio UI at flowHref, not through MCP.",
         `4. For an installed app, its resolved connection details and curated settings are available via the project's app-settings/connection tools once it's running.`,
       ].join("\n");
     },

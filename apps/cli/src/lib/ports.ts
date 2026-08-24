@@ -4,12 +4,12 @@
  * The resolution algorithm itself lives in `@repo/core/ports` (`resolvePortPair`),
  * shared with the desktop app so the two launchers can't drift — that divergence is
  * why the desktop one lacked the restart grace period. What's CLI-specific and
- * stays here: remembering the pair in `~/.openship/ports.json` (OS_DIR), the
+ * stays here: remembering the pair in `~/.kovalio/ports.json` (OS_DIR), the
  * documented 4000/3001 defaults, and the lines we print when a port moves.
  *
  * Ports are persisted so a restart REUSES the same origin when it's still free —
  * session cookies are bound to `localhost:<port>`, so a stable port is what keeps
- * you logged in across restarts. ports.json is also how `openship status`,
+ * you logged in across restarts. ports.json is also how `kovalio status`,
  * `doctor`, `reset-admin` and the control panel find the running instance, which is
  * why EVERY install mode (bare + compose) resolves through here.
  */
@@ -72,8 +72,8 @@ export function readInstanceUrl(): string | null {
  * Every command that has to reach the local instance (`status`, `doctor`,
  * `reset-admin`, the control panel, the orphan-port sweep in lib/service.ts) needs
  * this, and each used to inline its own `JSON.parse(readFileSync(...))`. One of
- * those copies pointed at `~/.openship` instead of OS_DIR, which under
- * OPENSHIP_HOME (a from-source install) read the OTHER install's ports.
+ * those copies pointed at `~/.kovalio` instead of OS_DIR, which under
+ * KOVALIO_HOME (a from-source install) read the OTHER install's ports.
  */
 export function readStoredPorts(): StoredPorts {
   try {
@@ -105,7 +105,7 @@ function saveStoredPorts(api: number, dashboard: number): void {
 /**
  * The operator-facing lines for a port that MOVED — empty when nothing moved.
  *
- * One builder, three printers: `openship up` (compose), `openship up` (bare) and
+ * One builder, three printers: `kovalio up` (compose), `kovalio up` (bare) and
  * the wizard all have to say this, and the wizard prints through clack rather than
  * console.log. Returning lines instead of printing keeps the wording identical
  * without forcing one output style on all three.
@@ -132,7 +132,7 @@ export function portMoveNotice(
 /**
  * URLs that still name the port the dashboard just moved OFF.
  *
- * `OPENSHIP_PUBLIC_URL` and `OPENSHIP_EXTRA_TRUSTED_ORIGINS` are the API's
+ * `KOVALIO_PUBLIC_URL` and `KOVALIO_EXTRA_TRUSTED_ORIGINS` are the API's
  * `trustedOrigins` allowlist. If one names `:3001` and the dashboard is now on
  * `:3002`, the browser's origin no longer matches: the install serves reads and
  * 403s every login with `ORIGIN_REJECTED` — an error that names neither the cause
@@ -172,12 +172,12 @@ export type PortPrefs = Omit<CorePortPrefs, "stored" | "defaults">;
  * last-used (ports.json) → default. A preferred port that's free (or held by us)
  * is kept, so the origin stays stable; otherwise the nearest free neighbour is
  * taken. API and dashboard are guaranteed distinct. The result is persisted to
- * ports.json for every install mode, since that is what `openship doctor`,
+ * ports.json for every install mode, since that is what `kovalio doctor`,
  * `reset-admin` and the control panel read to find the running instance.
  *
  * `persist: false` resolves WITHOUT writing ports.json — for `--dry-run`, which
  * must report the ports a real run would take without becoming the run that
- * claims them (a preview that rewrote ports.json would repoint `openship
+ * claims them (a preview that rewrote ports.json would repoint `kovalio
  * status`/`doctor` at a port nothing is listening on).
  */
 export async function resolvePorts(

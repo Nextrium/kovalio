@@ -61,7 +61,7 @@
       "title": "Contrôles de santé",
       "subtitle": "Désactivés — le déploiement se termine dès que l'app tourne",
       "subtitleOn": "Activés — le déploiement attend votre app avant la mise en ligne",
-      "description": "Openship n'attend pas votre app après son démarrage : un démarrage lent ne retarde donc jamais un déploiement et ne le fait pas échouer. Une fois en ligne, le port est vérifié malgré tout et signalé sans rien bloquer. N'activez ceci que si vous voulez que le déploiement lui-même refuse de passer au vert.",
+      "description": "Kovalio n'attend pas votre app après son démarrage : un démarrage lent ne retarde donc jamais un déploiement et ne le fait pas échouer. Une fois en ligne, le port est vérifié malgré tout et signalé sans rien bloquer. N'activez ceci que si vous voulez que le déploiement lui-même refuse de passer au vert.",
       "probeLabel": "Attendre que l'app réponde",
       "probeDesc": "Après le démarrage du conteneur, contacter le port de l'app et attendre qu'elle accepte une connexion.",
       "pathLabel": "Chemin HTTP",
@@ -291,7 +291,7 @@
     "deploymentModeDesc": "{mode} · Basculer entre les runtimes par application et la gestion en application unique."
   },
   "deploymentProcessing": {
-    "targetOpenshipCloud": "Openship Cloud",
+    "targetKovalioCloud": "Kovalio Cloud",
     "targetServerNamed": "Serveur · {name}",
     "targetServer": "Serveur",
     "targetLocal": "Machine locale",
@@ -303,9 +303,9 @@
       "port": "Port",
       "process": "Processus",
       "unitDescription": "Description de l'unité",
-      "openshipDeployment": "Déploiement Openship",
+      "kovalioDeployment": "Déploiement Kovalio",
       "sites": {
-        "lead": "Le proxy existant dessert actuellement {count} site(s). La migration les importe dans Openship avant qu'il ne prenne le contrôle des ports 80/443 :",
+        "lead": "Le proxy existant dessert actuellement {count} site(s). La migration les importe dans Kovalio avant qu'il ne prenne le contrôle des ports 80/443 :",
         "tlsBadge": "TLS",
         "staticLabel": "statique :",
         "warningsTitle": "N'ont pas pu être migrés automatiquement — à rajouter manuellement :"
@@ -432,12 +432,12 @@
     "rowType": "Type"
   },
   "configDiagnostics": {
-    "title": "Une partie du openship.json de ce dépôt n'a pas été appliquée",
+    "title": "Une partie du kovalio.json de ce dépôt n'a pas été appliquée",
     "description": "Les champs listés ci-dessous ont été ignorés ; le reste du fichier a été appliqué. Le déploiement se poursuivra.",
-    "titleWholeFile": "Le openship.json de ce dépôt a été ignoré",
-    "descriptionWholeFile": "Rien n'en a été appliqué. Le déploiement se poursuivra avec les réglages détectés par Openship.",
+    "titleWholeFile": "Le kovalio.json de ce dépôt a été ignoré",
+    "descriptionWholeFile": "Rien n'en a été appliqué. Le déploiement se poursuivra avec les réglages détectés par Kovalio.",
     "refused": "Refusé",
     "unrecognized": "Non reconnu",
-    "hint": "Lancez `openship config validate` dans le dépôt pour vérifier le fichier avant le prochain déploiement."
+    "hint": "Lancez `kovalio config validate` dans le dépôt pour vérifier le fichier avant le prochain déploiement."
   }
 }

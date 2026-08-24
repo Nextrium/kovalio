@@ -45,7 +45,7 @@ export const DeletionModal = ({
   const [inputValue, setInputValue] = useState("");
   const [wipeVolumes, setWipeVolumes] = useState(false);
   // Record-only ("soft") delete: keep the workload + data on the server, drop
-  // only the Openship record. Self-hosted only (hidden for cloud below).
+  // only the Kovalio record. Self-hosted only (hidden for cloud below).
   const [recordOnly, setRecordOnly] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -198,7 +198,7 @@ export const DeletionModal = ({
               built server-side before it can be offered again. */}
 
           {/* Record-only (soft) delete — self-hosted only; keeps the workload on
-              the server and drops just the Openship record. */}
+              the server and drops just the Kovalio record. */}
           {canRecordOnly && (
             <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/50 bg-muted/15 p-3">
               <Checkbox

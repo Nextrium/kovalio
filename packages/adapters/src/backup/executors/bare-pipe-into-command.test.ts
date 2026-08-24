@@ -88,7 +88,7 @@ describe("BareBackupExecutor.pipeIntoCommand ceiling", () => {
     const { tmpdir } = await import("node:os");
     const staged = () =>
       readdir(tmpdir())
-        .then((names) => names.filter((n) => n.startsWith("openship-bare-restore-")))
+        .then((names) => names.filter((n) => n.startsWith("kovalio-bare-restore-")))
         .catch(() => [] as string[]);
     const before = await staged();
 

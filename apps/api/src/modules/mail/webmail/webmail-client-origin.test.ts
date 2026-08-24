@@ -7,7 +7,7 @@
  *     if (!session) return Response.redirect(`${import.meta.env.VITE_PUBLIC_APP_URL}/login`);
  *
  * - so the published image froze whatever the BUILD host defined into the
- * bundle. `ghcr.io/oblien/openship-webmail:latest` shipped
+ * bundle. `ghcr.io/oblien/kovalio-webmail:latest` shipped
  * `http://localhost:3000/login`; a build with the var unset ships the literal
  * string `"undefined/login"`. On any real hostname a session expiry threw the
  * user clean off their own domain, and no runtime env could correct it - the

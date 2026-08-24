@@ -1,7 +1,7 @@
 {
   "checking": "Verificando seu provedor de DNS…",
   "noProviderTitle": "Configure esses registros automaticamente",
-  "noProviderDesc": "Conecte um provedor de DNS e o Openship adiciona esses registros para você.",
+  "noProviderDesc": "Conecte um provedor de DNS e o Kovalio adiciona esses registros para você.",
   "connect": "Conectar um provedor de DNS",
   "unauthorizedTitle": "O provedor de DNS precisa ser reconectado",
   "unauthorizedDesc": "Seu token salvo foi rejeitado. Reconecte-o para configurar o DNS automaticamente.",
@@ -19,7 +19,7 @@
   "actionAdopt": "Redirecionar",
   "actionInSync": "No lugar",
   "actionConflict": "Conflito",
-  "conflictNote": "Não gerenciado pelo Openship — remova-o ou configure este registro manualmente.",
+  "conflictNote": "Não gerenciado pelo Kovalio — remova-o ou configure este registro manualmente.",
   "outcomeApplied": "Aplicado",
   "outcomeSkipped": "Ignorado",
   "outcomeFailed": "Falhou",

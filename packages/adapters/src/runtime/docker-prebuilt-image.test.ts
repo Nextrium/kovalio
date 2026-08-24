@@ -41,7 +41,7 @@ describe("DockerRuntime.prepareImage", () => {
   it("advertises the prebuilt-image capability used by the orchestrator gate", async () => {
     const runtime = await DockerRuntime.create({
       transport: "socket",
-      dockerSocketPath: "/tmp/openship-prebuilt-capability-test.sock",
+      dockerSocketPath: "/tmp/kovalio-prebuilt-capability-test.sock",
     });
     expect(runtime.supports("prebuiltImage")).toBe(true);
     await runtime.dispose();

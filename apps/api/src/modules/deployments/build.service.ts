@@ -444,7 +444,7 @@ export function buildConfigSnapshot(project: Project, branch?: string): Deployme
  *
  * Version precedence lives in resolveReleaseVersion: explicit webhook/redeploy
  * tag → pinnedVersion → newest advertised. There is intentionally no fallback
- * to OpenShip's own package version for arbitrary projects.
+ * to Kovalio's own package version for arbitrary projects.
  *
  * Mutates `snapshot` in place and returns the resolved semver (no leading "v").
  */
@@ -534,7 +534,7 @@ async function resolveLatestCommitInfo(ctx: RequestContext, project: Project, br
 /**
  * Canonicalize a caller-supplied commit ref to the commit's full sha.
  *
- * `POST /deployments` takes `commitSha` as a free string — `openship deploy
+ * `POST /deployments` takes `commitSha` as a free string — `kovalio deploy
  * --commit 1eeaf76`, the MCP deploy tool, a CI script — and git checks out
  * anything it is given, so an abbreviated sha builds exactly the right code while
  * the row records a name nothing downstream can match by value: the drift check
@@ -1353,7 +1353,7 @@ export async function requestBuildAccess(
     snapshot.cloneStrategy = cloneStrategy;
   }
 
-  // Openship Cloud resource tier — only a SERVER-BACKED cloud (Oblien)
+  // Kovalio Cloud resource tier — only a SERVER-BACKED cloud (Oblien)
   // deploy provisions a workspace sized by these resources. Both a web app and
   // a worker run a long-lived container that must be sized; only a static
   // (Pages) deploy has no workspace. Non-cloud targets keep the project's own
@@ -1484,7 +1484,7 @@ export async function requestBuildAccess(
  * Cancel an in-flight deployment.
  *
  * `keepProvisioned` aborts the build and marks the row cancelled but SKIPS the
- * runtime teardown — the record-only ("remove from Openship only") delete needs
+ * runtime teardown — the record-only ("remove from Kovalio only") delete needs
  * to quiesce an in-flight deploy while honoring its "nothing on the server is
  * touched" guarantee, so it must never destroy the containers/images the deploy
  * had already provisioned.
@@ -1576,15 +1576,15 @@ export async function redeployBuildSession(
   opts?: { useExistingCommit?: boolean; trigger?: string },
 ) {
   const { dep: oldDep, project } = await loadDeployment(deploymentId);
-  // The Openship control plane updates itself via the CLI — never a redeploy.
+  // The Kovalio control plane updates itself via the CLI — never a redeploy.
   // The apply-update endpoint (updates.service) reaches redeploy directly, and
   // the self-app is a repo-less release project so the GitHub gate below
   // short-circuits without catching it — guard explicitly here too, matching
   // triggerDeployment. Otherwise "Apply update" no-ops on the adopt deployment
   // and fakes success while the running control plane is untouched.
-  if (project.appTemplateId === "openship") {
+  if (project.appTemplateId === "kovalio") {
     throw new ForbiddenError(
-      "The Openship control plane updates itself — run `openship update` on the host, not a redeploy.",
+      "The Kovalio control plane updates itself — run `kovalio update` on the host, not a redeploy.",
     );
   }
   // GitHub access gate (default-deny): a member can redeploy a
@@ -1876,12 +1876,12 @@ export async function triggerDeployment(
   if (!project) {
     throw new NotFoundError("Project", data.projectId);
   }
-  // The Openship control plane IS the running host service, not a redeployable
+  // The Kovalio control plane IS the running host service, not a redeployable
   // workload — it updates itself via the CLI. It's a release-provider project, so
   // the git/localPath 403 below would NOT catch it; guard it explicitly.
-  if (project.appTemplateId === "openship") {
+  if (project.appTemplateId === "kovalio") {
     throw new ForbiddenError(
-      "The Openship control plane updates itself — run `openship update` on the host, not a redeploy.",
+      "The Kovalio control plane updates itself — run `kovalio update` on the host, not a redeploy.",
     );
   }
   // Org-membership verified at the route boundary. No userId equality

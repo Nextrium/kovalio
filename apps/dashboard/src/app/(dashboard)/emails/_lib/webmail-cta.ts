@@ -17,7 +17,7 @@ export type WebmailCta =
   | { kind: "open"; url: string }
   /** Installed, address unreadable — the project owns the route rows and the logs. */
   | { kind: "project"; projectId: string }
-  /** Genuinely not installed, or installed outside Openship with no project row. */
+  /** Genuinely not installed, or installed outside Kovalio with no project row. */
   | { kind: "deploy" };
 
 export interface WebmailCtaInput {
@@ -25,7 +25,7 @@ export interface WebmailCtaInput {
   url: string;
   /** The API could not read the routing, rather than there being none. */
   routingUnknown?: boolean;
-  /** Absent when the webmail was adopted or deployed outside Openship. */
+  /** Absent when the webmail was adopted or deployed outside Kovalio. */
   projectId?: string | null;
 }
 

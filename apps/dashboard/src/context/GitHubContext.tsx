@@ -78,7 +78,7 @@ export interface GitHubRepo {
  */
 export interface GitHubConnectionState {
   sources: {
-    openshipApp: {
+    kovalioApp: {
       connected: boolean;
       login?: string;
       avatarUrl?: string;
@@ -102,7 +102,7 @@ export interface GitHubConnectionState {
       checkedAt?: string;
     };
   };
-  primary: "openship-app" | "gh-cli" | null;
+  primary: "kovalio-app" | "gh-cli" | null;
 }
 
 interface GitHubContextValue {
@@ -115,7 +115,7 @@ interface GitHubContextValue {
   loading: boolean;
   /**
    * Initiate a GitHub connection. `source` discriminates which dual-source
-   * card was clicked in cli mode — "oauth" forces the Openship App install
+   * card was clicked in cli mode — "oauth" forces the Kovalio App install
    * flow even when gh CLI is already authenticated. Omit on legacy modes.
    */
   connect: (source?: "oauth" | "cli") => Promise<void>;
@@ -194,7 +194,7 @@ interface GitHubProviderProps {
 
 const EMPTY_STATE: GitHubConnectionState = {
   sources: {
-    openshipApp: { connected: false },
+    kovalioApp: { connected: false },
     ghCli: { available: false },
   },
   primary: null,
@@ -215,7 +215,7 @@ export function GitHubProvider({ children, initialData }: GitHubProviderProps) {
   const [cliAction, setCliAction] = useState<CliAction | null>(null);
   const [accounts, setAccounts] = useState<GitHubAccount[]>(initialData?.accounts || []);
   const [userLogin, setUserLogin] = useState(
-    initialData?.state?.sources?.openshipApp?.login ||
+    initialData?.state?.sources?.kovalioApp?.login ||
       initialData?.state?.sources?.ghCli?.login ||
       "",
   );
@@ -262,7 +262,7 @@ export function GitHubProvider({ children, initialData }: GitHubProviderProps) {
         setCliAction(null);
         setAccounts(res.accounts ?? []);
         const primaryLogin =
-          nextState.sources.openshipApp.login ??
+          nextState.sources.kovalioApp.login ??
           nextState.sources.ghCli.login ??
           "";
         setUserLogin(primaryLogin);
@@ -422,7 +422,7 @@ export function GitHubProvider({ children, initialData }: GitHubProviderProps) {
         // Always refresh — the canonical state on the backend is now the
         // source of truth, and a per-source disconnect may still leave
         // the other source connected (e.g. cli logged out but the
-        // Openship App still installed).
+        // Kovalio App still installed).
         await refresh();
       } catch (err) {
         if (isAbortError(err) || isNetworkError(err)) return;

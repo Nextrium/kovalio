@@ -99,7 +99,7 @@ async function hasCommand(exec: CommandExecutor, cmd: string): Promise<boolean> 
 /** Marker written as the key's `-C` comment — unique per run, so removal targets
  *  exactly our authorized_keys line and nothing else. */
 function trustMarker(runId: string, tag: string): string {
-  return `openship-migration-${runId}-${tag}`;
+  return `kovalio-migration-${runId}-${tag}`;
 }
 
 /**
@@ -129,8 +129,8 @@ async function bootstrapTrust(
     const ak = "$HOME/.ssh/authorized_keys";
     await peerExec
       .exec(
-        `if [ -f ${ak} ]; then grep -v ${sq(marker)} ${ak} > ${ak}.openship.tmp 2>/dev/null || true; ` +
-          `mv ${ak}.openship.tmp ${ak} 2>/dev/null || true; fi`,
+        `if [ -f ${ak} ]; then grep -v ${sq(marker)} ${ak} > ${ak}.kovalio.tmp 2>/dev/null || true; ` +
+          `mv ${ak}.kovalio.tmp ${ak} 2>/dev/null || true; fi`,
       )
       .catch(() => {});
   };
@@ -169,7 +169,7 @@ async function bootstrapTrust(
 
     // Bare (unquoted) paths on purpose: this string is used BOTH inside a shell
     // (sshTo) AND as rsync's `-e` value, which tokenize quoting differently.
-    // The temp dir is fully controlled (/tmp/openship-migration-<hex>-<tag>) —
+    // The temp dir is fully controlled (/tmp/kovalio-migration-<hex>-<tag>) —
     // no spaces or shell-specials — so bare is safe and unambiguous for both.
     const sshCommand =
       `ssh -i ${keyFile} -o IdentitiesOnly=yes -o BatchMode=yes ` +
@@ -205,12 +205,12 @@ async function probeDirectLink(
       sshTo(
         sshCommand,
         peer,
-        `'command -v rsync >/dev/null && command -v docker >/dev/null && echo OPENSHIP_LINK_OK'`,
+        `'command -v rsync >/dev/null && command -v docker >/dev/null && echo KOVALIO_LINK_OK'`,
       ),
       { timeout: PROBE_TIMEOUT_MS },
     )
     .catch(() => "");
-  return out.includes("OPENSHIP_LINK_OK");
+  return out.includes("KOVALIO_LINK_OK");
 }
 
 /** Resolve a named volume's on-host mountpoint (handles a custom data-root). */
@@ -274,7 +274,7 @@ export function rsyncCommand(
   // --partial + --partial-dir keep a dropped transfer's bytes so a re-invoke
   // RESUMES instead of restarting (see runRsync's retry loop). --timeout aborts
   // a stalled link so the retry can kick in.
-  const flags = `-a --partial --partial-dir=.openship-partial --info=progress2 --timeout=60${compress ? " -z" : ""}`;
+  const flags = `-a --partial --partial-dir=.kovalio-partial --info=progress2 --timeout=60${compress ? " -z" : ""}`;
   const dash_e = `-e ${sq(sshCommand)}`;
   const slash = dir ? "/" : "";
   const local = `${sq(localPath)}${slash}`;

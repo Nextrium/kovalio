@@ -27,7 +27,7 @@ export function faq(now: Date): FaqItem[] {
       a: "Yes — free forever. Run the full platform on your own servers with no metering, no seat caps, and no telemetry. It's open source under Apache 2.0, and there's nothing to buy or sign up for: install the CLI, point it at a box, and you're running.",
     },
     {
-      q: "How much does Openship Cloud cost?",
+      q: "How much does Kovalio Cloud cost?",
       a: [
         FREE_TIER ? `The ${FREE_TIER.name} tier costs nothing.` : null,
         ladder ? `Paid plans are ${ladder}, ${UI.billedMonthly}.` : null,
@@ -50,7 +50,7 @@ export function faq(now: Date): FaqItem[] {
     },
     {
       q: "Can I move between self-hosted and cloud later?",
-      a: "Yes, either direction. Your containers travel as-is — no rebuild, no rewrites — because a deployment on Openship is a plain image and standard manifests. Move a workload from Cloud onto your own box, or the other way, without paying an exit tax.",
+      a: "Yes, either direction. Your containers travel as-is — no rebuild, no rewrites — because a deployment on Kovalio is a plain image and standard manifests. Move a workload from Cloud onto your own box, or the other way, without paying an exit tax.",
     },
     {
       q: "What's the license?",

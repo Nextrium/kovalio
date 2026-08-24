@@ -32,7 +32,7 @@ function makeExecutor(opts: {
   } as unknown as CommandExecutor;
 }
 
-const ROOT = "/opt/openship/static/proj_1";
+const ROOT = "/opt/kovalio/static/proj_1";
 
 /** `imageRef` is omitted so workDir === stagedDir and no artifact promotion runs. */
 function config(outputDirectory: string) {
@@ -45,13 +45,13 @@ function config(outputDirectory: string) {
 
 describe("BareRuntime.deployStatic doc-root assertions", () => {
   it("fails when the doc-root is missing", async () => {
-    const rt = new BareRuntime({ workDir: "/opt/openship/static", executor: makeExecutor({}) });
+    const rt = new BareRuntime({ workDir: "/opt/kovalio/static", executor: makeExecutor({}) });
     await expect(rt.deployStatic(config("dist"))).rejects.toThrow(/output directory/i);
   });
 
   it("fails when the doc-root exists but is EMPTY", async () => {
     const rt = new BareRuntime({
-      workDir: "/opt/openship/static",
+      workDir: "/opt/kovalio/static",
       executor: makeExecutor({
         paths: [`${ROOT}/dist`],
         // `[ -d ]` true, `ls -A` prints nothing → DIR alone == empty.
@@ -63,7 +63,7 @@ describe("BareRuntime.deployStatic doc-root assertions", () => {
 
   it("succeeds when the doc-root has content", async () => {
     const rt = new BareRuntime({
-      workDir: "/opt/openship/static",
+      workDir: "/opt/kovalio/static",
       executor: makeExecutor({
         paths: [`${ROOT}/dist`],
         exec: () => "DIR\nindex.html\n",
@@ -76,7 +76,7 @@ describe("BareRuntime.deployStatic doc-root assertions", () => {
 
   it("does not report a plain FILE doc-root as empty — a file is its own index", async () => {
     const rt = new BareRuntime({
-      workDir: "/opt/openship/static",
+      workDir: "/opt/kovalio/static",
       executor: makeExecutor({
         paths: [`${ROOT}/index.html`],
         // Not a directory → the `if [ -d ]` branch prints nothing at all.
@@ -92,7 +92,7 @@ describe("BareRuntime.deployStatic doc-root assertions", () => {
     // A probe that can't read must never be the thing that fails a deploy — the
     // root existed, which is the contract this method actually enforces.
     const rt = new BareRuntime({
-      workDir: "/opt/openship/static",
+      workDir: "/opt/kovalio/static",
       executor: makeExecutor({
         paths: [`${ROOT}/dist`],
         exec: () => Promise.reject(new Error("permission denied")),

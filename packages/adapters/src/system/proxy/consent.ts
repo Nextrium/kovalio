@@ -34,7 +34,7 @@ function log(message: string, level: SystemLog["level"] = "info"): SystemLog {
  *   4. neither                  → throw EdgeConflictError (never guess).
  *
  * Whatever holds the ports goes through here, INCLUDING a deprecated bare-host
- * OpenResty an older Openship installed: the edge is a container now, so a host
+ * OpenResty an older Kovalio installed: the edge is a container now, so a host
  * OpenResty is a proxy to migrate from like any other. There is no second
  * "decommission the legacy edge" path — a second path is precisely how this gate got
  * bypassed (detect called that proxy "ours", so `canProceedClean` was true and we
@@ -84,7 +84,7 @@ export async function ensureEdgeClear(
         // operator retries the same unprivileged takeover forever — and "stopped the
         // existing proxy" is untrue on this arm, since the stop is what was refused.
         freed.privilegeDegraded
-          ? `The ${ports} — and Openship could not run the stop as root on this host (see the ` +
+          ? `The ${ports} — and Kovalio could not run the stop as root on this host (see the ` +
             "privilege warning above), so stopping the existing proxy was almost certainly " +
             "refused. Retrying as this user will fail the same way: reconnect as root, or as a " +
             "user with passwordless sudo."
@@ -110,18 +110,18 @@ export async function ensureEdgeClear(
     const scan = await importSites(executor, status);
     const migratable = scan.sites.length > 0;
 
-    // Openship terminates TLS + routes on its own OpenResty edge, so it must own
+    // Kovalio terminates TLS + routes on its own OpenResty edge, so it must own
     // 80/443. Spell that out — the operator is choosing to hand their load
     // balancer to us, and "migrate" imports the existing sites first so nothing
     // they're serving goes dark.
     const message = migratable
-      ? `Openship runs its own load balancer (OpenResty) on ports 80 and 443, but ${owner} is ` +
+      ? `Kovalio runs its own load balancer (OpenResty) on ports 80 and 443, but ${owner} is ` +
         `already serving them (${scan.sites.length} site${scan.sites.length === 1 ? "" : "s"}). ` +
-        `Migrate those sites into Openship and take over, just stop it and take over, or cancel?`
+        `Migrate those sites into Kovalio and take over, just stop it and take over, or cancel?`
       : known
-        ? `Openship runs its own load balancer (OpenResty) on ports 80 and 443, but ${owner} is ` +
+        ? `Kovalio runs its own load balancer (OpenResty) on ports 80 and 443, but ${owner} is ` +
           `already serving them. Stop it and take over, or cancel and leave it running?`
-        : `Openship runs its own load balancer (OpenResty) on ports 80 and 443, but ${owner} is ` +
+        : `Kovalio runs its own load balancer (OpenResty) on ports 80 and 443, but ${owner} is ` +
           `already using them and we can't identify it. Stop it and take over, or cancel and leave it running?`;
 
     const details: EdgeConflictDetails = {

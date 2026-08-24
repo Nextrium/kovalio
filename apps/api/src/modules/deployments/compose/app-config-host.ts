@@ -22,14 +22,14 @@ import { sshManager } from "../../../lib/ssh-manager";
 
 /**
  * Persistent on-host root for app template config files. Sibling of the other
- * openship host state (`/var/lib/openship/ssh-keys`); overridable for hosts that keep
- * openship state elsewhere. Files land at
+ * kovalio host state (`/var/lib/kovalio/ssh-keys`); overridable for hosts that keep
+ * kovalio state elsewhere. Files land at
  * `<root>/<projectId>/<service>/<container-path>` — the executor creates parent dirs —
  * and the container-absolute path is appended verbatim so binds are unique and
  * self-describing.
  */
 export const APP_CONFIG_HOST_ROOT =
-  process.env.OPENSHIP_APP_CONFIG_DIR || "/var/lib/openship/app-config";
+  process.env.KOVALIO_APP_CONFIG_DIR || "/var/lib/kovalio/app-config";
 
 export function appConfigHostPath(
   projectId: string,
@@ -97,7 +97,7 @@ export async function writeAppConfigFile(
     throw new Error(
       `Service "${serviceName}": couldn't write its generated config file ${containerPath} to ` +
         `${hostPath} on the deploy target. Docker mounts this file by HOST path, so it has to ` +
-        `be written on the machine running the containers — the usual causes are that Openship ` +
+        `be written on the machine running the containers — the usual causes are that Kovalio ` +
         `can't reach that machine, or can't write that path. Underlying error: ${detail}`,
     );
   }

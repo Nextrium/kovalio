@@ -13,7 +13,7 @@
  *
  * The "Use your mail server" toggle is offered only when a provisioned
  * mail server exists; ticking it asks the backend to warm the platform
- * mailbox (ensureOpenshipPlatformMailbox) so outbound mail uses our
+ * mailbox (ensureKovalioPlatformMailbox) so outbound mail uses our
  * own SMTP identity by default after the upgrade.
  */
 

@@ -195,7 +195,7 @@ describe("deploy_blocked — the case nothing could see before", () => {
     expect(action.message).toContain("node server.js");
   });
 
-  it("says Openship will stop it when the holder is our OWN stale deployment", async () => {
+  it("says Kovalio will stop it when the holder is our OWN stale deployment", async () => {
     findLatestByProject.mockResolvedValue(
       blockedByPort({
         errorDetails: {
@@ -209,11 +209,11 @@ describe("deploy_blocked — the case nothing could see before", () => {
 
     const [action] = await getProjectPendingActions(PROJECT, ORG);
 
-    expect(action.message).toContain("previous Openship deployment");
+    expect(action.message).toContain("previous Kovalio deployment");
     // Describes the offer without quoting the button's words: the deploy prompt now
     // labels it by what it stops ("Stop Container", "Stop Service"), so a literal
     // pinned here was a copy in two places that could disagree.
-    expect(action.message).toMatch(/Openship will (free the port|stop that (container|service)) first/);
+    expect(action.message).toMatch(/Kovalio will (free the port|stop that (container|service)) first/);
   });
 
   it("promises no Free Port button when the deploy refused to offer one", async () => {
@@ -222,7 +222,7 @@ describe("deploy_blocked — the case nothing could see before", () => {
     // choose Free Port" sends the operator to a button that will not be there.
     findLatestByProject.mockResolvedValue(
       blockedByPort({
-        errorMessage: "Port 3000 is published by a Docker container Openship couldn't identify",
+        errorMessage: "Port 3000 is published by a Docker container Kovalio couldn't identify",
         errorDetails: {
           port: 3000,
           pid: 42,
@@ -246,8 +246,8 @@ describe("deploy_blocked — the case nothing could see before", () => {
         errorDetails: {
           port: 3000,
           pid: 42,
-          command: "docker container openship-api-web (openship/api:latest)",
-          containerName: "openship-api-web",
+          command: "docker container kovalio-api-web (kovalio/api:latest)",
+          containerName: "kovalio-api-web",
           isManagedDeployment: true,
           dockerPublished: true,
           stopTarget: "container",
@@ -257,14 +257,14 @@ describe("deploy_blocked — the case nothing could see before", () => {
 
     const [action] = await getProjectPendingActions(PROJECT, ORG);
 
-    expect(action.message).toContain("openship-api-web");
+    expect(action.message).toContain("kovalio-api-web");
     expect(action.message).toContain("stop that container");
   });
 
   it("says it could not tell when ownership was never probed", async () => {
     // A listener with no systemd unit and no container carries no `isManagedDeployment`
     // at all. Treating absent as false would tell the operator a process is not
-    // Openship's when we simply couldn't establish it, and that is the difference
+    // Kovalio's when we simply couldn't establish it, and that is the difference
     // between "safe to free" and "might kill something else".
     findLatestByProject.mockResolvedValue(
       blockedByPort({

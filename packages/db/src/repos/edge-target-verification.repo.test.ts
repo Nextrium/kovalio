@@ -14,7 +14,7 @@ const MIGRATIONS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../d
  * conflict on (organization_id, target) and the token-retention rule — neither of
  * which a mock would exercise.
  *
- * The rule that matters: Openship Cloud's edge re-probes THE SAME token within 7 days
+ * The rule that matters: Kovalio Cloud's edge re-probes THE SAME token within 7 days
  * of its 90-day expiry, so a token we stop serving silently kills that route ~83 days
  * after a green deploy. A re-issued challenge must therefore RETIRE the previous token
  * (keep serving it) rather than replace it, and nothing here is ever deleted when a

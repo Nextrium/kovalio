@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * #581: a private-image pull went out anonymous because dockerode reads no
- * `~/.docker/config.json`. It now asks Openship's own credential store — and the two
+ * `~/.docker/config.json`. It now asks Kovalio's own credential store — and the two
  * properties that matter are that the lookup keys off the SAME registry derivation the
  * credential was saved under, and that a failure degrades to an anonymous pull instead of
  * failing the deploy.

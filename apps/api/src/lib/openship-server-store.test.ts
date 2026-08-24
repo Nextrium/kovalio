@@ -9,19 +9,19 @@ import {
   profileFixture,
 } from "../../../../packages/adapters/src/system/environment.fixtures";
 import {
-  OPENSHIP_DIR,
-  openshipFileExists,
-  readOpenshipFile,
-  writeOpenshipFile,
-} from "./openship-server-store";
+  KOVALIO_DIR,
+  kovalioFileExists,
+  readKovalioFile,
+  writeKovalioFile,
+} from "./kovalio-server-store";
 
 /**
  * Privilege for the server state store.
  *
- * `.openship` is 0700 root-owned by design, so on a host we log in to as a non-root user
+ * `.kovalio` is 0700 root-owned by design, so on a host we log in to as a non-root user
  * EVERY operation here needs elevation — including the reads, which is the half that hid:
  * a `cat` of a file the login user could never have written returns "" and is
- * indistinguishable from "this server has no Openship state", which is exactly what
+ * indistinguishable from "this server has no Kovalio state", which is exactly what
  * `scan` reads to re-import our own projects.
  *
  * A fresh executor object per case on purpose: the profile is cached per executor
@@ -66,10 +66,10 @@ const NON_ROOT_NO_SUDO = probeOutput({
 /** The ordinary managed host: root login, no elevation needed anywhere. */
 const ROOT = probeOutput();
 
-describe("openship-server-store privilege", () => {
+describe("kovalio-server-store privilege", () => {
   it("elevates every operation on a non-root login, without moving the path", async () => {
     const write = fakeHost(NON_ROOT_SUDO);
-    await writeOpenshipFile(write.executor, "manifest.json", "{}");
+    await writeKovalioFile(write.executor, "manifest.json", "{}");
 
     // Staged through a user-writable temp, then moved into the root-owned dir as root —
     // SFTP has no shell and cannot be elevated, so a direct write would EACCES.
@@ -79,23 +79,23 @@ describe("openship-server-store privilege", () => {
     const mv = write.stored().filter((c) => c.includes("mv -f"));
     expect(mv).toHaveLength(2);
     expect(mv.every((c) => c.includes("sudo -n sh -c"))).toBe(true);
-    expect(mv[0]).toContain(`${OPENSHIP_DIR}/manifest.json.tmp`);
-    expect(mv[1]).toContain(`${OPENSHIP_DIR}/manifest.json`);
+    expect(mv[0]).toContain(`${KOVALIO_DIR}/manifest.json.tmp`);
+    expect(mv[1]).toContain(`${KOVALIO_DIR}/manifest.json`);
 
     const read = fakeHost(NON_ROOT_SUDO);
-    expect(await readOpenshipFile(read.executor, "manifest.json")).toBe("PAYLOAD");
+    expect(await readKovalioFile(read.executor, "manifest.json")).toBe("PAYLOAD");
     expect(read.stored().find((c) => c.includes("cat "))).toContain("sudo -n sh -c");
 
     const stat = fakeHost(NON_ROOT_SUDO);
-    expect(await openshipFileExists(stat.executor, "manifest.json")).toBe(true);
+    expect(await kovalioFileExists(stat.executor, "manifest.json")).toBe(true);
     expect(stat.stored().find((c) => c.includes("test -f"))).toContain("sudo -n sh -c");
   });
 
   it("leaves a root login exactly as it was — no sudo, same path", async () => {
     const { executor, stored, writes } = fakeHost(probeOutput());
-    await writeOpenshipFile(executor, "manifest.json", "{}");
+    await writeKovalioFile(executor, "manifest.json", "{}");
 
-    expect(writes).toEqual([`${OPENSHIP_DIR}/manifest.json.tmp`]);
+    expect(writes).toEqual([`${KOVALIO_DIR}/manifest.json.tmp`]);
     expect(stored().some((c) => c.includes("sudo"))).toBe(false);
   });
 
@@ -104,7 +104,7 @@ describe("openship-server-store privilege", () => {
     // manifest into a missing one — a regression dressed as a safety check.
     const { executor, stored } = fakeHost("Please login as the user \"ec2-user\"\n");
 
-    expect(await readOpenshipFile(executor, "manifest.json")).toBe("PAYLOAD");
+    expect(await readKovalioFile(executor, "manifest.json")).toBe("PAYLOAD");
     expect(stored().some((c) => c.includes("sudo"))).toBe(false);
   });
 
@@ -115,7 +115,7 @@ describe("openship-server-store privilege", () => {
     // the unmeasurable box, `isRoot`/`canSudo` here are facts — /root is 0700, the read
     // cannot work, and the shell cannot say so: `cat … || echo ""` exits 0 either way, so
     // "forbidden" came back as a successful empty answer and `scan` read it as a server
-    // with no Openship projects. The distinction is only visible before the command is sent.
+    // with no Kovalio projects. The distinction is only visible before the command is sent.
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
       const { executor, stored } = fakeHost(
@@ -129,7 +129,7 @@ describe("openship-server-store privilege", () => {
         }),
       );
 
-      expect(await readOpenshipFile(executor, "manifest.json")).toBe("");
+      expect(await readKovalioFile(executor, "manifest.json")).toBe("");
       // Not attempted, rather than attempted and discarded — the point is that the answer
       // was never going to mean anything.
       expect(stored().some((c) => c.includes("cat "))).toBe(false);
@@ -141,27 +141,27 @@ describe("openship-server-store privilege", () => {
 
   it("names the fix when the login is measurably unprivileged", async () => {
     const write = fakeHost(NON_ROOT_NO_SUDO);
-    await expect(writeOpenshipFile(write.executor, "manifest.json", "{}")).rejects.toThrow(
+    await expect(writeKovalioFile(write.executor, "manifest.json", "{}")).rejects.toThrow(
       /passwordless sudo/,
     );
     expect(write.writes).toEqual([]);
 
     // Reads stay non-throwing by contract; absent state is still absent state.
     const read = fakeHost(NON_ROOT_NO_SUDO);
-    expect(await readOpenshipFile(read.executor, "manifest.json")).toBe("");
+    expect(await readKovalioFile(read.executor, "manifest.json")).toBe("");
   });
 
   it("reports a refused read instead of silently calling it absent", async () => {
     // The compromise the line above makes is that the VALUE is ambiguous. The log
     // must not be: a host that merely denies elevation otherwise reads as a host
-    // with no Openship state, and `scan` re-imports our own projects off that.
+    // with no Kovalio state, and `scan` re-imports our own projects off that.
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
       const read = fakeHost(NON_ROOT_NO_SUDO);
-      expect(await readOpenshipFile(read.executor, "manifest.json")).toBe("");
+      expect(await readKovalioFile(read.executor, "manifest.json")).toBe("");
 
       const stat = fakeHost(NON_ROOT_NO_SUDO);
-      expect(await openshipFileExists(stat.executor, "manifest.json")).toBe(false);
+      expect(await kovalioFileExists(stat.executor, "manifest.json")).toBe(false);
 
       const messages = warn.mock.calls.map((call) => String(call[0]));
       expect(messages).toHaveLength(2);
@@ -179,8 +179,8 @@ describe("openship-server-store privilege", () => {
    * The two remote roots DIVERGE on a non-root login, on purpose.
    *
    * The remote journal moved to the login user's home (`scratchDir()`); this store did
-   * not (`/root/.openship`). Asserted against the literal rather than `OPENSHIP_DIR`
-   * because the point is the divergence: a test written as `expect(…).toBe(OPENSHIP_DIR)`
+   * not (`/root/.kovalio`). Asserted against the literal rather than `KOVALIO_DIR`
+   * because the point is the divergence: a test written as `expect(…).toBe(KOVALIO_DIR)`
    * follows the constant wherever a future "unify the paths" refactor moves it, and
    * moving THIS one strands every host provisioned before the privilege fix — the state
    * here is read back later, sometimes by a different login user, so it has to be found
@@ -196,11 +196,11 @@ describe("openship-server-store privilege", () => {
       home: "/home/deploy",
     });
 
-    expect(OPENSHIP_DIR).toBe("/root/.openship");
-    expect(envOps(nonRoot).scratchDir()).toBe("/home/deploy/.openship");
+    expect(KOVALIO_DIR).toBe("/root/.kovalio");
+    expect(envOps(nonRoot).scratchDir()).toBe("/home/deploy/.kovalio");
     // And on the ordinary root host the two are byte-identical, which is why the split
     // is invisible in production and needs pinning here.
-    expect(envOps(profileFixture()).scratchDir()).toBe(OPENSHIP_DIR);
+    expect(envOps(profileFixture()).scratchDir()).toBe(KOVALIO_DIR);
   });
 
   it("stays quiet when the file is genuinely absent", async () => {
@@ -209,7 +209,7 @@ describe("openship-server-store privilege", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
       const host = fakeHost(ROOT, "");
-      expect(await readOpenshipFile(host.executor, "manifest.json")).toBe("");
+      expect(await readKovalioFile(host.executor, "manifest.json")).toBe("");
       expect(warn).not.toHaveBeenCalled();
     } finally {
       warn.mockRestore();

@@ -45,7 +45,7 @@ export interface DocEntry {
   title: string;
   description: string;
   url: string; // /docs/<slug>
-  mdUrl: string; // https://openship.io/docs/<slug>.md
+  mdUrl: string; // https://nextrium.org/docs/<slug>.md
 }
 
 /** Every docs page as a catalog entry. */

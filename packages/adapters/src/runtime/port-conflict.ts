@@ -9,8 +9,8 @@ import {
   describeContainerById,
   isBuildHelperContainer,
   isContainerPortForwarder,
-  isOpenshipContainer,
-  isOpenshipPlatformContainer,
+  isKovalioContainer,
+  isKovalioPlatformContainer,
   isOurEdgeContainer,
   managedDeploymentIdFromUnit,
   mayStopUnitForAppPort,
@@ -45,13 +45,13 @@ export interface PortOccupant {
   containerId?: string;
   containerName?: string;
   containerImage?: string;
-  /** `openship.project` / `openship.service` off that container's labels. */
+  /** `kovalio.project` / `kovalio.service` off that container's labels. */
   ownerProjectId?: string;
   serviceName?: string;
   /** The port is published by a container runtime, so the listener is a forwarder and
    *  any unit resolved from its cgroup is the DAEMON's, not the workload's. */
   dockerPublished?: boolean;
-  /** The container is part of Openship ITSELF (the compose control plane, the mail
+  /** The container is part of Kovalio ITSELF (the compose control plane, the mail
    *  engine, the edge) — never a stop target for an application port. */
   platformContainer?: boolean;
   /** More than one container publishes this port (same port, different host IPs), so
@@ -117,7 +117,7 @@ export type PortVerdict =
  *
  * The refusal REASON is returned from here rather than re-derived by the copy, because
  * a second chain over the same fields drifted immediately: it had no `platform` arm, so
- * refusing to stop Openship's own API container fell through to the docker-blind copy
+ * refusing to stop Kovalio's own API container fell through to the docker-blind copy
  * and told the operator to go `docker stop` it by hand — #628 restated as prose. A
  * total switch on {@link PortRefusal} makes a new refusal a compile error instead.
  */
@@ -127,13 +127,13 @@ export function portStopVerdict(occupant: PortOccupant): PortVerdict {
 
   if (occupant.containerId) {
     // The edge is checked BEFORE the general platform test so it keeps its own, more
-    // specific copy — `isOpenshipPlatformContainer` is true for the edge as well. It
+    // specific copy — `isKovalioPlatformContainer` is true for the edge as well. It
     // also works from name/image alone, so it still holds for an occupant built by the
     // cheap probe, which never asks who the platform containers are.
     if (isOurEdgeContainer(occupant.containerName, occupant.containerImage)) {
       return { target: "none", why: "our-edge" };
     }
-    // Openship's own control plane or mail engine.
+    // Kovalio's own control plane or mail engine.
     if (occupant.platformContainer) return { target: "none", why: "platform" };
     // An id off a cgroup with no name or image behind it: docker could not describe it,
     // so the checks above could not run. Stopping a container we cannot identify is
@@ -326,7 +326,7 @@ async function withContainer(
   occupant: PortOccupant,
   container: PortContainer,
 ): Promise<PortOccupant> {
-  const platform = await isOpenshipPlatformContainer(executor, container);
+  const platform = await isKovalioPlatformContainer(executor, container);
   return {
     ...occupant,
     dockerPublished: true,
@@ -338,10 +338,10 @@ async function withContainer(
     ...(container.deploymentId ? { deploymentId: container.deploymentId } : {}),
     ...(container.serviceName ? { serviceName: container.serviceName } : {}),
     // Ownership now rests on the container's labels, not on a unit name. Left
-    // UNDEFINED when the container carries no `openship.project`: a container adopted
-    // in place by the docker migration is tracked by Openship while wearing no labels
+    // UNDEFINED when the container carries no `kovalio.project`: a container adopted
+    // in place by the docker migration is tracked by Kovalio while wearing no labels
     // at all, so "no label" means "could not tell", never "not ours".
-    ...(isOpenshipContainer(container) ? { isManagedDeployment: true } : {}),
+    ...(isKovalioContainer(container) ? { isManagedDeployment: true } : {}),
     // Naming a build helper as such matters: it is ours and safe to stop, but an
     // operator told only "container X holds the port" has no way to know that.
     command:
@@ -457,11 +457,11 @@ function freeActionLabel(occupant: PortOccupant): string {
   switch (portStopTarget(occupant)) {
     case "container":
       return occupant.isManagedDeployment
-        ? "Stop Openship Container & Continue"
+        ? "Stop Kovalio Container & Continue"
         : "Stop Container & Continue";
     case "unit":
       return occupant.isManagedDeployment
-        ? "Stop Openship Deployment & Continue"
+        ? "Stop Kovalio Deployment & Continue"
         : "Stop Service & Continue";
     default:
       return "Free Port & Continue";
@@ -478,37 +478,37 @@ function refusalReason(port: number, occupant: PortOccupant, why: PortRefusal): 
     case "ambiguous":
       return (
         `Port ${port} is published by ${occupant.ambiguousOwners} containers at once (${occupant.command}), ` +
-        `so Openship can't tell which one owns it. Stop the right container yourself, or deploy on a different port.`
+        `so Kovalio can't tell which one owns it. Stop the right container yourself, or deploy on a different port.`
       );
     case "our-edge":
       return (
-        `Port ${port} belongs to the Openship edge proxy (container ${named}), which routes every domain on this ` +
+        `Port ${port} belongs to the Kovalio edge proxy (container ${named}), which routes every domain on this ` +
         `server. Deploy on a different host port and route it through the edge instead.`
       );
     case "platform":
       return (
-        `Port ${port} is held by Openship itself — container ${named} is part of the control plane running this ` +
-        `deploy. Stopping it would take Openship down, so deploy on a different host port.`
+        `Port ${port} is held by Kovalio itself — container ${named} is part of the control plane running this ` +
+        `deploy. Stopping it would take Kovalio down, so deploy on a different host port.`
       );
     case "unidentified-container":
       return (
         `Port ${port} is held by container ${occupant.containerId}, which this Docker daemon won't describe — so ` +
-        `Openship can't tell whether it is one of its own (the edge publishes nothing and is only visible this ` +
+        `Kovalio can't tell whether it is one of its own (the edge publishes nothing and is only visible this ` +
         `way). Run \`docker inspect ${occupant.containerId}\` on the server, stop it if it is safe to, then redeploy.`
       );
     case "docker-blind":
       return (
-        `Port ${port} is published by a Docker container Openship couldn't identify — the process holding it is ` +
-        `Docker's port forwarder, not the app, so there is nothing here Openship can safely stop. ` +
+        `Port ${port} is published by a Docker container Kovalio couldn't identify — the process holding it is ` +
+        `Docker's port forwarder, not the app, so there is nothing here Kovalio can safely stop. ` +
         `Run \`docker ps --filter publish=${port}\` on the server, stop that container, then redeploy.`
       );
     case "protected-unit":
       return (
-        `Port ${port} is held by ${occupant.systemdUnit}, a service Openship will not stop — doing so would take ` +
+        `Port ${port} is held by ${occupant.systemdUnit}, a service Kovalio will not stop — doing so would take ` +
         `down more than this deploy. Free the port on the server, or deploy on a different port.`
       );
     case "no-owner":
-      return `Port ${port} is occupied by ${occupant.command}, which Openship can't free automatically.`;
+      return `Port ${port} is occupied by ${occupant.command}, which Kovalio can't free automatically.`;
   }
 }
 
@@ -576,7 +576,7 @@ export async function ensurePortAvailable(
     promptId: `port_in_use:${port}`,
     title: "Port In Use",
     message: occupant.isManagedDeployment
-      ? `Port ${port} is occupied by ${occupant.command}, which Openship deployed.`
+      ? `Port ${port} is occupied by ${occupant.command}, which Kovalio deployed.`
       : `Port ${port} is occupied by ${occupant.command}. This may not be a previous deployment.`,
     actions: [
       { id: "free_port", label: freeActionLabel(occupant), variant: "danger" },

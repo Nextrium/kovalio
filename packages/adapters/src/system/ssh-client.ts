@@ -161,7 +161,7 @@ export async function openSshExecChannel(
  * cause instead of a reset — the reader is `dialStdioDiagnostics`, and it needs no
  * plumbing through the three layers between here and there.
  */
-const DIAL_STDIO_DIAGNOSTICS = Symbol("openship.dialStdioDiagnostics");
+const DIAL_STDIO_DIAGNOSTICS = Symbol("kovalio.dialStdioDiagnostics");
 
 /** First 4 KiB only: the cause is the first line, the rest is a daemon log tail. */
 const DIAL_STDIO_STDERR_CAP = 4096;

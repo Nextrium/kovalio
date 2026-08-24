@@ -1,5 +1,5 @@
 /**
- * Retargeting an `openship_server` destination at a different box was a no-op.
+ * Retargeting an `kovalio_server` destination at a different box was a no-op.
  *
  * `UpdateDestinationInput` had no `serverId` and `updateDestination` never carried one
  * into its allow-listed patch, so the dashboard's server picker sent the field, the
@@ -51,7 +51,7 @@ beforeEach(async () => {
 const createServerDestination = (organizationId: string, serverId: string) =>
   createDestination(ctx(organizationId), {
     name: `dest-${serverId}`,
-    kind: "openship_server",
+    kind: "kovalio_server",
     serverId,
     pathPrefix: "/backups",
   });
@@ -89,8 +89,8 @@ describe("updateDestination carries serverId", () => {
     ).rejects.toThrow(/not accessible/);
   });
 
-  it("refuses to CLEAR the server on an openship_server destination", async () => {
-    // `toAdapterRow` calls a serverId-less openship_server row corrupted state, so
+  it("refuses to CLEAR the server on an kovalio_server destination", async () => {
+    // `toAdapterRow` calls a serverId-less kovalio_server row corrupted state, so
     // storing the null would break every run on it rather than disable anything.
     const created = await createServerDestination(orgA, serverA1);
     await expect(

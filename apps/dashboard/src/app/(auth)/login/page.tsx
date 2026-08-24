@@ -172,7 +172,7 @@ function LoginPageInner() {
               dir="ltr"
               className="mt-2 block rounded-md bg-background/60 px-2 py-1.5 font-mono text-xs text-foreground"
             >
-              OPENSHIP_AUTH_MODE=local
+              KOVALIO_AUTH_MODE=local
             </code>
             <p className="mt-2 text-sm text-warning">{t.auth.zeroAuth.remedyAdmin}</p>
           </div>
@@ -201,7 +201,7 @@ function LoginPageInner() {
     );
   }
 
-  /* ── Cloud mode (desktop): redirect to Openship Cloud for all auth ── */
+  /* ── Cloud mode (desktop): redirect to Kovalio Cloud for all auth ── */
   if (authMode === "cloud") {
     const apiUrl = getApiOrigin(typeof window !== "undefined" ? window.location.origin : undefined);
     const callbackUrl = `${apiUrl}/api/auth/cloud-callback`;
@@ -216,7 +216,7 @@ function LoginPageInner() {
             {t.auth.login.title}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Sign in with your Openship account to continue.
+            Sign in with your Kovalio account to continue.
           </p>
         </div>
 
@@ -237,7 +237,7 @@ function LoginPageInner() {
           onClick={() => { void handleCloudSignIn(callbackUrl); }}
         >
           {loading ? <Loader2 className="me-2 size-4 animate-spin" /> : <ExternalLink className="me-2 size-4" />}
-          {loading ? "Opening Openship Cloud..." : "Sign in with Openship"}
+          {loading ? "Opening Kovalio Cloud..." : "Sign in with Kovalio"}
         </Button>
       </AuthShell>
     );

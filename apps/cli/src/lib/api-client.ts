@@ -1,5 +1,5 @@
 /**
- * CLI HTTP client — talks to the Openship API using the active context's PAT.
+ * CLI HTTP client — talks to the Kovalio API using the active context's PAT.
  * No Origin header is sent, so the API accepts the Bearer token (its anti-XSS
  * guard only rejects bearer auth from browser-trusted origins).
  */
@@ -13,7 +13,7 @@ declare const __CLI_VERSION__: string;
  * source instead of a generic "API" one — a PAT call from here and a PAT call
  * from a script are otherwise identical on the wire.
  */
-const USER_AGENT = `openship-cli/${typeof __CLI_VERSION__ === "string" ? __CLI_VERSION__ : "dev"}`;
+const USER_AGENT = `kovalio-cli/${typeof __CLI_VERSION__ === "string" ? __CLI_VERSION__ : "dev"}`;
 
 /** Base API URL including the /api prefix, resolved from the active context. */
 export function getApiUrl(): string {
@@ -74,7 +74,7 @@ export interface PaginateOptions {
   query?: Record<string, string | number | boolean | undefined>;
   /**
    * Pull the items + total out of one page's body. Default reads the standard
-   * Openship envelope: { data: T[], total?: number }.
+   * Kovalio envelope: { data: T[], total?: number }.
    */
   extract?: (body: unknown) => { items: unknown[]; total?: number };
 }

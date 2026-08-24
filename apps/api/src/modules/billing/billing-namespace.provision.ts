@@ -1,7 +1,7 @@
 /**
  * Namespace provisioning — the step that makes every Oblien ceiling real.
  *
- * Openship Cloud is a wrapper over Oblien: a plan IS "these credits plus these
+ * Kovalio Cloud is a wrapper over Oblien: a plan IS "these credits plus these
  * resource ceilings on your namespace", and Oblien enforces both. That only works
  * if Oblien has been told the namespace exists AND what its limits are.
  *
@@ -24,7 +24,7 @@
 import { DEFAULT_PLAN_TIER, safeErrorMessage, type PlanTierId } from "@repo/core";
 import { repos } from "@repo/db";
 import { env } from "../../config/env";
-import { ensureNamespace } from "../../lib/openship-cloud";
+import { ensureNamespace } from "../../lib/kovalio-cloud";
 import { setQuotaForTier } from "./billing-oblien-quota";
 
 /**

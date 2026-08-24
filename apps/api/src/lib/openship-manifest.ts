@@ -1,12 +1,12 @@
 /**
- * Per-server `.openship/manifest.json` — a structural, secret-free mirror of
+ * Per-server `.kovalio/manifest.json` — a structural, secret-free mirror of
  * the projects deployed to a given server, written over SSH at deploy time.
  *
  * Why: in DESKTOP mode the orchestrator DB (pglite) lives on the user's PC and
  * dies with it. The deployments themselves keep running on the user's servers,
  * so each server carries this manifest to let a fresh orchestrator SCAN the
  * server and re-adopt its projects (rebuild rows, re-link the live containers
- * by `openship.project` label). Mirrors the mail-state-on-VPS pattern.
+ * by `kovalio.project` label). Mirrors the mail-state-on-VPS pattern.
  *
  * Invariants:
  *   - The orchestrator DB is ALWAYS canonical. This file is a best-effort
@@ -21,18 +21,18 @@ import type { CommandExecutor } from "@repo/adapters";
 import { safeErrorMessage } from "@repo/core";
 import type { DatabaseDump } from "@repo/db";
 import {
-  OPENSHIP_DIR,
-  readOpenshipFile,
-  writeOpenshipFile,
-  removeOpenshipFile,
-  openshipFileExists,
-} from "./openship-server-store";
+  KOVALIO_DIR,
+  readKovalioFile,
+  writeKovalioFile,
+  removeKovalioFile,
+  kovalioFileExists,
+} from "./kovalio-server-store";
 
-/** Bare filename within the shared `.openship/` dir; folder + atomic-write
- *  mechanics live in openship-server-store. */
+/** Bare filename within the shared `.kovalio/` dir; folder + atomic-write
+ *  mechanics live in kovalio-server-store. */
 const MANIFEST_FILE = "manifest.json";
 /** Full path — for log messages only. */
-export const MANIFEST_PATH = `${OPENSHIP_DIR}/${MANIFEST_FILE}`;
+export const MANIFEST_PATH = `${KOVALIO_DIR}/${MANIFEST_FILE}`;
 const MANIFEST_VERSION = 1;
 
 export interface ManifestDeployment {
@@ -64,7 +64,7 @@ export interface ManifestProjectEntry {
   updatedAt: string;
 }
 
-export interface OpenshipManifest {
+export interface KovalioManifest {
   version: number;
   updatedAt: string;
   projects: ManifestProjectEntry[];
@@ -74,18 +74,18 @@ export interface OpenshipManifest {
  * Read the manifest over SSH. Returns null if absent / unparseable / a version
  * we don't understand (caller treats null as "no manifest").
  */
-export async function readManifest(exec: CommandExecutor): Promise<OpenshipManifest | null> {
-  const trimmed = await readOpenshipFile(exec, MANIFEST_FILE);
+export async function readManifest(exec: CommandExecutor): Promise<KovalioManifest | null> {
+  const trimmed = await readKovalioFile(exec, MANIFEST_FILE);
   if (!trimmed) return null;
   try {
-    const parsed = JSON.parse(trimmed) as OpenshipManifest;
+    const parsed = JSON.parse(trimmed) as KovalioManifest;
     if (parsed.version !== MANIFEST_VERSION || !Array.isArray(parsed.projects)) {
-      console.warn(`[openship-manifest] ${MANIFEST_PATH} unrecognized shape/version — ignoring`);
+      console.warn(`[kovalio-manifest] ${MANIFEST_PATH} unrecognized shape/version — ignoring`);
       return null;
     }
     return parsed;
   } catch (err) {
-    console.warn(`[openship-manifest] failed to parse ${MANIFEST_PATH}: ${safeErrorMessage(err)}`);
+    console.warn(`[kovalio-manifest] failed to parse ${MANIFEST_PATH}: ${safeErrorMessage(err)}`);
     return null;
   }
 }
@@ -94,13 +94,13 @@ export async function readManifest(exec: CommandExecutor): Promise<OpenshipManif
  * Atomically write the manifest over SSH: temp file → `mv -f` (a kill mid-write
  * never leaves a half-flushed JSON). Mirrors mail-state's writeState.
  */
-export async function writeManifest(exec: CommandExecutor, manifest: OpenshipManifest): Promise<void> {
-  const next: OpenshipManifest = {
+export async function writeManifest(exec: CommandExecutor, manifest: KovalioManifest): Promise<void> {
+  const next: KovalioManifest = {
     ...manifest,
     version: MANIFEST_VERSION,
     updatedAt: new Date().toISOString(),
   };
-  await writeOpenshipFile(exec, MANIFEST_FILE, JSON.stringify(next, null, 2));
+  await writeKovalioFile(exec, MANIFEST_FILE, JSON.stringify(next, null, 2));
 }
 
 /**
@@ -144,9 +144,9 @@ export async function removeProjectFromManifest(
 // exact DB rows (project + services + deployments + service_deployments + domains
 // + env structure) — written beside it so re-import can `restoreSubgraph` the
 // project FAITHFULLY instead of reconstructing it from live docker. Flat file
-// (no subdir) so it reuses the atomic openship-file helpers verbatim.
+// (no subdir) so it reuses the atomic kovalio-file helpers verbatim.
 
-/** `.openship/snapshot-<projectId>.json`. projectId is `proj_<alnum>` (safe
+/** `.kovalio/snapshot-<projectId>.json`. projectId is `proj_<alnum>` (safe
  *  filename) — enforce it here so a crafted id can never traverse the path or
  *  inject into the remote command that consumes this name. */
 function snapshotFile(projectId: string): string {
@@ -162,7 +162,7 @@ export async function writeProjectSnapshot(
   projectId: string,
   dump: DatabaseDump,
 ): Promise<void> {
-  await writeOpenshipFile(exec, snapshotFile(projectId), JSON.stringify(dump));
+  await writeKovalioFile(exec, snapshotFile(projectId), JSON.stringify(dump));
 }
 
 /** Read + parse a project snapshot. Null when absent / unparseable / wrong shape. */
@@ -170,14 +170,14 @@ export async function readProjectSnapshot(
   exec: CommandExecutor,
   projectId: string,
 ): Promise<DatabaseDump | null> {
-  const raw = await readOpenshipFile(exec, snapshotFile(projectId));
+  const raw = await readKovalioFile(exec, snapshotFile(projectId));
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as DatabaseDump;
     if (parsed?.scope?.kind !== "project" || !parsed.tables) return null;
     return parsed;
   } catch (err) {
-    console.warn(`[openship-snapshot] failed to parse snapshot for ${projectId}: ${safeErrorMessage(err)}`);
+    console.warn(`[kovalio-snapshot] failed to parse snapshot for ${projectId}: ${safeErrorMessage(err)}`);
     return null;
   }
 }
@@ -187,7 +187,7 @@ export async function projectSnapshotExists(
   exec: CommandExecutor,
   projectId: string,
 ): Promise<boolean> {
-  return openshipFileExists(exec, snapshotFile(projectId));
+  return kovalioFileExists(exec, snapshotFile(projectId));
 }
 
 /** Delete a project's snapshot (teardown). Idempotent. */
@@ -195,5 +195,5 @@ export async function removeProjectSnapshot(
   exec: CommandExecutor,
   projectId: string,
 ): Promise<void> {
-  await removeOpenshipFile(exec, snapshotFile(projectId));
+  await removeKovalioFile(exec, snapshotFile(projectId));
 }

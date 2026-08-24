@@ -167,7 +167,7 @@ describe("a doc root that IS the release root is pruned of build inputs", () => 
     const release = `${RELEASES}/dep_new`;
     const host = new FakeHost(
       new Set([RELEASES, release, `${release}/.git`, `${release}/index.html`]),
-      { [release]: [".git", "index.html", "Dockerfile.openship", ".dockerignore"] },
+      { [release]: [".git", "index.html", "Dockerfile.kovalio", ".dockerignore"] },
     );
 
     await runtime(host).promoteStaticRelease({
@@ -183,7 +183,7 @@ describe("a doc root that IS the release root is pruned of build inputs", () => 
     const rm = host.commands.find((c) => c.startsWith("rm -rf ") && c.includes(".git"));
     expect(rm).toBeTruthy();
     // The same predicate the Docker sandbox uses, so all four go, not just .git.
-    expect(rm).toContain("Dockerfile.openship");
+    expect(rm).toContain("Dockerfile.kovalio");
     expect(rm).toContain(".dockerignore");
     // ...and real content is untouched.
     expect(await host.exists(`${release}/index.html`)).toBe(true);

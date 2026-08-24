@@ -340,11 +340,11 @@ describe("reconcileServerModule", () => {
   });
 
   it("seeds a baseline when the legacy marker exists (no replay)", async () => {
-    const { executor, files } = fakeExecutor({ seed: { "/legacy/.openship-lua-version": "deadbeef" } });
+    const { executor, files } = fakeExecutor({ seed: { "/legacy/.kovalio-lua-version": "deadbeef" } });
     const res = await reconcileServerModule(executor, {
       module: "openresty", profile: PROFILE, mode: "auto",
       catalog: verified(1, "1.0.0", [baseline], luaAsset),
-      seed: { legacyMarkerPath: "/legacy/.openship-lua-version", baselineVersion: "1.0.0" },
+      seed: { legacyMarkerPath: "/legacy/.kovalio-lua-version", baselineVersion: "1.0.0" },
     });
     expect(res.changed).toBe(false);
     expect(res.appliedSteps).toEqual([]);

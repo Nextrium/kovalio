@@ -1,6 +1,6 @@
 /**
  * Database dump / restore primitives — power team-mode migration AND
- * per-project transfer between local and Openship Cloud.
+ * per-project transfer between local and Kovalio Cloud.
  *
  * A subgraph is a coherent, FK-closed slice of the DB. Three flavors today:
  *

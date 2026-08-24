@@ -87,7 +87,7 @@ vi.mock("@repo/db", () => ({
  * What the Docker daemon ACTUALLY answers when a release directory is handed to a
  * container action — measured against dockerode 4.0.9 + Docker 29.2.1:
  *
- *   getContainer("/opt/openship/static/releases/dep_1").stop()
+ *   getContainer("/opt/kovalio/static/releases/dep_1").stop()
  *     → statusCode 301, "(HTTP code 301) unexpected -  "
  *
  * The leading slash doubles in `/containers/<id>/stop`, and the daemon's router
@@ -233,7 +233,7 @@ describe("project pause / resume", () => {
    */
   const asStaticProject = () => {
     h.project.hasServer = false;
-    h.containerId = "/opt/openship/static/releases/dep_1";
+    h.containerId = "/opt/kovalio/static/releases/dep_1";
     h.domainRows = [
       {
         id: "dom_1",
@@ -242,7 +242,7 @@ describe("project pause / resume", () => {
         domainType: "custom",
         verified: true,
         targetPort: null,
-        targetPath: "/opt/openship/static/releases/dep_1",
+        targetPath: "/opt/kovalio/static/releases/dep_1",
       },
       {
         id: "dom_2",
@@ -251,7 +251,7 @@ describe("project pause / resume", () => {
         domainType: "managed",
         verified: true,
         targetPort: null,
-        targetPath: "/opt/openship/static/releases/dep_1",
+        targetPath: "/opt/kovalio/static/releases/dep_1",
       },
       // Belongs to a service, not the project — pausing the project must not
       // deregister it.
@@ -364,8 +364,8 @@ describe("project pause / resume", () => {
     expect(h.project.disabledAt).toBeInstanceOf(Date);
   });
 
-  it("refuses to pause the Openship control plane", async () => {
-    h.project.appTemplateId = "openship";
+  it("refuses to pause the Kovalio control plane", async () => {
+    h.project.appTemplateId = "kovalio";
     const { disableProject } = await load();
 
     await expect(disableProject("proj_1", "org_1")).rejects.toThrow(/control plane/i);

@@ -6,7 +6,7 @@ import { getAuthBaseUrl } from "@/lib/api/urls";
  * API base URL - auth requests go directly to the selected API origin.
  *
  * Local SaaS uses localhost:4100. Public-host dev and production use
- * api.openship.io so Better Auth can share cookies with app.openship.io.
+ * api.nextrium.org so Better Auth can share cookies with kovalio.nextrium.org.
  */
 const AUTH_BASE_URL = getAuthBaseUrl();
 

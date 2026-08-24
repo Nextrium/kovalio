@@ -6,7 +6,7 @@
  * preference. Our own Dockerfile generator bakes `node_modules/.bin` into the
  * runtime stage's `ENV PATH`, and the bare/cloud start commands prepend the same
  * dirs as a shell prelude, so that a dependency-binary start command
- * (`next start`, `gatsby serve`) resolves at all — openship#623. But none of the
+ * (`next start`, `gatsby serve`) resolves at all — kovalio#623. But none of the
  * transports that carry a project's env do variable expansion:
  *
  *   - docker `Env`      — an absolute literal; REPLACES the image's `ENV PATH`

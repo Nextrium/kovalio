@@ -1,16 +1,16 @@
 /**
- * Adopt a discovered Docker stack as an Openship project.
+ * Adopt a discovered Docker stack as an Kovalio project.
  *
  * Re-discovers the server (server truth, not client-sent config), filters to the
  * services the user selected, and creates a `services` project whose service
  * rows mirror the running containers. Same-server adoption reuses the EXISTING
  * named volumes in place by default (`namespaceVolumes=false`, original bare
- * names) so data survives — Openship would otherwise re-scope them to
- * `openship-<slug>-<name>` and mount empty volumes. A service the user marks
+ * names) so data survives — Kovalio would otherwise re-scope them to
+ * `kovalio-<slug>-<name>` and mount empty volumes. A service the user marks
  * "copy" instead keeps the scoped name; its data is duplicated into that new
  * volume during moving_data, leaving the original volume untouched.
  *
- * This creates records only; deploy + cutover (stop old → start Openship's) is a
+ * This creates records only; deploy + cutover (stop old → start Kovalio's) is a
  * separate step so the user reviews before anything on the server changes.
  */
 
@@ -32,7 +32,7 @@ import {
 import { unmaskEnv } from "../../lib/secret-env";
 import { createServerDockerRuntime } from "../../lib/deployment-runtime";
 import { sshManager } from "../../lib/ssh-manager";
-import { readProjectSnapshot } from "../../lib/openship-manifest";
+import { readProjectSnapshot } from "../../lib/kovalio-manifest";
 import { discoverServerStack } from "./docker-inspect.service";
 import { excludeAlreadyManaged } from "./managed-containers";
 import { perService, selectDiscoveredServices, serviceUid } from "./select-services";
@@ -42,13 +42,13 @@ import {
   isExternalHostPublish,
   type DiscoveredService,
   type DiscoveredVolumeMount,
-  type OpenshipProjectGroup,
+  type KovalioProjectGroup,
 } from "./docker-reconcile";
 
 type EnsureBody = Parameters<typeof ensureProject>[0];
 type ParsedComposeList = Parameters<typeof repos.service.syncFromCompose>[1];
 
-/** Openship deployment id shape — validated before trusting a server label as a PK. */
+/** Kovalio deployment id shape — validated before trusting a server label as a PK. */
 const DEPLOYMENT_ID_RE = /^dep_[A-Za-z0-9]+$/;
 
 /** Compose file names to probe in a linked repo (mirrors prepare.service COMPOSE_FILES). */
@@ -81,7 +81,7 @@ export async function parseRepoCompose(
   branch?: string,
 ): Promise<RepoComposeService[]> {
   // NB: we deliberately do NOT read the repo's `.env` for `${VAR}` interpolation.
-  // Secrets live in Openship's ENCRYPTED env store — captured from the running
+  // Secrets live in Kovalio's ENCRYPTED env store — captured from the running
   // container for adopted services, or set via the wizard/env UI for new ones —
   // never a committed repo file. Pulling a `.env` here would drop those values
   // into the PLAINTEXT service.environment column. So a bare `${VAR}` with no
@@ -105,7 +105,7 @@ export async function parseRepoCompose(
       const blocking = blockingComposeFields(parsed.unsupported);
       if (blocking.length > 0) {
         throw new Error(
-          "The repo's Docker Compose file declares options Openship can't deploy faithfully:\n" +
+          "The repo's Docker Compose file declares options Kovalio can't deploy faithfully:\n" +
             describeBlockingComposeFields(blocking),
         );
       }
@@ -208,16 +208,16 @@ function volumeToComposeString(v: DiscoveredVolumeMount): string | null {
   return `${v.source}:${v.target}${mode}`;
 }
 
-/** Normalize an adopted service's ports for the shared Openship service group.
+/** Normalize an adopted service's ports for the shared Kovalio service group.
  *
  *  Adoption deliberately leaves every service UNEXPOSED and drops the HOST side of
  *  ALL published ports, keeping only the container port. Three reasons, one rule:
  *
- *   - 80/443 belong to Openship's OpenResty edge — a service can't bind them, the
+ *   - 80/443 belong to Kovalio's OpenResty edge — a service can't bind them, the
  *     edge routes to the container port instead.
  *   - A pinned host port (e.g. "5432:5432") collides with whatever already holds
  *     it on the box: another adopted service, a second project's Postgres, or
- *     Openship's OWN Postgres. That collision is the exact `port is already
+ *     Kovalio's OWN Postgres. That collision is the exact `port is already
  *     allocated` failure #388 reports — and it aborts the whole deploy, not just
  *     the one service. Stripping the host binding removes the entire class.
  *   - Exposure is added LATER from the project's Domains tab, which runs the one
@@ -477,7 +477,7 @@ export async function adoptServerStack(opts: {
    *  containers (#584). See {@link selectDiscoveredServices}. */
   serviceContainerIds?: string[];
   /** Adopt in flat-docker mode — must match the scan the user selected from, or
-   *  openship-labeled containers are treated as managed and none are found. */
+   *  kovalio-labeled containers are treated as managed and none are found. */
   flatDocker?: boolean;
   /** Restrict `serviceNames` resolution to ONE discovered group: the compose
    *  project name, or `null` for the standalone (hand-run container) group.
@@ -559,14 +559,14 @@ export async function adoptServerStack(opts: {
   const { project_id, created } = await ensureProject(ensureBody, organizationId);
 
   // `ensureProject` REUSES a project whose slug matches the name, and
-  // slugify("Openship") is the control-plane self-app's own slug — so naming a
-  // migration "Openship" adopted the user's foreign containers INTO Openship's own
+  // slugify("Kovalio") is the control-plane self-app's own slug — so naming a
+  // migration "Kovalio" adopted the user's foreign containers INTO Kovalio's own
   // project, with `created:false` so a rollback would not even remove it. Refuse the
   // name instead. Checked on the result rather than by re-deriving the slug: the
   // matching rules live in ensureProject and must not be duplicated here.
   if (!created && isControlPlaneProject(await repos.project.findById(project_id))) {
     throw new Error(
-      `"${projectName}" is reserved — that is Openship's own project on this instance. ` +
+      `"${projectName}" is reserved — that is Kovalio's own project on this instance. ` +
         `Pick a different project name.`,
     );
   }
@@ -650,7 +650,7 @@ export async function adoptServerStack(opts: {
     if (!svc) continue;
     // Volume ownership: reuse the original bare-named volumes in place
     // (namespaceVolumes=false) — EXCEPT same-server services the user marked
-    // "copy", which keep the scoped openship-<slug>-<name> name so the deploy
+    // "copy", which keep the scoped kovalio-<slug>-<name> name so the deploy
     // mounts the fresh copy (populated in moving_data) and the original is left
     // untouched. Cross-server always reuses bare names (the A→B stream trick).
     const copy = Boolean(sameServer) && volumeStrategies?.[s.name] === "copy";
@@ -839,13 +839,13 @@ async function writeAttachedRuntime(opts: {
   return true;
 }
 
-/** Openship id shape — validated before we trust a server-supplied label as a PK. */
+/** Kovalio id shape — validated before we trust a server-supplied label as a PK. */
 const PROJECT_ID_RE = /^proj_[A-Za-z0-9]+$/;
 
 /**
  * Live re-attach: reconstruct the runtime graph (deployment + service_deployment
  * rows) from the ALREADY-RUNNING containers, PRESERVING the deployment id so the
- * live containers (labelled `openship.deployment=<id>`) stay attached — the
+ * live containers (labelled `kovalio.deployment=<id>`) stay attached — the
  * Services tab reads live docker by that label, so the project shows deployed +
  * running with NO redeploy and no container disruption. Best-effort: returns the
  * reconstructed deployment id, or null when it can't run (no preserved dep id, id
@@ -855,13 +855,13 @@ async function reattachRuntime(opts: {
   projectId: string;
   organizationId: string;
   serverId: string;
-  group: OpenshipProjectGroup;
+  group: KovalioProjectGroup;
   chosen: DiscoveredService[];
   createdServices: Service[];
 }): Promise<string | null> {
   const { projectId, organizationId, serverId, group, chosen, createdServices } = opts;
 
-  // Need the ORIGINAL deployment id (from the openship.deployment label) so the
+  // Need the ORIGINAL deployment id (from the kovalio.deployment label) so the
   // running containers match the live-status query. Absent / malformed → not a
   // standard deploy container; skip (records-only). Refuse if it already exists.
   const depId = group.deploymentId;
@@ -900,7 +900,7 @@ async function reattachRuntime(opts: {
  * live containers (by their existing container id), so the Services tab reads them
  * live immediately. The migrated project is a NEW id, so (unlike re-import) the
  * caller MINTS the deployment id and the adopted containers keep their ORIGINAL
- * `openship.*`/compose labels — labels are immutable in place.
+ * `kovalio.*`/compose labels — labels are immutable in place.
  *
  * Status/logs/terminal therefore CANNOT be label-scoped for these containers: the
  * live read matches them by canonical name and stored container id instead
@@ -968,7 +968,7 @@ export async function attachLiveRuntime(opts: {
 
 /**
  * Pre-join the migration's reused (attach-live) containers to the target project's
- * `openship-<slug>` network with a DNS alias = each row's name, BEFORE the native
+ * `kovalio-<slug>` network with a DNS alias = each row's name, BEFORE the native
  * deploy runs. The deploy's ensureServiceGroup is idempotent (reuses this
  * network), so a freshly-built service resolves the reused container by name from
  * its very first start (e.g. `web` → `postgres:5432`). This is what makes the
@@ -1101,9 +1101,9 @@ async function restoreFromSnapshot(opts: {
 }
 
 /**
- * Re-import an ORPHANED Openship project recovered from a server (see
- * `reconcileOpenshipProjects`): the DB was reset (DR) or the server came from
- * another Openship instance. Rebuilds the project + compose service rows,
+ * Re-import an ORPHANED Kovalio project recovered from a server (see
+ * `reconcileKovalioProjects`): the DB was reset (DR) or the server came from
+ * another Kovalio instance. Rebuilds the project + compose service rows,
  * PRESERVING the original id (+ slug) so the still-running containers' labels
  * re-attach immediately — teardown/reclaim/network reconcile recognize them. Then
  * LIVE RE-ATTACHES the runtime graph (deployment + service_deployment rows) from
@@ -1114,7 +1114,7 @@ async function restoreFromSnapshot(opts: {
  * land UNEXPOSED, so routing/OpenResty is untouched here; adding a domain later
  * runs the unified ensure-OpenResty + 80/443 takeover-consent flow.
  */
-export async function reimportOpenshipProject(opts: {
+export async function reimportKovalioProject(opts: {
   serverId: string;
   organizationId: string;
   projectId: string;
@@ -1125,7 +1125,7 @@ export async function reimportOpenshipProject(opts: {
 
   // Never trust a raw label as a primary key without shape-checking it.
   if (!PROJECT_ID_RE.test(projectId)) {
-    throw new Error("Invalid Openship project id.");
+    throw new Error("Invalid Kovalio project id.");
   }
   // Refuse-not-merge: if ANY project (any org, incl. soft-deleted) already owns
   // this id, do not graft server-supplied state onto it.
@@ -1135,12 +1135,12 @@ export async function reimportOpenshipProject(opts: {
   }
 
   const stack = await discoverServerStack(serverId, organizationId);
-  const group = stack.openshipProjects.find((p) => p.projectId === projectId);
+  const group = stack.kovalioProjects.find((p) => p.projectId === projectId);
   if (!group) {
-    throw new Error("That Openship project was not found on the server.");
+    throw new Error("That Kovalio project was not found on the server.");
   }
   if (group.knownHere) {
-    throw new Error("That Openship project is already managed by this instance.");
+    throw new Error("That Kovalio project is already managed by this instance.");
   }
 
   // PRIMARY: a full server-side subgraph snapshot → restore it faithfully (exact

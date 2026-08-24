@@ -119,7 +119,7 @@ function rewriteNode(node: unknown, origin: string): unknown {
  *
  * Better Auth builds both MCP discovery documents from its STATIC baseURL —
  * materialised at startup with no request in scope. On a box whose API container
- * has no OPENSHIP_PUBLIC_URL that origin is the internal upstream
+ * has no KOVALIO_PUBLIC_URL that origin is the internal upstream
  * (`http://api:4000`), so the advertised authorize/token endpoints name a host
  * the external OAuth client can't reach (#543). Rewriting onto the origin the
  * request actually arrived on lines discovery up with the request-scoped

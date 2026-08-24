@@ -54,7 +54,7 @@ describe("webmail catalog contract", () => {
   it("generates the two secrets nobody may be asked for", () => {
     // SESSION_ENCRYPTION_KEY is generated ONCE at install and reused from the
     // project's env on every redeploy — a fresh key signs every operator out.
-    // BRANDING_ADMIN_TOKEN is openship→Zero only and must never reach a form.
+    // BRANDING_ADMIN_TOKEN is kovalio→Zero only and must never reach a form.
     const configKeys = new Map((template?.configFields ?? []).map((f) => [f.key, f]));
     for (const key of ["SESSION_ENCRYPTION_KEY", "BRANDING_ADMIN_TOKEN"]) {
       const field = configKeys.get(key);

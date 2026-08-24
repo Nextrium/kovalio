@@ -5,9 +5,9 @@ description: "\"This operation targets the HOST machine, but no host channel is 
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-When Openship runs in a container it builds and runs your apps through the Docker socket — but a
+When Kovalio runs in a container it builds and runs your apps through the Docker socket — but a
 container can't operate the machine underneath it. For the handful of jobs that need the host itself,
-Openship keeps a private SSH channel to it: an ed25519 key authorized for one user, dialed over the
+Kovalio keeps a private SSH channel to it: an ed25519 key authorized for one user, dialed over the
 internal `host.docker.internal` bridge and never over a public address.
 
 This page is about the state where that channel was never built. The install reported success, the
@@ -16,15 +16,15 @@ dashboard looks fine, ordinary deploys work — and then one specific operation 
 <Callout type="error">
 ```
 This operation targets the HOST machine, but no host channel is configured
-(OPENSHIP_HOST_SSH_HOST is unset) and Openship is running in a container — so it
+(KOVALIO_HOST_SSH_HOST is unset) and Kovalio is running in a container — so it
 would have run inside the container instead, against the wrong filesystem.
-Re-run `openship up` to provision the host channel. `openship doctor` reports
+Re-run `kovalio up` to provision the host channel. `kovalio doctor` reports
 whether it worked.
 ```
 </Callout>
 
 You can also meet it before anything fails: as a `!!! HOST CONTROL NOT CONFIGURED` banner in the API's
-boot log, as a **Host control** row reading *never provisioned* in `openship doctor`, or as a banner on
+boot log, as a **Host control** row reading *never provisioned* in `kovalio doctor`, or as a banner on
 the server's screen in the dashboard.
 
 <Callout title="Where this lives">
@@ -42,7 +42,7 @@ Read this before you touch anything, because the instinct to rebuild the box is 
   restarting and routing your apps needs the socket, not this channel.
 - **Blocked until the channel works:**
   - the host terminal, host system info and host port scans
-  - taking over `:80`/`:443` from a proxy Openship didn't start
+  - taking over `:80`/`:443` from a proxy Kovalio didn't start
   - installing or updating the mail engine
   - deploying a catalog app that needs a generated config file on the host (Supabase's `kong.yml`, say)
 
@@ -64,15 +64,15 @@ to the wrong one, the first does nothing and the second can cost you every store
 Check which you have:
 
 ```bash
-ls ~/.openship/compose/docker-compose.yml   # exists → the CLI installed this stack
+ls ~/.kovalio/compose/docker-compose.yml   # exists → the CLI installed this stack
 ```
 
-### Installed with `openship up`
+### Installed with `kovalio up`
 
 One command — the same one the error names:
 
 ```bash
-openship up
+kovalio up
 ```
 
 It generates and authorizes the key, writes the environment variables, recreates the API container so it
@@ -83,25 +83,25 @@ probe reports a dropped connection it offers to add the firewall rule for you (o
 The run is idempotent: your secrets, database volume and certificates are carried forward, and a channel
 that already works is re-provisioned to the same key.
 
-<Callout title="openship update does this too — but only when there's a newer release" type="info">
-`openship update` regenerates the stack from the new template and re-provisions the channel the same
+<Callout title="kovalio update does this too — but only when there's a newer release" type="info">
+`kovalio update` regenerates the stack from the new template and re-provisions the channel the same
 way, then re-probes it. That makes it the better command when you're also behind a version — an update
 is exactly when a working channel silently stops working, because the recreated API container can land
 in a different docker subnet than your firewall rule allows. But when you're already on the latest
 release it exits at *"Already on the latest version"* without touching the stack, so on its own it is
-not a repair. Use `openship up`.
+not a repair. Use `kovalio up`.
 </Callout>
 
 ### Installed from the raw `docker/docker-compose.yml`
 
-<Callout type="warn" title="Do not run openship up on this box">
-Both install shapes pin the Compose project name `openship`, so `openship up` here doesn't create a
+<Callout type="warn" title="Do not run kovalio up on this box">
+Both install shapes pin the Compose project name `kovalio`, so `kovalio up` here doesn't create a
 second stack — it **adopts** yours, volumes and all, while generating a fresh
-`~/.openship/compose/.env`. Current releases stop before writing anything (*"Refusing to continue: this
+`~/.kovalio/compose/.env`. Current releases stop before writing anything (*"Refusing to continue: this
 would regenerate secrets your existing install already has"*), which is the outcome you want. Releases
 without that guard minted a new `BETTER_AUTH_SECRET` — the key your stored environment variables are
-encrypted with — making **every one of them permanently unreadable**. `openship update` is not the
-answer either: with no `~/.openship/compose` stack to reconcile it updates the CLI and leaves your
+encrypted with — making **every one of them permanently unreadable**. `kovalio update` is not the
+answer either: with no `~/.kovalio/compose` stack to reconcile it updates the CLI and leaves your
 containers alone.
 </Callout>
 
@@ -114,9 +114,9 @@ one — setting them alone gets you `Cannot read host SSH key` or a hung handsha
 **Generate a key on the host** (not inside a container):
 
 ```bash
-sudo mkdir -p /var/lib/openship/host-ssh
-sudo ssh-keygen -t ed25519 -N '' -C openship-host-executor \
-  -f /var/lib/openship/host-ssh/id_ed25519
+sudo mkdir -p /var/lib/kovalio/host-ssh
+sudo ssh-keygen -t ed25519 -N '' -C kovalio-host-executor \
+  -f /var/lib/kovalio/host-ssh/id_ed25519
 ```
 </Step>
 
@@ -128,7 +128,7 @@ and then can't do the job.
 ```bash
 sudo mkdir -p /root/.ssh && sudo chmod 700 /root/.ssh
 printf 'from="172.16.0.0/12,192.168.0.0/16,10.0.0.0/8,127.0.0.1",restrict,pty %s\n' \
-  "$(sudo cat /var/lib/openship/host-ssh/id_ed25519.pub)" \
+  "$(sudo cat /var/lib/kovalio/host-ssh/id_ed25519.pub)" \
   | sudo tee -a /root/.ssh/authorized_keys
 sudo chmod 600 /root/.ssh/authorized_keys
 ```
@@ -148,15 +148,15 @@ the step that's actually missing.
 **Set the variables** in the `.env` you pass with `--env-file`:
 
 ```bash
-OPENSHIP_HOST_SSH_HOST=host.docker.internal
-OPENSHIP_HOST_SSH_USER=root
-OPENSHIP_HOST_SSH_PORT=22
-OPENSHIP_HOST_SSH_KEY=/run/secrets/openship_host_key
-OPENSHIP_HOST_KEY_PATH=/var/lib/openship/host-ssh/id_ed25519
+KOVALIO_HOST_SSH_HOST=host.docker.internal
+KOVALIO_HOST_SSH_USER=root
+KOVALIO_HOST_SSH_PORT=22
+KOVALIO_HOST_SSH_KEY=/run/secrets/kovalio_host_key
+KOVALIO_HOST_KEY_PATH=/var/lib/kovalio/host-ssh/id_ed25519
 ```
 
-The last two are a pair: `OPENSHIP_HOST_KEY_PATH` is the key's path **on the host**, which
-`docker/docker-compose.yml` mounts at `OPENSHIP_HOST_SSH_KEY` inside the API container — so no compose
+The last two are a pair: `KOVALIO_HOST_KEY_PATH` is the key's path **on the host**, which
+`docker/docker-compose.yml` mounts at `KOVALIO_HOST_SSH_KEY` inside the API container — so no compose
 file needs editing. It must be an **absolute** path; a relative one resolves against `docker/`, not the
 directory you run `docker compose` from. Left unset, `/dev/null` is mounted in its place, which is what
 lets the stack start on a box with no key at all.
@@ -180,7 +180,7 @@ The repair happens on the host and the fault shows up in a container, so "the co
 "the channel works" are genuinely different questions. Ask the second one:
 
 ```bash
-openship doctor
+kovalio doctor
 ```
 
 The **Host control** row dials the host from inside the API container: `reachable at
@@ -188,9 +188,9 @@ host.docker.internal:22` is the pass. Anything else names the cause — a droppe
 refusal (sshd), or a name that didn't resolve.
 
 <Callout title="On a raw docker compose install, doctor reports less" type="info">
-The dial above needs the CLI's own stack at `~/.openship/compose`, which a hand-run
+The dial above needs the CLI's own stack at `~/.kovalio/compose`, which a hand-run
 `docker/docker-compose.yml` install doesn't have. There, the **Host control** row falls back to what the
-API says about its own environment over the loopback API: `never provisioned — run openship up` (read
+API says about its own environment over the loopback API: `never provisioned — run kovalio up` (read
 the warning above before you do), `reachable from the api container`, or the fault by name. It cannot
 name an address, because nothing dialed one.
 
@@ -244,7 +244,7 @@ sudo firewall-cmd --reload
 `172.16.0.0/12` is Docker's default address pool — wider than one bridge, and correct for any of them.
 A raw `iptables` rule works too but doesn't survive a reboot on its own; persist it with
 `iptables-persistent` or your distro's equivalent. On a CLI install you don't write any of this
-yourself: `openship up` and `openship update` read the API container's actual networks, print the
+yourself: `kovalio up` and `kovalio update` read the API container's actual networks, print the
 narrower rule, and offer to apply it (or take `--open-host-firewall` for a scripted run).
 
 <Callout title="The rule is in place and it still doesn't work" type="info">
@@ -259,12 +259,12 @@ A box that only manages *remote* servers doesn't need a host channel. Switching 
 decision, not a repair — everything in the blocked list above stays blocked:
 
 ```bash
-openship up --no-host-control
+kovalio up --no-host-control
 ```
 
 That deletes the private key and revokes its `authorized_keys` line, so the box's attack surface
 shrinks rather than just this install's behaviour. On a raw `docker compose` install the equivalent is
-`OPENSHIP_HOST_CONTROL=false` in `.env` (plus removing the key and its authorized line yourself). Host
+`KOVALIO_HOST_CONTROL=false` in `.env` (plus removing the key and its authorized line yourself). Host
 operations then refuse with a message naming the choice instead of the fault, and this box stops being
 offered as a deploy target.
 

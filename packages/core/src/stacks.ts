@@ -908,7 +908,7 @@ export const STACKS = {
     defaultStartCommand: "",
   },
 
-  // ── Opinionated openship installs (commands fixed by the runner) ───────────
+  // ── Opinionated kovalio installs (commands fixed by the runner) ───────────
 
   webmail: {
     name: "Webmail",
@@ -1101,7 +1101,7 @@ const NODE_BIN_PACKAGE_MANAGERS: ReadonlySet<string> = new Set(["npm", "yarn", "
  * reason a package.json script can say `next build`. Every command we generate is
  * handed to a bare `sh -c` instead (a Dockerfile RUN, an SSH exec, a container
  * Cmd), so nothing does that injection for us and the binary is unresolvable even
- * though it sits right there on disk - openship#623, exit 127.
+ * though it sits right there on disk - kovalio#623, exit 127.
  *
  * `roots` are searched nearest-first: a monorepo hoists dependencies to the
  * workspace root, so the sub-app directory alone is not enough. Duplicates are

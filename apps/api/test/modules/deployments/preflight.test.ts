@@ -55,7 +55,7 @@ describe("runPreflightChecks", () => {
             available: input.slug !== "taken-endpoint",
             message:
               input.slug === "taken-endpoint"
-                ? '"taken-endpoint.openship.test" is already taken. Choose a different subdomain.'
+                ? '"taken-endpoint.kovalio.test" is already taken. Choose a different subdomain.'
                 : undefined,
           }
         : undefined,

@@ -87,7 +87,7 @@ export function useSettingsTabs(): { tabs: SettingsTab[]; activeTab: SettingsTab
     { id: "team", label: t.settings.sidebar.tabs.team, icon: Users, visible: true },
     { id: "notifications", label: t.settings.sidebar.tabs.notifications, icon: Bell, visible: true },
     // Instance SMTP transport — self-hosted only (the SaaS uses its own mailer).
-    // In Openship Mail it sits next to a whole rail of mail-server surfaces, where
+    // In Kovalio Mail it sits next to a whole rail of mail-server surfaces, where
     // "Email" would read as the mail server's own config; "System sender" says
     // what it actually is (where invites and alerts are sent FROM).
     {

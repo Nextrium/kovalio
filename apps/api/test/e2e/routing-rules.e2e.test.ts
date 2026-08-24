@@ -13,7 +13,7 @@
  *   - `{"source":"/(.*).html","destination":"/$1"}` on a static site 308'd EVERY path to
  *     `/index`, forever: a regex location matches `$uri`, which `index`/`try_files` rewrite
  *     internally, so the rule fired on nginx's own `/index.html`.
- *   - A compiled catch-all out-ranked `location /_openship/hooks/` and the composite
+ *   - A compiled catch-all out-ranked `location /_kovalio/hooks/` and the composite
  *     `/api/` backend (a regex location beats any plain prefix), so GitHub deliveries and
  *     authenticated API traffic went to whatever origin the repo named.
  *   - `trailingSlash:false` put any index-less directory in a 301↔308 loop.
@@ -63,11 +63,11 @@ import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const LUA_SRC = join(REPO_ROOT, "packages/adapters/src/infra/lua");
-const LUA_DEST = "/usr/local/openresty/site/lualib/openship";
+const LUA_DEST = "/usr/local/openresty/site/lualib/kovalio";
 const SITES_DIR = OPENRESTY_DEFAULT_PATHS.sitesDir;
 const CONF_PATH = `${OPENRESTY_DEFAULT_PATHS.confDir}/nginx.conf`;
-/** Must be under /opt/openship — `assertValidStaticRoot` refuses anything else. */
-const WWW = "/opt/openship/www";
+/** Must be under /opt/kovalio — `assertValidStaticRoot` refuses anything else. */
+const WWW = "/opt/kovalio/www";
 
 /** `cat > path <<'EOF'` — quoted delimiter, so nothing in the body is expanded. */
 function heredoc(path: string, content: string): string {
@@ -507,8 +507,8 @@ http {
     // A regex location beats any plain prefix, so the catch-all swallowed both: the
     // delivery (with its X-Hub-Signature) and authenticated /api traffic were proxied to
     // the third-party origin the repo named.
-    expect((await ask(port, "/_openship/hooks/github", "hooks.test")).body).toContain(
-      "WEBHOOK uri=/_openship/hooks/github",
+    expect((await ask(port, "/_kovalio/hooks/github", "hooks.test")).body).toContain(
+      "WEBHOOK uri=/_kovalio/hooks/github",
     );
     const api = await ask(port, "/api/thing", "hooks.test");
     expect(api.body).toContain("BACKEND uri=/api/thing");

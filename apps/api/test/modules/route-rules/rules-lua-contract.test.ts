@@ -193,7 +193,7 @@ describe("rules_guard.lua keeps the properties its comments promise", () => {
     // is the most expensive thing on this path.
     expect(guard).toContain("if country_cache == nil then");
     expect(guard).toContain("country_cache or nil");
-    expect(guard).toContain("pcall(require, \"openship.geo_country\")");
+    expect(guard).toContain("pcall(require, \"kovalio.geo_country\")");
   });
 
   it("returns early when the host has no rules (the common case)", () => {

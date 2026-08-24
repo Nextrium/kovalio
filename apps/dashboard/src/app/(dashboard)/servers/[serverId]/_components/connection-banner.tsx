@@ -60,7 +60,7 @@ export function classifyConnectionError(
  *
  * It also decides WHICH host-channel state this is, because the remedy differs: a
  * channel that was dialed and didn't answer wants a host firewall rule, one that
- * was never provisioned wants `openship up` (#509).
+ * was never provisioned wants `kovalio up` (#509).
  */
 export interface ConnectionDiagnosis {
   /** The address the API DIALED. Absent when there was no endpoint to dial. */
@@ -92,7 +92,7 @@ export function readConnectionDiagnosis(body: unknown): ConnectionDiagnosis | un
 /**
  * The address the API actually dialed, or null when it dialed nothing.
  *
- * The #509 state is containerized with no OPENSHIP_HOST_SSH_HOST: there is no
+ * The #509 state is containerized with no KOVALIO_HOST_SSH_HOST: there is no
  * endpoint, so no probe ran and the health carries a remedy and nothing else. Read
  * from the explicit channel code when the API sends one — an endpoint on that code
  * is intent, not evidence — else from the absence of a target, since "no address"
@@ -189,7 +189,7 @@ export function ConnectionBanner(props: {
 
   /**
    * The pasteable remedy under "Fix:". For an unprovisioned channel it is
-   * `openship up`, which needs nothing measured on the host — so the block does not
+   * `kovalio up`, which needs nothing measured on the host — so the block does not
    * depend on the API attaching a command, and a firewall rule is never offered: no
    * packet ever left, so no packet filter has been established (#509).
    *

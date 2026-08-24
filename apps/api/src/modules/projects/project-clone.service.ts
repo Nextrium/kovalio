@@ -23,8 +23,8 @@
  * not from the source rows. The transfer streams each volume A→B *under the same name* — that
  * "no remap" property is what makes resume work — so the copy's deploy has to mount the name
  * the bytes actually landed under. A source row declares `pgdata:/var/lib/postgresql/data`,
- * while the running container mounts `openship-<sourceslug>-pgdata`; the clone has a NEW slug,
- * so re-namespacing would point it at `openship-<newslug>-pgdata`, which the transfer never
+ * while the running container mounts `kovalio-<sourceslug>-pgdata`; the clone has a NEW slug,
+ * so re-namespacing would point it at `kovalio-<newslug>-pgdata`, which the transfer never
  * wrote. That copy would start with an empty database and report success. So: resolved names,
  * namespacing off — exactly what the adopt path did for cross-server, for exactly this reason.
  */
@@ -102,7 +102,7 @@ function omit(row: Record<string, unknown>, keys: readonly string[]): Record<str
   return out;
 }
 
-/** `openship-x-pgdata:/var/lib/…` from a discovered mount, or null for an anonymous one. */
+/** `kovalio-x-pgdata:/var/lib/…` from a discovered mount, or null for an anonymous one. */
 function mountToComposeString(v: { source?: string; target: string; rw?: boolean }): string | null {
   if (!v.source) return null;
   return `${v.source}:${v.target}${v.rw === false ? ":ro" : ""}`;

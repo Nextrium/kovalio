@@ -272,7 +272,7 @@ const COMPOSER_INSTALL =
   "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer";
 
 const NO_EPEL =
-  "and Openship does not enable third-party repositories (EPEL) on a host it did not " +
+  "and Kovalio does not enable third-party repositories (EPEL) on a host it did not " +
   "provision. Install it yourself, or build in a container.";
 
 const NO_GRADLE_RPM =
@@ -291,7 +291,7 @@ const NO_ELIXIR_RPM = `The RHEL family ships no elixir or erlang package ${NO_EP
  * Probed rather than installed outright because an index refresh is the slow half of this
  * whole recipe on apt and unzip is already there on a full install — and because a host
  * with no package manager has no install to render, where the probe leaves the pure-curl
- * recipe intact instead of turning bun into the one curl-installed toolchain Openship
+ * recipe intact instead of turning bun into the one curl-installed toolchain Kovalio
  * refuses on a box it would have worked on.
  */
 function ensureUnzip(ops: EnvOps): ToolSteps {
@@ -362,12 +362,12 @@ const RECIPES: Record<InstallableTool, ToolRecipe> = {
     steps: (ops): ToolSteps => {
       // bun.sh/install is a bash script and Alpine ships busybox ash, so the pipe ends in
       // `bash: not found` (exit 127) reported as a failed install. Installing bash to work
-      // around it would be Openship adding a shell to someone's host to satisfy a vendor
+      // around it would be Kovalio adding a shell to someone's host to satisfy a vendor
       // script, and there is no apk `bun` to prefer instead.
       if (ops.profile.libc === "musl") {
         return refused(
           "Bun's official installer is a bash script and this host is musl-based (Alpine), " +
-            "which ships busybox ash and no bash. Openship will not add a shell to a host " +
+            "which ships busybox ash and no bash. Kovalio will not add a shell to a host " +
             "to satisfy an installer. Use Node for this project, or build in a container.",
         );
       }
@@ -524,13 +524,13 @@ const RECIPES: Record<InstallableTool, ToolRecipe> = {
       if (ops.profile.packageManager === "brew") return asRoot(ops.pkgInstall(["composer"]));
       // Alpine splits PHP into one package per extension, and composer.phar needs `phar`
       // and `openssl` — neither of which comes with the `php83` the PHP recipe installs.
-      // The upstream installer's own check then fails on a missing extension. Openship
+      // The upstream installer's own check then fails on a missing extension. Kovalio
       // will not guess at per-extension package names it has not verified on a real host,
       // so this is a refusal that names what is missing rather than an opaque exit.
       if (ops.profile.libc === "musl") {
         return refused(
           "Composer needs PHP's phar and openssl extensions, and on musl hosts (Alpine) " +
-            "those ship as separate packages that Openship does not install. Add " +
+            "those ship as separate packages that Kovalio does not install. Add " +
             "php-phar and php-openssl for your PHP version yourself, or build in a " +
             "container.",
         );
@@ -556,7 +556,7 @@ const RECIPES: Record<InstallableTool, ToolRecipe> = {
           // the silent wrong answer, so name the release as the problem instead.
           yum: refused(
             "This host's release carries no OpenJDK 21 package — the newest it has is Java " +
-              "8/11, and Openship will not install a JDK older than the toolchain asks for. " +
+              "8/11, and Kovalio will not install a JDK older than the toolchain asks for. " +
               "Use a newer OS release, or build in a container.",
           ),
           apk: answered(["openjdk21-jdk"]),
@@ -593,7 +593,7 @@ const RECIPES: Record<InstallableTool, ToolRecipe> = {
       if (ops.profile.packageManager === "brew") return asRoot(ops.pkgInstall(["dotnet"]));
       if (ops.profile.os !== "linux") {
         return refused(
-          `Openship installs the .NET SDK on Linux, and on macOS through Homebrew. This ` +
+          `Kovalio installs the .NET SDK on Linux, and on macOS through Homebrew. This ` +
             `host reports os=${ops.profile.os}.`,
         );
       }
@@ -641,7 +641,7 @@ const INSTALLS: Record<string, InstallPlanFactory> = Object.fromEntries(
     (profile: EnvironmentProfile): ToolchainInstallPlan => {
       // Not every recipe touches a command method — bun and bundler are pure `curl`/`gem`
       // — so the host gate has to be applied here rather than left to `envOps`, or a host
-      // Openship refused would still get a toolchain installed on it.
+      // Kovalio refused would still get a toolchain installed on it.
       const gate = hostRefusal(profile);
       if (gate !== null) return refused(gate);
 

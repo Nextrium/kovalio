@@ -166,7 +166,7 @@ export function CloudConnection() {
               )}
             </button>
             <a
-              href="https://openship.io/pricing"
+              href="https://nextrium.org/pricing"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-muted/50 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted sm:flex-none"

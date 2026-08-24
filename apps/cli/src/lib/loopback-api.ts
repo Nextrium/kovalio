@@ -1,14 +1,14 @@
 /**
  * Loopback control-plane helpers, shared by the interactive install wizard
  * (commands/wizard.ts), the headless installer (lib/instance-provision.ts),
- * `openship up` (commands/up.ts), doctor/repair and reset-admin-password. Single
+ * `kovalio up` (commands/up.ts), doctor/repair and reset-admin-password. Single
  * home for the internal-token-gated request + the boot/health polls, so there's
  * exactly ONE copy (no per-command duplication).
  *
  * The API is bound to loopback and gated by X-Internal-Token. WHICH token that is
  * depends on the install method, so it is resolved in one place (lib/internal-token)
  * rather than chosen per call site — the mistake that made every compose box answer
- * "Unauthorized" to `openship reset-admin-password`.
+ * "Unauthorized" to `kovalio reset-admin-password`.
  */
 
 import {
@@ -18,8 +18,8 @@ import {
 } from "./internal-token";
 import { OS_DIR } from "./paths";
 
-/** The CLI's state dir (internal-token, auth-secret, data, logs); ~/.openship
- *  by default, or OPENSHIP_HOME for a from-source install. Re-exported for the
+/** The CLI's state dir (internal-token, auth-secret, data, logs); ~/.kovalio
+ *  by default, or KOVALIO_HOME for a from-source install. Re-exported for the
  *  many callers that import it from here. */
 export { OS_DIR };
 
@@ -46,7 +46,7 @@ export type InternalCall =
  *
  * The distinction decides whether the request may be repeated: internalAuth answers
  * before the handler runs, so retrying it with another token repeats nothing — while
- * `/api/system/cloud-connect` answers 401 with "Could not verify with Openship Cloud"
+ * `/api/system/cloud-connect` answers 401 with "Could not verify with Kovalio Cloud"
  * AFTER exchanging a single-use PKCE code, where a retry would burn the code and the
  * rewritten message would blame the wrong thing entirely.
  *
@@ -148,7 +148,7 @@ export async function internalPost(
     token,
   );
   // A token problem is reported as the error TEXT rather than a bare "failed": every
-  // caller of this prints `data.error`, so the fix (sudo, `openship up`, a port) lands
+  // caller of this prints `data.error`, so the fix (sudo, `kovalio up`, a port) lands
   // in front of the operator instead of a generic Unauthorized.
   if (call.kind !== "response") return { ok: false, data: { error: call.detail } };
   const data = (await call.res.json().catch(() => ({}))) as Record<string, unknown>;

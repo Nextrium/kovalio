@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bootstrap the mail databases into the openship-mail-db SIDECAR on first boot.
+# Bootstrap the mail databases into the kovalio-mail-db SIDECAR on first boot.
 #
 # Faithful to iRedMail's functions/postgresql.sh::pgsql_import_vmail_users, but
 # adapted for our containerized topology:
@@ -34,11 +34,11 @@ SAMPLES="$ENGINE/samples"
 WORK=/tmp/mailboot.d
 rm -rf "$WORK"; mkdir -p "$WORK"
 
-DB_HOST="${OPENSHIP_MAIL_DB_HOST:-127.0.0.1}"
-DB_PORT="${OPENSHIP_MAIL_DB_PORT:-5432}"
+DB_HOST="${KOVALIO_MAIL_DB_HOST:-127.0.0.1}"
+DB_PORT="${KOVALIO_MAIL_DB_PORT:-5432}"
 export PGPASSWORD="${PGSQL_ROOT_PASSWD:-}"
 # Bound the TCP connect. Without it the wait budget below is decorative: against a host
-# that silently drops packets (a firewall, a wrong OPENSHIP_MAIL_DB_HOST) libpq blocks
+# that silently drops packets (a firewall, a wrong KOVALIO_MAIL_DB_HOST) libpq blocks
 # for the OS default — minutes per attempt — so a "180s" budget never gets to iterate
 # and the operator watches the boot hang with no output at all. 5s is far above a
 # loopback or same-host sidecar connect.
@@ -55,12 +55,12 @@ psql_su() { psql -h "$DB_HOST" -p "$DB_PORT" -U postgres -v ON_ERROR_STOP=1 "$@"
 # command of an AND-list aborts the script, so the terse form would exit on the very
 # first (already-ready) probe.
 wait_for_db() {
-  local budget="${OPENSHIP_MAIL_DB_WAIT_SECS:-180}" waited=0
+  local budget="${KOVALIO_MAIL_DB_WAIT_SECS:-180}" waited=0
   until psql_su -d postgres -tAc 'SELECT 1' >/dev/null 2>&1; do
     if [ "$waited" -ge "$budget" ]; then
       fatal "the mail database at ${DB_HOST}:${DB_PORT} did not accept queries within ${budget}s.
   The sidecar is unreachable, still initializing, or rejecting our credentials.
-  Check:  docker logs openship-mail-db
+  Check:  docker logs kovalio-mail-db
   A host process already on ${DB_PORT} is the most common cause."
     fi
     if [ "$waited" -eq 0 ]; then
@@ -75,7 +75,7 @@ wait_for_db() {
 }
 
 # ── iRedMail conventions (conf/global, conf/postfix, conf/dovecot) ────────────
-export VMAIL_DB_NAME="${OPENSHIP_MAIL_DB_NAME:-vmail}"
+export VMAIL_DB_NAME="${KOVALIO_MAIL_DB_NAME:-vmail}"
 export VMAIL_DB_BIND_USER=vmail
 export VMAIL_DB_ADMIN_USER=vmailadmin
 export STORAGE_BASE_DIR=/var/vmail

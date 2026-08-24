@@ -142,7 +142,7 @@ describe("createDockerBuildContext", () => {
 
     expect(context.dockerfileName).toBe("Dockerfile");
     expect(context.usesRepositoryDockerfile).toBe(true);
-    expect(context.contextEntries).not.toContain("Dockerfile.openship");
+    expect(context.contextEntries).not.toContain("Dockerfile.kovalio");
   });
 
   it("does not fall back to a generated Dockerfile when .dockerignore excludes the repository one", async () => {

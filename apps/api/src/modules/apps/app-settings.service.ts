@@ -239,9 +239,9 @@ export interface AppConnectionView {
  * and inside a container it is the container itself — so an app handed that
  * origin points at itself.
  *
- * There is deliberately NO fallback to the openship instance's own public URL.
+ * There is deliberately NO fallback to the kovalio instance's own public URL.
  * On a cloud-target app that is the CONTROL PLANE's hostname, so a routeless app
- * would print `http://api.openship.io:3210` as its deployment URL: a host nobody
+ * would print `http://api.nextrium.org:3210` as its deployment URL: a host nobody
  * chose, non-empty enough that the "no URL yet" guards downstream stop firing,
  * and it gets persisted into a second project's env by "Use in a project".
  */

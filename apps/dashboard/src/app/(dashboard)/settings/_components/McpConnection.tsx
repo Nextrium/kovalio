@@ -137,7 +137,7 @@ const MCP_CLIENTS: McpClientDef[] = [
     Icon: ClaudeLogo,
     setup: (e) => ({
       label: "Run in your terminal",
-      code: `claude mcp add --transport http openship ${e}`,
+      code: `claude mcp add --transport http kovalio ${e}`,
       note: "Claude Code opens your browser to authorize on first use.",
     }),
   },
@@ -153,10 +153,10 @@ const MCP_CLIENTS: McpClientDef[] = [
       // the OAuth handshake. Unlike the other CLIs here, Codex does NOT open the
       // browser on first tool call — without the login step the server is
       // registered but every call is unauthorized.
-      code: `codex mcp add openship --url ${e}\ncodex mcp login openship`,
+      code: `codex mcp add kovalio --url ${e}\ncodex mcp login kovalio`,
       note:
         "Local Codex surfaces (CLI, desktop app, IDE extension) share one MCP config, so this " +
-        "registers Openship for all of them — restart any that were already running. Hosted " +
+        "registers Kovalio for all of them — restart any that were already running. Hosted " +
         "Codex tasks are separate: they only reach this endpoint if that environment can.",
     }),
   },
@@ -166,8 +166,8 @@ const MCP_CLIENTS: McpClientDef[] = [
     Icon: CursorLogo,
     setup: (e) => ({
       label: "Add to ~/.cursor/mcp.json",
-      code: JSON.stringify({ mcpServers: { openship: { url: e } } }, null, 2),
-      deeplink: `cursor://anysphere.cursor-deeplink/mcp/install?name=openship&config=${encodeConfig({ url: e })}`,
+      code: JSON.stringify({ mcpServers: { kovalio: { url: e } } }, null, 2),
+      deeplink: `cursor://anysphere.cursor-deeplink/mcp/install?name=kovalio&config=${encodeConfig({ url: e })}`,
       deeplinkLabel: "Add to Cursor",
       note: "Restart Cursor after saving; it authorizes in the browser.",
     }),
@@ -178,7 +178,7 @@ const MCP_CLIENTS: McpClientDef[] = [
     Icon: CopilotLogo,
     setup: (e) => ({
       label: "Run once to register the server",
-      code: `code --add-mcp '{"name":"openship","type":"http","url":"${e}"}'`,
+      code: `code --add-mcp '{"name":"kovalio","type":"http","url":"${e}"}'`,
       note: 'Runs through GitHub Copilot. Or add it under "servers" in .vscode/mcp.json.',
     }),
   },
@@ -202,7 +202,7 @@ const MCP_CLIENTS: McpClientDef[] = [
     Icon: WindsurfLogo,
     setup: (e) => ({
       label: "Add to ~/.codeium/windsurf/mcp_config.json",
-      code: JSON.stringify({ mcpServers: { openship: { serverUrl: e } } }, null, 2),
+      code: JSON.stringify({ mcpServers: { kovalio: { serverUrl: e } } }, null, 2),
     }),
   },
   {
@@ -214,7 +214,7 @@ const MCP_CLIENTS: McpClientDef[] = [
       code: JSON.stringify(
         {
           context_servers: {
-            openship: { source: "custom", command: { path: "npx", args: ["-y", "mcp-remote", e] } },
+            kovalio: { source: "custom", command: { path: "npx", args: ["-y", "mcp-remote", e] } },
           },
         },
         null,
@@ -229,19 +229,19 @@ const MCP_CLIENTS: McpClientDef[] = [
     Icon: Boxes,
     setup: (e) => ({
       label: "Generic MCP client config",
-      code: JSON.stringify({ mcpServers: { openship: { url: e } } }, null, 2),
+      code: JSON.stringify({ mcpServers: { kovalio: { url: e } } }, null, 2),
       note: "Most MCP clients accept a { mcpServers: { <name>: { url } } } block.",
     }),
   },
 ];
 
-/** Client picker: pick your agent, get the exact command/config to add Openship,
+/** Client picker: pick your agent, get the exact command/config to add Kovalio,
  *  pre-filled with this instance's endpoint. */
 function McpClientSetup({ endpoint }: { endpoint: string }) {
   const { t } = useI18n();
   const [activeId, setActiveId] = useState(MCP_CLIENTS[0].id);
   const active = MCP_CLIENTS.find((c) => c.id === activeId) ?? MCP_CLIENTS[0];
-  const setup = active.setup(endpoint || "https://<your-openship>/api/mcp");
+  const setup = active.setup(endpoint || "https://<your-kovalio>/api/mcp");
 
   return (
     <div className="space-y-3">
@@ -391,8 +391,8 @@ export function McpConnection() {
   const configSnippet = [
     "{",
     '  "mcpServers": {',
-    '    "openship": {',
-    `      "url": "${endpoint || "https://<your-openship>/api/mcp"}",`,
+    '    "kovalio": {',
+    `      "url": "${endpoint || "https://<your-kovalio>/api/mcp"}",`,
     '      "headers": { "Authorization": "Bearer opsh_pat_…" }',
     "    }",
     "  }",

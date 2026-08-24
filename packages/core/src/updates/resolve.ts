@@ -1,6 +1,6 @@
 /**
  * Pure update-resolution logic shared by the desktop in-app updater
- * (apps/desktop/src/main/updater.ts) and the CLI `openship update` command.
+ * (apps/desktop/src/main/updater.ts) and the CLI `kovalio update` command.
  *
  * Kept here (no I/O, no Electron/Node-fs) so the exact asset-selection + version
  * gate is unit-testable with synthetic GitHub `releases/latest` payloads — the
@@ -44,14 +44,14 @@ export type DesktopUpdateCheck =
  * Installer asset name the release pipeline publishes for a platform/arch.
  * Must match `.github/workflows/release.yml` exactly: macOS ships per-arch dmgs,
  * Windows a single x64 zip (NOT a Squirrel Setup.exe — forge uses maker-zip),
- * Linux a per-arch AppImage — x64 keeps the legacy `Openship.AppImage` name
+ * Linux a per-arch AppImage — x64 keeps the legacy `Kovalio.AppImage` name
  * (so already-installed x64 clients keep auto-updating), arm64 is a distinct
  * asset. Returns null for an unknown platform.
  */
 export function desktopAssetName(platform: string, arch: string): string | null {
-  if (platform === "darwin") return arch === "arm64" ? "Openship-arm64.dmg" : "Openship-x64.dmg";
-  if (platform === "win32") return "Openship-win32-x64.zip";
-  if (platform === "linux") return arch === "arm64" ? "Openship-arm64.AppImage" : "Openship.AppImage";
+  if (platform === "darwin") return arch === "arm64" ? "Kovalio-arm64.dmg" : "Kovalio-x64.dmg";
+  if (platform === "win32") return "Kovalio-win32-x64.zip";
+  if (platform === "linux") return arch === "arm64" ? "Kovalio-arm64.AppImage" : "Kovalio.AppImage";
   return null;
 }
 
@@ -95,7 +95,7 @@ export function resolveDesktopUpdate(input: {
   };
 }
 
-// ─── CLI (`openship update`) ─────────────────────────────────────────────────
+// ─── CLI (`kovalio update`) ─────────────────────────────────────────────────
 
 export type CliPackageManager = "bun" | "npm";
 
@@ -112,6 +112,6 @@ export function resolveCliUpdatePlan(current: string, latest: string): CliUpdate
 
 /** The global re-install command for the detected package manager. */
 export function cliInstallCommand(pm: CliPackageManager, version: string): string {
-  const ref = `openship@${version || "latest"}`;
+  const ref = `kovalio@${version || "latest"}`;
   return pm === "bun" ? `bun add -g ${ref}` : `npm install -g ${ref}`;
 }

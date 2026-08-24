@@ -28,7 +28,7 @@ const CJS_SHIM = [
 export default defineConfig([
   // ── Bundle 1: dist/index.js — the polyglot sh/JS launcher ──────────────
   // The first two banner lines are a sh/JS POLYGLOT launcher, not a plain
-  // shebang. `npm i -g openship` gives Node, the curl installer gives Node too
+  // shebang. `npm i -g kovalio` gives Node, the curl installer gives Node too
   // now, but a box may have only Bun — a single `#!/usr/bin/env node` or `bun`
   // shebang breaks one of those paths (#261). Under `sh` the second line execs
   // the CLI with whichever runtime exists; under Node/Bun that line is a
@@ -45,7 +45,7 @@ export default defineConfig([
     clean: true,
     define: { __CLI_VERSION__: JSON.stringify(version) },
     // Bundle the workspace packages (@repo/core, @repo/onboarding) INTO the
-    // output. They're never published to npm, so an npx-installed `openship`
+    // output. They're never published to npm, so an npx-installed `kovalio`
     // must carry them inline — otherwise it fails with ERR_MODULE_NOT_FOUND.
     // Runtime deps (commander, chalk, ora, open) stay external and come from
     // the published package's own dependencies.
@@ -60,10 +60,10 @@ export default defineConfig([
   },
 
   // ── Bundle 2: dist/node-entry.js — plain `node` shebang for npm ─────────
-  // npm reads the shebang of `bin.openship` to generate Windows launchers.
+  // npm reads the shebang of `bin.kovalio` to generate Windows launchers.
   // If that were dist/index.js (polyglot `#!/usr/bin/env sh`), npm emits
-  // `sh.exe` calls in openship.ps1/.cmd — which don't exist on a standard
-  // Windows box, so every `npm i -g openship` breaks with "sh.exe not
+  // `sh.exe` calls in kovalio.ps1/.cmd — which don't exist on a standard
+  // Windows box, so every `npm i -g kovalio` breaks with "sh.exe not
   // recognized" (#460). This wrapper carries `#!/usr/bin/env node`, so npm
   // generates correct node.exe launchers; it just imports dist/index.js.
   {
@@ -102,7 +102,7 @@ export default defineConfig([
   // ── Bundle 3: dist/node-bootstrap.js — old-Node recovery ────────────────
   // Imported (never executed) by node-entry.js when the runtime is below the
   // floor: reuse a vendored Node, or offer to fetch one via the same
-  // ensureNodeRuntime() `openship update` calls. Its own bundle so the gate can
+  // ensureNodeRuntime() `kovalio update` calls. Its own bundle so the gate can
   // load it with `await import()` in a try/catch — see the note above.
   //
   // Must stay dependency-free: the whole point is that it parses and runs on the

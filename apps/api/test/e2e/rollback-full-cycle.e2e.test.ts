@@ -38,8 +38,8 @@ import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 import { seedOrg, seedProject, seedDeployment, setActive } from "../helpers/seed";
 
 const BASE_IMAGE = "busybox:latest";
-const TAG_V1 = "openship/e2e-cycle:v1";
-const TAG_V2 = "openship/e2e-cycle:v2";
+const TAG_V1 = "kovalio/e2e-cycle:v1";
+const TAG_V2 = "kovalio/e2e-cycle:v2";
 const APP_PORT = 80;
 
 async function freePort(): Promise<number> {
@@ -124,7 +124,7 @@ describeDockerE2E("full rollback cycle through the real entry point", () => {
     hostPort = await freePort();
     // A local-path project: no git remote, so the restore has nothing to clone
     // even if it wanted to — which is exactly the invariant under test.
-    sourceDir = await mkdtemp(join(tmpdir(), "openship-cycle-src-"));
+    sourceDir = await mkdtemp(join(tmpdir(), "kovalio-cycle-src-"));
     await writeFile(join(sourceDir, "index.html"), "<h1>ignored</h1>\n");
     project = (await seedProject(org.organizationId, {
       localPath: sourceDir,
@@ -138,7 +138,7 @@ describeDockerE2E("full rollback cycle through the real entry point", () => {
       routeStrategy: "loopback-port",
     })) as never;
 
-    contextDir = await mkdtemp(join(tmpdir(), "openship-cycle-ctx-"));
+    contextDir = await mkdtemp(join(tmpdir(), "kovalio-cycle-ctx-"));
     for (const [tag, version] of [
       [TAG_V1, "v1"],
       [TAG_V2, "v2"],
@@ -156,7 +156,7 @@ describeDockerE2E("full rollback cycle through the real entry point", () => {
       );
       const stream = await runtime.docker.buildImage(
         { context: contextDir, src: ["Dockerfile"] },
-        { t: tag, labels: { "openship.project": project.id } },
+        { t: tag, labels: { "kovalio.project": project.id } },
       );
       await new Promise<void>((resolve, reject) => {
         runtime.docker.modem.followProgress(stream, (err: Error | null) =>
@@ -229,7 +229,7 @@ describeDockerE2E("full rollback cycle through the real entry point", () => {
     }
     for (const tag of [TAG_V1, TAG_V2]) await runtime.removeImage(tag).catch(() => {});
     await runtime.docker
-      .getVolume(`openship-${project.slug}-data`)
+      .getVolume(`kovalio-${project.slug}-data`)
       .remove({ force: true } as never)
       .catch(() => {});
     await runtime.dispose?.().catch(() => {});
@@ -349,8 +349,8 @@ describeDockerE2E("full rollback cycle through the real entry point", () => {
 
     const info = await runtime.docker.getContainer(row.containerId!).inspect();
     expect(info.Config.Env).toContain("APP_VERSION=v1"); // frozen env, not today's
-    expect(info.HostConfig.Binds ?? []).toContain(`openship-${project.slug}-data:/data`);
-    expect(info.Config.Labels["openship.deployment"]).toBe(restore.id);
+    expect(info.HostConfig.Binds ?? []).toContain(`kovalio-${project.slug}-data:/data`);
+    expect(info.Config.Labels["kovalio.deployment"]).toBe(restore.id);
 
     // Retention ran as part of the cycle: the restore is retained, v2 stays
     // restorable (it's the release we rolled back FROM).

@@ -1,6 +1,6 @@
 {
   "title": "Sorunlar",
-  "subtitle": "Openship'in projelerinde, sunucularında ve alan adlarında bulduğu her sorun.",
+  "subtitle": "Kovalio'in projelerinde, sunucularında ve alan adlarında bulduğu her sorun.",
   "tabs": {
     "open": "Açık",
     "resolved": "Çözüldü"
@@ -17,7 +17,7 @@
     "clear": "Filtreleri temizle"
   },
   "scopes": {
-    "platform": "Openship",
+    "platform": "Kovalio",
     "server": "Sunucular",
     "project": "Projeler",
     "domain": "Alan adları"

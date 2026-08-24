@@ -30,9 +30,9 @@ export const Deployments = () => {
   const router = useRouter();
 
   const [isRedeploying, setIsRedeploying] = React.useState(false);
-  // The Openship control-plane self-app has no deployable source and updates
+  // The Kovalio control-plane self-app has no deployable source and updates
   // itself via the CLI — redeploy/self-update controls would only 403, so hide them.
-  const isSelfApp = projectData?.appTemplateId === "openship";
+  const isSelfApp = projectData?.appTemplateId === "kovalio";
 
   // "Project outdated" banner. Two shapes discriminated by `mode`: a commit
   // project is behind its branch HEAD; a release/dist project has a newer
@@ -253,7 +253,7 @@ export const Deployments = () => {
       {/* Blocked deploy — FIRST, because nothing shipped: the newest release
           didn't go out, whereas every other callout below is about a release that
           did. The copy and the button both come from the API item, so the reason
-          (which process, which pid, whether it's a stale Openship deployment we
+          (which process, which pid, whether it's a stale Kovalio deployment we
           can safely stop) is the server's answer rather than a guess here. */}
       {blockedAction && (
         <WarningCallout

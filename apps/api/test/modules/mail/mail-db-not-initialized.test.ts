@@ -16,15 +16,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 vi.mock("@repo/adapters", () => ({
-  HOST_STATE_DIR: "/root/.openship",
+  HOST_STATE_DIR: "/root/.kovalio",
   detectMailEngine: vi.fn(),
-  MAIL_CONTAINER: "openship-mail",
-  MAIL_DB_CONTAINER: "openship-mail-db",
+  MAIL_CONTAINER: "kovalio-mail",
+  MAIL_DB_CONTAINER: "kovalio-mail-db",
   MAIL_DB_NAME: "vmail",
   MAIL_HOST_PATHS: {
-    saslPasswd: "/opt/openship/mail/postfix/sasl_passwd",
-    senderRelayhost: "/opt/openship/mail/postfix/sender_relayhost",
-    amavisUserConf: "/opt/openship/mail/amavis/50-user",
+    saslPasswd: "/opt/kovalio/mail/postfix/sasl_passwd",
+    senderRelayhost: "/opt/kovalio/mail/postfix/sender_relayhost",
+    amavisUserConf: "/opt/kovalio/mail/amavis/50-user",
   },
 }));
 
@@ -39,7 +39,7 @@ const CONTAINER = {
   flavor: "container" as const,
   running: true,
   exists: true,
-  image: "ghcr.io/oblien/openship-mail:0.6.5",
+  image: "ghcr.io/oblien/kovalio-mail:0.6.5",
 };
 const HOST = { flavor: "host" as const, running: true, exists: true, image: null };
 
@@ -73,7 +73,7 @@ describe("runMailSql — unseeded schema", () => {
     expect(err.message).toContain("db-bootstrap.sh");
     // The daemons are already FATAL against the empty database by this point, and
     // supervisord never retries that — the schema alone does not revive them.
-    expect(err.message).toContain("docker restart openship-mail");
+    expect(err.message).toContain("docker restart kovalio-mail");
     // Must not read as a verdict while setup may still be mid-bootstrap.
     expect(err.message).toContain("still running");
   });

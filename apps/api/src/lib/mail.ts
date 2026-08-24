@@ -14,7 +14,7 @@ import { decrypt } from "./encryption";
  *      system mail — password reset, verification, invites, notifications.
  *      Password decrypted from `smtpPasswordEncrypted`.
  *   2. The provisioned platform mailbox on this instance's mail server
- *      (`openship@<state.domain>`), via `ensureOpenshipPlatformMailbox`.
+ *      (`kovalio@<state.domain>`), via `ensureKovalioPlatformMailbox`.
  *   3. Static env-configured SMTP (SMTP_HOST/USER/PASS) — deployment fallback.
  *
  * Self-hosted instances without any source no-op gracefully — email
@@ -99,7 +99,7 @@ const PLATFORM_ENSURE_TIMEOUT_MS = 8_000;
 const platformTransportFailures = new Map<string, number>();
 
 /**
- * `ensureOpenshipPlatformMailbox` reports `mail.<domain>` as the platform
+ * `ensureKovalioPlatformMailbox` reports `mail.<domain>` as the platform
  * mailbox's SMTP host - correct for an external mail client, and correct
  * for THIS process too when the api runs bare on the mail server box. But
  * when containerized, that hostname commonly resolves to a loopback address
@@ -116,7 +116,7 @@ const platformTransportFailures = new Map<string, number>();
  * through untouched.
  */
 async function resolveContainerReachableSmtpHost(reportedHost: string): Promise<string> {
-  const bridgeHost = process.env.OPENSHIP_HOST_SSH_HOST?.trim();
+  const bridgeHost = process.env.KOVALIO_HOST_SSH_HOST?.trim();
   if (!bridgeHost) return reportedHost;
   try {
     const { address } = await dnsLookup(reportedHost);
@@ -177,11 +177,11 @@ async function getPlatformTransport(): Promise<{
   }
 
   try {
-    const { ensureOpenshipPlatformMailbox } = await import(
+    const { ensureKovalioPlatformMailbox } = await import(
       "../modules/mail/admin/platform-mailbox.service"
     );
     const creds = await withTimeout(
-      ensureOpenshipPlatformMailbox(installed.serverId),
+      ensureKovalioPlatformMailbox(installed.serverId),
       PLATFORM_ENSURE_TIMEOUT_MS,
       `platform mailbox lookup on ${installed.serverId}`,
     );
@@ -325,9 +325,9 @@ export async function sendInstanceTestEmail(to: string): Promise<void> {
   await active.transport.sendMail({
     from: active.from,
     to,
-    subject: "Openship SMTP test",
+    subject: "Kovalio SMTP test",
     text:
-      "This is a test message from your Openship instance SMTP configuration. " +
+      "This is a test message from your Kovalio instance SMTP configuration. " +
       "If you received it, outbound email (password resets, invites, notifications) works.",
   });
 }

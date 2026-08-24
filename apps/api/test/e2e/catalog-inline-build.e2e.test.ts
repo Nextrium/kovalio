@@ -49,7 +49,7 @@ import { buildComposeImages } from "../../src/modules/deployments/compose/build.
 const execFileAsync = promisify(execFile);
 
 const SERVICE_ID = "widget-svc";
-const MARKER = "OPENSHIP_INLINE_BUILD_OK";
+const MARKER = "KOVALIO_INLINE_BUILD_OK";
 
 // Same minimal BuildConfigSnapshotLike the unit test uses — framework "docker" is
 // what routes buildSpecFor down the Dockerfile branch.

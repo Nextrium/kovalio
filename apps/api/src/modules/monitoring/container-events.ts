@@ -136,7 +136,7 @@ function eventsEnabled(): boolean {
   // Same gate as the health-watch job itself: desktop has no always-on poller and
   // Oblien exposes no event feed, so "selfhosted" is the only target with anything
   // to accelerate.
-  return getPlatform().target === "selfhosted" && !env.OPENSHIP_DISABLE_CONTAINER_EVENTS;
+  return getPlatform().target === "selfhosted" && !env.KOVALIO_DISABLE_CONTAINER_EVENTS;
 }
 
 /**

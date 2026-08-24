@@ -42,7 +42,7 @@
   "page": {
     "title": "設定",
     "subtitle": "設定、チーム、インスタンス構成を管理します",
-    "cloudConnectedToast": "Openship Cloud に接続しました"
+    "cloudConnectedToast": "Kovalio Cloud に接続しました"
   },
   "sidebar": {
     "title": "設定",
@@ -65,7 +65,7 @@
     "noInstallations": "接続済み · インストールはまだありません",
     "connectedOne": "接続済み · 1 件のインストール",
     "connectedMany": "接続済み · {count} 件のインストール",
-    "requiresCloud": "Openship Cloud が必要です — この App は openship.io が所有しています",
+    "requiresCloud": "Kovalio Cloud が必要です — この App は nextrium.org が所有しています",
     "connectPrompt": "GitHub アカウントを接続してリポジトリをデプロイしましょう",
     "checkingConnection": "接続を確認中…",
     "addAccount": "アカウントを追加",
@@ -73,10 +73,10 @@
     "manageOnGithub": "GitHub で管理",
     "disconnect": "切断",
     "disconnectTitle": "{label} を切断",
-    "disconnectAppLabel": "Openship GitHub App",
-    "disconnectAppBody": "これにより Openship の OAuth アカウント行が削除されます。GitHub App のインストールは、GitHub 上でアンインストールするまで残ります。",
-    "cloudExplainer": "Openship GitHub App は openship.io が所有しています。インスタンスを Openship Cloud に接続すると、プライベートリポジトリのクローンにスコープ付きのインストールトークンを使用できます（ローカルおよびリモートの両方のデプロイで機能します）。",
-    "connectCloud": "Openship Cloud に接続",
+    "disconnectAppLabel": "Kovalio GitHub App",
+    "disconnectAppBody": "これにより Kovalio の OAuth アカウント行が削除されます。GitHub App のインストールは、GitHub 上でアンインストールするまで残ります。",
+    "cloudExplainer": "Kovalio GitHub App は nextrium.org が所有しています。インスタンスを Kovalio Cloud に接続すると、プライベートリポジトリのクローンにスコープ付きのインストールトークンを使用できます（ローカルおよびリモートの両方のデプロイで機能します）。",
+    "connectCloud": "Kovalio Cloud に接続",
     "noCloudTitle": "クラウドなしでプライベートリポジトリをクローン",
     "useSshPerServer": "サーバーごとのSSHキー",
     "usePat": "アクセストークン",
@@ -95,8 +95,8 @@
       "usedForDeploys": "デプロイに使用",
       "usedForDeploysTitle": "クラウド接続がありません — 現在は gh CLI がすべての主要なソースです",
       "activeWarnStrong": "gh CLI がアクティブなソースです。",
-      "activeWarnRest": "リモートサーバーへのデプロイは拒否されます — リモートターゲットへデプロイするには、Openship App を接続するか、プロジェクトごとのクローントークンを設定してください。",
-      "primaryNotePrefix": "Openship App が主要なソースです。gh CLI は次の場合を補完します:",
+      "activeWarnRest": "リモートサーバーへのデプロイは拒否されます — リモートターゲットへデプロイするには、Kovalio App を接続するか、プロジェクトごとのクローントークンを設定してください。",
+      "primaryNotePrefix": "Kovalio App が主要なソースです。gh CLI は次の場合を補完します:",
       "primaryNoteStrong": "ローカルビルド",
       "primaryNoteSuffix": "App のインストール範囲外のリポジトリに対して。",
       "optionalPrefix": "任意です。次を実行してください:",
@@ -120,13 +120,13 @@
         "desc": "構成済みの SSH サーバー"
       },
       "cloud": {
-        "label": "OpenShip Cloud",
+        "label": "Kovalio Cloud",
         "desc": "マネージドのクラウドインフラ"
       }
     },
     "labelFor": {
       "yourServer": "自分のサーバー",
-      "cloud": "Openship Cloud"
+      "cloud": "Kovalio Cloud"
     },
     "toast": {
       "pickServer": "まずサーバーを選択してください",
@@ -236,11 +236,11 @@
   },
   "mcp": {
     "title": "MCP",
-    "description": "Model Context Protocol を介して AI エージェントを Openship API に接続します。",
+    "description": "Model Context Protocol を介して AI エージェントを Kovalio API に接続します。",
     "loading": "読み込み中…",
     "connectAnother": "別のクライアントを接続",
     "bannerStrong": "以下のエンドポイントを MCP クライアントに貼り付けてください",
-    "bannerRest": "（Claude、Cursor など） — ブラウザウィンドウが開き、アクセスを承認してクライアントが到達できる範囲を選択できます。コピーするトークンはありません。Openship は標準準拠の OAuth 2.1 MCP サーバーです。",
+    "bannerRest": "（Claude、Cursor など） — ブラウザウィンドウが開き、アクセスを承認してクライアントが到達できる範囲を選択できます。コピーするトークンはありません。Kovalio は標準準拠の OAuth 2.1 MCP サーバーです。",
     "addToClient": "クライアントに追加",
     "install": "インストール",
     "endpoint": "エンドポイント",
@@ -352,7 +352,7 @@
     "grantsMany": "{count} 件の付与",
     "sendVia": "送信方法",
     "yourMailServer": "自分のメールサーバー",
-    "openshipCloud": "Openship Cloud",
+    "kovalioCloud": "Kovalio Cloud",
     "pickerTitle": "初期リソースアクセス",
     "pickerDesc": "制限付きメンバーはアクセス権なしで開始します。承認後にこの招待が解放するものを選択してください — 後からメンバーの行でさらに付与できます。",
     "sendInvite": "招待を送信",
@@ -366,7 +366,7 @@
   "teamWorkspace": {
     "title": "チームワークスペース",
     "description": "このインスタンスをマルチユーザーモードに移行します。",
-    "body": "現在このインスタンスはシングルユーザーです — あなただけがサインインできます。チームメンバーを追加する準備ができたら、デプロイを共有の場所に移行してください: 自分のサーバー、Openship Cloud、またはトンネル経由でこのマシンを公開します。",
+    "body": "現在このインスタンスはシングルユーザーです — あなただけがサインインできます。チームメンバーを追加する準備ができたら、デプロイを共有の場所に移行してください: 自分のサーバー、Kovalio Cloud、またはトンネル経由でこのマシンを公開します。",
     "currentMode": "現在のモード",
     "singleUserLocal": "シングルユーザー（ローカル）",
     "migrate": "移行",
@@ -375,7 +375,7 @@
   },
   "cloud": {
     "checking": "確認中…",
-    "fallbackName": "Openship Cloud",
+    "fallbackName": "Kovalio Cloud",
     "connectedAccount": "接続済みのクラウドアカウント",
     "connected": "接続済み",
     "disconnect": "切断",
@@ -384,10 +384,10 @@
     "unlockDesktop": "クラウドデプロイ、マネージド SSL、グローバル CDN のロックを解除します。",
     "deployLocal": "ローカルインスタンスから直接クラウドにデプロイします。",
     "waitingSignIn": "サインインを待機中…",
-    "connectButton": "Openship Cloud に接続",
-    "confirmDisconnect": "Openship Cloud から切断しますか？再接続するまでクラウドデプロイは機能しなくなります。",
+    "connectButton": "Kovalio Cloud に接続",
+    "confirmDisconnect": "Kovalio Cloud から切断しますか？再接続するまでクラウドデプロイは機能しなくなります。",
     "toast": {
-      "disconnected": "Openship Cloud から切断しました",
+      "disconnected": "Kovalio Cloud から切断しました",
       "disconnectFailed": "切断に失敗しました"
     }
   },
@@ -397,7 +397,7 @@
     "descCloud": "クラウド",
     "descSelfHosted": "セルフホスト",
     "typeDesktop": "デスクトップ",
-    "typeCloud": "Openship Cloud",
+    "typeCloud": "Kovalio Cloud",
     "typeSelfHosted": "セルフホスト",
     "deployMode": "デプロイモード: {mode}",
     "authNone": "ゼロ認証",
@@ -458,7 +458,7 @@
     "form": {
       "labelPlaceholder": "ラベル（例: オンコール用メール）",
       "emailPlaceholder": "you@example.com",
-      "webhookPlaceholder": "https://example.com/openship-hook",
+      "webhookPlaceholder": "https://example.com/kovalio-hook",
       "slackPlaceholder": "https://hooks.slack.com/services/...",
       "discordPlaceholder": "https://discord.com/api/webhooks/...",
       "msteamsPlaceholder": "https://prod-00.westus.logic.azure.com/workflows/...",
@@ -554,9 +554,9 @@
   },
   "updates": {
     "title": "アップデート",
-    "description": "Openship が新しいリリースを確認して適用する方法",
+    "description": "Kovalio が新しいリリースを確認して適用する方法",
     "checking": "アップデートを確認中…",
-    "available": "Openship {version} が利用可能です",
+    "available": "Kovalio {version} が利用可能です",
     "upToDate": "最新バージョンを使用しています",
     "current": "現在: {version}",
     "rerunToUpdate": " · インストールを再実行して更新してください",
@@ -569,12 +569,12 @@
     "viewChangelog": "変更履歴とリリースを表示",
     "securityTitle": "アップデート確認の仕組み",
     "securityDescription": "何があなたのインストールと通信するかを完全に透明化します",
-    "security1": "Openship はアップデートとセキュリティアドバイザリを確認します",
+    "security1": "Kovalio はアップデートとセキュリティアドバイザリを確認します",
     "securityOnlyGithub": "公開されている GitHub リリースからのみ",
     "security2": "オープンソースリポジトリの（",
     "security3": "）。データを取得するのは",
     "securityPulls": "取得",
-    "security4": "このデータのみです — サードパーティのサービスも、Openship が運用するサーバーも、アップデートやシグナルをあなたのインストールにプッシュすることはできません。アドバイザリは各リリースに固定されているため、未リリースの変更が届くことはありません。重大なセキュリティアドバイザリは常に一度だけ表示され、それ以外はすべて上記のトグルに従います。"
+    "security4": "このデータのみです — サードパーティのサービスも、Kovalio が運用するサーバーも、アップデートやシグナルをあなたのインストールにプッシュすることはできません。アドバイザリは各リリースに固定されているため、未リリースの変更が届くことはありません。重大なセキュリティアドバイザリは常に一度だけ表示され、それ以外はすべて上記のトグルに従います。"
   },
   "infrastructure": {
     "title": "プラットフォームコンポーネント",
@@ -590,8 +590,8 @@
     "allHealthy": "すべてのプラットフォームコンポーネントは最新です",
     "manageLink": "サーバーで管理",
     "hostControlLabel": "このマシンにデプロイ",
-    "hostControlDesc": "接続済みのサーバーに加えて、OpenShip が動作しているサーバー自身にもアプリをデプロイできるようにします。--no-host-control（コントロールプレーンのみ）でインストールした場合はオフです。オンにするとこのマシンをデプロイ先として追加します。",
-    "hostControlEnvNote": "このマシンはインストール時にコントロールプレーン専用（--no-host-control）に設定されました。オンにするとその設定を上書きし、OpenShip がここにデプロイできるようになります。",
+    "hostControlDesc": "接続済みのサーバーに加えて、Kovalio が動作しているサーバー自身にもアプリをデプロイできるようにします。--no-host-control（コントロールプレーンのみ）でインストールした場合はオフです。オンにするとこのマシンをデプロイ先として追加します。",
+    "hostControlEnvNote": "このマシンはインストール時にコントロールプレーン専用（--no-host-control）に設定されました。オンにするとその設定を上書きし、Kovalio がここにデプロイできるようになります。",
     "hostControlError": "ホスト制御を変更できませんでした。変更できるのはこのマシンのワークスペースのオーナーだけです。"
   },
   "dataTransfer": {
@@ -627,7 +627,7 @@
     "import": {
       "title": "データをインポート",
       "description": "エクスポートしたファイルをこのインスタンスに復元します。",
-      "intro": "別の Openship インストールからエクスポートしたファイルを読み込みます。シークレットも復元するには、エクスポート時に使用したパスフレーズを入力してください。",
+      "intro": "別の Kovalio インストールからエクスポートしたファイルを読み込みます。シークレットも復元するには、エクスポート時に使用したパスフレーズを入力してください。",
       "importFromFile": "ファイルからインポート…",
       "modalTitle": "インスタンスデータをインポート",
       "modalSubtitle": "エクスポートしたスナップショットを復元します。",
@@ -645,7 +645,7 @@
       "importing": "インポート中…",
       "import": "インポート",
       "confirmWipe": "このインスタンス上のすべてのデータをインポートしたスナップショットで置き換えますか？これは元に戻せず、サインアウトされます。",
-      "notExport": "これは Openship のエクスポートファイルには見えません。",
+      "notExport": "これは Kovalio のエクスポートファイルには見えません。",
       "cantRead": "そのファイルを読み取れませんでした — 有効なエクスポートですか？",
       "importFailed": "インポートに失敗しました。",
       "rowsRestored": "{count} 行を復元しました",
@@ -656,20 +656,20 @@
   "migrate": {
     "chooseTitle": "マルチユーザーモードに移行",
     "serverTitle": "自分のサーバーに移行",
-    "cloudTitle": "Openship Cloud に移行",
+    "cloudTitle": "Kovalio Cloud に移行",
     "tunnelTitle": "トンネル経由で公開",
     "completeTitle": "移行完了",
     "back": "戻る",
     "chooseIntro": "現在このインスタンスはシングルユーザーです。チームメンバーがどのように到達するかを選択してください。",
     "cards": {
       "serverTitle": "自分のサーバーに移行",
-      "serverBody": "あなたが所有する VPS 上に openship を SSH でデプロイします。データはそこへ移動します。すでにインフラを持っているチームに最適です。",
+      "serverBody": "あなたが所有する VPS 上に kovalio を SSH でデプロイします。データはそこへ移動します。すでにインフラを持っているチームに最適です。",
       "serverMeta": "外部依存なし",
-      "cloudTitle": "Openship Cloud に移行",
-      "cloudBody": "データを api.openship.io にプッシュします。すべてを当社がホストします。インフラを一切持ちたくないチームに最適です。",
+      "cloudTitle": "Kovalio Cloud に移行",
+      "cloudBody": "データを api.nextrium.org にプッシュします。すべてを当社がホストします。インフラを一切持ちたくないチームに最適です。",
       "cloudMetaConnected": "クラウドアカウント接続済み",
       "metaRequiresCloud": "クラウドアカウントが必要です",
-      "cloudWarn": "まず Openship Cloud に接続してください。",
+      "cloudWarn": "まず Kovalio Cloud に接続してください。",
       "tunnelTitle": "ローカルのまま、トンネル経由で公開",
       "tunnelBody": "データはこのマシンに残ります。Oblien エッジトンネルをプロビジョニングし、チームメンバーがインターネット経由で到達できるようにします — あなたのマシンはオンラインである必要があります。",
       "tunnelMetaConnected": "Oblien 経由のトンネル",
@@ -689,24 +689,24 @@
       "customHostPlaceholder": "team.acme.com",
       "preflight": "プリフライト",
       "sshReachable": "SSH に到達可能",
-      "releaseAvailable": "Openship リリースが利用可能",
+      "releaseAvailable": "Kovalio リリースが利用可能",
       "domainReady": "ドメインの準備完了",
       "runPreflight": "プリフライトを実行",
       "recheck": "再チェック",
       "deploying": "デプロイ中...",
       "startMigration": "移行を開始",
-      "successDetail": "openship はあなたのサーバー上で稼働中です。プロジェクト id {projectId}。",
+      "successDetail": "kovalio はあなたのサーバー上で稼働中です。プロジェクト id {projectId}。",
       "toastLoadFailed": "サーバーの読み込みに失敗しました",
       "toastPreflightFailed": "プリフライトに失敗しました",
       "toastMigrationFailed": "移行に失敗しました"
     },
     "cloud": {
       "connectFirstTitle": "まずクラウドアカウントを接続してください",
-      "connectFirstBody": "設定 → クラウド を開き、api.openship.io にサインインしてください。その後、ここに戻って移行してください。",
+      "connectFirstBody": "設定 → クラウド を開き、api.nextrium.org にサインインしてください。その後、ここに戻って移行してください。",
       "whatHappens": "移行をクリックすると何が起こるか",
       "bullet1": "ローカル DB がダンプされます（暗号化されたフィールドは除去され、認証情報はこのマシンから出ません）。",
-      "bullet2": "ダンプがアクティブな組織の下で api.openship.io にアップロードされます。",
-      "bullet3": "ローカルインスタンスは app.openship.io を指すランチャーになります。",
+      "bullet2": "ダンプがアクティブな組織の下で api.nextrium.org にアップロードされます。",
+      "bullet3": "ローカルインスタンスは kovalio.nextrium.org を指すランチャーになります。",
       "bullet4": "いつでも元に戻せます — ローカルデータはディスク上に残ります。",
       "proceedNonEmpty": "クラウド組織にすでにプロジェクトがある場合でも続行する（競合は自分で対処します）",
       "pushingData": "データをプッシュ中...",
@@ -717,7 +717,7 @@
     },
     "tunnel": {
       "connectFirstTitle": "まずクラウドアカウントを接続してください",
-      "connectFirstBody": "トンネルは Openship Cloud を通じてプロビジョニングされます。設定 → クラウド を開いてサインインし、その後ここに戻ってください。",
+      "connectFirstBody": "トンネルは Kovalio Cloud を通じてプロビジョニングされます。設定 → クラウド を開いてサインインし、その後ここに戻ってください。",
       "headsUp": "ご注意",
       "bullet1": "データはこのマシンに残ります。何も移動しません。",
       "bullet2": "チームメンバーは、このマシンがオンラインのときのみあなたに到達できます。",
@@ -755,7 +755,7 @@
     "heading": "シングルユーザーに戻す",
     "intro": "このインスタンスを {mode} から取り出し、このマシン上でソロモードに戻します。",
     "modeServer": "自分のサーバー",
-    "modeCloud": "Openship Cloud",
+    "modeCloud": "Kovalio Cloud",
     "modeTunnel": "トンネル",
     "current": "現在",
     "noUrl": "（URL は記録されていません）",
@@ -798,7 +798,7 @@
   },
   "credentials": {
     "title": "認証情報",
-    "description": "Openship があなたの代わりに使うトークンとログイン情報です（プライベートイメージの取得、DNS レコードの書き込みなど）。暗号化して保存され、保存後に再表示されることはありません。",
+    "description": "Kovalio があなたの代わりに使うトークンとログイン情報です（プライベートイメージの取得、DNS レコードの書き込みなど）。暗号化して保存され、保存後に再表示されることはありません。",
     "noProviders": "このインスタンスで利用できるプロバイダーはありません。",
     "noneForProvider": "まだ追加されていません。",
     "add": "追加",
@@ -813,7 +813,7 @@
     "namePlaceholder": "例: GHCR 読み取り専用",
     "secretKeptPlaceholder": "••••••••（保存済み — 空のままで維持）",
     "selectPlaceholder": "選択…",
-    "verifyNote": "保存する前に、Openship がプロバイダーへ認証情報を確認します。",
+    "verifyNote": "保存する前に、Kovalio がプロバイダーへ認証情報を確認します。",
     "confirmDelete": "「{name}」を削除しますか？これに依存しているものは動作しなくなります。",
     "toast": {
       "loadFailed": "認証情報を読み込めませんでした",

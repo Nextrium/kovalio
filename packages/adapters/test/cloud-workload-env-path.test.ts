@@ -7,7 +7,7 @@ import type { DeployConfig, LogEntry } from "../src/types";
 import type { CloudBuiltArtifact } from "../src/runtime/cloud/compose";
 
 /**
- * Covers the two cloud-side follow-ups to openship#623, both inside
+ * Covers the two cloud-side follow-ups to kovalio#623, both inside
  * `CloudRuntime.deploy` (cloud.ts step 4, "create a workload for the
  * application process"):
  *

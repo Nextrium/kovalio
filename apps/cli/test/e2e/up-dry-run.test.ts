@@ -1,5 +1,5 @@
 /**
- * `openship up --dry-run` must change NOTHING (#436).
+ * `kovalio up --dry-run` must change NOTHING (#436).
  *
  * The reported symptom was an unattended Docker install — apt repo, GPG key,
  * ~150 MB of packages and an enabled daemon — on a fresh Debian box whose operator
@@ -8,7 +8,7 @@
  *
  * So these tests assert on the absence of side effects, not on wording: every
  * mutating helper is counted and must stay at zero, and the (real) port resolver
- * must not persist ports.json — asserted by pointing OPENSHIP_HOME at a path that
+ * must not persist ports.json — asserted by pointing KOVALIO_HOME at a path that
  * doesn't exist and checking it still doesn't afterwards.
  */
 import { existsSync, rmSync } from "node:fs";
@@ -17,8 +17,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Hoisted above the imports so lib/paths.ts reads it at module load: every path
 // the CLI would write to lands under here, and nothing may create it.
 const HOME = vi.hoisted(() => {
-  const dir = `${process.env.TMPDIR?.replace(/\/$/, "") || "/tmp"}/openship-dry-run-${process.pid}`;
-  process.env.OPENSHIP_HOME = dir;
+  const dir = `${process.env.TMPDIR?.replace(/\/$/, "") || "/tmp"}/kovalio-dry-run-${process.pid}`;
+  process.env.KOVALIO_HOME = dir;
   return dir;
 });
 
@@ -57,11 +57,11 @@ vi.mock("../../src/lib/compose", () => ({
     composeFile: `${HOME}/compose/docker-compose.yml`,
     envFile: `${HOME}/compose/.env`,
     installMethodFile: `${HOME}/install-method`,
-    yaml: "services:\n  api:\n    image: ghcr.io/oblien/openship-api:latest\n",
+    yaml: "services:\n  api:\n    image: ghcr.io/oblien/kovalio-api:latest\n",
     settings: [{ key: "API_PORT", value: "4000" }],
     newSecrets: ["POSTGRES_PASSWORD", "BETTER_AUTH_SECRET", "INTERNAL_TOKEN"],
     existing: false,
-    mountDirs: ["/var/lib/openship/edge/sites-enabled"],
+    mountDirs: ["/var/lib/kovalio/edge/sites-enabled"],
     buildDir: null,
     hostControl: true,
   }),
@@ -100,7 +100,7 @@ vi.mock("../../src/lib/service", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../src/lib/service")>()),
   preview: () => ({
     kind: "systemd-user",
-    path: `${HOME}/openship.service`,
+    path: `${HOME}/kovalio.service`,
     content: "[Service]\nExecStart=/usr/bin/node index.js up --foreground\n",
   }),
   installAndStart: () => {
@@ -122,7 +122,7 @@ vi.mock("../../src/lib/edge-preflight", () => ({
 
 vi.mock("../../src/lib/from-source", () => ({
   // The dirs the plan names come from this module (one definition, see up-plan).
-  DEFAULT_REPO: "https://github.com/oblien/openship.git",
+  DEFAULT_REPO: "https://github.com/Nextrium/kovalio.git",
   SOURCE_CHECKOUT_DIR: `${HOME}/src`,
   SOURCE_DIST_DIR: `${HOME}/from-source-dist`,
   prepareFromSource: async () => {
@@ -192,7 +192,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("openship up --dry-run", () => {
+describe("kovalio up --dry-run", () => {
   // The issue verbatim: fresh Debian, no Docker, plain `up --dry-run`.
   it("does NOT install Docker to work out that it would install Docker", async () => {
     const r = await runCommand(upCommand, ["--dry-run"]);
@@ -217,7 +217,7 @@ describe("openship up --dry-run", () => {
     expect(out).toContain("docker compose pull");
     expect(out).toContain("docker compose up -d");
     // The compose file itself, as it would be written.
-    expect(out).toContain("ghcr.io/oblien/openship-api:latest");
+    expect(out).toContain("ghcr.io/oblien/kovalio-api:latest");
   });
 
   it("resolves ports WITHOUT persisting them", async () => {
@@ -253,7 +253,7 @@ describe("openship up --dry-run", () => {
     expectNoSideEffects();
 
     const out = con.text();
-    expect(out).toContain(`${HOME}/openship.service`);
+    expect(out).toContain(`${HOME}/kovalio.service`);
     expect(out).toContain("ExecStart=/usr/bin/node index.js up --foreground");
     expect(out).toContain("systemctl --user enable --now");
     // The bare install's own writes are named rather than made.

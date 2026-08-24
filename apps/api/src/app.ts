@@ -57,7 +57,7 @@ import { backupDestinationRoutes } from "./modules/backup-destinations/destinati
 import { reconcileAllSchedules } from "./modules/backups/triggers/cron";
 import { reconcileJobs } from "./modules/jobs/job.service";
 import { scheduleBillingAnniversary } from "./modules/billing/billing-anniversary.cron";
-import { ensureOblienWebhook } from "./lib/openship-cloud";
+import { ensureOblienWebhook } from "./lib/kovalio-cloud";
 import { ensureOblienDefaultQuota } from "./modules/billing/billing-oblien-quota";
 import { backfillWebhookSecrets } from "./modules/github/github.service";
 import { backupOrchestrator } from "./modules/backups/backup.orchestrator";
@@ -78,7 +78,7 @@ const oauthProtectedResourceMetadata = oAuthProtectedResourceMetadata(auth);
  * see `rewriteMetadataOrigin` for why that origin is unreachable).
  *
  * `no-store` because the document now varies by request origin on a box with no
- * OPENSHIP_PUBLIC_URL: the plugin sets `Access-Control-Allow-Origin: *` and no
+ * KOVALIO_PUBLIC_URL: the plugin sets `Access-Control-Allow-Origin: *` and no
  * cache directives, so a shared cache keyed on path alone could otherwise hand
  * one client's resolved origin to another.
  */
@@ -227,7 +227,7 @@ const OAUTH_DISCOVERY_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  // Origin-dependent when no OPENSHIP_PUBLIC_URL is set — never let a shared
+  // Origin-dependent when no KOVALIO_PUBLIC_URL is set — never let a shared
   // cache serve one client's resolved origin to another.
   "Cache-Control": "no-store",
 } as const;
@@ -318,7 +318,7 @@ if (env.CLOUD_MODE) {
   const { terminalRoutes } = await import("./modules/terminal/terminal.routes");
   app.route("/api/terminal", terminalRoutes);
 
-  /** Cloud account management - connect/disconnect to Openship Cloud */
+  /** Cloud account management - connect/disconnect to Kovalio Cloud */
   const { cloudLocalRoutes } = await import("./modules/cloud/cloud-local.routes");
   app.route("/api/cloud", cloudLocalRoutes);
 

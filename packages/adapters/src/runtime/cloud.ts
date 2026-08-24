@@ -1173,7 +1173,7 @@ export class CloudRuntime implements MultiServiceRuntimeAdapter {
       ? `${config.branch}@${config.commitSha.slice(0, 7)}`
       : config.branch;
     const checkoutRef = config.commitSha ?? "FETCH_HEAD";
-    const sourceDir = "/openship/dockerfile-source";
+    const sourceDir = "/kovalio/dockerfile-source";
     let sourceWorkspaceId: string | undefined;
 
     try {
@@ -1439,7 +1439,7 @@ export class CloudRuntime implements MultiServiceRuntimeAdapter {
     if (source.kind === "local") {
       await transferLocalDirectory(
         source.contextRoot,
-        { kind: "cloud-runtime", runtime, path: "/openship/context" },
+        { kind: "cloud-runtime", runtime, path: "/kovalio/context" },
         logger,
         { excludes: [...TRANSFER_EXCLUDES] },
       );
@@ -1455,8 +1455,8 @@ export class CloudRuntime implements MultiServiceRuntimeAdapter {
     targetRuntime: CloudWorkspaceRuntime,
     logger: BuildLogger,
   ): Promise<void> {
-    const repoRoot = "/openship/repo";
-    const contextRoot = "/openship/context";
+    const repoRoot = "/kovalio/repo";
+    const contextRoot = "/kovalio/context";
     const contextRelativePath = normalizeDockerRelativePath(source.contextRelativePath);
 
     if (contextRelativePath.startsWith("..")) {
@@ -1498,7 +1498,7 @@ export class CloudRuntime implements MultiServiceRuntimeAdapter {
     const cloneCommand = [
       "set -e",
       `rm -rf ${sq(repoRoot)} ${sq(contextRoot)}`,
-      "mkdir -p /openship",
+      "mkdir -p /kovalio",
       // See fetchCommand above for env-var rationale; --progress keeps
       // the clone visible in the streamed log even though stdout/stderr
       // are pipes, not a tty.
@@ -1550,7 +1550,7 @@ export class CloudRuntime implements MultiServiceRuntimeAdapter {
     logger: BuildLogger;
   }): Promise<void> {
     const { copy, stageRefs, runtime, logger } = opts;
-    let sourceBase = "/openship/context";
+    let sourceBase = "/kovalio/context";
     let sourcePaths = copy.sources;
     let copyFromStage = false;
 
@@ -1793,7 +1793,7 @@ export class CloudRuntime implements MultiServiceRuntimeAdapter {
       log({
         timestamp: new Date().toISOString(),
         level: "warn",
-        message: `Persistent storage (${config.volumes.join(", ")}) is not supported on Openship Cloud — the workspace disk is the only durable storage. Use object storage for uploads, or deploy to a server.\n`,
+        message: `Persistent storage (${config.volumes.join(", ")}) is not supported on Kovalio Cloud — the workspace disk is the only durable storage. Use object storage for uploads, or deploy to a server.\n`,
       });
     }
 
@@ -1956,7 +1956,7 @@ fi`;
     // shell-quotes workDir (this call site did not) and it is the one place the
     // `node_modules/.bin` prelude has to live, so the compose path and this one
     // cannot drift. Without the prelude a buildpack `next start` exits 127 here
-    // the same way it did on the bare target (openship#623).
+    // the same way it did on the bare target (kovalio#623).
     //
     // Roots are `[workDir, "/app"]`, not `[workDir]`: a stack with
     // productionPaths runs from /app/production while node_modules stays at /app.
@@ -2438,7 +2438,7 @@ fi`;
     try {
       data = await ws.get();
     } catch (err) {
-      // ABSENT: the workspace was deleted on Openship Cloud out-of-band →
+      // ABSENT: the workspace was deleted on Kovalio Cloud out-of-band →
       // report `missing` (drift). A transient Oblien/network error is NOT a
       // 404 and propagates so callers can tell "gone" from "can't reach".
       if (isRuntimeNotFoundError(err)) {

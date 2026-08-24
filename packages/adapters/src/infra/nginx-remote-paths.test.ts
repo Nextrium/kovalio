@@ -13,7 +13,7 @@
  *     sslStatus=provisioning / sslExpiresAt=null, which the renewal sweep skips
  *     — the cert quietly expired 90 days later.
  *   - the vhost was written to the SSH session's home directory as a file
- *     literally named `\var\lib\openship\edge\sites-enabled\<site>.conf`, so
+ *     literally named `\var\lib\kovalio\edge\sites-enabled\<site>.conf`, so
  *     nginx never saw it and the site didn't serve.
  */
 
@@ -35,7 +35,7 @@ type CommandExecutor = import("../types").CommandExecutor;
 type RootChecked = import("../system/privilege").RootChecked;
 
 const DOMAIN = "app.example.com";
-const SITES = "/var/lib/openship/edge/sites-enabled";
+const SITES = "/var/lib/kovalio/edge/sites-enabled";
 const LIVE = `/etc/letsencrypt/live/${DOMAIN}`;
 const PATHS = { ...OPENRESTY_DEFAULT_PATHS, sitesDir: SITES };
 
@@ -46,7 +46,7 @@ const PATHS = { ...OPENRESTY_DEFAULT_PATHS, sitesDir: SITES };
  * String concatenation sidesteps the mock entirely.
  */
 function mintCert(): { certPem: string; keyPem: string } {
-  const dir = mkdtempSync(`${tmpdir()}/openship-nginx-remote-paths-`);
+  const dir = mkdtempSync(`${tmpdir()}/kovalio-nginx-remote-paths-`);
   try {
     execFileSync(
       "openssl",

@@ -76,7 +76,7 @@ export class DockerEdgeExecutor implements CommandExecutor {
    * that fails must not replace the real failure with an error about diagnosing it.
    *
    * The condition this exists for used to be reported as `(HTTP code 409) … container
-   * <64-hex-id> is not running`: the RESOLVED id, no name, no cause. During `openship
+   * <64-hex-id> is not running`: the RESOLVED id, no name, no cause. During `kovalio
    * up` migration that surfaced as six identical 409s against the edge's own id while
    * it was still starting, and from the cert flow it surfaced as a container the
    * operator had no reason to think was involved at all.

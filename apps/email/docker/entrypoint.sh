@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# First-boot / every-boot entrypoint for the openship-mail engine.
+# First-boot / every-boot entrypoint for the kovalio-mail engine.
 #
 # Idempotent by construction — this is what makes `docker pull` + recreate safe:
 #   1. seed-if-absent: copy baked config into empty bind mounts, never overwrite
@@ -28,18 +28,18 @@
 #   7. hand off to supervisord (the CMD).
 #
 # Env (from ensure-container-mail.ts --env-file): FIRST_DOMAIN,
-# OPENSHIP_MAIL_DB_{HOST,PORT,NAME,USER}, plus iRedMail secrets
+# KOVALIO_MAIL_DB_{HOST,PORT,NAME,USER}, plus iRedMail secrets
 # (VMAIL_DB_ADMIN_PASSWD, VMAIL_DB_BIND_PASSWD, AMAVISD_DB_PASSWD,
 # IREDAPD_DB_PASSWD, FAIL2BAN_DB_PASSWD, PGSQL_ROOT_PASSWD, DOMAIN_ADMIN_PASSWD_PLAIN).
 set -euo pipefail
 
-log() { echo "[openship-mail] $*"; }
+log() { echo "[kovalio-mail] $*"; }
 
 # No DB_HOST/DB_PORT here on purpose: db-bootstrap.sh reads the same two env vars and
 # owns every conversation with the sidecar, so duplicating them invites the two files
 # to disagree about where the database is.
 FIRST_DOMAIN="${FIRST_DOMAIN:-}"
-SEED_DIR="/opt/openship-mail/seed"
+SEED_DIR="/opt/kovalio-mail/seed"
 
 # 1. seed-if-absent for bind-mounted config dirs.
 seed() { # <seed-subdir> <target>
@@ -58,7 +58,7 @@ mkdir -p /var/vmail /var/spool/postfix /var/lib/dkim /var/lib/clamav
 # The iRedMail installer does this at image-build time, but /var/spool/postfix is
 # replaced by the queue bind mount at runtime. Refreshing rather than seed-once
 # also follows Docker DNS changes after a container recreate (GH-686).
-bash /opt/openship-mail/postfix-chroot-etc.sh /etc /var/spool/postfix/etc
+bash /opt/kovalio-mail/postfix-chroot-etc.sh /etc /var/spool/postfix/etc
 
 # 3. reconcile baked placeholder secrets -> the real shared role password.
 #    The image is built with `build-placeholder` in every daemon's DB config; all
@@ -67,7 +67,7 @@ bash /opt/openship-mail/postfix-chroot-etc.sh /etc /var/spool/postfix/etc
 #    amavis/iredapd/fail2ban to the sidecar. Idempotent: once replaced there is no
 #    placeholder left to match, so every later boot is a no-op.
 if [ -n "${VMAIL_DB_BIND_PASSWD:-}" ]; then
-  export _OPENSHIP_MAIL_PW="$VMAIL_DB_BIND_PASSWD"
+  export _KOVALIO_MAIL_PW="$VMAIL_DB_BIND_PASSWD"
   # Pipe grep straight into xargs, newline-delimited. A NUL-delimited list (grep
   # -Z / xargs -0) cannot round-trip through a shell variable — bash silently
   # drops NUL bytes, mashing every path into one bogus filename that rewrites
@@ -77,13 +77,13 @@ if [ -n "${VMAIL_DB_BIND_PASSWD:-}" ]; then
   # so its mtime is now newer). Deleting the stale .pyc below makes that certain.
   if grep -rl --exclude='*.pyc' 'build-placeholder' \
        /etc/postfix /etc/dovecot /etc/amavis /opt/iredapd /etc/fail2ban 2>/dev/null \
-       | xargs -r perl -pi -e 's/\Qbuild-placeholder\E/$ENV{_OPENSHIP_MAIL_PW}/g'; then
+       | xargs -r perl -pi -e 's/\Qbuild-placeholder\E/$ENV{_KOVALIO_MAIL_PW}/g'; then
     log "reconciled DB passwords in daemon configs"
   else
     log "no placeholder passwords to reconcile"
   fi
   rm -f /opt/iredapd/__pycache__/*.pyc 2>/dev/null || true
-  unset _OPENSHIP_MAIL_PW
+  unset _KOVALIO_MAIL_PW
 fi
 
 # 3b. reconcile the baked placeholder DOMAIN -> the real FIRST_DOMAIN.
@@ -109,18 +109,18 @@ if [ -n "$FIRST_DOMAIN" ]; then
     *[!A-Za-z0-9.-]*|"")
       log "WARN: FIRST_DOMAIN '$FIRST_DOMAIN' outside [A-Za-z0-9.-] — skipping domain reconcile" ;;
     *)
-      export _OPENSHIP_MAIL_DOMAIN="$FIRST_DOMAIN"
+      export _KOVALIO_MAIL_DOMAIN="$FIRST_DOMAIN"
       # \Q…\E so the dot in build.invalid is literal, not a wildcard. Same file set +
       # *.pyc handling as the password reconcile above.
       if grep -rl --exclude='*.pyc' 'build\.invalid' \
            /etc/postfix /etc/dovecot /etc/amavis /opt/iredapd /etc/fail2ban 2>/dev/null \
-           | xargs -r perl -pi -e 's/\Qbuild.invalid\E/$ENV{_OPENSHIP_MAIL_DOMAIN}/g'; then
+           | xargs -r perl -pi -e 's/\Qbuild.invalid\E/$ENV{_KOVALIO_MAIL_DOMAIN}/g'; then
         log "reconciled build.invalid -> ${FIRST_DOMAIN} in daemon configs"
       else
         log "no build.invalid placeholder to reconcile"
       fi
       rm -f /opt/iredapd/__pycache__/*.pyc 2>/dev/null || true
-      unset _OPENSHIP_MAIL_DOMAIN
+      unset _KOVALIO_MAIL_DOMAIN
 
       # /etc/mailname — Debian's "system mail name" (postfix myorigin source). Not on
       # a bind mount and never written under the stubbed-init build, so it is missing
@@ -159,10 +159,10 @@ fi
 # crash-looping while the boot log claimed success. Dying here instead means the log
 # names the cause once, and `verifyMailEngine`'s port probe correctly reports the
 # engine as down instead of reporting a healthy install.
-if ! bash /opt/openship-mail/db-bootstrap.sh; then
+if ! bash /opt/kovalio-mail/db-bootstrap.sh; then
   log "FATAL: mail database bootstrap failed — see the [db-bootstrap] lines above."
   log "  The engine will not start without its schema. After fixing the cause, recreate"
-  log "  the container, or re-run:  docker exec openship-mail bash /opt/openship-mail/db-bootstrap.sh"
+  log "  the container, or re-run:  docker exec kovalio-mail bash /opt/kovalio-mail/db-bootstrap.sh"
   exit 1
 fi
 

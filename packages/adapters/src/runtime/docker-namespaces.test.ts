@@ -18,7 +18,7 @@ import type { MultiServiceDeployConfig, MultiServiceGroupHandle } from "./types"
  * be handed a project-network endpoint that would contradict it.
  */
 
-const GROUP: MultiServiceGroupHandle = { id: "net-openship-demo" } as MultiServiceGroupHandle;
+const GROUP: MultiServiceGroupHandle = { id: "net-kovalio-demo" } as MultiServiceGroupHandle;
 
 function baseConfig(overrides: Partial<MultiServiceDeployConfig> = {}): MultiServiceDeployConfig {
   return {
@@ -26,7 +26,7 @@ function baseConfig(overrides: Partial<MultiServiceDeployConfig> = {}): MultiSer
     projectId: "proj-1",
     slug: "demo",
     serviceName: "app",
-    image: "openship/local:app",
+    image: "kovalio/local:app",
     ports: ["8080:80"],
     environment: {},
     volumes: [],
@@ -58,7 +58,7 @@ function recordingDaemon() {
 async function createWith(config: MultiServiceDeployConfig) {
   const { docker, creates } = recordingDaemon();
   const runtime = await DockerRuntime.create({
-    dockerSocketPath: "/tmp/openship-test-absent.sock",
+    dockerSocketPath: "/tmp/kovalio-test-absent.sock",
   });
   (runtime as unknown as { _docker: unknown })._docker = docker;
   await runtime.deployServiceWorkload(GROUP, config);

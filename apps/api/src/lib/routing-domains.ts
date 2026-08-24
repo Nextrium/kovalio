@@ -138,7 +138,7 @@ export function hostTerminatesTlsLocally(
   hostname: string,
   domain?: { externalIngress?: boolean | null } | null,
 ): boolean {
-  // A managed *.opsh.io host is fronted by Openship Cloud's edge, which
+  // A managed *.opsh.io host is fronted by Kovalio Cloud's edge, which
   // terminates TLS and forwards to plain :80 here.
   if (resolveManagedHostname(hostname).isManaged) return false;
   return !domain?.externalIngress;
@@ -276,7 +276,7 @@ export function buildProjectRouteDomains(opts: {
       tls: !external || manualSsl,
       requiresSslTooling,
       // Ours to terminate unless an upstream ingress owns it (externalIngress) or
-      // it's a managed *.opsh.io host fronted by Openship Cloud's edge.
+      // it's a managed *.opsh.io host fronted by Kovalio Cloud's edge.
       terminatesTlsLocally: !external && !managed.isManaged,
       // Attempt issuance on the FIRST deploy of an unverified custom domain —
       // issuing IS the verification on self-hosted, so the domain is Live at
@@ -318,7 +318,7 @@ export function buildProjectRouteDomains(opts: {
 
       // Attach EITHER the operator's custom domain OR a free
       // <slug>.opsh.io fallback — never both. The free managed URL is
-      // served by Openship Cloud's edge (runPostDeploySync →
+      // served by Kovalio Cloud's edge (runPostDeploySync →
       // ensureManagedEdgeProxy), so a self-hosted box can't serve it
       // alone; once the operator points their own domain at the box, that
       // domain is the deploy URL and a free slug they never asked for is

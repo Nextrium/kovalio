@@ -202,12 +202,12 @@
   },
   "cloud": {
     "connectionGate": {
-      "reconnect": "Reconectar ao Openship Cloud",
-      "deployedOn": "Este projeto está implantado no Openship Cloud",
-      "sessionMissing": "Sua sessão do Openship Cloud está ausente. Conecte-se para gerenciar implantações, ver logs e acessar os controles de tempo de execução de {name}.",
+      "reconnect": "Reconectar ao Kovalio Cloud",
+      "deployedOn": "Este projeto está implantado no Kovalio Cloud",
+      "sessionMissing": "Sua sessão do Kovalio Cloud está ausente. Conecte-se para gerenciar implantações, ver logs e acessar os controles de tempo de execução de {name}.",
       "thisProject": "este projeto",
       "connecting": "Conectando…",
-      "connect": "Conectar ao Openship Cloud",
+      "connect": "Conectar ao Kovalio Cloud",
       "readOnlyNote": "Você ainda pode navegar nesta página em modo somente leitura enquanto estiver desconectado."
     }
   },
@@ -215,7 +215,7 @@
     "githubPermission": {
       "title": "Conectar ao GitHub",
       "subtitle": "Escolha o nível de acesso aos repositórios",
-      "intro": "Selecione a quais repositórios o Openship pode acessar. Você pode alterar isso depois nas configurações do GitHub.",
+      "intro": "Selecione a quais repositórios o Kovalio pode acessar. Você pode alterar isso depois nas configurações do GitHub.",
       "publicTitle": "Somente repositórios públicos",
       "publicDesc": "Acesso aos seus repositórios públicos. Perfeito para projetos de código aberto.",
       "publicItem1": "Ler dados de repositórios públicos",
@@ -371,12 +371,12 @@
     "youreOn": "· você está na {version}",
     "rerunInstall": "Execute novamente a instalação para atualizar seu servidor auto-hospedado.",
     "updateNow": "Atualizar agora",
-    "downloading": "Baixando o Openship {version}",
-    "installing": "Instalando — o Openship será reiniciado",
+    "downloading": "Baixando o Kovalio {version}",
+    "installing": "Instalando — o Kovalio será reiniciado",
     "updateFailed": "Falha na atualização",
     "retry": "Tentar novamente",
     "changelog": "Changelog",
-    "updatedTo": "Atualizado para o Openship {version}",
+    "updatedTo": "Atualizado para o Kovalio {version}",
     "seeChanges": "Veja o que mudou nesta versão.",
     "onLatest": "Você está na versão mais recente.",
     "whatsNew": "Novidades",

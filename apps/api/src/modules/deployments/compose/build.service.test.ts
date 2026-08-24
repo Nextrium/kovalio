@@ -111,7 +111,7 @@ function repoService(
 
 /** Materialized context roots currently sitting in os.tmpdir() (leak detector). */
 function catalogTempRoots(): string[] {
-  return readdirSync(tmpdir()).filter((n) => n.startsWith("openship-catalog-build-"));
+  return readdirSync(tmpdir()).filter((n) => n.startsWith("kovalio-catalog-build-"));
 }
 
 type Captured = { config: BuildConfig; serviceName: string };
@@ -201,7 +201,7 @@ describe("buildComposeImages — inline catalog build materialization", () => {
     // Source is the shared orchestrator temp root, not a repo clone.
     expect(cfg.localPath).toBe(rootSeen);
     expect(isAbsolute(cfg.localPath!)).toBe(true);
-    expect(cfg.localPath).toContain("openship-catalog-build-");
+    expect(cfg.localPath).toContain("kovalio-catalog-build-");
     // The context stays the SHARED ROOT; the subdir — the author-facing COPY prefix
     // — rides in the Dockerfile path, so `COPY compute/…` resolves on every runtime.
     expect(cfg.rootDirectory).toBe("");

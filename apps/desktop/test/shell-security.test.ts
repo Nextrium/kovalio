@@ -64,7 +64,7 @@ describe("classifyFrameNavigation", () => {
     // Dashboard links to docs and github.com/settings/tokens/new carry no
     // target="_blank", so they arrive as main-frame navigations. They must still
     // reach the user — just not inside the frame that holds the native bridge.
-    expect(classifyFrameNavigation("https://openship.io/docs", LOCAL)).toBe("external");
+    expect(classifyFrameNavigation("https://nextrium.org/docs", LOCAL)).toBe("external");
     expect(
       classifyFrameNavigation("https://github.com/settings/tokens/new?scopes=repo", LOCAL),
     ).toBe("external");
@@ -87,7 +87,7 @@ describe("classifyFrameNavigation", () => {
 
 describe("isSafeExternalUrl", () => {
   it("allows http and https", () => {
-    expect(isSafeExternalUrl("https://github.com/oblien/openship")).toBe(true);
+    expect(isSafeExternalUrl("https://github.com/Nextrium/kovalio")).toBe(true);
     expect(isSafeExternalUrl("http://localhost:3001/x")).toBe(true);
   });
 
@@ -137,7 +137,7 @@ describe("isAllowedUpdateAssetUrl", () => {
   it("allows GitHub release download hosts over https", () => {
     expect(
       isAllowedUpdateAssetUrl(
-        "https://github.com/oblien/openship/releases/download/v0.6.1/Openship-arm64.dmg",
+        "https://github.com/Nextrium/kovalio/releases/download/v0.6.1/Kovalio-arm64.dmg",
       ),
     ).toBe(true);
     expect(isAllowedUpdateAssetUrl("https://objects.githubusercontent.com/x")).toBe(true);
@@ -145,11 +145,11 @@ describe("isAllowedUpdateAssetUrl", () => {
   });
 
   it("blocks other hosts, plaintext http, and host-suffix lookalikes", () => {
-    expect(isAllowedUpdateAssetUrl("https://attacker.tld/Openship.dmg")).toBe(false);
+    expect(isAllowedUpdateAssetUrl("https://attacker.tld/Kovalio.dmg")).toBe(false);
     expect(isAllowedUpdateAssetUrl("http://github.com/x")).toBe(false);
     expect(isAllowedUpdateAssetUrl("https://github.com.attacker.tld/x")).toBe(false);
     expect(isAllowedUpdateAssetUrl("https://notgithub.com/x")).toBe(false);
-    expect(isAllowedUpdateAssetUrl("file:///tmp/Openship.dmg")).toBe(false);
+    expect(isAllowedUpdateAssetUrl("file:///tmp/Kovalio.dmg")).toBe(false);
   });
 });
 

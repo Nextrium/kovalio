@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
  *
  * GH-622 is the incident. v0.6.6 added `**\/build` for the webmail client's Vite
  * output; it also matched the dashboard's own `/build/[id]` route directory, so
- * openship-dashboard:0.6.6 shipped 52 routes where 0.6.5 had 53 and every
+ * kovalio-dashboard:0.6.6 shipped 52 routes where 0.6.5 had 53 and every
  * deployment-detail link 404'd. Only the published image was wrong, which is the
  * worst place for a bug to be visible for the first time.
  */

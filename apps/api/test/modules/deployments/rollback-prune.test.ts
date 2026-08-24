@@ -228,10 +228,10 @@ describe("prune — never deletes an image another retained release needs", () =
       dep({ id: "d5", imageRef: "compose" }), // active compose release
       dep({ id: "d4", imageRef: "compose" }),
       dep({ id: "d3", imageRef: "compose" }),
-      dep({ id: "d1", imageRef: "openship/app-web:bld_1" }),
+      dep({ id: "d1", imageRef: "kovalio/app-web:bld_1" }),
     ];
     // The active release's `web` service runs the very tag d1 recorded.
-    h.serviceRows = { d5: [{ serviceName: "web", imageRef: "openship/app-web:bld_1" }] };
+    h.serviceRows = { d5: [{ serviceName: "web", imageRef: "kovalio/app-web:bld_1" }] };
     await prune("p1");
     expect(h.purged).toEqual([{ id: "d1", imageRef: null }]);
   });
@@ -241,8 +241,8 @@ describe("prune — the retention column never claims a reclaim that did not hap
   // A compose static release keeps its doc-root in the SERVICE row's imageRef, so
   // `runtime.purge` (which works off the deployment ref, "compose" for these) can
   // never see it. These directories are the release.
-  const DIR_WEB = "/opt/openship/static/releases/d1-web";
-  const DIR_DOCS = "/opt/openship/static/releases/d1-docs";
+  const DIR_WEB = "/opt/kovalio/static/releases/d1-web";
+  const DIR_DOCS = "/opt/kovalio/static/releases/d1-docs";
 
   const overflowWithServiceDirs = () => {
     h.ready = [
@@ -293,13 +293,13 @@ describe("prune — the retention column never claims a reclaim that did not hap
       dep({ id: "d5", imageRef: "img5" }),
       dep({ id: "d4", imageRef: "img4" }),
       dep({ id: "d3", imageRef: "img3" }),
-      dep({ id: "d1", imageRef: "openship/app:bld_1" }),
+      dep({ id: "d1", imageRef: "kovalio/app:bld_1" }),
     ];
     h.purgeFails = new Set(["d1"]);
 
     const result = await prune("p1");
 
-    expect(h.purged).toEqual([{ id: "d1", imageRef: "openship/app:bld_1" }]);
+    expect(h.purged).toEqual([{ id: "d1", imageRef: "kovalio/app:bld_1" }]);
     expect(h.retainedCleared).toEqual([]);
     expect(result.purged).toBe(0);
   });
@@ -309,8 +309,8 @@ describe("prune — the retention column never claims a reclaim that did not hap
       dep({ id: "d5", imageRef: "img5" }),
       dep({ id: "d4", imageRef: "img4" }),
       dep({ id: "d3", imageRef: "img3" }),
-      dep({ id: "d1", imageRef: "openship/app:bld_1" }),
-      dep({ id: "d0", imageRef: "openship/app:bld_0" }),
+      dep({ id: "d1", imageRef: "kovalio/app:bld_1" }),
+      dep({ id: "d0", imageRef: "kovalio/app:bld_0" }),
     ];
     h.purgeFails = new Set(["d1"]);
 
