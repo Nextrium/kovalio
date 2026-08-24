@@ -1,5 +1,5 @@
-﻿import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
-import { join, extname, relative } from "node:path";
+﻿import { readFileSync, writeFileSync, readdirSync, statSync, renameSync, existsSync } from "node:fs";
+import { join, extname, relative, basename, dirname } from "node:path";
 
 const ROOT = process.cwd();
 
@@ -64,8 +64,36 @@ const REPLACEMENTS = [
   [/OPENSHIP/g, "KOVALIO"],
 ];
 
+const FILE_RENAMES = [
+  ["apps/api/src/lib/openship-cloud.ts", "apps/api/src/lib/kovalio-cloud.ts"],
+  ["apps/api/src/lib/openship-manifest-sync.ts", "apps/api/src/lib/kovalio-manifest-sync.ts"],
+  ["apps/api/src/lib/openship-manifest.ts", "apps/api/src/lib/kovalio-manifest.ts"],
+  ["apps/api/src/lib/openship-server-store.test.ts", "apps/api/src/lib/kovalio-server-store.test.ts"],
+  ["apps/api/src/lib/openship-server-store.ts", "apps/api/src/lib/kovalio-server-store.ts"],
+  ["apps/api/src/lib/openship-snapshot-read.test.ts", "apps/api/src/lib/kovalio-snapshot-read.test.ts"],
+  ["apps/api/src/modules/system/migration/openship-dist.ts", "apps/api/src/modules/system/migration/kovalio-dist.ts"],
+  ["apps/api/src/modules/system/migration/openship-project.service.ts", "apps/api/src/modules/system/migration/kovalio-project.service.ts"],
+  ["apps/web/content/docs/guides/openship-json.mdx", "apps/web/content/docs/guides/kovalio-json.mdx"],
+  ["apps/web/content/docs/reference/openship-json.mdx", "apps/web/content/docs/reference/kovalio-json.mdx"],
+  ["apps/web/content/resources/introducing-openship.mdx", "apps/web/content/resources/introducing-kovalio.mdx"],
+  ["apps/web/public/openship.schema.json", "apps/web/public/kovalio.schema.json"],
+  ["packages/core/src/metadata/openship.ts", "packages/core/src/metadata/kovalio.ts"],
+  ["packages/core/src/openship-config", "packages/core/src/kovalio-config"],
+];
+
 let filesScanned = 0;
 let filesModified = 0;
+
+function handleFileRenames() {
+  for (const [from, to] of FILE_RENAMES) {
+    const fromPath = join(ROOT, from);
+    const toPath = join(ROOT, to);
+    if (existsSync(fromPath) && !existsSync(toPath)) {
+      renameSync(fromPath, toPath);
+      console.log(`[rebrand] Renamed: ${from} -> ${to}`);
+    }
+  }
+}
 
 function walk(dir) {
   const entries = readdirSync(dir);
@@ -111,5 +139,6 @@ function processFile(fullPath, relPath) {
 }
 
 console.log("🚀 Starting Kovalio Brand Overlay Engine...");
+handleFileRenames();
 walk(ROOT);
 console.log(`\n✅ Finished rebranding: Scanned ${filesScanned} files, Modified ${filesModified} files.`);
