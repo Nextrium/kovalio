@@ -55,7 +55,8 @@ export const AUDIT_CATEGORIES = [
   {
     id: "agent",
     label: "AI agents",
-    description: "What connected assistants did over MCP — every tool call, and the scope they hold.",
+    description:
+      "What connected assistants did over MCP — every tool call, and the scope they hold.",
   },
   {
     id: "security",
@@ -165,6 +166,20 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     label: "App deletion refused",
     tone: "warning",
     description: "A delete was refused — something still depends on this app.",
+  },
+  "project.deletion.failed": {
+    category: "apps",
+    action: "failed to delete",
+    label: "App deletion failed",
+    tone: "warning",
+    description: "Cleanup did not complete, so the app record was kept for a safe retry.",
+  },
+  "project.build_cache.cleared": {
+    category: "apps",
+    action: "cleared the Docker build cache for",
+    label: "Build cache cleared",
+    tone: "warning",
+    description: "Unused build cache was removed from the app's Docker host.",
   },
   "project:write": {
     category: "apps",
@@ -382,6 +397,43 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     tone: "warning",
   },
 
+  "ingress.connection_created": {
+    category: "servers",
+    action: "requested public ingress setup for",
+    label: "Tunnel connection requested",
+    description: "Server tunnel setup was queued; its persisted status records completion or failure.",
+  },
+  "ingress.defaults_updated": {
+    category: "servers",
+    action: "changed domain defaults for",
+    label: "Tunnel defaults changed",
+    description: "Automatic enrollment or the Access policy for future hostnames changed.",
+  },
+  "ingress.retry_requested": {
+    category: "servers",
+    action: "requested ingress recovery for",
+    label: "Tunnel retry requested",
+  },
+  "ingress.disconnection_requested": {
+    category: "servers",
+    action: "requested ingress removal for",
+    label: "Tunnel disconnection requested",
+    tone: "warning",
+    description: "Owned hostname and connector cleanup was queued before removing the connection.",
+  },
+  "ingress.hostname_saved": {
+    category: "domains",
+    action: "configured public ingress for",
+    label: "Hostname ingress saved",
+    description: "The hostname connection or Access policy was saved for reconciliation.",
+  },
+  "ingress.hostname_disconnect_requested": {
+    category: "domains",
+    action: "requested ingress removal for",
+    label: "Hostname disconnection requested",
+    tone: "warning",
+  },
+
   /* ---------------- Servers ---------------- */
   "server.added": {
     category: "servers",
@@ -429,6 +481,21 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     label: "Server reachable again",
     tone: "success",
   },
+  "migration.source_connected": {
+    category: "servers",
+    action: "connected the migration source",
+    label: "Migration source connected",
+    tone: "info",
+    description:
+      "An external SSH server was connected for importing projects. It cannot be used as a deployment destination.",
+  },
+  "migration.source_disconnected": {
+    category: "servers",
+    action: "disconnected the migration source",
+    label: "Migration source disconnected",
+    description:
+      "The stored migration connection was removed. The source server and its data are unchanged.",
+  },
   "server:write": {
     category: "servers",
     action: "changed the server",
@@ -461,7 +528,7 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     tone: "warning",
   },
   // Catalogued because the taxonomy scan is deliberately over-inclusive: it greps
-  // apps/api/src for `eventType:` literals, so a notification-only emit that never
+  // the HTTP API and shared engine for `eventType:` literals, so a notification-only emit that never
   // writes an audit_event row is caught the same as an audit write. Without this the
   // suite fails; with it, an operator who DOES surface these sees a real label.
   "mail.inbound_received": {
@@ -472,6 +539,13 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
   },
 
   /* ---------------- Members & access ---------------- */
+  "identity.provisioned": {
+    category: "members",
+    action: "provisioned the identity",
+    label: "Identity provisioned",
+    tone: "info",
+    description: "A trusted host mapped an external identity to an Openship user.",
+  },
   "organization.created": {
     category: "members",
     action: "created the organization",
@@ -508,6 +582,13 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     action: "changed the role of",
     label: "Member role changed",
     tone: "warning",
+  },
+  "member.updated": {
+    category: "members",
+    action: "changed the membership of",
+    label: "Membership updated by the host",
+    tone: "warning",
+    description: "A trusted host added, changed or removed an organization membership.",
   },
   "member.joined": {
     category: "members",
@@ -548,6 +629,13 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     label: "Invitation sent with pending permissions",
     tone: "info",
     description: "Grants were queued and will apply the moment the invitee joins.",
+  },
+  "invitation.resent": {
+    category: "members",
+    action: "renewed the invitation for",
+    label: "Invitation renewed",
+    tone: "info",
+    description: "The invitation's authority and expiry were renewed; delivery may use email or a link.",
   },
   "invitation.accepted": {
     category: "members",
@@ -690,6 +778,21 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     tone: "warning",
     description: "A database dump from another instance was loaded in.",
   },
+  "instance.move_requested": {
+    category: "security",
+    action: "requested a control-plane move to another instance",
+    label: "Control-plane move requested",
+    tone: "warning",
+    description:
+      "An administrator requested a transfer of instance data and control to another instance.",
+  },
+  "instance.server_move_requested": {
+    category: "security",
+    action: "requested a control-plane move to a server",
+    label: "Server control-plane move requested",
+    tone: "warning",
+    description: "An administrator requested a hosted control plane on a selected server.",
+  },
   // Written by the audit module itself. "disabled" is recorded before the switch
   // flips, so turning recording off always leaves this one row behind.
   "audit.disabled": {
@@ -725,6 +828,13 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     label: "Spending cap reached",
     tone: "danger",
     description: "Cloud resources may have been paused — review billing.",
+  },
+  "billing.credit_low": {
+    category: "billing",
+    action: "approached the credit limit for",
+    label: "Cloud credits running low",
+    tone: "warning",
+    description: "Review the remaining allowance before Cloud workloads are interrupted.",
   },
   "billing.credit_exhausted": {
     category: "billing",
@@ -812,6 +922,53 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     label: "GitHub app installed",
     tone: "info",
   },
+  "github.source.created": {
+    category: "system",
+    action: "registered the GitHub App source",
+    label: "GitHub App source registered",
+    tone: "info",
+    description:
+      "An organization-owned GitHub App was verified and stored. Secret values are never recorded.",
+  },
+  "github.source.updated": {
+    category: "system",
+    action: "updated the GitHub App source",
+    label: "GitHub App source updated",
+    tone: "info",
+    description: "A GitHub App's identity, endpoint, or encrypted credentials changed.",
+  },
+  "github.source.verified": {
+    category: "system",
+    action: "verified the GitHub App source",
+    label: "GitHub App source verified",
+    tone: "info",
+  },
+  "github.source.defaulted": {
+    category: "system",
+    action: "made the default GitHub App source",
+    label: "Default GitHub App source changed",
+    tone: "info",
+  },
+  "github.source.deleted": {
+    category: "system",
+    action: "deleted the GitHub App source",
+    label: "GitHub App source deleted",
+    tone: "warning",
+    description:
+      "The local App credentials and installation bindings were removed; the GitHub App itself was not uninstalled on GitHub.",
+  },
+  "github.connect": {
+    category: "system",
+    action: "started connecting GitHub for",
+    label: "GitHub connection started",
+    tone: "info",
+  },
+  "github.installation.claim": {
+    category: "system",
+    action: "claimed the GitHub installation for",
+    label: "GitHub installation claimed",
+    tone: "info",
+  },
   "github.disconnect": {
     category: "system",
     action: "disconnected GitHub from",
@@ -860,6 +1017,13 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     label: "GitHub admin action",
     tone: "warning",
   },
+  "issues.history.clear": {
+    category: "system",
+    action: "cleared resolved monitoring history",
+    label: "Monitoring history cleared",
+    tone: "warning",
+    description: "Resolved incident history in this organization was removed. Active incidents remain.",
+  },
   "notification_channel.created": {
     category: "system",
     action: "added the notification channel",
@@ -892,6 +1056,11 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     category: "system",
     action: "changed the notification defaults of",
     label: "Notification defaults changed",
+  },
+  "notification_delivery.seen": {
+    category: "system",
+    action: "marked as seen",
+    label: "Notification marked as seen",
   },
   "notifications:write": {
     category: "system",
@@ -981,6 +1150,7 @@ export const AUDIT_RESOURCE_LABELS: Record<string, string> = {
   deployment: "a deployment",
   domain: "a domain",
   dns_credential: "a DNS provider",
+  ingress_connection: "a Cloudflare Tunnel connection",
   credential: "a credential",
   server: "a server",
   mail_server: "the mail server",

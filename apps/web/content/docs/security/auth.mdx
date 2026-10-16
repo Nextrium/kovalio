@@ -38,6 +38,53 @@ you never handle it yourself.
 The cookie name is prefixed with your instance mode — `kovalio.session_token` on a self-hosted install,
 `kovalio-cloud.session_token` on Kovalio Cloud.
 
+### Passkeys
+
+On Openship Cloud or a self-hosted instance with local accounts, open **Settings → Security → Passkeys**
+after signing in. Add a passkey using Face ID, Touch ID, Windows Hello, a password manager, or a
+compatible hardware security key. Registration requires a recent session and a discoverable credential
+so the login page can find it without a username. The private key stays with your authenticator;
+Openship stores the public WebAuthn credential.
+
+Choose **Sign in with a passkey** on the login page. If you enabled two-factor authentication, complete
+that step before a session is issued. You can remove saved passkeys from Settings even in a browser
+that cannot create them. Keep another sign-in method available before removing your last passkey.
+
+Passkeys require HTTPS, except on localhost. They bind to the configured **dashboard** hostname and
+browser origin, independently of the API host. Self-hosted public instances use `OPENSHIP_PUBLIC_URL`;
+Cloud uses its dashboard runtime URL. Keep the hostname stable: moving to another domain requires
+registering a passkey there. Use your password or social login to do that.
+
+### Two-factor authentication
+
+Open **Settings → Security → Two-factor authentication** on Openship Cloud or a self-hosted instance
+using `OPENSHIP_AUTH_MODE=local` (including a VPS). No email delivery or additional provider is needed
+for authenticator codes.
+
+1. Choose **Set up 2FA** and confirm your current password. If you have only used social login, first
+   choose **Add password**; this requires a recent signed-in session and does not replace social login.
+2. Scan the QR code with an authenticator app, or enter the setup key manually.
+3. Enter the app's six-digit code. Protection starts only after this verification succeeds.
+4. Copy or download your recovery codes and store them somewhere safe. Each code works once.
+
+When 2FA is enabled, password, social, and passkey sign-in all require an authenticator or recovery
+code before creating a usable session. Pending challenges expire after ten minutes. Browser handoffs,
+invitations, and MCP authorization continue after verification. Password resets do not disable 2FA.
+
+Use **Recovery codes** to replace your codes, or **Turn off 2FA** to disable protection; both require
+your password. Replacing codes invalidates the old set. An enabled authenticator cannot be overwritten
+by starting setup again: disable it explicitly first. Keep your authenticator or a recovery code
+available; an email password reset is not a way to bypass the second factor.
+
+These controls do not apply to account-free local mode. Instances that delegate sign-in to Openship
+Cloud manage account security on Cloud rather than storing a separate local factor.
+
+Authentication tables are added automatically during the normal database upgrade. Back up and retain
+your installation's `BETTER_AUTH_SECRET`, which encrypts authenticator secrets and recovery codes.
+An instance transfer must include credentials to preserve accounts with 2FA enabled; the destination
+re-encrypts them with its own key. An incomplete factor restore is rejected before changing data.
+Project-only transfers do not move account credentials.
+
 <Callout title="Bearer tokens are refused from the dashboard's own origin" type="warn">
 If a request arrives with a `Bearer` header **and** an `Origin` matching one of the dashboard's trusted
 browser origins, Kovalio rejects it (`401 BEARER_NOT_ALLOWED_FROM_BROWSER`). Bearer tokens are for
@@ -64,8 +111,6 @@ person's role, unless you narrow it (see below).
 
 In the dashboard, open **Settings → Tokens** and use the **Personal Access Tokens** section. Copy the
 token when it appears — that's the only time you'll see it.
-
-<Callout title="Screenshot">Settings → Tokens tab, the "Personal Access Tokens" section with the create form and a freshly minted token shown once. *(screenshot pending)*</Callout>
 
 From the terminal:
 
@@ -173,9 +218,10 @@ Kovalio recognizes three auth modes overall:
 
 - **`none`** — zero-auth loopback, described above. Default for the desktop app only; never used by a
   CLI-started or public instance.
-- **`local`** — standard login required (email + password via [Better Auth](https://www.better-auth.com/)).
-  Default for a fresh self-hosted install, and always used for CLI (`kovalio up`) and public instances.
-- **`cloud`** — the desktop app signs in with an Kovalio Cloud account instead of a local one.
+- **`local`** — standard login required (email + password, configured OAuth, or a registered passkey via
+  [Better Auth](https://www.better-auth.com/)). Default for a fresh self-hosted install, and always used
+  for CLI (`openship up`) and public instances.
+- **`cloud`** — the desktop app signs in with an Openship Cloud account instead of a local one.
 
 <Callout title="Creating the first admin" type="info">
 A CLI or self-hosted instance has no public sign-up. The first admin (email + password) is created during the
@@ -203,8 +249,10 @@ Kovalio keeps secrets where they're safest instead of copying them around:
 
 - **PAT secrets** are stored only as a SHA-256 hash; the plaintext exists just once, in your clipboard.
 - **Cloud sessions** are encrypted at rest on the instance and never exposed to the browser.
-- The **GitHub App private key** lives only on Kovalio Cloud; self-hosted instances mint short-lived App
-  tokens through the cloud rather than holding the key.
+- The managed **Openship GitHub App private key** lives only on Openship Cloud. A self-hosted workspace may
+  instead register one or more Apps in Settings; each private key, client secret, and webhook secret is
+  stored in a versioned AES-256-GCM envelope and is never returned by the API. The legacy process-environment
+  configuration remains supported. Every App path mints short-lived, repository-scoped installation tokens.
 - Per-project git tokens and environment secrets are encrypted at rest.
 
 ## Revocation
@@ -227,7 +275,7 @@ Kovalio keeps secrets where they're safest instead of copying them around:
 | `401 Unauthorized` | No valid session, or a zero-auth request that failed the mode/loopback gates. |
 | `503 AUTH_UNAVAILABLE` | The session check itself failed — retry; it never silently downgrades to no-auth. |
 
-## What next?
+## Related guides
 
 <Cards>
   <Card title="Permission model" href="/docs/security/permissions" description="What a logged-in identity is actually allowed to do — roles and resource grants." />

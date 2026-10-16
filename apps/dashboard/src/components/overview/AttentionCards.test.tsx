@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { I18nProvider } from "@/components/i18n-provider";
 import { EDGE_ERROR, ISSUE_FIXTURES } from "@/components/issues/issue-fixtures";
 import { IssuesCard, UpdatesCard } from "./AttentionCards";
+import type { SystemIssue } from "@/lib/api/issues";
 
 /**
  * Do the home attention cards render what an operator needs to act on?
@@ -15,7 +16,7 @@ import { IssuesCard, UpdatesCard } from "./AttentionCards";
  * diagnosis must be clamped rather than truncated — because a single truncated line
  * of an nginx error is what made these rows useless in a 320px column.
  *
- * They now render rows from the `/issues` feed, so this file also guards the swap:
+ * They now render rows from the Monitoring feed, so this file also guards the swap:
  * every behaviour the card used to compute from container state must still hold when
  * the severity and the fix arrive on the row instead.
  *
@@ -30,7 +31,7 @@ const card =
       <I18nProvider>
         <Card
           issues={issues}
-          busyId={null}
+          busyIds={new Set()}
           onResolve={() => {}}
           onInfraFix={() => {}}
           onHide={onHide}
@@ -45,6 +46,23 @@ const broken = (key: keyof typeof ISSUE_FIXTURES) =>
   ISSUE_FIXTURES[key]!.filter((i) => i.severity !== "advisory");
 
 describe("IssuesCard", () => {
+  it("presents unavailable monitoring as a connection notice with no repair action", () => {
+    const issue: SystemIssue = {
+      id: "platform:monitoring-offline", kind: "monitoring_offline", severity: "action_required",
+      scope: "platform", source: "component", title: "Openship", message: "Current health is unknown",
+      details: { affectedServers: [{ name: "Mail", reason: "connect ENETUNREACH 192.0.2.1:22" }] },
+      target: { id: "observer", name: "Openship", scope: "platform", href: "/monitoring" }, resolveWith: [],
+    };
+    const html = issues([issue]);
+    expect(html).toContain("Connection interrupted");
+    expect(html).toContain("Their current health is unknown");
+    expect(html).not.toContain("Something is broken");
+    expect(html).not.toContain("Mail engine down");
+    expect(html).not.toContain(">Fix<");
+    expect(html).toMatch(/<details[^>]*>.*Technical details.*ENETUNREACH/s);
+    expect(html).not.toMatch(/<details[^>]*\bopen\b/);
+  });
+
   it("names the server, what broke on it, and the recorded failure", () => {
     const html = issues();
     expect(html).toContain("web-01");
@@ -103,11 +121,11 @@ describe("IssuesCard", () => {
 
   it("caps the list and hands the remainder to the tracker", () => {
     const html = issues();
-    // 4 issues, 3 rows → the 4th is only reachable via /issues.
+    // 4 issues, 3 rows → the 4th is only reachable via /monitoring.
     expect(html).toContain("web-01");
     expect(html).not.toContain("billing-api-worker");
     expect(html).toContain("1 more");
-    expect(html).toContain('href="/issues"');
+    expect(html).toContain('href="/monitoring"');
     // The header count still reports every issue, not just the visible ones.
     expect(html).toContain(">4<");
   });
@@ -123,7 +141,7 @@ describe("IssuesCard", () => {
   });
 
   it("renders no hide control where hiding means nothing", () => {
-    // The fixture preview and the /issues groups pass no handler; a dead X on the
+    // The fixture preview and Monitoring groups pass no handler; a dead X on the
     // tracker would suggest the feed itself can be filtered.
     expect(issues()).not.toContain("Hide until something changes");
   });
@@ -132,7 +150,7 @@ describe("IssuesCard", () => {
     // There is no Issues entry in the sidebar — this card IS the shortcut, so its
     // footer link cannot depend on a fourth row existing to appear.
     const html = issues(ISSUE_FIXTURES.outage!.slice(0, 1));
-    expect(html).toContain('href="/issues"');
+    expect(html).toContain('href="/monitoring"');
     expect(html).not.toMatch(/\d+ more/);
     expect(html).toContain("View all");
   });

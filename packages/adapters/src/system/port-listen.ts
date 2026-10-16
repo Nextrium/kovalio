@@ -3,18 +3,24 @@
  *
  * Unlike `reachability.ts` (which dials the target from the API host), this runs
  * INSIDE the deployment (docker container / cloud workspace / bare host) via a
- * CommandExecutor and reads the kernel's own socket table. It exists because a
- * host-side TCP probe can't reach cloud/remote targets, and because the tool the
- * naive approach reaches for — `lsof -i :PORT` — is (a) absent on minimal images
- * and (b) prone to missing IPv6-only (or IPv4-only) listeners.
+ * CommandExecutor and reads the kernel's socket table or host tools. It exists
+ * because a host-side TCP probe can't reach cloud/remote targets.
  *
- * Method: `cat /proc/net/tcp` + `/proc/net/tcp6` (needs only busybox `sh` + `cat`,
- * present on every runtime image incl. Alpine/Oblien) and parse in TypeScript.
- * Reading BOTH files and unioning them is what eliminates the address-family
- * false negative: a process bound to `0.0.0.0:PORT` shows in tcp, one bound to
- * `:::PORT` (or Node's default dual-stack) shows in tcp6 — either counts.
+ * Method:
+ *   1. `/proc/net/tcp` + `/proc/net/tcp6` (needs only busybox `sh` + `cat`,
+ *      present on every Linux runtime image incl. Alpine/Oblien) and parse in TypeScript.
+ *      Reading BOTH files and unioning them is what eliminates the address-family
+ *      false negative: a process bound to `0.0.0.0:PORT` shows in tcp, one bound to
+ *      `:::PORT` (or Node's default dual-stack) shows in tcp6 — either counts.
+ *   2. `lsof -nP -t -iTCP:PORT -sTCP:LISTEN` fallback on macOS / Darwin / BSD
+ *      hosts where `/proc` is absent.
+ *   3. `ss -tln sport = :PORT` fallback on Linux hosts where procfs is unmounted.
+ *   4. An explicit unavailable marker when no probe method is usable, returning
+ *      `null` (`checked: false`) so an unmeasurable host is never falsely reported
+ *      as "not listening".
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import type { ExecOnly } from "../types";
 
 /** Minimal command surface this probe needs. A full `CommandExecutor` satisfies it. */
@@ -29,16 +35,56 @@ export interface PortProbeResult {
    * treat `checked:false` as "no signal", never as "not listening".
    */
   checked: boolean;
+  /**
+   * True when every LISTEN socket on the port is bound to a loopback address, so
+   * only a client in the same network namespace can connect. Set only from a
+   * complete procfs reading; the lsof/ss fallbacks don't report the bind address.
+   */
+  loopbackOnly?: boolean;
 }
 
-// Dump both address families; suppress stderr and force exit 0 so a missing
-// file (rare) or an empty family never rejects the exec. Parsing is per-line and
-// family-agnostic, so no separator is needed between the two files.
-const PROC_NET_TCP_CMD = "cat /proc/net/tcp 2>/dev/null; cat /proc/net/tcp6 2>/dev/null; true";
+const PROC_NET_TCP_FILES = ["/proc/net/tcp", "/proc/net/tcp6"] as const;
+
+const PROBE_LISTENING = "__OPENSHIP_PORT_LISTENING__";
+const PROBE_FREE = "__OPENSHIP_PORT_FREE__";
+const PROBE_UNAVAILABLE = "__OPENSHIP_PORT_UNAVAILABLE__";
+
+/**
+ * Build the portable fallback used only when neither procfs socket table can be
+ * read. The status/output checks matter: a missing or broken probe must remain
+ * inconclusive instead of becoming the false "free" result that caused #646.
+ */
+export function buildPortProbeCommand(port: number): string {
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    throw new RangeError(`Invalid TCP port: ${port}`);
+  }
+
+  return [
+    `lsof_output="$(lsof -nP -t -iTCP:${port} -sTCP:LISTEN 2>&1)"`,
+    `lsof_status=$?`,
+    `if [ "$lsof_status" -eq 0 ] && [ -n "$lsof_output" ] && printf '%s\\n' "$lsof_output" | grep -Eqv '^[0-9]+$'; then`,
+    `  : # Unexpected lsof output: fall through to ss instead of guessing.`,
+    `elif [ "$lsof_status" -eq 0 ] && [ -n "$lsof_output" ]; then`,
+    `  printf '${PROBE_LISTENING}\\n'`,
+    `  exit 0`,
+    `elif [ "$lsof_status" -eq 1 ] && [ -z "$lsof_output" ]; then`,
+    `  printf '${PROBE_FREE}\\n'`,
+    `  exit 0`,
+    `fi`,
+    `ss_output="$(ss -tln "sport = :${port}" 2>&1)"`,
+    `ss_status=$?`,
+    `if [ "$ss_status" -eq 0 ] && printf '%s\\n' "$ss_output" | grep -q LISTEN; then`,
+    `  printf '${PROBE_LISTENING}\\n'`,
+    `elif [ "$ss_status" -eq 0 ]; then`,
+    `  printf '${PROBE_FREE}\\n'`,
+    `else`,
+    `  printf '${PROBE_UNAVAILABLE}\\n'`,
+    `fi`,
+  ].join("\n");
+}
 
 // procfs socket state column: 0A = TCP_LISTEN.
 const TCP_LISTEN = "0A";
-
 /**
  * Parse the concatenated contents of /proc/net/tcp and /proc/net/tcp6 into the
  * set of ports in LISTEN state. Pure and family-agnostic — feeding it both files
@@ -49,7 +95,28 @@ const TCP_LISTEN = "0A";
  * field[1] = local_address (`HEXIP:HEXPORT`), field[3] = state.
  */
 export function parseListeningPorts(procText: string): Set<number> {
-  const ports = new Set<number>();
+  return new Set(listeningSockets(procText).map((socket) => socket.port));
+}
+
+/**
+ * Of the LISTEN ports in procfs text, those whose every socket is bound to a
+ * loopback address (127.0.0.0/8, ::1, or IPv4-mapped 127.x). Such a listener only
+ * answers from inside the same network namespace; one wildcard or interface
+ * socket on the port makes it reachable, so the port is left out.
+ */
+export function parseLoopbackOnlyPorts(procText: string): Set<number> {
+  const loopbackOnly = new Set<number>();
+  const reachable = new Set<number>();
+  for (const { hexAddress, port } of listeningSockets(procText)) {
+    if (isLoopbackHexAddress(hexAddress)) loopbackOnly.add(port);
+    else reachable.add(port);
+  }
+  for (const port of reachable) loopbackOnly.delete(port);
+  return loopbackOnly;
+}
+
+function listeningSockets(procText: string): { hexAddress: string; port: number }[] {
+  const sockets: { hexAddress: string; port: number }[] = [];
   for (const rawLine of procText.split("\n")) {
     const line = rawLine.trim();
     if (!line) continue;
@@ -63,9 +130,38 @@ export function parseListeningPorts(procText: string): Set<number> {
     // A port is at most 0xFFFF (4 hex digits); reject anything that isn't clean hex.
     if (!/^[0-9A-Fa-f]{1,4}$/.test(hexPort)) continue;
     const port = parseInt(hexPort, 16);
-    if (port > 0) ports.add(port);
+    if (port > 0) sockets.push({ hexAddress: local.slice(0, colon).toUpperCase(), port });
   }
-  return ports;
+  return sockets;
+}
+
+/**
+ * procfs writes each 32-bit word of the address in host byte order (little-endian
+ * on every Linux target here), so 127.0.0.1 reads `0100007F`: the first octet is
+ * the LAST byte of the word.
+ */
+function isLoopbackHexAddress(hexAddress: string): boolean {
+  if (hexAddress.length === 8) return hexAddress.endsWith("7F");
+  if (hexAddress.length !== 32) return false;
+  if (hexAddress === "00000000000000000000000001000000") return true; // ::1
+  // ::ffff:127.x.x.x, a v4 loopback socket seen through tcp6.
+  return hexAddress.startsWith("0000000000000000FFFF0000") && hexAddress.endsWith("7F");
+}
+
+/**
+ * Parse the output of `buildPortProbeCommand`.
+ *
+ * Resolves:
+ *   - `true` when a LISTEN socket was confirmed.
+ *   - `false` when the socket table/tool was read and the port is confirmed NOT listening.
+ *   - `null` when the probe was inconclusive (unknown output, tool missing, or error).
+ */
+export function parsePortProbeOutput(out: string): boolean | null {
+  const trimmed = out.trim();
+  if (trimmed === PROBE_LISTENING) return true;
+  if (trimmed === PROBE_FREE) return false;
+  if (trimmed === PROBE_UNAVAILABLE) return null;
+  return null;
 }
 
 /**
@@ -76,10 +172,48 @@ export async function probePortListeningOnce(
   executor: PortProbeExecutor,
   port: number,
 ): Promise<boolean | null> {
+  const listener = await readPortListener(executor, port);
+  return listener === null ? null : listener.listening;
+}
+
+/** {@link probePortListeningOnce}, plus whether a procfs reading shows a loopback-only bind. */
+async function readPortListener(
+  executor: PortProbeExecutor,
+  port: number,
+): Promise<{ listening: boolean; loopbackOnly: boolean } | null> {
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) return null;
+
+  const readable: string[] = [];
+  // Read the families independently and preserve whether each read succeeded.
+  // Appending `; true` to one combined shell command made two permission/read
+  // failures look exactly like a valid empty socket table—a dangerous false
+  // negative for edge ownership checks. One readable family is still useful;
+  // neither readable means the probe is inconclusive.
+  for (const file of PROC_NET_TCP_FILES) {
+    try {
+      readable.push(await executor.exec(`cat ${file} 2>/dev/null`, { timeout: 5_000 }));
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "adapters/system/port-listen");
+      // Try the other address family before declaring the probe inconclusive.
+    }
+  }
+  if (readable.length > 0) {
+    const procText = readable.join("\n");
+    return {
+      listening: parseListeningPorts(procText).has(port),
+      // A socket in the unreadable family might bind to a routable address.
+      // Positive occupancy survives a partial read; exclusivity does not.
+      loopbackOnly:
+        readable.length === PROC_NET_TCP_FILES.length && parseLoopbackOnlyPorts(procText).has(port),
+    };
+  }
+
   try {
-    const out = await executor.exec(PROC_NET_TCP_CMD, { timeout: 5_000 });
-    return parseListeningPorts(out).has(port);
-  } catch {
+    const out = await executor.exec(buildPortProbeCommand(port), { timeout: 5_000 });
+    const listening = parsePortProbeOutput(out);
+    return listening === null ? null : { listening, loopbackOnly: false };
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/system/port-listen");
     return null;
   }
 }
@@ -89,12 +223,14 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
- * Poll `probePortListeningOnce` until the port is found listening or the deadline
- * passes — mirrors the shape of `waitForReady` (reachability.ts) because an app
- * may bind its port a beat after the container reports started.
+ * Poll the {@link probePortListeningOnce} reading until the port is found
+ * listening or the deadline passes — mirrors the shape of `waitForReady`
+ * (reachability.ts) because an app may bind its port a beat after the container
+ * reports started.
  *
  * NEVER throws. Returns:
- *   - `{ listening:true,  checked:true }`  — found a listener.
+ *   - `{ listening:true,  checked:true }`  — found a listener (`loopbackOnly:true`
+ *      added when procfs shows it bound to loopback only).
  *   - `{ listening:false, checked:true }`  — got at least one real "not listening"
  *      reading and the deadline passed (a genuine negative).
  *   - `{ listening:false, checked:false }` — every attempt errored (executor
@@ -112,20 +248,25 @@ export async function waitForPortListening(
 
   try {
     for (;;) {
-      const result = await probePortListeningOnce(executor, port);
-      if (result === true) return { listening: true, checked: true };
-      if (result === false) anyConclusive = true;
+      const result = await readPortListener(executor, port);
+      if (result?.listening) {
+        return {
+          listening: true,
+          checked: true,
+          ...(result.loopbackOnly ? { loopbackOnly: true } : {}),
+        };
+      }
+      if (result) anyConclusive = true;
       const remaining = deadline - Date.now();
       if (remaining <= 0) break;
       await delay(Math.min(intervalMs, remaining));
     }
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/system/port-listen");
     return { listening: false, checked: false };
   }
 
-  return anyConclusive
-    ? { listening: false, checked: true }
-    : { listening: false, checked: false };
+  return anyConclusive ? { listening: false, checked: true } : { listening: false, checked: false };
 }
 
 /** Outcome of {@link waitForPortFree}. `checked:false` = inconclusive, same rule. */
@@ -167,7 +308,8 @@ export async function waitForPortFree(
       if (remaining <= 0) break;
       await delay(Math.min(intervalMs, remaining));
     }
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/system/port-listen");
     return { free: false, checked: false };
   }
 

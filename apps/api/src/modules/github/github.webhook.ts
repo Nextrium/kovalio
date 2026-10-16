@@ -11,25 +11,27 @@
  *   - check_run             → acknowledged, no action
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { repos } from "@repo/db";
-import { env } from "../../config/env";
-import { decrypt } from "../../lib/encryption";
-import { verifyHmacSha256 } from "../webhooks/webhook.service";
+import { env } from "@repo/platform/engine/config/env";
+import { decrypt } from "@repo/platform/engine/lib/encryption";
+import { verifyHmacSha256 } from "@repo/platform/engine/modules/webhooks/webhook.service";
 // resolveProjectWebhookSecret (github.service) was the old single-secret reader;
 // verify() now collects ALL candidate secrets via collectDeliverySecrets below.
 import { handleInstallation } from "./webhook-installation";
 import { handlePush } from "./webhook-push";
 import { handleCheckRun } from "./webhook-check-run";
+import { collectGitHubSourceWebhookSecrets } from "@repo/platform/engine/modules/github/github-source.service";
 import type {
   WebhookProvider,
   WebhookVerifyResult,
   WebhookHandlerResult,
-} from "../webhooks/webhook.types";
+} from "@repo/platform/engine/modules/webhooks/webhook.types";
 import type {
   GitHubCheckRunPayload,
   GitHubInstallationPayload,
   GitHubPushPayload,
-} from "./github.types";
+} from "@repo/contracts";
 
 // ─── Per-project webhook secret resolution ──────────────────────────────────
 
@@ -86,24 +88,26 @@ async function collectDeliverySecrets(
 
   const secrets = new Set<string>();
 
-  const projects = await repos.project.findByGitRepo(owner, repo).catch(() => []);
+  const projects = await repos.project.findByGitRepo(owner, repo).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/github/github.webhook"); return []; });
   for (const p of projects) {
     if (!p.webhookSecret) continue;
     try {
       secrets.add(decrypt(p.webhookSecret));
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "api/modules/github/github.webhook");
       // corrupted / key-rotated row — skip; env fallback handles it in verify()
     }
   }
 
   // Cloud projects this box forwards for: the binding holds the same per-project
   // secret (preserved across promote), so a forged push still rejects.
-  const bindings = await repos.cloudWebhookBinding.findByRepo(owner, repo).catch(() => []);
+  const bindings = await repos.cloudWebhookBinding.findByRepo(owner, repo).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/github/github.webhook"); return []; });
   for (const b of bindings) {
     if (!b.webhookSecret) continue;
     try {
       secrets.add(decrypt(b.webhookSecret));
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "api/modules/github/github.webhook");
       // try the next binding, then env fallback
     }
   }
@@ -131,12 +135,46 @@ export const githubWebhookProvider: WebhookProvider = {
     // fallback. Deliveries without a routable repo (installation/ping) yield no
     // per-project candidates and rely on env — the SaaS App secret.
     const candidates = await collectDeliverySecrets(payload, headers);
+    let installationId: number | undefined;
+    let appId: number | undefined;
+    try {
+      const text = Buffer.isBuffer(payload) ? payload.toString("utf8") : payload;
+      const parsed = JSON.parse(text) as {
+        installation?: { id?: unknown; app_id?: unknown };
+        hook?: { app_id?: unknown };
+      };
+      const rawInstallationId = parsed.installation?.id;
+      if (
+        typeof rawInstallationId === "number" &&
+        Number.isSafeInteger(rawInstallationId) &&
+        rawInstallationId > 0
+      ) {
+        installationId = rawInstallationId;
+      }
+      const rawAppId = parsed.installation?.app_id ?? parsed.hook?.app_id;
+      if (typeof rawAppId === "number" && Number.isSafeInteger(rawAppId) && rawAppId > 0) {
+        appId = rawAppId;
+      }
+    } catch {
+      // Malformed JSON is rejected by signature verification below.
+    }
+    const sourceSecrets = await collectGitHubSourceWebhookSecrets({
+      installationId,
+      appId,
+      allowAllFallback: headers["x-github-event"] === "ping",
+    });
+    candidates.push(...sourceSecrets);
     // env.GITHUB_WEBHOOK_SECRET is the legacy/App fallback — append it ONLY when
     // this delivery has no per-project or cloud-binding candidate of its own
     // (installation/ping, or a repo Kovalio doesn't manage). Appending it for a
     // routable delivery that already has a per-project secret would make it a
     // cross-repo skeleton key that validates any managed repo's webhook.
-    if (candidates.length === 0 && env.GITHUB_WEBHOOK_SECRET) {
+    const customAppDelivery = sourceSecrets.length > 0;
+    if (
+      !customAppDelivery &&
+      (candidates.length === 0 || installationId !== undefined) &&
+      env.GITHUB_WEBHOOK_SECRET
+    ) {
       candidates.push(env.GITHUB_WEBHOOK_SECRET);
     }
 
@@ -153,52 +191,91 @@ export const githubWebhookProvider: WebhookProvider = {
     // A delivery is signed with exactly one hook's secret — accept on the first
     // candidate that matches (each comparison is constant-time).
     const valid = candidates.some((secret) => verifyHmacSha256(payload, secret, signature));
-    return valid ? { valid: true } : { valid: false, error: "Invalid signature" };
+    const appSecrets = [...sourceSecrets, ...(!customAppDelivery && env.GITHUB_WEBHOOK_SECRET ? [env.GITHUB_WEBHOOK_SECRET] : [])];
+    const githubApp = valid && installationId !== undefined && appSecrets.some(secret => verifyHmacSha256(payload, secret, signature));
+    return valid ? { valid: true, ...(githubApp ? { githubApp: true } : {}) } : { valid: false, error: "Invalid signature" };
   },
 
-  async handle(payload: unknown, headers: Record<string, string>): Promise<WebhookHandlerResult> {
+  async handle(payload: unknown, headers: Record<string, string>, verification?: WebhookVerifyResult): Promise<WebhookHandlerResult> {
     const event = headers["x-github-event"];
     if (!event) {
       return { success: true, event: "unknown", message: "Missing x-github-event header" };
     }
 
-    // Idempotency: claim the delivery id so an at-least-once redelivery is dropped
+    // Idempotency: completed and in-flight deliveries are deduplicated; a
+    // finished failure can be reclaimed when the operator redelivers it.
     // (persistent — survives restarts/replicas). The claim row is the ANCHOR
     // (source='github', project-less); per-project feed rows are recorded later
     // by the push handler. Missing id or claim error → process (fail-open; the
     // commit-sha guard in triggerDeployment is the backstop).
     const deliveryId = headers["x-github-delivery"];
+    // Accept Actions work durably before the legacy deployment receipt claim.
+    // A repeated delivery fills any interrupted fan-out without executing twice.
+    if (verification?.githubApp && deliveryId)
+      await (await import("@repo/platform/engine/modules/actions/triggers")).enqueueActionWebhook(event, payload, deliveryId);
     let anchorId = "";
+    const handledProjectIds = new Set<string>();
     if (deliveryId) {
       const claim = await repos.webhookDelivery
         .claimGithub({ deliveryId, event, outcome: "received" })
-        .catch(() => ({ claimed: true, id: "" }));
+        .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/github/github.webhook"); return ({ claimed: true, id: "" }); });
       if (!claim.claimed) {
         return { success: true, event, message: "Duplicate delivery ignored" };
       }
       anchorId = claim.id;
+      if ("handledProjectIds" in claim) {
+        for (const id of claim.handledProjectIds ?? []) handledProjectIds.add(id);
+      }
     }
 
     let result: WebhookHandlerResult;
-    switch (event) {
-      case "installation":
-        result = await handleInstallation(payload as GitHubInstallationPayload);
-        break;
-      case "push":
-        result = await handlePush(payload as GitHubPushPayload);
-        break;
-      case "check_run":
-        result = await handleCheckRun(payload as GitHubCheckRunPayload);
-        break;
-      case "ping":
-        result = { success: true, event, message: "Pong" };
-        break;
-      default:
-        result = { success: true, event, message: `Event '${event}' not handled` };
+    try {
+      switch (event) {
+        case "installation":
+          result = await handleInstallation(payload as GitHubInstallationPayload);
+          break;
+        case "push":
+          result = await handlePush(payload as GitHubPushPayload, handledProjectIds);
+          break;
+        case "check_run":
+          result = await handleCheckRun(payload as GitHubCheckRunPayload);
+          break;
+        case "pull_request":
+          result = { success: true, event, message: verification?.githubApp ? "Actions pull request delivery queued" : "Event 'pull_request' not handled" };
+          break;
+        case "ping":
+          result = { success: true, event, message: "Pong" };
+          break;
+        default:
+          result = { success: true, event, message: `Event '${event}' not handled` };
+      }
+    } catch (error) {
+      if (anchorId) {
+        await repos.webhookDelivery
+          .markProcessed(anchorId, {
+            outcome: "failed",
+            statusCode: 500,
+            error: error instanceof Error ? error.message : "Webhook handler failed",
+            summary: { handledProjectIds: [...handledProjectIds] },
+          })
+          .catch((diagnosticFailure) => {
+            observeCaughtError(diagnosticFailure, "api/modules/github/github.webhook");
+          });
+      }
+      throw error;
     }
 
     if (anchorId) {
-      await repos.webhookDelivery.markProcessed(anchorId, { outcome: "received" }).catch(() => {});
+      await repos.webhookDelivery
+        .markProcessed(anchorId, {
+          outcome: result.success ? "received" : "failed",
+          statusCode: result.success ? 200 : 500,
+          error: result.error,
+          summary: { handledProjectIds: [...handledProjectIds] },
+        })
+        .catch((diagnosticFailure) => {
+          observeCaughtError(diagnosticFailure, "api/modules/github/github.webhook");
+        });
     }
     return result;
   },

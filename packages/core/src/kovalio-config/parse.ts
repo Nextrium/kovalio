@@ -7,7 +7,13 @@
  * Every field is optional; unknown top-level keys are warnings, not errors.
  */
 
-import { STACK_IDS } from "../stacks";
+import {
+  STACK_IDS,
+  ROLE_KINDS,
+  ROLE_HEALTH_KINDS,
+  type RoleHealth,
+  type StackRole,
+} from "../stacks";
 import { ALL_PACKAGE_MANAGERS } from "../stacks";
 import type { RoutingConfig } from "../metadata/types";
 import {
@@ -29,6 +35,11 @@ import {
   type KovalioService,
   type ParseResult,
 } from "./schema";
+import { validateImageReference } from "../project-source";
+import { isValidEnvKey, normalizeProjectRootDirectory } from "../utils";
+import { isRuntimeVersion, runtimeVersionError } from "../runtime-version";
+import { isValidServiceName } from "../service-name";
+import { isComposeDuration } from "../duration";
 
 const TOP_LEVEL_KEYS = new Set([
   "$schema",
@@ -39,14 +50,19 @@ const TOP_LEVEL_KEYS = new Set([
   "installCommand",
   "buildCommand",
   "startCommand",
+  "releaseCommands",
   "outputDirectory",
   "buildImage",
+  "runtimeVersion",
+  "runtimeImage",
   "productionPaths",
   "volumes",
   "runtime",
   "productionMode",
   "workload",
   "port",
+  "roles",
+  "optimize",
   "env",
   "domains",
   "routes",
@@ -139,7 +155,39 @@ function parseEnv(ctx: Ctx, v: unknown, path: string): KovalioEnv | undefined {
   return out;
 }
 
-function parseDomains(ctx: Ctx, v: unknown, path: string): KovalioDomain[] | undefined {
+/**
+ * Parse the native service build-argument map into the same normalized shape
+ * used by Compose imports. `null` deliberately means "inherit this key from
+ * the project build environment"; explicit values are strings and win later in
+ * the shared Docker build-argument resolver.
+ */
+function parseBuildArgs(
+  ctx: Ctx,
+  v: unknown,
+  path: string,
+): Record<string, string | null> | undefined {
+  if (v === undefined) return undefined;
+  if (!ctx.isObj(v)) {
+    ctx.err(path, "must be an object of string or null build arguments");
+    return undefined;
+  }
+
+  const out: Record<string, string | null> = {};
+  for (const [key, value] of Object.entries(v)) {
+    if (!isValidEnvKey(key)) {
+      ctx.err(`${path}.${key}`, "has an invalid build argument name");
+      continue;
+    }
+    if (value === null || typeof value === "string") {
+      out[key] = value;
+    } else {
+      ctx.err(`${path}.${key}`, "must be a string or null");
+    }
+  }
+  return out;
+}
+
+function parseDomains(ctx: Ctx, v: unknown, path: string): OpenshipDomain[] | undefined {
   if (v === undefined) return undefined;
   if (!Array.isArray(v)) {
     ctx.err(path, "must be an array of hostnames or domain objects");
@@ -186,7 +234,9 @@ function parseRoutes(ctx: Ctx, v: unknown, path: string): RoutingConfig | undefi
     return source && destination ? { source, destination } : null;
   };
   if (Array.isArray(v.rewrites)) {
-    routes.rewrites = v.rewrites.map((r, i) => rule(r, `${path}.rewrites[${i}]`)).filter(Boolean) as RoutingConfig["rewrites"];
+    routes.rewrites = v.rewrites
+      .map((r, i) => rule(r, `${path}.rewrites[${i}]`))
+      .filter(Boolean) as RoutingConfig["rewrites"];
   } else if (v.rewrites !== undefined) ctx.err(`${path}.rewrites`, "must be an array");
   if (Array.isArray(v.redirects)) {
     routes.redirects = v.redirects
@@ -215,7 +265,10 @@ function parseRoutes(ctx: Ctx, v: unknown, path: string): RoutingConfig | undefi
           ? (h.headers
               .map((kv, j) => {
                 const key = ctx.str((kv as Record<string, unknown>)?.key, `${p}.headers[${j}].key`);
-                const value = ctx.str((kv as Record<string, unknown>)?.value, `${p}.headers[${j}].value`);
+                const value = ctx.str(
+                  (kv as Record<string, unknown>)?.value,
+                  `${p}.headers[${j}].value`,
+                );
                 return key && value !== undefined ? { key, value } : null;
               })
               .filter(Boolean) as { key: string; value: string }[])
@@ -318,11 +371,19 @@ function parseServices(ctx: Ctx, v: unknown, path: string): KovalioService[] | u
       ctx.err(p, "requires a `name`");
       return;
     }
+    if (!isValidServiceName(name)) {
+      ctx.err(
+        p,
+        "requires a service name starting with a letter or digit and containing only letters, digits, dots, underscores or hyphens",
+      );
+      return;
+    }
     out.push({
       name,
       image: ctx.str(item.image, `${p}.image`),
       build: ctx.str(item.build, `${p}.build`),
       dockerfile: ctx.str(item.dockerfile, `${p}.dockerfile`),
+      buildArgs: parseBuildArgs(ctx, item.buildArgs, `${p}.buildArgs`),
       ports: ctx.strArray(item.ports, `${p}.ports`),
       volumes: ctx.strArray(item.volumes, `${p}.volumes`),
       dependsOn: ctx.strArray(item.dependsOn, `${p}.dependsOn`),
@@ -340,7 +401,167 @@ function parseServices(ctx: Ctx, v: unknown, path: string): KovalioService[] | u
   return out;
 }
 
-function parseMonorepo(ctx: Ctx, v: unknown, path: string): KovalioMonorepo | undefined {
+function parseRoleHealth(ctx: Ctx, v: unknown, path: string): RoleHealth | undefined {
+  if (v === undefined) return undefined;
+  if (!ctx.isObj(v)) {
+    ctx.err(path, "must be an object");
+    return undefined;
+  }
+  if (v.kind === undefined) {
+    ctx.err(`${path}.kind`, "is required");
+    return undefined;
+  }
+  const kind = ctx.enumOf(v.kind, `${path}.kind`, ROLE_HEALTH_KINDS);
+  if (kind === undefined) return undefined;
+  if (kind === "http") {
+    ctx.err(
+      `${path}.kind`,
+      '"http" is not supported for roles: roles run portless, so an HTTP probe has nothing to call; use "process" or "exec"',
+    );
+    return undefined;
+  }
+  const command = ctx.str(v.command, `${path}.command`);
+  if (kind === "exec" && !command?.trim()) {
+    ctx.err(`${path}.command`, "requires a non-empty command for an exec health check");
+    return undefined;
+  }
+  return {
+    kind,
+    path: ctx.str(v.path, `${path}.path`),
+    command,
+  };
+}
+
+/** Role names land in container names and labels, so they must be DNS labels. */
+const ROLE_NAME_RE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
+/** Matches the existing app-scaling limit (1-100). */
+const MAX_ROLE_REPLICAS = 100;
+
+/**
+ * Runtime roles beyond the web process (issue #935). Presence of the field at
+ * all - including `[]` - overrides the stack's own `defaultRoles` presets;
+ * see `resolveStackRoles`. `kind: "web"` is rejected: the web role is always
+ * derived from `startCommand`, never declared here.
+ */
+function parseRoles(ctx: Ctx, v: unknown, path: string): StackRole[] | undefined {
+  if (v === undefined) return undefined;
+  if (!Array.isArray(v)) {
+    ctx.err(path, "must be an array of role objects");
+    return undefined;
+  }
+  const out: StackRole[] = [];
+  const seen = new Set<string>();
+  v.forEach((item, i) => {
+    const p = `${path}[${i}]`;
+    if (!ctx.isObj(item)) {
+      ctx.err(p, "must be an object");
+      return;
+    }
+    const name = ctx.str(item.name, `${p}.name`);
+    if (!name?.trim()) {
+      ctx.err(`${p}.name`, "requires a non-empty `name`");
+      return;
+    }
+    if (!ROLE_NAME_RE.test(name)) {
+      ctx.err(
+        `${p}.name`,
+        "must be a DNS label: lowercase letters, digits and dashes, starting and ending with a letter or digit, at most 63 characters",
+      );
+      return;
+    }
+    if (seen.has(name)) {
+      ctx.err(`${p}.name`, `duplicates role "${name}"; each role needs a unique name`);
+      return;
+    }
+    seen.add(name);
+    if (item.kind === undefined) {
+      ctx.err(`${p}.kind`, "is required");
+      return;
+    }
+    const kind = ctx.enumOf(item.kind, `${p}.kind`, ROLE_KINDS);
+    if (kind === undefined) return;
+    if (kind === "web") {
+      ctx.err(`${p}.kind`, '"web" is derived from `startCommand`, not declared in `roles`');
+      return;
+    }
+    const command = ctx.str(item.command, `${p}.command`);
+    if (!command?.trim()) {
+      ctx.err(`${p}.command`, "requires a non-empty `command`");
+      return;
+    }
+    const replicas = parseReplicas(ctx, item.replicas, `${p}.replicas`);
+    const declaredSingleton = ctx.bool(item.singleton, `${p}.singleton`);
+    // A scheduler is, by definition, one instance.
+    const singleton = kind === "scheduler" ? true : declaredSingleton;
+    if (singleton && replicas !== undefined && replicas > 1) {
+      ctx.err(
+        `${p}.replicas`,
+        kind === "scheduler"
+          ? `conflicts with kind "scheduler", which is always a singleton; remove \`replicas\` or use kind "worker"`
+          : "conflicts with `singleton: true`; a singleton runs exactly one instance",
+      );
+      return;
+    }
+    const stopSignal = parseStopSignal(ctx, item.stopSignal, `${p}.stopSignal`);
+    const stopGracePeriod = parseStopGracePeriod(ctx, item.stopGracePeriod, `${p}.stopGracePeriod`);
+    // Preset gating only (see StackRole): a declared role always runs. Say so,
+    // or a role copied from a preset silently loses the condition it relied on.
+    const gateKeys = (["when", "unless"] as const).filter((key) => item[key] !== undefined);
+    if (gateKeys.length > 0) {
+      const keys = gateKeys.map((key) => `\`${key}\``).join(" and ");
+      const verbs =
+        gateKeys.length === 1
+          ? "applies only to stack presets and is"
+          : "apply only to stack presets and are";
+      ctx.warnings.push(`${p} ("${name}"): ${keys} ${verbs} ignored, so this role always runs`);
+    }
+    out.push({
+      name,
+      kind,
+      command,
+      replicas,
+      singleton,
+      health: parseRoleHealth(ctx, item.health, `${p}.health`),
+      stopSignal,
+      stopGracePeriod,
+    });
+  });
+  return out;
+}
+
+function parseStopSignal(ctx: Ctx, v: unknown, path: string): string | undefined {
+  const sig = ctx.str(v, path);
+  if (sig === undefined) return undefined;
+  if (!/^SIG[A-Z0-9]+$/.test(sig) && !/^[1-9]\d*$/.test(sig)) {
+    ctx.err(path, 'must be a signal name like "SIGTERM" or a positive integer');
+    return undefined;
+  }
+  return sig;
+}
+
+// The shared grammar in `../duration`, which the runtime and the compose parser
+// read too, so a value accepted here is one the runtime applies as written.
+
+function parseStopGracePeriod(ctx: Ctx, v: unknown, path: string): string | undefined {
+  const dur = ctx.str(v, path);
+  if (dur === undefined) return undefined;
+  if (!isComposeDuration(dur)) {
+    ctx.err(path, 'must be a duration like "90s", "1m30s", "10m", or a bare number of seconds');
+    return undefined;
+  }
+  return dur;
+}
+
+function parseReplicas(ctx: Ctx, v: unknown, path: string): number | undefined {
+  if (v === undefined) return undefined;
+  if (typeof v !== "number" || !Number.isSafeInteger(v) || v < 1 || v > MAX_ROLE_REPLICAS) {
+    ctx.err(path, `must be an integer between 1 and ${MAX_ROLE_REPLICAS}`);
+    return undefined;
+  }
+  return v;
+}
+
+function parseMonorepo(ctx: Ctx, v: unknown, path: string): OpenshipMonorepo | undefined {
   if (v === undefined) return undefined;
   if (!ctx.isObj(v)) {
     ctx.err(path, "must be an object");
@@ -367,7 +588,8 @@ function parseMonorepo(ctx: Ctx, v: unknown, path: string): KovalioMonorepo | un
   if (v.apps !== undefined) {
     if (!Array.isArray(v.apps)) ctx.err(`${path}.apps`, "must be an array");
     else {
-      const apps: KovalioMonorepoApp[] = [];
+      const apps: OpenshipMonorepoApp[] = [];
+      const roots = new Map<string, number>();
       v.apps.forEach((a, i) => {
         const p = `${path}.apps[${i}]`;
         if (!ctx.isObj(a)) {
@@ -380,6 +602,15 @@ function parseMonorepo(ctx: Ctx, v: unknown, path: string): KovalioMonorepo | un
           ctx.err(p, "requires `name` and `rootDirectory`");
           return;
         }
+        const root = normalizeProjectRootDirectory(rootDirectory);
+        if (roots.has(root)) {
+          ctx.err(
+            `${p}.rootDirectory`,
+            `duplicates ${path}.apps[${roots.get(root)}]; each override must target a different detected app`,
+          );
+          return;
+        }
+        roots.set(root, i);
         apps.push({
           name,
           rootDirectory,
@@ -409,8 +640,27 @@ function parsePackageManager(ctx: Ctx, v: unknown, path: string): string | undef
   return s;
 }
 
-/** Parse + validate raw `kovalio.json` JSON (already `JSON.parse`d) into a config. */
-export function parseKovalioConfig(raw: unknown): ParseResult {
+function parseRuntimeImage(ctx: Ctx, raw: unknown): string | undefined {
+  const image = ctx.str(raw, "runtimeImage");
+  if (image === undefined) return undefined;
+  if (!image.trim() || image.length > 200 || validateImageReference(image.trim())) {
+    ctx.err("runtimeImage", "must be a valid Docker image reference");
+    return undefined;
+  }
+  return image.trim();
+}
+
+function parseRuntimeVersion(ctx: Ctx, raw: unknown): string | undefined {
+  if (raw === undefined) return undefined;
+  if (!isRuntimeVersion(raw)) {
+    ctx.err("runtimeVersion", "must be a numeric version such as 8.3 or 8.3.1");
+    return undefined;
+  }
+  return raw;
+}
+
+/** Parse + validate raw `openship.json` JSON (already `JSON.parse`d) into a config. */
+export function parseOpenshipConfig(raw: unknown): ParseResult {
   const ctx = new Ctx();
   if (!ctx.isObj(raw)) {
     return { config: null, errors: ["kovalio.json must be a JSON object"], warnings: [] };
@@ -428,14 +678,19 @@ export function parseKovalioConfig(raw: unknown): ParseResult {
     installCommand: ctx.str(raw.installCommand, "installCommand"),
     buildCommand: ctx.str(raw.buildCommand, "buildCommand"),
     startCommand: ctx.str(raw.startCommand, "startCommand"),
+    releaseCommands: ctx.strArray(raw.releaseCommands, "releaseCommands"),
     outputDirectory: ctx.str(raw.outputDirectory, "outputDirectory"),
     buildImage: ctx.str(raw.buildImage, "buildImage"),
+    runtimeVersion: parseRuntimeVersion(ctx, raw.runtimeVersion),
+    runtimeImage: parseRuntimeImage(ctx, raw.runtimeImage),
     productionPaths: ctx.strArray(raw.productionPaths, "productionPaths"),
     volumes: ctx.strArray(raw.volumes, "volumes"),
     runtime: ctx.enumOf(raw.runtime, "runtime", KOVALIO_RUNTIMES),
     productionMode: ctx.enumOf(raw.productionMode, "productionMode", KOVALIO_PRODUCTION_MODES),
     workload: ctx.enumOf(raw.workload, "workload", KOVALIO_WORKLOADS),
     port: ctx.int(raw.port, "port", 1, 65535),
+    roles: parseRoles(ctx, raw.roles, "roles"),
+    optimize: ctx.bool(raw.optimize, "optimize"),
     env: parseEnv(ctx, raw.env, "env"),
     domains: parseDomains(ctx, raw.domains, "domains"),
     routes: parseRoutes(ctx, raw.routes, "routes"),
@@ -444,6 +699,11 @@ export function parseKovalioConfig(raw: unknown): ParseResult {
     services: parseServices(ctx, raw.services, "services"),
     monorepo: parseMonorepo(ctx, raw.monorepo, "monorepo"),
   };
+
+  if (config.framework && config.runtimeVersion) {
+    const error = runtimeVersionError(config.framework, config.runtimeVersion);
+    if (error) ctx.err("runtimeVersion", error);
+  }
 
   // Strip undefined so the overlay only carries fields the user actually declared.
   for (const k of Object.keys(config) as (keyof KovalioConfig)[]) {

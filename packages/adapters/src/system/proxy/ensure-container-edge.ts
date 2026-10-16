@@ -16,7 +16,9 @@
  * doesn't come up.
  */
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import { buildEdgeImageRef, safeErrorMessage } from "@repo/core";
+import { DEFAULT_CONTAINER_LOG_ARGS } from "../../container-logging";
 import type { CommandExecutor, LogEntry } from "../../types";
 import type { NginxProvider, NginxProviderOptions } from "../../infra/nginx";
 import type { InstallerConfig, SystemLog, SystemLogCallback } from "../types";
@@ -139,7 +141,7 @@ function edgeHostExecutor(executor: CommandExecutor): Promise<RootChecked> {
     consequence:
       "Vhosts and certificates may not be writable, and routing will be incomplete — " +
       "the deploy continues and the app still runs on its port.",
-    report: (message) => console.error(`[edge] ${message}`),
+    report: (message) => errorDiagnostics.error("adapters/system/proxy/ensure-container-edge", `[edge] ${message}`),
   });
 }
 
@@ -246,8 +248,12 @@ async function startEdgeContainer(
   onLog: SystemLogCallback,
   mounts: readonly EdgeContainerMount[],
 ): Promise<boolean> {
-  await sanitizeEdgeVhosts(executor, EDGE_HOST_PATHS.sitesDir, onLog).catch(() => {});
-  await executor.exec(`docker rm -f ${sq(container)} 2>/dev/null || true`).catch(() => {});
+  await sanitizeEdgeVhosts(executor, EDGE_HOST_PATHS.sitesDir, onLog).catch((diagnosticFailure) => {
+    observeCaughtError(diagnosticFailure, "adapters/system/proxy/ensure-container-edge");
+  });
+  await executor.exec(`docker rm -f ${sq(container)} 2>/dev/null || true`).catch((diagnosticFailure) => {
+    observeCaughtError(diagnosticFailure, "adapters/system/proxy/ensure-container-edge");
+  });
   const run = await executor.streamExec(
     buildEdgeRunCommand(container, image, mounts),
     onLog as (l: LogEntry) => void,
@@ -259,6 +265,9 @@ async function startEdgeContainer(
 
 export type EdgeContainerMount = Readonly<{ host: string; container: string }>;
 
+/** Marks the start of each mount's output in the batched resolve exec below. */
+const MOUNT_RESOLVE_MARKER = "__OPENSHIP_MOUNT__";
+
 /**
  * Resolve bind sources on the machine that owns the Docker daemon.
  *
@@ -267,29 +276,52 @@ export type EdgeContainerMount = Readonly<{ host: string; container: string }>;
  * `pwd -P` is POSIX and resolves existing directory symlinks on both macOS and
  * Linux. In particular, it turns macOS `/var` and `/etc` into `/private/var` and
  * `/private/etc`, which Docker Desktop/OrbStack must receive as bind sources.
+ *
+ * All four mounts resolve in ONE exec, never one each (#774): each exec opens
+ * its own channel on the shared multiplexed SSH connection, and four concurrent
+ * channels is one more than sshd grants on hosts hardened to the common
+ * `MaxSessions 3` baseline — the fourth open failed, which failed edge recovery
+ * and route retries outright. Each `cd` runs in a subshell with stderr folded
+ * into its segment, so one missing directory can't leak a working directory
+ * into the next mount and still names its cause; the trailing `true` keeps a
+ * failed segment from turning the whole batch into a nonzero exit.
  */
 export async function resolveEdgeContainerMounts(
   executor: Pick<CommandExecutor, "exec">,
 ): Promise<EdgeContainerMount[]> {
-  return Promise.all(
-    EDGE_CONTAINER_MOUNTS.map(async (mount) => {
-      let host: string;
-      try {
-        host = (await executor.exec(`cd ${sq(mount.host)} && pwd -P`)).trim();
-      } catch (err) {
-        throw new Error(
-          `Could not resolve edge bind-mount source ${mount.host} on the target host: ${safeErrorMessage(err)}`,
-        );
-      }
-      if (!host.startsWith("/") || host.includes("\n")) {
-        throw new Error(
-          `Could not resolve edge bind-mount source ${mount.host} on the target host: ` +
-            `expected one absolute path, received ${JSON.stringify(host)}.`,
-        );
-      }
-      return { host, container: mount.container };
-    }),
-  );
+  const script =
+    EDGE_CONTAINER_MOUNTS.map(
+      (mount) => `echo ${MOUNT_RESOLVE_MARKER}; (cd ${sq(mount.host)} && pwd -P) 2>&1`,
+    ).join("; ") + "; true";
+
+  let raw: string;
+  try {
+    raw = await executor.exec(script);
+  } catch (err) {
+    observeCaughtError(err, "adapters/system/proxy/ensure-container-edge");
+    throw new Error(
+      `Could not resolve edge bind-mount sources on the target host: ${safeErrorMessage(err)}`,
+    );
+  }
+
+  const segments = raw.split(MOUNT_RESOLVE_MARKER).slice(1);
+  if (segments.length !== EDGE_CONTAINER_MOUNTS.length) {
+    throw new Error(
+      `Could not resolve edge bind-mount sources on the target host: ` +
+        `expected ${EDGE_CONTAINER_MOUNTS.length} paths, received ${JSON.stringify(raw)}.`,
+    );
+  }
+
+  return EDGE_CONTAINER_MOUNTS.map((mount, i) => {
+    const host = segments[i].trim();
+    if (!host.startsWith("/") || host.includes("\n")) {
+      throw new Error(
+        `Could not resolve edge bind-mount source ${mount.host} on the target host: ` +
+          `expected one absolute path, received ${JSON.stringify(host)}.`,
+      );
+    }
+    return { host, container: mount.container };
+  });
 }
 
 /** `docker run` argv for the edge: host networking (it owns 80/443) + the mounts. */
@@ -307,6 +339,7 @@ export function buildEdgeRunCommand(
     `--name ${sq(container)}`,
     "--network host",
     "--restart unless-stopped",
+    ...DEFAULT_CONTAINER_LOG_ARGS,
     mounts,
     sq(image),
   ].join(" ");
@@ -327,7 +360,8 @@ async function edgeContainerMountsMatch(
     raw = await executor.exec(
       `docker inspect -f '{{range .HostConfig.Binds}}{{println .}}{{end}}' ${sq(container)}`,
     );
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/system/proxy/ensure-container-edge");
     return null;
   }
 
@@ -409,6 +443,7 @@ export async function verifyEdgeServing(
     try {
       await executor.exec(containerCommand(container, "openresty -t 2>&1"));
     } catch (err) {
+      observeCaughtError(err, "adapters/system/proxy/ensure-container-edge");
       const out = safeErrorMessage(err);
       return { serving: false, reason: edgeFailureReason(out) ?? out };
     }
@@ -575,6 +610,7 @@ export async function ensureContainerEdge(
   });
   for (const mount of EDGE_CONTAINER_MOUNTS) {
     await hostState.exec(`mkdir -p ${sq(mount.host)}`).catch((err: unknown) => {
+      observeCaughtError(err, "adapters/system/proxy/ensure-container-edge");
       onLog(
         log(
           `Could not create the edge state directory ${mount.host}: ${safeErrorMessage(err)}. ` +
@@ -625,17 +661,20 @@ export async function ensureContainerEdge(
 
     const version = await executor
       .exec(containerCommand(container, "openresty -v 2>&1"))
-      .catch(() => "");
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/proxy/ensure-container-edge"); return ""; });
     onLog(log(`Edge container running${version.trim() ? ` (${version.trim()})` : ""}`));
     return { container, image, converted: clear.tookOver };
   } catch (err) {
+    observeCaughtError(err, "adapters/system/proxy/ensure-container-edge");
     const msg = safeErrorMessage(err);
     onLog(log(`Edge container setup failed: ${msg}`, "error"));
     const logs = await executor
       .exec(`docker logs --tail 40 ${sq(container)} 2>&1 || true`)
-      .catch(() => "");
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/proxy/ensure-container-edge"); return ""; });
     if (logs.trim()) onLog(log(`Edge container logs:\n${logs}`, "error"));
-    await executor.exec(`docker rm -f ${sq(container)} 2>/dev/null || true`).catch(() => {});
+    await executor.exec(`docker rm -f ${sq(container)} 2>/dev/null || true`).catch((diagnosticFailure) => {
+      observeCaughtError(diagnosticFailure, "adapters/system/proxy/ensure-container-edge");
+    });
     invalidateEdgeContainer(executor);
     // Put back exactly what the consent gate stopped, from its journal — the one
     // rollback implementation, shared with the CLI's two-process takeover and with

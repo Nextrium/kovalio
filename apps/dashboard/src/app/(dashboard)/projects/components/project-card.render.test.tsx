@@ -1,10 +1,13 @@
 // No DOM needed: renderToStaticMarkup runs no effects, and the row is pure.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { I18nProvider } from "@/components/i18n-provider";
 import { ModalProvider } from "@/context/ModalContext";
 import type { Project } from "@/constants/mock";
 import ProjectCard from "./ProjectCard";
+import ProjectGridCard from "./ProjectGridCard";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 /**
  * Two lies this row used to tell, both seen in the field on one Convex app:
@@ -63,18 +66,20 @@ describe("ProjectCard — hostname", () => {
 });
 
 describe("ProjectCard — status pill", () => {
-  it("does not read Live when the latest deploy failed", () => {
-    const out = text(
-      render(
-        project({
-          activeDeploymentId: "d1",
-          latestDeploymentId: "d2",
-          latestDeploymentStatus: "failed",
-        }),
-      ),
+  it("labels an ordinary failed attempt without inventing an action", () => {
+    const html = render(
+      project({
+        activeDeploymentId: "d1",
+        latestDeploymentId: "d2",
+        latestDeploymentStatus: "failed",
+      }),
     );
-    expect(out).toContain("Action Required");
+    const out = text(html);
+    expect(out).toContain("Deploy failed");
+    expect(out).not.toContain("Action Required");
     expect(out).not.toContain("Live");
+    expect(html).toContain('href="/build/d2"');
+    expect(html).not.toContain('data-project-action-required="true"');
   });
 
   it("reads Failed when the failed deploy is all the project has", () => {
@@ -88,5 +93,65 @@ describe("ProjectCard — status pill", () => {
   it("still reads Live for a healthy release", () => {
     const out = text(render(project({ activeDeploymentId: "d1" })));
     expect(out).toContain("Live");
+  });
+
+  it("links a genuine action-required badge to the owning deployment screen", () => {
+    const out = render(
+      project({
+        activeDeploymentId: "d1",
+        latestDeploymentId: "d2",
+        latestDeploymentStatus: "action_required",
+        latestDeploymentBlocked: true,
+      }),
+    );
+    expect(out).toContain("Action Required");
+    expect(out).toContain('data-project-action-required="true"');
+    expect(out).toContain('href="/projects/p1/deployments"');
+  });
+
+  it("links a routing action directly to Domains", () => {
+    const out = render(
+      project({
+        activeDeploymentId: "d1",
+        latestDeploymentId: "d1",
+        latestDeploymentStatus: "ready",
+        routingUnsynced: true,
+      }),
+    );
+    expect(out).toContain('href="/projects/p1/domains"');
+  });
+});
+
+
+describe("ProjectGridCard — management shortcuts", () => {
+  function grid(over: Partial<Project>) {
+    return renderToStaticMarkup(
+      <I18nProvider><ProjectGridCard project={project(over)} /></I18nProvider>,
+    );
+  }
+
+  it("links to project services, deployments and logs with persisted counts", () => {
+    const html = grid({ activeDeploymentId: "d1", serviceCount: 3, activeVersion: 17 });
+    expect(html).toContain('href="/projects/p1/services"');
+    expect(html).toContain('href="/projects/p1/deployments"');
+    expect(html).toContain('href="/projects/p1/logs"');
+    expect(html).toContain('aria-label="Convex: Services"');
+    expect(text(html)).toContain("Services 3 Deployments v17 Logs");
+    // The whole-card link must not wrap the independently clickable shortcuts.
+    for (const anchor of html.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)) {
+      expect(anchor[1]).not.toMatch(/<a\b/);
+    }
+  });
+
+  it.each([undefined, 0, -1, NaN])("hides the services shortcut when count is %s", (serviceCount) => {
+    const html = grid({ serviceCount });
+    expect(html).not.toContain('aria-label="Convex: Services"');
+    expect(text(html)).toContain("Deployments Logs");
+  });
+
+  it("opens topology for a draft with known services", () => {
+    const html = grid({ serviceCount: 2 });
+    expect(html).toContain('href="/projects/p1/topology"');
+    expect(text(html)).toContain("Services 2");
   });
 });

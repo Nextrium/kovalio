@@ -1,4 +1,19 @@
-import { pgTable, text, timestamp, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { pgTable, text, timestamp, index, jsonb } from "drizzle-orm/pg-core";
+import { gitSource } from "./git-source";
+
+export interface GithubInstallStatePayload {
+  /** Operator-facing label retained through the external manifest round-trip. */
+  name?: string;
+  apiBaseUrl?: string;
+  webBaseUrl?: string;
+  /** Repository OAuth: PKCE is encrypted, browser proof is hashed. */
+  sessionId?: string;
+  browserNonceHash?: string;
+  codeVerifierEncrypted?: string;
+  callbackMode?: "dashboard" | "bridge";
+  connectionError?: string;
+}
 
 /**
  * One-time, session-bound nonce minted when a user kicks off the GitHub
@@ -16,8 +31,9 @@ import { pgTable, text, timestamp, index } from "drizzle-orm/pg-core";
  * gets a row here, keyed by the state nonce, carrying the originating
  * user/org. When the install-complete callback (or webhook) fires with
  * a matching state, we look the row up, verify the caller matches the
- * stored userId/organizationId, then DELETE the row so the binding is
- * one-shot.
+ * stored userId/organizationId, then atomically mark it complete with the
+ * installation write. The short-lived result lets its initiator poll progress;
+ * a completed state can never claim another installation.
  *
  * Cleanup
  * ───────
@@ -37,6 +53,16 @@ export const githubInstallState = pgTable(
     userId: text("user_id").notNull(),
     /** Org id resolved for the user at request time (nullable when no org). */
     organizationId: text("organization_id"),
+    /** Source being installed. Null for legacy env/Cloud App flows and manifests. */
+    sourceId: text("source_id").references(() => gitSource.id, { onDelete: "cascade" }),
+    /** `install`, `manifest`, `repository-oauth`, or a short-lived completion. */
+    flow: text("flow").notNull().default("install"),
+    /** Setup inputs, plus encrypted PKCE for repository OAuth. This ephemeral
+     * table is excluded from transfers and never stores provider tokens. */
+    payload: jsonb("payload")
+      .$type<GithubInstallStatePayload>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },

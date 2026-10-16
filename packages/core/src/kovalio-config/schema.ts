@@ -12,7 +12,7 @@
  * reference page for the mapping table.
  */
 
-import type { StackId } from "../stacks";
+import type { StackId, StackRole } from "../stacks";
 import type { RoutingConfig } from "../metadata/types";
 import type { KovalioReadiness } from "../types";
 
@@ -90,6 +90,12 @@ export interface KovalioService {
   image?: string;
   build?: string;
   dockerfile?: string;
+  /**
+   * Dockerfile build arguments for this service. A null value inherits the
+   * same-named value from the project's `env`; a string is an explicit
+   * service-local override. Runtime variables continue to live in `env`.
+   */
+  buildArgs?: Record<string, string | null>;
   ports?: string[];
   volumes?: string[];
   dependsOn?: string[];
@@ -162,8 +168,23 @@ export interface KovalioConfig {
   installCommand?: string;
   buildCommand?: string;
   startCommand?: string;
+  /**
+   * Commands run ONCE per deploy, after the build and before the new version is
+   * activated — for example, database migrations. A non-zero exit FAILS the
+   * deploy, so the old version keeps serving rather than a new one coming up
+   * against a schema it can't use.
+   *
+   * Each command gets its own execution context and log marker. Only effects in
+   * a database or persistent volume survive a Docker release container. Commands
+   * must be idempotent; a code rollback does not undo their data changes.
+   * Absent/[] disables the phase. Nothing is auto-injected per framework.
+   */
+  releaseCommands?: string[];
   outputDirectory?: string;
   buildImage?: string;
+  /** Explicit runtime version; validated by the detected stack's image policy. */
+  runtimeVersion?: string;
+  runtimeImage?: string;
   productionPaths?: string[];
   /**
    * Paths the app keeps across deploys. Either the short app form — a path
@@ -183,6 +204,32 @@ export interface KovalioConfig {
    */
   workload?: KovalioWorkload;
   port?: number;
+  /**
+   * Runtime roles beyond the web process - workers, schedulers (issue #935).
+   * Presence of this field, EVEN `[]`, overrides the stack's own presets
+   * (`STACKS[framework].defaultRoles`) outright; absence derives them from
+   * detected deps/files. See `resolveStackRoles` in `../stack-roles`. A role
+   * with `kind: "web"` is rejected here - the web role is always derived from
+   * `startCommand`. Deriving presets is a creation-time act: the deploy path
+   * resolves the persisted `project.roles`, where null means web only, so an
+   * existing project never gains a process on redeploy (#935 Q2).
+   */
+  roles?: StackRole[];
+  /**
+   * Opt-in Laravel cache warming (issue #19). When `true`, the resolved WEB role
+   * command gains a `php artisan optimize && ` prefix, which warms Laravel's
+   * config/route/event/view caches once at startup for higher per-request
+   * throughput. Default `false`: an absent or `false` flag keeps the web command
+   * byte-identical, so existing projects are unaffected. Laravel web role only —
+   * workers and schedulers stay unwarmed. It applies only to the `laravel` stack.
+   *
+   * Warming must run at startup, never at build or in `releaseCommands`:
+   * `config:cache` (inside `optimize`) freezes the env present when it runs and
+   * makes every `env()` call outside `config/*.php` return `null`, so it is only
+   * correct after Openship injects the runtime env. See `resolveWebCommand` in
+   * `../stack-roles`.
+   */
+  optimize?: boolean;
   // ── Env ──
   env?: KovalioEnv;
   // ── Domains + routing ──

@@ -27,8 +27,9 @@
  * over before any worker would actually do anything.
  */
 
-import { db, sql } from "@repo/db";
-import { getJobRunner } from "../../../lib/job-runner";
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
+import { db, sql, type DatabaseTransaction } from "@repo/db";
+import { getJobRunner } from "@repo/platform/engine/lib/job-runner/index";
 
 export class MigrationAlreadyInProgressError extends Error {
   readonly code = "MIGRATION_IN_PROGRESS" as const;
@@ -87,6 +88,27 @@ async function releaseLock(): Promise<void> {
 }
 
 /**
+ * Keep the quiesce flag alive when a destructive restore replaces the
+ * instance_settings row that originally held it. Call this as the final write
+ * in the restore transaction: once that transaction commits, mutation requests
+ * must remain blocked until post-commit process state has been reconciled.
+ */
+export async function reassertMigrationLockAfterRestore(tx: DatabaseTransaction): Promise<void> {
+  const result = await tx.execute(sql`
+    UPDATE instance_settings
+    SET migration_in_progress = true,
+        migration_started_at = NOW(),
+        updated_at = NOW()
+    WHERE id = 'default'
+    RETURNING id
+  `);
+  const rows = (result as unknown as { rows?: unknown[] }).rows ?? (result as unknown as unknown[]);
+  if (!Array.isArray(rows) || rows.length !== 1) {
+    throw new Error("The restored instance settings row is missing; the migration lock was lost.");
+  }
+}
+
+/**
  * Wrap a migration body in the quiesce protocol.
  *
  * Order of operations:
@@ -115,12 +137,11 @@ export async function withMigrationLock<T>(fn: () => Promise<T>): Promise<T> {
   try {
     acquired = await tryAcquireLock();
   } catch (err) {
+    observeCaughtError(err, "api/modules/system/migration/migration-lock");
     // The compare-and-swap UPDATE never committed, so no lock leak.
     // Wrap the raw drizzle/pg error in a typed error so the controller
     // surfaces a clean 503 instead of a raw 500 with a stack trace.
-    throw new MigrationLockAcquireError(
-      err instanceof Error ? err.message : String(err),
-    );
+    throw new MigrationLockAcquireError(err instanceof Error ? err.message : String(err));
   }
   if (!acquired) {
     throw new MigrationAlreadyInProgressError();
@@ -142,7 +163,7 @@ export async function withMigrationLock<T>(fn: () => Promise<T>): Promise<T> {
       // Don't fail the migration just because pause didn't take — the
       // mutation-guard already keeps user-driven writes out, and
       // BullMQ jobs writing during migration are rare (no deploys mid-flight).
-      console.warn("[migration-lock] job-runner pause failed:", err);
+      errorDiagnostics.warn("api/modules/system/migration/migration-lock", "[migration-lock] job-runner pause failed:", err);
     }
 
     return await fn();
@@ -151,11 +172,13 @@ export async function withMigrationLock<T>(fn: () => Promise<T>): Promise<T> {
       try {
         if (typeof (pausedRunner as { resumeAll?: () => Promise<void> }).resumeAll === "function") {
           await (pausedRunner as unknown as { resumeAll: () => Promise<void> }).resumeAll();
-        } else if (typeof (pausedRunner as { resume?: () => Promise<void> }).resume === "function") {
+        } else if (
+          typeof (pausedRunner as { resume?: () => Promise<void> }).resume === "function"
+        ) {
           await (pausedRunner as unknown as { resume: () => Promise<void> }).resume();
         }
       } catch (err) {
-        console.warn("[migration-lock] job-runner resume failed:", err);
+        errorDiagnostics.warn("api/modules/system/migration/migration-lock", "[migration-lock] job-runner resume failed:", err);
       }
     }
     try {
@@ -164,7 +187,7 @@ export async function withMigrationLock<T>(fn: () => Promise<T>): Promise<T> {
       // Stale-lock recovery on the NEXT acquire saves us here, so
       // we don't crash the migration response just because the
       // release UPDATE failed.
-      console.warn("[migration-lock] release failed; relying on stale-lock recovery:", err);
+      errorDiagnostics.warn("api/modules/system/migration/migration-lock", "[migration-lock] release failed; relying on stale-lock recovery:", err);
     }
   }
 }
@@ -176,8 +199,9 @@ export async function isMigrationInProgress(): Promise<boolean> {
     FROM instance_settings
     WHERE id = 'default'
   `);
-  const rows = (row as unknown as { rows?: Array<{ in_progress?: boolean }> }).rows
-    ?? (row as unknown as Array<{ in_progress?: boolean }>);
+  const rows =
+    (row as unknown as { rows?: Array<{ in_progress?: boolean }> }).rows ??
+    (row as unknown as Array<{ in_progress?: boolean }>);
   if (!Array.isArray(rows) || rows.length === 0) return false;
   return rows[0]?.in_progress === true;
 }

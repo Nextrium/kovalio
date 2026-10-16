@@ -38,6 +38,8 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFil
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { stageCloudflared } from "../scripts/fetch-cloudflared.mjs";
+import { stageActionRunnerAssets } from "../../../packages/actions-runner/assets.mjs";
 
 const DESKTOP_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
 const REPO_ROOT = join(DESKTOP_DIR, "..", "..");
@@ -87,6 +89,14 @@ async function main(): Promise<void> {
   );
   rmSync(RESOURCES, { recursive: true, force: true });
   mkdirSync(RESOURCES, { recursive: true });
+
+  await step("staging verified Cloudflare SSH client", () => {
+    stageCloudflared(join(DESKTOP_DIR, "assets/cloudflared"), join(RESOURCES, "cloudflared"), process.env.FORGE_PLATFORM || process.platform, TARGET_ARCH);
+  });
+
+  await step("staging Actions runners for connected Linux and macOS servers", () => {
+    stageActionRunnerAssets(join(RESOURCES, "server/assets/actions-runner"));
+  });
 
   // 1. API → one Node-runnable bundle (NOT a bun --compile binary — see the
   //    file header for why the compiled binary can't reach Docker over SSH).

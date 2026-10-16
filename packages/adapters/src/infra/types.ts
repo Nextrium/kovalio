@@ -18,12 +18,23 @@ import type { OutputProbeResult, StaticProbeOptions } from "../system/output-exi
 
 // ─── Routing ─────────────────────────────────────────────────────────────────
 
+export type ProjectRouteCleanupResult = "removed" | "absent" | "foreign";
+
 export interface RoutingProvider {
   /** Register a reverse-proxy route (domain → container/process) */
   registerRoute(route: RouteConfig): Promise<void>;
 
-  /** Remove a reverse-proxy route */
-  removeRoute(domain: string): Promise<void>;
+  /** Remove a reverse-proxy route. Providers that can roll back a failed
+   * removal must not recreate it after the caller has abandoned the attempt. */
+  removeRoute(domain: string, opts?: { signal?: AbortSignal }): Promise<void>;
+
+  /** Project-scoped teardown may preserve a route freshly proven to belong to
+   * another project. Unknown ownership must reject. A foreign result also forbids
+   * a later generic release of the managed hostname. */
+  removeProjectRoute?(domain: string): Promise<ProjectRouteCleanupResult>;
+
+  /** Pause a file-served site while retaining its hostname and certificate. */
+  suspendRoute?(domain: string): Promise<void>;
 
   /**
    * Re-emit vhosts an older generator wrote, so a fix to the EMITTED config shape reaches
@@ -90,19 +101,38 @@ export interface RoutingProvider {
 
 // ─── SSL ─────────────────────────────────────────────────────────────────────
 
+export interface ProvisionCertOptions {
+  onLog?: (line: string) => void;
+  force?: boolean;
+  challenge?: "http-01" | "dns-01";
+  /** Existing hook commands already present in the Certbot execution environment. */
+  dnsAuthHook?: string;
+  dnsCleanupHook?: string;
+  /** Hook bodies that the provider must materialize beside Certbot on its target. */
+  dnsAuthHookScript?: string;
+  dnsCleanupHookScript?: string;
+}
+
 export interface SslProvider {
+  /** The provider handles issuance and renewal through its own API. DNS
+   * credentials and local Certbot hook scripts must not be required or sent. */
+  readonly certificateManagement?: "provider";
+  /** Resumable DNS-01 orders. Waiting for a person must not hold an executor,
+   * Certbot process, or deployment lock. Returned order material is private. */
+  dnsChallengeProvider?(): Promise<DnsCertificateProvider>;
+  /** Enable the current route with an already-validated certificate, without
+   * opening another ACME order. A readable PEM alone does not prove a failed
+   * vhost reload has recovered. Only providers that own the route implement it. */
+  activateCert?(domain: string): Promise<void>;
   /** Provision a new TLS certificate for a domain. `onLog`, when given, streams
    *  certbot's output line-by-line (powers the live-log verify modal). `force`
    *  bypasses the "cert already on disk" short-circuit and passes certbot
    *  `--force-renewal`, so a present-but-stale/near-expiry cert is actually
    *  reissued instead of returned as-is. */
-  provisionCert(
-    domain: string,
-    opts?: { onLog?: (line: string) => void; force?: boolean },
-  ): Promise<SslResult>;
+  provisionCert(domain: string, opts?: ProvisionCertOptions): Promise<SslResult>;
 
   /** Renew an existing TLS certificate */
-  renewCert(domain: string): Promise<SslResult>;
+  renewCert(domain: string, opts?: ProvisionCertOptions): Promise<SslResult>;
 
   /**
    * Install an operator-supplied certificate (bring-your-own / Cloudflare
@@ -120,4 +150,16 @@ export interface SslProvider {
    * of mistaking a transient read failure for "no cert".
    */
   verifyCert(domain: string): Promise<SslResult>;
+}
+
+export interface DnsCertificateProvider {
+  readonly directoryUrl: string;
+  createAccountKey(): Promise<string>;
+  prepare(hostname: string, accountKey: string): Promise<{
+    record: { name: string; value: string };
+    expiresAt: string;
+    /** Opaque serialized order, CSR and key. Encrypt at rest; never return to a client. */
+    state: string;
+  }>;
+  complete(hostname: string, accountKey: string, state: string): Promise<ManualCert>;
 }

@@ -1,20 +1,27 @@
 "use client";
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
+import { Icon as UiIcon } from "@repo/ui/icons";
+
 import React from "react";
 import { useProjectSettings } from "@/context/ProjectSettingsContext";
 import { DeploymentsContent } from "@/app/(dashboard)/deployments/components";
-import { deployApi, projectsApi, isAbortError } from "@/lib/api";
+import { deployApi, projectsApi, isAbortError, getApiErrorMessage } from "@/lib/api";
 import type { PendingAction } from "@/lib/api/projects";
+import { updatesApi } from "@/lib/api/updates";
 import { openTriggeredBuild } from "@/lib/deploy-nav";
-import { type Service } from "@/lib/api/services";
 import { useModal } from "@/context/ModalContext";
+import { useCloudDeployPricing } from "@/hooks/useCloudDeployPricing";
 import { useToast } from "@/context/ToastContext";
 import { useI18n, interpolate } from "@/components/i18n-provider";
 import { useRouter } from "next/navigation";
-import { Rocket, ChevronDown, RefreshCw, Layers } from "lucide-react";
 import DropdownMenu from "@/components/ui/DropdownMenu";
 import WarningCallout from "@/components/shared/WarningCallout";
-
+import {
+  hasConnectedDomain,
+  isPotentiallyPublicService,
+  shouldWarnAboutUnreachableServices,
+} from "./redeploy-unreachable-warning";
 export const Deployments = () => {
   const {
     id,
@@ -23,9 +30,13 @@ export const Deployments = () => {
     servicesData,
     refreshServices,
     hasMultipleServices,
+    domainsData,
+    availableUpdate,
+    refreshUpdateStatus,
   } = useProjectSettings();
   const { t } = useI18n();
   const { showToast } = useToast();
+  const showCloudPricing = useCloudDeployPricing(projectData.workspaceId);
   const { showModal, hideModal } = useModal();
   const router = useRouter();
 
@@ -34,58 +45,7 @@ export const Deployments = () => {
   // itself via the CLI — redeploy/self-update controls would only 403, so hide them.
   const isSelfApp = projectData?.appTemplateId === "kovalio";
 
-  // "Project outdated" banner. Two shapes discriminated by `mode`: a commit
-  // project is behind its branch HEAD; a release/dist project has a newer
-  // version available. Fetched on-demand; conservative (only shows when we
-  // positively know the deploy is behind and nothing is already in flight).
-  const [commitStatus, setCommitStatus] = React.useState<{
-    behind: boolean;
-    mode: "commit" | "release";
-    /* commit */
-    branch?: string;
-    latestSha?: string | null;
-    latestMessage?: string | null;
-    deployedSha?: string | null;
-    /* release */
-    latestVersion?: string | null;
-    currentVersion?: string | null;
-  } | null>(null);
-
-  React.useEffect(() => {
-    if (!projectData?.id) return;
-    // The self-app updates via the CLI — no drift banner, so skip the fetch.
-    if (isSelfApp) return;
-    let cancelled = false;
-    projectsApi
-      .getCommitStatus(projectData.id)
-      .then((res) => {
-        if (cancelled) return;
-        const s = res?.data;
-        // Set when behind (and not already in flight), else CLEAR — must be
-        // able to remove a stale banner, not only add one.
-        setCommitStatus(
-          s?.supported && s.behind && !s.latestInProgress
-            ? {
-                behind: true,
-                mode: s.mode ?? "commit",
-                branch: s.branch,
-                latestSha: s.latestSha,
-                latestMessage: s.latestMessage,
-                deployedSha: s.deployedSha,
-                latestVersion: s.latestVersion,
-                currentVersion: s.currentVersion,
-              }
-            : null,
-        );
-      })
-      .catch(() => {
-        /* best-effort nudge; never block the page */
-      });
-    return () => {
-      cancelled = true;
-    };
-    // activeDeploymentId dep → refetch after a deploy advances the live release.
-  }, [projectData?.id, projectData?.activeDeploymentId, isSelfApp]);
+  React.useEffect(() => { void refreshUpdateStatus(); }, [refreshUpdateStatus]);
 
   /**
    * A deploy blocked on something the operator can clear — today a port already
@@ -109,11 +69,10 @@ export const Deployments = () => {
       .getPendingActions(projectData.id)
       .then((res) => {
         if (cancelled) return;
-        setBlockedAction(
-          res?.data?.actions?.find((a) => a.kind === "deploy_blocked") ?? null,
-        );
+        setBlockedAction(res?.data?.actions?.find((a) => a.kind === "deploy_blocked") ?? null);
       })
-      .catch(() => {
+      .catch((diagnosticFailure) => {
+        observeCaughtError(diagnosticFailure, "dashboard/app/(dashboard)/projects/[id]/components/Deployments");
         /* best-effort — the status badge already says Action Required */
       });
     return () => {
@@ -132,10 +91,21 @@ export const Deployments = () => {
    * we land on the build screen for the new version.
    */
   const runRedeploy = React.useCallback(
-    async (mode: "smart" | "all" | "refresh" = "smart") => {
+    async (mode: "smart" | "all" | "refresh" | "update" = "smart") => {
       if (!projectData?.id) return;
       setIsRedeploying(true); // drive the loading state for menu paths too
       try {
+        if (mode === "update") {
+          // Image updates must force-pull the tag through the existing update
+          // operation; a normal rebuild can reuse the currently running image.
+          const res = await updatesApi.apply(projectData.id);
+          openTriggeredBuild(
+            router,
+            { data: { deployment: { id: res.data?.deployment_id } } },
+            projectData.id,
+          );
+          return;
+        }
         const body =
           mode === "all"
             ? { projectId: projectData.id, forceAll: true }
@@ -145,6 +115,10 @@ export const Deployments = () => {
         const res = await deployApi.trigger(body);
         openTriggeredBuild(router, res, projectData.id);
       } catch (error) {
+        if (showCloudPricing(error, () => runRedeploy(mode))) {
+          setIsRedeploying(false);
+          return;
+        }
         // A timeout almost certainly means the server started the deploy but was
         // slow to return the id — show the deployments list so it's visible rather
         // than stranding the user on an error.
@@ -157,18 +131,21 @@ export const Deployments = () => {
           router.push(`/projects/${projectData.id}/deployments`);
           return;
         }
-        console.error("Redeploy failed:", error);
+        errorDiagnostics.error("dashboard/app/(dashboard)/projects/[id]/components/Deployments", "Redeploy failed:", error);
         showToast(
-          mode === "refresh"
-            ? t.projects.redeploy.couldNotRefresh
-            : t.projects.redeploy.couldNotRedeploy,
+          getApiErrorMessage(
+            error,
+            mode === "refresh"
+              ? t.projects.redeploy.couldNotRefresh
+              : t.projects.redeploy.couldNotRedeploy,
+          ),
           "error",
           t.projects.redeploy.errorTitle,
         );
         setIsRedeploying(false); // success navigates away; only clear on failure
       }
     },
-    [projectData?.id, router, showToast, t],
+    [projectData?.id, router, showToast, showCloudPricing, t],
   );
 
   const handleRedeploy = async () => {
@@ -179,8 +156,12 @@ export const Deployments = () => {
       if (hasMultipleServices) {
         const services =
           servicesData.services.length > 0 ? servicesData.services : await refreshServices();
-        if (shouldWarnAboutUnreachableServices(services)) {
-          const candidateServices = services.filter(isPotentiallyPublicService);
+        if (shouldWarnAboutUnreachableServices(services, domainsData.domains, projectData.port)) {
+          const candidateServices = services.filter(
+            (s) =>
+              isPotentiallyPublicService(s) &&
+              !hasConnectedDomain(s, domainsData.domains, projectData.port),
+          );
           let modalId = "";
           modalId = showModal({
             customContent: (
@@ -200,10 +181,10 @@ export const Deployments = () => {
                         className="rounded-lg bg-foreground/[0.06] px-3 py-1.5 text-[12px] font-medium text-foreground transition-colors hover:bg-foreground/[0.1]"
                         onClick={() => {
                           hideModal(modalId);
-                          setActiveTab("services");
+                          setActiveTab("domains");
                         }}
                       >
-                        {t.projects.redeploy.openServices}
+                        {t.projects.redeploy.openDomains}
                       </button>
                       <button
                         type="button"
@@ -241,7 +222,7 @@ export const Deployments = () => {
 
       await runRedeploy();
     } catch (error) {
-      console.error("Error redeploying project:", error);
+      errorDiagnostics.error("dashboard/app/(dashboard)/projects/[id]/components/Deployments", "Error redeploying project:", error);
       showToast(t.projects.redeploy.failedRedeploy, "error", t.projects.redeploy.errorTitle);
     } finally {
       setIsRedeploying(false);
@@ -298,23 +279,23 @@ export const Deployments = () => {
 
       {/* "Project outdated" nudge — only when the deployed commit is behind the
           branch HEAD. Redeploy uses the same direct path as the button below. */}
-      {!isSelfApp && commitStatus?.behind && commitStatus.mode === "commit" && (
+      {!isSelfApp && availableUpdate?.mode === "commit" && (
         <WarningCallout
           title={t.projects.redeploy.newCommitTitle}
           description={
             <>
               <span className="font-mono text-foreground/80">
-                {commitStatus.latestSha?.slice(0, 7)}
+                {availableUpdate.latestSha?.slice(0, 7)}
               </span>
-              {commitStatus.latestMessage ? ` · ${commitStatus.latestMessage}` : ""}{" "}
+              {availableUpdate.latestMessage ? ` · ${availableUpdate.latestMessage}` : ""}{" "}
               {t.projects.redeploy.newCommitOn}{" "}
-              <span className="font-mono text-foreground/80">{commitStatus.branch}</span>
-              {commitStatus.deployedSha ? (
+              <span className="font-mono text-foreground/80">{availableUpdate.branch}</span>
+              {availableUpdate.deployedSha ? (
                 <>
                   {" "}
                   {t.projects.redeploy.newCommitDeployedOn}{" "}
                   <span className="font-mono text-foreground/80">
-                    {commitStatus.deployedSha.slice(0, 7)}
+                    {availableUpdate.deployedSha.slice(0, 7)}
                   </span>
                   .
                 </>
@@ -338,19 +319,19 @@ export const Deployments = () => {
 
       {/* Release/dist source: a newer version is available. Same direct deploy
           path — triggerDeployment re-resolves the newest version server-side. */}
-      {!isSelfApp && commitStatus?.behind && commitStatus.mode === "release" && (
+      {!isSelfApp && availableUpdate?.mode === "release" && (
         <WarningCallout
           title={t.projects.redeploy.newVersionTitle}
           description={
             <>
               {t.projects.redeploy.newVersionAvailable}{" "}
-              <span className="font-mono text-foreground/80">v{commitStatus.latestVersion}</span>
-              {commitStatus.currentVersion ? (
+              <span className="font-mono text-foreground/80">v{availableUpdate.latestVersion}</span>
+              {availableUpdate.currentVersion ? (
                 <>
                   {" "}
                   {t.projects.redeploy.newVersionDeployed}{" "}
                   <span className="font-mono text-foreground/80">
-                    v{commitStatus.currentVersion}
+                    v{availableUpdate.currentVersion}
                   </span>
                   .
                 </>
@@ -372,12 +353,30 @@ export const Deployments = () => {
         />
       )}
 
+      {!isSelfApp && availableUpdate?.mode === "image" && (
+        <WarningCallout
+          title={t.projectSettings.appSource.updateAvailable}
+          description={availableUpdate.services?.filter((service) => service.behind)
+            .map((service) => `${service.name} (${service.ref})`).join(", ")}
+          actions={
+            <button
+              type="button"
+              onClick={() => runRedeploy("update")}
+              disabled={isRedeploying}
+              className="rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+            >
+              {isRedeploying ? t.projects.redeploy.deploying : t.projectSettings.appSource.update}
+            </button>
+          }
+        />
+      )}
+
       {!isSelfApp && (
         <div className="bg-card rounded-2xl border border-border/50 p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
               <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Rocket className="size-5" />
+                <UiIcon name="rocket" className="size-5" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
@@ -407,12 +406,12 @@ export const Deployments = () => {
                 align="right"
                 disabled={isRedeploying}
                 triggerClassName="inline-flex items-center justify-center rounded-xl border border-border/60 bg-muted/30 p-2.5 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                trigger={<ChevronDown className="size-4" />}
+                trigger={<UiIcon name="chevron-down" className="size-4" />}
                 actions={[
                   {
                     id: "refresh",
                     label: t.projects.redeploy.refreshEnv,
-                    icon: <RefreshCw className="size-4" />,
+                    icon: <UiIcon name="refresh" className="size-4" />,
                     onClick: () => runRedeploy("refresh"),
                   },
                   ...(hasMultipleServices
@@ -420,7 +419,7 @@ export const Deployments = () => {
                         {
                           id: "rebuild",
                           label: t.projects.redeploy.rebuildAll,
-                          icon: <Layers className="size-4" />,
+                          icon: <UiIcon name="layers" className="size-4" />,
                           onClick: () => runRedeploy("all"),
                         },
                       ]
@@ -442,19 +441,3 @@ export const Deployments = () => {
     </div>
   );
 };
-
-function hasConnectedDomain(service: Service) {
-  if (!service.exposed) return false;
-  if (service.domainType === "custom") return Boolean(service.customDomain?.trim());
-  return Boolean(service.domain?.trim());
-}
-
-function isPotentiallyPublicService(service: Service) {
-  return service.enabled && (service.ports?.length ?? 0) > 0;
-}
-
-function shouldWarnAboutUnreachableServices(services: Service[]) {
-  const candidateServices = services.filter(isPotentiallyPublicService);
-  if (candidateServices.length === 0) return false;
-  return candidateServices.every((service) => !hasConnectedDomain(service));
-}

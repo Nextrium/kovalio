@@ -1,5 +1,5 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { getSession, getDeploymentInfo } from "@/lib/server/session";
-import { serverApi } from "@/lib/server/api";
 import { AuthShell } from "@/components/auth-shell";
 import { Sidebar } from "@/components/sidebar";
 import { NotFoundContent } from "@/components/not-found-content";
@@ -18,27 +18,23 @@ import { DashboardProviders } from "./(dashboard)/providers";
 export default async function NotFound() {
   const body = <NotFoundContent variant="global" />;
 
-  const session = await getSession().catch(() => null);
+  const session = await getSession().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/app/not-found"); return null; });
   if (!session) {
     return <AuthShell maxWidth="max-w-[520px]">{body}</AuthShell>;
   }
 
-  const deploymentInfo = await getDeploymentInfo().catch(() => null);
+  const deploymentInfo = await getDeploymentInfo().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/app/not-found"); return null; });
   if (!deploymentInfo) {
     return <AuthShell maxWidth="max-w-[520px]">{body}</AuthShell>;
   }
 
-  const initialGithubData = await serverApi
-    .get("github/home", { cache: "no-store" })
-    .catch(() => null);
-
   return (
     <DashboardProviders
-      initialGithubData={initialGithubData}
       initialUser={session.user}
       selfHosted={deploymentInfo.selfHosted}
       deployMode={deploymentInfo.deployMode}
       authMode={deploymentInfo.authMode}
+      version={deploymentInfo.version}
       cloudAuthUrl={deploymentInfo.cloudAuthUrl}
       cloudApiUrl={deploymentInfo.cloudApiUrl}
       machineName={deploymentInfo.machineName}
@@ -47,9 +43,7 @@ export default async function NotFound() {
       <div className="flex h-dvh">
         <Sidebar />
         <main className="flex-1 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center px-6 py-10">
-            {body}
-          </div>
+          <div className="flex min-h-full items-center justify-center px-6 py-10">{body}</div>
         </main>
       </div>
     </DashboardProviders>

@@ -71,6 +71,14 @@ export const SYSTEM = {
     READINESS_TIMEOUT_MS: 45_000,
     /** Readiness-probe poll interval. */
     READINESS_INTERVAL_MS: 1_000,
+    /**
+     * Per-command budget for the release phase (for example, migrations) that
+     * runs between build and cutover. Same 10 minutes a bare build step gets
+     * (BareRuntimeOptions.buildTimeout) — a migration is build-shaped work, and
+     * an unbounded one would hold the deploy open forever with the old version
+     * still serving. Only reached by a project that declares releaseCommands.
+     */
+    RELEASE_COMMAND_TIMEOUT_MS: 10 * 60 * 1000,
   },
 
   // ── SSE / Build Streaming ────────────────────────────────────────────
@@ -105,6 +113,8 @@ export const SYSTEM = {
     VERIFICATION_PREFIX: "_kovalio-challenge",
     /** SSL renewal scheduler interval (ms) */
     SSL_RENEW_INTERVAL_MS: 6 * 60 * 60 * 1000, // 6 hours
+    /** Minimum age before observing a managed Cloud hostname's HTTPS again. */
+    SSL_HEALTH_CHECK_INTERVAL_MS: 5 * 60 * 1000,
     /** How many days before expiry to trigger renewal */
     SSL_RENEW_BEFORE_DAYS: 14,
     /** Maximum domains to renew per scheduler run */

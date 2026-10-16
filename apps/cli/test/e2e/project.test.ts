@@ -11,6 +11,7 @@ vi.mock("../../src/lib/caps", () => ({
 
 import { projectCommand, releaseImageSourceFromOptions } from "../../src/commands/project";
 import { runCommand, stubFetch, type FetchStub } from "../helpers/harness";
+import { projectFixture } from "../../../../packages/contracts/test/fixtures";
 
 let fetchStub: FetchStub;
 afterEach(() => fetchStub?.restore());
@@ -19,7 +20,7 @@ describe("kovalio project list", () => {
   it("paginates /projects and tabulates the rows", async () => {
     fetchStub = stubFetch((req) => {
       expect(req.url).toContain("/api/projects");
-      return { json: { data: [{ id: "p1", name: "shop", slug: "shop" }], total: 1 } };
+      return { json: { data: [projectFixture("p1", "shop")], total: 1, page: 1, perPage: 50 } };
     });
     const { out, code } = await runCommand(projectCommand, ["list"]);
     expect(code).toBe(0);
@@ -30,11 +31,141 @@ describe("kovalio project list", () => {
 
 describe("kovalio project get", () => {
   it("GETs /projects/:id", async () => {
-    fetchStub = stubFetch(() => ({ json: { data: { id: "p1", name: "shop" } } }));
+    fetchStub = stubFetch(() => ({
+      json: {
+        data: {
+          ...projectFixture("p1", "shop"),
+          deployTarget: "server",
+          serverId: "srv_remote",
+        },
+      },
+    }));
     const { out, code } = await runCommand(projectCommand, ["get", "p1"]);
     expect(code).toBe(0);
     expect(fetchStub.calls[0].url).toContain("/api/projects/p1");
     expect(out).toContain("shop");
+    expect(out).toContain("deployTarget server");
+    expect(out).toContain("serverId     srv_remote");
+  });
+});
+
+describe("openship project rename", () => {
+  it("sends only the display name through the SDK and prints the saved identity", async () => {
+    fetchStub = stubFetch((req) => {
+      expect(req.url).toBe("http://api.test/api/projects/project%2Fone");
+      expect(req.method).toBe("PATCH");
+      expect(req.body).toEqual({ name: "New Store" });
+      return { json: { data: { ...projectFixture("project/one", "old-store"), name: "New Store" } } };
+    });
+
+    const { out, code } = await runCommand(projectCommand, ["rename", "project/one", "  New Store  "]);
+
+    expect(code).toBe(0);
+    expect(fetchStub.calls).toHaveLength(1);
+    expect(out).toContain("New Store");
+    expect(out).toContain("old-store");
+  });
+
+  it("rejects a blank name before sending a write", async () => {
+    fetchStub = stubFetch(() => ({ json: {} }));
+
+    const { err, code } = await runCommand(projectCommand, ["rename", "p1", "   "]);
+
+    expect(code).toBe(1);
+    expect(fetchStub.calls).toHaveLength(0);
+    expect(err).toContain("Project name cannot be empty");
+  });
+
+  it("reports a rejected rename without printing a successful project update", async () => {
+    fetchStub = stubFetch(() => ({ status: 409, json: { error: 'Project "Taken" already exists' } }));
+
+    const { out, err, code } = await runCommand(projectCommand, ["rename", "p1", "Taken"]);
+
+    expect(code).toBe(1);
+    expect(err).toContain("already exists");
+    expect(out).toBe("");
+  });
+});
+
+describe("openship project create", () => {
+  it("routes local paths through the server-side import scanner (#751)", async () => {
+    fetchStub = stubFetch((req) => {
+      expect(req.url).toBe("http://api.test/api/projects/import");
+      expect(req.method).toBe("POST");
+      expect(req.body).toMatchObject({
+        name: "payments",
+        localPath: "/opt/apps/payments",
+        projectType: "services",
+      });
+      return { json: { data: projectFixture("p1", "payments") } };
+    });
+
+    const { code } = await runCommand(projectCommand, [
+      "create",
+      "--name",
+      "payments",
+      "--local-path",
+      "/opt/apps/payments",
+      "--type",
+      "services",
+    ]);
+
+    expect(code).toBe(0);
+    expect(fetchStub.calls).toHaveLength(1);
+  });
+
+  it("keeps Git projects on the normal create endpoint", async () => {
+    fetchStub = stubFetch((req) => {
+      expect(req.url).toBe("http://api.test/api/projects");
+      return { json: { data: projectFixture("p2", "shop") } };
+    });
+
+    const { code } = await runCommand(projectCommand, [
+      "create",
+      "--name",
+      "shop",
+      "--git-owner",
+      "acme",
+      "--git-repo",
+      "shop",
+    ]);
+
+    expect(code).toBe(0);
+  });
+
+  it("binds a new project to a registered server", async () => {
+    fetchStub = stubFetch((req) => {
+      expect(req.url).toBe("http://api.test/api/projects");
+      expect(req.body).toMatchObject({
+        name: "shop",
+        gitOwner: "acme",
+        gitRepo: "shop",
+        serverId: "srv_remote",
+      });
+      return {
+        json: {
+          data: {
+            ...projectFixture("p2", "shop"),
+            deployTarget: "server",
+            serverId: "srv_remote",
+          },
+        },
+      };
+    });
+
+    const { code } = await runCommand(projectCommand, [
+      "create",
+      "--name",
+      "shop",
+      "--git-owner",
+      "acme",
+      "--git-repo",
+      "shop",
+      "--server",
+      "srv_remote",
+    ]);
+
+    expect(code).toBe(0);
   });
 });
 
@@ -49,7 +180,7 @@ describe("kovalio project release-image", () => {
         imageTemplate: "ghcr.io/acme/api:{tag}",
         repo: "acme/api",
       });
-      return { json: { data: { id: "project/one" } } };
+      return { json: { data: projectFixture("project/one") } };
     });
 
     const { err, code } = await runCommand(projectCommand, [
@@ -128,4 +259,127 @@ describe("kovalio project release-image", () => {
       }),
     ).toThrow("embedded credentials");
   });
+});
+
+
+describe("openship project env set (#844)", () => {
+  it("prints override warnings after a successful write without printing the submitted secret", async () => {
+    fetchStub = stubFetch(() => ({ json: { upserted: 1, deleted: 0, warnings: ['Service "worker" overrides project environment for: TOKEN.'] } }));
+    const { err: output, code } = await runCommand(projectCommand, ["env", "set", "p1", "--set", "TOKEN=new-secret", "--secret"]);
+    expect(code).toBe(0);
+    expect(output).toContain("Updated env");
+    expect(output).toContain('Service "worker" overrides');
+    expect(output).not.toContain("new-secret");
+  });
+
+  it("accepts positional KEY=VALUE pairs the same as --set, and both together (#1023)", async () => {
+    fetchStub = stubFetch(() => ({ json: { upserted: 1, deleted: 0 } }));
+    await runCommand(projectCommand, ["env", "set", "p1", "--set", "A=1"]);
+    const positional = await runCommand(projectCommand, ["env", "set", "p1", "A=1"]);
+    expect(positional.code).toBe(0);
+    expect(fetchStub.calls[1].body).toEqual(fetchStub.calls[0].body);
+
+    const mixed = await runCommand(projectCommand, ["env", "set", "p1", "A=1", "--set", "B=x=y", "--unset", "OLD"]);
+    expect(mixed.code).toBe(0);
+    expect(fetchStub.calls[2]).toMatchObject({
+      method: "PATCH",
+      url: "http://api.test/api/projects/p1/env",
+      body: {
+        environment: "production",
+        upserts: [
+          { key: "A", value: "1", isSecret: false },
+          { key: "B", value: "x=y", isSecret: false },
+        ],
+        deletes: ["OLD"],
+      },
+    });
+  });
+
+  it("rejects a malformed positional pair before sending a write", async () => {
+    fetchStub = stubFetch(() => ({ json: {} }));
+    const { err, code } = await runCommand(projectCommand, ["env", "set", "p1", "NOVALUE"]);
+    expect(code).toBe(1);
+    expect(fetchStub.calls).toHaveLength(0);
+    expect(err).toContain("Expected KEY=VALUE");
+  });
+});
+
+describe("openship project auth errors (#1023)", () => {
+  it("points at openship login when the API answers 401", async () => {
+    fetchStub = stubFetch(() => ({ status: 401, json: { error: "Unauthorized" } }));
+    const { err, code } = await runCommand(projectCommand, ["create", "--name", "shop"]);
+    expect(code).toBe(1);
+    expect(err).toContain("Unauthorized");
+    expect(err).toContain("Run `openship login` first.");
+  });
+
+  it("leaves other API errors without the login hint", async () => {
+    fetchStub = stubFetch(() => ({ status: 403, json: { error: "Forbidden" } }));
+    const { err, code } = await runCommand(projectCommand, ["get", "p1"]);
+    expect(code).toBe(1);
+    expect(err).toContain("Forbidden");
+    expect(err).not.toContain("openship login");
+  });
+});
+
+describe("openship project runtime roles (#1282)", () => {
+  it("lists the active deployment's roles through the project API", async () => {
+    fetchStub = stubFetch(() => ({
+      json: {
+        data: {
+          deploymentId: "dep_1",
+          roles: [{ name: "queue", kind: "worker", replicas: 2, containers: [] }],
+          error: null,
+        },
+      },
+    }));
+    const { out, code } = await runCommand(projectCommand, ["roles", "p1"]);
+    expect(code).toBe(0);
+    expect(fetchStub.calls[0].url).toBe("http://api.test/api/projects/p1/roles");
+    expect(out).toContain("queue");
+  });
+
+  it.each([false, true])(
+    "reads only the selected release and replica (follow=%s)",
+    async (follow) => {
+      fetchStub = stubFetch(() =>
+        follow
+          ? new Response(
+              'event: log\ndata: {"message":"queue replica 2","level":"info","timestamp":"2026-10-16T12:00:00Z"}\n\n',
+              { headers: { "Content-Type": "text/event-stream" } },
+            )
+          : {
+              json: {
+                data: [
+                  { message: "queue replica 2", level: "info", timestamp: "2026-10-16T12:00:00Z" },
+                ],
+              },
+            },
+      );
+      const { out, code } = await runCommand(projectCommand, [
+        "logs",
+        "p1",
+        "--role",
+        "queue",
+        "--replica",
+        "2",
+        "--deployment-id",
+        "dep_1",
+        "--tail",
+        "40",
+        ...(follow ? ["--follow"] : []),
+      ]);
+      expect(code).toBe(0);
+      expect(fetchStub.calls).toHaveLength(1);
+      const url = new URL(fetchStub.calls[0].url);
+      expect(url.pathname).toBe(follow ? "/api/projects/p1/logs/stream" : "/api/projects/p1/logs");
+      expect(Object.fromEntries(url.searchParams)).toEqual({
+        role: "queue",
+        replica: "2",
+        deploymentId: "dep_1",
+        tail: "40",
+      });
+      expect(out).toContain("queue replica 2");
+    },
+  );
 });

@@ -37,8 +37,9 @@ module.exports = {
     executableName: "kovalio",
     // Stable, owned bundle identifier — used by the code signature, notarization,
     // Keychain, and LaunchServices. Without it packager defaults to the generic
-    // `com.electron.kovalio`, which collides with other Electron apps.
-    appBundleId: "com.oblien.kovalio",
+    // `com.electron.openship`, which collides with other Electron apps.
+    appBundleId: "com.oblien.openship",
+    protocols: [{ name: "Openship instance", schemes: ["openship"] }],
     icon: ICON_BASE,
     asar: true,
     // The main/preload are bundled (build/bundle.mjs) into self-contained files,
@@ -74,6 +75,7 @@ module.exports = {
       // ssh2 + dockerode (external to the API bundle) — resolved at runtime via
       // NODE_PATH=<Resources>/node_modules in services.ts.
       path.join(RESOURCES, "node_modules"),
+      path.join(RESOURCES, "cloudflared"),
     ],
     ...osxSigning,
   },
@@ -89,7 +91,7 @@ module.exports = {
       execFileSync("bun", ["run", path.join(__dirname, "build/stage.ts")], {
         cwd: __dirname,
         stdio: "inherit",
-        env: { ...process.env, FORGE_ARCH: arch },
+        env: { ...process.env, FORGE_ARCH: arch, FORGE_PLATFORM: _platform },
       });
     },
 
@@ -197,7 +199,12 @@ module.exports = {
   makers: [
     {
       name: "@reforged/maker-appimage",
-      config: { options: { bin: "kovalio", icon: `${ICON_BASE}.png` } },
+      config: { options: {
+        name: "openship",
+        bin: "openship",
+        icon: `${ICON_BASE}.png`,
+        desktopFile: path.join(__dirname, "assets/openship.desktop"),
+      } },
       platforms: ["linux"],
     },
     {
@@ -209,6 +216,7 @@ module.exports = {
           bin: "kovalio",
           icon: `${ICON_BASE}.png`,
           categories: ["Development", "Utilities"],
+          mimeType: ["x-scheme-handler/openship"],
           maintainer: "Oblien",
           homepage: "https://nextrium.org",
           license: "Apache-2.0",
@@ -225,7 +233,8 @@ module.exports = {
           bin: "kovalio",
           icon: `${ICON_BASE}.png`,
           categories: ["Development", "Utilities"],
-          homepage: "https://nextrium.org",
+          mimeType: ["x-scheme-handler/openship"],
+          homepage: "https://openship.io",
           // Required by electron-installer-redhat (the RPM spec's `License:`).
           // Also set on package.json; kept here so the maker never depends on it.
           license: "Apache-2.0",

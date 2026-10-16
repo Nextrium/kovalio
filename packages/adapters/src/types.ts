@@ -7,7 +7,7 @@
  */
 
 import { PRICING } from "@repo/core";
-import type { BuildStrategy, ProxySettings } from "@repo/core";
+import type { BuildStrategy, ProxySettings, BuildStep, LogEntry } from "@repo/core";
 import type { Readable, Duplex } from "node:stream";
 export type { BuildStrategy } from "@repo/core";
 
@@ -55,16 +55,10 @@ export const DEFAULT_RESOURCE_CONFIG: ResourceConfig = {
 };
 
 /**
- * Build resources. Sized for memory-hungry production builds (Next.js / webpack
- * routinely need several GB); 4 cores + 8 GB is the resource-schema ceiling
- * (project.schema.ts UpdateResourcesBody).
- *
- * DERIVED from the pricing catalog rather than typed here, because every plan's
- * Oblien ceiling is computed to fit this machine: `max_vcpus`/`max_ram_mb`/
- * `max_disk_gb` are per-WORKSPACE caps and a build gets its own workspace, so a
- * tier sized below this number cannot build at all — Oblien 409s the create. Two
- * independent copies of it meant a bump here could silently un-buildable the
- * cheapest tier; now raising it raises every ceiling with it.
+ * Default for direct Cloud adapter callers without an engine-selected budget.
+ * The SaaS engine selects CPU/RAM from Oblien's current shared-pool headroom,
+ * using saved build settings only as upper limits. It uses this catalog value
+ * for the default build disk, not a fixed CPU/RAM reservation.
  */
 export const DEFAULT_BUILD_RESOURCE_CONFIG: ResourceConfig = {
   cpuCores: PRICING.oblien.buildResources.cpuCores,
@@ -112,27 +106,28 @@ export interface BuildConfig {
   commitSha?: string;
   /** Absolute path to a local project directory (used instead of repoUrl for local projects) */
   localPath?: string;
+  /** Inline catalog source, written inside a Cloud Docker workspace without
+   * reading a path on the API host. Paths are relative to the shared build root. */
+  inlineSourceFiles?: Array<{ path: string; content: string }>;
   /** Where the build runs: "server" (clone/copy to workspace) or "local" (build on host, transfer dist) */
   buildStrategy?: BuildStrategy;
-  /**
-   * Cloud folder-upload flow: adopt this ALREADY-PROVISIONED cloud workspace
-   * instead of creating a fresh one. The browser uploaded the source straight
-   * into it, so the build attaches to it and (with `sourceStaged`) skips clone
-   * and source transfer. Ignored by non-cloud runtimes.
-   */
-  cloudWorkspaceId?: string;
-  /**
-   * Source is ALREADY present at the runtime's project dir (uploaded out of
-   * band — the folder-upload flow). Skips both the git clone and the local
-   * source transfer; install/build run against what's already there.
-   */
+  /** Trusted uploaded/release bytes supplied by the control plane. Never executes source locally. */
+  /** Source hook already populated the target directory; skip cloning. */
   sourceStaged?: boolean;
+  sourceTransfer?: (executor: CommandExecutor, directory: string, onLog: LogCallback) => Promise<void>;
   /** Detected framework / stack */
   stack: string;
   /** Docker image for the build container (e.g. "node:22", "oven/bun:latest") */
   buildImage: string;
+  /** Frozen selected runtime version; its recipe checks the actual binary. */
+  runtimeVersion?: string;
+  /** Explicit custom production base; generated recipes verify compatibility. */
+  runtimeImageOverride?: boolean;
   /** Package manager (npm | yarn | pnpm | bun) */
   packageManager: string;
+  /** Internal: cache mounts are enabled only after the runtime confirms a
+   * compatible BuildKit path. False preserves legacy/capped Engine builds. */
+  buildCache?: boolean;
   /** Shell command to install dependencies */
   installCommand: string;
   /**
@@ -155,6 +150,8 @@ export interface BuildConfig {
   port: number;
   /** Runtime image for generated Docker recipes. */
   runtimeImage: string;
+  /** Internal: generated managed Cloud Node runtime adapter. */
+  managedNodeListener?: boolean;
   /** Start command for generated runtime images. */
   startCommand?: string;
   /** Files/directories needed at runtime for generated Docker recipes. */
@@ -289,6 +286,8 @@ export interface ImageArtifactConfig {
   resources: ResourceConfig;
   /** Refresh a mutable tag even when it is already present on the target. */
   forcePull?: boolean;
+  /** Refresh cached registry tags while preserving images built only on this host. */
+  refreshMutableTag?: boolean;
 }
 
 export interface DeployPublicEndpoint {
@@ -430,6 +429,9 @@ export interface BuildResult {
   durationMs?: number;
   /** Human-readable error description when status is "failed" */
   errorMessage?: string;
+  /** In-process cause for orchestration recovery. Never persist or send the raw
+   * provider error to clients; the engine exposes only allowlisted diagnostics. */
+  errorCause?: unknown;
   /**
    * Start command chosen BY THE BUILD (overrides the snapshot's when set).
    * The snapshot's startCommand is fixed before the build runs, so a build that
@@ -448,43 +450,7 @@ export interface DeploymentResult {
   status: ContainerStatus;
 }
 
-/**
- * Pipeline step identifiers for stepper UI.
- *
- * "prepare" is one-time server provisioning (toolchain install, source
- * transfer) that runs BEFORE the build timer starts — so it's shown as its own
- * phase and excluded from the reported build duration.
- */
-export type BuildStep = "prepare" | "clone" | "install" | "build" | "deploy";
-
-export const BUILD_STEPS: readonly BuildStep[] = [
-  "prepare",
-  "clone",
-  "install",
-  "build",
-  "deploy",
-] as const;
-
-export interface LogEntry {
-  timestamp: string;
-  message: string;
-  level: "info" | "warn" | "error";
-  /** When present, this entry is a step event for the stepper UI */
-  step?: BuildStep;
-  /** Step lifecycle status */
-  stepStatus?: "running" | "completed" | "failed" | "skipped";
-  /** Compose service name when this log belongs to one service. */
-  serviceName?: string;
-  /** Stable id of the service this log belongs to (compose deployments). Routes
-   *  the line to its per-service tab without fragile name matching. */
-  serviceId?: string;
-  /** Pre-encoded base64 data - passed through to SSE without re-encoding. */
-  rawData?: string;
-  /** Monotonic sequence assigned by the session manager at append time, used as
-   *  the SSE event id / client dedup cursor. Decoupled from the ring-buffer
-   *  index so it never plateaus when the buffer trims. */
-  seq?: number;
-}
+export { BUILD_STEPS, type BuildStep, type LogEntry } from "@repo/core";
 
 /**
  * A serialization gate for server/workspace-scoped provisioning. The API injects
@@ -495,12 +461,14 @@ export interface LogEntry {
  * `run`; when no lock is injected, callers fall back to running `fn` directly.
  */
 export interface ProvisionLock {
-  run<T>(fn: () => Promise<T>): Promise<T>;
+  run<T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T>;
 }
 
 export interface ContainerInfo {
   containerId: string;
   status: ContainerStatus;
+  /** Immutable image actually used by this container (Docker runtimes). */
+  imageId?: string;
   /** Container IP on the internal network */
   ip?: string;
   /** Mapped port on host (if applicable). The FIRST binding the daemon reports —
@@ -522,6 +490,9 @@ export interface ContainerInfo {
   uptimeSeconds?: number;
   /** Current resource consumption */
   usage?: ResourceUsage;
+  /** Applied limits, independent of usage or the next deployment's settings.
+   * Zero means unlimited; undefined means the runtime could not report them. */
+  resources?: { cpuCores: number; memoryMb: number };
 }
 
 export interface ResourceUsage {
@@ -532,10 +503,12 @@ export interface ResourceUsage {
   networkTxBytes: number;
 }
 
-/** An extra path-prefix location that reverse-proxies to another target. */
+/** An extra literal-path location that reverse-proxies to another target. */
 export interface RouteProxyLocation {
-  /** nginx location prefix, e.g. "/api/". */
+  /** nginx location path, e.g. "/api/". */
   pathPrefix: string;
+  /** true -> `location = <path>`; unset/false -> `location ^~ <path>`. */
+  exact?: boolean;
   /** Proxy target, e.g. "http://10.0.0.5:3000". When `upstreamPath` is set this is
    *  the ORIGIN only (no path) — the path comes from the template instead. */
   targetUrl: string;
@@ -586,6 +559,8 @@ export interface RouteRedirect {
 /** A response-header rule compiled from vercel.json `headers`. */
 export interface RouteHeaderRule {
   path: string;
+  /** Literal sources match exactly; absent retains legacy prefix behavior. */
+  exact?: boolean;
   headers: { key: string; value: string }[];
 }
 
@@ -686,12 +661,14 @@ export interface ProxyRouteConfig extends BaseRouteConfig {
   /** Target container IP + port */
   targetUrl: string;
   staticRoot?: never;
+  notFound?: never;
 }
 
 export interface StaticRouteConfig extends BaseRouteConfig {
   /** Absolute path on the target machine to serve via Nginx root. */
   staticRoot: string;
   targetUrl?: never;
+  notFound?: never;
   /**
    * This root is being ADOPTED from a proxy we're taking over, not produced by an
    * Kovalio build.
@@ -708,7 +685,14 @@ export interface StaticRouteConfig extends BaseRouteConfig {
   staticRootAdopted?: boolean;
 }
 
-export type RouteConfig = ProxyRouteConfig | StaticRouteConfig;
+/** Only explicit proxy locations serve traffic; unmatched paths return 404. */
+export interface PathRouteConfig extends BaseRouteConfig {
+  notFound: true;
+  targetUrl?: never;
+  staticRoot?: never;
+}
+
+export type RouteConfig = ProxyRouteConfig | StaticRouteConfig | PathRouteConfig;
 
 /** An operator-supplied certificate to install verbatim (no ACME). */
 export interface ManualCert {
@@ -744,12 +728,21 @@ export interface SslResult {
    * exists, so a retry won't help, and treating it as valid is what let "Recheck
    * SSL" report green on a cert browsers reject.
    */
-  reason?: "issued" | "renewed" | "missing" | "read_error" | "not_local" | "invalid";
+  reason?: "issued" | "renewed" | "missing" | "read_error" | "not_local" | "invalid" | "edge_invalid" | "pending";
+  /** Safe explanation from a live HTTPS check, independent of provider metadata. */
+  detail?: string;
 }
 
 // ─── Log streaming callback ──────────────────────────────────────────────────
 
 export type LogCallback = (entry: LogEntry) => void;
+
+export interface RuntimeLogStreamOptions {
+  tail?: number;
+  /** Called once when the source closes without an explicit cleanup.
+   * An error means the transport failed; consumers may reconnect. */
+  onEnd?: (error?: Error) => void;
+}
 
 // ─── SSH configuration ──────────────────────────────────────────────────────
 
@@ -788,7 +781,9 @@ export interface SshConfig {
   useSystemSsh?: boolean;
   /** Optional jump/bastion host (`ssh -J`). Honored by the system-ssh path. */
   sshJumpHost?: string;
-  /** Extra raw `ssh` CLI arguments. Honored by the system-ssh path. */
+  /** Fixed SSH transport; executable paths and arbitrary proxy commands are never request inputs. */
+  sshTransport?: "direct" | "cloudflare";
+  /** Allowlisted `ssh` connection tuning arguments. Honored by the system-ssh path. */
   sshArgs?: string;
   /**
    * How long to wait for the SSH handshake. Left unset, ssh2's 20s default applies —
@@ -832,6 +827,20 @@ export interface ExecOnly {
  */
 export interface CommandExecutor extends ExecOnly {
   /**
+   * Bind an AbortSignal to command/file operations started by `fn`.
+   *
+   * Remote executors use an async-local scope rather than mutable instance
+   * state: one deployment may be cancelled while another caller legitimately
+   * shares the pooled connection.  Implementations must not resolve the scope
+   * until an operation which already started has quiesced its transport.  That
+   * invariant lets provisioning locks release safely after cancellation.
+   *
+   * Optional for compatibility with lightweight/custom executors. Callers must
+   * still pass explicit signals to APIs that expose one.
+   */
+  runWithAbortSignal?<T>(signal: AbortSignal, fn: () => Promise<T>): Promise<T>;
+
+  /**
    * Run a command with real-time log streaming.
    * Resolves when the command exits - the log callback fires for each line.
    *
@@ -847,8 +856,15 @@ export interface CommandExecutor extends ExecOnly {
     opts?: { signal?: AbortSignal },
   ): Promise<{ code: number; output: string }>;
 
-  /** Write content to a file on the target machine. Creates dirs as needed. */
-  writeFile(path: string, content: string): Promise<void>;
+  /**
+   * Write content to a file on the target machine. Creates dirs as needed.
+   *
+   * `mode` is applied before any payload bytes become reachable at `path`. This
+   * matters for credentials: write-then-chmod briefly publishes a secret under
+   * the login user's umask. Callers that need an atomic replacement should write
+   * a unique sibling and rename it after this call.
+   */
+  writeFile(path: string, content: string, opts?: { mode?: number }): Promise<void>;
 
   /** Read a file from the target machine. */
   readFile(path: string): Promise<string>;
@@ -907,6 +923,13 @@ export interface CommandExecutor extends ExecOnly {
 
   /** Clean up connections / resources. */
   dispose(): Promise<void>;
+
+  /**
+   * False when each operation opens its own connection (Windows OpenSSH).
+   * A completed command then proves only past reachability; connection caches
+   * must probe again. Omitted by existing persistent/local executors.
+   */
+  readonly persistentConnection?: boolean;
 
   /**
    * Subscribe to transport-level disconnects (socket close/end/error, or a

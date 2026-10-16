@@ -50,6 +50,7 @@ const h = vi.hoisted(() => ({
     webhookId: 77 as number | null,
     webhookDomain: "hooks.example.com" as string | null,
     autoDeploy: true,
+    deletionInProgress: false,
     activeDeploymentId: null as string | null,
     serverId: null as string | null,
     resources: null,
@@ -66,6 +67,13 @@ const h = vi.hoisted(() => ({
     projectFields: Record<string, unknown>;
     groupFields: Record<string, unknown>;
   }>,
+  ensureSharedWebhook: vi.fn(async () => null as number | null),
+  webhookStrategy: "none" as "none" | "app",
+  authInstallationId: undefined as number | undefined,
+  resolveInstallUrl: vi.fn(async () => ({
+    url: "https://github.com/apps/operator-app/installations/new?state=workspace-nonce",
+    state: "workspace-nonce",
+  })),
 }));
 
 vi.mock("@repo/db", () => ({
@@ -111,7 +119,7 @@ vi.mock("@repo/db", () => ({
  * all. Its own contract (how a slug change rewrites and deregisters hostnames) lives
  * with the domains module — here we only assert it is never invoked.
  */
-vi.mock("../domains/project-route.service", () => ({
+vi.mock("@repo/platform/engine/modules/domains/project-route.service", () => ({
   syncProjectRouteState: async (_p: unknown, input: Record<string, unknown>) => {
     h.routeSyncs.push(input);
   },
@@ -125,37 +133,44 @@ vi.mock("../domains/project-route.service", () => ({
   deriveEnvironmentPublicEndpoints: () => [],
 }));
 
-vi.mock("../domains/routing-apply.service", () => ({ applyProjectRouting: async () => {} }));
-vi.mock("./project-runtime.service", () => ({ syncProjectManagedEdge: async () => {} }));
-vi.mock("../../lib/free-domain-guard", () => ({ assertFreeEndpointsAllowed: async () => {} }));
+vi.mock("@repo/platform/engine/modules/domains/routing-apply.service", () => ({ applyProjectRouting: async () => {} }));
+vi.mock("@repo/platform/engine/modules/projects/project-runtime.service", () => ({ syncProjectManagedEdge: async () => {} }));
+vi.mock("@repo/platform/engine/lib/free-domain-guard", () => ({ assertFreeEndpointsAllowed: async () => {} }));
 vi.mock("../../lib/controller-helpers", () => ({
   assertResourceInOrg: () => {},
   platform: () => ({ runtime: { name: "docker" } }),
 }));
-vi.mock("../github/github.service", () => ({
+vi.mock("@repo/platform/engine/modules/github/github.service", () => ({
   resolveDefaultBranch: async () => "main",
   listBranches: async () => [],
   getLatestCommit: async () => null,
-  resolveWebhookStrategy: async () => "none",
+  resolveWebhookStrategy: async () => h.webhookStrategy,
 }));
-vi.mock("../github/github.auth", () => ({
-  getInstallationIdByOrg: async () => undefined,
-  getInstallUrl: () => "",
+vi.mock("@repo/platform/engine/modules/github/github.auth", () => ({
+  getInstallationIdByOrg: async () => h.authInstallationId,
+  resolveInstallUrl: h.resolveInstallUrl,
 }));
-vi.mock("./project-git-webhook", () => ({
-  ensureSharedWebhook: async () => null,
+vi.mock("@repo/platform/engine/modules/projects/project-git-webhook", () => ({
+  ensureSharedWebhook: h.ensureSharedWebhook,
   findSharedWebhookId: async () => null,
 }));
-vi.mock("../../lib/release-resolver", () => ({
+vi.mock("@repo/platform/engine/lib/project-runtime-lock", () => ({
+  withProjectStateLock: async (_id: string, work: () => Promise<unknown>) => work(),
+  withLiveProjectRuntimeMutation: async (
+    _projectId: string,
+    mutate: (project: typeof h.project) => Promise<unknown>,
+  ) => (h.project.deletionInProgress ? undefined : mutate({ ...h.project })),
+}));
+vi.mock("@repo/platform/engine/lib/release-resolver", () => ({
   resolveLatestVersion: async () => null,
   resolveLatestReleaseTag: async () => null,
   readApiVersion: () => "0.0.0",
 }));
-vi.mock("../../lib/image-registry", () => ({ resolveLatestImageDigest: async () => null }));
-vi.mock("./folder/session-store", () => ({ getFolderSession: () => null }));
-vi.mock("../../config", () => ({ env: { CLOUD_MODE: false, CLOUD_MAX_PROJECTS_PER_USER: 2 } }));
+vi.mock("@repo/platform/engine/lib/image-registry", () => ({ resolveLatestImageDigest: async () => null }));
+vi.mock("@repo/platform/engine/modules/projects/folder/session-store", () => ({ getFolderSession: () => null }));
+vi.mock("@repo/platform/engine/config/index", () => ({ env: { CLOUD_MODE: false, CLOUD_MAX_PROJECTS_PER_USER: 2 } }));
 
-const load = () => import("./project-crud.service");
+const load = () => import("@repo/platform/engine/modules/projects/project-crud.service");
 
 describe("project rename — the slug is immutable", () => {
   beforeEach(() => {
@@ -165,8 +180,12 @@ describe("project rename — the slug is immutable", () => {
     h.projectUpdates = [];
     h.groupUpdates = [];
     h.routeSyncs = [];
+    h.webhookStrategy = "none";
+    h.authInstallationId = undefined;
+    h.resolveInstallUrl.mockClear();
     h.liveRouteReapplies = 0;
     h.sourceUpdates = [];
+    h.project.deletionInProgress = false;
     Object.assign(h.project, {
       gitProvider: "github",
       framework: "node",
@@ -251,6 +270,10 @@ describe("project source transitions", () => {
   beforeEach(() => {
     h.projectUpdates = [];
     h.sourceUpdates = [];
+    h.project.deletionInProgress = false;
+    h.webhookStrategy = "none";
+    h.authInstallationId = undefined;
+    h.resolveInstallUrl.mockClear();
     Object.assign(h.project, {
       gitProvider: "github",
       gitOwner: "acme",
@@ -463,4 +486,55 @@ describe("project source transitions", () => {
     expect(fields).not.toHaveProperty("runtimeMode");
     expect(fields).not.toHaveProperty("startCommand");
   });
+
+  it("does not register a webhook or repoint source after deletion claims the project", async () => {
+    h.project.deletionInProgress = true;
+    const { linkProjectRepo } = await load();
+
+    await expect(
+      linkProjectRepo({ userId: "user_1", organizationId: "org_1" } as never, "proj_1", {
+        owner: "acme",
+        repo: "new-source",
+        branch: "main",
+      }),
+    ).resolves.toEqual({ ok: false, code: "not_found" });
+
+    expect(h.ensureSharedWebhook).not.toHaveBeenCalled();
+    expect(h.sourceUpdates).toEqual([]);
+    expect(h.projectUpdates).toEqual([]);
+  });
+
+  it("returns the workspace-bound install URL when App strategy has no installation", async () => {
+    h.webhookStrategy = "app";
+    const { linkProjectRepo } = await load();
+
+    await expect(
+      linkProjectRepo({ userId: "user_1", organizationId: "org_1" } as never, "proj_1", {
+        owner: "acme",
+        repo: "private-app",
+        branch: "main",
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      code: "app_not_installed",
+      owner: "acme",
+      installUrl: "https://github.com/apps/operator-app/installations/new?state=workspace-nonce",
+    });
+    expect(h.resolveInstallUrl).toHaveBeenCalledWith(expect.objectContaining({
+      userId: "user_1",
+      organizationId: "org_1",
+    }));
+    expect(h.sourceUpdates).toEqual([]);
+  });
 });
+
+// The application seams moved with the shared engine.
+vi.mock("@repo/platform/engine/lib/platform-config", () => ({
+  assertResourceInOrg: () => {},
+  platform: () => ({ runtime: { name: "docker" } }),
+}));
+
+vi.mock("@repo/platform/engine/lib/resource-access", () => ({
+  assertResourceInOrg: () => {},
+  platform: () => ({ runtime: { name: "docker" } }),
+}));

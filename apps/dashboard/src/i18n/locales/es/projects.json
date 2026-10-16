@@ -13,7 +13,9 @@
     "queued": "En cola",
     "building": "Compilando",
     "deploying": "Desplegando",
+    "reconciling": "Verificando",
     "migrating": "Migrando",
+    "deploy_failed": "Falló el último despliegue",
     "failed": "Fallido",
     "cancelled": "Cancelado",
     "deleting": "Eliminando",
@@ -32,6 +34,7 @@
     "local": "Local"
   },
   "card": {
+    "more": "Más",
     "liveVersion": "Versión en vivo v{version}",
     "sourceLocal": "Local",
     "services": "Servicios",
@@ -101,9 +104,11 @@
     "deletionInProgress": "Ya se está ejecutando otra eliminación para este proyecto",
     "deletionInProgressTitle": "Eliminación en curso",
     "confirmForceOrphan": "Algunos recursos no se pudieron eliminar del servidor. ¿Eliminar el proyecto de todos modos y limpiarlos automáticamente más tarde?",
-    "teardownFailedAt": "El desmontaje falló en: {reasons}. Reintenta o fuerza la eliminación para dejarlos huérfanos.",
+    "teardownFailedAt": "No se pudo completar la limpieza: {reasons}. El proyecto sigue guardado. Vuelve a intentar eliminarlo después de resolver el problema.",
     "teardownFailed": "Falló el desmontaje",
     "cleanupFailedTitle": "Falló la limpieza",
+    "retryCleanup": "Reintentar eliminación",
+    "cleanupPending": "La eliminación ha comenzado. El proyecto no estará disponible hasta completar la limpieza.",
     "alreadyDeleted": "El proyecto ya fue eliminado",
     "forceModalTitle": "No se pudo eliminar en el origen",
     "forceModalBody": "No se pudo alcanzar el runtime (o siguió fallando), así que este proyecto no se desmontó. Puedes eliminarlo de Kovalio igualmente: el registro se borra ahora y los recursos restantes se reclaman automáticamente cuando el servidor vuelva a estar accesible.",
@@ -124,6 +129,7 @@
     "noDomain": "Sin dominio",
     "addDomain": "Añadir dominio",
     "tabs": {
+      "topology": "Topología",
       "appSettings": "Ajustes",
       "overview": "Resumen",
       "services": "Servicios",
@@ -131,9 +137,12 @@
       "deployments": "Despliegues",
       "health": "Estado",
       "monitoring": "Monitorización",
+      "monitoringAndLogs": "Monitorización y registros",
       "source": "Origen",
+      "sourceAndTriggers": "Origen y desencadenadores",
       "webhooks": "Webhooks",
       "runtime": "Configuración",
+      "settings": "Ajustes",
       "logs": "Registros",
       "backup": "Copia de seguridad",
       "advanced": "Avanzado"
@@ -189,7 +198,8 @@
     "targetPending": "Se elige al desplegar",
     "type": "Tipo",
     "typeApp": "App",
-    "typeProject": "Proyecto"
+    "typeProject": "Proyecto",
+    "subtextNoSource": "Conecta una fuente para configurar tu primer despliegue."
   },
   "overview": {
     "platformCloud": "Kovalio Cloud",
@@ -236,6 +246,12 @@
     "waitingRequests": "Esperando solicitudes",
     "noTransfer": "Aún no hay transferencia"
   },
+  "analytics": {
+    "loadFailed": "No se pudieron cargar las analíticas de tráfico",
+    "loadFailedDescription": "Reintenta para cargar los datos más recientes.",
+    "sectionsUnavailable": "No disponible: {sections}.",
+    "staleData": "Se muestran los últimos datos disponibles."
+  },
   "monitoring": {
     "noDataTitle": "Aún no hay datos de monitoreo",
     "noDataDescription": "Las analíticas aparecerán aquí una vez que la aplicación desplegada comience a recibir tráfico.",
@@ -262,6 +278,7 @@
     "geoUnavailableBody": "El proxy edge no puede resolver los países de los visitantes, así que el mapa queda vacío. Los totales de tráfico no se ven afectados.",
     "noCountries": "Aún no hay datos de país para este período.",
     "statusesTitle": "Respuestas",
+    "statusesOthers": "Otros",
     "share": "{pct} %",
     "visitorDays": "Visitantes-día",
     "peakDayTooltip": "Día más activo: {peak}. Un visitante que regresa cuenta una vez por día, así que el total es un límite superior.",
@@ -285,6 +302,8 @@
     "liveHitsWaiting": "Esperando solicitudes…",
     "statusesUnclassified": "{count} sin clase de estado",
     "trafficTitle": "Resumen de tráfico",
+    "dailyWindow": "7 días, incluido hoy (UTC)",
+    "currentHour": "Hora actual · recuento en curso",
     "trafficSummary": "{count} solicitudes",
     "servicesMore": "+{count} más",
     "servicesLess": "Mostrar menos",
@@ -296,7 +315,11 @@
       "disable": "Desactivar rutas principales"
     },
     "liveFeed": "Solicitudes recientes",
-    "liveFeedHint": "Mostrar la lista de solicitudes recientes en el mapa (el detalle completo está en Registros)"
+    "liveFeedHint": "Mostrar la lista de solicitudes recientes en el mapa (el detalle completo está en Registros)",
+    "dataUnavailable": "Algunos datos de monitoreo no están disponibles",
+    "connecting": "Conectando…",
+    "liveUnavailable": "Solicitudes en vivo no disponibles",
+    "liveUnavailableDescription": "El tráfico histórico sigue visible. Vuelve a conectar para ver las solicitudes en vivo."
   },
   "services": {
     "failedLoad": "No se pudieron cargar los servicios",
@@ -327,16 +350,20 @@
     "toastKeptEdits": "{name}: se conservaron tus ediciones",
     "failedResolveDrift": "No se pudo resolver la divergencia",
     "failedCreateService": "No se pudo crear el servicio",
-    "requestFailed": "La solicitud falló"
+    "requestFailed": "La solicitud falló",
+    "application": "Aplicación",
+    "applicationHint": "Se administra mediante los despliegues de este proyecto.",
+    "companionsTitle": "Añadir otra aplicación o servicio"
   },
   "serviceStatus": {
+    "checking": "Comprobando…",
     "running": "En ejecución",
     "stopped": "Detenido",
     "disabled": "Deshabilitado",
     "failed": "Fallido",
     "starting": "Iniciando",
     "restarting": "Reiniciando",
-    "unknown": "Desconocido"
+    "unknown": "Estado no disponible"
   },
   "routingRetry": {
     "title": "El enrutamiento del dominio necesita atención",
@@ -378,17 +405,20 @@
     "noPublicDomainTitle": "No hay ningún dominio público conectado",
     "noPublicDomainDescOne": "Este proyecto tiene {count} servicio con puertos expuestos, pero ninguno está configurado con un dominio accesible. Si despliegas ahora, la pila puede ejecutarse internamente, pero los usuarios no podrán acceder a ella desde una URL pública.",
     "noPublicDomainDescOther": "Este proyecto tiene {count} servicios con puertos expuestos, pero ninguno está configurado con un dominio accesible. Si despliegas ahora, la pila puede ejecutarse internamente, pero los usuarios no podrán acceder a ella desde una URL pública.",
+    "openDomains": "Abrir dominios",
     "openServices": "Abrir servicios",
     "deployAnyway": "Desplegar de todos modos",
     "suggestedFix": "Solución sugerida",
-    "fixStep1": "Abre la pestaña Servicios.",
-    "fixStep2": "Elige el servicio que debe ser público.",
-    "fixStep3": "Habilita la exposición del dominio y elige el puerto público."
+    "fixStep1": "Abre la pestaña Dominios.",
+    "fixStep2": "Añade una ruta o dominio personalizado para el puerto del servicio.",
+    "fixStep3": "Verifica el dominio y despliega."
   },
   "connections": {
+    "nativeClusterHint": "Elige un proyecto en el clúster de esta base de datos. Solo los proyectos vinculados reciben acceso privado.",
+    "nativeNoTargets": "Ningún otro proyecto utiliza este clúster todavía.",
     "useInProject": "Usar en un proyecto",
     "title": "Usar en un proyecto",
-    "subtitle": "Conecta esta base de datos a otro proyecto como una conexión lista.",
+    "subtitle": "Comparte este servicio con otro proyecto mediante una conexión.",
     "targetLabel": "Proyecto",
     "targetPlaceholder": "Selecciona un proyecto…",
     "valueLabel": "Valor para inyectar",
@@ -423,15 +453,24 @@
     "forwardShort": "Reenviar",
     "usedByTitle": "Usado por",
     "usedByOpen": "Abrir proyecto",
-    "usedByHint": "{count} proyecto(s) dependen de la conexión de esta app. Desvincúlala desde el proyecto que la consume.",
-    "linkedCountOne": "{count} app vinculada",
-    "linkedCountOther": "{count} apps vinculadas",
-    "linkedHint": "Este proyecto las usa, pero no las ejecuta.",
-    "linkedBadge": "Vinculada",
+    "usedByHint": "{count} proyecto(s) usan esta conexión. Desconéctala desde el proyecto que la consume.",
+    "linkedCountOne": "{count} servicio conectado",
+    "linkedCountOther": "{count} servicios conectados",
+    "linkedHint": "Estos servicios se gestionan en sus proyectos de origen.",
+    "linkedBadge": "Compartido",
     "unlink": "Desvincular",
-    "openApp": "Abrir app",
+    "openApp": "Abrir origen",
     "internalTitle": "Dirección interna",
-    "internalDescription": "Accede a este proyecto de forma privada desde otro servicio en el mismo servidor, sin puerto público."
+    "internalDescription": "Accede a este proyecto de forma privada desde otro servicio en el mismo servidor, sin puerto público.",
+    "createNew": "Crear nuevo",
+    "connectExisting": "Conectar existente",
+    "existingHint": "Usa un servicio o una aplicación de otro proyecto. Sus datos y su gestión permanecen allí.",
+    "sourceLabel": "Proyecto o aplicación de origen",
+    "sourcePlaceholder": "Elige un proyecto o aplicación…",
+    "loadingServices": "Cargando servicios…",
+    "noConnections": "No hay valores de conexión disponibles. Revisa el puerto y las credenciales del servicio en el proyecto de origen.",
+    "noSources": "Crea un servicio en otro proyecto para conectarlo aquí.",
+    "sharedFrom": "Compartido desde {project}"
   },
   "incomingWebhooks": {
     "title": "Webhooks entrantes",
@@ -459,7 +498,8 @@
       "none": "Abierto"
     },
     "summaryDeploy": "Vuelve a desplegar este proyecto",
-    "summaryDeployService": "Vuelve a desplegar el servicio {service}",
+    "summaryDeployOne": "Vuelve a desplegar 1 servicio seleccionado",
+    "summaryDeployServices": "Vuelve a desplegar {count} servicios juntos",
     "summaryJob": "Ejecuta el trabajo {job}",
     "createTitle": "Nuevo webhook entrante",
     "createSubtitle": "Elige qué hace y cómo se autentican los llamantes.",
@@ -467,10 +507,10 @@
     "namePlaceholder": "p. ej. hook de despliegue de CI",
     "actionLabel": "Acción",
     "actionDeploy": "Desplegar",
-    "actionDeployDesc": "Vuelve a desplegar este proyecto (o un servicio) al llamarlo.",
+    "actionDeployDesc": "Vuelve a desplegar este proyecto o los servicios seleccionados al llamarlo.",
     "actionJob": "Ejecutar un trabajo",
     "actionJobDesc": "Ejecuta uno de tus trabajos al llamarlo.",
-    "serviceLabel": "Servicio (opcional)",
+    "serviceLabel": "Servicios (opcionales)",
     "serviceAll": "Todo el proyecto",
     "jobLabel": "Trabajo",
     "jobPlaceholder": "Selecciona un trabajo…",
@@ -514,5 +554,5 @@
       "server_unreachable": "Servidor inaccesible"
     }
   },
-  "migrationAwaitingHint": "La migración te espera: completa el cambio o revértela en la pestaña Avanzado del proyecto"
+  "migrationAwaitingHint": "La migración te espera: completa el cambio o revértela en Ajustes → Avanzado del proyecto"
 }

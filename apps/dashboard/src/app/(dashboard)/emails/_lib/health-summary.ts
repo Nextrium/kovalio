@@ -1,3 +1,5 @@
+import type { MailCertificateHealth } from "@repo/core";
+import type { IconName } from "@repo/ui/icons";
 /**
  * The one-line verdict at the top of the Health tab.
  *
@@ -13,22 +15,26 @@
  *           in the queue)
  *   green = all three readings clean
  *
- * A reading we couldn't take never colours the banner. `unknown` means "we didn't
- * look", and grading it would turn an unreachable probe into an outage.
+ * A reading we couldn't take never colours the banner. An observed SMTP timeout
+ * that the API could not attribute still warns: receiving mail is unverified.
  *
  * Lives out here, as a pure function, because that ordering is the part most
  * likely to be quietly wrong — see ./health-summary.test.ts.
  */
 
-import { AlertTriangle, Check, CheckCircle2, CircleX } from "lucide-react";
 
 import { interpolate } from "@/components/i18n-provider";
-import type { DnsCheck, MailComponentHealth, MailDeliveryHealth } from "@/lib/api";
+import type {
+  DnsCheck,
+  MailComponentHealth,
+  MailDeliveryHealth,
+  MailPortReachability,
+} from "@/lib/api";
 
 export type HealthDict = (typeof import("@/i18n/locales/en/emailsAdmin.json"))["health"];
 
 export interface BannerSummary {
-  Icon: typeof Check;
+  Icon: IconName;
   banner: string;
   iconBg: string;
   iconColor: string;
@@ -42,8 +48,10 @@ export function summarizeHealth(
   checks: DnsCheck[] | null,
   delivery: MailDeliveryHealth | null,
   h: HealthDict,
+  reachability: MailPortReachability | null = null,
+  certificate: MailCertificateHealth | null = null,
 ): BannerSummary | null {
-  if (!components && !checks && !delivery) return null;
+  if (!components && !checks && !delivery && !reachability && !certificate) return null;
 
   // Down splits by SEVERITY before anything else. A dead ClamAV and a dead Postfix
   // are both `failed`, but only one of them means this box has stopped being a mail
@@ -72,7 +80,15 @@ export function summarizeHealth(
   const dnsFails = checks?.filter((c) => c.status === "fail").length ?? 0;
   const dnsWarns = checks?.filter((c) => c.status === "warn").length ?? 0;
 
+  const certificateFails = certificate?.status === "fail";
+  const certificateWarns = certificate?.status === "warn" || certificate?.status === "unknown";
   const deliveryFails = delivery?.status === "fail";
+  const reachabilityFails = reachability?.status === "fail";
+  // Trust the API's classification. An unknown result with a failed TCP probe
+  // needs attention even though it cannot establish an inbound-mail outage.
+  const reachabilityUnverified =
+    reachability?.status === "unknown" &&
+    reachability.ports.some((port) => port.status === "blocked");
   // Mail waiting in the queue is worth the operator's eyes, but a warn here is
   // also how a healthy MTA rides out a receiver's greylist - so it colours the
   // banner amber and points at the card, never red.
@@ -94,12 +110,16 @@ export function summarizeHealth(
     missingComponents.length === 0 &&
     dnsFails === 0 &&
     dnsWarns === 0 &&
+    !certificateFails &&
+    !certificateWarns &&
     !deliveryFails &&
+    !reachabilityFails &&
+    !reachabilityUnverified &&
     !queueNote;
 
-  if (allClean && (components || checks || delivery)) {
+  if (allClean && (components || checks || delivery || reachability || certificate)) {
     return {
-      Icon: CheckCircle2,
+      Icon: "check-circle",
       banner: "bg-success-bg border-success-border",
       iconBg: "bg-success-bg",
       iconColor: "text-success",
@@ -115,7 +135,7 @@ export function summarizeHealth(
   // sentence instead of whichever branch happened to come first. (That merge is a
   // deliberate behaviour change for one combination: missing daemons alongside DNS
   // warnings used to drop the DNS sentence.)
-  if (requiredDown.length === 0 && dnsFails === 0 && !deliveryFails) {
+  if (requiredDown.length === 0 && dnsFails === 0 && !deliveryFails && !reachabilityFails && !certificateFails) {
     const almost: string[] = [];
     almost.push(...advisoryNotes(advisoryDown, h));
     // The heading names the most consequential amber cause: a daemon that is down and
@@ -139,6 +159,8 @@ export function summarizeHealth(
       );
     }
     if (queueNote) almost.push(queueNote);
+    if (certificateWarns) almost.push(h.summary.partCertificate);
+    if (reachabilityUnverified) almost.push(h.reachability.unknownHint);
     const label =
       advisoryDown.length > 0
         ? h.summary.degradedLabel
@@ -146,7 +168,7 @@ export function summarizeHealth(
           ? interpolate(h.summary.notInstalledLabel, { names: namesMissing })
           : h.summary.almostLabel;
     return {
-      Icon: AlertTriangle,
+      Icon: "warning",
       banner: "bg-warning-bg border-warning-border",
       iconBg: "bg-warning-bg",
       iconColor: "text-warning",
@@ -174,9 +196,11 @@ export function summarizeHealth(
   // Only a delivery `fail` earns a line here. A backlog next to a dead daemon is
   // that daemon's symptom, and repeating it would bury the cause.
   if (deliveryFails) parts.push(h.summary.partDelivery);
+  if (certificateFails) parts.push(h.summary.partCertificate);
+  if (reachabilityFails) parts.push(h.summary.partReachability);
 
   return {
-    Icon: CircleX,
+    Icon: "x-circle",
     banner: "bg-danger-bg border-danger-border",
     iconBg: "bg-danger-bg",
     iconColor: "text-danger",

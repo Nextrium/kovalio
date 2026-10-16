@@ -14,7 +14,10 @@
 
 /* ── Public types ─────────────────────────────────────────────────── */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 export interface AuthWindowHandle {
+  /** True when the browser refused to create the popup. */
+  readonly blocked: boolean;
   /** Redirect / open the auth URL. In browser, redirects the popup.
    *  In Electron, opens system browser. */
   navigate: (url: string) => void;
@@ -44,7 +47,8 @@ export function closeAuthWindowAfterSuccess(
   setTimeout(() => {
     try {
       targetWindow.close();
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "dashboard/utils/authWindow");
       /* window already closed / browser denied close */
     }
   }, delayMs);
@@ -54,9 +58,7 @@ export function closeAuthWindowAfterSuccess(
 
 function isElectron(): boolean {
   return (
-    typeof window !== "undefined" &&
-    "desktop" in window &&
-    !!(window as any).desktop?.isDesktop
+    typeof window !== "undefined" && "desktop" in window && !!(window as any).desktop?.isDesktop
   );
 }
 
@@ -72,7 +74,7 @@ function createBrowserHandle(initialUrl = "about:blank"): AuthWindowHandle {
   const popup = window.open(
     initialUrl,
     "Auth",
-    `width=${POPUP_WIDTH},height=${POPUP_HEIGHT},left=${left},top=${top}`
+    `width=${POPUP_WIDTH},height=${POPUP_HEIGHT},left=${left},top=${top}`,
   );
 
   let timer: ReturnType<typeof setInterval> | null = null;
@@ -85,6 +87,7 @@ function createBrowserHandle(initialUrl = "about:blank"): AuthWindowHandle {
   }
 
   return {
+    blocked: popup === null,
     navigate(url: string) {
       if (popup && !popup.closed) {
         popup.location.href = url;
@@ -121,11 +124,15 @@ function createElectronHandle(initialUrl?: string): AuthWindowHandle {
 
   // If the caller supplied a URL up front (matching the browser handle's
   // behavior where `window.open(initialUrl, ...)` opens immediately),
-  // hand it to the desktop bridge now. Without this, callers that pass
-  // `openAuthWindow(url)` and never call `.navigate()` (GitHubContext,
-  // the legacy initAuthWindow helper) would silently no-op in desktop.
+  // hand it to the desktop bridge now. This keeps that supported calling
+  // convention equivalent across browser and desktop runtimes.
   if (initialUrl) {
-    try { desktop?.onboarding?.openExternal?.(initialUrl); } catch { /* bridge missing */ }
+    try {
+      desktop?.onboarding?.openExternal?.(initialUrl);
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "dashboard/utils/authWindow");
+      /* bridge missing */
+    }
   }
 
   function cleanup() {
@@ -136,6 +143,7 @@ function createElectronHandle(initialUrl?: string): AuthWindowHandle {
   }
 
   return {
+    blocked: false,
     navigate(url: string) {
       desktop.onboarding.openExternal(url);
     },

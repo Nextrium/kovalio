@@ -1,5 +1,8 @@
 "use client";
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import { Icon as UiIcon, type IconName } from "@repo/ui/icons";
+
 /**
  * Health tab - single place to answer "is everything working?"
  *
@@ -25,29 +28,8 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  Activity,
-  AlertTriangle,
-  Check,
-  CheckCircle2,
-  CircleAlert,
-  CircleDashed,
-  CircleX,
-  Clock,
-  Globe,
-  KeyRound,
-  Loader2,
-  Lock,
-  Play,
-  RefreshCcw,
-  RotateCw,
-  ScrollText,
-  Search,
-  Send,
-  ShieldAlert,
-  Square,
-  Unplug,
-} from "lucide-react";
+import type { MailCertificateHealth } from "@repo/core";
+import { CertificateHealthCard } from "./certificate-card";
 import {
   mailAdminApi,
   mailApi,
@@ -61,6 +43,8 @@ import {
   type MailDeferralKind,
   type MailDeliveryHealth,
   type MailDeliveryStatus,
+  type MailPortReachability,
+  type MailPortReachabilityCheck,
 } from "@/lib/api";
 import { useToast } from "@/context/ToastContext";
 import { SectionCard } from "./_shared/section-card";
@@ -82,6 +66,9 @@ export function HealthTab({ serverId }: { serverId: string }) {
   // Same response as the daemons, so the same poll and the same error banner —
   // the send path is a second reading off one connection, not a second request.
   const [delivery, setDelivery] = useState<MailDeliveryHealth | null>(null);
+  const [reachability, setReachability] = useState<MailPortReachability | null>(null);
+  const [reachabilityRefreshing, setReachabilityRefreshing] = useState(false);
+  const [certificate, setCertificate] = useState<MailCertificateHealth | null>(null);
   const [componentsErr, setComponentsErr] = useState<string | null>(null);
   const [componentsLastUpdated, setComponentsLastUpdated] = useState<number | null>(null);
 
@@ -89,14 +76,17 @@ export function HealthTab({ serverId }: { serverId: string }) {
   const [dnsErr, setDnsErr] = useState<string | null>(null);
   const [dnsRefreshing, setDnsRefreshing] = useState(false);
 
-  const tickComponents = useCallback(async () => {
+  const tickComponents = useCallback(async (refreshReachability = false) => {
     try {
-      const r = await mailApi.getHealth(serverId);
+      const r = await mailApi.getHealth(serverId, refreshReachability);
       setComponents(r.components);
       setDelivery(r.delivery);
+      setReachability(r.reachability);
+      setCertificate(r.certificate ?? null);
       setComponentsErr(null);
       setComponentsLastUpdated(Date.now());
     } catch (err) {
+      observeCaughtError(err, "dashboard/app/(dashboard)/emails/_components/admin/health-tab");
       setComponentsErr(err instanceof Error ? err.message : t.emailsAdmin.health.healthCheckFailed);
     }
   }, [serverId]);
@@ -107,6 +97,7 @@ export function HealthTab({ serverId }: { serverId: string }) {
       setDns(r);
       setDnsErr(null);
     } catch (err) {
+      observeCaughtError(err, "dashboard/app/(dashboard)/emails/_components/admin/health-tab");
       setDnsErr(err instanceof Error ? err.message : t.emailsAdmin.health.scanFailed);
     }
   }, [serverId]);
@@ -141,11 +132,23 @@ export function HealthTab({ serverId }: { serverId: string }) {
     }
   };
 
+  const onReachabilityRefresh = async () => {
+    if (reachabilityRefreshing) return;
+    setReachabilityRefreshing(true);
+    try {
+      await tickComponents(true);
+    } finally {
+      setReachabilityRefreshing(false);
+    }
+  };
+
   const summary = summarizeHealth(
     components,
     dns?.checks ?? null,
     delivery,
     t.emailsAdmin.health,
+    reachability,
+    certificate,
   );
 
   return (
@@ -166,9 +169,8 @@ export function HealthTab({ serverId }: { serverId: string }) {
           <div
             className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${summary.iconBg}`}
           >
-            <summary.Icon
+            <UiIcon name={summary.Icon}
               className={`size-5 ${summary.iconColor}`}
-              strokeWidth={2}
             />
           </div>
           <div className="min-w-0 flex-1">
@@ -180,12 +182,14 @@ export function HealthTab({ serverId }: { serverId: string }) {
         </div>
       )}
 
+      <CertificateHealthCard health={certificate} serverId={serverId} />
+
       {/* ── Daemons ───────────────────────────────────────────────────── */}
       <SectionCard
         title={t.emailsAdmin.health.daemonsTitle}
         description={t.emailsAdmin.health.daemonsDesc}
         density="split"
-        icon={Activity}
+        icon={"activity"}
         action={
           componentsLastUpdated && (
             <span className="text-[11px] text-muted-foreground tabular-nums">
@@ -215,6 +219,13 @@ export function HealthTab({ serverId }: { serverId: string }) {
         ) : null}
       </SectionCard>
 
+      <ReachabilitySection
+        reachability={reachability}
+        error={componentsErr}
+        refreshing={reachabilityRefreshing}
+        onRefresh={onReachabilityRefresh}
+      />
+
       {/* ── Outbound delivery ─────────────────────────────────────────────
           Hidden only until the first reading lands, and only if that first
           reading failed — the error is already shown above, and an empty card
@@ -233,14 +244,14 @@ export function HealthTab({ serverId }: { serverId: string }) {
             : t.emailsAdmin.health.dnsScanDesc
         }
         density="split"
-        icon={Search}
+        icon={"search"}
         action={
           <button
             onClick={onRescan}
             disabled={dnsRefreshing}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-muted text-foreground hover:bg-muted/80 border border-border transition-colors disabled:opacity-50"
           >
-            <RefreshCcw
+            <UiIcon name="refresh"
               className={`size-3 ${dnsRefreshing ? "animate-spin" : ""}`}
             />
             {t.emailsAdmin.health.rescan}
@@ -256,9 +267,8 @@ export function HealthTab({ serverId }: { serverId: string }) {
           <DnsScanSkeleton />
         ) : dns && dns.checks.length === 0 ? (
           <div className="px-5 py-10 text-center">
-            <Globe
+            <UiIcon name="globe"
               className="size-7 text-muted-foreground/60 mx-auto mb-3"
-              strokeWidth={1.5}
             />
             <p className="text-sm text-muted-foreground">
               {t.emailsAdmin.health.dnsEmpty}
@@ -274,6 +284,140 @@ export function HealthTab({ serverId }: { serverId: string }) {
       </SectionCard>
     </div>
   );
+}
+
+export function ReachabilitySection({
+  reachability,
+  error,
+  refreshing,
+  onRefresh,
+}: {
+  reachability: MailPortReachability | null;
+  error: string | null;
+  refreshing: boolean;
+  onRefresh: () => void;
+}) {
+  const { t } = useI18n();
+  const h = t.emailsAdmin.health;
+  const providerBlocked =
+    reachability?.status === "fail" &&
+    reachability.ports.some((port) => port.status === "blocked");
+  return (
+    <SectionCard
+      title={h.reachability.title}
+      description={
+        reachability?.address
+          ? interpolate(h.reachability.descFor, {
+              hostname: reachability.hostname,
+              address: reachability.address,
+            })
+          : h.reachability.desc
+      }
+      density="split"
+      icon={"globe"}
+      action={
+        <div className="flex items-center gap-3">
+          {reachability && (
+            <span className="text-[11px] text-muted-foreground tabular-nums">
+              {interpolate(h.updated, { time: timeAgo(reachability.checkedAt, h.time) })}
+            </span>
+          )}
+          <button
+            onClick={onRefresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-muted text-foreground hover:bg-muted/80 border border-border transition-colors disabled:opacity-50"
+          >
+            <UiIcon name="refresh" className={`size-3 ${refreshing ? "animate-spin" : ""}`} />
+            {h.rescan}
+          </button>
+        </div>
+      }
+    >
+      {!reachability && !error ? (
+        <ReachabilitySkeleton />
+      ) : reachability ? (
+        <>
+          {providerBlocked && (
+            <div className="px-5 py-3 text-sm text-danger border-b border-danger-border bg-danger-bg">
+              {h.reachability.remediation}
+            </div>
+          )}
+          {reachability.status === "unknown" && reachability.detail && (
+            <div className="px-5 py-3 text-sm text-warning border-b border-warning-border bg-warning-bg">
+              {reachability.detail}
+            </div>
+          )}
+          <div className="divide-y divide-border/40">
+            {reachability.ports.map((port) => (
+              <ReachabilityRow
+                key={port.key}
+                port={port}
+                unverified={reachability.status === "unknown" && port.status === "blocked"}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+    </SectionCard>
+  );
+}
+
+function ReachabilityRow({
+  port,
+  unverified,
+}: {
+  port: MailPortReachabilityCheck;
+  unverified: boolean;
+}) {
+  const { t } = useI18n();
+  const copy = t.emailsAdmin.health.reachability;
+  // Keep the raw failed probe in the API response, but do not present an
+  // ambiguous SMTP timeout as a confirmed inbound firewall failure.
+  const displayStatus = unverified ? "unknown" : port.status;
+  const status = reachabilityPresentation(displayStatus);
+  const detail =
+    displayStatus === "reachable"
+      ? copy.reachableHint
+      : displayStatus === "blocked"
+        ? port.failure === "timeout"
+          ? copy.blockedTimeoutHint
+          : copy.blockedHint
+        : displayStatus === "not_listening"
+          ? copy.notListeningHint
+          : displayStatus === "not_exposed"
+            ? copy.notExposedHint
+            : port.detail || copy.unknownHint;
+
+  return (
+    <div className="flex items-center gap-4 px-5 py-4">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${status.iconBg}`}>
+        <UiIcon name={status.Icon} className={`size-5 ${status.iconColor}`} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-sm font-medium text-foreground">{copy.ports[port.key]}</p>
+          <span className="font-mono text-[11px] text-muted-foreground">TCP {port.port}</span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5">{detail}</p>
+      </div>
+      <StatusPill tone={status.tone}>{copy.status[displayStatus]}</StatusPill>
+    </div>
+  );
+}
+
+function reachabilityPresentation(status: MailPortReachabilityCheck["status"]): {
+  Icon: IconName;
+  iconBg: string;
+  iconColor: string;
+  tone: PillTone;
+} {
+  if (status === "reachable") {
+    return { Icon: "check-circle", iconBg: "bg-success-bg", iconColor: "text-success", tone: "success" };
+  }
+  if (status === "unknown") {
+    return { Icon: "circle-dashed", iconBg: "bg-muted", iconColor: "text-muted-foreground", tone: "neutral" };
+  }
+  return { Icon: "unplug", iconBg: "bg-danger-bg", iconColor: "text-danger", tone: "danger" };
 }
 
 // ─── Rows ────────────────────────────────────────────────────────────────────
@@ -331,6 +475,7 @@ function DaemonRow({
         );
       }
     } catch (err) {
+      observeCaughtError(err, "dashboard/app/(dashboard)/emails/_components/admin/health-tab");
       const failMsg =
         action === "start" ? h.toast.startFailed : action === "stop" ? h.toast.stopFailed : h.toast.restartFailed;
       const failTitleTpl =
@@ -358,14 +503,14 @@ function DaemonRow({
       items.push({
         id: "restart",
         label: acting === "restart" ? h.menu.restarting : h.menu.restart,
-        icon: <RotateCw className="size-4" strokeWidth={2.25} />,
+        icon: <UiIcon name="refresh" className="size-4" />,
         onClick: () => void run("restart"),
         disabled: acting !== null,
       });
       items.push({
         id: "stop",
         label: acting === "stop" ? h.menu.stopping : h.menu.stop,
-        icon: <Square className="size-4" strokeWidth={2.25} />,
+        icon: <UiIcon name="square" className="size-4" />,
         onClick: () => void run("stop"),
         disabled: acting !== null,
         variant: "danger",
@@ -374,7 +519,7 @@ function DaemonRow({
       items.push({
         id: "start",
         label: acting === "start" ? h.menu.starting : h.menu.start,
-        icon: <Play className="size-4" strokeWidth={2.25} />,
+        icon: <UiIcon name="play" className="size-4" />,
         onClick: () => void run("start"),
         disabled: acting !== null,
         variant: "success",
@@ -382,7 +527,7 @@ function DaemonRow({
       items.push({
         id: "restart",
         label: acting === "restart" ? h.menu.restarting : h.menu.restart,
-        icon: <RotateCw className="size-4" strokeWidth={2.25} />,
+        icon: <UiIcon name="refresh" className="size-4" />,
         onClick: () => void run("restart"),
         disabled: acting !== null,
       });
@@ -396,9 +541,8 @@ function DaemonRow({
         <div
           className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${presentation.iconBg}`}
         >
-          <presentation.Icon
+          <UiIcon name={presentation.Icon}
             className={`size-5 ${presentation.iconColor}`}
-            strokeWidth={2}
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -447,7 +591,7 @@ function DaemonRow({
             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] font-medium rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
             title={h.openLogs}
           >
-            <ScrollText className="size-3.5" strokeWidth={2.25} />
+            <UiIcon name="file-text" className="size-3.5" />
             {h.logs}
           </button>
           {menuActions.length > 0 && (
@@ -458,7 +602,7 @@ function DaemonRow({
               triggerClassName="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors disabled:opacity-60"
               trigger={
                 acting ? (
-                  <Loader2 className="size-3.5 animate-spin" strokeWidth={2.25} />
+                  <UiIcon name="spinner" className="size-3.5 animate-spin" />
                 ) : undefined
               }
             />
@@ -497,7 +641,7 @@ function DeliverySection({ delivery }: { delivery: MailDeliveryHealth | null }) 
       title={d.title}
       description={d.desc}
       density="split"
-      icon={Send}
+      icon={"send"}
       action={
         delivery && (
           <StatusPill tone={DELIVERY_TONE[delivery.status]}>
@@ -513,7 +657,7 @@ function DeliverySection({ delivery }: { delivery: MailDeliveryHealth | null }) 
           <SendPathRow delivery={delivery} />
           {delivery.status === "unknown" ? (
             <DeliveryRow
-              Icon={CircleDashed}
+              Icon={"circle-dashed"}
               iconBg="bg-muted"
               iconColor="text-muted-foreground"
               title={d.status.unknown}
@@ -524,7 +668,7 @@ function DeliverySection({ delivery }: { delivery: MailDeliveryHealth | null }) 
           ) : (
             <>
               <DeliveryRow
-                Icon={delivery.queued > 0 ? Clock : Check}
+                Icon={delivery.queued > 0 ? "clock" : "check"}
                 iconBg={delivery.queued > 0 ? "bg-warning-bg" : "bg-muted"}
                 iconColor={
                   delivery.queued > 0 ? "text-warning" : "text-muted-foreground"
@@ -580,7 +724,7 @@ function SendPathRow({ delivery }: { delivery: MailDeliveryHealth }) {
 
   return (
     <DeliveryRow
-      Icon={relaying ? Send : Globe}
+      Icon={relaying ? "send" : "globe"}
       iconBg="bg-muted"
       iconColor="text-muted-foreground"
       eyebrow={d.sendPath}
@@ -638,7 +782,7 @@ function DeliveryRow({
   note,
   detail,
 }: {
-  Icon: typeof Check;
+  Icon: IconName;
   iconBg: string;
   iconColor: string;
   eyebrow?: string;
@@ -654,7 +798,7 @@ function DeliveryRow({
       <div
         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}
       >
-        <Icon className={`size-5 ${iconColor}`} strokeWidth={2} />
+        <UiIcon name={Icon} className={`size-5 ${iconColor}`} />
       </div>
       <div className="min-w-0 flex-1">
         {eyebrow && (
@@ -698,9 +842,8 @@ function DnsCheckRow({ check }: { check: DnsCheck }) {
       <div
         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${presentation.iconBg}`}
       >
-        <presentation.Icon
+        <UiIcon name={presentation.Icon}
           className={`size-5 ${presentation.iconColor}`}
-          strokeWidth={2}
         />
       </div>
       <div className="min-w-0 flex-1">
@@ -790,6 +933,23 @@ function DeliverySkeleton() {
   );
 }
 
+function ReachabilitySkeleton() {
+  return (
+    <div className="divide-y divide-border/40">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 px-5 py-4">
+          <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-3 w-48 max-w-full" />
+            <Skeleton className="h-2.5 w-72 max-w-full" />
+          </div>
+          <Skeleton className="h-5 w-20 rounded-full shrink-0" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function DnsScanSkeleton() {
   return (
     <div className="divide-y divide-border/40">
@@ -810,8 +970,8 @@ function DnsScanSkeleton() {
 // ─── Status mappings ─────────────────────────────────────────────────────────
 
 interface StatusPresentation {
-  Icon: typeof Check;
-  PillIcon: typeof Check;
+  Icon: IconName;
+  PillIcon: IconName;
   iconBg: string;
   iconColor: string;
   tone: PillTone;
@@ -822,8 +982,8 @@ function daemonStatusPresentation(status: MailComponentStatus): StatusPresentati
   switch (status) {
     case "active":
       return {
-        Icon: Check,
-        PillIcon: Check,
+        Icon: "check",
+        PillIcon: "check",
         iconBg: "bg-success-bg",
         iconColor: "text-success",
         tone: "success",
@@ -831,8 +991,8 @@ function daemonStatusPresentation(status: MailComponentStatus): StatusPresentati
       };
     case "activating":
       return {
-        Icon: Loader2,
-        PillIcon: Loader2,
+        Icon: "spinner",
+        PillIcon: "spinner",
         iconBg: "bg-info-bg",
         iconColor: "text-info animate-spin",
         tone: "info",
@@ -840,8 +1000,8 @@ function daemonStatusPresentation(status: MailComponentStatus): StatusPresentati
       };
     case "deactivating":
       return {
-        Icon: Loader2,
-        PillIcon: Loader2,
+        Icon: "spinner",
+        PillIcon: "spinner",
         iconBg: "bg-warning-bg",
         iconColor: "text-warning animate-spin",
         tone: "warning",
@@ -849,8 +1009,8 @@ function daemonStatusPresentation(status: MailComponentStatus): StatusPresentati
       };
     case "inactive":
       return {
-        Icon: CircleDashed,
-        PillIcon: CircleDashed,
+        Icon: "circle-dashed",
+        PillIcon: "circle-dashed",
         iconBg: "bg-muted",
         iconColor: "text-muted-foreground",
         tone: "neutral",
@@ -858,8 +1018,8 @@ function daemonStatusPresentation(status: MailComponentStatus): StatusPresentati
       };
     case "failed":
       return {
-        Icon: CircleX,
-        PillIcon: CircleX,
+        Icon: "x-circle",
+        PillIcon: "x-circle",
         iconBg: "bg-danger-bg",
         iconColor: "text-danger",
         tone: "danger",
@@ -867,8 +1027,8 @@ function daemonStatusPresentation(status: MailComponentStatus): StatusPresentati
       };
     case "missing":
       return {
-        Icon: CircleAlert,
-        PillIcon: CircleAlert,
+        Icon: "alert-circle",
+        PillIcon: "alert-circle",
         iconBg: "bg-warning-bg",
         iconColor: "text-warning",
         tone: "warning",
@@ -876,8 +1036,8 @@ function daemonStatusPresentation(status: MailComponentStatus): StatusPresentati
       };
     default:
       return {
-        Icon: CircleDashed,
-        PillIcon: CircleDashed,
+        Icon: "circle-dashed",
+        PillIcon: "circle-dashed",
         iconBg: "bg-muted",
         iconColor: "text-muted-foreground",
         tone: "neutral",
@@ -894,16 +1054,16 @@ const DELIVERY_TONE: Record<MailDeliveryStatus, PillTone> = {
   unknown: "neutral",
 };
 
-const DEFERRAL_ICON: Record<MailDeferralKind, typeof Check> = {
-  auth: KeyRound,
-  tls: Lock,
-  network: Unplug,
-  rejected: ShieldAlert,
-  other: CircleAlert,
+const DEFERRAL_ICON: Record<MailDeferralKind, IconName> = {
+  auth: "key",
+  tls: "lock",
+  network: "unplug",
+  rejected: "shield-alert",
+  other: "alert-circle",
 };
 
 interface DnsStatusPresentation {
-  Icon: typeof Check;
+  Icon: IconName;
   iconBg: string;
   iconColor: string;
   tone: PillTone;
@@ -914,7 +1074,7 @@ function dnsStatusPresentation(status: DnsCheckStatus): DnsStatusPresentation {
   switch (status) {
     case "pass":
       return {
-        Icon: Check,
+        Icon: "check",
         iconBg: "bg-success-bg",
         iconColor: "text-success",
         tone: "success",
@@ -922,7 +1082,7 @@ function dnsStatusPresentation(status: DnsCheckStatus): DnsStatusPresentation {
       };
     case "warn":
       return {
-        Icon: AlertTriangle,
+        Icon: "warning",
         iconBg: "bg-warning-bg",
         iconColor: "text-warning",
         tone: "warning",
@@ -930,7 +1090,7 @@ function dnsStatusPresentation(status: DnsCheckStatus): DnsStatusPresentation {
       };
     case "fail":
       return {
-        Icon: CircleX,
+        Icon: "x-circle",
         iconBg: "bg-danger-bg",
         iconColor: "text-danger",
         tone: "danger",
@@ -938,7 +1098,7 @@ function dnsStatusPresentation(status: DnsCheckStatus): DnsStatusPresentation {
       };
     default:
       return {
-        Icon: CircleDashed,
+        Icon: "circle-dashed",
         iconBg: "bg-muted",
         iconColor: "text-muted-foreground",
         tone: "neutral",

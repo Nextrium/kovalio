@@ -1,4 +1,4 @@
-import type { ReleaseSource } from "@repo/core";
+import type { ReleaseSource, ProjectLifecycleOperation } from "@repo/core";
 
 /**
  * Shared domain types used across the dashboard.
@@ -54,14 +54,28 @@ export interface Project {
   activeDeploymentStatus?: string | null;
   /** True when the live release is a partial-failure deploy awaiting keep/reject. */
   awaitingDecision?: boolean | null;
+  /** True when the live release's edge/domain routes did not finish syncing. */
+  routingUnsynced?: boolean | null;
+  /** True when the latest failed deploy has a named, clearable blocker. */
+  latestDeploymentBlocked?: boolean | null;
+  /** Operator switch, derived from the project's disabled timestamp. */
+  enabled?: boolean | null;
+  /** Current project migration, when one is still running or awaiting a decision. */
+  activeMigration?: {
+    id: string;
+    status: string;
+    mode: string;
+    needsAction?: boolean;
+  } | null;
   serviceCount?: number;
   hasMultipleServices?: boolean;
   /** Set once soft-deleted; in practice teardown hard-deletes, so the list
    *  rarely sees this. */
   deletedAt?: string | null;
-  /** True while an atomic teardown is in flight — drives the "Deleting" status
-   *  in the list (the row is still returned because deletedAt is null). */
+  /** Retained until teardown succeeds; failed cleanup stays fenced and retryable.
+   *  The row remains visible because deletedAt is null. */
   deletionInProgress?: boolean | null;
+  lifecycleOperation?: ProjectLifecycleOperation | null;
 
   /* ── Hosting info (enriched by API) ─────────────────────── */
   favicon?: string | null;

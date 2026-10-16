@@ -13,7 +13,9 @@
     "queued": "待機中",
     "building": "ビルド中",
     "deploying": "デプロイ中",
+    "reconciling": "確認中",
     "migrating": "移行中",
+    "deploy_failed": "最新のデプロイに失敗",
     "failed": "失敗",
     "cancelled": "キャンセル済み",
     "deleting": "削除中",
@@ -32,6 +34,7 @@
     "local": "ローカル"
   },
   "card": {
+    "more": "その他",
     "liveVersion": "稼働中のバージョン v{version}",
     "sourceLocal": "ローカル",
     "services": "サービス",
@@ -101,9 +104,11 @@
     "deletionInProgress": "このプロジェクトでは別の削除処理がすでに実行中です",
     "deletionInProgressTitle": "削除処理中",
     "confirmForceOrphan": "一部のリソースをサーバーから削除できませんでした。それでもプロジェクトを削除し、後で自動的にクリーンアップしますか？",
-    "teardownFailedAt": "次の箇所でティアダウンに失敗しました: {reasons}。再試行するか、強制削除してリソースを孤立させてください。",
+    "teardownFailedAt": "クリーンアップを完了できませんでした：{reasons}。プロジェクトは保存されています。問題を解決してから削除を再試行してください。",
     "teardownFailed": "ティアダウンに失敗しました",
     "cleanupFailedTitle": "クリーンアップに失敗しました",
+    "retryCleanup": "削除を再試行",
+    "cleanupPending": "削除を開始しました。クリーンアップが完了するまで、プロジェクトは利用できません。",
     "alreadyDeleted": "プロジェクトはすでに削除されています",
     "forceModalTitle": "ソースから削除できませんでした",
     "forceModalBody": "ランタイムに到達できなかった（または失敗が続いた）ため、このプロジェクトは削除処理されていません。それでも Kovalio から削除できます — レコードは今すぐ消え、残ったリソースはサーバーに到達できるようになり次第、自動的に回収されます。",
@@ -124,6 +129,7 @@
     "noDomain": "ドメインなし",
     "addDomain": "ドメインを追加",
     "tabs": {
+      "topology": "トポロジー",
       "appSettings": "設定",
       "overview": "概要",
       "services": "サービス",
@@ -131,9 +137,12 @@
       "deployments": "デプロイ",
       "health": "ヘルス",
       "monitoring": "モニタリング",
+      "monitoringAndLogs": "モニタリングとログ",
       "source": "ソース",
+      "sourceAndTriggers": "ソースとトリガー",
       "webhooks": "Webhook",
       "runtime": "設定",
+      "settings": "設定",
       "logs": "ログ",
       "backup": "バックアップ",
       "advanced": "詳細設定"
@@ -189,7 +198,8 @@
     "targetPending": "デプロイ時に選択",
     "type": "種類",
     "typeApp": "アプリ",
-    "typeProject": "プロジェクト"
+    "typeProject": "プロジェクト",
+    "subtextNoSource": "ソースを接続して最初のデプロイを設定します。"
   },
   "overview": {
     "platformCloud": "Kovalio Cloud",
@@ -236,6 +246,12 @@
     "waitingRequests": "リクエストを待機中",
     "noTransfer": "まだ転送がありません"
   },
+  "analytics": {
+    "loadFailed": "トラフィック分析を読み込めませんでした",
+    "loadFailedDescription": "再試行して最新のデータを読み込んでください。",
+    "sectionsUnavailable": "取得できません: {sections}。",
+    "staleData": "最後に取得したデータを表示しています。"
+  },
   "monitoring": {
     "noDataTitle": "まだモニタリングデータがありません",
     "noDataDescription": "デプロイされたアプリがトラフィックを受信し始めると、ここにアナリティクスが表示されます。",
@@ -262,6 +278,7 @@
     "geoUnavailableBody": "エッジプロキシが訪問者の国を解決できないため、マップは空のままです。トラフィックの合計には影響しません。",
     "noCountries": "この期間の国データはまだありません。",
     "statusesTitle": "レスポンス",
+    "statusesOthers": "その他",
     "share": "{pct}%",
     "visitorDays": "訪問者日数",
     "peakDayTooltip": "最も多かった日: {peak}。再訪した訪問者は1日1回として数えるため、合計は上限値です。",
@@ -285,6 +302,8 @@
     "liveHitsWaiting": "リクエストを待機中…",
     "statusesUnclassified": "ステータスクラスなし: {count}",
     "trafficTitle": "トラフィック概要",
+    "dailyWindow": "今日を含む7日間（UTC）",
+    "currentHour": "現在の時間帯 · 集計中",
     "trafficSummary": "{count} リクエスト",
     "servicesMore": "他 {count} 件",
     "servicesLess": "表示を減らす",
@@ -296,7 +315,11 @@
       "disable": "トップパスを無効にする"
     },
     "liveFeed": "最近のヒット",
-    "liveFeedHint": "最近のヒット一覧を地図上に表示（詳細はログタブ）"
+    "liveFeedHint": "最近のヒット一覧を地図上に表示（詳細はログタブ）",
+    "dataUnavailable": "一部の監視データを取得できません",
+    "connecting": "接続中…",
+    "liveUnavailable": "ライブリクエストを取得できません",
+    "liveUnavailableDescription": "過去のトラフィックは引き続き表示されます。ライブリクエストを表示するには再接続してください。"
   },
   "services": {
     "failedLoad": "サービスの読み込みに失敗しました",
@@ -327,16 +350,20 @@
     "toastKeptEdits": "{name}: あなたの編集を保持しました",
     "failedResolveDrift": "ドリフトの解決に失敗しました",
     "failedCreateService": "サービスの作成に失敗しました",
-    "requestFailed": "リクエストに失敗しました"
+    "requestFailed": "リクエストに失敗しました",
+    "application": "アプリケーション",
+    "applicationHint": "このプロジェクトのデプロイを通じて管理されます。",
+    "companionsTitle": "別のアプリやサービスを追加"
   },
   "serviceStatus": {
+    "checking": "確認中…",
     "running": "実行中",
     "stopped": "停止中",
     "disabled": "無効",
     "failed": "失敗",
     "starting": "起動中",
     "restarting": "再起動中",
-    "unknown": "不明"
+    "unknown": "状態を確認できません"
   },
   "routingRetry": {
     "title": "ドメインのルーティングに対応が必要です",
@@ -378,17 +405,20 @@
     "noPublicDomainTitle": "公開ドメインが接続されていません",
     "noPublicDomainDescOne": "このプロジェクトには公開ポートを持つサービスが {count} 件ありますが、到達可能なドメインが設定されているものはありません。今デプロイすると、スタックは内部的に実行できますが、ユーザーは公開 URL からアクセスできません。",
     "noPublicDomainDescOther": "このプロジェクトには公開ポートを持つサービスが {count} 件ありますが、到達可能なドメインが設定されているものはありません。今デプロイすると、スタックは内部的に実行できますが、ユーザーは公開 URL からアクセスできません。",
+    "openDomains": "ドメインを開く",
     "openServices": "サービスを開く",
     "deployAnyway": "このままデプロイ",
     "suggestedFix": "推奨される対処",
-    "fixStep1": "サービスタブを開きます。",
-    "fixStep2": "公開したいサービスを選択します。",
-    "fixStep3": "ドメイン公開を有効にし、公開ポートを選択します。"
+    "fixStep1": "ドメインタブを開きます。",
+    "fixStep2": "サービスポートのルートまたはカスタムドメインを追加します。",
+    "fixStep3": "ドメインを検証してデプロイします。"
   },
   "connections": {
+    "nativeClusterHint": "このデータベースと同じクラスタのプロジェクトを選択してください。リンクされたプロジェクトのみがプライベートアクセスを利用できます。",
+    "nativeNoTargets": "このクラスタを使用する他のプロジェクトはまだありません。",
     "useInProject": "プロジェクトで使用",
     "title": "プロジェクトで使用",
-    "subtitle": "このデータベースを別のプロジェクトにすぐ使える接続として連携します。",
+    "subtitle": "接続を通じて、このサービスを別のプロジェクトと共有します。",
     "targetLabel": "プロジェクト",
     "targetPlaceholder": "プロジェクトを選択…",
     "valueLabel": "注入する値",
@@ -423,15 +453,24 @@
     "forwardShort": "転送",
     "usedByTitle": "使用元",
     "usedByOpen": "プロジェクトを開く",
-    "usedByHint": "{count} 件のプロジェクトがこのアプリの接続に依存しています。利用側のプロジェクトからリンクを解除してください。",
-    "linkedCountOne": "リンク済みアプリ {count} 件",
-    "linkedCountOther": "リンク済みアプリ {count} 件",
-    "linkedHint": "このプロジェクトが利用するもので、実行はしません。",
-    "linkedBadge": "リンク済み",
+    "usedByHint": "{count} 個のプロジェクトがこの接続を使用しています。利用側のプロジェクトから接続を解除してください。",
+    "linkedCountOne": "接続されたサービス {count} 件",
+    "linkedCountOther": "接続されたサービス {count} 件",
+    "linkedHint": "これらのサービスは接続元のプロジェクトで管理されます。",
+    "linkedBadge": "共有",
     "unlink": "リンク解除",
-    "openApp": "アプリを開く",
+    "openApp": "接続元を開く",
     "internalTitle": "内部アドレス",
-    "internalDescription": "同じサーバー上の別のサービスから、このプロジェクトにプライベートに接続できます（公開ポート不要）。"
+    "internalDescription": "同じサーバー上の別のサービスから、このプロジェクトにプライベートに接続できます（公開ポート不要）。",
+    "createNew": "新規作成",
+    "connectExisting": "既存のサービスに接続",
+    "existingHint": "別のプロジェクトのサービスやアプリを使用します。データと管理は元のプロジェクトに残ります。",
+    "sourceLabel": "接続元のプロジェクトまたはアプリ",
+    "sourcePlaceholder": "プロジェクトまたはアプリを選択…",
+    "loadingServices": "サービスを読み込み中…",
+    "noConnections": "接続情報が準備されていません。接続元のプロジェクトでサービスのポートと認証情報を確認してください。",
+    "noSources": "別のプロジェクトにサービスを作成すると、ここに接続できます。",
+    "sharedFrom": "{project} から共有"
   },
   "incomingWebhooks": {
     "title": "受信 Webhook",
@@ -459,7 +498,8 @@
       "none": "オープン"
     },
     "summaryDeploy": "このプロジェクトを再デプロイ",
-    "summaryDeployService": "{service} サービスを再デプロイ",
+    "summaryDeployOne": "選択した 1 つのサービスを再デプロイ",
+    "summaryDeployServices": "{count} 個のサービスをまとめて再デプロイ",
     "summaryJob": "{job} ジョブを実行",
     "createTitle": "新しい受信 Webhook",
     "createSubtitle": "動作と呼び出し元の認証方法を選択します。",
@@ -467,7 +507,7 @@
     "namePlaceholder": "例: CI デプロイフック",
     "actionLabel": "アクション",
     "actionDeploy": "デプロイ",
-    "actionDeployDesc": "呼び出し時にこのプロジェクト（または1つのサービス）を再デプロイします。",
+    "actionDeployDesc": "呼び出し時にこのプロジェクトまたは選択したサービスを再デプロイします。",
     "actionJob": "ジョブを実行",
     "actionJobDesc": "呼び出し時にジョブのいずれかを実行します。",
     "serviceLabel": "サービス（任意）",
@@ -514,5 +554,5 @@
       "server_unreachable": "サーバー到達不可"
     }
   },
-  "migrationAwaitingHint": "移行が操作待ちです。プロジェクトの「詳細設定」タブで切り替えを完了するか、ロールバックしてください"
+  "migrationAwaitingHint": "移行が操作待ちです。プロジェクトの「設定 → 詳細設定」で切り替えを完了するか、ロールバックしてください"
 }

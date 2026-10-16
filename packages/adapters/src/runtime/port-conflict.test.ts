@@ -1,8 +1,15 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { CommandExecutor } from "../types";
 import type { BuildLogger } from "./build-pipeline";
 import type { PromptPayload, PromptUserFn } from "./deploy-pipeline";
-import { ensurePortAvailable, portOccupantDetails, probeListeningPort } from "./port-conflict";
+import {
+  ensurePortAvailable,
+  isDockerHostPortAvailable,
+  portOccupantDetails,
+  probeListeningPort,
+  probeListeningPortOwners,
+  probeListeningPortState,
+} from "./port-conflict";
 import {
   containerIdFromCgroup,
   isContainerPortForwarder,
@@ -114,6 +121,83 @@ describe("probeListeningPort — tiered fallback", () => {
     expect(occ?.command).toBe("unknown listener");
   });
 
+  test("non-root ss remains occupied when procfs cannot confirm the listener", async () => {
+    const occ = await probeListeningPort(
+      makeExecutor([["sport = :443", "LISTEN 0 511 *:443 *:*"]]),
+      443,
+    );
+    expect(occ?.pid).toBeNull();
+    expect(occ?.command).toBe("unknown listener");
+  });
+
+  test("strict callers can distinguish an unreadable socket table from a free port", async () => {
+    const executor = {
+      exec: async () => {
+        throw new Error("SSH connection dropped");
+      },
+    } as unknown as CommandExecutor;
+
+    await expect(probeListeningPortState(executor, 443)).resolves.toEqual({
+      occupant: null,
+      checked: false,
+    });
+    await expect(probeListeningPort(executor, 443)).resolves.toBeNull();
+  });
+
+  test("non-root ss resolves the PID through targeted passwordless sudo", async () => {
+    const seen: string[] = [];
+    const executor = {
+      exec: async (cmd: string) => {
+        seen.push(cmd);
+        if (cmd.startsWith("sudo -n ss")) {
+          return 'LISTEN 0 511 *:443 *:* users:(("nginx",pid=888,fd=8))';
+        }
+        if (cmd.includes("sport = :443")) return "LISTEN 0 511 *:443 *:*";
+        if (cmd.includes("-p 888 -o args=")) return "nginx: master process /usr/sbin/nginx";
+        return "";
+      },
+    } as unknown as CommandExecutor;
+
+    const occ = await probeListeningPort(executor, 443);
+
+    expect(occ?.pid).toBe(888);
+    expect(occ?.command).toContain("nginx: master process");
+    expect(seen.some((cmd) => cmd.startsWith("sudo -n ss"))).toBe(true);
+  });
+
+  test("targeted sudo falls back to lsof when privileged ss is unavailable", async () => {
+    const executor = {
+      exec: async (cmd: string) => {
+        if (cmd.startsWith("sudo -n ss")) return "999\n";
+        if (cmd.includes("sport = :443")) return "LISTEN 0 511 *:443 *:*";
+        if (cmd.includes("-p 999 -o args=")) return "openresty -g daemon on;";
+        return "";
+      },
+    } as unknown as CommandExecutor;
+
+    const occ = await probeListeningPort(executor, 443);
+
+    expect(occ?.pid).toBe(999);
+    expect(occ?.command).toContain("openresty");
+  });
+
+  test("does not request sudo when the unprivileged probe already exposes a PID", async () => {
+    const seen: string[] = [];
+    const executor = {
+      exec: async (cmd: string) => {
+        seen.push(cmd);
+        if (cmd.includes("sport = :443")) {
+          return 'LISTEN 0 511 *:443 *:* users:(("nginx",pid=555,fd=8))';
+        }
+        if (cmd.includes("-p 555 -o args=")) return "nginx: master process /usr/sbin/nginx";
+        return "";
+      },
+    } as unknown as CommandExecutor;
+
+    expect((await probeListeningPort(executor, 443))?.pid).toBe(555);
+    expect(seen.some((cmd) => cmd.startsWith("sudo -n "))).toBe(false);
+  });
+
   test("free port: no tool and no procfs row → null", async () => {
     expect(await probeListeningPort(makeExecutor([]), 443)).toBeNull();
   });
@@ -130,6 +214,23 @@ describe("probeListeningPort — tiered fallback", () => {
     );
     expect(occ?.pid).toBe(1001);
     expect(occ?.command).toContain("envoy");
+  });
+
+  test("strict owner enumeration preserves every SO_REUSEPORT listener", async () => {
+    const owners = await probeListeningPortOwners(
+      makeExecutor([
+        ["lsof -ti tcp:8080", "1001\n1002"],
+        ["-p 1001 -o args=", "nginx: master process /managed/openresty"],
+        ["-p 1002 -o args=", "envoy -c /etc/envoy.yaml"],
+        ["/proc/1001/cgroup", "0::/system.slice/managed.service"],
+        ["/proc/1002/cgroup", "0::/system.slice/envoy.service"],
+      ]),
+      8080,
+    );
+
+    expect(owners.checked).toBe(true);
+    expect(owners.ownershipComplete).toBe(true);
+    expect(owners.occupants.map((owner) => owner.pid)).toEqual([1001, 1002]);
   });
 });
 
@@ -253,6 +354,141 @@ function promptSpy(answer: string): PromptSpy {
   };
 }
 
+describe("operator-selected host port", () => {
+  const occupiedHost = () => recordingHost(() => [[`--filter publish=${PORT}`, OWNED_LINE]]);
+
+  test("offers an available alternative and applies it only after the exact choice", async () => {
+    const host = occupiedHost();
+    const apply = vi.fn(async () => true);
+    const promptUser = vi.fn(async (prompt: PromptPayload) => {
+      expect(apply).not.toHaveBeenCalled();
+      expect(prompt.actions[0]).toEqual({
+        id: "use_port:20002",
+        label: "Use port 20002",
+        variant: "primary",
+      });
+      expect(prompt.message).toContain("Port 20002 is available");
+      expect(prompt.message).toContain("future deployments");
+      expect(prompt.details).toMatchObject({
+        port: PORT,
+        alternativePort: 20002,
+        containerId: CID,
+      });
+      return "use_port:20002";
+    });
+
+    await ensurePortAvailable(host.executor, PORT, fakeLogger().logger, promptUser, {
+      suggestAlternative: async () => ({ port: 20002, apply }),
+    });
+
+    expect(apply).toHaveBeenCalledOnce();
+    expect(host.seen.filter((command) => /docker (stop|update)|\bkill\b/.test(command))).toEqual(
+      [],
+    );
+  });
+
+  test.each(["abort", "use_port:20003"])("does not change the port for %s", async (answer) => {
+    const host = occupiedHost();
+    const apply = vi.fn(async () => true);
+    await expect(
+      ensurePortAvailable(host.executor, PORT, fakeLogger().logger, promptSpy(answer).promptUser, {
+        suggestAlternative: async () => ({ port: 20002, apply }),
+      }),
+    ).rejects.toThrow("Deploy aborted");
+    expect(apply).not.toHaveBeenCalled();
+    expect(host.seen.filter((command) => /docker (stop|update)|\bkill\b/.test(command))).toEqual(
+      [],
+    );
+  });
+
+  test("asks again when the suggested port is taken while the dialog is open", async () => {
+    const host = occupiedHost();
+    const first = vi.fn(async () => false);
+    const next = vi.fn(async () => true);
+    const prompts: PromptPayload[] = [];
+    const suggest = vi.fn(async (excluded: ReadonlySet<number>) => {
+      expect(excluded.has(PORT)).toBe(true);
+      return excluded.has(20002) ? { port: 20003, apply: next } : { port: 20002, apply: first };
+    });
+    await ensurePortAvailable(
+      host.executor,
+      PORT,
+      fakeLogger().logger,
+      async (prompt) => {
+        prompts.push(prompt);
+        expect(next).not.toHaveBeenCalled();
+        return prompt.actions[0]!.id;
+      },
+      { suggestAlternative: suggest },
+    );
+
+    expect(prompts).toHaveLength(2);
+    expect(prompts[1]!.promptId).not.toBe(prompts[0]!.promptId);
+    expect(prompts[1]!.message).toContain("Could not confirm port 20002");
+    expect(prompts[1]!.actions.map((action) => action.id)).not.toContain("use_port:20002");
+    expect(first).toHaveBeenCalledOnce();
+    expect(next).toHaveBeenCalledOnce();
+    expect(host.seen.filter((command) => /docker (stop|update)|\bkill\b/.test(command))).toEqual(
+      [],
+    );
+  });
+
+  test("offers an alternative for a protected edge without offering to stop it", async () => {
+    const host = recordingHost(() => [["--filter publish=80", psLine({ name: "openship-edge" })]]);
+    const apply = vi.fn(async () => true);
+    const spy = promptSpy("use_port:20002");
+    await ensurePortAvailable(host.executor, 80, fakeLogger().logger, spy.promptUser, {
+      suggestAlternative: async () => ({ port: 20002, apply }),
+    });
+    expectRefusalPrompt(spy);
+    expect(apply).toHaveBeenCalledOnce();
+    expect(host.seen.filter((command) => /docker (stop|update)|\bkill\b/.test(command))).toEqual(
+      [],
+    );
+  });
+
+  test("keeps existing choices when no alternative can be verified", async () => {
+    const host = occupiedHost();
+    const spy = promptSpy("abort");
+    await expect(
+      ensurePortAvailable(host.executor, PORT, fakeLogger().logger, spy.promptUser, {
+        suggestAlternative: async () => null,
+      }),
+    ).rejects.toThrow("Deploy aborted");
+    expect(spy.calls[0]!.actions.map((action) => action.id)).toEqual(["free_port", "abort"]);
+  });
+});
+
+describe("isDockerHostPortAvailable", () => {
+  test("requires both the socket table and Docker to confirm the port is free", async () => {
+    const host = recordingHost(() => [["__OPENSHIP_PORT_FREE__", "__OPENSHIP_PORT_FREE__"]]);
+    expect(await isDockerHostPortAvailable(host.executor, 20002)).toBe(true);
+  });
+
+  test("detects a Docker DNAT publish even without a host listener", async () => {
+    const host = recordingHost(() => [
+      ["--filter publish=20002", OWNED_LINE],
+      ["__OPENSHIP_PORT_FREE__", "__OPENSHIP_PORT_FREE__"],
+    ]);
+    expect(await isDockerHostPortAvailable(host.executor, 20002)).toBe(false);
+  });
+
+  test.each(["socket", "docker"])(
+    "does not call a port available when %s is unreadable",
+    async (probe) => {
+      const host = recordingHost(() => [
+        ["--filter publish=20002", probe === "docker" ? null : ""],
+        ["/proc/net/tcp", probe === "socket" ? null : ""],
+        [
+          "__OPENSHIP_PORT_FREE__",
+          probe === "socket" ? "__OPENSHIP_PORT_UNAVAILABLE__" : "__OPENSHIP_PORT_FREE__",
+        ],
+      ]);
+      expect(await isDockerHostPortAvailable(host.executor, 20002)).toBeNull();
+    },
+  );
+});
+
 describe("ensurePortAvailable — docker-published port (#628)", () => {
   test("a stale Kovalio container is stopped by id, and the daemon is never touched", async () => {
     let stopped = false;
@@ -272,7 +508,9 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
       return out;
     };
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).resolves.toBeUndefined();
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
+    ).resolves.toBeUndefined();
 
     expect(spy.calls).toHaveLength(1);
     const prompt = spy.calls[0]!;
@@ -304,7 +542,9 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
     const { logger } = fakeLogger();
     const spy = promptSpy("abort");
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).rejects.toThrow(/port 8080/i);
+    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).rejects.toThrow(
+      /port 8080/i,
+    );
 
     expect(spy.calls[0]!.actions[0]!.label).toBe("Stop Container & Continue");
     // A container with no kovalio label may still be an ADOPTED one of ours, so we
@@ -324,9 +564,9 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
     const { logger } = fakeLogger();
     const spy = promptSpy("free_port");
 
-    await expect(
-      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
-    ).rejects.toThrow(/Docker's port forwarder/);
+    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).rejects.toThrow(
+      /Docker's port forwarder/,
+    );
 
     expectRefusalPrompt(spy);
     expect(forbiddenCommands(host.seen)).toEqual([]);
@@ -358,7 +598,10 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
       ["sport = :80", SS_DOCKER_PROXY.replace(`:${PORT}`, ":80")],
       [`-p ${PROXY_PID} -o args=`, PS_DOCKER_PROXY],
       [`/proc/${PROXY_PID}/cgroup`, CGROUP_DOCKER_SERVICE],
-      ["--filter publish=80", psLine({ name: "kovalio-edge", image: "ghcr.io/oblien/kovalio-edge:latest" })],
+      [
+        "--filter publish=80",
+        psLine({ name: "openship-edge", image: "ghcr.io/oblien/openship-edge:latest" }),
+      ],
     ]);
     const { logger } = fakeLogger();
     const spy = promptSpy("free_port");
@@ -372,15 +615,23 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
 
   test("rootless docker: the operator's user manager is never a stop target", async () => {
     const host = recordingHost(() => [
-      [`sport = :${PORT}`, `LISTEN 0 4096 0.0.0.0:${PORT} 0.0.0.0:* users:(("rootlesskit",pid=${PROXY_PID},fd=9))`],
-      [`-p ${PROXY_PID} -o args=`, "rootlesskit --net=slirp4netns --copy-up=/etc --port-driver=builtin"],
+      [
+        `sport = :${PORT}`,
+        `LISTEN 0 4096 0.0.0.0:${PORT} 0.0.0.0:* users:(("rootlesskit",pid=${PROXY_PID},fd=9))`,
+      ],
+      [
+        `-p ${PROXY_PID} -o args=`,
+        "rootlesskit --net=slirp4netns --copy-up=/etc --port-driver=builtin",
+      ],
       [`/proc/${PROXY_PID}/cgroup`, "0::/user.slice/user-1000.slice/user@1000.service/init.scope"],
       [`--filter publish=${PORT}`, null],
     ]);
     const { logger } = fakeLogger();
     const spy = promptSpy("free_port");
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).rejects.toThrow();
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
+    ).rejects.toThrow();
     expectRefusalPrompt(spy);
     expect(forbiddenCommands(host.seen)).toEqual([]);
   });
@@ -392,15 +643,24 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
     const { logger } = fakeLogger();
     const spy = promptSpy("abort");
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).rejects.toThrow();
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
+    ).rejects.toThrow();
     expect(spy.calls).toHaveLength(1);
-    expect(spy.calls[0]!.details).toMatchObject({ stopTarget: "container", containerId: CID, pid: null });
+    expect(spy.calls[0]!.details).toMatchObject({
+      stopTarget: "container",
+      containerId: CID,
+      pid: null,
+    });
   });
 
   test("host-networked container: resolved through its cgroup, not left a kill -9 target", async () => {
     const NGINX_PID = 991;
     const host = recordingHost(() => [
-      [`sport = :${PORT}`, `LISTEN 0 511 0.0.0.0:${PORT} 0.0.0.0:* users:(("nginx",pid=${NGINX_PID},fd=8))`],
+      [
+        `sport = :${PORT}`,
+        `LISTEN 0 511 0.0.0.0:${PORT} 0.0.0.0:* users:(("nginx",pid=${NGINX_PID},fd=8))`,
+      ],
       [`-p ${NGINX_PID} -o args=`, "nginx: master process nginx -g daemon off;"],
       [`/proc/${NGINX_PID}/cgroup`, `0::/system.slice/docker-${CID}.scope`],
       // Host networking publishes nothing, so the publish filter finds nobody...
@@ -411,7 +671,9 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
     const { logger } = fakeLogger();
     const spy = promptSpy("abort");
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).rejects.toThrow();
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
+    ).rejects.toThrow();
     expect(spy.calls[0]!.details).toMatchObject({
       stopTarget: "container",
       containerName: "legacy-proxy",
@@ -425,7 +687,10 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
     const UNIT = "kovalio-dep_Ab3xY9zQ.service";
     let stopped = false;
     const host = recordingHost(() => [
-      [`sport = :${PORT}`, stopped ? "" : `LISTEN 0 511 *:${PORT} *:* users:(("node",pid=700,fd=18))`],
+      [
+        `sport = :${PORT}`,
+        stopped ? "" : `LISTEN 0 511 *:${PORT} *:* users:(("node",pid=700,fd=18))`,
+      ],
       ["-p 700 -o args=", "node /srv/app/server.js"],
       ["/proc/700/cgroup", `0::/system.slice/${UNIT}`],
       ["--property=Description", "Kovalio deployment dep_Ab3xY9zQ"],
@@ -439,8 +704,10 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
       return out;
     };
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).resolves.toBeUndefined();
-    expect(spy.calls[0]!.actions[0]!.label).toBe("Stop Kovalio Deployment & Continue");
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
+    ).resolves.toBeUndefined();
+    expect(spy.calls[0]!.actions[0]!.label).toBe("Stop Openship Deployment & Continue");
     expect(spy.calls[0]!.details).toMatchObject({
       stopTarget: "unit",
       isManagedDeployment: true,
@@ -452,7 +719,10 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
   test("a genuine foreign service is still offered — the fix is not a blanket refusal", async () => {
     let stopped = false;
     const host = recordingHost(() => [
-      [`sport = :${PORT}`, stopped ? "" : `LISTEN 0 511 *:${PORT} *:* users:(("mysqld",pid=800,fd=4))`],
+      [
+        `sport = :${PORT}`,
+        stopped ? "" : `LISTEN 0 511 *:${PORT} *:* users:(("mysqld",pid=800,fd=4))`,
+      ],
       ["-p 800 -o args=", "/usr/sbin/mysqld --port=8080"],
       ["/proc/800/cgroup", "0::/system.slice/mysql.service"],
       ["--property=Description", "MySQL Community Server"],
@@ -466,7 +736,9 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
       return out;
     };
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).resolves.toBeUndefined();
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
+    ).resolves.toBeUndefined();
     expect(spy.calls[0]!.actions[0]!.label).toBe("Stop Service & Continue");
     expect(spy.calls[0]!.details).toMatchObject({ stopTarget: "unit", isManagedDeployment: false });
     expect(host.seen.some((c) => c.includes("systemctl stop 'mysql.service'"))).toBe(true);
@@ -489,7 +761,7 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
     expect(forbiddenCommands(host.seen)).toEqual([]);
   });
 
-  test("kovalio-dev.service is the control plane, not a deployment with id \"dev\"", async () => {
+  test('openship-dev.service is the control plane, not a deployment with id "dev"', async () => {
     const host = recordingHost(() => [
       [`sport = :${PORT}`, `LISTEN 0 511 *:${PORT} *:* users:(("bun",pid=900,fd=20))`],
       ["-p 900 -o args=", "bun run apps/api/src/index.ts"],
@@ -499,7 +771,9 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
     const { logger } = fakeLogger();
     const spy = promptSpy("free_port");
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).rejects.toThrow();
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
+    ).rejects.toThrow();
     expectRefusalPrompt(spy);
     expect(forbiddenCommands(host.seen)).toEqual([]);
   });
@@ -508,7 +782,10 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
     const UNIT = "kovalio-dep_Zz1.service";
     let stopped = false;
     const host = recordingHost(() => [
-      [`sport = :${PORT}`, stopped ? "" : `LISTEN 0 511 *:${PORT} *:* users:(("node",pid=701,fd=18))`],
+      [
+        `sport = :${PORT}`,
+        stopped ? "" : `LISTEN 0 511 *:${PORT} *:* users:(("node",pid=701,fd=18))`,
+      ],
       ["-p 701 -o args=", "node /srv/app/server.js"],
       ["/proc/701/cgroup", `0::/system.slice/${UNIT}`],
       ["--property=Description", "Kovalio deployment"],
@@ -524,8 +801,50 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
       return out;
     };
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).resolves.toBeUndefined();
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
+    ).resolves.toBeUndefined();
     expect(host.seen.some((c) => c.includes(`systemctl stop '${UNIT}'`))).toBe(true);
+  });
+
+  // #1038: a bare redeploy probes its ports while the release it replaces still binds
+  // them. Bare runs stop-first, so the pipeline stops that release in the next step.
+  test("the outgoing deployment's own unit holds the port: no prompt, nothing stopped", async () => {
+    const host = recordingHost(() => [
+      [`sport = :${PORT}`, `LISTEN 0 511 *:${PORT} *:* users:(("node",pid=702,fd=18))`],
+      ["-p 702 -o args=", "next-server (v16.3.1)"],
+      ["/proc/702/cgroup", "0::/system.slice/openship-dep_Old1.service"],
+      ["--property=Description", "Openship deployment dep_Old1"],
+    ]);
+    const { logger } = fakeLogger();
+    const spy = promptSpy("free_port");
+
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser, {
+        outgoingDeploymentId: "dep_Old1",
+      }),
+    ).resolves.toBeUndefined();
+    expect(spy.calls).toEqual([]);
+    expect(forbiddenCommands(host.seen)).toEqual([]);
+  });
+
+  test("another Openship deployment on the port is still prompted for", async () => {
+    const host = recordingHost(() => [
+      [`sport = :${PORT}`, `LISTEN 0 511 *:${PORT} *:* users:(("node",pid=703,fd=18))`],
+      ["-p 703 -o args=", "node /srv/other/server.js"],
+      ["/proc/703/cgroup", "0::/system.slice/openship-dep_Other.service"],
+      ["--property=Description", "Openship deployment dep_Other"],
+    ]);
+    const { logger } = fakeLogger();
+    const spy = promptSpy("abort");
+
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser, {
+        outgoingDeploymentId: "dep_Old1",
+      }),
+    ).rejects.toThrow(/Deploy aborted/);
+    expect(spy.calls).toHaveLength(1);
+    expect(spy.calls[0]!.details).toMatchObject({ deploymentId: "dep_Other" });
   });
 });
 
@@ -633,7 +952,9 @@ describe("ensurePortAvailable — the fixes the adversarial review found", () =>
       return "re_check";
     };
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, promptUser)).resolves.toBeUndefined();
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, promptUser),
+    ).resolves.toBeUndefined();
     expect(calls[0]!.actions.map((a) => a.id)).toEqual(["re_check", "abort"]);
     expect(forbiddenCommands(host.seen)).toEqual([]);
   });
@@ -672,11 +993,22 @@ describe("ensurePortAvailable — the fixes the adversarial review found", () =>
     // postgres/redis run stock images under compose service names, so only the compose
     // project they share with the api marks them as the control plane's.
     const host = recordingHost(() => [
-      ["--filter publish=5432", psLine({ name: "kovalio-postgres-1", image: "postgres:16-alpine", composeProject: "kovalio" })],
       [
-        "label=com.docker.compose.project='kovalio'",
-        `${psLine({ name: "kovalio-api-1", image: "ghcr.io/oblien/kovalio-api:latest", composeProject: "kovalio" })}\n` +
-          psLine({ name: "kovalio-postgres-1", image: "postgres:16-alpine", composeProject: "kovalio" }),
+        "--filter publish=5432",
+        psLine({
+          name: "openship-postgres-1",
+          image: "postgres:16-alpine",
+          composeProject: "openship",
+        }),
+      ],
+      [
+        "label=com.docker.compose.project='openship'",
+        `${psLine({ name: "openship-api-1", image: "ghcr.io/oblien/openship-api:latest", composeProject: "openship" })}\n` +
+          psLine({
+            name: "openship-postgres-1",
+            image: "postgres:16-alpine",
+            composeProject: "openship",
+          }),
       ],
     ]);
     const { logger } = fakeLogger();
@@ -696,7 +1028,10 @@ describe("ensurePortAvailable — the fixes the adversarial review found", () =>
     // publish filter, so stopping it blind is exactly the accident to avoid.
     const NGINX_PID = 991;
     const host = recordingHost(() => [
-      [`sport = :${PORT}`, `LISTEN 0 511 0.0.0.0:${PORT} 0.0.0.0:* users:(("nginx",pid=${NGINX_PID},fd=8))`],
+      [
+        `sport = :${PORT}`,
+        `LISTEN 0 511 0.0.0.0:${PORT} 0.0.0.0:* users:(("nginx",pid=${NGINX_PID},fd=8))`,
+      ],
       [`-p ${NGINX_PID} -o args=`, "nginx: master process nginx -g daemon off;"],
       [`/proc/${NGINX_PID}/cgroup`, `0::/system.slice/docker-${CID}.scope`],
       [`--filter publish=${PORT}`, ""],
@@ -705,7 +1040,9 @@ describe("ensurePortAvailable — the fixes the adversarial review found", () =>
     const { logger } = fakeLogger();
     const spy = promptSpy("free_port");
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).rejects.toThrow();
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
+    ).rejects.toThrow();
     expectRefusalPrompt(spy);
     // The id is reported so the operator can `docker inspect` it, and authorizes
     // nothing: the one rule refuses a container it cannot NAME.
@@ -733,8 +1070,13 @@ describe("ensurePortAvailable — the fixes the adversarial review found", () =>
     const { logger } = fakeLogger();
     const spy = promptSpy("abort");
 
-    await expect(ensurePortAvailable(host.executor, PORT, logger, spy.promptUser)).rejects.toThrow();
-    expect(spy.calls[0]!.details).toMatchObject({ stopTarget: "unit", systemdUnit: "mysql.service" });
+    await expect(
+      ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
+    ).rejects.toThrow();
+    expect(spy.calls[0]!.details).toMatchObject({
+      stopTarget: "unit",
+      systemdUnit: "mysql.service",
+    });
     expect(spy.calls[0]!.details!.containerName).toBeUndefined();
   });
 

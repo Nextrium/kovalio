@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
+const databaseLock = vi.hoisted(() => ({ acquire: vi.fn(async () => ({ release: vi.fn(async () => {}) })) }));
+
 // The Postgres advisory-lock layer is exercised by the deploy smoke; here we mock
 // it to a passthrough so the test focuses on the in-process keyed-mutex behaviour.
 vi.mock("@repo/db", () => ({
   withAdvisoryLock: <T>(_scopeKey: string, fn: () => Promise<T>) => fn(),
+  tryAcquireAdvisoryLock: databaseLock.acquire,
 }));
 
-import { createProvisionLock } from "../../src/lib/provision-lock";
+import { createProvisionLock, tryWithProvisionLock } from "@repo/platform/engine/lib/provision-lock";
 
 describe("createProvisionLock", () => {
   it("serializes concurrent run() for the same scope (no overlap)", async () => {
@@ -87,5 +90,85 @@ describe("createProvisionLock", () => {
 
     const result = await lock.run(async () => "ok");
     expect(result).toBe("ok");
+  });
+
+  it("does not queue recovery behind a local worker or a worker on another replica", async () => {
+    let finish!: () => void;
+    const worker = createProvisionLock("recover-local").run(() => new Promise<void>(resolve => { finish = resolve; }));
+    const recovery = vi.fn(async () => true);
+    await expect(tryWithProvisionLock("recover-local", recovery)).resolves.toBeUndefined();
+    expect(recovery).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(finish).toBeTypeOf("function"));
+    finish();
+    await worker;
+    databaseLock.acquire.mockResolvedValueOnce(null as never);
+    await expect(tryWithProvisionLock("recover-remote", recovery)).resolves.toBeUndefined();
+    expect(recovery).not.toHaveBeenCalled();
+    await expect(tryWithProvisionLock("recover-local", recovery)).resolves.toBe(true);
+  });
+
+  it("holds both recovery lock layers until work settles and releases them after failure", async () => {
+    const release = vi.fn(async () => {});
+    databaseLock.acquire.mockResolvedValueOnce({ release });
+    await expect(tryWithProvisionLock("recover-failure", async () => {
+      await expect(tryWithProvisionLock("recover-failure", async () => "overlap")).resolves.toBeUndefined();
+      throw new Error("recovery is not confirmed");
+    })).rejects.toThrow("recovery is not confirmed");
+    expect(release).toHaveBeenCalledOnce();
+    await expect(tryWithProvisionLock("recover-failure", async () => "retry")).resolves.toBe("retry");
+  });
+
+  it("lets a queued deployment cancel without entering the critical section", async () => {
+    const lock = createProvisionLock("scope-cancel");
+    let releaseFirst!: () => void;
+    const first = lock.run(
+      () => new Promise<void>((resolve) => {
+        releaseFirst = resolve;
+      }),
+    );
+    const controller = new AbortController();
+    let entered = false;
+    const second = lock.run(
+      async () => {
+        entered = true;
+      },
+      controller.signal,
+    );
+
+    controller.abort();
+    await expect(second).rejects.toThrow("cancelled");
+    expect(entered).toBe(false);
+
+    releaseFirst();
+    await first;
+  });
+
+  it("keeps ownership after a started cancel until transport quiesces, then admits the next deploy", async () => {
+    const lock = createProvisionLock("scope-started-cancel");
+    const controller = new AbortController();
+    let rejectTransport!: (error: Error) => void;
+    let secondEntered = false;
+    const first = lock.run(
+      () => new Promise<void>((_resolve, reject) => {
+        rejectTransport = reject;
+      }),
+      controller.signal,
+    );
+
+    await vi.waitFor(() => expect(rejectTransport).toBeTypeOf("function"));
+    const second = lock.run(async () => {
+      secondEntered = true;
+      return "next deployment entered";
+    });
+    controller.abort();
+    await Promise.resolve();
+
+    // Abort is only a request once the critical section has started. The next
+    // owner cannot enter until the transport confirms its operation is over.
+    expect(secondEntered).toBe(false);
+    rejectTransport(new Error("SSH operation cancelled after channel close"));
+    await expect(first).rejects.toThrow("after channel close");
+    await expect(second).resolves.toBe("next deployment entered");
+    expect(secondEntered).toBe(true);
   });
 });

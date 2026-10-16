@@ -1,9 +1,17 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { getTableColumns } from "drizzle-orm";
+import { getTableColumns, sql } from "drizzle-orm";
 import { getTableConfig, type PgTable } from "drizzle-orm/pg-core";
+import { clusterRuntimePlanFixture } from "../../contracts/test/cluster-runtime-fixtures";
 
-import { db } from "./client";
-import { countInstanceSubgraphTables, dumpSubgraph, restoreSubgraph, topoOrderedTables, type TableSpec } from "./dump";
+import { db, type DatabaseTransaction } from "./client";
+import {
+  countInstanceSubgraphTables,
+  dumpSubgraph,
+  restoreSubgraph,
+  restoreSubgraphInTransaction,
+  topoOrderedTables,
+  type TableSpec,
+} from "./dump";
 
 // The test the data-transfer feature never had: does a whole-instance dump actually
 // RESTORE?
@@ -44,10 +52,11 @@ function foreignKeyFields(
   return out;
 }
 
-/** A value the column will accept. The schema has no CHECK constraints and no
- *  enums, so type-correct is sufficient — this fixture proves referential
- *  integrity, not domain semantics. */
+/** Domain-constrained fields use valid examples; other fields only need the
+ * correct type to exercise referential integrity and JSON round trips. */
 function sampleValue(column: { dataType: string; name: string }, tableName: string): unknown {
+  if (tableName === "cluster_runtime" && column.name === "status") return "interrupted";
+  if (tableName === "cluster_runtime" && column.name === "plan") return { ...clusterRuntimePlanFixture(), cleanup: { verifiedAt: "2026-09-21T12:00:00.000Z", clusterUid: "saved-cluster-uid" } };
   switch (column.dataType) {
     case "string":
       return `${tableName}.${column.name}`;
@@ -139,9 +148,16 @@ async function seedOneRowPerTable(): Promise<Map<string, Record<string, unknown>
       }
 
       if (col.notNull && !col.hasDefault) row[field] = sampleValue(col, spec.sqlName);
-      else if (field === "id") row[field] = `${spec.sqlName}_1`;
+      else if (field === "id") row[field] = col.dataType === "number" ? 37 : `${spec.sqlName}_1`;
     }
 
+    // A project chooses exactly one execution target. Other instance parents
+    // still get their own rows and are independently round-tripped.
+    if (spec.sqlName === "project") { row.clusterId = null; }
+    // A standalone workflow has nullable repository fields but must carry its YAML.
+    if (spec.sqlName === "action_workflow") {
+      row.source = "name: Automation\non: workflow_dispatch\njobs:\n  run:\n    runs-on: self-hosted\n    steps:\n      - run: echo restored\n";
+    }
     await db.insert(spec.table).values(row as never);
 
     const bySqlColumn: Record<string, unknown> = {};
@@ -198,6 +214,8 @@ describe("whole-instance dump → restore round trip", () => {
     for (const spec of topoOrderedTables()) {
       expect(await rowCount(spec), `${spec.sqlName} did not survive the restore`).toBe(1);
     }
+    const restoredRuntime = (await dumpSubgraph({ kind: "instance" })).tables.cluster_runtime;
+    expect(JSON.parse(JSON.stringify(restoredRuntime))).toEqual(overTheWire.tables.cluster_runtime);
 
     // Spot-check the exact edge that broke in production: a domain bound to a
     // service, restored with its binding intact rather than nulled or dropped.
@@ -206,6 +224,55 @@ describe("whole-instance dump → restore round trip", () => {
     )) as Array<Record<string, unknown>>;
     expect(domain?.serviceId).toBe(seeded.get("domain")?.serviceId);
     expect(domain?.serviceId).toBeTruthy();
+  });
+
+  it("advances generated artifact IDs after importing explicit IDs", async () => {
+    const spec = topoOrderedTables().find((table) => table.sqlName === "action_storage_object")!;
+    const dump = JSON.parse(JSON.stringify(await dumpSubgraph({ kind: "instance" })));
+    await restoreSubgraph(dump, { mode: "wipe" });
+    const [saved] = await db.select().from(spec.table);
+    const { id, ...copy } = saved!;
+    const [created] = await db.insert(spec.table).values(copy as never).returning();
+    expect(created!.id).toBeGreaterThan(Number(id));
+    // Keep the one-row-per-table fixture intact for later restore assertions.
+    await db.execute(sql`DELETE FROM ${sql.identifier(spec.sqlName)} WHERE id = ${created!.id}`);
+  });
+
+  it("lets callers include follow-up work in the same atomic restore transaction", async () => {
+    const projectSpec = topoOrderedTables().find((s) => s.sqlName === "project")!;
+    const [before] = (await db.select().from(projectSpec.table)) as Array<Record<string, unknown>>;
+    const dump = JSON.parse(JSON.stringify(await dumpSubgraph({ kind: "instance" }))) as Awaited<
+      ReturnType<typeof dumpSubgraph>
+    >;
+    dump.tables.project![0]!.name = "must-roll-back";
+
+    await expect(
+      db.transaction(async (rawTx) => {
+        await restoreSubgraphInTransaction(rawTx as DatabaseTransaction, dump, { mode: "wipe" });
+        throw new Error("follow-up write failed");
+      }),
+    ).rejects.toThrow("follow-up write failed");
+
+    const [after] = (await db.select().from(projectSpec.table)) as Array<Record<string, unknown>>;
+    expect(after?.name).toBe(before?.name);
+    expect(after?.name).not.toBe("must-roll-back");
+  });
+
+  it("restores pre-separation network table names without changing approved journal payloads", async () => {
+    const dump = JSON.parse(JSON.stringify(await dumpSubgraph({ kind: "instance" }))) as Awaited<ReturnType<typeof dumpSubgraph>>;
+    const journal = structuredClone(dump.tables.managed_network_operation);
+    for (const [current, legacy] of [
+      ["private_network", "server_cluster"], ["private_network_config", "cluster_network"], ["network_member", "cluster_member"],
+    ]) {
+      dump.tables[legacy!] = dump.tables[current!]!;
+      delete dump.tables[current!];
+    }
+    // Keeping the new pool tables here also checks their references resolve through the renamed parents.
+    await restoreSubgraph(dump, { mode: "wipe" });
+    const restored = JSON.parse(JSON.stringify(await dumpSubgraph({ kind: "instance" }))) as typeof dump;
+    expect(restored.tables.private_network?.[0]?.id).toBe(seeded.get("private_network")?.id);
+    expect(restored.tables.compute_cluster_member).toHaveLength(1);
+    expect(restored.tables.managed_network_operation).toEqual(journal);
   });
 
   it("skips explicitly excluded history tables at query time", async () => {

@@ -1,27 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  ArrowLeft,
-  Box,
-  Cloud,
-  Container,
-  Cpu,
-  Database,
-  HardDrive,
-  Loader2,
-  Mail,
-  MessageSquare,
-  Plus,
-  Rocket,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  X,
-  Zap,
-} from "lucide-react";
+import { Icon as UiIcon, type IconName } from "@repo/ui/icons";
+
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
-import { imagesApi, type ImageCatalogEntry } from "@/lib/api/images";
+import type { ImageCatalogEntry } from "@/lib/api/images";
 import type { ServiceInput } from "@/lib/api/services";
 import { usePlatform } from "@/context/PlatformContext";
 import { useCloud } from "@/context/CloudContext";
@@ -30,15 +13,14 @@ import { getApiErrorMessage } from "@/lib/api";
 import EnvironmentVariables from "@/components/import-project/EnvironmentVariables";
 import { RoutingSettingsCard } from "@/components/routing/RoutingSettingsCard";
 import { LOCAL_SERVICE_CATALOG } from "./local-service-catalog";
+import { ProjectConnectionForm } from "../UseInProjectModal";
 import { useI18n, interpolate } from "@/components/i18n-provider";
 
 interface AddServiceModalProps {
   open: boolean;
+  projectId?: string;
   projectName: string;
-  // True when the *project itself* deploys to kovalio cloud, regardless of
-  // the dashboard install mode. A self-hosted dashboard can still manage a
-  // cloud project — in that case only cloud (Oblien) images are valid and
-  // the local upstream-image catalog must be hidden.
+  // A self-hosted dashboard can also manage a managed Cloud project.
   isCloudProject?: boolean;
   onClose: () => void;
   onSubmit: (data: ServiceInput) => Promise<void>;
@@ -75,8 +57,10 @@ function envRowsFromCatalog(entry: ImageCatalogEntry | null): EnvRow[] {
   // off per-value if it's sensitive (e.g. an admin password).
   return entry.defaultEnv.map((e) => ({
     key: e.key,
-    value: e.value ?? "",
-    visible: true,
+    value: e.generate === "secret"
+      ? Array.from(crypto.getRandomValues(new Uint8Array(24)), (byte) => byte.toString(16).padStart(2, "0")).join("")
+      : e.value ?? "",
+    visible: e.generate !== "secret",
   }));
 }
 
@@ -122,7 +106,7 @@ function volumeStringsFromRows(rows: VolumeRow[]): string[] {
 interface CategoryDef {
   id: string;
   label: string;
-  icon: React.ElementType;
+  icon: IconName;
   /** Substrings (lowercased) - match against category, tags, name, image. */
   match: string[];
 }
@@ -131,55 +115,55 @@ const CATEGORIES: CategoryDef[] = [
   {
     id: "database",
     label: "Databases",
-    icon: Database,
+    icon: "database",
     match: ["database", "db", "sql", "postgres", "mysql", "mariadb", "mongo", "cockroach", "neon", "sqlite"],
   },
   {
     id: "cache",
     label: "Caches",
-    icon: Zap,
+    icon: "bolt",
     match: ["cache", "redis", "memcached", "dragonfly", "keydb"],
   },
   {
     id: "search",
     label: "Search",
-    icon: Search,
+    icon: "search",
     match: ["search", "elastic", "opensearch", "meilisearch", "typesense", "solr"],
   },
   {
     id: "vector",
     label: "Vector & AI",
-    icon: Sparkles,
+    icon: "sparkles",
     match: ["vector", "qdrant", "weaviate", "milvus", "chroma", "pgvector", "embedding", "llm", "ollama"],
   },
   {
     id: "queue",
     label: "Queues & Streams",
-    icon: MessageSquare,
+    icon: "message",
     match: ["queue", "broker", "rabbitmq", "kafka", "nats", "pulsar", "redpanda", "mqtt"],
   },
   {
     id: "storage",
     label: "Object Storage",
-    icon: HardDrive,
+    icon: "hard-drive",
     match: ["storage", "minio", "s3", "garage", "seaweedfs", "ceph"],
   },
   {
     id: "auth",
     label: "Auth & Identity",
-    icon: ShieldCheck,
+    icon: "shield-check",
     match: ["auth", "identity", "keycloak", "authentik", "oauth", "oidc"],
   },
   {
     id: "mail",
     label: "Mail & SMTP",
-    icon: Mail,
+    icon: "mail",
     match: ["mail", "smtp", "mailpit", "mailhog", "smtp4dev", "postal"],
   },
   {
     id: "runtime",
     label: "Runtimes",
-    icon: Rocket,
+    icon: "rocket",
     match: ["runtime", "node", "python", "deno", "bun", "go", "ruby", "php"],
   },
 ];
@@ -187,59 +171,71 @@ const CATEGORIES: CategoryDef[] = [
 const OTHER_CATEGORY_ID = "other";
 const CUSTOM_CATEGORY_ID = "__custom__";
 
+// Keep service families recognizable without turning each catalog tile into
+// a competing action button. These are presentation colors, not capabilities.
+const CATEGORY_ACCENTS: Record<string, string> = {
+  database: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  cache: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+  search: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  vector: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+  queue: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+  storage: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
+  auth: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  mail: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
+  runtime: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+};
+
 /**
  * Bucket a catalog entry into one of the curated categories. Walks
  * (category → tags → name → image) and returns the first match. Falls
  * through to "other" so nothing is hidden.
  */
 function bucketEntry(entry: ImageCatalogEntry): string {
-  const haystack = [
+  const hints = [
     entry.category,
     ...(entry.tags ?? []),
     entry.id,
     entry.name,
     entry.image,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-  for (const cat of CATEGORIES) {
-    if (cat.match.some((kw) => haystack.includes(kw))) return cat.id;
+  ];
+  for (const hint of hints) {
+    if (!hint) continue;
+    const text = hint.toLowerCase();
+    for (const cat of CATEGORIES) {
+      if (cat.id === text || cat.label.toLowerCase() === text || cat.match.some((kw) => text.includes(kw))) return cat.id;
+    }
   }
   return OTHER_CATEGORY_ID;
 }
 
-export function AddServiceModal({ open, projectName, isCloudProject, onClose, onSubmit }: AddServiceModalProps) {
+function CatalogIcon({ entry, className = "size-5" }: { entry: ImageCatalogEntry; className?: string }) {
+  const [failedLogo, setFailedLogo] = useState<string>();
+  if (entry.logo && failedLogo !== entry.logo) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={entry.logo} alt="" className={`${className} object-contain`} onError={() => setFailedLogo(entry.logo)} />;
+  }
+  const Icon = CATEGORIES.find((category) => category.id === bucketEntry(entry))?.icon ?? "window";
+  return <UiIcon name={Icon} className={className} />;
+}
+
+export function AddServiceModal({ open, projectId, projectName, isCloudProject, onClose, onSubmit }: AddServiceModalProps) {
   const { t } = useI18n();
   const { deployMode } = usePlatform();
   const cloud = useCloud();
   const newEndpointDomainType = defaultDomainType(cloud.connected);
-  // Cloud-only catalog when EITHER the install is the SaaS dashboard
-  // (deployMode === "cloud") OR this specific project is deployed to
-  // kovalio cloud (isCloudProject). In either case the local upstream-
-  // image catalog isn't applicable and we pin the source to "cloud".
   const cloudOnly = deployMode === "cloud" || !!isCloudProject;
 
   // Step state - "pick" shows the catalog, "configure" shows the form.
   const [step, setStep] = useState<"pick" | "configure">("pick");
+  const [sourceMode, setSourceMode] = useState<"new" | "existing">("new");
   const [selected, setSelected] = useState<ImageCatalogEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   // Active category in the left rail. null = "All". Special sentinel
   // "__custom__" filters down to just the custom-image tile.
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  // Catalog state
-  const [catalog, setCatalog] = useState<ImageCatalogEntry[]>([]);
-  const [catalogLoading, setCatalogLoading] = useState(false);
-  const [cloudConnected, setCloudConnected] = useState<boolean | null>(null);
-  // Catalog source: "local" = curated upstream Docker images, "cloud" = Oblien
-  // managed images. Cloud-only contexts (SaaS install OR cloud-deployed
-  // project) are pinned to "cloud" — it's the only valid source. Local
-  // projects on local installs default to "local" but can flip via the
-  // switcher when the user wants a managed image.
-  const [catalogSource, setCatalogSource] = useState<"local" | "cloud">(
-    cloudOnly ? "cloud" : "local",
-  );
+  // Every application service uses the shared Docker engine and OCI catalog.
+  const catalog = cloudOnly ? LOCAL_SERVICE_CATALOG.filter(entry => !entry.gpus && entry.supportsCloud !== false) : LOCAL_SERVICE_CATALOG;
 
   // Configure step state. Ports is a single-line, comma-separated string -
   // 95% of services have one port and the old textarea wasted vertical space.
@@ -256,6 +252,7 @@ export function AddServiceModal({ open, projectName, isCloudProject, onClose, on
   const [customDomain, setCustomDomain] = useState("");
   const [domainType, setDomainType] = useState<"free" | "custom">(newEndpointDomainType);
   const [saving, setSaving] = useState(false);
+  const submitting = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   // Reset everything when the modal opens - never carry state between sessions
@@ -263,9 +260,9 @@ export function AddServiceModal({ open, projectName, isCloudProject, onClose, on
     if (!open) return;
     setStep("pick");
     setSelected(null);
+    setSourceMode("new");
     setSearchQuery("");
     setActiveCategory(null);
-    setCatalogSource(cloudOnly ? "cloud" : "local");
     setName("");
     setImage("");
     setPorts("");
@@ -279,50 +276,6 @@ export function AddServiceModal({ open, projectName, isCloudProject, onClose, on
     setSaving(false);
     setError(null);
   }, [open]);
-
-  // Load the catalog when the modal opens, or when the user flips the source
-  // switcher in local deployments. Sources:
-  //  - "local" → bundled `LOCAL_SERVICE_CATALOG` (clean upstream Docker
-  //              images like postgres, redis, qdrant - what people run on
-  //              their own machine or server)
-  //  - "cloud" → Oblien `images.list()` (oblien/* managed cloud images)
-  // Either way "no catalog" never blocks the user - Custom image is always
-  // an escape hatch.
-  useEffect(() => {
-    if (!open) return;
-
-    // Reset filters when the source changes so we don't keep a category
-    // active that doesn't exist in the new catalog.
-    setActiveCategory(null);
-
-    if (catalogSource === "local") {
-      setCatalog(LOCAL_SERVICE_CATALOG);
-      setCloudConnected(null);
-      setCatalogLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setCatalogLoading(true);
-    imagesApi
-      .list()
-      .then((res) => {
-        if (cancelled) return;
-        setCatalog(res.images ?? []);
-        setCloudConnected(res.cloudConnected ?? true);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setCatalog([]);
-        setCloudConnected(false);
-      })
-      .finally(() => {
-        if (!cancelled) setCatalogLoading(false);
-      });
-    return () => { cancelled = true; };
-    // Re-fetch when the cloud connection flips (e.g. the user connects from the
-    // empty-state CTA) so the catalog + connected flag refresh without reopening.
-  }, [open, catalogSource, cloud.connected]);
 
   // Bucket every catalog entry once into a curated category. We memoize
   // the assignments so search/filter doesn't re-run bucketEntry per render.
@@ -339,14 +292,14 @@ export function AddServiceModal({ open, projectName, isCloudProject, onClose, on
       counts.set(bucket, (counts.get(bucket) ?? 0) + 1);
     }
     const catLabels = t.projectDetail.services.addModal.categories as Record<string, string>;
-    const ordered: Array<{ id: string; label: string; icon: React.ElementType; count: number }> = [];
+    const ordered: Array<{ id: string; label: string; icon: IconName; count: number }> = [];
     for (const cat of CATEGORIES) {
       const count = counts.get(cat.id) ?? 0;
       if (count > 0) ordered.push({ id: cat.id, label: catLabels[cat.id] ?? cat.label, icon: cat.icon, count });
     }
     const otherCount = counts.get(OTHER_CATEGORY_ID) ?? 0;
     if (otherCount > 0) {
-      ordered.push({ id: OTHER_CATEGORY_ID, label: catLabels.other, icon: Box, count: otherCount });
+      ordered.push({ id: OTHER_CATEGORY_ID, label: catLabels.other, icon: "window", count: otherCount });
     }
     return ordered;
   }, [bucketed, t]);
@@ -406,6 +359,7 @@ export function AddServiceModal({ open, projectName, isCloudProject, onClose, on
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submitting.current) return;
 
     const trimmedName = name.trim();
     const trimmedImage = image.trim();
@@ -419,6 +373,7 @@ export function AddServiceModal({ open, projectName, isCloudProject, onClose, on
       return;
     }
 
+    submitting.current = true;
     setSaving(true);
     setError(null);
 
@@ -438,6 +393,16 @@ export function AddServiceModal({ open, projectName, isCloudProject, onClose, on
       environment: envObjectFromRows(envRows),
       volumes: volumeList,
       command: "",
+      // A custom replacement image must not inherit another image's entrypoint
+      // arguments. Matching catalog images keep argv intact (never `sh -c`).
+      ...(trimmedImage === selected?.image && selected.commandArgv
+        ? { commandArgv: [...selected.commandArgv] }
+        : {}),
+      // A catalog entry that needs a GPU (the Ollama GPU variant) carries its
+      // request; a replacement image keeps nothing, like commandArgv above.
+      ...(trimmedImage === selected?.image && selected.gpus
+        ? { advanced: { gpus: { ...selected.gpus } } }
+        : {}),
       restart: "unless-stopped",
       enabled: true,
       exposed,
@@ -454,6 +419,7 @@ export function AddServiceModal({ open, projectName, isCloudProject, onClose, on
     } catch (err) {
       setError(getApiErrorMessage(err, t.projectDetail.services.addModal.addServiceFailed));
     } finally {
+      submitting.current = false;
       setSaving(false);
     }
   };
@@ -478,7 +444,7 @@ export function AddServiceModal({ open, projectName, isCloudProject, onClose, on
                 className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                 aria-label={t.projectDetail.services.addModal.backToCatalog}
               >
-                <ArrowLeft className="size-4 rtl:rotate-180" />
+                <UiIcon name="arrow-left" className="size-4 rtl:rotate-180" />
               </button>
             )}
             <div className="min-w-0">
@@ -487,47 +453,50 @@ export function AddServiceModal({ open, projectName, isCloudProject, onClose, on
                   ? t.projectDetail.services.addModal.addTitle
                   : interpolate(t.projectDetail.services.addModal.configureTitle, { name: selected?.name ?? t.projectDetail.services.addModal.fallbackService })}
               </h2>
-              <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                {step === "pick"
+              <p className={`mt-0.5 text-xs text-muted-foreground ${sourceMode === "new" ? "truncate" : ""}`}>
+                {sourceMode === "existing" ? t.projects.connections.existingHint : step === "pick"
                   ? t.projectDetail.services.addModal.pickSubtitle
                   : t.projectDetail.services.addModal.configureSubtitle}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            {/* Source switcher lives in the header so it sits visually with
-                the deploy-mode context, not buried in the right pane. Only
-                shown on the picker step (configure is already scoped to a
-                single selected service) and only when the user has a real
-                choice - cloud-only contexts (SaaS install OR cloud-deployed
-                project) are pinned to the cloud catalog. */}
-            {step === "pick" && !cloudOnly ? (
-              <SourceSwitcher value={catalogSource} onChange={setCatalogSource} />
-            ) : (
-              <ModeBadge mode={cloudOnly ? "cloud" : "local"} />
-            )}
+            {sourceMode === "new" && <ModeBadge mode={cloudOnly ? "cloud" : "local"} />}
             <button
               type="button"
               onClick={onClose}
               className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
               aria-label={t.projectDetail.services.addModal.close}
             >
-              <X className="size-4" />
+              <UiIcon name="close" className="size-4" />
             </button>
           </div>
         </div>
 
-        {step === "pick" ? (
+        {step === "pick" && projectId && (
+          <div className="flex gap-2 border-b border-border/40 px-6 py-3" role="tablist" aria-label={t.projectDetail.services.addModal.addTitle}>
+            {([
+              { id: "new", label: t.projects.connections.createNew, icon: "plus" },
+              { id: "existing", label: t.projects.connections.connectExisting, icon: "plug" },
+            ] as const).map(item => (
+              <button key={item.id} type="button" role="tab" aria-selected={sourceMode === item.id}
+                onClick={() => setSourceMode(item.id)}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${sourceMode === item.id ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/50"}`}>
+                <UiIcon name={item.icon} className="size-4" />{item.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {sourceMode === "existing" && projectId ? (
+          <div className="overflow-y-auto"><ProjectConnectionForm targetProjectId={projectId} onClose={onClose} hideHeader /></div>
+        ) : step === "pick" ? (
           <CatalogPickStep
             catalog={visibleCatalog}
             categories={categories}
             activeCategory={activeCategory}
             onCategoryChange={setActiveCategory}
             totalCount={catalog.length}
-            loading={catalogLoading}
-            source={catalogSource}
-            cloudConnected={cloudConnected}
-            onConnectCloud={() => void cloud.requireCloud("cloud-services-catalog")}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             showCustomTile={showCustomTile}
@@ -576,24 +545,16 @@ function CatalogPickStep({
   activeCategory,
   onCategoryChange,
   totalCount,
-  loading,
-  source,
-  cloudConnected,
-  onConnectCloud,
   searchQuery,
   onSearchChange,
   showCustomTile,
   onPick,
 }: {
   catalog: ImageCatalogEntry[];
-  categories: Array<{ id: string; label: string; icon: React.ElementType; count: number }>;
+  categories: Array<{ id: string; label: string; icon: IconName; count: number }>;
   activeCategory: string | null;
   onCategoryChange: (c: string | null) => void;
   totalCount: number;
-  loading: boolean;
-  source: "local" | "cloud";
-  cloudConnected: boolean | null;
-  onConnectCloud: () => void;
   searchQuery: string;
   onSearchChange: (v: string) => void;
   showCustomTile: boolean;
@@ -601,32 +562,8 @@ function CatalogPickStep({
 }) {
   const { t } = useI18n();
   const m = t.projectDetail.services.addModal;
-  const hasNoResults = !loading && catalog.length === 0 && !showCustomTile;
+  const hasNoResults = catalog.length === 0 && !showCustomTile;
 
-  // Cloud catalog picked but the instance isn't linked to Kovalio Cloud yet —
-  // there's nothing to browse, so lead with a connect CTA instead of an empty
-  // pane. Connecting flips `cloud.connected`, which re-fetches the catalog.
-  if (source === "cloud" && cloudConnected === false && !loading) {
-    return (
-      <div className="flex flex-1 min-h-0 items-center justify-center p-8">
-        <div className="flex max-w-sm flex-col items-center text-center">
-          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/10">
-            <Cloud className="size-7 text-primary" />
-          </div>
-          <h3 className="text-[15px] font-semibold text-foreground">{m.cloudConnectTitle}</h3>
-          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{m.cloudConnectBody}</p>
-          <button
-            type="button"
-            onClick={onConnectCloud}
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <Cloud className="size-4" />
-            {m.cloudConnectButton}
-          </button>
-        </div>
-      </div>
-    );
-  }
   const activeLabel =
     activeCategory === null
       ? m.allServices
@@ -643,7 +580,7 @@ function CatalogPickStep({
         </div>
         <div className="flex-1 overflow-y-auto px-2.5 pb-3 space-y-0.5">
           <CategoryItem
-            icon={Sparkles}
+            icon={"sparkles"}
             label={m.allServices}
             count={totalCount}
             active={activeCategory === null}
@@ -654,6 +591,7 @@ function CatalogPickStep({
               key={c.id}
               icon={c.icon}
               label={c.label}
+              accent={CATEGORY_ACCENTS[c.id]}
               count={c.count}
               active={activeCategory === c.id}
               onClick={() => onCategoryChange(c.id)}
@@ -662,7 +600,7 @@ function CatalogPickStep({
         </div>
         <div className="border-t border-border/30 px-2.5 py-3">
           <CategoryItem
-            icon={Plus}
+            icon={"plus"}
             label={m.customImage}
             active={activeCategory === CUSTOM_CATEGORY_ID}
             onClick={() => onCategoryChange(CUSTOM_CATEGORY_ID)}
@@ -675,14 +613,14 @@ function CatalogPickStep({
         <div className="px-7 pt-5 pb-4 border-b border-border/30 space-y-3">
           <div className="flex items-baseline justify-between gap-3">
             <h3 className="text-[15px] font-semibold text-foreground truncate">{activeLabel}</h3>
-            {!loading && catalog.length > 0 && (
+            {catalog.length > 0 && (
               <span className="text-[11px] font-medium text-muted-foreground/70 tabular-nums shrink-0">
                 {interpolate(catalog.length === 1 ? m.serviceCountOne : m.serviceCountOther, { count: String(catalog.length) })}
               </span>
             )}
           </div>
           <div className="relative">
-            <Search className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60" />
+            <UiIcon name="search" className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60" />
             <input
               type="text"
               value={searchQuery}
@@ -693,27 +631,14 @@ function CatalogPickStep({
               className="h-10 w-full rounded-xl border border-border/50 bg-muted/20 ps-9 pe-3 text-sm text-foreground outline-none transition-colors focus:border-primary/40"
             />
           </div>
-          {cloudConnected === false && (
-            <p className="text-[12px] text-muted-foreground">
-              {m.cloudConnectHint}
-            </p>
-          )}
+
         </div>
 
         <div className="flex-1 overflow-y-auto px-7 py-5">
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {Array.from({ length: 9 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl border border-border/40 bg-muted/10 p-3 h-[64px] animate-pulse"
-                />
-              ))}
-            </div>
-          ) : hasNoResults ? (
+          {hasNoResults ? (
             <div className="flex flex-col items-center justify-center text-center py-16">
               <div className="size-11 rounded-xl bg-muted/40 flex items-center justify-center mb-3">
-                <Search className="size-4 text-muted-foreground/60" />
+                <UiIcon name="search" className="size-4 text-muted-foreground/60" />
               </div>
               <p className="text-sm font-medium text-foreground">{m.noMatchesTitle}</p>
               <p className="text-xs text-muted-foreground/70 mt-1 max-w-[280px]">
@@ -744,54 +669,19 @@ function CatalogPickStep({
   );
 }
 
-function SourceSwitcher({
-  value,
-  onChange,
-}: {
-  value: "local" | "cloud";
-  onChange: (v: "local" | "cloud") => void;
-}) {
-  const { t } = useI18n();
-  const options: Array<{ value: "local" | "cloud"; label: string; icon: React.ElementType }> = [
-    { value: "local", label: t.projectDetail.services.addModal.localImages, icon: Cpu },
-    { value: "cloud", label: t.projectDetail.services.addModal.kovalioCloud, icon: Cloud },
-  ];
-  return (
-    <div className="inline-flex w-fit items-center gap-0.5 rounded-xl border border-border/60 bg-muted/60 p-0.5">
-      {options.map((opt) => {
-        const active = value === opt.value;
-        const Icon = opt.icon;
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onChange(opt.value)}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition-all ${
-              active
-                ? "bg-card text-foreground shadow-sm ring-1 ring-border/70"
-                : "text-muted-foreground/80 hover:text-foreground"
-            }`}
-          >
-            <Icon className="size-3.5" />
-            {opt.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function CategoryItem({
   icon: Icon,
   label,
   count,
   active,
+  accent,
   onClick,
 }: {
-  icon: React.ElementType;
+  icon: IconName;
   label: string;
   count?: number;
   active?: boolean;
+  accent?: string;
   onClick: () => void;
 }) {
   return (
@@ -806,10 +696,10 @@ function CategoryItem({
     >
       <span
         className={`flex size-7 items-center justify-center rounded-lg shrink-0 transition-colors ${
-          active ? "bg-primary/15 text-primary" : "bg-muted/50 text-muted-foreground/70 group-hover:text-foreground"
+          accent ?? (active ? "bg-primary/15 text-primary" : "bg-muted/50 text-muted-foreground/70 group-hover:text-foreground")
         }`}
       >
-        <Icon className="size-3.5" />
+        <UiIcon name={Icon} className="size-3.5" />
       </span>
       <span className="flex-1 min-w-0 truncate text-[13px] font-medium">{label}</span>
       {typeof count === "number" && (
@@ -837,6 +727,7 @@ function CatalogCard({
   const { t } = useI18n();
   const m = t.projectDetail.services.addModal;
   const custom = isCustom(entry);
+  const accent = CATEGORY_ACCENTS[bucketEntry(entry)] ?? "bg-muted/30 text-muted-foreground";
   return (
     <button
       type="button"
@@ -848,19 +739,11 @@ function CatalogCard({
           : "border-border/40 bg-card hover:border-primary/40 hover:bg-foreground/[0.015]"
       }`}
     >
-      <div className="size-9 rounded-lg bg-muted/30 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-border/30 group-hover:ring-border/50 transition-all">
+      <div className={`size-9 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${accent}`}>
         {custom ? (
-          <Plus className="size-4 text-muted-foreground/80" />
-        ) : entry.logo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={entry.logo}
-            alt={entry.name ?? entry.image ?? "service"}
-            className="size-5 object-contain"
-            onError={(e) => { e.currentTarget.style.display = "none"; }}
-          />
+          <UiIcon name="plus" className="size-4 text-muted-foreground/80" />
         ) : (
-          <Container className="size-4 text-muted-foreground/80" />
+          <CatalogIcon entry={entry} />
         )}
       </div>
       <div className="min-w-0 flex-1">
@@ -956,18 +839,8 @@ function ConfigureStep({
 
         {selected && !isCustom(selected) && (
           <div className="rounded-2xl border border-border/40 bg-muted/15 px-4 py-3 flex items-center gap-3">
-            <div className="size-9 rounded-xl bg-card/60 flex items-center justify-center shrink-0 overflow-hidden">
-              {selected.logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={selected.logo}
-                  alt={selected.name ?? ""}
-                  className="size-6 object-contain"
-                  onError={(e) => { e.currentTarget.style.display = "none"; }}
-                />
-              ) : (
-                <Container className="size-4 text-muted-foreground" />
-              )}
+            <div className={`size-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden ${CATEGORY_ACCENTS[bucketEntry(selected)] ?? "bg-card/60 text-muted-foreground"}`}>
+              <CatalogIcon entry={selected} className="size-6" />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground truncate">{selected.name}</p>
@@ -1056,7 +929,7 @@ function ConfigureStep({
                     className="size-10 shrink-0 rounded-xl text-muted-foreground/60 transition-colors hover:bg-muted/40 hover:text-foreground inline-flex items-center justify-center"
                     aria-label={m.removeVolume}
                   >
-                    <X className="size-4" />
+                    <UiIcon name="close" className="size-4" />
                   </button>
                 </div>
               ))}
@@ -1069,7 +942,7 @@ function ConfigureStep({
               volumeRows.length > 0 ? "mt-2" : ""
             }`}
           >
-            <Plus className="size-3.5" />
+            <UiIcon name="plus" className="size-3.5" />
             {m.addVolume}
           </button>
           <p className="mt-1.5 text-sm text-muted-foreground">
@@ -1118,7 +991,7 @@ function ConfigureStep({
           disabled={saving}
           className="inline-flex h-10 items-center gap-2 rounded-xl bg-foreground/[0.06] px-4 text-sm font-medium text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
         >
-          <X className="size-4" />
+          <UiIcon name="close" className="size-4" />
           {m.cancel}
         </button>
         <button
@@ -1126,7 +999,7 @@ function ConfigureStep({
           disabled={saving}
           className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+          {saving ? <UiIcon name="spinner" className="size-4 animate-spin" /> : <UiIcon name="plus" className="size-4" />}
           {m.addService}
         </button>
       </div>
@@ -1156,12 +1029,11 @@ function Field({
 
 function ModeBadge({ mode }: { mode: "cloud" | "local" }) {
   const { t } = useI18n();
-  const Icon = mode === "cloud" ? Cloud : Cpu;
+  const Icon = mode === "cloud" ? "cloud" : "cpu";
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-      <Icon className="size-3" />
-      {mode === "cloud" ? t.projectDetail.services.addModal.kovalioCloud : t.projectDetail.services.addModal.localDocker}
+      <UiIcon name={Icon} className="size-3" />
+      {mode === "cloud" ? t.projectDetail.services.addModal.openshipCloud : t.projectDetail.services.addModal.localDocker}
     </span>
   );
 }
-

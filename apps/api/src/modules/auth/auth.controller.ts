@@ -24,10 +24,16 @@
  * load before drizzle migrations have run.
  */
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import type { Context } from "hono";
-import { auth } from "../../lib/auth";
+import { auth, isSaasDeployment } from "@repo/platform/engine/lib/auth";
+import { repos } from "@repo/db";
+import {
+  invitationAccountCreationMode,
+  resolveInvitationClaim,
+} from "@repo/platform/engine/lib/invitation-claim";
 import { setSessionCookie } from "../../lib/session-cookie";
-import { localDashboardUrl } from "../../config/env";
+import { localDashboardUrl } from "@repo/platform/engine/config/env";
 import { alignLoopbackOrigin } from "@repo/core";
 
 // ─── HTML result page ────────────────────────────────────────────────────────
@@ -46,6 +52,46 @@ function desktopResultPage(title: string, message: string, success = false): str
 }
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/auth/invitation-preview/:id
+ *
+ * Invitation claim pages must load before an invitee has a session. Better
+ * Auth's own get-invitation endpoint is session-bound, so expose only the
+ * token-bound, non-secret projection the page needs. Every invalid lifecycle
+ * state is the same 404 to avoid turning this into an invitation oracle.
+ */
+export async function invitationPreview(c: Context) {
+  c.header("Cache-Control", "no-store");
+  c.header("Referrer-Policy", "no-referrer");
+
+  const invitationId = (c.req.param("id") ?? "").trim();
+  const claim = await resolveInvitationClaim(invitationId);
+  if (!claim) {
+    return c.json({ error: "This invitation is invalid or has expired." }, 404);
+  }
+
+  const existingUser = await repos.user.findByEmail(claim.email);
+  const accountCreation = invitationAccountCreationMode({
+    accountExists: !!existingUser,
+    isSaas: isSaasDeployment,
+    inviterIsInstanceAdmin: claim.inviterIsInstanceAdmin,
+  });
+
+  return c.json({
+    data: {
+      invitation: {
+        id: claim.id,
+        email: claim.email,
+        role: claim.role,
+        expiresAt: claim.expiresAt.toISOString(),
+      },
+      organization: claim.organization,
+      inviter: { name: claim.inviterName },
+      accountCreation,
+    },
+  });
+}
 
 /**
  * GET /api/auth/get-session
@@ -68,7 +114,8 @@ export async function getSession(c: Context) {
       // backfill needed; the migration handled any legacy rows.
       return c.json(realSession);
     }
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "api/modules/auth/auth.controller");
     // session lookup failed — fall through to zero-auth bootstrap below
   }
 
@@ -244,11 +291,12 @@ export async function cloudCallback(c: Context) {
       const { failDesktopAuth, getActiveNonce } = await import("../../lib/cloud-auth-proxy");
       const nonce = getActiveNonce();
       if (nonce) failDesktopAuth(nonce);
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "api/modules/auth/auth.controller");
       // best-effort
     }
-    console.error("[cloud-callback] error:", err);
-    return c.html(desktopResultPage("Authentication failed", "Something went wrong. Please return to Kovalio and try again."));
+    errorDiagnostics.error("api/modules/auth/auth.controller", "[cloud-callback] error:", err);
+    return c.html(desktopResultPage("Authentication failed", "Something went wrong. Please return to Openship and try again."));
   }
 }
 
@@ -282,7 +330,8 @@ export async function desktopAuthStart(c: Context) {
   try {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     connectUserId = session?.user?.id;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "api/modules/auth/auth.controller");
     // No session — onboarding flow; mirror cloud user instead.
   }
 

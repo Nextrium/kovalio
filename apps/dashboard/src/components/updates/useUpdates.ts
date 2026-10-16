@@ -9,10 +9,13 @@
  * @repo/core; this hook only does I/O + persistence.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { observedAllSettled, reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
   RELEASES_LATEST_API,
   advisoryManifestUrl,
+  changelogMarkdownUrl,
+  extractChangelogSection,
   parseManifest,
   resolveUpdateState,
   matchAdvisories,
@@ -20,6 +23,7 @@ import {
   compareSemver,
   type AdvisoryManifest,
   type LatestRelease,
+  type ReleaseFeedSnapshot,
   type UpdateState,
 } from "@repo/core";
 import { useDeploymentInfo } from "@/hooks/useDeploymentInfo";
@@ -28,6 +32,18 @@ import { getRestApiBaseUrl } from "@/lib/api/urls";
 const LS_MUTED = "kovalio_update_muted";
 const LS_DISMISSED = "kovalio_dismissed_advisories";
 const LS_LAST_SEEN = "kovalio_last_seen_version";
+
+// The header and Settings can both consume this hook. A dismissal belongs to
+// the app session, so a remount or an in-flight refresh must not undo it.
+const EMPTY_DISMISSALS: ReadonlySet<string> = new Set();
+let sessionDismissals = EMPTY_DISMISSALS;
+const dismissalListeners = new Set<() => void>();
+const getSessionDismissals = () => sessionDismissals;
+const getServerDismissals = () => EMPTY_DISMISSALS;
+function subscribeDismissals(listener: () => void) {
+  dismissalListeners.add(listener);
+  return () => { dismissalListeners.delete(listener); };
+}
 
 function isDesktop(): boolean {
   return typeof window !== "undefined" && !!window.desktop?.isDesktop;
@@ -43,9 +59,9 @@ interface Prefs {
 async function getPrefs(): Promise<Prefs> {
   const cfg = isDesktop() ? window.desktop?.config : undefined;
   if (cfg) {
-    const notif = await cfg.get<boolean | undefined>("updateNotifications").catch(() => undefined);
-    const dismissed = (await cfg.get<string[] | undefined>("dismissedAdvisoryIds").catch(() => undefined)) ?? [];
-    const lastSeen = (await cfg.get<string | undefined>("lastSeenVersion").catch(() => undefined)) ?? null;
+    const notif = await cfg.get<boolean | undefined>("updateNotifications").catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates"); return undefined; });
+    const dismissed = (await cfg.get<string[] | undefined>("dismissedAdvisoryIds").catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates"); return undefined; })) ?? [];
+    const lastSeen = (await cfg.get<string | undefined>("lastSeenVersion").catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates"); return undefined; })) ?? null;
     return { muted: notif === false, dismissed, lastSeen };
   }
   let dismissed: string[] = [];
@@ -70,7 +86,7 @@ async function persistMuted(muted: boolean): Promise<void> {
 async function persistDismissed(id: string): Promise<void> {
   const cfg = isDesktop() ? window.desktop?.config : undefined;
   if (cfg) {
-    const cur = (await cfg.get<string[] | undefined>("dismissedAdvisoryIds").catch(() => undefined)) ?? [];
+    const cur = (await cfg.get<string[] | undefined>("dismissedAdvisoryIds").catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates"); return undefined; })) ?? [];
     if (!cur.includes(id)) await cfg.set("dismissedAdvisoryIds", [...cur, id]);
     return;
   }
@@ -91,36 +107,68 @@ async function persistLastSeen(version: string): Promise<void> {
 
 // Session-scoped cache: fetch GitHub once per app session (GitHub rate-limits
 // unauthenticated calls to 60/hr/IP; navigation shouldn't re-hit it).
-let remoteCache: Promise<{ latest: LatestRelease | null; manifest: AdvisoryManifest | null }> | null = null;
+let remoteCache: Promise<ReleaseFeedSnapshot> | null = null;
+let remoteInFlight: Promise<ReleaseFeedSnapshot> | null = null;
 
-async function fetchRemote(): Promise<{ latest: LatestRelease | null; manifest: AdvisoryManifest | null }> {
-  remoteCache ??= (async () => {
-    let latest: LatestRelease | null = null;
-    let manifest: AdvisoryManifest | null = null;
-    try {
-      const res = await fetch(RELEASES_LATEST_API, {
-        headers: { Accept: "application/vnd.github+json" },
-      });
-      if (res.ok) {
-        const data = (await res.json()) as { tag_name?: string; body?: string };
-        const tag = data.tag_name ?? "";
-        if (tag) {
-          latest = { version: tag.replace(/^v/, ""), tag, notes: data.body ?? "" };
-          // Advisories pinned to the release TAG — main commits never surface.
+/** One uncached update read. Exported so the three-source failure isolation is testable. */
+export async function fetchRemoteUncached(
+  fetcher: typeof fetch = fetch,
+): Promise<{ latest: LatestRelease | null; manifest: AdvisoryManifest | null }> {
+  let latest: LatestRelease | null = null;
+  let manifest: AdvisoryManifest | null = null;
+  try {
+    const res = await fetcher(RELEASES_LATEST_API, {
+      headers: { Accept: "application/vnd.github+json" },
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { tag_name?: string };
+      const tag = data.tag_name ?? "";
+      if (tag) {
+        latest = { version: tag.replace(/^v/, ""), tag, notes: "" };
+        // Both documents are pinned to the release tag. Fetch independently:
+        // a missing changelog must not hide a critical advisory, and a missing
+        // advisory must not erase the release notes.
+        const [changelogResult, manifestResult] = await observedAllSettled([
+          fetcher(changelogMarkdownUrl(tag)),
+          fetcher(advisoryManifestUrl(tag), { headers: { Accept: "application/json" } }),
+        ], "dashboard/components/updates/useUpdates");
+        if (changelogResult.status === "fulfilled" && changelogResult.value.ok) {
           try {
-            const m = await fetch(advisoryManifestUrl(tag), { headers: { Accept: "application/json" } });
-            if (m.ok) manifest = parseManifest(await m.json());
-          } catch {
-            /* no manifest at this tag → no advisories */
+            latest.notes = extractChangelogSection(await changelogResult.value.text(), latest.version);
+          } catch (diagnosticFailure) {
+            observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates");
+            /* malformed/unreadable changelog → keep notes empty */
+          }
+        }
+        if (manifestResult.status === "fulfilled" && manifestResult.value.ok) {
+          try {
+            manifest = parseManifest(await manifestResult.value.json());
+          } catch (diagnosticFailure) {
+            observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates");
+            /* malformed/unreadable manifest → no advisories */
           }
         }
       }
-    } catch {
-      /* offline / rate-limited → no update info */
     }
-    return { latest, manifest };
-  })();
-  return remoteCache;
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates");
+    /* offline / rate-limited → no update info */
+  }
+  return { latest, manifest };
+}
+
+function fetchRemote(force = false): Promise<ReleaseFeedSnapshot> {
+  if (remoteInFlight) return remoteInFlight;
+  if (!force && remoteCache) return remoteCache;
+  // The native process owns desktop release I/O, including the launch check.
+  // Preserve notes and advisories even when its platform has no installer.
+  const check = isDesktop() ? window.desktop?.updates?.check : undefined;
+  const request: Promise<ReleaseFeedSnapshot> = check
+    ? check(force).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates"); return ({ latest: null, manifest: null }); })
+    : fetchRemoteUncached();
+  remoteInFlight = request.finally(() => { remoteInFlight = null; });
+  remoteCache = remoteInFlight;
+  return remoteInFlight;
 }
 
 // The SaaS advisory source: operator-pushed platform notices from our own API
@@ -135,7 +183,8 @@ async function fetchNotices(): Promise<AdvisoryManifest> {
     });
     if (!res.ok) return { advisories: [] };
     return parseManifest(await res.json());
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates");
     return { advisories: [] };
   }
 }
@@ -180,6 +229,7 @@ export interface UseUpdates {
 
 export function useUpdates(): UseUpdates {
   const deployInfo = useDeploymentInfo();
+  const dismissed = useSyncExternalStore(subscribeDismissals, getSessionDismissals, getServerDismissals);
   const [state, setState] = useState<UpdateState | null>(null);
   const [latest, setLatest] = useState<LatestRelease | null>(null);
   const [muted, setMutedState] = useState(false);
@@ -227,7 +277,7 @@ export function useUpdates(): UseUpdates {
 
     let current: string | null = null;
     if (isDesktop() && window.desktop?.app) {
-      current = await window.desktop.app.version().catch(() => null);
+      current = await window.desktop.app.version().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates"); return null; });
     } else {
       current = deployInfo?.version ?? null;
     }
@@ -240,7 +290,7 @@ export function useUpdates(): UseUpdates {
     const [prefs, remote, notices] = await Promise.all([
       getPrefs(),
       fetchRemote(),
-      fetchNotices().catch(() => ({ advisories: [] })),
+      fetchNotices().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates"); return ({ advisories: [] }); }),
     ]);
     setMutedState(prefs.muted);
     setLatest(remote.latest);
@@ -276,10 +326,15 @@ export function useUpdates(): UseUpdates {
   const dismissAdvisory = useCallback(
     (id: string) => {
       const adv = state?.advisories.find((a) => a.id === id);
-      setState((s) => (s ? { ...s, advisories: s.advisories.filter((a) => a.id !== id) } : s));
+      if (!adv || sessionDismissals.has(id)) return;
+      sessionDismissals = new Set([...sessionDismissals, id]);
+      for (const listener of dismissalListeners) listener();
       // Critical advisories are session-dismiss only (they resurface next launch
       // by design); everything else is remembered so it never nags again.
-      if (adv && adv.severity !== "critical") void persistDismissed(id);
+      // Keep the session choice even if the persistent store is unavailable.
+      if (adv.severity !== "critical") void persistDismissed(id).catch((diagnosticFailure) => {
+        observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates");
+      });
     },
     [state],
   );
@@ -342,21 +397,18 @@ export function useUpdates(): UseUpdates {
           void u.open?.();
         }
       })
-      .catch(() => setUpdatePhase("idle"));
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/components/updates/useUpdates"); return setUpdatePhase("idle"); });
   }, []);
 
-  // Force a fresh GitHub check (the session cache is otherwise reused). Also
-  // prime the desktop main process so its pending-update state — which the
-  // native wizard + install act on — re-checks in lockstep with the renderer,
-  // instead of only being set by the boot check.
+  // Refresh the same snapshot that drives both the dashboard and native install.
+  // Concurrent consumers join the request instead of issuing duplicate checks.
   const refresh = useCallback(() => {
-    remoteCache = null;
-    void window.desktop?.updates?.check?.();
+    void fetchRemote(true);
     void load();
   }, [load]);
 
   return {
-    state,
+    state: state ? { ...state, advisories: state.advisories.filter((a) => !dismissed.has(a.id)) } : null,
     latest,
     muted,
     desktop: isDesktop(),

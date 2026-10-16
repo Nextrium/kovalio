@@ -7,7 +7,52 @@
  * post-close handler reads + clears it and shows a toast — otherwise the flow
  * would just silently report "not connected".
  */
-export const GITHUB_CONNECT_ERROR_KEY = "kovalio.github.connectError";
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+export const GITHUB_CONNECT_ERROR_KEY = "openship.github.connectError";
+
+type ConnectErrorStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+
+function browserStorage(): ConnectErrorStorage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage;
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/lib/github-connect-error");
+    return null;
+  }
+}
+
+/** Store a callback error for the window that initiated the OAuth flow. */
+export function storeGitHubConnectError(
+  error: string,
+  storage: ConnectErrorStorage | null = browserStorage(),
+  state?: string,
+): void {
+  if (!error || !storage) return;
+  try {
+    storage.setItem(state ? `${GITHUB_CONNECT_ERROR_KEY}.${state}` : GITHUB_CONNECT_ERROR_KEY, error);
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/lib/github-connect-error");
+    /* storage unavailable */
+  }
+}
+
+/** Read and clear the callback error so it cannot leak into a later attempt. */
+export function consumeGitHubConnectError(
+  storage: ConnectErrorStorage | null = browserStorage(),
+  state?: string,
+): string | null {
+  if (!storage) return null;
+  try {
+    const key = state ? `${GITHUB_CONNECT_ERROR_KEY}.${state}` : GITHUB_CONNECT_ERROR_KEY;
+    const error = storage.getItem(key);
+    if (error !== null) storage.removeItem(key);
+    return error;
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/lib/github-connect-error");
+    return null;
+  }
+}
 
 const MESSAGES: Record<string, string> = {
   account_already_linked_to_different_user:
@@ -20,6 +65,13 @@ const MESSAGES: Record<string, string> = {
 };
 
 export function githubConnectErrorMessage(code: string | null | undefined): string {
-  if (!code) return "Couldn't connect GitHub. Please try again.";
-  return MESSAGES[code] ?? `Couldn't connect GitHub (${code}).`;
+  const value = code?.trim();
+  if (!value) return "Couldn't connect GitHub. Please try again.";
+  if (MESSAGES[value]) return MESSAGES[value];
+
+  // OAuth failures arrive as machine codes, while later installation-claim
+  // failures are already useful server messages stored through the same
+  // cross-window channel. Preserve those messages instead of wrapping them as
+  // if the entire sentence were an unknown error code.
+  return /^[a-z\d._-]+$/i.test(value) ? `Couldn't connect GitHub (${value}).` : value;
 }

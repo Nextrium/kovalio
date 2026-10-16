@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { composeSpecDiff, composeSpecsEqual, composeWritePatch, toComposeSpec } from "./service.repo";
+import {
+  composeSpecDiff,
+  composeSpecsEqual,
+  composeWritePatch,
+  toComposeSpec,
+} from "./service.repo";
 
 /**
  * #332 drift stability: adding structured `commandArgv` must NOT make a legacy
@@ -9,6 +14,14 @@ import { composeSpecDiff, composeSpecsEqual, composeWritePatch, toComposeSpec } 
  * surfaces.
  */
 describe("compose command drift stability (#332)", () => {
+  it("keeps host mappings in specs and explicitly removes deleted source mappings", () => {
+    const stored = { advanced: { extraHosts: { mail: "host-gateway" }, readiness: { enabled: true } } };
+    expect(toComposeSpec(stored).advanced?.extraHosts).toEqual({ mail: "host-gateway" });
+    const patch = composeWritePatch({ name: "web", advanced: {} }, stored, true);
+    expect(patch.advanced?.extraHosts).toBeUndefined();
+    expect(patch.advanced?.readiness).toEqual({ enabled: true });
+    expect(composeSpecsEqual(toComposeSpec(stored), toComposeSpec({ advanced: { extraHosts: { mail: "127.0.0.1" } } }))).toBe(false);
+  });
   it("legacy text command ≡ re-parsed command+argv (no phantom drift)", () => {
     const legacy = toComposeSpec({ command: "serve --host 0.0.0.0" }); // argv null → derived
     const reparsed = toComposeSpec({
@@ -16,14 +29,28 @@ describe("compose command drift stability (#332)", () => {
       commandArgv: ["serve", "--host", "0.0.0.0"],
     });
     expect(composeSpecsEqual(legacy, reparsed)).toBe(true);
-    expect(composeSpecDiff(legacy, reparsed).some((c) => c.field === "command" || c.field === "commandArgv")).toBe(false);
+    expect(
+      composeSpecDiff(legacy, reparsed).some(
+        (c) => c.field === "command" || c.field === "commandArgv",
+      ),
+    ).toBe(false);
   });
 
   it("a genuine argv change is still flagged", () => {
-    const before = toComposeSpec({ command: "serve --host 0.0.0.0", commandArgv: ["serve", "--host", "0.0.0.0"] });
-    const after = toComposeSpec({ command: "serve --host ::", commandArgv: ["serve", "--host", "::"] });
+    const before = toComposeSpec({
+      command: "serve --host 0.0.0.0",
+      commandArgv: ["serve", "--host", "0.0.0.0"],
+    });
+    const after = toComposeSpec({
+      command: "serve --host ::",
+      commandArgv: ["serve", "--host", "::"],
+    });
     expect(composeSpecsEqual(before, after)).toBe(false);
-    expect(composeSpecDiff(before, after).some((c) => c.field === "command" || c.field === "commandArgv")).toBe(true);
+    expect(
+      composeSpecDiff(before, after).some(
+        (c) => c.field === "command" || c.field === "commandArgv",
+      ),
+    ).toBe(true);
   });
 
   it("args-with-spaces: a real representation difference the old join lost is caught", () => {
@@ -202,7 +229,7 @@ describe("composeWritePatch — entrypoint is compose-owned (#575)", () => {
       storedOverride,
       fromFile,
     );
-    expect(patch.advanced.entrypoint).toEqual(["/new-init.sh", "-v"]);
+    expect(patch.advanced?.entrypoint).toEqual(["/new-init.sh", "-v"]);
   });
 
   it("KEEPS an empty array — the clear survives the owned-key sweep", () => {
@@ -211,12 +238,12 @@ describe("composeWritePatch — entrypoint is compose-owned (#575)", () => {
       storedOverride,
       fromFile,
     );
-    expect(patch.advanced.entrypoint).toEqual([]);
+    expect(patch.advanced?.entrypoint).toEqual([]);
   });
 
   it("drops the override when the file no longer declares one", () => {
     const patch = composeWritePatch({ name: "web", advanced: {} }, storedOverride, fromFile);
-    expect(patch.advanced.entrypoint).toBeUndefined();
+    expect(patch.advanced?.entrypoint).toBeUndefined();
   });
 
   // The half that must NOT delete: several syncFromCompose callers pass a release's
@@ -224,7 +251,7 @@ describe("composeWritePatch — entrypoint is compose-owned (#575)", () => {
   // all — so its silence cannot be read as "the operator removed the entrypoint".
   it("leaves it alone when the writer is not speaking for the file", () => {
     const patch = composeWritePatch({ name: "web", advanced: {} }, storedOverride);
-    expect(patch.advanced.entrypoint).toEqual(["/old-init.sh"]);
+    expect(patch.advanced?.entrypoint).toEqual(["/old-init.sh"]);
   });
 
   it("does not disturb sibling advanced keys compose cannot express", () => {
@@ -233,9 +260,46 @@ describe("composeWritePatch — entrypoint is compose-owned (#575)", () => {
       { advanced: { entrypoint: ["/old-init.sh"], readiness: { enabled: true } } },
       fromFile,
     );
-    expect(patch.advanced.entrypoint).toEqual([]);
-    expect(patch.advanced.readiness).toEqual({ enabled: true });
+    expect(patch.advanced?.entrypoint).toEqual([]);
+    expect(patch.advanced?.readiness).toEqual({ enabled: true });
   });
+});
+
+/**
+ * `gpus` is COMPOSE-OWNED like `entrypoint`: deleting the GPU reservation from the file must release
+ * the card. If it were not swept, a service stays pinned to a GPU its compose file no longer asks for,
+ * and the operator has no field in the UI to clear it.
+ */
+describe("composeWritePatch — gpus is compose-owned", () => {
+  const stored = { advanced: { gpus: { driver: "nvidia", count: "all" as const } } };
+  const fromFile = true;
+
+  it("drops the GPU when the file no longer asks for one", () => {
+    const patch = composeWritePatch({ name: "worker", advanced: {} }, stored, fromFile);
+    expect(patch.advanced?.gpus).toBeUndefined();
+  });
+
+  it("applies the GPU the file declares", () => {
+    const patch = composeWritePatch(
+      { name: "worker", advanced: { gpus: { driver: "nvidia", count: 2 } } },
+      {},
+      fromFile,
+    );
+    expect(patch.advanced?.gpus).toEqual({ driver: "nvidia", count: 2 });
+  });
+
+  it("keeps it when the writer is a frozen snapshot that is not speaking for the file", () => {
+    const patch = composeWritePatch({ name: "worker", advanced: {} }, stored);
+    expect(patch.advanced?.gpus).toEqual({ driver: "nvidia", count: "all" });
+  });
+});
+
+it("clears legacy GPU runtime only when the Compose source owns the update", () => {
+  const stored = { advanced: { runtime: "nvidia" as const, monitoringEnabled: true } };
+  expect(composeWritePatch({ name: "app" }, stored, true).advanced).toEqual({
+    monitoringEnabled: true,
+  });
+  expect(composeWritePatch({ name: "app" }, stored).advanced.runtime).toBe("nvidia");
 });
 
 describe("compose environment templates (#673)", () => {
@@ -271,5 +335,24 @@ describe("compose environment templates (#673)", () => {
     );
 
     expect(patch.advanced.environmentTemplateKeys).toEqual(["DATABASE_URL"]);
+  });
+});
+
+
+describe("environment provenance across writers (#893)", () => {
+  it("persists template metadata even when a parser supplies only the expression map", () => {
+    const patch = composeWritePatch({
+      name: "api", environment: { MY_VAR: "A" },
+      environmentTemplates: { MY_VAR: "${MY_VAR}" },
+    });
+    expect(patch.environment).toEqual({ MY_VAR: "${MY_VAR}" });
+    expect(patch.advanced.environmentTemplateKeys).toEqual(["MY_VAR"]);
+  });
+
+  it("clears explicit edits only when a source sync owns the whole configuration", () => {
+    const stored = { advanced: { environmentOverrideKeys: ["MY_VAR"], readiness: { enabled: true } } };
+    const parsed = { name: "api", environment: { MY_VAR: "literal" } };
+    expect(composeWritePatch(parsed, stored).advanced.environmentOverrideKeys).toEqual(["MY_VAR"]);
+    expect(composeWritePatch(parsed, stored, true).advanced).toEqual({ readiness: { enabled: true } });
   });
 });

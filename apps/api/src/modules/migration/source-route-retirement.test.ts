@@ -1,18 +1,18 @@
+import { diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { repos } from "@repo/db";
-import type { HostPortTargetIdentity } from "../../lib/host-port-target";
+import type { HostPortTargetIdentity } from "@repo/platform/engine/lib/host-port-target";
 
 const h = vi.hoisted(() => ({
   lock: vi.fn(),
   converge: vi.fn(),
 }));
 
-vi.mock("../deployments/pinned-host-ports", () => ({
+vi.mock("@repo/platform/engine/modules/deployments/pinned-host-ports", () => ({
   withHostPortTargetLock: (...args: unknown[]) => h.lock(...args),
   convergeTargetHostPortClaimsUnlocked: (...args: unknown[]) => h.converge(...args),
 }));
 
-import { migrationOrchestrator, retireSourceManagedRoutes } from "./migration.orchestrator";
+import { retireSourceManagedRoutes } from "@repo/platform/engine/modules/migration/migration.orchestrator";
 
 const target: HostPortTargetIdentity = {
   targetKey: "host:source-machine",
@@ -89,7 +89,7 @@ describe("retireSourceManagedRoutes", () => {
   });
 
   it("retains every claim when any route removal is uncertain", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warn = vi.spyOn(errorDiagnostics, "warn").mockImplementation(() => {});
     const routing = {
       removeRoute: vi
         .fn()
@@ -111,14 +111,16 @@ describe("retireSourceManagedRoutes", () => {
     expect(routing.removeRoute).toHaveBeenCalledTimes(2);
     expect(h.converge).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalledWith(
+      expect.any(String),
       expect.stringContaining("host-port claims retained"),
       "source edge unavailable",
+      expect.any(Error),
     );
     warn.mockRestore();
   });
 
   it("keeps completed cutover best-effort when the strict scan or database convergence fails", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warn = vi.spyOn(errorDiagnostics, "warn").mockImplementation(() => {});
     h.converge.mockRejectedValueOnce(new Error("strict edge scan unavailable"));
 
     await expect(
@@ -136,68 +138,11 @@ describe("retireSourceManagedRoutes", () => {
     // and stale claims must not survive forever when the workloads are gone.
     expect(h.converge).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledWith(
+      expect.any(String),
       expect.stringContaining("claims retained"),
       "strict edge scan unavailable",
+      expect.any(Error),
     );
     warn.mockRestore();
   });
-});
-
-describe("interrupted project-move cutover recovery", () => {
-  it.each([
-    { failed: [], releaseClaims: true },
-    {
-      failed: [{ name: "web", containerId: "container-1", reason: "still running" }],
-      releaseClaims: false,
-    },
-  ])(
-    "replays source route retirement with releaseClaims=$releaseClaims",
-    async ({ failed, releaseClaims }) => {
-      const run = {
-        id: "migration-1",
-        status: "cutover",
-        mode: "project_move",
-        projectId: "project-1",
-        organizationId: "org-1",
-        sourceServerId: "source-server",
-        targetServerId: "target-server",
-        scannedContainerIds: { web: "container-1" },
-      };
-      const listInFlight = vi
-        .spyOn(repos.dockerMigrationRun, "listInFlight")
-        .mockResolvedValue([run] as never);
-      const transition = vi
-        .spyOn(repos.dockerMigrationRun, "transition")
-        .mockResolvedValue(undefined as never);
-      const internals = migrationOrchestrator as unknown as {
-        cutover: () => Promise<{ failed: typeof failed }>;
-        retireSourceRoutes: (
-          projectId: string,
-          sourceServerId: string,
-          organizationId: string,
-          releaseClaims: boolean,
-        ) => Promise<void>;
-      };
-      const cutover = vi.spyOn(internals, "cutover").mockResolvedValue({ failed });
-      const retireRoutes = vi.spyOn(internals, "retireSourceRoutes").mockResolvedValue(undefined);
-
-      await migrationOrchestrator.recoverInterruptedMigrations();
-
-      expect(cutover).toHaveBeenCalledWith("source-server", "org-1", {
-        web: "container-1",
-      });
-      expect(retireRoutes).toHaveBeenCalledWith(
-        "project-1",
-        "source-server",
-        "org-1",
-        releaseClaims,
-      );
-      expect(transition).toHaveBeenCalledWith("migration-1", "succeeded");
-
-      retireRoutes.mockRestore();
-      cutover.mockRestore();
-      transition.mockRestore();
-      listInFlight.mockRestore();
-    },
-  );
 });

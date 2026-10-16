@@ -11,6 +11,7 @@
  * (recoverInterruptedTakeover), so an interrupted migrate can't strand 80/443.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { safeErrorMessage } from "@repo/core";
 import type { CommandExecutor, ManualCert } from "../../types";
 import type { RoutingProvider, SslProvider } from "../../infra/types";
@@ -118,11 +119,16 @@ export async function registerImportedSites(
     for (const domain of domains) {
       try {
         if (site.target.kind === "proxy") {
-          // Non-root locations become path-prefix proxy locations ahead of `/`
-          // so a fan-out vhost (`/ → A`, `/v3 → B`) is kept, not collapsed.
+          // Non-root locations, plus an exact `/`, become proxy locations ahead
+          // of the inclusive `/` (upstream or 404) so both fan-out and nginx
+          // exact matching survive the takeover.
           const proxyLocations = (site.routes ?? [])
-            .filter((r) => r.path !== "/")
-            .map((r) => ({ pathPrefix: r.path, targetUrl: r.url }));
+            .filter((r) => r.path !== "/" || r.exact)
+            .map((r) => ({
+              pathPrefix: r.path,
+              targetUrl: r.url,
+              ...(r.exact ? { exact: true } : {}),
+            }));
           await routing.registerRoute({
             domain,
             tls: site.ssl,
@@ -133,7 +139,9 @@ export async function registerImportedSites(
             // placeholder cert and the branded not-found page — so a live site reads
             // as "no application configured here" (#308).
             terminatesTlsLocally: site.ssl,
-            targetUrl: site.target.url,
+            ...(site.routes?.length && !site.routes.some((route) => route.path === "/" && !route.exact)
+              ? { notFound: true as const }
+              : { targetUrl: site.target.url }),
             ...(proxyLocations.length ? { proxyLocations } : {}),
             // Carry the source vhost's tunables (upload limit, upstream timeouts).
             // Taking the ports over swaps the config the site is served from, so
@@ -199,6 +207,7 @@ export async function registerImportedSites(
         opts.onLog(log(`Migrated ${domain} → ${site.target.kind === "proxy" ? site.target.url : site.target.root}`));
         registered.push(domain);
       } catch (err) {
+        observeCaughtError(err, "adapters/system/proxy/takeover");
         opts.warnings.push(`${domain}: ${safeErrorMessage(err)}`);
       }
     }
@@ -272,7 +281,7 @@ export async function runEdgeTakeover(
   // (`kovalio up` does, because a containerized edge can't cat the host FS).
   let certPems = opts.certPems;
   if (!certPems) {
-    const source = await edgeProxy(executor, { status: opts.status }).catch(() => null);
+    const source = await edgeProxy(executor, { status: opts.status }).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/proxy/takeover"); return null; });
     if (source) {
       const harvest = await collectProxyCerts(source, opts.sites);
       certPems = harvest.certPems;
@@ -396,6 +405,7 @@ export async function runEdgeTakeover(
         if (route.tls) await nginx.provisionCert(route.domain);
         registered.push(route.domain);
       } catch (err) {
+        observeCaughtError(err, "adapters/system/proxy/takeover");
         warnings.push(`${route.domain}: ${safeErrorMessage(err)}`);
       }
     }
@@ -413,6 +423,7 @@ export async function runEdgeTakeover(
     onLog(log(`Takeover complete — ${registered.length} route(s) now served by Kovalio.`));
     return { ok: true, rolledBack: false, registered, warnings };
   } catch (err) {
+    observeCaughtError(err, "adapters/system/proxy/takeover");
     warnings.push(safeErrorMessage(err));
     const rolledBack = await rollback(executor, journal, onLog);
     await clearJournal(executor);

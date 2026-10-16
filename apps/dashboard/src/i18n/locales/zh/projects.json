@@ -13,7 +13,9 @@
     "queued": "排队中",
     "building": "构建中",
     "deploying": "部署中",
+    "reconciling": "正在验证",
     "migrating": "迁移中",
+    "deploy_failed": "最新部署失败",
     "failed": "失败",
     "cancelled": "已取消",
     "deleting": "删除中",
@@ -32,6 +34,7 @@
     "local": "本地"
   },
   "card": {
+    "more": "更多",
     "liveVersion": "运行版本 v{version}",
     "sourceLocal": "本地",
     "services": "服务",
@@ -101,9 +104,11 @@
     "deletionInProgress": "该项目已有另一个删除操作正在进行",
     "deletionInProgressTitle": "删除进行中",
     "confirmForceOrphan": "部分资源无法从服务器移除。仍然删除该项目并稍后自动清理它们吗？",
-    "teardownFailedAt": "拆除在此处失败：{reasons}。请重试，或强制删除以将它们变为孤立资源。",
+    "teardownFailedAt": "无法完成清理：{reasons}。项目仍然保留。请解决此问题后重试删除。",
     "teardownFailed": "拆除失败",
     "cleanupFailedTitle": "清理失败",
+    "retryCleanup": "重试删除",
+    "cleanupPending": "删除已开始。清理完成前，项目将保持不可用。",
     "alreadyDeleted": "项目已删除",
     "forceModalTitle": "无法从源端移除",
     "forceModalBody": "无法连接到运行时（或持续失败），因此该项目未被拆除。你仍然可以将它从 Kovalio 中删除——记录会立即移除，服务器恢复可访问后会自动回收残留资源。",
@@ -124,6 +129,7 @@
     "noDomain": "无域名",
     "addDomain": "添加域名",
     "tabs": {
+      "topology": "拓扑",
       "appSettings": "设置",
       "overview": "概览",
       "services": "服务",
@@ -131,9 +137,12 @@
       "deployments": "部署",
       "health": "健康",
       "monitoring": "监控",
+      "monitoringAndLogs": "监控与日志",
       "source": "源",
+      "sourceAndTriggers": "源与触发器",
       "webhooks": "Webhook",
       "runtime": "配置",
+      "settings": "设置",
       "logs": "日志",
       "backup": "备份",
       "advanced": "高级"
@@ -189,7 +198,8 @@
     "targetPending": "部署时选择",
     "type": "类型",
     "typeApp": "应用",
-    "typeProject": "项目"
+    "typeProject": "项目",
+    "subtextNoSource": "连接源代码以配置首次部署。"
   },
   "overview": {
     "platformCloud": "Kovalio Cloud",
@@ -236,6 +246,12 @@
     "waitingRequests": "等待请求中",
     "noTransfer": "暂无传输"
   },
+  "analytics": {
+    "loadFailed": "无法加载流量分析数据",
+    "loadFailedDescription": "重试以加载最新数据。",
+    "sectionsUnavailable": "无法获取：{sections}。",
+    "staleData": "正在显示最后获取的数据。"
+  },
   "monitoring": {
     "noDataTitle": "暂无监控数据",
     "noDataDescription": "部署的应用开始接收流量后，分析数据将显示在此处。",
@@ -262,6 +278,7 @@
     "geoUnavailableBody": "边缘代理无法解析访客国家，因此地图为空。流量总计不受影响。",
     "noCountries": "该时间段暂无国家数据。",
     "statusesTitle": "响应",
+    "statusesOthers": "其他",
     "share": "{pct}%",
     "visitorDays": "访客人日",
     "peakDayTooltip": "最繁忙的单日：{peak}。回访访客每天计一次，因此总数为上限值。",
@@ -285,6 +302,8 @@
     "liveHitsWaiting": "等待请求…",
     "statusesUnclassified": "{count} 个无状态类别",
     "trafficTitle": "流量概览",
+    "dailyWindow": "含今天的7天（UTC）",
+    "currentHour": "当前小时 · 持续统计中",
     "trafficSummary": "{count} 个请求",
     "servicesMore": "另外 {count} 个",
     "servicesLess": "收起",
@@ -296,7 +315,11 @@
       "disable": "关闭热门路径"
     },
     "liveFeed": "最近请求",
-    "liveFeedHint": "在地图上显示最近请求列表（完整详情见日志标签页）"
+    "liveFeedHint": "在地图上显示最近请求列表（完整详情见日志标签页）",
+    "dataUnavailable": "部分监控数据暂时无法获取",
+    "connecting": "正在连接…",
+    "liveUnavailable": "实时请求暂时不可用",
+    "liveUnavailableDescription": "仍在显示历史流量。重新连接以查看实时请求。"
   },
   "services": {
     "failedLoad": "加载服务失败",
@@ -327,16 +350,20 @@
     "toastKeptEdits": "{name}：已保留你的编辑",
     "failedResolveDrift": "解决偏差失败",
     "failedCreateService": "创建服务失败",
-    "requestFailed": "请求失败"
+    "requestFailed": "请求失败",
+    "application": "应用程序",
+    "applicationHint": "通过此项目的部署进行管理。",
+    "companionsTitle": "添加其他应用或服务"
   },
   "serviceStatus": {
+    "checking": "检查中…",
     "running": "运行中",
     "stopped": "已停止",
     "disabled": "已禁用",
     "failed": "失败",
     "starting": "启动中",
     "restarting": "重启中",
-    "unknown": "未知"
+    "unknown": "无法获取状态"
   },
   "routingRetry": {
     "title": "域名路由需要处理",
@@ -378,17 +405,20 @@
     "noPublicDomainTitle": "未连接公开域名",
     "noPublicDomainDescOne": "此项目有 {count} 个服务开放了端口，但均未配置可访问的域名。若现在部署，堆栈可在内部运行，但用户将无法通过公开 URL 访问它。",
     "noPublicDomainDescOther": "此项目有 {count} 个服务开放了端口，但均未配置可访问的域名。若现在部署，堆栈可在内部运行，但用户将无法通过公开 URL 访问它。",
+    "openDomains": "打开域名",
     "openServices": "打开服务",
     "deployAnyway": "仍然部署",
     "suggestedFix": "建议的修复方法",
-    "fixStep1": "打开“服务”标签页。",
-    "fixStep2": "选择应对外公开的服务。",
-    "fixStep3": "启用域名暴露并选择公开端口。"
+    "fixStep1": "打开“域名”标签页。",
+    "fixStep2": "为服务端口添加路由或自定义域名。",
+    "fixStep3": "验证域名并部署。"
   },
   "connections": {
+    "nativeClusterHint": "选择与此数据库位于同一集群的项目。只有关联的项目才能获得私有访问权限。",
+    "nativeNoTargets": "目前没有其他项目使用此集群。",
     "useInProject": "在项目中使用",
     "title": "在项目中使用",
-    "subtitle": "将此数据库作为现成连接接入另一个项目。",
+    "subtitle": "通过连接与其他项目共享此服务。",
     "targetLabel": "项目",
     "targetPlaceholder": "选择一个项目…",
     "valueLabel": "要注入的值",
@@ -423,15 +453,24 @@
     "forwardShort": "转发",
     "usedByTitle": "被使用于",
     "usedByOpen": "打开项目",
-    "usedByHint": "有 {count} 个项目依赖此应用的连接。请在使用它的项目中解除链接。",
-    "linkedCountOne": "{count} 个关联应用",
-    "linkedCountOther": "{count} 个关联应用",
-    "linkedHint": "本项目连接使用，但并不运行它们。",
-    "linkedBadge": "已关联",
+    "usedByHint": "{count} 个项目正在使用此连接。请从使用方项目断开连接。",
+    "linkedCountOne": "{count} 个已连接服务",
+    "linkedCountOther": "{count} 个已连接服务",
+    "linkedHint": "这些服务由各自的来源项目管理。",
+    "linkedBadge": "已共享",
     "unlink": "解除关联",
-    "openApp": "打开应用",
+    "openApp": "打开来源",
     "internalTitle": "内部地址",
-    "internalDescription": "在同一服务器上从另一个服务私密访问此项目 — 无需公开端口。"
+    "internalDescription": "在同一服务器上从另一个服务私密访问此项目 — 无需公开端口。",
+    "createNew": "新建服务",
+    "connectExisting": "连接现有服务",
+    "existingHint": "使用其他项目中的服务或应用。数据和管理权仍归原项目所有。",
+    "sourceLabel": "来源项目或应用",
+    "sourcePlaceholder": "选择项目或应用…",
+    "loadingServices": "正在加载服务…",
+    "noConnections": "连接信息尚未就绪。请在来源项目中检查服务端口和凭据。",
+    "noSources": "先在其他项目中创建服务，即可在此连接。",
+    "sharedFrom": "由 {project} 共享"
   },
   "incomingWebhooks": {
     "title": "传入 Webhook",
@@ -459,7 +498,8 @@
       "none": "开放"
     },
     "summaryDeploy": "重新部署此项目",
-    "summaryDeployService": "重新部署 {service} 服务",
+    "summaryDeployOne": "重新部署 1 个所选服务",
+    "summaryDeployServices": "同时重新部署 {count} 个服务",
     "summaryJob": "运行 {job} 任务",
     "createTitle": "新建传入 Webhook",
     "createSubtitle": "选择它的功能以及调用方如何认证。",
@@ -467,7 +507,7 @@
     "namePlaceholder": "例如：CI 部署钩子",
     "actionLabel": "操作",
     "actionDeploy": "部署",
-    "actionDeployDesc": "被调用时重新部署此项目（或某个服务）。",
+    "actionDeployDesc": "被调用时重新部署此项目或所选服务。",
     "actionJob": "运行任务",
     "actionJobDesc": "被调用时运行你的某个任务。",
     "serviceLabel": "服务（可选）",
@@ -514,5 +554,5 @@
       "server_unreachable": "服务器不可达"
     }
   },
-  "migrationAwaitingHint": "迁移正在等待你处理 —— 在项目的「高级」标签页中完成切换或回滚"
+  "migrationAwaitingHint": "迁移正在等待你处理 —— 在项目的「设置 → 高级」中完成切换或回滚"
 }

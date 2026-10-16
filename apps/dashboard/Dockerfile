@@ -1,16 +1,20 @@
+# syntax=docker/dockerfile:1
 # ─── Build stage ────────────────────────────────────────
-FROM oven/bun:1.3.10 AS builder
+# Pinned to .bun-version — reproducible official images.
+FROM oven/bun:1.3.14 AS builder
 WORKDIR /app
 
 COPY package.json bun.lock pnpm-workspace.yaml ./
 COPY tsconfig.base.json ./
+COPY patches/ ./patches/
 COPY packages/ ./packages/
 COPY apps/ ./apps/
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_API_PROXY=true
+# Match the API image and the tested dependency graph on remote rebuilds.
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --ignore-scripts \
+    bun install --frozen-lockfile \
  && cd apps/dashboard && bun run build
 
 # ─── Production stage ──────────────────────────────────
