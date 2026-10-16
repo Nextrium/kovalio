@@ -28,6 +28,23 @@ concurrency:
 # unmergeable forever with no visible reason.
 
 jobs:
+  brand-guard:
+    name: Brand guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Fails if any upstream (pre-fork) branding is present. Fix locally with
+      # `node scripts/rebrand-kovalio.mjs`.
+      - name: Check Kovalio branding
+        run: node scripts/rebrand-kovalio.mjs --check
+
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest

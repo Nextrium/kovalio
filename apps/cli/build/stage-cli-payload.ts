@@ -1,10 +1,10 @@
 /**
  * Stage the self-contained, ARCH-INDEPENDENT CLI payload that `scripts/install.sh`
  * (and Windows `install.ps1`) download and run under Node — the distribution that
- * replaces `bun add -g openship`. See the plan in the repo: Node is the shipped
+ * replaces `bun add -g kovalio`. See the plan in the repo: Node is the shipped
  * runtime, Bun is only the build tool.
  *
- * Produces .cli-payload/openship-cli-<tag>.tar.gz (+ .sha256), whose contents are:
+ * Produces .cli-payload/kovalio-cli-<tag>.tar.gz (+ .sha256), whose contents are:
  *   dist/            the tsup CLI bundle (index.js) + staged API (server/) — pure
  *                    JS/WASM, @repo/* inlined, ssh2/dockerode/cpu-features external
  *   node_modules/    the FULL prod closure (commander/chalk/ora/open/@clack +
@@ -52,9 +52,9 @@ const pkg = JSON.parse(readFileSync(join(CLI_DIR, "package.json"), "utf8")) as {
 
 // The release job runs on a tag push, so GITHUB_REF_NAME is the version tag
 // (e.g. v0.5.0); local builds fall back to v<version>. The asset name mirrors
-// the dashboard bundle's `openship-dashboard-<tag>.tar.gz`.
+// the dashboard bundle's `kovalio-dashboard-<tag>.tar.gz`.
 const TAG = process.env.GITHUB_REF_NAME || `v${pkg.version}`;
-const ASSET = `openship-cli-${TAG}.tar.gz`;
+const ASSET = `kovalio-cli-${TAG}.tar.gz`;
 
 if (!existsSync(join(DIST, "index.js"))) {
   console.error(`[stage-cli-payload] ${join(DIST, "index.js")} missing — run \`tsup\` first.`);

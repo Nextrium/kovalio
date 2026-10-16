@@ -1,26 +1,51 @@
-﻿name: Upstream Sync & Kovalio Brand Enforcement
+name: Upstream Sync & Kovalio Brand Enforcement
+
+# Merges oblien/openship into a sync branch, re-applies the Kovalio brand overlay
+# (scripts/rebrand-kovalio.mjs), verifies no upstream branding survived, and opens
+# (or refreshes) a PR into the base branch.
+#
+# Conflicts: the fork's diff against upstream is almost entirely branding, which the
+# overlay regenerates, so conflicting hunks take the upstream side and the overlay
+# re-brands them. Review the PR for any fork-specific change upstream overrode.
+#
+# Token: pushing a merge that touches .github/workflows needs the `workflow` scope,
+# which GITHUB_TOKEN never has. Add a fine-grained PAT (contents, pull-requests and
+# workflows: read/write on this repo) as the SYNC_TOKEN secret. Without it, syncs
+# whose upstream range edits workflows fail at the push step.
 
 on:
   schedule:
-    # Run every Sunday at midnight UTC
-    - cron: '0 0 * * 0'
+    - cron: '0 0 * * 0' # Sundays 00:00 UTC
   workflow_dispatch:
+    inputs:
+      base:
+        description: Branch the sync PR targets
+        default: main
 
 permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_URL: https://github.com/oblien/openship.git
+  SYNC_BRANCH: sync/upstream
+  BASE_BRANCH: ${{ inputs.base || 'main' }}
+
 jobs:
   sync-and-rebrand:
     name: Sync Upstream & Rebrand
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout base branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ env.BASE_BRANCH }}
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -32,24 +57,62 @@ jobs:
           git config user.name "Nextrium Bot"
           git config user.email "bot@nextrium.org"
 
-      - name: Add Upstream Remote & Fetch
+      - name: Fetch upstream
         run: |
-          git remote add upstream https://github.com/oblien/openship.git || true
-          git fetch upstream main
+          git remote add upstream "$UPSTREAM_URL" 2>/dev/null || git remote set-url upstream "$UPSTREAM_URL"
+          git fetch --no-tags upstream main
 
-      - name: Create Sync Branch & Merge Upstream
+      - name: Merge upstream
+        id: merge
         run: |
-          git checkout -B sync-upstream-latest
-          git merge upstream/main -m "chore(sync): merge latest upstream/main" --no-edit || true
+          git checkout -B "$SYNC_BRANCH"
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo "Already up to date with upstream."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git merge upstream/main -X theirs --no-edit -m "chore(sync): merge upstream/main" || true
+          # Whatever -X theirs couldn't settle (modify/delete, rename collisions):
+          # take the upstream side when it has one, otherwise accept its deletion.
+          git diff --name-only --diff-filter=U -z | while IFS= read -r -d '' path; do
+            if git ls-files -u -- "$path" | awk '{print $3}' | grep -qx 3; then
+              git checkout --theirs -- "$path" && git add -- "$path"
+            else
+              git rm -q -- "$path"
+            fi
+          done
+          if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
+            echo "::error::Unresolved conflicts remain"; git status; exit 1
+          fi
+          if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
+            git commit --no-edit
+          fi
+          if grep -rIl --exclude-dir=.git -E '^(<<<<<<<|>>>>>>>) ' . ; then
+            echo "::error::Conflict markers left in the tree"; exit 1
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Run Kovalio Brand Overlay Engine
+      - name: Apply Kovalio brand overlay
+        if: steps.merge.outputs.changed == 'true'
         run: |
           node scripts/rebrand-kovalio.mjs
+          node scripts/rebrand-kovalio.mjs --check
+          git add -A
+          git diff --cached --quiet || git commit -m "chore(brand): enforce Kovalio brand overlay"
 
-      - name: Check for Brand Diffs & Commit
+      - name: Push and open PR
+        if: steps.merge.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            git add -A
-            git commit -m "chore(brand): enforce Kovalio brand overlay across codebase"
-            git push origin sync-upstream-latest --force
+          git push --force origin "$SYNC_BRANCH"
+          upstream_sha=$(git rev-parse --short upstream/main)
+          title="chore(sync): merge upstream/main (${upstream_sha}) with Kovalio branding"
+          body="Automated merge of oblien/openship main (\`${upstream_sha}\`), with the Kovalio brand overlay applied and verified by \`node scripts/rebrand-kovalio.mjs --check\`.
+
+          Conflicting hunks took the upstream side; check that no fork-specific change was overridden."
+          if gh pr view "$SYNC_BRANCH" --json state -q .state 2>/dev/null | grep -qx OPEN; then
+            gh pr edit "$SYNC_BRANCH" --title "$title" --body "$body"
+          else
+            gh pr create --base "$BASE_BRANCH" --head "$SYNC_BRANCH" --title "$title" --body "$body"
           fi

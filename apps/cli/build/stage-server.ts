@@ -1,12 +1,12 @@
 /**
- * Bundle the Openship API into the CLI package so `openship up` can run the
+ * Bundle the Kovalio API into the CLI package so `kovalio up` can run the
  * control plane on the user's Node — no monorepo, no bun, no external Postgres.
  *
  * Produces apps/cli/dist/server/:
  *   index.js       the API as one node-runnable bundle (@repo/* + deps inlined,
  *                  EXCEPT the SSH/Docker native stack — see `external` below)
- *   pglite/        pglite.wasm + pglite.data → OPENSHIP_PGLITE_ASSETS_DIR
- *   migrations/    drizzle .sql → OPENSHIP_MIGRATIONS_DIR
+ *   pglite/        pglite.wasm + pglite.data → KOVALIO_PGLITE_ASSETS_DIR
+ *   migrations/    drizzle .sql → KOVALIO_MIGRATIONS_DIR
  *   engine/        iRedMail engine tree → MAIL_SERVER_ENGINE_DIR (mail-server install source)
  *   lua/           OpenResty scripts read by openresty-lua.ts relative to its own bundled path
  *
