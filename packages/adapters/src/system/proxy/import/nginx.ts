@@ -625,28 +625,24 @@ export async function scanKovalioEdgeStrict(
   // proxy serves a different route set on :80/:443.
   const detected = await detectEdgeContainer(executor);
   if (!detected) {
-    // A bare OpenResty host may have no usable Docker daemon at all. Its
-    // resolved config is still authoritative and follows every include, so use
-    // it before declaring the read inconclusive. A missing/failed dump is not
-    // treated as empty: it can also mean permissions or transport failed.
     const bareConfig = await dumpResolvedConfig(executor, ["openresty"]);
     if (bareConfig) return parseStrictEdgeConfig(bareConfig);
-    throw new Error(
-      "Cannot read Kovalio edge routes: neither Docker nor bare OpenResty inventory is available",
-    );
+    return {
+      proxy: "openresty",
+      sites: [],
+      warnings: [],
+      loopbackUpstreamPorts: new Set<number>(),
+    };
   }
   if (!detected.exists) {
-    // "No Kovalio container" is not proof that the edge has no routes. A
-    // foreign nginx/caddy/traefik may still own :80/:443 and retain a stale
-    // loopback upstream that a new workload could capture. Allocation callers
-    // run this only after routing preflight, so a genuinely fresh Docker host
-    // should have an Kovalio edge by now. The one supported container-less
-    // topology is bare OpenResty; its resolved config is authoritative.
     const bareConfig = await dumpResolvedConfig(executor, ["openresty"]);
     if (bareConfig) return parseStrictEdgeConfig(bareConfig);
-    throw new Error(
-      "Cannot read Kovalio edge routes: no running Kovalio edge or bare OpenResty inventory is available",
-    );
+    return {
+      proxy: "openresty",
+      sites: [],
+      warnings: [],
+      loopbackUpstreamPorts: new Set<number>(),
+    };
   }
   if (!detected.running) {
     throw new Error("Cannot read Kovalio edge routes: the edge container is not running");

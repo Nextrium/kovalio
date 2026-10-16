@@ -426,7 +426,7 @@ async function createSelfHostedPlatform(config: PlatformConfig): Promise<Platfor
   // An `ssh` config is unambiguously remote and always wins; otherwise trust the
   // explicit flag, falling back to the old inference. See PlatformConfig.localHost.
   const targetIsThisMachine = !config.ssh && (config.localHost ?? !config.executor);
-  const useDockerEdge = targetIsThisMachine && process.env.KOVALIO_EDGE_MODE === "docker";
+  const useDockerEdge = targetIsThisMachine && (process.env.KOVALIO_EDGE_MODE === "docker" || Boolean(config.localHost));
   const edgeContainer = process.env.KOVALIO_EDGE_CONTAINER?.trim() || EDGE_CONTAINER_NAME;
 
   // Executor - use injected (managed/pooled) executor, or create a fresh one
