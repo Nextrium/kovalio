@@ -98,8 +98,6 @@ services:
       # Loopback by default (nothing exposed off-box); KOVALIO_BIND_ADDR opts
       # into a public/LAN interface. See the "BIND INTERFACE" note above.
       - "${KOVALIO_BIND_ADDR:-127.0.0.1}:${API_PORT:-4000}:${API_PORT:-4000}"
-    volumes:
-      - //var/run/docker.sock:/var/run/docker.sock
     # Mode + secrets (CLOUD_MODE, DEPLOY_MODE, KOVALIO_TARGET, Oblien, GitHub
     # App, auth secrets, …) all come from .env. The values below OVERRIDE it
     # with the fixed internal port + in-cluster service DNS (compose
