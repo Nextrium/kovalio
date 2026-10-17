@@ -24,7 +24,7 @@ the names rebranded; see section 9 for what in them is not yet true for Kovalio.
 | Area | State |
 |---|---|
 | Upstream base on `main` | v0.9.2 (`480f17abf`) plus fork work |
-| Next sync | PR #10 brings v0.9.3 (`2e42298df`, 43 commits). CI passes; CodeQL found 3 new alerts in the new upstream code (see section 8) |
+| Next sync | PR #10 brings v0.9.3 (`2e42298df`, 43 commits). It also carries a fix for the sync workflow and a fork patch for a ReDoS that v0.9.3 introduced; the other two new CodeQL alerts were false positives |
 | Releases | None yet. No desktop downloads, no `kovalio` npm package, no `ghcr.io/nextrium/kovalio-*` images |
 | Install domain, docs site | `get.kovalio.nextrium.org` doesn't resolve; `nextrium.org/docs` returns 404 |
 | CodeQL on `main` | 59 open alerts, all in categories not reviewed yet; 172 dismissed with reasons (see [docs/codeql-triage.md](docs/codeql-triage.md)) |
@@ -110,6 +110,12 @@ meaning-preserving like branding, so it lives in the same pipeline.
 - **Token:** the `SYNC_TOKEN` secret is a fine-grained token with Contents, Pull requests
   and Workflows set to read and write on this repository. The organization forbids
   Actions-created PRs, which is why `GITHUB_TOKEN` isn't used.
+- **`GH_REPO` is pinned in the workflow, and it must stay.** This repository is a GitHub
+  fork of upstream, and the sync adds an `upstream` remote. Without `GH_REPO`, the `gh`
+  CLI targets upstream's repository instead of ours. That made the first run fail to
+  open its PR, and it would have broken the open-PR skip and the conflict issue too.
+  Any script you write that calls `gh` from a checkout with that remote needs
+  `--repo Nextrium/kovalio` or `GH_REPO`.
 
 ## 6. CI and the Fork guard
 
@@ -156,9 +162,8 @@ meaning-preserving like branding, so it lives in the same pipeline.
 
 | Item | Notes |
 |---|---|
-| Sync PR #10 (v0.9.3) | CodeQL flagged `packages/adapters/src/runtime/docker-build-plan.ts:46`, a build-cache regex that is quadratic on a long repeated `--mount=type=cache,` (about 7.6 s on 200 KB; needs an authenticated user and slows that user's own build). The two `node-output.ts` alerts are false positives (JSON in a base64, shell-quoted `node -e` script). Options: merge as is and track it, or patch it as a fork patch with a fork test. |
+| Sync PR #10 (v0.9.3) | Ready to review and merge. Merge it before the next Sunday run: the `GH_REPO` fix to the sync workflow only takes effect once it's on `main`. |
 | First release | Publishing a `v*.*.*` tag runs `docker-images.yml` and creates the images, desktop builds and CLI package the README already links to. |
-| `SYNC_TOKEN` permissions | The first run pushed but couldn't open its PR: the token needs Pull requests set to read and write. |
 | README | Still upstream's content (section 9). |
 | Remaining CodeQL alerts | 59 unreviewed, mostly missing regex anchors and file/HTTP data flow. |
 
