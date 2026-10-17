@@ -6,6 +6,8 @@
 //
 // Run after every upstream merge (the Upstream Sync workflow does this) so new or
 // moved upstream files are branded too. CI runs --check so branding can't regress.
+// `rebrandText` is also imported by scripts/brand-merge-driver.mjs, which applies
+// the same rules to upstream's side of a merge so branding never shows as a conflict.
 //
 // Base64 literals that decode to branded text are rebranded too (see BASE64_LITERAL).
 //
@@ -15,12 +17,17 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, extname, join } from "node:path";
+import { pathToFileURL } from "node:url";
 
-const CHECK = process.argv.includes("--check");
-const ROOT = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
-
-// The overlay itself and the sync workflow (which needs the real upstream URL).
-const EXEMPT_FILES = new Set(["scripts/rebrand-kovalio.mjs", ".github/workflows/upstream-sync.yml"]);
+// The overlay itself and the sync tooling (which needs the real upstream URL).
+const EXEMPT_FILES = new Set([
+  "scripts/rebrand-kovalio.mjs",
+  "scripts/brand-merge-driver.mjs",
+  "scripts/sync-upstream.sh",
+  ".github/workflows/upstream-sync.yml",
+]);
+// The overlay's and merge driver's tests feed upstream branding in as input.
+const isExempt = (rel) => EXEMPT_FILES.has(rel) || rel.startsWith("scripts/test/");
 const KEEP_MARKER = "brand-guard:keep";
 
 const BINARY_EXTENSIONS = new Set([
@@ -77,7 +84,7 @@ function decodeBrandedBase64(token) {
   return decoded;
 }
 
-function rebrandText(text) {
+export function rebrandText(text) {
   const plain = (s) => REPLACEMENTS.reduce((acc, [pattern, to]) => acc.replace(pattern, to), s);
   const apply = (s) =>
     plain(
@@ -93,7 +100,14 @@ function rebrandText(text) {
     .join("\n");
 }
 
-function listFiles() {
+/** Text the overlay may rewrite: valid UTF-8 with no NUL bytes in its first 8 KB. */
+export function asText(buf) {
+  if (buf.subarray(0, 8000).includes(0)) return null;
+  const text = buf.toString("utf8");
+  return Buffer.from(text, "utf8").equals(buf) ? text : null;
+}
+
+function listFiles(ROOT) {
   const out = execFileSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], {
     cwd: ROOT,
     encoding: "utf8",
@@ -102,7 +116,7 @@ function listFiles() {
   return [...new Set(out.split("\0").filter(Boolean))].filter((p) => existsSync(join(ROOT, p)));
 }
 
-function removeEmptyParents(relDir) {
+function removeEmptyParents(ROOT, relDir) {
   let dir = relDir;
   while (dir && dir !== ".") {
     const abs = join(ROOT, dir);
@@ -112,39 +126,50 @@ function removeEmptyParents(relDir) {
   }
 }
 
+function main() {
+const CHECK = process.argv.includes("--check");
+const ROOT = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
 const findings = [];
+const collisions = [];
 let renamed = 0;
 let rewritten = 0;
 
 // 1. Paths: any file whose path carries the brand moves to the Kovalio name. If the
-//    target already exists, it is a stale fork copy of a file upstream has since
-//    changed under its original name, so the upstream version wins.
-for (const from of listFiles()) {
-  if (EXEMPT_FILES.has(from) || !/openship/i.test(from)) continue;
+//    Kovalio-named file already exists with different content, both versions are kept
+//    and reported: which one wins is a human decision, never the overlay's.
+for (const from of listFiles(ROOT)) {
+  if (isExempt(from) || !/openship/i.test(from)) continue;
   const to = rebrandText(from);
   if (CHECK) {
     findings.push(`path: ${from} -> ${to}`);
     continue;
   }
   if (existsSync(join(ROOT, to))) {
-    rmSync(join(ROOT, to), { force: true });
-    console.log(`[rebrand] Replaced stale ${to} with upstream ${from}`);
+    const incoming = readFileSync(join(ROOT, from));
+    const incomingText = asText(incoming);
+    const branded = incomingText === null ? incoming : Buffer.from(rebrandText(incomingText), "utf8");
+    if (!branded.equals(readFileSync(join(ROOT, to)))) {
+      collisions.push(`${from} and ${to}`);
+      continue;
+    }
+    rmSync(join(ROOT, from), { force: true });
+    removeEmptyParents(ROOT, dirname(from));
+    console.log(`[rebrand] ${from} duplicates ${to}; removed`);
+    continue;
   }
   mkdirSync(dirname(join(ROOT, to)), { recursive: true });
   renameSync(join(ROOT, from), join(ROOT, to));
-  removeEmptyParents(dirname(from));
+  removeEmptyParents(ROOT, dirname(from));
   renamed++;
   console.log(`[rebrand] Renamed: ${from} -> ${to}`);
 }
 
 // 2. Contents.
-for (const rel of listFiles()) {
-  if (EXEMPT_FILES.has(rel) || BINARY_EXTENSIONS.has(extname(rel).toLowerCase())) continue;
+for (const rel of listFiles(ROOT)) {
+  if (isExempt(rel) || BINARY_EXTENSIONS.has(extname(rel).toLowerCase())) continue;
   const abs = join(ROOT, rel);
-  const buf = readFileSync(abs);
-  if (buf.subarray(0, 8000).includes(0)) continue; // binary
-  const text = buf.toString("utf8");
-  if (!Buffer.from(text, "utf8").equals(buf)) continue; // not valid UTF-8; don't risk corrupting it
+  const text = asText(readFileSync(abs));
+  if (text === null) continue; // binary or not UTF-8; don't risk corrupting it
   const branded = rebrandText(text);
   if (branded === text) continue;
   if (CHECK) {
@@ -176,3 +201,15 @@ if (CHECK) {
 }
 
 console.log(`Brand overlay done: ${renamed} path(s) renamed, ${rewritten} file(s) rewritten.`);
+if (collisions.length > 0) {
+  console.error(
+    `Brand overlay: ${collisions.length} path collision(s) need a decision. Each upstream file
+` +
+      "differs from the existing Kovalio-named file; keep one, delete the other, re-run:",
+  );
+  for (const c of collisions) console.error(`  ${c}`);
+  process.exit(2);
+}
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

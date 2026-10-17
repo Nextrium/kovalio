@@ -1,0 +1,2 @@
+# Bash rejects CRLF line endings; keep the sync script LF on every checkout.
+scripts/sync-upstream.sh text eol=lf

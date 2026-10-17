@@ -1,17 +1,19 @@
 name: Upstream Sync & Kovalio Brand Enforcement
 
-# Merges oblien/openship into a sync branch, re-applies the Kovalio brand overlay
-# (scripts/rebrand-kovalio.mjs), verifies no upstream branding survived, and opens
-# (or refreshes) a PR into the base branch.
+# Merges oblien/openship into sync/upstream with branding factored out
+# (scripts/sync-upstream.sh + scripts/brand-merge-driver.mjs), applies and verifies
+# the Kovalio overlay, and opens (or refreshes) a PR into the base branch. CI and the
+# required Fork guard then run on that PR, so nothing reaches the base unreviewed.
 #
-# Conflicts: the fork's diff against upstream is almost entirely branding, which the
-# overlay regenerates, so conflicting hunks take the upstream side and the overlay
-# re-brands them. Review the PR for any fork-specific change upstream overrode.
+# Conflicts are never resolved here. With branding factored out, a conflict means a
+# fork change overlaps an upstream change, and which side wins is a person's call.
+# The run fails and files an issue listing the conflicts; resolve them locally with
+# `bash scripts/sync-upstream.sh`, which reproduces this exact merge.
 #
-# Token: pushing a merge that touches .github/workflows needs the `workflow` scope,
-# which GITHUB_TOKEN never has. Add a fine-grained PAT (contents, pull-requests and
-# workflows: read/write on this repo) as the SYNC_TOKEN secret. Without it, syncs
-# whose upstream range edits workflows fail at the push step.
+# Token: SYNC_TOKEN (fine-grained PAT: contents, pull requests and workflows,
+# read/write) pushes the branch and opens the PR. GITHUB_TOKEN can do neither here:
+# it lacks the `workflow` scope and the org forbids Actions-created PRs. A PR the
+# PAT opens also triggers CI, which a GITHUB_TOKEN push would not.
 
 on:
   schedule:
@@ -23,15 +25,14 @@ on:
         default: main
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  issues: write
 
 concurrency:
   group: upstream-sync
   cancel-in-progress: false
 
 env:
-  UPSTREAM_URL: https://github.com/oblien/openship.git
   SYNC_BRANCH: sync/upstream
   BASE_BRANCH: ${{ inputs.base || 'main' }}
 
@@ -45,7 +46,7 @@ jobs:
         with:
           ref: ${{ env.BASE_BRANCH }}
           fetch-depth: 0
-          token: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.SYNC_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -57,62 +58,77 @@ jobs:
           git config user.name "Nextrium Bot"
           git config user.email "bot@nextrium.org"
 
-      - name: Fetch upstream
+      # An open sync PR may carry hand-resolved decisions; never force-push over it.
+      # New upstream commits wait for the next run after it's merged or closed.
+      - name: Skip while a sync PR is open
+        id: open
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
         run: |
-          git remote add upstream "$UPSTREAM_URL" 2>/dev/null || git remote set-url upstream "$UPSTREAM_URL"
-          git fetch --no-tags upstream main
+          if gh pr view "$SYNC_BRANCH" --json state -q .state 2>/dev/null | grep -qx OPEN; then
+            echo "::notice::A sync PR is already open; review it first."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Merge upstream
         id: merge
+        if: steps.open.outputs.skip != 'true'
         run: |
-          git checkout -B "$SYNC_BRANCH"
-          if git merge-base --is-ancestor upstream/main HEAD; then
-            echo "Already up to date with upstream."
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          git merge upstream/main -X theirs --no-edit -m "chore(sync): merge upstream/main" || true
-          # Whatever -X theirs couldn't settle (modify/delete, rename collisions):
-          # take the upstream side when it has one, otherwise accept its deletion.
-          git diff --name-only --diff-filter=U -z | while IFS= read -r -d '' path; do
-            if git ls-files -u -- "$path" | awk '{print $3}' | grep -qx 3; then
-              git checkout --theirs -- "$path" && git add -- "$path"
-            else
-              git rm -q -- "$path"
-            fi
-          done
-          if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
-            echo "::error::Unresolved conflicts remain"; git status; exit 1
-          fi
-          if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
-            git commit --no-edit
-          fi
-          if git grep -lE '^(<<<<<<<|>>>>>>>) ' -- . ; then
-            echo "::error::Conflict markers left in the tree"; exit 1
-          fi
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-
-      - name: Apply Kovalio brand overlay
-        if: steps.merge.outputs.changed == 'true'
-        run: |
-          node scripts/rebrand-kovalio.mjs
-          node scripts/rebrand-kovalio.mjs --check
-          git add -A
-          git diff --cached --quiet || git commit -m "chore(brand): enforce Kovalio brand overlay"
+          set +e
+          bash scripts/sync-upstream.sh "$BASE_BRANCH"
+          status=$?
+          set -e
+          case "$status" in
+            0) echo "result=merged" >> "$GITHUB_OUTPUT" ;;
+            3) echo "result=current" >> "$GITHUB_OUTPUT" ;;
+            1) echo "result=conflict" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::sync-upstream.sh failed ($status)"; exit "$status" ;;
+          esac
+          echo "upstream_sha=$(git rev-parse --short upstream/main)" >> "$GITHUB_OUTPUT"
 
       - name: Push and open PR
-        if: steps.merge.outputs.changed == 'true'
+        if: steps.merge.outputs.result == 'merged'
         env:
-          GH_TOKEN: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+          UPSTREAM_SHA: ${{ steps.merge.outputs.upstream_sha }}
         run: |
           git push --force origin "$SYNC_BRANCH"
-          upstream_sha=$(git rev-parse --short upstream/main)
-          title="chore(sync): merge upstream/main (${upstream_sha}) with Kovalio branding"
-          body="Automated merge of oblien/openship main (\`${upstream_sha}\`), with the Kovalio brand overlay applied and verified by \`node scripts/rebrand-kovalio.mjs --check\`.
+          title="chore(sync): merge upstream/main (${UPSTREAM_SHA}) with Kovalio branding"
+          body="Automated merge of oblien/openship main (\`${UPSTREAM_SHA}\`) with the Kovalio overlay applied and verified.
 
-          Conflicting hunks took the upstream side; check that no fork-specific change was overridden."
-          if gh pr view "$SYNC_BRANCH" --json state -q .state 2>/dev/null | grep -qx OPEN; then
-            gh pr edit "$SYNC_BRANCH" --title "$title" --body "$body"
+          Branding was factored out of the merge and no fork change overlapped an upstream change. Review the upstream changes and the checks before merging; the Fork guard check covers fork-specific fixes and features."
+          gh pr create --base "$BASE_BRANCH" --head "$SYNC_BRANCH" --title "$title" --body "$body"
+
+      - name: Report conflicts
+        if: steps.merge.outputs.result == 'conflict'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM_SHA: ${{ steps.merge.outputs.upstream_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "The upstream sync to \`${UPSTREAM_SHA}\` stopped: these files have a fork change that overlaps an upstream change. Branding was already factored out, so each one is a real decision."
+            echo
+            if [ -s .git/SYNC_CONFLICTS ]; then sed 's/^/- `/; s/$/`/' .git/SYNC_CONFLICTS; else echo "- path collisions found by the overlay (see the run log)"; fi
+            echo
+            echo "Resolve locally:"
+            echo
+            echo '```'
+            echo "bash scripts/sync-upstream.sh ${BASE_BRANCH}"
+            echo "# decide each conflict, then:"
+            echo "git add -A && node scripts/rebrand-kovalio.mjs && node scripts/rebrand-kovalio.mjs --check"
+            echo "git add -A && git commit --no-edit"
+            echo "git push --force origin ${SYNC_BRANCH}   # then open a PR into ${BASE_BRANCH}"
+            echo '```'
+            echo
+            echo "Run: ${RUN_URL}"
+          } > issue.md
+          title="Upstream sync needs a decision"
+          number=$(gh issue list --state open --search "in:title \"$title\"" --json number -q '.[0].number')
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file issue.md
           else
-            gh pr create --base "$BASE_BRANCH" --head "$SYNC_BRANCH" --title "$title" --body "$body"
+            gh issue create --title "$title" --body-file issue.md
           fi
+          echo "::error::Upstream sync stopped on conflicts; see the issue."
+          exit 1
