@@ -22,7 +22,7 @@ on:
     inputs:
       base:
         description: Branch the sync PR targets
-        default: main
+        default: develop
 
 permissions:
   contents: read
@@ -34,7 +34,13 @@ concurrency:
 
 env:
   SYNC_BRANCH: sync/upstream
-  BASE_BRANCH: ${{ inputs.base || 'main' }}
+  # Syncs land in develop like every other change, then reach main through the usual
+  # develop -> main PR.
+  BASE_BRANCH: ${{ inputs.base || 'develop' }}
+  # This repo is a GitHub fork, and the checkout gains an `upstream` remote; without
+  # an explicit repo, gh resolves to oblien/openship and every PR/issue call (and the
+  # open-PR skip check) silently targets upstream.
+  GH_REPO: ${{ github.repository }}
 
 jobs:
   sync-and-rebrand:

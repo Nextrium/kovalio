@@ -7,7 +7,7 @@ test that proves it still holds after an upstream sync.
 ## How syncs work
 
 - **Every Sunday**, [upstream-sync.yml](.github/workflows/upstream-sync.yml) merges
-  upstream into `sync/upstream` and opens a PR. It skips the run while a sync PR is
+  upstream into `sync/upstream` and opens a PR into `develop`. It skips the run while a sync PR is
   still open.
 - **Branding is factored out of the merge.** The [merge driver](scripts/brand-merge-driver.mjs)
   applies the overlay to upstream's side first, so only real changes are compared.
@@ -36,6 +36,7 @@ test that proves it still holds after an upstream sync.
 | ReDoS: trailing-run regexes (`/\/+$/`, `\|\/+$/`, `/\.+$/`, `/-+$/`, `\|-+$/`, `/[ \t]+#+$/`) rewritten with a lookbehind, by the overlay (`hardenText`) | ~80 files | overlay `--check` in Fork guard, `packages/core/src/security.fork.test.ts` |
 | ReDoS: `render.yaml` and `railway.toml` field parsers (`prefix\s*(.+)$`) use `matchTrailingField` | `packages/core/src/metadata/render.ts`, `railway.ts` | `packages/core/src/linear-match.fork.test.ts`, `security.fork.test.ts` |
 | ReDoS: Gemfile `ruby(...)` call parser uses `matchParenthesizedCall` | `packages/core/src/languages/ruby.ts` | `packages/core/src/linear-match.fork.test.ts` |
+| ReDoS: build-cache target scan uses `cacheMountTargets` (since v0.9.3) | `packages/adapters/src/runtime/docker-build-plan.ts` | `packages/adapters/src/runtime/cache-mount-targets.fork.test.ts` |
 | ReDoS: email checks bounded to 254 characters (public waitlist, ACME email) | `apps/dashboard/src/app/api/cloud-waitlist/route.ts`, `packages/adapters/src/infra/nginx.ts` | `apps/dashboard/src/security.fork.test.ts` |
 | Session ids use `randomUUID()` instead of 6 `Math.random` characters | `edge-consent-session.ts`, `setup-session.ts`, `server-container-session.ts` | `apps/api/src/security.fork.test.ts` |
 | DMARC XML entities decode once (no `&amp;lt;` → `<`) | `apps/api/src/modules/mail/dmarc/xml-parser.ts` | `apps/api/src/security.fork.test.ts` |

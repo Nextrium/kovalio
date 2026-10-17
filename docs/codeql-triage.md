@@ -31,6 +31,7 @@ each pinned by a fork test that fails without it.
 | Polynomial ReDoS | `render.yaml` (`startCommand:`, `buildCommand:`, `key:`, `value:`) and `railway.toml` (`key = value`) parsers | Repository content (e.g. a PR preview) can stall a deploy | `matchTrailingField` in the fork-only `packages/core/src/linear-match.ts`, identical to `prefix\s*(.+)$` on every string checked | 100 KB ending in a lone `\r` or U+2028: **12–23 s** before |
 | Polynomial ReDoS | Gemfile `ruby(...)` call parser | Same | `matchParenthesizedCall`, identical to the regex on every string up to length 7 | 20 KB ending in U+2028: 377 ms before, quadratic |
 | Polynomial ReDoS | service-label and static-root slugs (`/^-+\|-+$/g`) | Service names and hostnames | lookbehind rewrite, added to the overlay | 20 KB of `-`: 1.6 s before |
+| Polynomial ReDoS (new in v0.9.3) | build-cache target scan in `docker-build-plan.ts` | A project's build command lands in the scanned Dockerfile | `cacheMountTargets` in the fork-only `packages/adapters/src/runtime/cache-mount-targets.ts`, identical to the regex on all token sequences up to length 5 and 20,000 random recipes | build command of 20,000 repeated `--mount=type=cache,`: **14.3 s** before |
 | Polynomial ReDoS | `isLoopbackHost` trailing dots | Same | lookbehind rewrite | 50 KB: **5.2 s** before |
 | Polynomial ReDoS | ACME email check | Admin-set value | length ≤ 254 | |
 | Insecure randomness (`js/insecure-randomness`) | setup, edge-consent and container-apply session ids | Ids were a timestamp plus 6 random characters, and `respond`/`events` look a session up by id alone | `crypto.randomUUID()` | |
@@ -55,6 +56,7 @@ each pinned by a fork test that fails without it.
 | Command-line injection | 2 | AppImage launch: `spawn` without a shell |
 | Shell command built from input (`js/shell-command-constructed-from-input`) | 26 | Values are `sq()`-quoted where assigned, numeric (ports, pids, line counts), base64, or fixed constants; CodeQL doesn't follow quoting through variables. `bare.ts` runs the project's own install command by design |
 | Indirect command-line injection | 7 | Executors run commands the platform composes; the alert is at the executor boundary |
+| Improper code sanitization (`js/bad-code-sanitization`, new in v0.9.3) | 2 | `node-output.ts`: options are `JSON.stringify`-ed into a script that is base64-encoded and shell-quoted before `node -e`; JSON is valid JavaScript on Node 22+, and no HTML is involved |
 | Polynomial ReDoS, `semver` range | 1 | Each comparator comes from splitting on `/\s+/`, so it never holds the whitespace the trigger needs |
 | Polynomial ReDoS, `env-file` trailing backslashes | 1 | Measured 0 ms on CodeQL's trigger |
 | Polynomial ReDoS, already fixed | ~4 | CodeQL still reports the old shape at lines rewritten to `matchTrailingField` or a lookbehind |
