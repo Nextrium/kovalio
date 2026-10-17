@@ -1,4 +1,5 @@
 import type { LanguageDetector } from "./types";
+import { matchParenthesizedCall } from "../linear-match";
 
 /**
  * Ruby - `Gemfile` lists gems via `gem 'name', '~> X.Y'` directives.
@@ -78,7 +79,7 @@ export function parseRubyVersion(filename: string, content: string): string | nu
       if (!line) return null;
       let argument = line[1].trim();
       if (argument.startsWith("(")) {
-        const call = argument.match(/^\((.*)\)[\t ]*(?:#.*)?$/);
+        const call = matchParenthesizedCall(argument);
         if (!call) return null;
         argument = call[1];
       }
