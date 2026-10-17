@@ -315,11 +315,19 @@ export function isValidEnvKey(key: string): boolean {
  * Existing newlines are honoured as hard breaks, so a block that already has
  * deliberate line structure — a copy-paste command on its own line, say — keeps it
  * instead of being reflowed into the paragraph above.
+ *
+ * A `backtick-quoted` span is kept whole, so a quoted multi-word command never
+ * breaks across lines whatever the surrounding copy's length.
  */
 export function wrapText(text: string, width = 88): string[] {
   const out: string[] = [];
   for (const paragraph of text.split("\n")) {
-    const words = paragraph.split(/\s+/).filter(Boolean);
+    const words: string[] = [];
+    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+      const open = words.length > 0 && (words[words.length - 1].match(/`/g)?.length ?? 0) % 2 === 1;
+      if (open) words[words.length - 1] += ` ${word}`;
+      else words.push(word);
+    }
     if (words.length === 0) {
       out.push("");
       continue;
