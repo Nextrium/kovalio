@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * The mailbox-creation path must reach the mail engine, not the host (GH-562).
  *
  * `doveadm` and the `vmail` user live wherever Dovecot does. On a container-flavor
- * box that is INSIDE `openship-mail` and emphatically not on the host — yet
+ * box that is INSIDE `kovalio-mail` and emphatically not on the host — yet
  * `hashPassword` ran a bare `doveadm pw` and `createMaildirOnDisk` ran a bare
  * `chown -R vmail:vmail`, both straight against the host executor. The result was a
  * 500 on every mailbox create on a containerized install: no `doveadm` on the host
@@ -22,26 +22,26 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 vi.mock("@repo/adapters", () => ({
-  HOST_STATE_DIR: "/root/.openship",
+  HOST_STATE_DIR: "/root/.kovalio",
   detectMailEngine: vi.fn(),
-  MAIL_CONTAINER: "openship-mail",
-  MAIL_DB_CONTAINER: "openship-mail-db",
+  MAIL_CONTAINER: "kovalio-mail",
+  MAIL_DB_CONTAINER: "kovalio-mail-db",
   MAIL_DB_NAME: "vmail",
   MAIL_HOST_PATHS: {
-    saslPasswd: "/opt/openship/mail/postfix/sasl_passwd",
-    senderRelayhost: "/opt/openship/mail/postfix/sender_relayhost",
-    amavisUserConf: "/opt/openship/mail/amavis/50-user",
+    saslPasswd: "/opt/kovalio/mail/postfix/sasl_passwd",
+    senderRelayhost: "/opt/kovalio/mail/postfix/sender_relayhost",
+    amavisUserConf: "/opt/kovalio/mail/amavis/50-user",
   },
 }));
 
 import { detectMailEngine } from "@repo/adapters";
-import { hashPassword } from "../../../src/modules/mail/admin/password";
+import { hashPassword } from "@repo/platform/engine/modules/mail/admin/password";
 import {
   createMaildirOnDisk,
   generateMaildir,
   removeMaildirOnDisk,
-} from "../../../src/modules/mail/admin/maildir";
-import { forgetMailEngine } from "../../../src/modules/mail/mail-engine";
+} from "@repo/platform/engine/modules/mail/admin/maildir";
+import { forgetMailEngine } from "@repo/platform/engine/modules/mail/mail-engine";
 
 const HASH = "{SSHA512}c2FsdGVkaGFzaHZhbHVl";
 
@@ -49,7 +49,7 @@ const CONTAINER = {
   flavor: "container" as const,
   running: true,
   exists: true,
-  image: "ghcr.io/oblien/openship-mail:0.6.5",
+  image: "ghcr.io/nextrium/kovalio-mail:0.6.5",
 };
 const HOST = { flavor: "host" as const, running: true, exists: true, image: null };
 
@@ -78,7 +78,7 @@ describe("hashPassword transport", () => {
     await expect(hashPassword(r.exec as never, "sekrit-pw")).resolves.toBe(HASH);
 
     // The prefix IS the fix. Without it the host answers, and the host has no doveadm.
-    expect(r.last()).toContain("docker exec openship-mail ");
+    expect(r.last()).toContain("docker exec kovalio-mail ");
     expect(r.last()).toContain("doveadm pw -s SSHA512");
   });
 
@@ -138,7 +138,7 @@ describe("createMaildirOnDisk transport + layout", () => {
 
     // `docker exec <c> a && b` would run `a` in the engine and `b` on the HOST —
     // which is how a chown meant for the engine's vmail user hits a host without one.
-    expect(cmd).toMatch(/^docker exec openship-mail sh -c /);
+    expect(cmd).toMatch(/^docker exec kovalio-mail sh -c /);
     const afterShC = cmd.slice(cmd.indexOf("sh -c "));
     expect(afterShC.startsWith("sh -c '")).toBe(true);
     // Every && must sit INSIDE the quoted script, never between top-level words.
@@ -152,7 +152,7 @@ describe("createMaildirOnDisk transport + layout", () => {
     await createMaildirOnDisk(r.exec as never, generateMaildir("acme.com", "carol"));
 
     expect(r.last()).toContain("chown -R vmail:vmail");
-    expect(r.last()).toMatch(/^docker exec openship-mail /);
+    expect(r.last()).toMatch(/^docker exec kovalio-mail /);
   });
 
   it("stays bare on a legacy host-flavor box", async () => {
@@ -175,7 +175,7 @@ describe("removeMaildirOnDisk", () => {
     await removeMaildirOnDisk(r.exec as never, layout);
 
     expect(r.last()).toBe(
-      `docker exec openship-mail rm -rf '/var/vmail/vmail1/${layout.maildir}'`,
+      `docker exec kovalio-mail rm -rf '/var/vmail/vmail1/${layout.maildir}'`,
     );
   });
 

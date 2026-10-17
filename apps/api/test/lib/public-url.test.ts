@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-// Mock the API config so the resolver reads a controllable OPENSHIP_PUBLIC_URL
+// Mock the API config so the resolver reads a controllable KOVALIO_PUBLIC_URL
 // without booting the real env module (and its INTERNAL_TOKEN guard). vi.hoisted
 // lets the hoisted vi.mock factory reference these mutable objects.
 const { mockEnv, mockRuntimeTarget } = vi.hoisted(() => ({
-  mockEnv: { OPENSHIP_PUBLIC_URL: undefined as string | undefined },
+  mockEnv: { KOVALIO_PUBLIC_URL: undefined as string | undefined },
   mockRuntimeTarget: { api: "http://localhost:4000", dashboard: "http://localhost:3001" },
 }));
-vi.mock("../../src/config/env", () => ({
+vi.mock("@repo/platform/engine/config/env", () => ({
   env: mockEnv,
   runtimeTarget: mockRuntimeTarget,
   // public-url.ts reads localDashboardUrl for resolveDashboardPublicUrl's fallback.
@@ -22,13 +22,13 @@ import {
   resolveAuthBaseUrl,
   requestApiPublicUrl,
   requestPublicOrigin,
-} from "../../src/lib/public-url";
+} from "@repo/platform/engine/lib/public-url";
 
 afterEach(() => {
-  mockEnv.OPENSHIP_PUBLIC_URL = undefined;
+  mockEnv.KOVALIO_PUBLIC_URL = undefined;
 });
 
-describe("public-url resolver — no OPENSHIP_PUBLIC_URL (cloud / dev)", () => {
+describe("public-url resolver — no KOVALIO_PUBLIC_URL (cloud / dev)", () => {
   it("falls back to runtimeTarget (preserves today's behavior)", () => {
     expect(resolveApiPublicUrl()).toBe("http://localhost:4000");
     expect(resolveDashboardPublicUrl()).toBe("http://localhost:3001");
@@ -38,18 +38,18 @@ describe("public-url resolver — no OPENSHIP_PUBLIC_URL (cloud / dev)", () => {
 
 describe("public-url resolver — self-hosted --public-url", () => {
   it("API base is <public>/api/proxy (reachable via the dashboard same-origin proxy)", () => {
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://ops.example.com";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://ops.example.com";
     expect(resolveApiPublicUrl()).toBe("https://ops.example.com/api/proxy");
     expect(resolveDashboardPublicUrl()).toBe("https://ops.example.com");
   });
 
   it("shared webhook URL is the proxied, publicly-reachable callback (not localhost)", () => {
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://ops.example.com";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://ops.example.com";
     expect(sharedWebhookUrl()).toBe("https://ops.example.com/api/proxy/api/webhooks/github");
   });
 
   it("strips a trailing slash on the public URL", () => {
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://ops.example.com/";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://ops.example.com/";
     expect(resolveApiPublicUrl()).toBe("https://ops.example.com/api/proxy");
   });
 });
@@ -65,7 +65,7 @@ describe("resolveAuthBaseUrl (Better Auth baseURL)", () => {
     // discovery handlers once at startup with no request in scope, so the
     // dynamic base resolved to "" → null discovery body + a 500. A static
     // baseURL is the fix (and RFC 8414 requires a stable issuer).
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://ops.example.com";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://ops.example.com";
     expect(resolveAuthBaseUrl()).toBe("https://ops.example.com");
   });
 });
@@ -80,7 +80,7 @@ describe("requestPublicOrigin (MCP WWW-Authenticate)", () => {
   });
 
   it("falls back to the configured public URL when no forwarded headers", () => {
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://ops.example.com";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://ops.example.com";
     const req = new Request("http://127.0.0.1:4000/api/mcp", { method: "POST" });
     expect(requestPublicOrigin(req)).toBe("https://ops.example.com");
   });
@@ -93,7 +93,7 @@ describe("requestPublicOrigin (MCP WWW-Authenticate)", () => {
 
 describe("requestApiPublicUrl (URLs handed back to the caller)", () => {
   it("is the proxied public base when a public URL is configured", () => {
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://ops.example.com";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://ops.example.com";
     const req = new Request("http://127.0.0.1:4000/api/projects/folder/session", { method: "POST" });
     expect(requestApiPublicUrl(req)).toBe("https://ops.example.com/api/proxy");
   });
@@ -107,14 +107,14 @@ describe("requestApiPublicUrl (URLs handed back to the caller)", () => {
 });
 
 describe("domainWebhookUrl (per-project domain strategy)", () => {
-  it("builds the /_openship/hooks callback, https by default", () => {
+  it("builds the /_kovalio/hooks callback, https by default", () => {
     expect(domainWebhookUrl("hooks.example.com")).toBe(
-      "https://hooks.example.com/_openship/hooks/github",
+      "https://hooks.example.com/_kovalio/hooks/github",
     );
   });
   it("honors an explicit http scheme (pre-TLS)", () => {
     expect(domainWebhookUrl("hooks.example.com", "http")).toBe(
-      "http://hooks.example.com/_openship/hooks/github",
+      "http://hooks.example.com/_kovalio/hooks/github",
     );
   });
 });

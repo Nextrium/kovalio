@@ -51,8 +51,8 @@ describe("DnsRecordCard", () => {
     const out = text(
       render({
         type: "TXT",
-        host: "_openship-challenge",
-        name: "_openship-challenge.hekai.org",
+        host: "_kovalio-challenge",
+        name: "_kovalio-challenge.hekai.org",
         value: "abc123",
       }),
     );
@@ -67,7 +67,7 @@ describe("DnsRecordCard", () => {
     expect(alias).toContain("Points www.hekai.org at hekai.org");
 
     const edge = text(
-      render({ type: "CNAME", host: "@", name: "hekai.org", value: "edge.openship.io" }),
+      render({ type: "CNAME", host: "@", name: "hekai.org", value: "edge.nextrium.org" }),
     );
     expect(edge).toContain("through the edge network");
   });

@@ -38,10 +38,10 @@ export interface ComponentInstall {
 export type InstallPlan = Answer<ComponentInstall>;
 
 /**
- * The oldest Docker Engine Openship drives, and the floor an EXISTING install has
+ * The oldest Docker Engine Kovalio drives, and the floor an EXISTING install has
  * to clear for `installDocker` to leave it alone (#491).
  *
- * Deliberately a FLOOR, not "current". Openship never upgrades a working engine on
+ * Deliberately a FLOOR, not "current". Kovalio never upgrades a working engine on
  * its own — restarting the daemon restarts every container on the host — so this is
  * only ever asked "is what's already here good enough", never "is it the latest".
  * 20.10 is where the surface the runtime depends on settled (cgroup v2 hosts,
@@ -131,7 +131,7 @@ export const systemCatalog = {
     },
   },
   // No `openresty` / `certbot` plans: nothing apt-installs an edge any more. Both
-  // shipped inside the `openship-edge` image, and their host-package plans (with the
+  // shipped inside the `kovalio-edge` image, and their host-package plans (with the
   // openresty.org apt-repo codename probing that came with them) went with the
   // installers. `checks.openresty` stays — it parses the version out of the
   // CONTAINER. See installer.ts `installContainerEdge`.

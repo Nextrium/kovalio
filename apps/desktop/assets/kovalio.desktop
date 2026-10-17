@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Kovalio
+Comment=Manage deployments with Kovalio
+Exec=kovalio %U
+Icon=kovalio
+Terminal=false
+Categories=Development;Utility;
+MimeType=x-scheme-handler/kovalio;

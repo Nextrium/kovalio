@@ -6,7 +6,7 @@ import {
   railwayMetadataParser,
   renderMetadataParser,
 } from "@repo/core";
-import { detectStack, type RepoFile } from "../../src/lib/stack-detector";
+import { detectStack, type RepoFile } from "@repo/platform/engine/lib/stack-detector";
 
 function files(...names: string[]): RepoFile[] {
   return names.map((name) =>
@@ -102,7 +102,7 @@ describe("vercelMetadataParser", () => {
     expect(meta).toBeNull(); // the only rule was conditional → no usable signal
   });
 
-  it("maps framework slugs that differ from openship stack ids", () => {
+  it("maps framework slugs that differ from kovalio stack ids", () => {
     const fw = (slug: string) =>
       vercelMetadataParser.parse({ "vercel.json": JSON.stringify({ framework: slug }) })?.framework;
     expect(fw("nuxtjs")).toBe("nuxt");
@@ -173,7 +173,7 @@ describe("railwayMetadataParser", () => {
       startCommand: "npm run start:prod",
     });
     expect(meta?.fillOnly).toBeUndefined(); // authoritative, not fill-only
-    expect(meta?.framework).toBeUndefined(); // NIXPACKS → let openship detect
+    expect(meta?.framework).toBeUndefined(); // NIXPACKS → let kovalio detect
   });
 
   it("reads railway.json (build/deploy tables)", () => {

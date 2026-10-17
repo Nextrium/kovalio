@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * "Which mail server is the rail talking about?" — mounted only in Openship Mail
+ * "Which mail server is the rail talking about?" — mounted only in Kovalio Mail
  * view, so a platform-mode dashboard never pays for the fetch.
  *
  * The URL wins: /emails already treats `?serverId=` as the single source of truth
@@ -11,6 +11,7 @@
  * only installed server, else the first row.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import {
   createContext,
   useCallback,
@@ -80,7 +81,8 @@ export function MailScopeProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         setServers(rows);
       })
-      .catch(() => {
+      .catch((diagnosticFailure) => {
+        observeCaughtError(diagnosticFailure, "dashboard/context/MailScopeContext");
         // Leave the list empty and mark loaded: the rail then offers "Set up
         // mail", which is a working link even if the reason we're here is a
         // transient API failure. Trapping the rail in its loading shape would be

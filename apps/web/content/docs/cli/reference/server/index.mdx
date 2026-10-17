@@ -1,0 +1,382 @@
+---
+title: server
+description: Commands, arguments, and options for kovalio server.
+cliGroup: kovalio server
+---
+
+See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio server
+
+Manage Cloud and self-hosted deployment servers
+
+```text
+kovalio server [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`managed`](/docs/cli/reference/server/managed#kovalio-server-managed) | Manage subscription-owned Cloud servers and connected Cloud destinations |
+| [`network`](/docs/cli/reference/server/network#kovalio-server-network) | Manage private networks and reviewed network operations |
+| [`cluster`](/docs/cli/reference/server/cluster#kovalio-server-cluster) | Manage compute clusters, scaling runtimes and replicated storage |
+| [`github`](/docs/cli/reference/server/github#kovalio-server-github) | Manage GitHub credentials on a deployment server |
+| [`tunnel`](/docs/cli/reference/server/tunnel#kovalio-server-tunnel) | Manage tunnels opened on the selected Kovalio instance (not this CLI machine) |
+| [`containers`](/docs/cli/reference/server/containers#kovalio-server-containers) | Inspect and update infrastructure containers through the engine |
+| [`destinations`](/docs/cli/reference/server#kovalio-server-destinations) | List deployment destinations and their supported capabilities |
+| [`get <id>`](/docs/cli/reference/server#kovalio-server-get) | Read server details, its managed plan and lifecycle progress |
+| [`reachability <id>`](/docs/cli/reference/server#kovalio-server-reachability) | Probe the controller's current connection to this server |
+| [`usage <id>`](/docs/cli/reference/server#kovalio-server-usage) | Read current resource use and project allocations |
+| [`infrastructure <id>`](/docs/cli/reference/server#kovalio-server-infrastructure) | Read network, compute-cluster and shared-storage membership |
+| [`deletion-preview <id>`](/docs/cli/reference/server#kovalio-server-deletion-preview) | Inspect workloads and retained data before removing a server |
+| [`scan-ports <id>`](/docs/cli/reference/server#kovalio-server-scan-ports) | Inspect listening ports on this server |
+| [`configure <id> <file>`](/docs/cli/reference/server#kovalio-server-configure) | Change a server's name or connection settings; omitted fields are preserved |
+| [`exec [options] <id> <command>`](/docs/cli/reference/server#kovalio-server-exec) | Execute a bounded command through the server's authorized connection |
+| [`network-settings`](/docs/cli/reference/server#kovalio-server-network-settings) | Inspect or change this server's Internet-access policy |
+| [`list\|ls`](/docs/cli/reference/server#kovalio-server-list) | List servers in the active organization |
+| [`add [options]`](/docs/cli/reference/server#kovalio-server-add) | Add a new server |
+| [`rm\|remove <id>`](/docs/cli/reference/server#kovalio-server-rm) | Delete a server |
+| [`test-connection\|test [options]`](/docs/cli/reference/server#kovalio-server-test-connection) | Test an SSH connection without saving it |
+| [`check [options] <serverId>`](/docs/cli/reference/server#kovalio-server-check) | Run component health checks against a saved server |
+| [`update [options] <serverId>`](/docs/cli/reference/server#kovalio-server-update) | Check for and apply native-module migrations (OpenResty, …) |
+| [`install [options] <serverId>`](/docs/cli/reference/server#kovalio-server-install) | Install components on a server |
+| [`install-session [sessionId]`](/docs/cli/reference/server#kovalio-server-install-session) | Inspect a server installation session |
+| [`install-events [sessionId]`](/docs/cli/reference/server#kovalio-server-install-events) | Reattach to installation logs and prompts without starting another install |
+| [`uninstall [options] <serverId> <component>`](/docs/cli/reference/server#kovalio-server-uninstall) | Remove a component through the server's shared installer |
+| [`install-respond [options] <sessionId>`](/docs/cli/reference/server#kovalio-server-install-respond) | Respond to an installation prompt |
+| [`rate-limit [options] <serverId>`](/docs/cli/reference/server#kovalio-server-rate-limit) | Read or update per-server OpenResty rate limiting |
+| [`monitor <serverId>`](/docs/cli/reference/server#kovalio-server-monitor) | Stream live system stats (SSE) |
+| [`ssh\|terminal [options] <serverId>`](/docs/cli/reference/server#kovalio-server-ssh) | Open a Cloud or self-hosted server terminal through the selected controller |
+
+## kovalio server add
+
+Add a new server
+
+```text
+kovalio server add [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--host <host>` | SSH host / IP |
+| `--name <name>` | Display name |
+| `--port <port>` | SSH port (default: "22") |
+| `--user <user>` | SSH user (default: "root") |
+| `--auth-method <method>` | Auth method (password\|key\|agent) |
+| `--password <password>` | SSH password (password auth) |
+| `--password-file <file>` | SSH password file on this machine, or - for stdin |
+| `--key-path <path>` | Private key path on the controller host |
+| `--private-key-file <file>` | Read an SSH key from this machine, or - for stdin |
+| `--key-passphrase <passphrase>` | Private key passphrase |
+| `--jump-host <host>` | SSH jump / bastion host |
+| `--ssh-transport <transport>` | SSH transport (direct\|cloudflare) |
+| `--ssh-args <args>` | SSH connection tuning arguments |
+
+## kovalio server check
+
+Run component health checks against a saved server
+
+```text
+kovalio server check [options] <serverId>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-c, --component <name...>` | Limit to specific components |
+
+## kovalio server configure
+
+Change a server's name or connection settings; omitted fields are preserved
+
+```text
+kovalio server configure [options] <id> <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+| `file` | JSON patch with the fields to change |
+
+## kovalio server deletion-preview
+
+Inspect workloads and retained data before removing a server
+
+```text
+kovalio server deletion-preview [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+
+## kovalio server destinations
+
+List deployment destinations and their supported capabilities
+
+```text
+kovalio server destinations [options]
+```
+
+## kovalio server exec
+
+Execute a bounded command through the server's authorized connection
+
+```text
+kovalio server exec [options] <id> <command>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+| `command` | Shell command to run on this server |
+
+| Option | Meaning |
+| --- | --- |
+| `--cwd <path>` | Remote working directory |
+| `--timeout <ms>` | Command deadline in milliseconds |
+| `--max-output <bytes>` | Maximum captured output |
+
+## kovalio server get
+
+Read server details, its managed plan and lifecycle progress
+
+```text
+kovalio server get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+
+## kovalio server infrastructure
+
+Read network, compute-cluster and shared-storage membership
+
+```text
+kovalio server infrastructure [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+
+## kovalio server install
+
+Install components on a server
+
+```text
+kovalio server install [options] <serverId>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-c, --component <name...>` | Component names from server check (for example docker, git, edge, rsync) |
+| `--config <file>` | Installer configuration as JSON, or - for stdin |
+| `-y, --yes` | Confirm a reinstall or explicit edge takeover |
+| `--follow` | Stream install logs live (SSE) |
+
+## kovalio server install-events
+
+Reattach to installation logs and prompts without starting another install
+
+```text
+kovalio server install-events [options] [sessionId]
+```
+
+## kovalio server install-respond
+
+Respond to an installation prompt
+
+```text
+kovalio server install-respond [options] <sessionId>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--action <action>` | Action id offered by the prompt |
+
+## kovalio server install-session
+
+Inspect a server installation session
+
+```text
+kovalio server install-session [options] [sessionId]
+```
+
+## kovalio server list
+
+List servers in the active organization
+
+```text
+kovalio server list|ls [options]
+```
+
+## kovalio server monitor
+
+Stream live system stats (SSE)
+
+```text
+kovalio server monitor [options] <serverId>
+```
+
+## kovalio server network-settings
+
+Inspect or change this server's Internet-access policy
+
+```text
+kovalio server network-settings [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`get <id>`](/docs/cli/reference/server#kovalio-server-network-settings-get) | Read Internet access and ingress ports |
+| [`set [options] <id> <file>`](/docs/cli/reference/server#kovalio-server-network-settings-set) | Apply a reviewed network policy, rejecting changes to stale state |
+
+## kovalio server network-settings get
+
+Read Internet access and ingress ports
+
+```text
+kovalio server network-settings get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+
+## kovalio server network-settings set
+
+Apply a reviewed network policy, rejecting changes to stale state
+
+```text
+kovalio server network-settings set [options] <id> <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+| `file` | JSON internetAccess, expectedInternetAccess and confirm fields |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm the policy change |
+
+## kovalio server rate-limit
+
+Read or update per-server OpenResty rate limiting
+
+```text
+kovalio server rate-limit [options] <serverId>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--rps <n>` | Requests per second (0 removes the limit) |
+| `--burst <n>` | Burst allowance |
+| `--whitelist <cidr...>` | CIDRs exempt from limiting |
+
+## kovalio server reachability
+
+Probe the controller's current connection to this server
+
+```text
+kovalio server reachability [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+
+## kovalio server rm
+
+Delete a server
+
+```text
+kovalio server rm|remove [options] <id>
+```
+
+## kovalio server scan-ports
+
+Inspect listening ports on this server
+
+```text
+kovalio server scan-ports [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+
+## kovalio server ssh
+
+Open a Cloud or self-hosted server terminal through the selected controller
+
+```text
+kovalio server ssh|terminal [options] <serverId>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--origin <url>` | Trusted dashboard origin (defaults to the saved context dashboard) |
+| `--timeout <ms>` | Maximum time to open the terminal (default: 30000) |
+
+## kovalio server test-connection
+
+Test an SSH connection without saving it
+
+```text
+kovalio server test-connection|test [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--host <host>` | SSH host / IP |
+| `--port <port>` | SSH port (default: "22") |
+| `--user <user>` | SSH user (default: "root") |
+| `--auth-method <method>` | Auth method (password\|key\|agent) |
+| `--password <password>` | SSH password |
+| `--password-file <file>` | SSH password file on this machine, or - for stdin |
+| `--key-path <path>` | Private key path on the controller host |
+| `--private-key-file <file>` | Read an SSH key from this machine, or - for stdin |
+| `--key-passphrase <passphrase>` | Private key passphrase |
+| `--jump-host <host>` | SSH jump / bastion host |
+| `--ssh-transport <transport>` | SSH transport (direct\|cloudflare) |
+| `--ssh-args <args>` | SSH connection tuning arguments |
+
+## kovalio server uninstall
+
+Remove a component through the server's shared installer
+
+```text
+kovalio server uninstall [options] <serverId> <component>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--config <file>` | Installer configuration as JSON, or - for stdin |
+| `-y, --yes` | Confirm component removal |
+
+## kovalio server update
+
+Check for and apply native-module migrations (OpenResty, …)
+
+```text
+kovalio server update [options] <serverId>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-c, --component <name...>` | Limit to specific modules |
+| `--check` | Only report drift; don't apply |
+| `-y, --yes` | Confirm migrations that require consent |
+
+## kovalio server usage
+
+Read current resource use and project allocations
+
+```text
+kovalio server usage [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |

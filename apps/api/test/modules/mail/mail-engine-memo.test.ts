@@ -15,15 +15,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@repo/adapters", () => ({
   // Carried so ssh-manager (imported transitively) and mail-engine both load; the
   // values are irrelevant to these tests, only `detectMailEngine` is exercised.
-  HOST_STATE_DIR: "/root/.openship",
+  HOST_STATE_DIR: "/root/.kovalio",
   detectMailEngine: vi.fn(),
-  MAIL_CONTAINER: "openship-mail",
-  MAIL_DB_CONTAINER: "openship-mail-db",
+  MAIL_CONTAINER: "kovalio-mail",
+  MAIL_DB_CONTAINER: "kovalio-mail-db",
   MAIL_DB_NAME: "vmail",
   MAIL_HOST_PATHS: {
-    saslPasswd: "/opt/openship/mail/postfix/sasl_passwd",
-    senderRelayhost: "/opt/openship/mail/postfix/sender_relayhost",
-    amavisUserConf: "/opt/openship/mail/amavis/50-user",
+    saslPasswd: "/opt/kovalio/mail/postfix/sasl_passwd",
+    senderRelayhost: "/opt/kovalio/mail/postfix/sender_relayhost",
+    amavisUserConf: "/opt/kovalio/mail/amavis/50-user",
   },
 }));
 
@@ -32,13 +32,13 @@ import {
   forgetMailEngine,
   requireMailEngine,
   resolveMailEngine,
-} from "../../../src/modules/mail/mail-engine";
+} from "@repo/platform/engine/modules/mail/mail-engine";
 
 const CONTAINER = {
   flavor: "container" as const,
   running: true,
   exists: true,
-  image: "ghcr.io/oblien/openship-mail:0.6.1",
+  image: "ghcr.io/nextrium/kovalio-mail:0.6.1",
 };
 const NONE = { flavor: "none" as const, running: false, exists: false, image: null };
 

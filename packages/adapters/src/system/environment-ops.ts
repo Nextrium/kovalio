@@ -46,6 +46,15 @@ import {
 /** Shell commands to run in order, or the reason there are none. Never empty when supported. */
 export type Op = Answer<readonly string[]>;
 
+/** Commands for Kovalio's owned network unit and persistent rollback timer. */
+export interface ManagedNetworkServices {
+  reload: string;
+  enable: string;
+  disable: string;
+  armTimer: string;
+  cancelTimer: string;
+}
+
 /**
  * Steps → one command line.
  *
@@ -69,7 +78,7 @@ export type ReleaseArch = Exclude<SystemArch, "unknown">;
 function releaseArchOf(profile: EnvironmentProfile): Answer<ReleaseArch> {
   return profile.arch === "unknown"
     ? refused(
-        "This host's CPU architecture could not be determined, and Openship will not " +
+        "This host's CPU architecture could not be determined, and Kovalio will not " +
           "default to amd64 — a release artifact for the wrong architecture installs " +
           "cleanly and then fails to execute.",
       )
@@ -77,15 +86,15 @@ function releaseArchOf(profile: EnvironmentProfile): Answer<ReleaseArch> {
 }
 
 /**
- * Openship's own state directory on a managed Linux host.
+ * Kovalio's own state directory on a managed Linux host.
  *
  * A constant rather than a literal because three places spelled it: this module, the
- * remote journal's wrapper default, and apps/api's `OPENSHIP_DIR` — each with a comment
+ * remote journal's wrapper default, and apps/api's `KOVALIO_DIR` — each with a comment
  * asking the next person to keep them in sync. Read it through `stateDir()`, which knows
  * about macOS; import it directly only where there is no profile to ask (a module-scope
  * default, an embedded shell script).
  */
-export const HOST_STATE_DIR = "/root/.openship";
+export const HOST_STATE_DIR = "/root/.kovalio";
 
 /**
  * Per-package-manager package names for one logical thing.
@@ -103,7 +112,7 @@ export type PackageVariants = Readonly<
 // ─── The surface ─────────────────────────────────────────────────────────────
 
 /**
- * Facts that hold whether or not Openship can drive the host.
+ * Facts that hold whether or not Kovalio can drive the host.
  *
  * Never gated. "This box runs firewalld" and "this box's home is /root" stay true on a
  * host we refuse to provision, and the operator-facing messages that explain the refusal
@@ -123,7 +132,7 @@ export type HostFacts = {
   /** The LOGIN user's home — whose `authorized_keys` and dotfiles these are. */
   home(): string;
   /**
-   * Where Openship keeps its own state on this host.
+   * Where Kovalio keeps its own state on this host.
    *
    * On Linux this is root's, NOT `home()`: every host operation runs elevated, and
    * the files are root-owned by contract (mail-state.json is root-only readable).
@@ -132,7 +141,7 @@ export type HostFacts = {
    */
   stateDir(): string;
   /**
-   * Scratch Openship owns on this host, writable by whoever we logged in AS.
+   * Scratch Kovalio owns on this host, writable by whoever we logged in AS.
    *
    * Distinct from `stateDir()` because the two have different writers. `stateDir()` is
    * root-owned by contract and reached through an elevated executor; the remote journal
@@ -164,15 +173,16 @@ export type HostFacts = {
  * whoever adds it.
  */
 export type HostCommands = {
-  pkgInstall(packages: readonly string[]): Op;
+  pkgInstall(packages: readonly string[], options?: { installRecommends?: boolean }): Op;
   /** Install one logical thing whose package name differs per manager. */
-  pkgInstallVariants(variants: PackageVariants): Op;
+  pkgInstallVariants(variants: PackageVariants, options?: { installRecommends?: boolean }): Op;
   pkgRemove(packages: readonly string[]): Op;
   /** Print the installable version of `pkg`; the caller parses per manager. */
   pkgAvailableVersion(pkg: string): Op;
   serviceEnableStart(unit: string): Op;
   /** Exit-code semantics: 0 iff the unit is running. Prints nothing. */
   serviceIsActive(unit: string): Op;
+  managedNetworkServices(identity: string): Answer<ManagedNetworkServices>;
   firewallAllow(scope: FirewallScope): Op;
   dockerInstall(): Op;
   dockerStart(): Op;
@@ -205,33 +215,37 @@ function joinPackages(packages: readonly string[]): Answer<string> {
 
 // ─── Package manager ─────────────────────────────────────────────────────────
 
-type PkgRule = (names: string) => Op;
+type PkgRule = (names: string, installRecommends?: boolean) => Op;
 
 const INSTALL: Readonly<Record<SystemPackageManager, PkgRule>> = {
   // `update` first because an install against a stale index fails on a
   // just-provisioned box; `-qq` because this output streams into the UI.
-  apt: (names) => answered(["apt-get update -qq", `apt-get install -y -qq ${names}`]),
-  dnf: (names) => answered([`dnf install -y ${names}`]),
+  apt: (names, recommends = true) =>
+    answered([
+      "apt-get update -qq",
+      `apt-get install -y -qq ${recommends ? "" : "--no-install-recommends "}${names}`,
+    ]),
+  dnf: (names, recommends = true) =>
+    answered([`dnf install -y ${recommends ? "" : "--setopt=install_weak_deps=False "}${names}`]),
   yum: (names) => answered([`yum install -y ${names}`]),
   apk: (names) => answered([`apk add --no-cache ${names}`]),
   brew: (names) => answered([`brew install ${names}`]),
   none: (names) =>
     refused(
-      `No package manager is available to install ${names} — Openship looked for ` +
+      `No package manager is available to install ${names} — Kovalio looked for ` +
         `apt-get, dnf, yum, apk and brew and found none.`,
     ),
 };
 
 const REMOVE: Readonly<Record<SystemPackageManager, PkgRule>> = {
   // `purge` + `autoremove`, matching what the uninstallers did before this table: a
-  // component Openship installed should leave no config behind when removed.
+  // component Kovalio installed should leave no config behind when removed.
   apt: (names) => answered([`apt-get purge -y -qq ${names}`, "apt-get autoremove -y -qq"]),
   dnf: (names) => answered([`dnf remove -y ${names}`]),
   yum: (names) => answered([`yum remove -y ${names}`]),
   apk: (names) => answered([`apk del ${names}`]),
   brew: (names) => answered([`brew uninstall --force ${names}`]),
-  none: (names) =>
-    refused(`No package manager is available to remove ${names}.`),
+  none: (names) => refused(`No package manager is available to remove ${names}.`),
 };
 
 /**
@@ -248,7 +262,7 @@ const AVAILABLE_VERSION: Readonly<Record<SystemPackageManager, PkgRule>> = {
   apk: (names) => answered([`apk policy ${names} 2>/dev/null`]),
   brew: (names) =>
     refused(
-      `Openship does not read Homebrew's available version for ${names} — it reports the ` +
+      `Kovalio does not read Homebrew's available version for ${names} — it reports the ` +
         `installed version only on macOS.`,
     ),
   none: (names) =>
@@ -287,13 +301,13 @@ const SERVICE: Readonly<Record<SystemServiceManager, ServiceRules>> = {
   },
 
   launchd: noServiceManager(
-    "This host runs launchd, and Openship does not manage macOS system services — " +
+    "This host runs launchd, and Kovalio does not manage macOS system services — " +
       "launchd jobs are addressed by label rather than by unit name, and starting or " +
       "stopping one is the operator's call.",
   ),
 
   none: noServiceManager(
-    "This host has no service manager Openship can drive (no running systemd, no " +
+    "This host has no service manager Kovalio can drive (no running systemd, no " +
       "OpenRC, no launchd), so services cannot be started, stopped or inspected. A " +
       "container started without an init system is the usual cause.",
   ),
@@ -408,7 +422,7 @@ function withComposePlugin(profile: EnvironmentProfile, engine: readonly string[
 function dockerInstallSteps(profile: EnvironmentProfile): Op {
   if (profile.os === "darwin") {
     return refused(
-      "Openship does not install Docker on macOS — Docker Desktop (or OrbStack/Colima) " +
+      "Kovalio does not install Docker on macOS — Docker Desktop (or OrbStack/Colima) " +
         "is a GUI application an operator installs and licenses themselves.",
     );
   }
@@ -485,10 +499,7 @@ function dockerInstallSteps(profile: EnvironmentProfile): Op {
       // So this stays a deliberate downgrade: the distro's `docker.io` is older than
       // docker-ce but real, and MIN_DOCKER_VERSION gates it. It carries no compose plugin
       // under any name we can derive here — see {@link COMPOSE_PLUGIN_VERSION}.
-      return withComposePlugin(profile, [
-        "apt-get update -qq",
-        "apt-get install -y -qq docker.io",
-      ]);
+      return withComposePlugin(profile, ["apt-get update -qq", "apt-get install -y -qq docker.io"]);
 
     case "alpine":
       // `docker-compose` does not exist in Alpine; the v2 plugin is `docker-cli-compose`.
@@ -500,7 +511,7 @@ function dockerInstallSteps(profile: EnvironmentProfile): Op {
     case "arch":
     case "unknown":
       return refused(
-        `Openship has no Docker install path for this host (os-release ID=` +
+        `Kovalio has no Docker install path for this host (os-release ID=` +
           `${JSON.stringify(profile.distroId ?? "")}, family ${profile.distroFamily}).`,
       );
   }
@@ -561,8 +572,8 @@ function hostFacts(profile: EnvironmentProfile): HostFacts {
     home: () => home,
     // macOS has no /root to own anything, and there it is a local target rather than
     // a provisioned server, so the invoking user's home is the only sensible anchor.
-    stateDir: () => (profile.os === "darwin" ? `${home}/.openship` : HOST_STATE_DIR),
-    scratchDir: () => `${home}/.openship`,
+    stateDir: () => (profile.os === "darwin" ? `${home}/.kovalio` : HOST_STATE_DIR),
+    scratchDir: () => `${home}/.kovalio`,
     installsNeedRoot: () => profile.os !== "darwin",
   };
 }
@@ -586,12 +597,15 @@ function hostCommands(profile: EnvironmentProfile): HostCommands {
   };
 
   return {
-    pkgInstall: (packages) => withPackages(packages, INSTALL[pm]),
+    pkgInstall: (packages, options) =>
+      withPackages(packages, (names) => INSTALL[pm](names, options?.installRecommends)),
 
-    pkgInstallVariants: (variants) => {
+    pkgInstallVariants: (variants, options) => {
       if (pm === "none") return INSTALL.none("this package");
       const chosen = variants[pm];
-      return chosen.supported ? withPackages(chosen.value, INSTALL[pm]) : chosen;
+      return chosen.supported
+        ? withPackages(chosen.value, (names) => INSTALL[pm](names, options?.installRecommends))
+        : chosen;
     },
 
     pkgRemove: (packages) => withPackages(packages, REMOVE[pm]),
@@ -603,6 +617,27 @@ function hostCommands(profile: EnvironmentProfile): HostCommands {
     // the guarantee has to hold for a string nobody vetted.
     serviceEnableStart: (name) => service.enableStart(unit(name)),
     serviceIsActive: (name) => service.isActive(unit(name)),
+
+    managedNetworkServices: (identity) => {
+      if (profile.os !== "linux" || profile.serviceManager !== "systemd")
+        return refused(
+          "Managed networking requires Linux with a running systemd, so rollback can survive a controller disconnect or host reboot.",
+        );
+      if (!/^[a-f0-9]{32}$/.test(identity)) return refused("Invalid managed network identity.");
+      const network = unit(`kovalio-network-${identity}.service`);
+      const timer = unit(`kovalio-network-${identity}-rollback.timer`);
+      return answered({
+        reload: "systemctl daemon-reload",
+        // Applying the interface happens under a host lock. Starting the unit here
+        // would recursively acquire it; enable it for subsequent boots instead.
+        enable: `systemctl enable ${network}`,
+        disable: `systemctl disable ${network}`,
+        armTimer: `systemctl enable ${timer} && systemctl restart ${timer}`,
+        // A timer may already be waiting on that same host lock. Never wait for it
+        // while holding the lock: the receipt fences its eventual callback.
+        cancelTimer: `systemctl disable ${timer} && systemctl --no-block stop ${timer}`,
+      });
+    },
 
     firewallAllow: (scope) => firewallScoped(scope, firewallAllowSteps),
 
@@ -653,7 +688,7 @@ function mapRefusals<T extends Record<string, AnswerFn>>(
  *
  * Exported because a caller can assemble a plan without touching a single command method
  * — `curl … | bash` needs no package manager — and such a plan still must not run on a
- * host Openship has refused. Sharing this function is what keeps that check from becoming
+ * host Kovalio has refused. Sharing this function is what keeps that check from becoming
  * a second, drifting opinion about which hosts are drivable.
  */
 export function hostRefusal(profile: EnvironmentProfile): string | null {
@@ -662,7 +697,7 @@ export function hostRefusal(profile: EnvironmentProfile): string | null {
   // is still not allowed to be silent.
   const reason =
     profile.unsupportedReason ??
-    "Openship cannot drive this host, and the detector recorded no reason.";
+    "Kovalio cannot drive this host, and the detector recorded no reason.";
   return `${reason} (host: ${describeProfile(profile)})`;
 }
 

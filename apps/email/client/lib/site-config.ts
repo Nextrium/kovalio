@@ -1,4 +1,4 @@
-// Default branding - overridable per-deploy from the openship admin panel.
+// Default branding - overridable per-deploy from the kovalio admin panel.
 // `siteConfig` stays as the build-time fallback; runtime values arrive
 // via the `branding.get` tRPC query (see app/root.tsx).
 //
@@ -6,7 +6,7 @@
 // hostnames and we don't want them baked in at build time. Browsers
 // resolve relative URLs against the current origin - exactly what we
 // want for og:image, canonical, etc.
-const TITLE = 'OpenShip Mail';
+const TITLE = 'Kovalio Mail';
 const DESCRIPTION = 'Your self-hosted mailbox.';
 
 export const siteConfig = {
@@ -15,8 +15,8 @@ export const siteConfig = {
   icons: {
     icon: '/favicon.ico',
   },
-  applicationName: 'OpenShip Mail',
-  creator: 'OpenShip',
+  applicationName: 'Kovalio Mail',
+  creator: 'Kovalio',
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,

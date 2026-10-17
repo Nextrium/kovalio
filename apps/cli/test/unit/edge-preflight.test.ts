@@ -226,8 +226,8 @@ describe("planAndApplyHostEdge — stopped proxy with unimported sites", () => {
   it("does NOT re-offer sites the edge already serves", async () => {
     // The regression: after a successful migration, re-running `up` asked to import
     // the same sites again. The old signal was a marker file under OS_DIR, which
-    // `openship-dev` (OPENSHIP_HOME=~/.openship-dev) can't see and a wiped
-    // ~/.openship loses — so the tool appeared to forget what it had just done.
+    // `kovalio-dev` (KOVALIO_HOME=~/.kovalio-dev) can't see and a wiped
+    // ~/.kovalio loses — so the tool appeared to forget what it had just done.
     const d = stoppedDeps({ edgeServedHostnames: vi.fn(() => new Set(["a.com"])) });
     const plan = await planAndApplyHostEdge({}, d);
     expect(plan).toEqual({ proceed: true });

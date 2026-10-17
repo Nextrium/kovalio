@@ -23,16 +23,16 @@ describe("mail backup plan targets the right topology", () => {
     // Nothing may assume a host-side postgres or vmail user.
     expect(produce).not.toContain("sudo -u postgres");
     expect(restore).not.toContain("sudo -u postgres");
-    expect(produce).toContain("docker exec openship-mail-db pg_dump -U postgres");
+    expect(produce).toContain("docker exec kovalio-mail-db pg_dump -U postgres");
 
     // The dump file is staged in the producer's $tmp ON THE HOST, which the sidecar
     // cannot see - so the replay must arrive over stdin, and docker exec needs -i.
-    expect(restore).toContain("docker exec -i openship-mail-db psql -U postgres");
+    expect(restore).toContain("docker exec -i kovalio-mail-db psql -U postgres");
     expect(restore).not.toMatch(/psql[^\n]*-f "\$tmp/);
 
     // Ownership must be applied where the vmail user exists: the ENGINE, not the sidecar,
     // and not the host.
-    expect(restore).toContain("docker exec openship-mail chown -R vmail:vmail /var/vmail/vmail1");
+    expect(restore).toContain("docker exec kovalio-mail chown -R vmail:vmail /var/vmail/vmail1");
     // ...and a failure there must not be swallowed - root-owned maildirs are unreadable.
     expect(restore).not.toMatch(/chown -R vmail:vmail [^\n]*\|\| true/);
 
@@ -68,11 +68,14 @@ describe("mail backup plan targets the right topology", () => {
   });
 
   it("keeps the maildir tar on the host, where the bind mount is", () => {
-    // /var/vmail is a bind mount, so tar reads it in place on either topology - moving it
-    // into the container would need the archive to come back out again.
-    for (const flavor of ["container", "host"] as const) {
-      const { payloadConfig } = buildMailBackupPayload("example.com", FLAGS, flavor);
-      expect(payloadConfig.produceCommand).toContain('sudo -n tar -c -C "$tmp" . -C /var/vmail vmail1');
-    }
+    // /var/vmail is a bind mount on container setups (${MAIL_HOST_STATE_DIR}/vmail) and
+    // a direct path on host setups.
+    const { payloadConfig: container } = buildMailBackupPayload("example.com", FLAGS, "container");
+    expect(container.produceCommand).toContain('sudo -n tar -c -C "$tmp" . -C /var/lib/kovalio/mail/vmail vmail1');
+    expect(container.restoreCommand).toContain('if [ -d "$tmp/vmail1" ]; then cp -a "$tmp/vmail1" /var/lib/kovalio/mail/vmail/');
+
+    const { payloadConfig: host } = buildMailBackupPayload("example.com", FLAGS, "host");
+    expect(host.produceCommand).toContain('sudo -n tar -c -C "$tmp" . -C /var/vmail vmail1');
+    expect(host.restoreCommand).toContain('if [ -d "$tmp/vmail1" ]; then cp -a "$tmp/vmail1" /var/vmail/');
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { COMPOSE_SENTINEL, isArtifactRef, isRealContainerRef, usableRef } from "./container-ref";
+import { COMPOSE_SENTINEL, isArtifactRef, isRealContainerRef, usableRef } from "@repo/platform/engine/lib/container-ref";
 
 /**
  * `deployment.container_id` and `*.image_ref` are polymorphic columns: each can
@@ -16,13 +16,13 @@ import { COMPOSE_SENTINEL, isArtifactRef, isRealContainerRef, usableRef } from "
 
 describe("isArtifactRef", () => {
   it("recognises the directories a static deploy stores", () => {
-    expect(isArtifactRef("/opt/openship/static/releases/dep_1")).toBe(true);
-    expect(isArtifactRef("/opt/openship/static/.builds/bld_1-svc_1")).toBe(true);
+    expect(isArtifactRef("/opt/kovalio/static/releases/dep_1")).toBe(true);
+    expect(isArtifactRef("/opt/kovalio/static/.builds/bld_1-svc_1")).toBe(true);
   });
 
   it("never mistakes an image tag for a path", () => {
     // THE distinction: a tag may contain slashes but can never START with one.
-    expect(isArtifactRef("openship/my-app:bld_1")).toBe(false);
+    expect(isArtifactRef("kovalio/my-app:bld_1")).toBe(false);
     expect(isArtifactRef("ghcr.io/org/img:v1")).toBe(false);
     expect(isArtifactRef("postgres:16-alpine")).toBe(false);
   });
@@ -42,11 +42,11 @@ describe("isArtifactRef", () => {
   });
 
   it("trims, because these values come out of stored columns", () => {
-    expect(isArtifactRef("  /opt/openship/static/releases/dep_1  ")).toBe(true);
+    expect(isArtifactRef("  /opt/kovalio/static/releases/dep_1  ")).toBe(true);
   });
 
   it("agrees with the other predicates on the same value", () => {
-    const path = "/opt/openship/static/releases/dep_1";
+    const path = "/opt/kovalio/static/releases/dep_1";
     expect(usableRef(path)).toBe(path);
     // A path IS actionable — it is just actionable by `destroy`, not `removeImage`.
     expect(isRealContainerRef(path)).toBe(true);

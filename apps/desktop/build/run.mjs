@@ -1,5 +1,5 @@
 /**
- * Launch the packaged desktop app built by `make` (out/Openship-<platform>-<arch>/)
+ * Launch the packaged desktop app built by `make` (out/Kovalio-<platform>-<arch>/)
  * ATTACHED to this terminal, so its logs stream here and Ctrl-C quits it.
  * Run `bun run build:desktop` first if there's no build.
  */
@@ -18,20 +18,20 @@ function fail(msg) {
 
 if (!existsSync(OUT)) fail("No desktop build found.");
 
-// Packaged output dir is named "Openship-<platform>-<arch>".
+// Packaged output dir is named "Kovalio-<platform>-<arch>".
 const dir = readdirSync(OUT).find(
-  (d) => d.startsWith("Openship-") && d.includes(process.platform),
+  (d) => d.startsWith("Kovalio-") && d.includes(process.platform),
 );
 if (!dir) fail(`No packaged app for ${process.platform} in out/.`);
 const base = join(OUT, dir);
 
 let bin;
 if (process.platform === "darwin") {
-  bin = join(base, "Openship.app", "Contents", "MacOS", "openship");
+  bin = join(base, "Kovalio.app", "Contents", "MacOS", "kovalio");
 } else if (process.platform === "win32") {
-  bin = join(base, "openship.exe");
+  bin = join(base, "kovalio.exe");
 } else {
-  bin = join(base, "openship");
+  bin = join(base, "kovalio");
 }
 if (!existsSync(bin)) fail(`Missing ${bin}.`);
 

@@ -14,8 +14,8 @@
  * then an authenticated `echo ok` through the same pooled executor the install
  * drives) rather than inventing a second notion of "server is usable".
  */
-import { runConnectivityCheck } from "../../lib/connectivity";
-import "../../lib/connectivity-checks"; // registers the ssh-server check used below
+import { runConnectivityCheck } from "@repo/platform/engine/lib/connectivity";
+import "@repo/platform/engine/lib/connectivity-checks"; // registers the ssh-server check used below
 import type { ConnectivityCode } from "@repo/core";
 
 export interface MailSetupPreflightFailure {
@@ -37,7 +37,7 @@ export async function preflightMailSetup(
   return {
     code: result.code,
     error:
-      `Can't start mail setup: ${result.message}. Openship could not run a single ` +
+      `Can't start mail setup: ${result.message}. Kovalio could not run a single ` +
       "command on this server, so nothing was attempted — fix the server's SSH " +
       "connection and start setup again.",
   };

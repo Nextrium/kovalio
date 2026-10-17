@@ -20,12 +20,19 @@
  * one pass over the box.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import type { ProxySettings } from "@repo/core";
 
 import type { CommandExecutor, ManualCert } from "../../types";
 import type { EdgeStatus, ImportedSite, ProxyKind, ProxyScanResult } from "../types";
 import { probeEdge } from "./detect";
-import { canImportProxy, detectInstalledProxy, scanImportableSites, scanOpenshipEdge } from "./import";
+import {
+  canImportProxy,
+  detectInstalledProxy,
+  scanImportableSites,
+  scanKovalioEdge,
+  scanKovalioEdgeStrict,
+} from "./import";
 import { caddyStoreCert } from "./import/caddy-certs";
 import { traefikAcmeCert, traefikDeclaredCertPaths } from "./import/traefik-certs";
 import {
@@ -49,10 +56,14 @@ export interface ProxySiteRouteSsl {
 }
 
 export interface ProxySiteRoute {
-  /** Published host port the proxy forwards to — the container-join key. */
+  /** Upstream port (a host publish OR a port on a Docker-private address). */
   port: number;
-  /** Location path prefix this upstream serves (e.g. "/", "/v3"). */
+  /** Full upstream identity. A port alone cannot distinguish Docker services. */
+  upstream?: string;
+  /** Location path this upstream serves (e.g. "/", "/v3"). */
   path: string;
+  /** Whether the source used nginx's exact-match selector (`location = …`). */
+  exact?: boolean;
   domains: string[];
   ssl: ProxySiteRouteSsl;
   /**
@@ -68,13 +79,13 @@ export interface ProxySiteRoute {
 }
 
 /**
- * PURE. Reverse-index parsed sites by their upstream (published host) port.
+ * PURE. Reverse-index parsed sites by their upstream port.
  * A vhost's `routes` (per-location upstreams) are indexed individually, so a
  * path-fan-out domain (`/ → :1010`, `/v3 → :1020`) yields one entry PER port,
  * each carrying its path — letting a join attach `/v3` to the `:1020` service.
  * Each port maps to a LIST (a port can serve multiple paths / come from multiple
- * vhosts). Static docroots (no upstream port) are skipped. Same (port,path) from
- * multiple vhosts union their domains and prefer an SSL-terminating one's cert.
+ * vhosts). Static docroots are skipped. Only identical upstreams and location
+ * selectors union their domains; two private Docker IPs on :3000 are distinct.
  */
 export function buildProxyRouteIndex(sites: ImportedSite[]): Map<number, ProxySiteRoute[]> {
   const byPort = new Map<number, ProxySiteRoute[]>();
@@ -84,16 +95,20 @@ export function buildProxyRouteIndex(sites: ImportedSite[]): Map<number, ProxySi
       site.routes ?? (site.target.kind === "proxy" ? [{ path: "/", url: site.target.url }] : []);
 
     for (const up of upstreams) {
-      let port: number;
+      let url: URL;
       try {
-        port = Number(new URL(up.url).port);
+        url = new URL(up.url);
       } catch {
         continue;
       }
-      if (!Number.isFinite(port) || port <= 0) continue;
+      if (url.protocol !== "http:" && url.protocol !== "https:") continue;
+      const port = Number(url.port || (url.protocol === "https:" ? 443 : 80));
+      if (!Number.isInteger(port) || port <= 0 || port > 65535) continue;
 
       const list = byPort.get(port) ?? [];
-      const existing = list.find((r) => r.path === up.path);
+      const existing = list.find(
+        (r) => r.upstream === url.href && r.path === up.path && Boolean(r.exact) === Boolean(up.exact),
+      );
       if (existing) {
         existing.domains = [...new Set([...existing.domains, ...site.serverNames])];
         if (site.ssl) {
@@ -109,7 +124,9 @@ export function buildProxyRouteIndex(sites: ImportedSite[]): Map<number, ProxySi
       } else {
         list.push({
           port,
+          upstream: url.href,
           path: up.path,
+          ...(up.exact ? { exact: true } : {}),
           domains: [...site.serverNames],
           ...(site.proxy ? { proxy: site.proxy } : {}),
           ssl: site.ssl
@@ -185,6 +202,15 @@ export interface EdgeProxyApi {
   container: string | null;
   /** Everything it serves, normalized. One scan, memoized. */
   listSites(): Promise<ProxyScanResult>;
+  /**
+   * Every loopback host port dialled by OUR edge. Unlike `listSites`, a config,
+   * transport, or permission failure rejects instead of masquerading as an
+   * empty inventory. Allocation uses this to fail closed around existing routes.
+   */
+  listLoopbackUpstreamPortsStrict(opts?: {
+    /** Bypass the per-instance memoized inventory and replace it with a fresh scan. */
+    refresh?: boolean;
+  }): Promise<Set<number>>;
   /** Sites reverse-indexed by the published host port they forward to. */
   sitesByPort(): Promise<Map<number, ProxySiteRoute[]>>;
   /** The vhost answering for `host`, or null. */
@@ -217,7 +243,7 @@ export async function edgeProxy(
   exec: CommandExecutor,
   opts: { status?: EdgeStatus } = {},
 ): Promise<EdgeProxyApi | null> {
-  const status = opts.status ?? (await probeEdge(exec).catch(() => null));
+  const status = opts.status ?? (await probeEdge(exec).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/proxy/api"); return null; }));
   if (!status) return null;
 
   let kind: ProxyKind | null = null;
@@ -231,7 +257,7 @@ export async function edgeProxy(
   }
   // Nothing on the ports (or something unrecognized) — but a stopped proxy's
   // config is still on disk and still migratable.
-  if (!kind) kind = await detectInstalledProxy(exec).catch(() => null);
+  if (!kind) kind = await detectInstalledProxy(exec).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/proxy/api"); return null; });
   if (!kind) return null;
 
   const container = status.occupants.find((o) => o.proxy === kind)?.containerName ?? null;
@@ -251,7 +277,7 @@ export function edgeProxyFor(
   // caller says otherwise. It used to default `kind === "openresty"` — the stale
   // bare-edge assumption ("an openresty IS our edge"), which is wrong now that our
   // edge is a container. That default made the one caller (harvesting certs from a
-  // proxy we're migrating FROM) read a foreign OpenResty through `scanOpenshipEdge`
+  // proxy we're migrating FROM) read a foreign OpenResty through `scanKovalioEdge`
   // instead of `scanForeignOpenResty`, so a legacy bare edge's vhost-declared certs
   // at non-default paths were silently not harvested — the sites migrated with no TLS.
   return makeApi(exec, kind, opts.ours ?? false, opts.container ?? null);
@@ -275,7 +301,7 @@ export async function collectProxyCerts(
   const warnings: string[] = [];
   const hosts = [...new Set(sites.filter((s) => s.ssl).flatMap((s) => s.serverNames))];
   for (const host of hosts) {
-    const candidate = await api.certCandidateFor(host).catch(() => null);
+    const candidate = await api.certCandidateFor(host).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/proxy/api"); return null; });
     if (candidate?.cert) {
       certPems[host] = { certPem: candidate.cert.certPem, keyPem: candidate.cert.keyPem };
     } else if (candidate?.reason) {
@@ -294,12 +320,36 @@ function makeApi(
   // One scan per instance backs sites / by-port / siteFor / certFor.
   let scan: Promise<ProxyScanResult> | null = null;
   const listSites = () => {
-    scan ??= (ours ? scanOpenshipEdge(exec) : scanImportableSites(exec, kind)).catch(() => ({
+    scan ??= (ours ? scanKovalioEdge(exec) : scanImportableSites(exec, kind)).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/proxy/api"); return ({
       proxy: kind,
       sites: [],
+      readable: false,
       warnings: [`${kind}: config scan failed`],
-    }));
+    }); });
     return scan;
+  };
+
+  let strictLoopbackPorts: Promise<Set<number>> | null = null;
+  const listLoopbackUpstreamPortsStrict = (opts: { refresh?: boolean } = {}) => {
+    if (!ours) {
+      return Promise.reject(
+        new Error("Strict loopback upstream inventory is only available for the Kovalio edge"),
+      );
+    }
+    if (opts.refresh || !strictLoopbackPorts) {
+      const nextScan = scanKovalioEdgeStrict(exec, container).then(
+        ({ loopbackUpstreamPorts }) => loopbackUpstreamPorts,
+      );
+      strictLoopbackPorts = nextScan;
+      // A transient transport/config failure must remain visible to this caller,
+      // but it must not poison the API instance forever. The next call retries a
+      // real scan; it never falls back to an older successful inventory.
+      void nextScan.catch((diagnosticFailure) => {
+        observeCaughtError(diagnosticFailure, "adapters/system/proxy/api");
+        if (strictLoopbackPorts === nextScan) strictLoopbackPorts = null;
+      });
+    }
+    return strictLoopbackPorts;
   };
 
   const siteFor = async (host: string): Promise<ImportedSite | null> => {
@@ -325,7 +375,7 @@ function makeApi(
     const ctx: CertLookupCtx = { exec, host, site, container };
     let lastReason: string | null = null;
     for (const source of CERT_SOURCES[kind] ?? []) {
-      const raw = await source(ctx).catch(() => null);
+      const raw = await source(ctx).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/proxy/api"); return null; });
       if (!raw) continue;
       const candidate = validateCertFor(host, raw, raw.source);
       if (candidate.cert) return candidate;
@@ -339,6 +389,7 @@ function makeApi(
     ours,
     container,
     listSites,
+    listLoopbackUpstreamPortsStrict,
     sitesByPort: async () => buildProxyRouteIndex((await listSites()).sites),
     siteFor,
     certFor: async (host) => (await certCandidateFor(host)).cert,

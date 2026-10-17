@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { organizationInviteEmail, resetPasswordOtpEmail } from "../../src/lib/email-templates";
+import { organizationInviteEmail, resetPasswordOtpEmail } from "@repo/platform/engine/lib/email-templates";
 
 describe("email-templates — HTML injection is neutralized", () => {
   it("escapes attacker-controlled org name and inviter name in the invite HTML", () => {
@@ -13,7 +13,7 @@ describe("email-templates — HTML injection is neutralized", () => {
       invitee: { email: "victim@example.com" },
       inviter: { name: "<b>Mallory</b>", email: "mallory@evil.example" },
       organizationName: '<img src=x onerror="alert(1)">',
-      url: "https://openship.example/accept-invite/abc",
+      url: "https://kovalio.example/accept-invite/abc",
     });
 
     // The raw markup must NOT appear as live HTML.
@@ -34,7 +34,7 @@ describe("email-templates — HTML injection is neutralized", () => {
       invitee: { email: '"><script>@example.com' },
       inviter: { name: "Alice", email: "alice@example.com" },
       organizationName: "Acme",
-      url: "https://openship.example/accept-invite/abc",
+      url: "https://kovalio.example/accept-invite/abc",
     });
 
     expect(email.html).not.toContain("<script>");

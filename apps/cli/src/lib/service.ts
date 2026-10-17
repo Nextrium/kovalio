@@ -1,15 +1,16 @@
 /**
- * OS service backend for `openship up` / `openship stop`.
+ * OS service backend for `kovalio up` / `kovalio stop`.
  *
- * `openship up` (default) installs Openship as a persistent service that
- * auto-restarts on crash and starts on boot, running until `openship stop`.
- * The service runs `openship up --foreground` — the attached supervisor in
+ * `kovalio up` (default) installs Kovalio as a persistent service that
+ * auto-restarts on crash and starts on boot, running until `kovalio stop`.
+ * The service runs `kovalio up --foreground` — the attached supervisor in
  * commands/up.ts — so the OS service manager is what keeps it alive.
  *
  *   - macOS   → launchd LaunchAgent (~/Library/LaunchAgents), KeepAlive + RunAtLoad
  *   - Linux   → systemd unit (system when root, else --user + linger), Restart=always
  *   - Windows → Scheduled Task at logon (best-effort; see docs)
  */
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -22,17 +23,17 @@ import { thisHost } from "./this-host";
 
 const HOME = homedir();
 /** Where the tarball install's stable launcher + PATH entry live. */
-const OPENSHIP_BIN = join(OS_DIR, "bin");
+const KOVALIO_BIN = join(OS_DIR, "bin");
 
-// A from-source/dev install (OPENSHIP_HOME set → IS_ALT_HOME) gets its OWN boot
-// service, so `openship up` from source never clobbers or fights a production
+// A from-source/dev install (KOVALIO_HOME set → IS_ALT_HOME) gets its OWN boot
+// service, so `kovalio up` from source never clobbers or fights a production
 // install's service. Same derivation across install/stop/restart/status.
-const MAC_LABEL = IS_ALT_HOME ? "io.openship-dev.up" : "io.openship.up";
+const MAC_LABEL = IS_ALT_HOME ? "io.kovalio-dev.up" : "io.kovalio.up";
 const MAC_PLIST = join(HOME, "Library", "LaunchAgents", `${MAC_LABEL}.plist`);
-const SYSTEMD_NAME = IS_ALT_HOME ? "openship-dev" : "openship";
-const WIN_TASK = IS_ALT_HOME ? "OpenshipDev" : "Openship";
+const SYSTEMD_NAME = IS_ALT_HOME ? "kovalio-dev" : "kovalio";
+const WIN_TASK = IS_ALT_HOME ? "KovalioDev" : "Kovalio";
 
-/** Flags the user gave to `openship up`, replayed into the service's run command. */
+/** Flags the user gave to `kovalio up`, replayed into the service's run command. */
 export interface UpFlags {
   port?: string;
   dataDir?: string;
@@ -50,14 +51,14 @@ export interface UpFlags {
   managedEdge?: boolean;
   /** ACME contact email for the managed edge. */
   acmeEmail?: string;
-  /** Openship Mail: default the dashboard to the mail control plane. */
+  /** Kovalio Mail: default the dashboard to the mail control plane. */
   mail?: boolean;
 }
 
 /** The CLI's own runtime + entry, so the service invokes THIS install. */
 export function selfInvocation(): { runtime: string; args: string[] } {
-  // Tarball installs run through the stable launcher (~/.openship/bin/openship):
-  // it re-resolves node and cli/current on every boot, so `openship update` and
+  // Tarball installs run through the stable launcher (~/.kovalio/bin/kovalio):
+  // it re-resolves node and cli/current on every boot, so `kovalio update` and
   // Node bumps repoint symlinks with NO service-unit rewrite. The launcher
   // `exec`s node, preserving the PID/process-group semantics up.ts supervises.
   const cli = readCliInstall();
@@ -83,7 +84,7 @@ function upArgs(flags: UpFlags): string[] {
   if (flags.acmeEmail) a.push("--acme-email", flags.acmeEmail);
   // Replayed, not carried in the unit's Environment=: the supervised process is
   // `up --foreground`, which builds its own env from the flags. Without this the
-  // service would boot the platform shell on a box installed as Openship Mail.
+  // service would boot the platform shell on a box installed as Kovalio Mail.
   if (flags.mail) a.push("--mail");
   return a;
 }
@@ -152,25 +153,25 @@ function xmlEscape(s: string): string {
 }
 
 /** Extra env the service should carry, only when set (unset in production so
- *  nothing changes). OPENSHIP_DASHBOARD_DIR lets a from-source install serve its
- *  locally-built dashboard; OPENSHIP_HOME pins the supervised process to the
+ *  nothing changes). KOVALIO_DASHBOARD_DIR lets a from-source install serve its
+ *  locally-built dashboard; KOVALIO_HOME pins the supervised process to the
  *  same alternate home (data dir / tokens / ports) the install runs under —
- *  without it the boot service would fall back to the production ~/.openship. */
+ *  without it the boot service would fall back to the production ~/.kovalio. */
 function serviceEnv(): Record<string, string> {
   const extra: Record<string, string> = {};
-  const dashDir = process.env.OPENSHIP_DASHBOARD_DIR?.trim();
-  if (dashDir) extra.OPENSHIP_DASHBOARD_DIR = dashDir;
-  const home = process.env.OPENSHIP_HOME?.trim();
-  if (home) extra.OPENSHIP_HOME = home;
+  const dashDir = process.env.KOVALIO_DASHBOARD_DIR?.trim();
+  if (dashDir) extra.KOVALIO_DASHBOARD_DIR = dashDir;
+  const home = process.env.KOVALIO_HOME?.trim();
+  if (home) extra.KOVALIO_HOME = home;
   return extra;
 }
 
 function plist(flags: UpFlags): string {
   const argv = runArgv(flags);
   const items = argv.map((a) => `      <string>${xmlEscape(a)}</string>`).join("\n");
-  // Tarball installs need ~/.openship/bin on PATH (the launcher resolves system
+  // Tarball installs need ~/.kovalio/bin on PATH (the launcher resolves system
   // node from the standard dirs); npm/bun installs keep ~/.bun/bin.
-  const runtimeBin = readCliInstall()?.method === "tarball" ? OPENSHIP_BIN : join(HOME, ".bun/bin");
+  const runtimeBin = readCliInstall()?.method === "tarball" ? KOVALIO_BIN : join(HOME, ".bun/bin");
   const path = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin", runtimeBin].join(":");
   const extraEnv = Object.entries(serviceEnv())
     .map(([k, v]) => `<key>${xmlEscape(k)}</key><string>${xmlEscape(v)}</string>`)
@@ -202,13 +203,13 @@ function systemdUnit(flags: UpFlags): string {
     .map(([k, v]) => `Environment=${k}=${v}\n`)
     .join("");
   // Tarball launcher resolves system node off PATH; systemd's default PATH is
-  // minimal, so pin one that covers the standard install dirs + ~/.openship/bin.
+  // minimal, so pin one that covers the standard install dirs + ~/.kovalio/bin.
   const pathEnv =
     readCliInstall()?.method === "tarball"
-      ? `Environment=PATH=${["/usr/local/sbin", "/usr/local/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin", OPENSHIP_BIN].join(":")}\n`
+      ? `Environment=PATH=${["/usr/local/sbin", "/usr/local/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin", KOVALIO_BIN].join(":")}\n`
       : "";
   return `[Unit]
-Description=Openship control plane
+Description=Kovalio control plane
 After=network-online.target
 Wants=network-online.target
 
@@ -306,14 +307,14 @@ export function installAndStart(flags: UpFlags): ServiceResult {
   }
 
   throw new Error(
-    "No supported service manager found (need systemd on Linux). Run `openship up --foreground` instead, or use docker compose for always-on.",
+    "No supported service manager found (need systemd on Linux). Run `kovalio up --foreground` instead, or use docker compose for always-on.",
   );
 }
 
 /**
  * Restart the installed service in place (pick up a new bundle after
- * `openship update`). Returns restarted:false when no service is installed —
- * the caller then tells the operator to `openship up` manually.
+ * `kovalio update`). Returns restarted:false when no service is installed —
+ * the caller then tells the operator to `kovalio up` manually.
  */
 export function restart(): { restarted: boolean; detail: string } {
   const kind = detectKind();
@@ -361,7 +362,7 @@ export function restart(): { restarted: boolean; detail: string } {
   return { restarted: false, detail: "no supported service manager" };
 }
 
-/** Is the `openship up` service installed on this box, and is it running now? */
+/** Is the `kovalio up` service installed on this box, and is it running now? */
 export function serviceStatus(): { kind: ServiceKind; installed: boolean; running: boolean } {
   const kind = detectKind();
   if (kind === "launchd") {
@@ -393,14 +394,14 @@ export function serviceStatus(): { kind: ServiceKind; installed: boolean; runnin
 /**
  * Best-effort reaper for processes still holding our canonical API/dashboard
  * ports. The supervisor stop should tear down the tree, but a previously
- * hard-killed `openship up` (kill -9 / OOM / an old build that leaked the
+ * hard-killed `kovalio up` (kill -9 / OOM / an old build that leaked the
  * reaper) can orphan the API + dashboard onto the port — leaving `stop`
  * reporting success while `lsof -i :4000` still shows live processes. Scoped to
  * OUR ports (from ports.json) so it never touches an unrelated app. POSIX only.
  *
- * Reads through readStoredPorts (OS_DIR), NOT a hardcoded `~/.openship`: this used
- * to inline its own path, so a from-source install (OPENSHIP_HOME=~/.openship-dev)
- * swept the PRODUCTION install's ports — `openship stop` in the dev tree could
+ * Reads through readStoredPorts (OS_DIR), NOT a hardcoded `~/.kovalio`: this used
+ * to inline its own path, so a from-source install (KOVALIO_HOME=~/.kovalio-dev)
+ * swept the PRODUCTION install's ports — `kovalio stop` in the dev tree could
  * SIGKILL the production API and dashboard. Every other part of this file already
  * derives from OS_DIR precisely so the two installs can't fight.
  */
@@ -416,7 +417,9 @@ function sweepOrphanPorts(): void {
     for (const token of q.out.split(/\s+/).filter(Boolean)) {
       const pid = Number(token);
       if (Number.isInteger(pid) && pid > 1 && pid !== self) {
-        try { process.kill(pid, "SIGKILL"); } catch { /* already gone */ }
+        try { process.kill(pid, "SIGKILL"); } catch (diagnosticFailure) {
+          observeCaughtError(diagnosticFailure, "cli/lib/service");
+ /* already gone */ }
       }
     }
   }

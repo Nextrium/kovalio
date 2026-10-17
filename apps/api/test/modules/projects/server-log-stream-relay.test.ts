@@ -28,7 +28,7 @@ vi.mock("../../../src/lib/permission", () => ({
   permission: { assert: vi.fn(async () => {}) },
 }));
 
-vi.mock("../../../src/lib/ssh-manager", () => ({
+vi.mock("@repo/platform/engine/lib/ssh-manager", () => ({
   sshManager: {
     retain: vi.fn(),
     release: vi.fn(),
@@ -36,7 +36,7 @@ vi.mock("../../../src/lib/ssh-manager", () => ({
   },
 }));
 
-vi.mock("@/lib/openresty-paths", () => ({
+vi.mock("@repo/platform/engine/lib/openresty-paths", () => ({
   getOpenRestyPaths: vi.fn(async () => ({})),
 }));
 
@@ -55,12 +55,16 @@ vi.mock("@repo/db", async (importOriginal) => {
         ...actual.repos.project,
         findById: vi.fn(async (id: string) => ({ id, organizationId: "org_1" })),
       },
+      server: {
+        ...actual.repos.server,
+        get: vi.fn(async (id: string) => ({ id, organizationId: "org_1", isLocal: false })),
+      },
     },
   };
 });
 
-vi.mock("../../../src/lib/project-analytics", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../../src/lib/project-analytics")>();
+vi.mock("@repo/platform/engine/lib/project-analytics", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@repo/platform/engine/lib/project-analytics")>();
   return {
     ...actual,
     resolveProjectTrafficSource: vi.fn(async () => ({
@@ -80,7 +84,7 @@ import { SSE_PRIMER } from "../../../src/lib/sse";
  */
 function edgeExecutor(chunks: Buffer[]): CommandExecutor {
   return {
-    exec: async (command: string) => (command.includes("docker ps") ? "openship-edge\n" : ""),
+    exec: async (command: string) => (command.includes("docker ps") ? "kovalio-edge\n" : ""),
     streamExec: async (_command: string, onLog: (log: LogEntry) => void) => {
       for (const chunk of chunks) {
         onLog({
@@ -163,4 +167,12 @@ describe("serverLogStream relay", () => {
 
     expect(relayed.toString()).toBe(SSE_PRIMER + frame);
   });
+});
+
+// The application seams moved with the shared engine.
+vi.mock("@repo/platform/engine/lib/authorization", async (importOriginal) => {
+  const mocked = await (() => ({
+  permission: { assert: vi.fn(async () => {}) },
+}))(importOriginal);
+  return { ...mocked, authorization: mocked.authorization ?? { authorize: async (ctx, input) => { await mocked.permission.assert(ctx, input); return ctx; } } };
 });

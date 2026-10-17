@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { SystemOperationSchemas } from "@repo/contracts";
 
 /**
  * Regression suite for GHSA-43hf-p5j8-8vhx.
@@ -12,7 +13,7 @@ import { fileURLToPath } from "node:url";
  * every resource type but billing/audit. So a member could write the single
  * global instance_settings row — repoint tunnelProvider/tunnelToken, shrink
  * every org's defaultRollbackWindow, flip defaultBuildMode, and on a box with
- * OPENSHIP_ALLOW_ZERO_AUTH=true, change authMode.
+ * KOVALIO_ALLOW_ZERO_AUTH=true, change authMode.
  *
  * Unit-testing the middleware could not catch that, so this suite asserts over
  * the route MANIFEST instead: every instance-global route must have
@@ -63,6 +64,8 @@ function chunkFor(chunks: string[], method: string, path: string): string | unde
  * gated and are pinned here so they stay that way.
  */
 const INSTANCE_GLOBAL: Array<[string, string]> = [
+  ["get", "/browse"],
+  ["get", "/diagnostics"],
   ["patch", "/settings"],
   ["delete", "/settings"],
   ["put", "/settings/email"],
@@ -76,22 +79,45 @@ const INSTANCE_GLOBAL: Array<[string, string]> = [
   ["post", "/migration/start-cloud"],
   ["post", "/migration/start-tunnel"],
   ["post", "/migration/switch-back"],
+  ["get", "/data-transfer/preview"],
+  ["post", "/data-transfer/preview"],
+  ["post", "/data-transfer/direct/session"],
+  ["post", "/data-transfer/direct/send"],
+  ["post", "/data-transfer/direct/send/stream"],
   ["post", "/data-transfer/export"],
+  ["post", "/data-transfer/import/session"],
+  ["post", "/data-transfer/import/session/:sessionId/preview"],
+  ["put", "/data-transfer/import/session/:sessionId/chunk/:index"],
+  ["post", "/data-transfer/import/session/:sessionId/finalize/stream"],
   ["post", "/data-transfer/import"],
 ];
 
-describe("instance-global routes are gated by requireInstanceAdmin()", () => {
-  const chunks = routeChunks(read("../../../src/modules/system/system.routes.ts"));
+const SHARED_INSTANCE_ROUTES = new Map<string, keyof typeof SystemOperationSchemas>([
+  ["get /browse", "browse"],
+  ["patch /settings", "updateSettings"], ["delete /settings", "resetSettings"],
+  ["put /settings/email", "updateEmailSettings"], ["post /settings/email/test", "sendTestEmail"],
+  ["get /edge/untracked", "listUntrackedEdgeSites"], ["post /edge/untracked/remove", "removeUntrackedEdgeSite"],
+  ["get /diagnostics", "health"],
+]);
+
+describe("instance-global routes retain an instance authorization boundary", () => {
+  const chunks = routeChunks(read("../../../src/modules/system/system.routes.ts") + "\n" + read("../../../src/modules/system/system-management.routes.ts"));
 
   it("parsed the routes file", () => {
     expect(chunks.length).toBeGreaterThan(20);
   });
 
   for (const [method, path] of INSTANCE_GLOBAL) {
-    it(`${method.toUpperCase()} ${path} mounts requireInstanceAdmin()`, () => {
+    it(`${method.toUpperCase()} ${path} enforces instance authority`, () => {
       const chunk = chunkFor(chunks, method, path);
 
       expect(chunk, `no registration found for ${method.toUpperCase()} ${path}`).toBeDefined();
+      const operation = SHARED_INSTANCE_ROUTES.get(`${method} ${path}`);
+      if (operation) {
+        expect(chunk).toContain("authorizationHandledByOperation: true");
+        expect(SystemOperationSchemas[operation]).toHaveProperty("instance", true);
+        return;
+      }
       expect(
         chunk!.includes("requireInstanceAdmin()"),
         `${method.toUpperCase()} ${path} writes instance-wide state but has no instance gate`,
@@ -108,14 +134,15 @@ describe("instance-global routes are gated by requireInstanceAdmin()", () => {
   }
 });
 
-describe("updateSettings — handler-level backstop", () => {
-  const src = stripComments(read("../../../src/modules/system/setup.controller.ts"));
+describe("updateSettings — shared operation backstop", () => {
+  const src = stripComments(read("../../../../../packages/platform/src/engine/modules/system/settings.operations.ts"));
   const handler = src.slice(src.indexOf("export async function updateSettings"));
   const body = handler.slice(0, handler.indexOf("\nexport "));
 
-  it("asserts instance-admin before reading the body", () => {
-    expect(body).toContain("assertInstanceAdmin");
-    expect(body.indexOf("assertInstanceAdmin")).toBeLessThan(body.indexOf("c.req.json"));
+  it("declares the instance gate and enters it from the HTTP adapter", () => {
+    expect(SystemOperationSchemas.updateSettings.instance).toBe(true);
+    const adapter = read("../../../src/modules/system/setup.controller.ts");
+    expect(adapter).toContain("getPlatformKernel().system.updateSettings(operationContext(c)");
   });
 
   it("still writes only the global instance_settings row", () => {
@@ -125,7 +152,7 @@ describe("updateSettings — handler-level backstop", () => {
 });
 
 describe("GET /settings does not leak instance secrets to a reader", () => {
-  const src = stripComments(read("../../../src/modules/system/setup.controller.ts"));
+  const src = stripComments(read("../../../../../packages/platform/src/engine/modules/system/settings.operations.ts"));
   const handler = src.slice(src.indexOf("export async function getSetup"));
   const body = handler.slice(0, handler.indexOf("\nexport "));
 

@@ -12,7 +12,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { flattenSettingFields, getAppEndpoints, getAppSettings, getAppTemplate } from "@repo/core";
-import { WEBMAIL_SETTING_KEYS, WEBMAIL_TEMPLATE_ID } from "./webmail-install.service";
+import { WEBMAIL_SETTING_KEYS, WEBMAIL_TEMPLATE_ID } from "@repo/platform/engine/modules/mail/webmail/webmail-install.service";
 
 const template = getAppTemplate(WEBMAIL_TEMPLATE_ID);
 
@@ -54,7 +54,7 @@ describe("webmail catalog contract", () => {
   it("generates the two secrets nobody may be asked for", () => {
     // SESSION_ENCRYPTION_KEY is generated ONCE at install and reused from the
     // project's env on every redeploy — a fresh key signs every operator out.
-    // BRANDING_ADMIN_TOKEN is openship→Zero only and must never reach a form.
+    // BRANDING_ADMIN_TOKEN is kovalio→Zero only and must never reach a form.
     const configKeys = new Map((template?.configFields ?? []).map((f) => [f.key, f]));
     for (const key of ["SESSION_ENCRYPTION_KEY", "BRANDING_ADMIN_TOKEN"]) {
       const field = configKeys.get(key);

@@ -6,7 +6,7 @@ import {
   matchesRule,
   parseHeaderBlock,
   spamGate,
-} from "../../../src/modules/mail/inbound/filter";
+} from "@repo/platform/engine/modules/mail/inbound/filter";
 import type { MailInboundRule } from "@repo/db";
 
 /**
@@ -111,10 +111,10 @@ describe("loopGuard — the four guards", () => {
   it("drops our OWN outbound sender — the direct self-feeding loop", () => {
     // A notification delivered to an address inside a watched domain would otherwise be
     // captured and emit again, forever.
-    const h = parseHeaderBlock("From: Openship <noreply@acme.com>\n");
-    expect(loopGuard(h, { openshipSenders: ["NoReply@acme.com"] })).toEqual({
+    const h = parseHeaderBlock("From: Kovalio <noreply@acme.com>\n");
+    expect(loopGuard(h, { kovalioSenders: ["NoReply@acme.com"] })).toEqual({
       drop: true,
-      reason: "openship-sender",
+      reason: "kovalio-sender",
     });
   });
 

@@ -18,7 +18,7 @@
  * hardcoded to a domain.
  */
 
-import { requestPublicOrigin } from "./public-url";
+import { requestPublicOrigin } from "@repo/platform/engine/lib/public-url";
 
 /** Path the MCP JSON-RPC endpoint is mounted at (`app.route("/api/mcp", …)`). */
 export const MCP_RESOURCE_PATH = "/api/mcp";
@@ -52,7 +52,7 @@ export function canonicalizeResource(raw: string | null | undefined): string | n
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") return null;
   // `URL` already lowercases scheme + host and drops the default port.
-  const path = url.pathname.replace(/\/+$/, "");
+  const path = url.pathname.replace(/(?<!\/)\/+$/, "");
   return `${url.origin}${path}`;
 }
 
@@ -62,8 +62,19 @@ export function publicOriginFor(req: Request): string {
   try {
     return new URL(raw).origin;
   } catch {
-    return raw.replace(/\/+$/, "");
+    return raw.replace(/(?<!\/)\/+$/, "");
   }
+}
+
+/**
+ * The MCP path the client connected to, before the dashboard proxy stripped its
+ * prefix. Only known MCP paths can select a discovery document; a forwarded
+ * value cannot introduce another resource or change the public origin.
+ */
+export function requestMcpResourcePath(req: Request): string {
+  const path = req.headers.get("x-forwarded-uri")?.split("?")[0] ?? new URL(req.url).pathname;
+  const normalized = path.replace(/(?<!\/)\/+$/, "");
+  return MCP_RESOURCE_PATHS.includes(normalized) ? normalized : MCP_RESOURCE_PATH;
 }
 
 /**
@@ -82,7 +93,7 @@ export function publicRequestUrl(req: Request): URL {
 
 /** The canonical MCP resource identifier for an origin: `<origin>/api/mcp`. */
 export function canonicalMcpResource(origin: string): string {
-  return `${origin.replace(/\/+$/, "")}${MCP_RESOURCE_PATH}`;
+  return `${origin.replace(/(?<!\/)\/+$/, "")}${MCP_RESOURCE_PATH}`;
 }
 
 /** Swap an absolute http(s) URL's origin for `origin`, keeping path/query/hash.
@@ -119,7 +130,7 @@ function rewriteNode(node: unknown, origin: string): unknown {
  *
  * Better Auth builds both MCP discovery documents from its STATIC baseURL —
  * materialised at startup with no request in scope. On a box whose API container
- * has no OPENSHIP_PUBLIC_URL that origin is the internal upstream
+ * has no KOVALIO_PUBLIC_URL that origin is the internal upstream
  * (`http://api:4000`), so the advertised authorize/token endpoints name a host
  * the external OAuth client can't reach (#543). Rewriting onto the origin the
  * request actually arrived on lines discovery up with the request-scoped
@@ -140,7 +151,7 @@ export function rewriteMetadataOrigin<T extends Record<string, unknown>>(
   metadata: T,
   origin: string,
 ): T {
-  return rewriteNode(metadata, origin.replace(/\/+$/, "")) as T;
+  return rewriteNode(metadata, origin.replace(/(?<!\/)\/+$/, "")) as T;
 }
 
 /**
@@ -150,7 +161,7 @@ export function rewriteMetadataOrigin<T extends Record<string, unknown>>(
  * issued to clients that echoed it back must keep working.
  */
 export function allowedMcpResources(origin: string): readonly string[] {
-  const base = origin.replace(/\/+$/, "");
+  const base = origin.replace(/(?<!\/)\/+$/, "");
   return [...MCP_RESOURCE_PATHS.map((p) => `${base}${p}`), base];
 }
 
@@ -177,7 +188,7 @@ export function resolveTokenAudience(raw: string | null | undefined, origin: str
 
 /** Where a client discovers the metadata for a given MCP resource path. */
 export function protectedResourceMetadataUrl(origin: string, path: string): string {
-  return `${origin.replace(/\/+$/, "")}/.well-known/oauth-protected-resource${path}`;
+  return `${origin.replace(/(?<!\/)\/+$/, "")}/.well-known/oauth-protected-resource${path}`;
 }
 
 export interface ProtectedResourceMetadata {
@@ -198,7 +209,7 @@ export function protectedResourceMetadata(
   origin: string,
   resource: string,
 ): ProtectedResourceMetadata {
-  const base = origin.replace(/\/+$/, "");
+  const base = origin.replace(/(?<!\/)\/+$/, "");
   return {
     resource,
     authorization_servers: [base],

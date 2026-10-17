@@ -1,0 +1,76 @@
+---
+title: system settings
+description: Commands, arguments, and options for kovalio system settings.
+cliGroup: kovalio system settings
+---
+
+See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio system settings
+
+Read or update instance settings
+
+```text
+kovalio system settings [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`patch [options] [file]`](/docs/cli/reference/system/settings#kovalio-system-settings-patch) | Update any supported instance setting using its shared JSON contract |
+| [`reset [options]`](/docs/cli/reference/system/settings#kovalio-system-settings-reset) | Reset instance settings and return to setup |
+| [`get`](/docs/cli/reference/system/settings#kovalio-system-settings-get) | Show current instance settings |
+| [`set [options]`](/docs/cli/reference/system/settings#kovalio-system-settings-set) | Update instance-level settings |
+
+## kovalio system settings get
+
+Show current instance settings
+
+```text
+kovalio system settings get [options]
+```
+
+## kovalio system settings patch
+
+Update any supported instance setting using its shared JSON contract
+
+```text
+kovalio system settings patch [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio system settings reset
+
+Reset instance settings and return to setup
+
+```text
+kovalio system settings reset [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm the instance reset |
+
+## kovalio system settings set
+
+Update instance-level settings
+
+```text
+kovalio system settings set [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--auth-mode <mode>` | Auth mode: none \| local \| cloud |
+| `--confirm <phrase>` | Required for auth-mode none: "I-understand-no-auth" |
+| `--tunnel-provider <provider>` | Tunnel provider (empty string clears) |
+| `--tunnel-token <token>` | Tunnel token |
+| `--default-build-mode <mode>` | Default build mode |
+| `--default-rollback-window <n>` | Default rollback window |
+| `--invitation-mail-source <src>` | Invitation mail source: platform \| cloud |

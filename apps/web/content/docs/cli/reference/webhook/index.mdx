@@ -1,0 +1,135 @@
+---
+title: webhook
+description: Commands, arguments, and options for kovalio webhook.
+cliGroup: kovalio webhook
+---
+
+See the [workflow guide](/docs/cli/operations) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio webhook
+
+Manage incoming deploy and job webhooks
+
+```text
+kovalio webhook [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list [options]`](/docs/cli/reference/webhook#kovalio-webhook-list) | List a project's incoming webhooks |
+| [`create [options] <file>`](/docs/cli/reference/webhook#kovalio-webhook-create) | Create a webhook; credentials in the result must be kept private |
+| [`update [options] <id> <file>`](/docs/cli/reference/webhook#kovalio-webhook-update) | Update a webhook using the shared authorization rules |
+| [`invoke [options] <id>`](/docs/cli/reference/webhook#kovalio-webhook-invoke) | Run this webhook's configured action as the current caller |
+| [`rotate [options] <id>`](/docs/cli/reference/webhook#kovalio-webhook-rotate) | Rotate a webhook's credential |
+| [`remove [options] <id>`](/docs/cli/reference/webhook#kovalio-webhook-remove) | Remove a webhook |
+| [`deliveries [options]`](/docs/cli/reference/webhook#kovalio-webhook-deliveries) | Inspect webhook deliveries with cursor pagination |
+
+## kovalio webhook create
+
+Create a webhook; credentials in the result must be kept private
+
+```text
+kovalio webhook create [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON webhook definition |
+
+| Option | Meaning |
+| --- | --- |
+| `-p, --project <id>` | Project ID |
+
+## kovalio webhook deliveries
+
+Inspect webhook deliveries with cursor pagination
+
+```text
+kovalio webhook deliveries [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-p, --project <id>` | Project ID |
+| `--hook <id>` | Only one webhook's deliveries |
+| `--cursor <cursor>` | Continue from the returned nextCursor |
+| `--limit <n>` | Page size (default: "50") |
+
+## kovalio webhook invoke
+
+Run this webhook's configured action as the current caller
+
+```text
+kovalio webhook invoke [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Webhook ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-p, --project <id>` | Project ID |
+
+## kovalio webhook list
+
+List a project's incoming webhooks
+
+```text
+kovalio webhook list [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-p, --project <id>` | Project ID |
+
+## kovalio webhook remove
+
+Remove a webhook
+
+```text
+kovalio webhook remove [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Webhook ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-p, --project <id>` | Project ID |
+| `-y, --yes` | Skip confirmation |
+
+## kovalio webhook rotate
+
+Rotate a webhook's credential
+
+```text
+kovalio webhook rotate [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Webhook ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-p, --project <id>` | Project ID |
+| `-y, --yes` | Skip confirmation |
+
+## kovalio webhook update
+
+Update a webhook using the shared authorization rules
+
+```text
+kovalio webhook update [options] <id> <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Webhook ID |
+| `file` | JSON webhook patch |
+
+| Option | Meaning |
+| --- | --- |
+| `-p, --project <id>` | Project ID |

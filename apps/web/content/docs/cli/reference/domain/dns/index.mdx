@@ -1,0 +1,53 @@
+---
+title: domain dns
+description: Commands, arguments, and options for kovalio domain dns.
+cliGroup: kovalio domain dns
+---
+
+See the [workflow guide](/docs/cli/projects) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio domain dns
+
+Plan and apply provider-managed DNS records
+
+```text
+kovalio domain dns [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`plan [options] <id>`](/docs/cli/reference/domain/dns#kovalio-domain-dns-plan) | Preview DNS record changes without applying them |
+| [`apply [options] <id>`](/docs/cli/reference/domain/dns#kovalio-domain-dns-apply) | Apply DNS records through the shared provider workflow |
+| [`challenge`](/docs/cli/reference/domain/dns/challenge#kovalio-domain-dns-challenge) | Manage a DNS certificate challenge |
+
+## kovalio domain dns apply
+
+Apply DNS records through the shared provider workflow
+
+```text
+kovalio domain dns apply [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--server <id>` | Target server ID |
+
+## kovalio domain dns plan
+
+Preview DNS record changes without applying them
+
+```text
+kovalio domain dns plan [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--server <id>` | Target server ID |

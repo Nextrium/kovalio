@@ -12,9 +12,11 @@
  * already exposes through HostConfig).
  */
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import type Dockerode from "dockerode";
 import { PassThrough, Readable } from "node:stream";
-import { withTimeout, shellQuote } from "@repo/core";
+import { posix } from "node:path";
+import { safeErrorMessage, withTimeout, shellQuote } from "@repo/core";
 import { DockerRuntime, resolveExecExitCode } from "../../runtime/docker";
 import { demuxDockerStream } from "../../runtime/docker-demux";
 import {
@@ -23,6 +25,7 @@ import {
   startExecStream,
 } from "../../runtime/docker-exec-stream";
 import { ensureScopedVolumeName, isHostPathSource } from "../../runtime/volume-namespace";
+import { resolveCloudProjectVolumeName } from "../../runtime/cloud/docker-volume";
 import { safeDumpCommand, safeRestoreCommand, type DumpCodec } from "../common/dump-pipeline";
 import { matchBackupSource } from "../common/source-match";
 import { registerExecutor } from "../registry";
@@ -35,8 +38,19 @@ import type {
   ServiceHandle,
   StreamPathOpts,
 } from "../types";
+import { watchArtifactConsumer } from "../common/artifact-stream";
+import { CAPTURE_IDLE_TIMEOUT_MS, CAPTURE_TIMEOUT_MS } from "../common/command-stream";
 
 const HELPER_IMAGE = "alpine:3";
+const BIND_PROBE_TARGET = "/__kovalio_bind_source";
+
+/** Docker's archive stat header encodes Go's os.FileMode; its top bit is ModeDir. */
+const DOCKER_MODE_DIRECTORY = 2 ** 31;
+
+type ArchiveInfoResponse = {
+  headers?: Record<string, string | string[] | undefined>;
+  resume?: () => unknown;
+};
 
 /**
  * How many artifact bytes may sit between the daemon and OUR writer.
@@ -62,10 +76,10 @@ const ARTIFACT_BUFFER_BYTES = 4 * 1024 * 1024;
  *  ReceiveStreamOpts.idleTimeoutMs for why idle and not wall-clock. Capture and
  *  restore share these on purpose: a wall-clock bound that a 50GB restore is
  *  allowed to blow through cannot be right for the backup that produced it. */
-const DEFAULT_HELPER_IDLE_MS = 10 * 60 * 1000;
+const DEFAULT_HELPER_IDLE_MS = CAPTURE_IDLE_TIMEOUT_MS;
 /** Last-resort ceiling behind the idle watchdog. Long enough that no honest
  *  transfer hits it, short enough that a stuck one is not forever. */
-const DEFAULT_HELPER_TIMEOUT_MS = 6 * 60 * 60 * 1000;
+const DEFAULT_HELPER_TIMEOUT_MS = CAPTURE_TIMEOUT_MS;
 /** How often to ask the daemon directly whether the helper has exited. */
 const EXIT_POLL_INTERVAL_MS = 2000;
 /**
@@ -142,7 +156,8 @@ function createAbortWatch(
 function destroyQuietly(stream: { destroy?: (err?: Error) => void } | undefined): void {
   try {
     stream?.destroy?.();
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker");
     // best-effort teardown
   }
 }
@@ -182,6 +197,37 @@ function parseVolumeSpec(
   return { source, target, type };
 }
 
+/** Read the path type returned by Docker's HEAD /containers/:id/archive endpoint. */
+function archivePathIsDirectory(response: ArchiveInfoResponse, path: string): boolean {
+  const rawHeader = response.headers?.["x-docker-container-path-stat"];
+  const encoded = Array.isArray(rawHeader) ? rawHeader[0] : rawHeader;
+  if (!encoded) {
+    throw new Error(`Docker returned no path-stat header while inspecting ${path}`);
+  }
+
+  let stat: unknown;
+  try {
+    stat = JSON.parse(Buffer.from(encoded, "base64").toString("utf8"));
+  } catch (err) {
+    observeCaughtError(err, "adapters/backup/executors/docker");
+    throw new Error(`Docker returned an invalid path-stat header while inspecting ${path}`, {
+      cause: err,
+    });
+  }
+  const mode = (stat as { mode?: unknown } | null)?.mode;
+  if (typeof mode !== "number" || !Number.isSafeInteger(mode)) {
+    throw new Error(`Docker returned no valid path mode while inspecting ${path}`);
+  }
+  return mode >= DOCKER_MODE_DIRECTORY;
+}
+
+function isMissingBindSourceError(err: unknown): boolean {
+  return (
+    (err as { statusCode?: number } | null)?.statusCode === 400 &&
+    /bind source path does not exist/i.test(safeErrorMessage(err))
+  );
+}
+
 export class DockerBackupExecutor implements BackupExecutor {
   readonly runtimeName = "docker" as const;
 
@@ -209,15 +255,76 @@ export class DockerBackupExecutor implements BackupExecutor {
     } catch (err) {
       // Loud, because a container left frozen is an outage. Not fatal, because the
       // artifact is already whole and failing the run would not thaw anything.
-      console.error(
+      errorDiagnostics.error("adapters/backup/executors/docker",
         `[backup] ${label}: could not unpause container ${containerId.slice(0, 12)} after the ` +
           `copy — the service may still be FROZEN and needs \`docker unpause\`: ` +
-          `${(err as { message?: string })?.message ?? String(err)}`,
+          `${(err as { message?: string })?.message ?? String(err)}`, err,
+      );
+    }
+  }
+
+  /**
+   * Ask the Docker daemon about a path in a container's mount namespace.
+   *
+   * The API may itself run in a container or connect to Docker over SSH/TLS, so
+   * `node:fs` would inspect the wrong filesystem. Docker's archive-info endpoint
+   * returns the daemon-side path's Go FileMode without copying any archive bytes.
+   */
+  private async containerPathIsDirectory(
+    container: Dockerode.Container,
+    path: string,
+  ): Promise<boolean> {
+    let response: ArchiveInfoResponse | undefined;
+    try {
+      response = (await container.infoArchive({ path })) as ArchiveInfoResponse;
+      return archivePathIsDirectory(response, path);
+    } finally {
+      // dockerode exposes the HEAD response as a stream. Drain it so the daemon
+      // connection can be reused, including through the SSH/TLS transports.
+      response?.resume?.();
+    }
+  }
+
+  /**
+   * Classify a recorded bind source when there is no service container to inspect.
+   * A never-started helper gives Docker a mount namespace, and archive-info reports
+   * the source type from the daemon host. `Mounts` (rather than legacy `Binds`) is
+   * deliberate: a missing source is rejected instead of being created as a directory.
+   */
+  private async declaredBindIsDirectory(sourcePath: string): Promise<boolean> {
+    try {
+      return await this.withHelper(
+        {
+          Image: HELPER_IMAGE,
+          NetworkDisabled: true,
+          HostConfig: {
+            Mounts: [
+              {
+                Type: "bind",
+                Source: sourcePath,
+                Target: BIND_PROBE_TARGET,
+                ReadOnly: true,
+              },
+            ],
+          },
+        },
+        (helper) => this.containerPathIsDirectory(helper, BIND_PROBE_TARGET),
+      );
+    } catch (err) {
+      observeCaughtError(err, "adapters/backup/executors/docker");
+      // Preserve the existing restore behavior for a declared directory that does
+      // not exist yet: streamPath/receiveStream may create and populate it later.
+      if (isMissingBindSourceError(err)) return true;
+      throw new Error(
+        `Could not inspect bind mount source "${sourcePath}" on the Docker host: ` +
+          safeErrorMessage(err),
+        { cause: err },
       );
     }
   }
 
   async listSources(service: ServiceHandle): Promise<BackupSource[]> {
+    await this.runtime.assertBackupAccess(service.projectId, { containerId: service.containerId });
     // Two sources of truth:
     //  1. Live container's actual Mounts (authoritative when the
     //     service is deployed). Captures Docker's resolution of relative
@@ -225,62 +332,98 @@ export class DockerBackupExecutor implements BackupExecutor {
     //  2. service.volumes from the DB (fallback when the container
     //     isn't running or doesn't exist yet).
     if (service.containerId) {
+      const container = this.dockerode.getContainer(service.containerId);
+      let data: Awaited<ReturnType<typeof container.inspect>> | null = null;
       try {
-        const data = await this.dockerode.getContainer(service.containerId).inspect();
+        data = await container.inspect();
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker");
+        // Container gone — fall through to the DB-declared volumes.
+      }
+      if (data) {
         const mounts = (data.Mounts ?? []) as Array<{
           Type?: string;
           Name?: string;
           Source?: string;
           Destination?: string;
         }>;
-        return mounts
-          .filter((m) => m.Type === "volume" || m.Type === "bind")
-          .map(
-            (m, i): BackupSource => ({
-              id: m.Name ?? m.Source ?? `mount-${i}`,
-              target: m.Destination ?? "",
-              source: m.Name ?? m.Source ?? "",
-              type: (m.Type as BackupSource["type"]) ?? "volume",
-            }),
-          );
-      } catch {
-        // Container gone — fall through to the DB-declared volumes.
+        const sources: BackupSource[] = [];
+        for (const [i, mount] of mounts.entries()) {
+          if (mount.Type !== "volume" && mount.Type !== "bind") continue;
+          const file = mount.Type === "bind" &&
+            (!mount.Destination || !(await this.containerPathIsDirectory(container, mount.Destination)));
+          if (file && !service.includeFileBinds) {
+            continue;
+          }
+          sources.push({
+            id: mount.Name ?? mount.Source ?? `mount-${i}`,
+            target: mount.Destination ?? "",
+            source: mount.Name ?? mount.Source ?? "",
+            type: mount.Type,
+            ...(file ? { isDirectory: false } : {}),
+          });
+        }
+        await this.runtime.assertBackupAccess(service.projectId, { sources: sources.map(source => source.source) });
+        return sources;
       }
     }
 
-    return service.volumes
-      .map((spec, i): BackupSource | null => {
-        const parsed = parseVolumeSpec(spec);
-        if (!parsed || !parsed.source) return null;
-        // Named volumes are project-scoped at deploy time; resolve the SAME
-        // name here so the fallback mounts the real volume (not an empty one
-        // docker would auto-create). Bind mounts and grandfathered services
-        // (namespaceVolumes=false) keep the raw source.
-        //
-        // Idempotent on purpose: the column stores whatever was written at deploy
-        // time, and for services deployed from an already-scoped spec that is the
-        // SCOPED name. Prefixing twice named a volume that never existed, which docker
-        // creates empty on mount — a capture that archives nothing (now a failure
-        // rather than a green run, via the empty-source gate) and a restore into a
-        // volume nothing reads.
-        const source =
-          parsed.type === "volume" && service.namespaceVolumes
-            ? ensureScopedVolumeName(service.projectSlug, parsed.source)
-            : parsed.source;
-        return {
-          id: `${source}-${i}`,
-          source,
-          target: parsed.target,
-          type: parsed.type,
-        };
-      })
-      .filter((x): x is BackupSource => x !== null);
+    const sources = (
+      await Promise.all(
+        service.volumes.map(async (spec, i): Promise<BackupSource | null> => {
+          const parsed = parseVolumeSpec(spec);
+          if (!parsed || !parsed.source) return null;
+          // Named volumes are project-scoped at deploy time; resolve the SAME
+          // name here so the fallback mounts the real volume (not an empty one
+          // docker would auto-create). Bind mounts and grandfathered services
+          // (namespaceVolumes=false) keep the raw source.
+          //
+          // Idempotent on purpose: the column stores whatever was written at deploy
+          // time, and for services deployed from an already-scoped spec that is the
+          // SCOPED name. Prefixing twice named a volume that never existed, which docker
+          // creates empty on mount — a capture that archives nothing (now a failure
+          // rather than a green run, via the empty-source gate) and a restore into a
+          // volume nothing reads.
+          const source =
+            parsed.type !== "volume" || !service.namespaceVolumes
+              ? parsed.source
+              : this.runtime.transport?.kind === "cloud"
+                ? await resolveCloudProjectVolumeName(
+                    this.dockerode,
+                    service.projectId,
+                    service.projectSlug,
+                    parsed.source,
+                  )
+                : ensureScopedVolumeName(service.projectSlug, parsed.source);
+          return {
+            id: `${source}-${i}`,
+            source,
+            target: parsed.target,
+            type: parsed.type,
+          };
+        }),
+      )
+    ).filter((x): x is BackupSource => x !== null);
+
+    await this.runtime.assertBackupAccess(service.projectId, { sources: sources.map(source => source.source) });
+    if (!sources.some((source) => source.type === "bind")) return sources;
+    await this.ensureImage(HELPER_IMAGE);
+
+    const backupable: BackupSource[] = [];
+    for (const source of sources) {
+      if (source.type !== "bind" || (await this.declaredBindIsDirectory(source.source))) {
+        backupable.push(source);
+      } else if (service.includeFileBinds) {
+        backupable.push({ ...source, isDirectory: false });
+      }
+    }
+    return backupable;
   }
 
   /**
    * The container's own `Config.Env`, as `KEY=value` pairs already split.
    *
-   * This is the credentials source for every service Openship did not deploy
+   * This is the credentials source for every service Kovalio did not deploy
    * itself — see `BackupExecutor.readContainerEnv`. Returns `{}` rather than
    * throwing on any failure: it is an ENRICHMENT of the handle's env, so a
    * container that has gone away, or a daemon that refuses the inspect, must leave
@@ -288,6 +431,7 @@ export class DockerBackupExecutor implements BackupExecutor {
    */
   async readContainerEnv(service: ServiceHandle): Promise<Record<string, string>> {
     if (!service.containerId) return {};
+    await this.runtime.assertBackupAccess(service.projectId, { containerId: service.containerId });
     try {
       const data = await this.dockerode.getContainer(service.containerId).inspect();
       const pairs = ((data.Config?.Env ?? []) as string[]) ?? [];
@@ -300,7 +444,8 @@ export class DockerBackupExecutor implements BackupExecutor {
         env[pair.slice(0, eq)] = pair.slice(eq + 1);
       }
       return env;
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker");
       return {};
     }
   }
@@ -316,6 +461,7 @@ export class DockerBackupExecutor implements BackupExecutor {
       );
     }
 
+    await this.runtime.assertBackupAccess(service.projectId, { containerId: service.containerId });
     const container = this.dockerode.getContainer(service.containerId);
     const exec = await container.exec({
       Cmd: cmd,
@@ -378,13 +524,17 @@ export class DockerBackupExecutor implements BackupExecutor {
     // unchanged because the shell strips the quotes before exec.
     const excludeArgs = (opts?.exclude ?? []).flatMap((p) => ["--exclude", shellQuote(p)]);
     const tarFlags = compressionFlag(compression);
-    const tarCmd = `tar -c${tarFlags} -C /mnt ${excludeArgs.join(" ")} .`;
+    const isFile = source.type === "bind" && source.isDirectory === false;
+    if (opts?.allowEmpty && source.type === "volume") await this.dockerode.getVolume(source.source).inspect();
+    const tarCmd = `tar -c${tarFlags} -C /mnt ${excludeArgs.join(" ")} ${isFile ? "file" : "."}`;
     const helperImage = compression === "zstd" ? "alpine:3" : HELPER_IMAGE;
 
     await this.ensureImage(helperImage);
 
     const hostConfig: Dockerode.HostConfig = {
-      Binds: [`${source.source}:/mnt:ro`],
+      ...(source.type === "bind"
+        ? { Mounts: [{ Type: "bind" as const, Source: source.source, Target: `/mnt${isFile ? "/file" : ""}`, ReadOnly: true }] }
+        : { Binds: [`${source.source}:/mnt:ro`] }),
       // OFF, for the reason demuxContainerStream already documents but this line
       // used to contradict: AutoRemove lets the daemon reap the helper before
       // container.wait() answers and before the attach stream has drained, which
@@ -451,7 +601,7 @@ export class DockerBackupExecutor implements BackupExecutor {
             // the operator has `payloadConfig.sourceIds` to narrow the policy. Silence
             // is the only outcome that cannot be recovered from.
             `SRC=${shellQuote(sourceId)}`,
-            `[ -n "$(ls -A /mnt 2>/dev/null)" ] || { echo "openship: backup source $SRC is ` +
+            opts?.allowEmpty ? "true" : `[ -n "$(ls -A /mnt 2>/dev/null)" ] || { echo "kovalio: backup source $SRC is ` +
               `empty or missing on this host, so this archive would contain nothing. ` +
               `Refusing to record it as a backup. If it is a mount, check that it is ` +
               `mounted; if it is empty on purpose, narrow the policy's sourceIds." >&2; ` +
@@ -496,6 +646,12 @@ export class DockerBackupExecutor implements BackupExecutor {
     });
 
     if (!quiesceId) return handed;
+    const awaitExit = handed.awaitExit.finally(() =>
+      this.thaw(quiesceId, `backup of "${sourceId}"`),
+    );
+    void awaitExit.catch((diagnosticFailure) => {
+      observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker");
+    });
     return {
       stdout: handed.stdout,
       // Thaw when the copy is DONE, however it ends. `awaitExit` settles once the helper
@@ -503,9 +659,7 @@ export class DockerBackupExecutor implements BackupExecutor {
       // to cover; unfreezing when `streamPath` returned would thaw before a single byte had
       // been read. The original promise is handed back so a caller still sees its value or
       // its rejection.
-      awaitExit: handed.awaitExit.finally(() =>
-        this.thaw(quiesceId, `backup of "${sourceId}"`),
-      ),
+      awaitExit,
     };
   }
 
@@ -532,6 +686,22 @@ export class DockerBackupExecutor implements BackupExecutor {
     const compression = opts?.compression ?? "zstd";
     const helperImage = compression === "zstd" ? "alpine:3" : HELPER_IMAGE;
     await this.ensureImage(helperImage);
+
+    const isFile = opts?.sourceIsFile ?? (source.type === "bind" && source.isDirectory === false);
+    if (isFile) {
+      if (source.type !== "bind") throw new Error("A file archive requires a bind-file destination");
+      // Docker creates a missing Binds source as a directory. Create only this
+      // file first, through the destination daemon, so its mount type is exact.
+      await this.withHelper({
+        Image: helperImage, NetworkDisabled: true,
+        HostConfig: { Binds: [`${posix.dirname(source.source)}:/destination`], AutoRemove: false },
+        Cmd: ["sh", "-ec", `path=${shellQuote(`/destination/${posix.basename(source.source)}`)}; [ ! -d "$path" ]; if [ ! -e "$path" ]; then touch "$path"; fi`],
+      }, async helper => {
+        await helper.start();
+        const exit = await helper.wait();
+        if (exit.StatusCode !== 0) throw new Error(`Cannot prepare file destination ${source.source}`);
+      });
+    }
 
     // ORDER IS THE FIX HERE, and it is the difference between a failed restore and
     // destroyed data.
@@ -560,17 +730,17 @@ export class DockerBackupExecutor implements BackupExecutor {
     const prelude = [
       compression === "zstd" ? "apk add --no-cache zstd >/dev/null 2>&1 || true" : null,
       compression === "zstd"
-        ? 'command -v zstd >/dev/null 2>&1 || { echo "openship: zstd is not available in the ' +
+        ? 'command -v zstd >/dev/null 2>&1 || { echo "kovalio: zstd is not available in the ' +
           'restore helper and could not be installed (the host may have no egress). ' +
           'Refusing to clear the target: nothing was written and your data is untouched." >&2; ' +
           "exit 90; }"
         : null,
       compression === "gzip"
-        ? 'command -v gzip >/dev/null 2>&1 || { echo "openship: gzip is not available in the ' +
+        ? 'command -v gzip >/dev/null 2>&1 || { echo "kovalio: gzip is not available in the ' +
           'restore helper. Refusing to clear the target; your data is untouched." >&2; exit 90; }'
         : null,
       // Only now, with every tool proven present.
-      opts?.clearTarget ? "find /mnt -mindepth 1 -delete 2>/dev/null || true" : null,
+      opts?.clearTarget && !isFile ? "find /mnt -mindepth 1 -delete 2>/dev/null || true" : null,
     ]
       .filter(Boolean)
       .join("\n");
@@ -584,7 +754,7 @@ export class DockerBackupExecutor implements BackupExecutor {
         // /containers/{id}/wait answered, and the exit status was then unknowable.
         // withHelper reaps instead — which also plugs a leak AutoRemove never
         // covered, since it only fires for a container that actually started.
-        HostConfig: { Binds: [`${source.source}:/mnt`], AutoRemove: false },
+        HostConfig: { Binds: [`${source.source}:/mnt${isFile ? "/file" : ""}`], AutoRemove: false },
         AttachStdin: true,
         AttachStdout: true,
         AttachStderr: true,
@@ -698,7 +868,9 @@ export class DockerBackupExecutor implements BackupExecutor {
     try {
       return await fn(helper);
     } finally {
-      await helper.remove({ force: true }).catch(() => {});
+      await helper.remove({ force: true }).catch((diagnosticFailure) => {
+        observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker");
+      });
     }
   }
 
@@ -716,7 +888,9 @@ export class DockerBackupExecutor implements BackupExecutor {
     try {
       return await setup(helper);
     } catch (err) {
-      await helper.remove({ force: true }).catch(() => {});
+      await helper.remove({ force: true }).catch((diagnosticFailure) => {
+        observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker");
+      });
       throw err;
     }
   }
@@ -761,6 +935,7 @@ export class DockerBackupExecutor implements BackupExecutor {
         try {
           state = (await helper.inspect()).State ?? {};
         } catch (err) {
+          observeCaughtError(err, "adapters/backup/executors/docker");
           // With AutoRemove off, a vanished helper means something outside this
           // call removed it — we can never learn its exit code, so say that
           // rather than reporting a success we didn't observe.
@@ -857,7 +1032,7 @@ export class DockerBackupExecutor implements BackupExecutor {
         const out = await helper
           .logs({ follow: false, stdout: true, stderr: true })
           .then((b) => b.toString().trim())
-          .catch(() => "");
+          .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker"); return ""; });
         if (res.StatusCode !== 0) {
           throw new Error(
             `Local volume copy failed (${srcSourceId}→${dstSourceId}): ${out.slice(0, 500) || `exit ${res.StatusCode}`}`,
@@ -881,37 +1056,41 @@ export class DockerBackupExecutor implements BackupExecutor {
     sourceId: string,
   ): Promise<{ exists: boolean; empty: boolean }> {
     const source = matchBackupSource(await this.listSources(service), sourceId);
-    if (!source || source.type !== "volume" || !source.source) {
-      return { exists: false, empty: true };
+    if (!source || !["volume", "bind"].includes(source.type) || !source.source) {
+      throw new Error(`Cannot inspect data source ${sourceId}`);
     }
-    try {
+    if (source.type === "volume") try {
       await this.dockerode.getVolume(source.source).inspect();
-    } catch {
-      return { exists: false, empty: true }; // not present → safe to create
+    } catch (error) {
+      if ((error as { statusCode?: number }).statusCode === 404) return { exists: false, empty: true };
+      throw error;
     }
     await this.ensureImage(HELPER_IMAGE);
-    return this.withHelper(
+    try { return await this.withHelper(
       {
         Image: HELPER_IMAGE,
         Cmd: [
           "sh",
           "-c",
-          'if [ -z "$(ls -A /probe 2>/dev/null)" ]; then echo VOLEMPTY; else echo VOLDATA; fi',
+          'if [ -d /probe ]; then entries=$(ls -A /probe) || exit 1; [ -z "$entries" ] && echo VOLEMPTY || echo VOLDATA; elif [ -f /probe ]; then [ -s /probe ] && echo VOLDATA || echo VOLEMPTY; else exit 1; fi',
         ],
-        HostConfig: { Binds: [`${source.source}:/probe:ro`] },
+        HostConfig: { Mounts: [{ Type: source.type as "volume" | "bind", Source: source.source, Target: "/probe", ReadOnly: true }] },
         Tty: true,
         NetworkDisabled: true,
       },
       async (helper) => {
         await helper.start();
-        await helper.wait();
+        const status = await helper.wait();
         const out = await helper
           .logs({ follow: false, stdout: true, stderr: true })
           .then((b) => b.toString())
-          .catch(() => "");
-        return { exists: true, empty: out.includes("VOLEMPTY") };
+          .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker"); return ""; });
+        return { exists: true, empty: status.StatusCode === 0 && out.includes("VOLEMPTY") };
       },
-    );
+    ); } catch (error) {
+      if (source.type === "bind" && isMissingBindSourceError(error)) return { exists: false, empty: true };
+      throw error;
+    }
   }
 
   async pipeIntoCommand(
@@ -925,6 +1104,7 @@ export class DockerBackupExecutor implements BackupExecutor {
         `Cannot exec in service ${service.name}: no containerId. Service must be deployed.`,
       );
     }
+    await this.runtime.assertBackupAccess(service.projectId, { containerId: service.containerId });
     const container = this.dockerode.getContainer(service.containerId);
     const exec = await container.exec({
       Cmd: cmd,
@@ -970,7 +1150,7 @@ export class DockerBackupExecutor implements BackupExecutor {
     // through stdin — so a demux failure on the output side cannot corrupt what is
     // being restored, and the real failure already reaches the caller through the
     // `stream.on("error")` → reject below.
-    stdoutSink.on("error", () => {});
+    stdoutSink.on("error", (eventDiagnosticError) => { observeCaughtError(eventDiagnosticError, "adapters/backup/executors/docker"); });
     const stderrSink = new PassThrough();
     stderrSink.on("data", (chunk: Buffer) => {
       if (stderrChunks.length < 16) stderrChunks.push(chunk);
@@ -1004,7 +1184,8 @@ export class DockerBackupExecutor implements BackupExecutor {
       body.on("error", (err) => {
         try {
           (stream as unknown as { end?: () => void }).end?.();
-        } catch {
+        } catch (diagnosticFailure) {
+          observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker");
           // best-effort
         }
         reject(err);
@@ -1016,10 +1197,11 @@ export class DockerBackupExecutor implements BackupExecutor {
         try {
           resolve({ code: await resolveExecExitCode(exec, exec.id), stderr: stderrTail() });
         } catch (err) {
+          observeCaughtError(err, "adapters/backup/executors/docker");
           reject(err);
         }
       });
-      stream.on("error", (err) => reject(err));
+      stream.on("error", (err) => { observeCaughtError(err, "adapters/backup/executors/docker"); return reject(err); });
       // Pipe body → stdin. ssh2/dockerode hijack streams are
       // bidirectional; writing to it = stdin, reading = stdout/stderr
       // (demuxed above).
@@ -1040,7 +1222,8 @@ export class DockerBackupExecutor implements BackupExecutor {
         let info: { Running?: boolean; ExitCode?: number | null };
         try {
           info = await exec.inspect();
-        } catch {
+        } catch (diagnosticFailure) {
+          observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker");
           continue; // transient daemon hiccup — the ceiling still covers us
         }
         if (info.Running === false && typeof info.ExitCode === "number") {
@@ -1070,10 +1253,12 @@ export class DockerBackupExecutor implements BackupExecutor {
 
   async stopService(service: ServiceHandle): Promise<void> {
     if (!service.containerId) return;
+    await this.runtime.assertBackupAccess(service.projectId, { containerId: service.containerId });
     try {
       await this.dockerode.getContainer(service.containerId).stop({ t: 30 });
-    } catch {
-      // Already stopped or gone — idempotent.
+    } catch (error) {
+      const status = (error as { statusCode?: number }).statusCode;
+      if (status !== 304 && status !== 404) throw error;
     }
   }
 
@@ -1081,6 +1266,7 @@ export class DockerBackupExecutor implements BackupExecutor {
     if (!service.containerId) {
       throw new Error(`Cannot start service ${service.name}: no containerId`);
     }
+    await this.runtime.assertBackupAccess(service.projectId, { containerId: service.containerId });
     try {
       await this.dockerode.getContainer(service.containerId).start();
     } catch (err: unknown) {
@@ -1092,11 +1278,13 @@ export class DockerBackupExecutor implements BackupExecutor {
 
   async isRunning(service: ServiceHandle): Promise<boolean> {
     if (!service.containerId) return false;
+    await this.runtime.assertBackupAccess(service.projectId, { containerId: service.containerId });
     try {
       const data = await this.dockerode.getContainer(service.containerId).inspect();
       return !!data.State?.Running;
-    } catch {
-      return false;
+    } catch (error) {
+      if ((error as { statusCode?: number }).statusCode === 404) return false;
+      throw error;
     }
   }
 
@@ -1183,6 +1371,7 @@ export class DockerBackupExecutor implements BackupExecutor {
     // source would abandon a backup that is moving, just slowly, and call it wedged.
     // The destination accepting more bytes is exactly the evidence that it is not.
     stdout.on("drain", () => watchdog.touch());
+    const consumer = watchArtifactConsumer(stdout, label);
 
     const awaitExit = (async (): Promise<ExecExitInfo> => {
       const onEnd = new Promise<ExecExitInfo>((resolve, reject) => {
@@ -1203,15 +1392,16 @@ export class DockerBackupExecutor implements BackupExecutor {
                 .slice(0, 16 * 1024),
             });
           } catch (err) {
+            observeCaughtError(err, "adapters/backup/executors/docker");
             reject(err);
           }
         });
-        stream.on("error", (err) => reject(err));
+        stream.on("error", (err) => { observeCaughtError(err, "adapters/backup/executors/docker"); return reject(err); });
       });
 
       try {
         return await withTimeout(
-          Promise.race([onEnd, watchdog.promise]),
+          Promise.race([onEnd, watchdog.promise, consumer.promise]),
           timeoutMs,
           `${label} exceeded its ${Math.round(timeoutMs / 1000)}s ceiling and was abandoned.`,
         );
@@ -1229,6 +1419,7 @@ export class DockerBackupExecutor implements BackupExecutor {
         throw err;
       } finally {
         watchdog.dispose();
+        consumer.dispose();
       }
     })();
 
@@ -1239,7 +1430,9 @@ export class DockerBackupExecutor implements BackupExecutor {
     // which is fatal on the Node-hosted desktop API. Attaching a no-op handler makes
     // the rejection observed; every real awaiter still sees it, because this is the
     // same promise object they hold.
-    void awaitExit.catch(() => {});
+    void awaitExit.catch((diagnosticFailure) => {
+      observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker");
+    });
 
     return { stdout, awaitExit };
   }
@@ -1287,14 +1480,22 @@ export class DockerBackupExecutor implements BackupExecutor {
     // removed container can no longer affect them.
     let sinksEnded = false;
     let exited = false;
+    let finishSinks!: () => void;
+    const sinksDone = new Promise<void>(resolve => { finishSinks = resolve; });
+    let removal: Promise<unknown> | undefined;
+    const reap = () => removal ??= container.remove({ force: true }).catch((diagnosticFailure) => {
+      observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker");
+    });
     const reapIfDone = () => {
       if (!sinksEnded || !exited) return;
-      void container.remove({ force: true }).catch(() => {});
+      void reap();
     };
     const endSinks = () => {
+      if (sinksEnded) return;
       stdout.end();
       stderrSink.end();
       sinksEnded = true;
+      finishSinks();
       reapIfDone();
     };
     stream.on("end", endSinks);
@@ -1322,6 +1523,9 @@ export class DockerBackupExecutor implements BackupExecutor {
       lastProgressAt = Date.now();
       watchdog.touch();
     });
+    const consumer = watchArtifactConsumer(stdout, opts.label);
+    const startedAt = Date.now();
+    let endBackstop: ReturnType<typeof setTimeout> | undefined;
 
     const awaitExit = (async (): Promise<ExecExitInfo> => {
       try {
@@ -1332,6 +1536,7 @@ export class DockerBackupExecutor implements BackupExecutor {
           timeoutMs: opts.timeoutMs,
           label: opts.label,
           note: "Nothing was written; the archive is incomplete and was not kept.",
+          cancelled: consumer.promise,
         });
         exited = true;
         // Backstop for an attach whose end/close is never delivered (it happens over
@@ -1362,20 +1567,28 @@ export class DockerBackupExecutor implements BackupExecutor {
         // `pending()` gate here is the load-bearing half and that guard is only a second
         // line of defence.
         const armEndBackstop = (): void => {
-          const timer = setTimeout(() => {
+          endBackstop = setTimeout(() => {
             if (sinksEnded) return;
             if (Date.now() - lastProgressAt < ATTACH_DRAIN_QUIET_MS || demux.pending()) {
               return armEndBackstop();
             }
             endSinks();
           }, ATTACH_DRAIN_QUIET_MS);
-          (timer as { unref?: () => void }).unref?.();
+          endBackstop.unref?.();
         };
-        armEndBackstop();
+        if (!sinksEnded) armEndBackstop();
+        // Helper exit alone does not mean its output has drained. Keep both
+        // cancellation and the watchdog alive until that handoff completes.
+        await withTimeout(
+          Promise.race([sinksDone, watchdog.promise, consumer.promise]),
+          Math.max(1, opts.timeoutMs - (Date.now() - startedAt)),
+          `${opts.label} exceeded its ${Math.round(opts.timeoutMs / 1000)}s ceiling while draining.`,
+        );
         reapIfDone();
         // `tar` can exit 0 having written an archive we could not read whole. The
         // helper's status describes the process, not the bytes.
         if (demuxError) throw demuxError;
+        await reap();
         return {
           code: res.StatusCode,
           stderr: Buffer.concat(stderrChunks)
@@ -1388,13 +1601,19 @@ export class DockerBackupExecutor implements BackupExecutor {
         // consumer learns via stdout as well as the rejection — it may be piping
         // the archive somewhere and never look at awaitExit until the end.
         stdout.destroy(err as Error);
-        void container.remove({ force: true }).catch(() => {});
+        destroyQuietly(stream as unknown as { destroy?: (err?: Error) => void });
+        await reap();
         throw err;
       } finally {
         watchdog.dispose();
+        consumer.dispose();
+        if (endBackstop) clearTimeout(endBackstop);
       }
     })();
 
+    void awaitExit.catch((diagnosticFailure) => {
+      observeCaughtError(diagnosticFailure, "adapters/backup/executors/docker");
+    });
     return { stdout, awaitExit };
   }
 }

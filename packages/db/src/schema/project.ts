@@ -8,6 +8,8 @@ import {
   jsonb,
   uniqueIndex,
   index,
+  foreignKey,
+  check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type {
@@ -15,11 +17,28 @@ import type {
   ProjectCompositeRoute,
   ReleaseSource,
   ProjectObjectStorage,
-  OpenshipReadiness,
+  KovalioReadiness,
+  ClusterWorkloadConfig,
+  GitHubDeploymentChecks,
+  StackRole,
+  ProjectLifecycleOperation,
 } from "@repo/core";
 import { organization } from "./organization";
 import { service } from "./service";
 import { servers } from "./servers";
+import { computeCluster } from "./compute-cluster";
+import { cloudWorkspace } from "./cloud-workspace";
+
+/** Durable promotion receipt. The destination stores this with the imported
+ * project, so a retry can prove which import it is completing before cleanup. */
+export interface ProjectCloudPromotion {
+  id: string;
+  target: { apiUrl: string; userId: string; organizationId: string };
+  sourceDigest: string;
+  imported: Record<string, number> | null;
+  /** Local-only admission fence while a confirmed promotion removes its source. */
+  cleanupInProgress?: boolean;
+}
 
 // ─── Project apps ────────────────────────────────────────────────────────────
 
@@ -117,8 +136,9 @@ export const project = pgTable(
      *   - "upload" → source came from a browser folder-upload; no durable origin
      *                (re-upload to redeploy). Can be switched to "github" later via
      *                the repo-link flow, becoming a normal git project.
-     *   - "release" → a prebuilt DIST (no repo, no build). Redeploys track a
-     *                VERSION, not a commit. Config lives in `releaseSource`.
+     *   - "release" → a prebuilt archive or container image (no clone/build).
+     *                Redeploys track a VERSION, not a commit. Config lives in
+     *                `releaseSource`.
      */
     gitProvider: text("git_provider").default("github"),
     /** Owner/org on the git provider */
@@ -131,6 +151,8 @@ export const project = pgTable(
     gitUrl: text("git_url"),
     /** Installation ID for GitHub App access */
     installationId: integer("installation_id"),
+    /** Null uses the shared default: deployment and per-service GitHub Checks. */
+    githubChecks: jsonb("github_checks").$type<GitHubDeploymentChecks | null>(),
     /**
      * Per-project clone-token override (encrypted via lib/encryption).
      * When set, this is the first credential `resolveCloneToken` returns -
@@ -143,9 +165,9 @@ export const project = pgTable(
     cloneTokenSetAt: timestamp("clone_token_set_at"),
 
     /**
-     * Release/dist source config (only when gitProvider === "release"). Either a
-     * GitHub-Releases asset (repo + assetTemplate) or an external HTTPS tarball
-     * (distUrl + sha256). `trackReleases` opts the project into release-webhook
+     * Release source config (only when gitProvider === "release"). The artifact
+     * is either an archive (GitHub asset or checksummed HTTPS tarball) or a
+     * versioned registry image. `trackReleases` is reserved for release-webhook
      * auto-deploy. See ReleaseSource in @repo/core.
      */
     releaseSource: jsonb("release_source").$type<ReleaseSource | null>(),
@@ -169,7 +191,7 @@ export const project = pgTable(
      * Where this project's compose file lives, when it is NOT at the auto-detected
      * root — either the file itself (`deploy/stack.yml`, which is also how a
      * non-standard filename is deployed) or the directory holding it
-     * (`deploy/docker-compose`). Set by the user; seeded from `openship.json`'s
+     * (`deploy/docker-compose`). Set by the user; seeded from `kovalio.json`'s
      * `composePath` when they haven't set one.
      *
      * Read on every scan AND on every redeploy: the push-triggered compose-drift
@@ -180,8 +202,35 @@ export const project = pgTable(
     composePath: text("compose_path"),
     /** Start command for production runtime */
     startCommand: text("start_command"),
+    /**
+     * Commands run ONCE per deploy, between a successful build and the cutover
+     * to the new version — `php artisan migrate --force`, `rails db:migrate`.
+     * A non-zero exit fails the deploy, so the previous version
+     * keeps serving.
+     *
+     * A LIST rather than one `&&`-chained string (the shape `startCommand` and
+     * `workspacePrepareCommand` take): each entry is logged and attributed
+     * separately, and a framework's release set is several independent steps.
+     * NULL = no release phase, which is the default for every project and is
+     * byte-identical to the behaviour before this column existed. Seeded from
+     * `kovalio.json`'s `releaseCommands`; snapshotted onto each deployment so a
+     * redeploy of an old release replays the commands as they were.
+     */
+    releaseCommands: jsonb("release_commands").$type<string[] | null>(),
+    /**
+     * Extra processes (queue workers, a scheduler) that run from the same built
+     * image as the web app (#935). NULL = web only, which is every existing
+     * project, so nothing changes for them; `[]` = explicitly no roles. Stored
+     * without the preset-only `when`/`unless` fields. Seeded from
+     * `kovalio.json`'s `roles`; snapshotted onto each deployment.
+     */
+    roles: jsonb("roles").$type<StackRole[] | null>(),
     /** Docker image for build environment (e.g. node:22, oven/bun:latest) */
     buildImage: text("build_image"),
+    /** Explicit runtime version, validated by the selected stack; null preserves its defaults. */
+    runtimeVersion: text("runtime_version"),
+    /** Optional custom production base image; null resolves the stack default. */
+    runtimeImage: text("runtime_image"),
     /** Production mode: host, static, standalone */
     productionMode: text("production_mode").default("host"),
     /** Port the app listens on (inside the container / the bare process). */
@@ -245,15 +294,15 @@ export const project = pgTable(
     objectStorage: jsonb("object_storage").$type<ProjectObjectStorage | null>(),
 
     /**
-     * Deploy-time readiness gate (Openship's own, NOT the Docker HEALTHCHECK
+     * Deploy-time readiness gate (Kovalio's own, NOT the Docker HEALTHCHECK
      * directive — that one lives per compose service in `service.advanced`).
      *
      * NULL = off, which is the default for every project: an unconfigured deploy
      * does no post-start waiting at all. Only a project that explicitly opts in
      * here gets a probe that can delay or veto a deploy. Set from the wizard's
-     * Health section, seeded by `openship.json`'s `readiness`.
+     * Health section, seeded by `kovalio.json`'s `readiness`.
      */
-    readiness: jsonb("readiness").$type<OpenshipReadiness | null>(),
+    readiness: jsonb("readiness").$type<KovalioReadiness | null>(),
 
     /* ── Resources (VM-native format) ───────────────────────────────────── */
     /** JSON: { cpuCores, memoryMb } */
@@ -269,6 +318,11 @@ export const project = pgTable(
      * deploy time (the prior wizard-only behavior).
      */
     runtimeMode: text("runtime_mode"),
+    /** Cloud static delivery; frozen per deployment so rollback keeps its hosting mode. */
+    cloudStaticHosting: text("cloud_static_hosting")
+      .$type<"pages" | "server">()
+      .notNull()
+      .default("pages"),
     /**
      * Deployment-class axes (see @repo/core deployment-class.ts). These
      * deconflate the legacy `hasServer`/`hasBuild` booleans, which each mixed
@@ -290,27 +344,20 @@ export const project = pgTable(
     workloadType: text("workload_type"),
     /**
      * How many past releases stay restorable. Explicit operator override;
-     * NULL = AUTO — use `rollbackWindowComputed` (sized from the deploy
-     * host's free disk), falling back to
-     * `instance_settings.default_rollback_window`. Resolved in exactly one
+     * NULL inherits `instance_settings.default_rollback_window` (default 5).
+     * Active and pinned releases are excluded from the count. Resolved in one
      * place: `resolveRollbackWindow` (modules/deployments/release-retention.ts).
      */
     rollbackWindow: integer("rollback_window"),
     /**
-     * The auto-sized window, recomputed once per successful deploy from
-     * `snapshotSizeBytes` + the host's free disk (see computeAutoRollbackWindow
-     * in @repo/core). Persisted so retention prune, the image GC and the deploy
-     * wizard's label all read it with zero I/O. Null = never measured.
+     * Legacy automatic window. Kept for database compatibility, but ignored:
+     * measured disk capacity must never override the configured retention limit.
      */
     rollbackWindowComputed: integer("rollback_window_computed"),
-    /** Mean on-disk size of ONE retained release for this project, in bytes
-     *  (measured from the project's own built images). Null = never measured. */
+    /** Mean size of this project's built images in bytes, including shared
+     *  layers. Informational, not a total release size. Null = never measured. */
     snapshotSizeBytes: bigint("snapshot_size_bytes", { mode: "number" }),
-    /** When the auto window was last sized — i.e. the last time BOTH the
-     *  snapshot size and the host's free disk were readable. A deploy whose disk
-     *  probe failed still refreshes `snapshotSizeBytes` and leaves this (and
-     *  `rollbackWindowComputed`) alone, so "auto" is never claimed on a figure we
-     *  didn't measure. */
+    /** Last successful image-size measurement. */
     capacityMeasuredAt: timestamp("capacity_measured_at"),
     /**
      * Retention preference for this project's rollback artifacts:
@@ -327,9 +374,7 @@ export const project = pgTable(
      * is available either way — images are retained by the rollback-window keep
      * set regardless of this setting.
      */
-    defaultRollbackStrategy: text("default_rollback_strategy")
-      .notNull()
-      .default("git"),
+    defaultRollbackStrategy: text("default_rollback_strategy").notNull().default("git"),
     /**
      * One-shot "rebuild every service on the next deploy regardless of
      * what changed" flag. Used by the dashboard's force-deploy toggle.
@@ -380,57 +425,32 @@ export const project = pgTable(
      * upstreams live. Null/[] = no fan-out. Widening needs no migration (jsonb).
      */
     compositeRoutes: jsonb("composite_routes").$type<ProjectCompositeRoute[] | null>(),
-    /**
-     * How Cloud deployments preserve their rollback artifact:
-     *   - "inplace"  → Oblien `snapshots.createArchive` + `workspace.stop`.
-     *                  Disk + archive remain attached to the workspace;
-     *                  compute paused. Rollback starts it back up.
-     *   - "offload"  → Reserved for future self-hosted external-S3
-     *                  shipping. Not implemented on Openship Cloud.
-     *
-     * Bare/Docker runtimes ignore this column.
-     */
-    cloudArchiveStrategy: text("cloud_archive_strategy").notNull().default("inplace"),
+    /** Billing owner, derived from the managed server by project_server_owner.
+     * It is not an independently selectable execution target. */
+    workspaceId: text("workspace_id"),
 
     /**
-     * Oblien workspace id this project deploys to — the LINK, not a
-     * mirror. Like `gitOwner/gitRepo` points at GitHub, this points
-     * at Oblien. Runtime state, files, logs all live on Oblien.
-     *
-     * `cloudWorkspaceId IS NOT NULL` is the canonical "this is a
-     * cloud project" test. The per-deployment `deployTarget` already
-     * lives in `deployment.meta` (snapshot per deploy); duplicating
-     * it on the project row creates two sources of truth for the
-     * same fact. Set by build.service after a successful workspace
-     * provision. Unique-per-project (the partial unique index below
-     * enforces that we never bind two local projects to the same
-     * workspace).
-     */
-    cloudWorkspaceId: text("cloud_workspace_id"),
-
-    /**
-     * Durable owner of the SERVER this project deploys to (self-hosted). The
+     * Durable reference to the execution server (local, SSH or managed Cloud). The
      * per-deployment `deployment.meta.serverId` is a volatile snapshot that a
      * fresh/partial redeploy could fail to re-derive, which then let the deploy
      * fall back to "local" and null the project's verified custom-domain ports —
      * the Access-URL-regressed-to-localhost bug. This column is the single
      * durable binding; `resolveSnapshotTarget` reads it first and re-stamps meta.
      *
-     * Unlike a `deployTarget` column (which we deliberately do NOT add — see
-     * cloudWorkspaceId above), this doesn't duplicate a source of truth: the
-     * effective target is DERIVED — `cloudWorkspaceId ? "cloud" : serverId ?
-     * "server" : "local"`. That derivation lives in ONE function,
-     * `deriveProjectDeployTarget` in @repo/core, so this rule has a single
-     * implementation to change; read surfaces reach it through
-     * `projectService.resolveProjectDeployTarget`. ON DELETE SET NULL so removing a
-     * server unbinds its projects rather than cascade-deleting them.
+     * The host connection and managed owner determine its execution transport;
+     * read surfaces use resolveProjectDeployTarget. Removing a connected server
+     * unbinds its projects. Managed servers cannot be removed while projects
+     * belong to them (the ownership trigger and composite FK enforce this).
      */
     serverId: text("server_id").references(() => servers.id, { onDelete: "set null" }),
+    /** Kubernetes deployment binding; independent from the Edge/build host. */
+    clusterId: text("cluster_id").references(() => computeCluster.id, { onDelete: "restrict" }),
+    clusterConfig: jsonb("cluster_config").$type<ClusterWorkloadConfig | null>(),
 
     /**
      * User-chosen internal DNS alias for a single-app native project. Resolves
      * east-west ALONGSIDE the default `<slug>` alias on the project's
-     * `openship-<slug>` network (both point at the container) — it never
+     * `kovalio-<slug>` network (both point at the container) — it never
      * replaces the default and never changes public exposure (edge stays the
      * sole ingress). Null = no custom alias, default only. Normalized to a
      * DNS-safe label (`normalizeServiceLabel`) before it reaches Docker.
@@ -489,25 +509,29 @@ export const project = pgTable(
     /**
      * Set true at the start of the atomic teardown flow so concurrent
      * requests refuse to operate on the row. The teardown either succeeds
-     * (row hard-deletes — flag disappears with it) or fails (flag is
-     * cleared so the caller can retry). NEVER stays true at rest.
+     * (row hard-deletes — flag disappears with it) or keeps this admission
+     * fence after destructive cleanup starts. The runtime advisory lock owns
+     * execution, so a failed/interrupted teardown can always be retried.
      */
     deletionInProgress: boolean("deletion_in_progress").notNull().default(false),
+    /** Set after workers quiesce, before destruction. Retained through cleanup retries. */
+    lifecycleOperation: jsonb("lifecycle_operation").$type<ProjectLifecycleOperation | null>(),
+    /** Internal transfer journal; never accepted as a project setting. */
+    cloudPromotion: jsonb("cloud_promotion").$type<ProjectCloudPromotion | null>(),
 
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
+    uniqueIndex("project_owner_unique").on(table.id, table.organizationId),
+    check("project_workspace_target_check", sql`${table.workspaceId} IS NULL OR (${table.serverId} IS NOT NULL AND ${table.clusterId} IS NULL)`),
+    foreignKey({ columns: [table.workspaceId, table.organizationId], foreignColumns: [cloudWorkspace.id, cloudWorkspace.organizationId], name: "project_workspace_owner_fk" }).onDelete("restrict"),
+    foreignKey({ columns: [table.serverId, table.workspaceId, table.organizationId], foreignColumns: [servers.id, servers.workspaceId, servers.organizationId], name: "project_server_workspace_fk" }).onDelete("restrict"),
+    index("project_workspace_idx").on(table.workspaceId),
+    index("project_cluster_idx").on(table.clusterId).where(sql`${table.clusterId} IS NOT NULL`),
     uniqueIndex("uq_project_app_environment_slug_active")
       .on(table.groupId, table.environmentSlug)
       .where(sql`${table.deletedAt} IS NULL`),
-    // One local project per Oblien workspace. Two project rows pointing
-    // at the same workspace would race on deploy + confuse drift
-    // detection. Partial unique — NULL allowed (self-hosted projects
-    // or pre-first-deploy), but any non-null value is unique.
-    uniqueIndex("uq_project_cloud_workspace_id")
-      .on(table.cloudWorkspaceId)
-      .where(sql`${table.cloudWorkspaceId} IS NOT NULL AND ${table.deletedAt} IS NULL`),
   ],
 );
 
@@ -518,30 +542,34 @@ export const project = pgTable(
  * Values are encrypted at rest (application-level encryption).
  * Each var can be scoped to specific environments.
  */
-export const envVar = pgTable("env_var", {
-  id: text("id").primaryKey(), // "env_..."
-  projectId: text("project_id")
-    .notNull()
-    .references(() => project.id, { onDelete: "cascade" }),
-  /** Service ID for service-scoped env vars (null = project-level / all services) */
-  serviceId: text("service_id").references(() => service.id, { onDelete: "cascade" }),
+export const envVar = pgTable(
+  "env_var",
+  {
+    id: text("id").primaryKey(), // "env_..."
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    /** Service ID for service-scoped env vars (null = project-level / all services) */
+    serviceId: text("service_id").references(() => service.id, { onDelete: "cascade" }),
 
-  /** Variable key (e.g. "DATABASE_URL") */
-  key: text("key").notNull(),
-  /** Encrypted value */
-  value: text("value").notNull(),
-  /** Environments where this var is active */
-  environment: text("environment").notNull().default("production"), // production | preview | development
+    /** Variable key (e.g. "DATABASE_URL") */
+    key: text("key").notNull(),
+    /** Encrypted value */
+    value: text("value").notNull(),
+    /** Environments where this var is active */
+    environment: text("environment").notNull().default("production"), // production | preview | development
 
-  /** Preview-only: don't include in production builds */
-  isSecret: boolean("is_secret").notNull().default(false),
+    /** Preview-only: don't include in production builds */
+    isSecret: boolean("is_secret").notNull().default(false),
 
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}, (t) => [
-  // Env resolution runs on every build — covers project + service +
-  // environment filtering used by buildPipelineEnv.
-  index("idx_env_var_project_env_service").on(t.projectId, t.environment, t.serviceId),
-  // Backup / restore reads all vars for a project.
-  index("idx_env_var_project").on(t.projectId),
-]);
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    // Env resolution runs on every build — covers project + service +
+    // environment filtering used by buildPipelineEnv.
+    index("idx_env_var_project_env_service").on(t.projectId, t.environment, t.serviceId),
+    // Backup / restore reads all vars for a project.
+    index("idx_env_var_project").on(t.projectId),
+  ],
+);

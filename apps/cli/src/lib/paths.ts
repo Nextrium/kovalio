@@ -3,19 +3,19 @@
  *
  * Everything the CLI persists — the PGlite data dir, logs, the internal/auth
  * tokens, ports.json, config.json, the compose stack, the dashboard cache — lives
- * under OS_DIR. It defaults to ~/.openship but is overridable via OPENSHIP_HOME
+ * under OS_DIR. It defaults to ~/.kovalio but is overridable via KOVALIO_HOME
  * so a FROM-SOURCE ("dev") install can run fully isolated from a production
  * install: separate data dir (concurrent PGlite opens on the same dir corrupt
  * it), separate ports, tokens, config, and — via IS_ALT_HOME — a separate boot
  * service. The from-source launcher (scripts/install-source.sh) sets
- * OPENSHIP_HOME=~/.openship-dev.
+ * KOVALIO_HOME=~/.kovalio-dev.
  */
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 
-const DEFAULT_HOME = join(homedir(), ".openship");
+const DEFAULT_HOME = join(homedir(), ".kovalio");
 
-const override = process.env.OPENSHIP_HOME?.trim();
+const override = process.env.KOVALIO_HOME?.trim();
 export const OS_DIR = override ? resolve(override) : DEFAULT_HOME;
 
 /** True when running against a non-default home (a from-source/dev install). */

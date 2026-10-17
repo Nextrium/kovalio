@@ -1,5 +1,7 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { spawn } from "node:child_process";
-import { access, mkdtemp, readdir, readFile, realpath, rm, stat, writeFile } from "node:fs/promises";
+import { access, lstat, mkdtemp, readdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, relative, sep } from "node:path";
 
@@ -9,8 +11,10 @@ import type { BuildConfig, LogCallback } from "../types";
 
 import { getTarCreateEnv, prepareSourceTarArgs } from "../archive";
 import { assembleGitClone } from "./build-pipeline";
+import { GIT_SUBMODULE_UPDATE_ARGS } from "./git-clone";
 import { localGitSshWriter, materializeGitSsh, type GitSshMaterial } from "./git-ssh-material";
 import { generateDockerfile } from "./docker-build-plan";
+import { generatedBuildIgnore } from "./docker-recipes/cache";
 import { dockerfileNeedsBuildKit } from "./docker-buildkit-trace";
 import {
   dockerBuildContextDirectory,
@@ -104,7 +108,7 @@ function spawnGit(
 
     armIdle(); // start the clock; every stdout/stderr chunk resets it
 
-    child.on("error", (err) => {
+    child.on("error", (err) => { observeCaughtError(err, "adapters/runtime/docker-build-context");
       clearTimeout(idleTimer);
       reject(err);
     });
@@ -116,7 +120,7 @@ function spawnGit(
   });
 }
 
-const GENERATED_DOCKERFILE_NAME = "Dockerfile.openship";
+const GENERATED_DOCKERFILE_NAME = "Dockerfile.kovalio";
 
 type IgnoreMatcher = ReturnType<typeof ignore>;
 
@@ -139,7 +143,7 @@ function anchorDockerignorePattern(line: string): string {
   const negated = trimmed.startsWith("!");
   const pattern = negated ? trimmed.slice(1) : trimmed;
   if (!pattern || pattern.startsWith("/") || pattern.startsWith("**/")) return line;
-  if (pattern.replace(/\/+$/, "").includes("/")) return line;
+  if (pattern.replace(/(?<!\/)\/+$/, "").includes("/")) return line;
 
   return `${negated ? "!" : ""}/${pattern}`;
 }
@@ -155,7 +159,8 @@ async function loadDockerignoreMatcher(rootPath: string): Promise<IgnoreMatcher 
   try {
     const contents = await readFile(join(rootPath, ".dockerignore"), "utf-8");
     return ignore().add(contents.split(/\r?\n/).map(anchorDockerignorePattern));
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/runtime/docker-build-context");
     return undefined; // no .dockerignore
   }
 }
@@ -193,6 +198,24 @@ function contextKeepPaths(dockerfileName: string): Set<string> {
 }
 
 /**
+ * `.dockerignore` exclusion test for one context entry. The `ignore` package
+ * only applies dir-only patterns — including dir-only negations like the
+ * `!src/` re-include in an allowlist `.dockerignore` — to paths with a
+ * trailing slash, so testing a directory with its bare path claims it is
+ * ignored even when Docker itself would keep it. That is how folder deploys
+ * lost re-included directories (#974): `matcher.ignores("src")` is true while
+ * `matcher.ignores("src/")` is false. Files are tested with the plain path,
+ * directories with the trailing-slash form.
+ */
+function dockerignoreIgnores(
+  matcher: IgnoreMatcher,
+  relativePosixPath: string,
+  isDirectory: boolean,
+): boolean {
+  return matcher.ignores(isDirectory ? `${relativePosixPath}/` : relativePosixPath);
+}
+
+/**
  * A `.dockerignore` predicate for a build context whose tree was NOT pruned
  * destructively — the shared-tree case, where one service's `.dockerignore` must
  * not delete files another service's context needs.
@@ -209,7 +232,13 @@ async function loadContextIgnore(
   if (!matcher) return undefined;
 
   return (relativePosixPath: string) =>
-    !keep.has(relativePosixPath) && matcher.ignores(relativePosixPath);
+    !keep.has(relativePosixPath) &&
+    // The predicate sees no entry type, so an entry is only filtered when both
+    // forms agree it is ignored. A directory re-included by a dir-only
+    // negation (bare path ignored, slash form kept) survives — the #974 case —
+    // while every genuinely ignored file or directory is still filtered.
+    dockerignoreIgnores(matcher, relativePosixPath, false) &&
+    dockerignoreIgnores(matcher, relativePosixPath, true);
 }
 
 /**
@@ -227,7 +256,7 @@ async function resolveBuildContextDir(treeDir: string, contextSubdir: string): P
   const target = resolveWithinDirectory(treeDir, contextSubdir);
   if (!contextSubdir) return target;
 
-  const stats = await stat(target).catch(() => null);
+  const stats = await stat(target).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/runtime/docker-build-context"); return null; });
   if (!stats?.isDirectory()) {
     throw new Error(
       `Build context "${contextSubdir}" is not a directory in this source. Check the service's build path.`,
@@ -258,7 +287,11 @@ async function applyDockerignore(contextDir: string, config: BuildConfig): Promi
       entries.map(async (entry) => {
         const absolutePath = join(currentPath, entry.name);
         const relativePath = toPosixPath(relative(contextDir, absolutePath));
-        if (!buildFiles.has(relativePath) && matcher.ignores(relativePath)) {
+        // Directories are tested in directory form so dir-only patterns apply:
+        // without it, the `!src/` re-include of an allowlist `.dockerignore`
+        // would not re-match the bare path and `src/` would be rm -rf'd (#974).
+        const ignored = dockerignoreIgnores(matcher, relativePath, entry.isDirectory());
+        if (!buildFiles.has(relativePath) && ignored) {
           await rm(absolutePath, { recursive: true, force: true });
           return;
         }
@@ -294,7 +327,7 @@ async function materializeLocalSource(
   // where there is nothing gitignored to re-add — and passing "." would re-add the
   // whole directory, discarding git-truth and shipping `node_modules` for every
   // stack whose outputDirectory is "." (most backend ones).
-  const outDir = outputDirectory?.trim().replace(/^\.\//, "").replace(/^\/+|\/+$/g, "");
+  const outDir = outputDirectory?.trim().replace(/^\.\//, "").replace(/^\/+|(?<!\/)\/+$/g, "");
   const alsoInclude = outDir && outDir !== "." ? [outDir] : undefined;
   const { args, cleanup } = await prepareSourceTarArgs(sourcePath, { alsoInclude });
   try {
@@ -338,7 +371,7 @@ async function firstExistingCandidate(dir: string, candidates: string[]): Promis
     const candidatePath = join(dir, ...candidate.split("/"));
     const exists = await access(candidatePath)
       .then(() => true)
-      .catch(() => false);
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/runtime/docker-build-context"); return false; });
     if (exists) {
       return candidate;
     }
@@ -409,7 +442,22 @@ async function cloneGitSource(
       });
     }
 
-    await rm(join(targetPath, ".git"), { recursive: true, force: true });
+    await spawnGit([...credArgs, "-C", targetPath, ...GIT_SUBMODULE_UPDATE_ARGS], {
+      timeoutMs: GIT_CLONE_IDLE_TIMEOUT_MS,
+      onLog,
+      env: gitEnv,
+    });
+
+    // A submodule's .git is usually a file pointing into the parent's metadata.
+    // Strip both forms without following symlinks into a path outside the checkout.
+    const removeGitMetadata = async (directory: string): Promise<void> => {
+      for (const entry of await readdir(directory, { withFileTypes: true })) {
+        const path = join(directory, entry.name);
+        if (entry.name === ".git") await rm(path, { recursive: true, force: true });
+        else if (entry.isDirectory()) await removeGitMetadata(path);
+      }
+    };
+    await removeGitMetadata(targetPath);
   } finally {
     await sshMaterial?.cleanup();
   }
@@ -481,7 +529,7 @@ export async function prepareSourceTree(
   config: BuildConfig,
   opts?: { onLog?: LogCallback; perServiceBuildContexts?: boolean },
 ): Promise<SourceTree> {
-  const contextDir = await mkdtemp(join(tmpdir(), "openship-docker-context-"));
+  const contextDir = await mkdtemp(join(tmpdir(), "kovalio-docker-context-"));
 
   try {
     // The destructive prune is only sound while the tree IS the build context. Once
@@ -515,11 +563,15 @@ export async function prepareSourceTree(
       contextDir,
       dockerignorePruned: pruneDockerignore,
       cleanup: async () => {
-        await rm(contextDir, { recursive: true, force: true }).catch(() => {});
+        await rm(contextDir, { recursive: true, force: true }).catch((diagnosticFailure) => {
+          observeCaughtError(diagnosticFailure, "adapters/runtime/docker-build-context");
+        });
       },
     };
   } catch (error) {
-    await rm(contextDir, { recursive: true, force: true }).catch(() => {});
+    await rm(contextDir, { recursive: true, force: true }).catch((diagnosticFailure) => {
+      observeCaughtError(diagnosticFailure, "adapters/runtime/docker-build-context");
+    });
     throw error;
   }
 }
@@ -547,7 +599,7 @@ export function missingContextDockerfileMessage(
       ? " The source root has a Dockerfile, but it is outside this service's build context, so it is not used — set the service's build path to the directory that holds the Dockerfile you want, or add one there."
       : "") +
     (opts?.generatedRecipeRefused
-      ? " A declared build context builds from its own Dockerfile — Openship will not generate one for it, because a generated recipe copies from the source root."
+      ? " A declared build context builds from its own Dockerfile — Kovalio will not generate one for it, because a generated recipe copies from the source root."
       : "")
   );
 }
@@ -592,6 +644,9 @@ export async function resolveServiceDockerfile(
       )
     : await resolveDockerfileName(contextDir, resolvedRootDirectory, config.dockerfilePath);
   const hasRepositoryDockerfile = repositoryDockerfileName !== null;
+  if (hasRepositoryDockerfile && (config.runtimeVersion != null || config.runtimeImageOverride)) {
+    throw new Error("runtimeVersion and runtimeImage cannot change a repository Dockerfile. Remove these settings or configure the runtime in that Dockerfile.");
+  }
 
   // A generated recipe COPYs from the source root, so it cannot be satisfied by a
   // narrowed context — refuse regardless of `requireRepositoryDockerfile` rather
@@ -602,7 +657,7 @@ export async function resolveServiceDockerfile(
         generatedRecipeRefused: !requireRepositoryDockerfile,
         rootDockerfileExists: await access(join(contextDir, "Dockerfile"))
           .then(() => true)
-          .catch(() => false),
+          .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/runtime/docker-build-context"); return false; }),
       }),
     );
   }
@@ -643,18 +698,34 @@ export async function resolveServiceDockerfile(
       }),
       "utf-8",
     );
+    if (config.buildCache) {
+      const ignoreFile = join(contextDir, ".dockerignore");
+      const info = await lstat(ignoreFile).catch(error => {
+        if (error.code === "ENOENT") return null;
+        throw error;
+      });
+      // Never follow a repository symlink to read or overwrite a host file.
+      if (!info || info.isFile()) {
+        const contents = info ? await readFile(ignoreFile, "utf8") : "";
+        const temporary = join(contextDir, `.kovalio-dockerignore-${randomUUID()}`);
+        try {
+          await writeFile(temporary, generatedBuildIgnore(contents));
+          await rename(temporary, ignoreFile);
+        } finally { await rm(temporary, { force: true }); }
+      }
+    }
   }
 
   const dockerfileName = repositoryDockerfileName ?? generatedName;
-  // Read only a repository Dockerfile: a generated recipe is ours and never uses
-  // BuildKit-only syntax, so re-reading it back off disk would be pure cost. A read
+  // Generated recipes declare cache mounts only on a confirmed BuildKit path.
+  // Reading a repository Dockerfile still detects its own syntax. A read
   // failure here must not fail the build — the builder choice is an optimization,
   // and the build itself is about to read the same file.
   const requiresBuildKit = hasRepositoryDockerfile
     ? await readFile(join(buildContextDir, ...dockerfileName.split("/")), "utf-8")
         .then(dockerfileNeedsBuildKit)
-        .catch(() => false)
-    : false;
+        .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/runtime/docker-build-context"); return false; })
+    : config.buildCache === true;
   const ignoreContextPath =
     opts?.dockerignorePruned === false
       ? await loadContextIgnore(buildContextDir, contextKeepPaths(dockerfileName))
@@ -663,7 +734,7 @@ export async function resolveServiceDockerfile(
   // walking — the seed `entries` list is queued unconditionally — so the top level
   // has to be filtered here or a `.dockerignore`d root directory would still ship.
   const contextEntries = (await readdir(buildContextDir)).filter(
-    (entry) => !ignoreContextPath?.(entry),
+    (entry) => !/^\.kovalio-dockerignore-[a-f0-9-]{36}$/.test(entry) && !ignoreContextPath?.(entry),
   );
 
   return {

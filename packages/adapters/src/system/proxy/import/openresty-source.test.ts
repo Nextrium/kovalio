@@ -2,10 +2,10 @@
  * A host OpenResty is a MIGRATION SOURCE, not "us".
  *
  * That distinction only became true when the edge became a container: while the bare
- * edge was Openship itself, treating `/usr/local/openresty/...` as ours was correct.
+ * edge was Kovalio itself, treating `/usr/local/openresty/...` as ours was correct.
  * Now the container's config lives inside its image and its host-side state is the
- * `/var/lib/openship/edge` bind mount, so a host OpenResty is someone's proxy to
- * migrate from — including an older Openship's own bare edge.
+ * `/var/lib/kovalio/edge` bind mount, so a host OpenResty is someone's proxy to
+ * migrate from — including an older Kovalio's own bare edge.
  */
 import { describe, expect, it } from "vitest";
 import { canImportProxy, scanImportableSites } from "./index";

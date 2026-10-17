@@ -10,9 +10,10 @@
  * edge takeover never shows up as an "active server setup" and vice-versa.
  */
 
+import { randomUUID } from "node:crypto";
 import type { PromptPayload } from "@repo/adapters";
-import { PromptRegistry } from "../../lib/prompt-gateway";
-import { TtlCache } from "../../lib/cache";
+import { PromptRegistry } from "@repo/platform/engine/lib/prompt-gateway";
+import { TtlCache } from "@repo/platform/engine/lib/cache";
 
 export type SseWriter = (event: string, data: string) => boolean;
 export type EdgeSessionStatus = "running" | "completed" | "failed";
@@ -35,7 +36,11 @@ export interface EdgeConsentSession {
   pendingPrompt?: PromptPayload;
 }
 
-const sessions = new TtlCache<EdgeConsentSession>({ maxSize: 50, sweepIntervalMs: 60_000 });
+const sessions = new TtlCache<EdgeConsentSession>({
+  maxSize: 50,
+  sweepIntervalMs: 60_000,
+  canEvict: (session) => session.status !== "running" && !session.pendingPrompt,
+});
 const promptRegistry = new PromptRegistry();
 
 const heartbeat = setInterval(() => {
@@ -62,7 +67,7 @@ export function getActiveEdgeSessionForProject(projectId: string): EdgeConsentSe
 }
 
 export function createEdgeConsentSession(projectId: string): EdgeConsentSession {
-  const id = `edge_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const id = `edge_${Date.now()}_${randomUUID()}`;
   const session: EdgeConsentSession = {
     id,
     projectId,

@@ -10,7 +10,7 @@
  * env in one pass.
  *
  * Storage lives with the caller, deliberately — the CLI remembers ports in
- * `~/.openship/ports.json` (OS_DIR) and the desktop app in Electron's `userData`.
+ * `~/.kovalio/ports.json` (OS_DIR) and the desktop app in Electron's `userData`.
  * This module takes the remembered pair as INPUT and returns the resolved pair, so
  * the algorithm is shared without either launcher inheriting the other's paths.
  *
@@ -35,7 +35,7 @@ const MAX_PORT = 65535;
 export function isPortFree(port: number, host: string = LOOPBACK): Promise<boolean> {
   return new Promise((resolve) => {
     const srv = createServer();
-    srv.once("error", () => resolve(false));
+    srv.once("error", () => { /* diagnostics-ignore: Port bind failure is the result of an availability probe, not an operation failure. */ return resolve(false); });
     srv.listen(port, host, () => srv.close(() => resolve(true)));
   });
 }

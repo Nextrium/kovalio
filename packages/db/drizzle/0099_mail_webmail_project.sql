@@ -9,7 +9,7 @@
 -- read back as mail server "prod").
 --
 -- Nullable: most servers have no webmail, and an operator may run one outside
--- openship. ON DELETE SET NULL so deleting the webmail project clears the link and
+-- kovalio. ON DELETE SET NULL so deleting the webmail project clears the link and
 -- /emails falls back to the install CTA rather than pointing at a row that is gone.
 --
 -- No backfill. A pre-existing webmail project still carries the retired

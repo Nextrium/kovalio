@@ -2,7 +2,7 @@
 
 /**
  * Settings → Instance → Product mode. Instance-wide default: does this box
- * present itself as Openship Mail (mail control plane in the sidebar, "OpenShip
+ * present itself as Kovalio Mail (mail control plane in the sidebar, "Kovalio
  * Mail" in the chrome and the browser tab) or as the full platform?
  *
  * Two cards, not a toggle — the same control `ProductViewSetting` uses one tab
@@ -20,8 +20,8 @@
  * worse than no control.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { useCallback, useEffect, useState } from "react";
-import { LayoutTemplate, Mail } from "lucide-react";
 
 import { useI18n } from "@/components/i18n-provider";
 import { useToast } from "@/context/ToastContext";
@@ -61,7 +61,8 @@ export function MailModeSetting() {
         const me = res.data?.members?.find((m) => m.userId === session?.user?.id);
         setIsOwner(me?.role === "owner");
       })
-      .catch(() => {
+      .catch((diagnosticFailure) => {
+        observeCaughtError(diagnosticFailure, "dashboard/app/(dashboard)/settings/_components/MailModeSetting");
         if (!cancelled) setIsOwner(false);
       });
     return () => {
@@ -79,7 +80,9 @@ export function MailModeSetting() {
         setMode(s.productModeEffective === "mail" ? "mail" : "platform");
         setFromEnv(!s.productMode && s.productModeEffective === "mail");
       })
-      .catch(() => {});
+      .catch((diagnosticFailure) => {
+        observeCaughtError(diagnosticFailure, "dashboard/app/(dashboard)/settings/_components/MailModeSetting");
+      });
     return () => {
       cancelled = true;
     };
@@ -92,7 +95,7 @@ export function MailModeSetting() {
       setMode(next);
       try {
         // Explicit value both ways, never null: "platform" has to be able to
-        // override an OPENSHIP_PRODUCT=mail environment, and clearing would hand
+        // override an KOVALIO_PRODUCT=mail environment, and clearing would hand
         // the decision back to it.
         await systemApi.updateSettings({ productMode: next });
         setFromEnv(false);
@@ -103,7 +106,8 @@ export function MailModeSetting() {
         } else {
           window.location.reload();
         }
-      } catch {
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "dashboard/app/(dashboard)/settings/_components/MailModeSetting");
         setMode(previous);
         showToast(copy.errorToast, "error", copy.title);
       } finally {
@@ -120,15 +124,15 @@ export function MailModeSetting() {
   const choices: Array<ModeChoice<ProductView>> = [
     {
       value: "platform",
-      icon: LayoutTemplate,
+      icon: "layout",
       label: copy.platformLabel,
       description: copy.platformDesc,
     },
-    { value: "mail", icon: Mail, label: copy.mailLabel, description: copy.mailDesc },
+    { value: "mail", icon: "mail", label: copy.mailLabel, description: copy.mailDesc },
   ];
 
   return (
-    <SettingsSection icon={Mail} title={copy.title} description={copy.description}>
+    <SettingsSection icon={"mail"} title={copy.title} description={copy.description}>
       <ModeChoiceCards
         choices={choices}
         value={mode}

@@ -57,10 +57,13 @@ export interface ServiceHandle {
   /** Project slug — used in destination key paths. */
   projectSlug: string;
   /** Whether this service's NAMED volumes are project-scoped
-   *  (openship-<slug>-<name>). Mirrors service.namespaceVolumes so the DB
+   *  (kovalio-<slug>-<name>). Mirrors service.namespaceVolumes so the DB
    *  fallback in listSources resolves the same name deploy used. False for
    *  grandfathered pre-migration services (bare names). */
   namespaceVolumes: boolean;
+  /** Migration includes bind-mounted config files; default backups keep their
+   * existing directory/volume selection. */
+  includeFileBinds?: boolean;
 }
 
 export interface ExecExitInfo {
@@ -75,6 +78,8 @@ export interface ExecExitInfo {
 /** The set of physical sources an executor can pull bytes out of for a
  *  given service. Producers iterate this to decide what to back up. */
 export interface BackupSource {
+  /** False for a single bind-mounted file when explicitly requested. */
+  isDirectory?: boolean;
   /** Opaque id understood by the executor — typically the path or
    *  volume name. */
   id: string;
@@ -107,10 +112,14 @@ export interface ExecuteCommandOpts {
   /** Absolute ceiling regardless of traffic, behind `idleTimeoutMs`. Docker
    *  exec default 6 hours, matching capture/restore helpers. */
   timeoutMs?: number;
+  /** Cancel a command/restore owned by this operation. */
+  signal?: AbortSignal;
 }
 
 export interface StreamPathOpts {
   compression?: PayloadCompression;
+  /** A migration may intentionally copy an empty source; backups stay strict. */
+  allowEmpty?: boolean;
   /** Glob-ish patterns to exclude (passed to tar `--exclude`). */
   exclude?: string[];
   /**
@@ -150,6 +159,8 @@ export interface StreamPathOpts {
 
 export interface ReceiveStreamOpts {
   compression?: PayloadCompression;
+  /** Incoming archive contains one file at the canonical `file` entry. */
+  sourceIsFile?: boolean;
   /** Wipe the target before extracting. Default false — adapter-
    *  specific safer modes (delete-then-recreate volume) take precedence. */
   clearTarget?: boolean;
@@ -183,7 +194,9 @@ export interface ReceiveStreamOpts {
  *  Oblien cloud, or an SSH host. */
 export interface BackupExecutor {
   /** Identifies which RuntimeAdapter this executor pairs with. */
-  readonly runtimeName: "docker" | "bare" | "cloud";
+  readonly runtimeName: "docker" | "bare";
+  /** False when stopping the service also stops access to its filesystem. */
+  readonly supportsOfflineVolumeRestore?: boolean;
 
   /** Discover what's backupable inside a service. */
   listSources(service: ServiceHandle): Promise<BackupSource[]>;
@@ -231,7 +244,7 @@ export interface BackupExecutor {
    *
    * Producers detect a database and authenticate to it from `ServiceHandle.env`,
    * which is assembled from the service row plus the project's env-var rows. That
-   * covers everything Openship deployed and nothing it adopted: a service row built
+   * covers everything Kovalio deployed and nothing it adopted: a service row built
    * from a running container carries no `environment` at all, so `POSTGRES_DB` and
    * `POSTGRES_USER` are simply absent and `PgDumpProducer.detects()` returns false
    * for an image that is plainly postgres — the volume fallback then runs instead
@@ -310,6 +323,8 @@ export type { PayloadCompression, PayloadKind };
  * the config unfiltered so the two halves cannot drift again.
  */
 export interface ProducerOpts {
+  /** Store complete snapshots with reusable blocks; interpreted by the storage pipeline. */
+  incremental?: boolean;
   /** Which sources from `listSources()` to back up. Null = producer's
    *  default (usually "everything"). */
   sourceIds?: string[];
@@ -367,7 +382,7 @@ export interface ProducerOpts {
  * Deliberately does NOT carry a post-restore startup timeout. `startupTimeoutMs`
  * lived here for a while, dropped on the floor by every producer and read by no
  * executor — honoring it means building a readiness probe, which is a feature and
- * belongs with `OpenshipReadiness`, not a field that quietly implies one exists.
+ * belongs with `KovalioReadiness`, not a field that quietly implies one exists.
  */
 export interface RestoreOpts {
   /** Pass clearTarget through. */
@@ -403,8 +418,9 @@ export interface ArtifactRef {
   payloadKind: PayloadKind;
   sha256: string;
   sizeBytes: number;
-  /** Lazily-resolved stream from the destination. The producer pipes
-   *  this through whatever decompression/parsing it needs. */
+  /** Lazily-resolved stream from the destination. Finish validation
+   *  before opening, and open before clearing or writing target data: the
+   *  orchestrator records that writes may begin when it hands out this stream. */
   open: () => Promise<Readable>;
 }
 
@@ -445,6 +461,7 @@ export type DestinationCapability =
   | "streamingGet"
   | "multipart"
   | "presignedGet"
+  | "rangedGet"
   | "presignedPut"
   | "quota"
   | "serverSideCopy";
@@ -452,7 +469,7 @@ export type DestinationCapability =
 export type DestinationKind =
   | "s3_compatible"
   | "sftp"
-  | "openship_server"
+  | "kovalio_server"
   | "local"
   | "http_upload";
 
@@ -471,7 +488,7 @@ export interface BackupDestinationRow {
   sshHost: string | null;
   sshPort: number | null;
   sshUser: string | null;
-  /** When kind="openship_server" this is the user's servers.id. The
+  /** When kind="kovalio_server" this is the user's servers.id. The
    *  apps/api layer hydrates SSH creds from that server BEFORE handing
    *  the row to resolveDestination — the adapter never queries the DB. */
   serverId?: string | null;
@@ -534,7 +551,8 @@ export interface BackupDestination {
   preflight(): Promise<{ ok: true } | { ok: false; reason: string }>;
 
   put(key: string, body: Readable, opts: PutOpts): Promise<PutResult>;
-  get(key: string): Promise<Readable>;
+  /** Ranges require the rangedGet capability; offsets are inclusive. */
+  get(key: string, options?: { range?: { start: number; end: number } }): Promise<Readable>;
   head(key: string): Promise<HeadInfo | null>;
   list(prefix: string, opts?: ListOpts): Promise<ListPage>;
   delete(key: string): Promise<void>;
@@ -576,7 +594,7 @@ export interface BackupTrigger {
  *  destination directory. Self-contained: anyone with destination
  *  access can hand-restore by reading this file. */
 export interface BackupManifest {
-  version: 1;
+  version: 1 | 2;
   runId: string;
   projectId: string;
   projectSlug: string;

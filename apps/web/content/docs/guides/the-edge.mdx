@@ -1,24 +1,24 @@
 ---
 title: The edge
-description: Openship's built-in reverse proxy — how your apps get a public address and HTTPS, how you protect a route, where your traffic numbers come from, and how to take over a proxy that's already running on a server.
+description: Kovalio's built-in reverse proxy — how your apps get a public address and HTTPS, how you protect a route, where your traffic numbers come from, and how to take over a proxy that's already running on a server.
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-Every request from the internet has to land *somewhere* first, before Openship knows which of your apps it's
+Every request from the internet has to land *somewhere* first, before Kovalio knows which of your apps it's
 for. That somewhere is the **edge** — a reverse proxy that sits on ports `80` and `443` and acts as the front
 door for the whole box. It answers the connection, sorts out HTTPS, works out which app the hostname belongs
 to, forwards the request to that app's container, and counts it on the way past.
 
-Most of the time you never think about it: `openship up` sets the edge up for you, and every deploy that has a
+Most of the time you never think about it: `kovalio up` sets the edge up for you, and every deploy that has a
 domain wires that domain into it automatically. You start caring about the edge directly in a few specific
 moments — when you're moving an existing server across, when you want to route a bare hostname at a port, when
 you need to rate-limit or block something, or when you're asking "where is my traffic actually coming from?"
 
 <Callout title="The edge vs. the server" type="info">
-Two different things run on a box, and it's worth keeping them straight. The **server** is Openship itself —
+Two different things run on a box, and it's worth keeping them straight. The **server** is Kovalio itself —
 the API and dashboard, the control room. The **edge** is the public reverse proxy in front of your apps — the
-front door. `openship up` installs both together; a visitor's request only ever touches the edge, never the
+front door. `kovalio up` installs both together; a visitor's request only ever touches the edge, never the
 server.
 </Callout>
 
@@ -38,15 +38,15 @@ Four jobs, all on the request path:
 <Callout title="What you need first">
 - A Linux server — the edge is a Linux reverse proxy. On macOS/Windows you can still *read* an edge's domains and
   traffic from the CLI, but installing and taking over the proxy happens on the Linux box.
-- Openship installed on that box (`openship up`). The edge comes with it.
-- For anything that reads data on a CLI-installed instance, a login: run `openship login` once with a token
+- Kovalio installed on that box (`kovalio up`). The edge comes with it.
+- For anything that reads data on a CLI-installed instance, a login: run `kovalio login` once with a token
   from the dashboard.
 </Callout>
 
 ## Taking over a server that's already serving
 
 This is the headline case. You have a server that's *already* running nginx, Apache, or Caddy on `:80/:443`
-with real sites on it, and you want Openship to run the front door instead — without a flag day where nothing
+with real sites on it, and you want Kovalio to run the front door instead — without a flag day where nothing
 is served.
 
 The edge does this as a **migration**: it reads the existing proxy's sites, registers each one on the edge so
@@ -62,7 +62,7 @@ fails, so you never end up with neither proxy up.
 On the server, ask the edge what it would import:
 
 ```bash
-openship edge sites
+kovalio edge sites
 ```
 
 It lists the reverse-proxy sites it found on the host — the hostnames and where each currently points.
@@ -74,11 +74,11 @@ It lists the reverse-proxy sites it found on the host — the hostnames and wher
 ### Take over and bring the sites across
 
 ```bash
-openship edge migrate
+kovalio edge migrate
 ```
 
 That imports every site it just listed, then frees `:80/:443` and starts serving them from the edge. If you'd
-rather *not* keep the old sites — you just want the ports — use `openship edge takeover` instead, which stops
+rather *not* keep the old sites — you just want the ports — use `kovalio edge takeover` instead, which stops
 the old proxy without importing anything.
 
 </Step>
@@ -86,8 +86,8 @@ the old proxy without importing anything.
 </Steps>
 
 <Callout title="You don't have to go looking for this" type="info">
-When a foreign proxy is holding `:80/:443`, Openship raises the same "there's another proxy here — take over
-and migrate its sites?" prompt **automatically** during `openship up` and in the bare `openship` control panel.
+When a foreign proxy is holding `:80/:443`, Kovalio raises the same "there's another proxy here — take over
+and migrate its sites?" prompt **automatically** during `kovalio up` and in the bare `kovalio` control panel.
 The commands above are the manual version of that same offer, for when you want to run it on demand.
 </Callout>
 
@@ -98,18 +98,16 @@ project, or bind a fresh one straight to a local port:
 
 ```bash
 # Point a host at a port on this box (creates a tracked project for it)
-openship edge domains add app.example.com --port 8080
+kovalio edge domains add app.example.com --port 8080
 
 # Attach a host to an existing project (uses that project's port)
-openship edge domains add www.example.com --project prj_123 --primary
+kovalio edge domains add www.example.com --project prj_123 --primary
 ```
 
 Registering a domain also verifies its DNS and issues the HTTPS certificate for you. If DNS isn't pointing at
 the box yet, the command prints the records to add and you re-run verification once they've propagated. The full
 domain workflow — DNS records, verification, primary vs. redirect — lives in the
-[Custom domains](/docs/guides/custom-domains) guide; `openship edge domains` is the edge-scoped view of it.
-
-<Callout title="Screenshot">A project's **Domains** tab showing a verified hostname with a green SSL badge. *(screenshot pending)*</Callout>
+[Custom domains](/docs/guides/custom-domains) guide; `kovalio edge domains` is the edge-scoped view of it.
 
 ## Protecting a route
 
@@ -119,22 +117,22 @@ one rule:
 
 ```bash
 # 20 requests/second per client IP on the login path, allowing short bursts
-openship edge rules add -p prj_123 --path /login --rate-limit 20 --burst 40
+kovalio edge rules add -p prj_123 --path /login --rate-limit 20 --burst 40
 
 # Block two countries and a bad IP, answering with 403
-openship edge rules add -p prj_123 --ban-country RU,CN --ban-ip 203.0.113.7 --block-status 403
+kovalio edge rules add -p prj_123 --ban-country RU,CN --ban-ip 203.0.113.7 --block-status 403
 
 # Only let an office network in; deny everyone else
-openship edge rules add -p prj_123 --allow-cidr 198.51.100.0/24
+kovalio edge rules add -p prj_123 --allow-cidr 198.51.100.0/24
 
-openship edge rules list -p prj_123
+kovalio edge rules list -p prj_123
 ```
 
 <Callout title="Rules that key on IP need the real client IP" type="warn">
-Rate limits and country rules only work if the edge sees the visitor's true address. Openship's own edge does.
+Rate limits and country rules only work if the edge sees the visitor's true address. Kovalio's own edge does.
 If you've put *another* proxy (or Cloudflare) in front of it, that proxy has to pass the real IP through and
 you have to run with `--trust-proxy` — otherwise every visitor looks like the proxy. See
-[`openship up`](/docs/cli/run) for the flag.
+[`kovalio up`](/docs/cli/run) for the flag.
 </Callout>
 
 ## Watching your traffic
@@ -150,13 +148,13 @@ request lines. That's covered in [Logs & monitoring](/docs/guides/logs-monitorin
 
 ```bash
 # Requests, bandwidth, and hourly periods
-openship edge traffic -p prj_123
+kovalio edge traffic -p prj_123
 
 # Visitors, countries, and top paths for one domain
-openship edge analytics -p prj_123 --domain app.example.com
+kovalio edge analytics -p prj_123 --domain app.example.com
 
 # The recent raw request log — and follow it live
-openship edge logs -p prj_123 --follow
+kovalio edge logs -p prj_123 --follow
 ```
 
 <Callout title="Where the numbers come from" type="info">
@@ -168,14 +166,14 @@ nothing until it's had some traffic, and the newest few minutes may not be in th
 
 ## Prefer the full command reference?
 
-Everything here is a task-level walkthrough. For the complete list of `openship edge` subcommands and every flag
+Everything here is a task-level walkthrough. For the complete list of `kovalio edge` subcommands and every flag
 — the interactive panel, `up`/`repair`, all the domain, rule, and analytics options — see the
 [Edge & monitoring](/docs/cli/edge) CLI reference.
 
-## What next?
+## Related guides
 
 <Cards>
-  <Card title="Edge & monitoring (CLI)" href="/docs/cli/edge" description="Every openship edge subcommand and flag, in full." />
+  <Card title="Edge & monitoring (CLI)" href="/docs/cli/edge" description="Every kovalio edge subcommand and flag, in full." />
   <Card title="Custom domains" href="/docs/guides/custom-domains" description="DNS records, verification, and certificates end to end." />
   <Card title="Logs & monitoring" href="/docs/guides/logs-monitoring" description="The dashboard view of runtime logs, request logs, and traffic." />
   <Card title="Migrate from Coolify / Dokploy / Dokku" href="/docs/guides/migrate-from-coolify-dokploy-dokku" description="Bring an existing PaaS box across, edge and all." />

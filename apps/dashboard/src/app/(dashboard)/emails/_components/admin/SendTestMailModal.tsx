@@ -1,12 +1,14 @@
 "use client";
 
+import { Icon as UiIcon } from "@repo/ui/icons";
+
 /**
  * Send Test Mail modal.
  *
  * Loads the list of provisioned domains for the given mail server, lets the
  * operator pick which domain to send AS, and POSTs to
  * `mail/admin/:serverId/test-email`. The backend ensures (creates if
- * missing) an `openship@<fromDomain>` mailbox and authenticates as that
+ * missing) an `kovalio@<fromDomain>` mailbox and authenticates as that
  * identity — so SMTP AUTH user == MAIL FROM and Postfix's
  * `reject_sender_login_mismatch` policy is satisfied. Subject and body
  * are hardcoded server-side; this form only collects recipient + sender
@@ -18,7 +20,6 @@
  */
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, ExternalLink } from "lucide-react";
 import {
   getApiErrorMessage,
   mailAdminApi,
@@ -179,7 +180,7 @@ function SendTestMailContent({
       <p className="text-sm text-muted-foreground leading-relaxed -mt-1">
         {s.sendsFromBefore}
         <span className="font-mono text-[12.5px] text-foreground">
-          openship@{senderDomain || "…"}
+          kovalio@{senderDomain || "…"}
         </span>
         {s.sendsFromAfter}
       </p>
@@ -233,7 +234,7 @@ function SentStage({
     <div className="p-6 space-y-5">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-success-bg text-success">
-          <CheckCircle2 className="size-5" strokeWidth={2} />
+          <UiIcon name="check-circle" className="size-5" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-xl font-bold text-foreground mb-1">{s.sentTitle}</h3>
@@ -262,7 +263,7 @@ function SentStage({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-xl bg-muted text-foreground hover:bg-muted/80 border border-border transition-colors"
           >
-            <ExternalLink className="size-3.5" />
+            <UiIcon name="external-link" className="size-3.5" />
             {s[inbox.labelKey]}
           </a>
         )}

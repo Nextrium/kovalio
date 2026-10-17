@@ -110,8 +110,8 @@ describe("a path policy archives each named folder as its own artifact", () => {
   it("yields one artifact per path, named after it", async () => {
     const { artifacts } = await capture(["/data/app", "/srv/uploads"]);
     expect(artifacts.map((a) => a.name)).toEqual([
-      "path-data_app.tar.zst",
-      "path-srv_uploads.tar.zst",
+      expect.stringMatching(/^path-data_app-[a-f0-9]{16}\.tar\.zst$/),
+      expect.stringMatching(/^path-srv_uploads-[a-f0-9]{16}\.tar\.zst$/),
     ]);
     // One artifact per path is the point: three folders give three independently
     // restorable units, not one all-or-nothing archive.
@@ -135,7 +135,7 @@ describe("a path policy archives each named folder as its own artifact", () => {
     // has to state what it is rather than leave an operator to assume a snapshot.
     const { artifacts } = await capture(["/data/app"], "none");
     expect(artifacts[0]!.metadata.consistency).toBe("crash");
-    expect(artifacts[0]!.name).toBe("path-data_app.tar");
+    expect(artifacts[0]!.name).toMatch(/^path-data_app-[a-f0-9]{16}\.tar$/);
   });
 
   it("probes the codec once for the whole run, not once per path", async () => {
@@ -148,7 +148,7 @@ describe("a path policy archives each named folder as its own artifact", () => {
     // `compression` is a declared config key for this kind, so the dialog's control has
     // to actually decide something. The probe would have answered zstd here.
     const { cmds, artifacts } = await capture(["/data/app"], "zstd", { compression: "gzip" });
-    expect(artifacts[0]!.name).toBe("path-data_app.tar.gz");
+    expect(artifacts[0]!.name).toMatch(/^path-data_app-[a-f0-9]{16}\.tar\.gz$/);
     expect(artifacts[0]!.metadata.compression).toBe("gzip");
     // …and no probe was needed at all.
     expect(cmds.some((c) => c.join(" ").includes("command -v zstd"))).toBe(false);
@@ -164,6 +164,13 @@ describe("a path policy archives each named folder as its own artifact", () => {
     // bill the destination twice and give the operator two identical restore points.
     const { artifacts } = await capture(["/data/app", "/data/app/", "/data//app"]);
     expect(artifacts).toHaveLength(1);
+  });
+
+  it("keeps different folders distinct when readable filenames collide", async () => {
+    const paths = ["/data/a_b", "/data/a/b", `/data/${"x".repeat(150)}/first`, `/data/${"x".repeat(150)}/second`];
+    const { artifacts } = await capture(paths);
+    expect(new Set(artifacts.map(artifact => artifact.name)).size).toBe(paths.length);
+    expect(artifacts.map(artifact => artifact.metadata.path)).toEqual(paths);
   });
 
   it("refuses a policy that archives folders but names none", async () => {
@@ -223,7 +230,7 @@ async function runCapture(dir: string) {
 
 describe("the generated gate behaves as claimed under /bin/sh", () => {
   it("exits 66 and names the path when the folder is absent", async () => {
-    const missing = "/tmp/openship-path-definitely-absent-4f19c";
+    const missing = "/tmp/kovalio-path-definitely-absent-4f19c";
     expect(existsSync(missing)).toBe(false);
     const run = await runCapture(missing);
     expect(run.status).toBe(66);
@@ -231,7 +238,7 @@ describe("the generated gate behaves as claimed under /bin/sh", () => {
   });
 
   it("exits 67 on a folder that exists and is empty", async () => {
-    const empty = mkdtempSync("/tmp/openship-path-empty-");
+    const empty = mkdtempSync("/tmp/kovalio-path-empty-");
     const run = await runCapture(empty);
     expect(run.status).toBe(67);
     // The diagnosis, not just the refusal: an existing-but-empty directory almost
@@ -243,14 +250,14 @@ describe("the generated gate behaves as claimed under /bin/sh", () => {
     // `find -mindepth 1` counts hidden entries; `ls` would not, and a tree whose only
     // content is `.env` or `.git` is exactly the case an `ls`-based gate would have
     // called empty and refused.
-    const dotOnly = mkdtempSync("/tmp/openship-path-dot-");
+    const dotOnly = mkdtempSync("/tmp/kovalio-path-dot-");
     writeFileSync(join(dotOnly, ".env"), "SECRET=1");
     const run = await runCapture(dotOnly);
     expect(run.status, run.stderr.toString()).toBe(0);
   });
 
   it("passes a populated folder and the archive holds its contents", async () => {
-    const full = mkdtempSync("/tmp/openship-path-full-");
+    const full = mkdtempSync("/tmp/kovalio-path-full-");
     mkdirSync(join(full, "public"));
     writeFileSync(join(full, "public", "index.html"), "<h1>hi</h1>");
     const run = await runCapture(full);
@@ -372,7 +379,7 @@ async function runRestore(
 
 /** A tar whose single member is `restored.txt`. */
 function tarWithRestoredFile(): Buffer {
-  const src = mkdtempSync("/tmp/openship-path-src-");
+  const src = mkdtempSync("/tmp/kovalio-path-src-");
   writeFileSync(join(src, "restored.txt"), "from the backup");
   const made = spawnSync("/usr/bin/tar", ["-c", "-C", src, "."], { maxBuffer: 8 * 1024 * 1024 });
   expect(made.status, made.stderr?.toString()).toBe(0);
@@ -383,7 +390,7 @@ describe("the generated restore script behaves as claimed under /bin/sh", () => 
   it("creates the target when the container no longer has it", async () => {
     // The ordinary case for a rebuilt container, and the one thing that makes a path
     // artifact useful after the service was recreated from its image.
-    const parent = mkdtempSync("/tmp/openship-path-parent-");
+    const parent = mkdtempSync("/tmp/kovalio-path-parent-");
     const target = join(parent, "gone");
     const { run } = await runRestore(target, tarWithRestoredFile());
     const out = run();
@@ -392,7 +399,7 @@ describe("the generated restore script behaves as claimed under /bin/sh", () => 
   });
 
   it("merges: files the artifact never had survive", async () => {
-    const target = mkdtempSync("/tmp/openship-path-merge-");
+    const target = mkdtempSync("/tmp/kovalio-path-merge-");
     writeFileSync(join(target, "kept.txt"), "operator's own file");
     const { run } = await runRestore(target, tarWithRestoredFile());
     const out = run();
@@ -404,7 +411,7 @@ describe("the generated restore script behaves as claimed under /bin/sh", () => 
   it("clears: everything present goes, including dotfiles and subtrees", async () => {
     // `rm -rf dir/*` would leave `.hidden` behind and silently produce a hybrid of two
     // points in time. `find -mindepth 1 -maxdepth 1` does not.
-    const target = mkdtempSync("/tmp/openship-path-clear-");
+    const target = mkdtempSync("/tmp/kovalio-path-clear-");
     writeFileSync(join(target, "stale.txt"), "old");
     writeFileSync(join(target, ".hidden"), "old");
     mkdirSync(join(target, "sub"));
@@ -419,7 +426,7 @@ describe("the generated restore script behaves as claimed under /bin/sh", () => 
   });
 
   it("confines the clear to the target: a sibling directory is untouched", async () => {
-    const parent = mkdtempSync("/tmp/openship-path-confine-");
+    const parent = mkdtempSync("/tmp/kovalio-path-confine-");
     const target = join(parent, "target");
     const sibling = join(parent, "sibling");
     mkdirSync(target);
@@ -437,9 +444,9 @@ describe("the generated restore script behaves as claimed under /bin/sh", () => 
     // The whole reason the guard exists. Before it: `rm -rf` ran, `tar -x` read EOF
     // from the missing `zstd`, and the restore exited 0 having emptied the target.
     // Proven against a PATH that really has no zstd, and asserted on the DATA.
-    const target = mkdtempSync("/tmp/openship-path-nozstd-");
+    const target = mkdtempSync("/tmp/kovalio-path-nozstd-");
     writeFileSync(join(target, "precious.txt"), "the only copy");
-    const bin = mkdtempSync("/tmp/openship-path-bin-");
+    const bin = mkdtempSync("/tmp/kovalio-path-bin-");
     for (const tool of ["mkdir", "find", "rm", "tar", "sh", "cat"]) {
       const found = spawnSync("/bin/sh", ["-c", `command -v ${tool}`]).stdout.toString().trim();
       if (found) spawnSync("/bin/ln", ["-s", found, join(bin, tool)]);

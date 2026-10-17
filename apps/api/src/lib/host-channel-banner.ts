@@ -1,3 +1,4 @@
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import { hostChannelHealth, type HostChannelHealth } from "@repo/adapters";
 import {
   HOST_CHANNEL_BLOCKED,
@@ -7,14 +8,14 @@ import {
   HOST_CHANNEL_UNAFFECTED,
   wrapText,
 } from "@repo/core";
-import { env } from "../config/env";
+import { env } from "@repo/platform/engine/config/env";
 
 /**
  * Boot-time diagnosis of the container→host SSH channel (#490).
  *
  * The channel's address is host-LOCAL, so unlike a published container port it
  * traverses the host's filter/INPUT chain — where a default-deny ufw silently DROPs
- * it. `openship up` now probes during install; this covers boxes provisioned before
+ * it. `kovalio up` now probes during install; this covers boxes provisioned before
  * that existed, and any box whose firewall changed under a running install.
  *
  * Never throws and never blocks boot.
@@ -47,7 +48,7 @@ const IMPACT = [
 ];
 
 function defaultDeps(): HostChannelBannerDeps {
-  return { health: hostChannelHealth, log: (line) => console.error(line) };
+  return { health: hostChannelHealth, log: (line) => errorDiagnostics.error("api/lib/host-channel-banner", line) };
 }
 
 export async function reportHostChannelAtBoot(
@@ -63,7 +64,8 @@ export async function reportHostChannelAtBoot(
   let health: HostChannelHealth;
   try {
     health = await deps.health();
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "api/lib/host-channel-banner");
     return "error";
   }
 
@@ -83,7 +85,7 @@ export async function reportHostChannelAtBoot(
       deps.log(
         `[host-channel] ${health.target ?? "the host channel"} refuses TCP forwarding, so ` +
           `deploy health checks fall back to \`curl\` on the host (and are skipped if it ` +
-          `has none). Re-run \`openship up\` to re-provision the channel with forwarding.`,
+          `has none). Re-run \`kovalio up\` to re-provision the channel with forwarding.`,
       );
     }
     return health.code;

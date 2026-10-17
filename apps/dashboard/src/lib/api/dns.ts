@@ -51,7 +51,7 @@ export interface VerifyZoneResult {
  * written. Mirrors the API's `RecordPlanAction`.
  *
  *   create   → nothing answers this name+type yet.
- *   update   → an Openship-managed record exists; apply rewrites it in place.
+ *   update   → an Kovalio-managed record exists; apply rewrites it in place.
  *   adopt    → one existing record we did NOT create; apply repoints it.
  *   in-sync  → a record already answers with the value apply would write.
  *   conflict → several records answer and none is ours; apply refuses to touch it.

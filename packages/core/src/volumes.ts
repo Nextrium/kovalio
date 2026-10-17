@@ -13,7 +13,7 @@
  * strings the service path takes, plus the shorter form an app actually wants —
  * a bare path relative to the app root (`storage`) — and expands it to a real
  * spec. Docker volume NAMING is not here: `runtime/volume-namespace.ts` in
- * @repo/adapters is the single authority for the `openship-<slug>-` scoping, and
+ * @repo/adapters is the single authority for the `kovalio-<slug>-` scoping, and
  * both the single-app and multi-service deploys go through it.
  *
  * Pure string logic, no dependencies.
@@ -32,14 +32,14 @@ const MODE_SUFFIX = /:(ro|rw|z|Z|nocopy)$/;
 /**
  * Volume name for a bare app path: `storage/app` → `storage-app`. Only the
  * characters Docker accepts in a volume name survive; the result is later
- * prefixed with `openship-<slug>-` at container-create time, so it just has to
+ * prefixed with `kovalio-<slug>-` at container-create time, so it just has to
  * be stable and readable, not globally unique.
  */
 export function volumeAutoName(path: string): string {
   const cleaned = path
     .trim()
     .replace(/^\.\//, "")
-    .replace(/^\/+|\/+$/g, "")
+    .replace(/^\/+|(?<!\/)\/+$/g, "")
     .replace(/[^A-Za-z0-9._-]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return cleaned || "data";
@@ -52,8 +52,8 @@ export function volumeAutoName(path: string): string {
  * `<autoname>:<absolute target>`. Anything already in `source:target` form (a
  * named volume or a host bind mount) passes through untouched, so a user who
  * wants a bind mount or a shared volume name keeps full control. Returns null
- * for input that can't be a mount (empty, or a target outside the app dir given
- * as a relative path that normalises away).
+ * for input that can't be a mount (empty, a target outside the app dir given as
+ * a relative path that normalises away, or a path with a `..` traversal segment).
  */
 export function normalizeAppVolume(spec: string, appDir: string = APP_DIR): string | null {
   const raw = spec.trim();
@@ -66,9 +66,16 @@ export function normalizeAppVolume(spec: string, appDir: string = APP_DIR): stri
   // Already `source:target` (2 segments, or 3 on Windows-style `C:\x:/y`).
   if (body.split(":").length >= 2) return raw;
 
-  const path = body.replace(/^\.\//, "").replace(/\/+$/g, "");
+  const path = body.replace(/^\.\//, "").replace(/(?<!\/)\/+$/g, "");
   if (!path) return null;
-  const target = path.startsWith("/") ? path : `${appDir.replace(/\/+$/, "")}/${path}`;
+  // A `..` segment resolves the mount outside the app dir (`../secret`,
+  // `/app/../secret` → `/secret`) — which the app-relative auto-name and the
+  // bare runtime's symlink logic below can't represent, and which the doc says
+  // returns null. Refuse traversal outright, the way normalizeRepoPath does in
+  // source-access.ts. Explicit `source:target` binds are handled above and keep
+  // full control.
+  if (path.split("/").includes("..")) return null;
+  const target = path.startsWith("/") ? path : `${appDir.replace(/(?<!\/)\/+$/, "")}/${path}`;
   // The auto-name is derived from the path RELATIVE to the app dir, so
   // `storage` and `/app/storage` produce the same volume — declaring it either
   // way must not create a second, empty volume.

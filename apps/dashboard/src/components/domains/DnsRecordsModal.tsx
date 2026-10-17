@@ -1,20 +1,27 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { Server, Loader2 } from "lucide-react";
+import { Icon as UiIcon } from "@repo/ui/icons";
+
+import React, { useCallback, useEffect, useId, useState } from "react";
 import { useI18n } from "@/components/i18n-provider";
 import { domainsApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api/client";
+import { Button } from "@/components/ui/button";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 import type { DomainDnsRecord } from "@/lib/api/domains";
 import DnsConfiguration from "@/app/(dashboard)/(deployment)/deploy/[slug]/components/DnsConfiguration";
 
 interface DnsRecordsModalProps {
-  /** The apex/primary custom hostname the deploy will serve. */
-  hostname: string;
-  /** When set, fetch the project-aware records for the existing row; otherwise
-   *  preview from the hostname alone (server IP still resolves on self-hosted). */
-  domainId?: string | null;
-  /** Show the synthesized `www` CNAME line (the www variant endpoint is enabled). */
-  includeWww?: boolean;
+  /** Every custom hostname this deploy will serve. Compose may have several. */
+  targets: Array<{
+    hostname: string;
+    includeWww?: boolean;
+    /** Existing persisted row; absent during the pre-deploy preview. */
+    domainId?: string | null;
+  }>;
+  /** Selected remote deployment target, so A records point at that server. */
+  serverId?: string;
+  confirmLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -26,30 +33,76 @@ interface DnsRecordsModalProps {
  * provider). Informational-blocking: Deploy proceeds, Cancel aborts.
  */
 export default function DnsRecordsModal({
-  hostname,
-  domainId,
-  includeWww,
+  targets,
+  serverId,
+  confirmLabel,
   onConfirm,
   onCancel,
 }: DnsRecordsModalProps) {
   const { t } = useI18n();
   const d = t.deploy.dns;
-  const [records, setRecords] = useState<DomainDnsRecord[] | null>(null);
-  const [mode, setMode] = useState<"cloud" | "selfhosted">("selfhosted");
+  const titleId = useId();
+  const { dialog, onKeyDown } = useDialogFocus(onCancel);
+  const [sections, setSections] = useState<
+    Array<{
+      hostname: string;
+      domainId?: string;
+      records: DomainDnsRecord[];
+      mode: "cloud" | "selfhosted";
+      error?: string;
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
+  const [connectionRevision, setConnectionRevision] = useState(0);
+  const [applying, setApplying] = useState<Set<string>>(() => new Set());
+  const handleApplying = useCallback((hostname: string, busy: boolean) => {
+    setApplying((current) => {
+      if (current.has(hostname) === busy) return current;
+      const next = new Set(current);
+      if (busy) next.add(hostname);
+      else next.delete(hostname);
+      return next;
+    });
+  }, []);
+  const handleConnected = useCallback(() => setConnectionRevision((value) => value + 1), []);
+  const targetKey = JSON.stringify({ targets, serverId });
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     void (async () => {
       try {
-        const res = domainId
-          ? await domainsApi.records(domainId)
-          : await domainsApi.previewRecords(hostname);
+        const loaded = await Promise.all(
+          targets.map(async (target) => {
+            try {
+              const res = target.domainId
+                ? await domainsApi.records(target.domainId, serverId)
+                : await domainsApi.previewRecords(
+                    target.hostname,
+                    target.includeWww === true,
+                    serverId,
+                  );
+              const mode = res.data.mode === "cloud" ? ("cloud" as const) : ("selfhosted" as const);
+              return {
+                hostname: target.hostname,
+                domainId: target.domainId ?? undefined,
+                records: res.data.records,
+                mode,
+              };
+            } catch (error) {
+              return {
+                hostname: target.hostname,
+                domainId: target.domainId ?? undefined,
+                records: [],
+                mode: "selfhosted" as const,
+                error: getApiErrorMessage(error, t.autoDns.recordsFailed),
+              };
+            }
+          }),
+        );
         if (cancelled) return;
-        setRecords(res.data.records);
-        setMode(res.data.mode === "cloud" ? "cloud" : "selfhosted");
-      } catch {
-        if (!cancelled) setRecords([]);
+        setSections(loaded);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -57,64 +110,86 @@ export default function DnsRecordsModal({
     return () => {
       cancelled = true;
     };
-  }, [hostname, domainId]);
-
-  // Synthesized, display-only `www → apex` CNAME. The backend still mints the
-  // apex A record used for actual verification; this is guidance only.
-  const shown = useMemo<DomainDnsRecord[]>(() => {
-    if (!records) return [];
-    if (!includeWww || mode === "cloud") return records;
-    const apex = hostname.replace(/^www\./, "");
-    if (records.some((r) => r.type === "CNAME" && r.host.startsWith("www"))) return records;
-    return [...records, { type: "CNAME", host: "www", name: `www.${apex}`, value: apex }];
-  }, [records, includeWww, mode, hostname]);
+    // The serialized key is stable across equivalent arrays, avoiding a refetch
+    // if a parent rebuilds the target list during an unrelated render.
+  }, [targetKey, revision]);
 
   return (
-    <div className="p-5">
-      {/* Same clean header as the "view DNS" modal — records + the hint carry
-          everything; the old "Point your domain, then deploy" title/subtitle and
-          the "auto-configure" row were redundant chrome. */}
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
-          <Server className="size-4 text-primary" />
+    <div
+      ref={dialog}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      tabIndex={-1}
+      onKeyDown={onKeyDown}
+      className="flex max-h-[90vh] min-h-0 flex-col p-5 outline-none"
+    >
+      <div className="mb-4 flex shrink-0 items-center gap-3">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+          <UiIcon name="server" className="size-4 text-primary" />
         </div>
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">{d.title}</h2>
-          <p className="text-xs text-muted-foreground">
-            {d.addRecordsFor} <span className="font-medium text-foreground">{hostname}</span>
+        <div className="min-w-0">
+          <h2 id={titleId} className="text-lg font-semibold text-foreground">
+            {d.title}
+          </h2>
+          <p className="text-xs text-muted-foreground break-words">
+            {d.addRecordsFor}{" "}
+            <span className="font-medium text-foreground">
+              {targets.map((target) => target.hostname).join(", ")}
+            </span>
           </p>
         </div>
       </div>
 
+      <p className="mb-4 shrink-0 text-xs leading-relaxed text-muted-foreground">{d.modalSubtitle}</p>
+
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> {d.loadingRecords}
+          <UiIcon name="spinner" className="size-4 animate-spin" /> {d.loadingRecords}
         </div>
       ) : (
-        <DnsConfiguration
-          domain={hostname}
-          records={shown}
-          mode={mode}
-          showHeader={false}
-          domainId={domainId ?? undefined}
-        />
+        <div className="max-h-[60vh] min-h-0 space-y-4 overflow-y-auto pe-1">
+          {sections.map((section) =>
+            section.error ? (
+              <div key={section.hostname} className="space-y-3 rounded-xl bg-card p-4">
+                <p className="break-all text-sm font-medium text-foreground">{section.hostname}</p>
+                <p role="alert" className="break-words text-sm text-danger">
+                  {section.error}
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={applying.size > 0}
+                  onClick={() => setRevision((value) => value + 1)}
+                >
+                  {t.autoDns.retry}
+                </Button>
+              </div>
+            ) : (
+              <DnsConfiguration
+                key={section.hostname}
+                domain={section.hostname}
+                records={section.records}
+                mode={section.mode}
+                showHeader={targets.length > 1}
+                domainId={section.domainId}
+                serverId={serverId}
+                connectionRevision={connectionRevision}
+                onConnected={handleConnected}
+                onApplyingChange={handleApplying}
+              />
+            ),
+          )}
+        </div>
       )}
 
-      <div className="mt-5 flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60"
-        >
+      <div className="mt-5 flex shrink-0 items-center justify-end gap-2">
+        <Button type="button" onClick={onCancel} variant="ghost">
           {d.cancel}
-        </button>
-        <button
-          type="button"
-          onClick={onConfirm}
-          className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          {d.deployAction}
-        </button>
+        </Button>
+        <Button type="button" onClick={onConfirm} disabled={loading || applying.size > 0}>
+          {confirmLabel ?? d.deployAction}
+        </Button>
       </div>
     </div>
   );

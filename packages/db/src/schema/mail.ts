@@ -11,12 +11,13 @@ import {
 import { servers } from "./servers";
 import { project } from "./project";
 import { organization } from "./organization";
+import type { MailCertificateHealth } from "@repo/core";
 
 /**
  * Mail-server install record.
  *
- * A row here is openship's fast answer to "is this server a mail server?".
- * The state file on the host (/root/.openship-mail-state.json) remains the
+ * A row here is kovalio's fast answer to "is this server a mail server?".
+ * The state file on the host (/root/.kovalio-mail-state.json) remains the
  * source of truth for STEP-level progress; this table just lets the
  * dashboard skip an SSH round-trip on every /emails page load.
  *
@@ -56,10 +57,16 @@ export const mailServers = pgTable("mail_servers", {
    */
   resumeStep: integer("resume_step"),
 
+  /** The shared ssl:renew job owns renewal; checking remains enabled when this is off. */
+  certificateAutoRenew: boolean("certificate_auto_renew").notNull().default(true),
+  /** Cached disk + SMTP/IMAP observations for Health and the read-only issue feed. */
+  certificateHealth: jsonb("certificate_health").$type<MailCertificateHealth>(),
+  certificateRenewalError: text("certificate_renewal_error"),
+
   /**
    * The webmail project serving this mail server, when one was installed from
    * the app catalog (`catalog/webmail.json`). Null = no webmail, or one an
-   * operator runs outside openship.
+   * operator runs outside kovalio.
    *
    * A stored FK, not a naming convention: webmail installs through the SAME
    * generic catalog installer as every other app, so its slug comes from the

@@ -1,11 +1,1567 @@
 # Changelog
 
-All notable changes to Openship. Versions follow [semver](https://semver.org);
+All notable changes to Kovalio. Versions follow [semver](https://semver.org);
 the in-app updater surfaces critical advisories from `release-advisories.json`.
+
+## 0.9.2
+
+This patch adds worker and scheduler execution, personal appearance customization,
+and managed Cloudflare Tunnel setup for self-hosted servers. Cloud spaces, reusable
+build caches, more catalog apps and safer storage cleanup improve everyday
+operations. These notes cover all merged changes since 0.9.1.
+
+### Workers and schedulers
+
+- **Run roles beside your web app** — declare workers and schedulers in
+  `kovalio.json` or the project API. Single-app Docker deployments start separate
+  containers from the app image, with shared environment, volumes and connected
+  networks, their own commands and shutdown settings, and no published ports.
+  Roles follow pause, resume, restart, rollback and project deletion.
+- **Hand over singletons safely** — scheduler renames, command changes, name swaps
+  and conversions into workers stop and retain outgoing singletons before starting
+  potentially conflicting replacements. Failed deployments restore them only after
+  those replacements are confirmed removed. Failed retirement of an old role is
+  surfaced in the deployment warning with its container identity.
+- **Require a verified startup** — every replica needs exactly one stable result
+  for its container ID before optional exec health checks run. Missing inspections,
+  duplicate results and processes that already exited successfully fail startup.
+  Both project-defined and image-inherited `PORT` values are removed from roles.
+- **Make role configuration explicit** — move and copy refuse active, unfinished
+  or preserved-cancelled role workloads even after saved roles are cleared.
+  Preset-only `when` and `unless` keys in declared roles produce warnings rather
+  than silently appearing to control execution. Automatic framework role selection
+  and cross-server role migration are not included.
+- **Improve framework shutdown defaults** — Rails presets have measured stop
+  settings, and Laravel's scheduler preset uses SIGTERM with a 10-second grace
+  period while queue and Horizon workers retain 90 seconds. Customize these bounds
+  for long-running tasks; they do not guarantee task completion or exactly-once
+  scheduling. Laravel web-role cache warming is available as an opt-in setting.
+
+### Appearance and dashboard
+
+- **Customize your own appearance** — Settings → General → Customize previews
+  color tokens and typography live, with explicit Save, Discard and Reset.
+  Import themes from JSON, a file or an HTTPS URL; export themes and libraries,
+  including supported WOFF2 fonts. Preferences belong to the signed-in user and
+  stay isolated across accounts and instances. API, SDK, CLI and MCP operations
+  use the same theme format.
+- **Keep operational tools together** — project monitoring and logs share one
+  navigation entry with their own views. Backups moves under Infrastructure.
+  Project sidebars show assigned domains, migration retries retain destination
+  choices, and migrated service deployments use the correct icons.
+- **Reduce false outage alerts** — the health watcher confirms repeated bounded
+  Docker probe failures before announcing a server outage. Late probe replies
+  cannot falsely announce recovery. Self-hosted administrators can clear resolved
+  monitoring history with confirmation while retaining open incidents.
+- **Improve navigation and terminal reliability** — GitHub discovery no longer
+  blocks dashboard pages, selection controls use consistent states, and leaving a
+  server terminal during WebGL loading cancels setup and disposes the terminal.
+  Instance connection and move actions have clearer setup and recovery guidance.
+
+### Cloudflare Tunnel and domains
+
+- **Manage self-hosted ingress from Kovalio** — Server → Security can connect or
+  create a remotely managed named Cloudflare Tunnel using saved credentials,
+  configure proxied DNS and optionally apply an existing reusable Access policy.
+  Install a pinned connector on a supported Linux server or use its existing
+  connector. Managed Kovalio Cloud routing retains its existing path.
+- **Enroll domains with recoverable setup** — explicitly enable automatic tunnel
+  enrollment for new custom domains or connect existing domains individually.
+  Setup records Access, tunnel and DNS progress, supports retry after interrupted
+  requests, and removes only owned resources. External edits remain visible for
+  review instead of being overwritten. Exact hostnames and `www` companions are
+  supported; wildcard auto-enrollment is not.
+- **Choose primary and www behavior** — the deployment wizard defaults a newly
+  included companion hostname to a 301 redirect to the entered primary. Choose
+  bare primary, www primary or Serve both on Cloud and self-hosted destinations.
+  Redirect rows show their target instead of duplicate runtime inputs.
+- **Keep domain operations consistent** — service aliases on the same port are
+  preserved, domains added through the CLI receive routing, and Cloud routing
+  retries recover missing Pages through the owning Cloud connection.
+- **Honor trusted proxies on containerized edges** — operator-declared proxy IPs
+  reach the edge without rebuilding its image. Invalid addresses and CIDR prefixes
+  are discarded. Failed configuration updates restore the previous shared trust
+  include, and an incomplete rollback cannot activate a partial configuration.
+
+### Cloud spaces, billing and connections
+
+- **See managed capacity as Cloud spaces** — a shared picker, Overview and
+  Activity views show projects, purchased capacity and measured usage, with clear
+  retry states for unavailable readings. Existing allocations and subscriptions
+  keep their identity; connected self-hosted server tools remain available.
+- **Use the owning Cloud account consistently** — connected Desktop and
+  self-hosted installations create Cloud projects through Cloud's API. Server,
+  project and deployment operations enforce their organization and provider
+  namespace. Cloud consent shows the actual account and organization and lets you
+  switch either before explicitly authorizing the connection.
+- **Continue purchases without repeating plan selection** — pricing links carry
+  the chosen plan into the signed-in app's checkout flow. Pending unpaid payments
+  can be cancelled when supported by the provider so another plan can be selected;
+  retries retain the original payment identity. Server cancellation is easier to
+  find and repeated requests cannot create duplicate operations.
+- **Configure Actions on existing spaces** — Cloud's Add runner flow opens the
+  capability form directly with the space picker. Local Actions lists remain
+  available when Cloud discovery fails, and official runner containers support
+  non-root SSH supervisors. Temporary runner profiles retain their separate
+  funding flow.
+- **Keep instance handoff with its source** — control-plane provisioning on a
+  linked managed destination stays owned by the source controller until the move
+  transfers the instance, including resumed API-only and dashboard installations.
+
+### Build performance and resource control
+
+- **Keep unconfigured resources uncapped** — omitted build and service CPU/RAM
+  limits no longer become sampled capacity caps or catalog sizing recommendations.
+  Containers share the selected server's capacity unless limits are explicitly
+  configured. Cloud plans and VM capacity still apply. Existing saved limits are
+  preserved; select Full capacity to remove an older unwanted limit.
+- **Allow concurrent Cloud submissions** — different projects can submit builds
+  while a sibling build is active. Unspecified resource dimensions remain shared;
+  explicit limits, saved plan concurrency and exclusive maintenance protection
+  remain enforced.
+- **Reuse bounded project build caches** — compatible builds retain project-owned
+  BuildKit state and supported package/compiler caches while temporary workers
+  are removed. Idle cache collection uses retention targets and storage-pressure
+  checks, preserving active workers, release images and application data.
+- **Optionally warm new Cloud spaces** — operators can select a provider software
+  disk with public build-image layers for new spaces. Matching images are pinned
+  against their current upstream digest; unavailable or outdated packs fall back
+  to registry resolution. Existing spaces are not reattached by an API redeploy.
+- **Show what image preparation is doing** — registry pulls stream progress,
+  preparation heartbeats and elapsed time into deployment logs. Build cleanup
+  waits for tracked Docker commands to acknowledge completion, and static export
+  publication normalizes public file permissions.
+
+### Catalog, GPUs and shared databases
+
+- **Add document, dashboard and media apps** — install Paperless-ngx, Wiki.js,
+  Homepage, Immich and Jellyfin using pinned published images, persistent storage
+  and protected initial setup. Homepage does not require a Docker socket.
+- **Run self-hosted AI apps** — Ollama offers CPU or one NVIDIA GPU, and Open WebUI
+  connects to an existing backend with protected chat access. These templates use
+  connected self-hosted destinations, not managed Cloud capacity. vLLM remains a
+  disabled preview pending hardware verification.
+- **Deploy NVIDIA GPU services** — Compose import, SDK/CLI sync and adoption share
+  validated GPU selection and Docker device requests. Server detection and picker
+  hints help choose a compatible destination. Unsupported or conflicting requests
+  fail before image acquisition or service replacement.
+- **Skip unnecessary WordPress and Odoo builds** — new catalog installs pull the
+  official images and mount setup helpers through the normal deployment engine.
+  Existing installations retain their saved recipes; reviewed catalog repair can
+  update the application service while preserving database siblings, credentials
+  and data.
+- **Share native databases explicitly** — Use in a project can connect ready
+  native PostgreSQL or Redis databases to authorized projects in the same cluster.
+  Saved grants and private network rules are checked together; ownership, backups
+  and database management stay with the source project.
+
+### Storage, deletion and migration safety
+
+- **Separate fresh Cloud app data** — new logical volume names use immutable
+  project IDs so reinstalling a deleted slug cannot adopt another project's data.
+  Owned legacy mounts and explicitly imported volume identities remain intact.
+- **Recover failed deletion clearly** — failed first installs offer the existing
+  explicit data-removal option, including owned volumes with no container. Data
+  retention stays the default. Cleanup failures remain retryable operations
+  instead of making a partly deleted project appear Live again.
+- **Preserve resources belonging to other projects** — teardown can retain stale
+  Cloud route and network references whose foreign ownership is confirmed.
+  Unreadable or ambiguous ownership still blocks cleanup, and owned networks are
+  removed by immutable identity rather than a potentially reused name.
+- **Avoid ephemeral host-port collisions** — Docker allocation checks the target
+  kernel's ephemeral range for both saved preferred ports and fresh candidates.
+  Unsafe legacy allocations move to a safe port during deployment; if no safe
+  candidate exists, allocation fails before reserving a replacement.
+
+### Mail, security and localization
+
+- **Persist webmail backend connectivity** — webmail deployed on its mail server
+  saves the host-gateway mapping through normal service settings and deployment
+  snapshots while retaining the certificate hostname for TLS. Sign-in connection
+  attempts have bounded timeouts rather than hanging indefinitely.
+- **Connect existing mailboxes from Cloud** — the Emails screen installs the
+  standard webmail client for existing IMAP/SMTP servers. It does not provision or
+  administer a self-hosted mail server in Cloud; managed email remains Coming soon.
+- **Repair containerized mail operations** — boot restores maildir ownership,
+  backups and restores use the actual host-mounted mail path, and fail2ban uses
+  valid nftables syntax and explicit private PostgreSQL sidecar credentials.
+  Database and unban failures no longer report success.
+- **Resize your inbox and reading pane** — drag the divider or use its keyboard
+  controls. Desktop widths are remembered separately from the mobile layout.
+- **Prevent dashboard clickjacking** — dashboard pages, authentication routes and
+  redirects deny framing through CSP and X-Frame-Options. Customer application
+  routing and headers are unchanged.
+- **Expand translated guidance and documentation** — supported dashboard locales
+  include preferences, transfer, jobs, issues, pricing, diagnostics and audit
+  descriptions. The website adds a blog and broader feature discovery, alongside
+  updated catalog, runtime-role, Cloud, API, SDK, CLI and MCP documentation.
+
+Update the API as well as Desktop/dashboard clients before using the new settings,
+managed tunnel operations or catalog recipes that require 0.9.2. The included
+database migrations run through normal API startup.
+
+## 0.9.1
+
+This patch adds a public app catalog, Russian dashboard support and runtime image
+controls. It fixes workflow saves and Cloud recovery, updates webmail live, and
+improves routing, build capacity and image handling during redeployments. These
+notes cover all changes since 0.9.0.
+
+### Apps, language and workflow setup
+
+- **Browse apps before installing** — the public website now has an Apps directory
+  with search, category filters and individual pages showing features, included
+  services and app overviews. Installation opens the existing Cloud setup flow;
+  self-hosted users can follow the installation guide. Returning to the directory
+  preserves search and category selections.
+- **Russian language support** — select Russian during onboarding or in dashboard
+  language settings. Dashboard translations cover workflow setup, Cloud reconnect
+  and webmail recovery, and a Russian README is available alongside the existing
+  localized introductions.
+- **Save custom Actions workflows** — new standalone workflows initialize their
+  name from validated YAML, so valid starter workflows can be saved after setup.
+  Missing names, runners, files, source validation or access settings now have
+  inline guidance that leads back to the relevant control or editor. Repository
+  setup also offers a direct custom-workflow option.
+
+### Cloud and webmail recovery
+
+- **Continue app installs and plan selection after sign-in** — app and plan links
+  retain their destination through login, registration, verification, password
+  reset and 2FA. App installation resumes its confirmed configuration, server and
+  existing draft after checkout; failed retries remain recoverable. Plan links
+  select an offer for review, with an explicit action still required to purchase.
+- **Reconnect saved Cloud server links** — disconnected links show a Cloud sign-in
+  action, with separate guidance for account mismatches and temporary failures.
+  Live controls wait for a verified connection, and reconnecting reuses the saved
+  server link. Controls missing from an older Cloud API show availability guidance;
+  refreshing retries reads without repeating a write.
+- **Recover an existing webmail app** — when a mail registration loses its webmail
+  link, select an accessible existing app on the same mail server and hostname and
+  choose **Reconnect and deploy**. Recovery reuses the project, credentials and
+  persistent volumes while preserving domain ownership and permission checks.
+
+### Runtime configuration and deployment safety
+
+- **Select matching runtime versions and custom production images** — generated
+  PHP builds support PHP 8.3 and 8.4 through the generic `runtimeVersion` setting.
+  Docker source builds offer an advanced `runtimeImage` override. Stack-selected
+  recipes validate actual runtime capabilities and compatibility before activation;
+  invalid settings do not partially update the project, and retained-image rollback
+  preserves the original version and image configuration.
+- **Recover Cloud Actions from connected instances** — Desktop and self-hosted
+  clients forward Cloud workflow and runner operations to their owning Cloud
+  instance, with the same scope and permission checks.
+- **Use the server's actual available build capacity** — automatic Cloud builds
+  account for running workloads and pending CPU reservations before choosing
+  their worker size. Build setup also reports the effective workspace capacity.
+- **Recheck deployment health** — project status and workload selection reuse
+  current startup-health verification while retaining earlier warnings for review.
+- **Track current container images during Compose redeploys** — cached Docker
+  inventory preserves immutable image identity, so port preflight and rollback
+  can verify running services safely.
+- **Receive live inbox changes** — webmail refreshes after IMAP IDLE events, with
+  event streams flushed through buffering proxies and correct folder routing.
+- **Simplify the project Backup page** — the existing project header supplies
+  its title, removing the duplicated backup heading and description.
+- **Validate declared runtime roles** — stack-role configuration rejects missing
+  kinds, empty commands, incomplete exec probes and invalid replica counts.
+  This is configuration/detection support for future role execution.
+
+- **Preserve domains that route only specific paths** — migrations now discover
+  and retain domains with exact or prefix routes and no catch-all service. OpenResty
+  and Cloud routing preserve those paths; unmatched requests return 404. Omitting
+  an existing source catch-all requires a decision before project creation or
+  source container changes. Routing retries keep the previous complete table when
+  a selected upstream is unavailable.
+- **Refresh deployment images before replacing services** — manual Docker
+  redeploys refresh mutable registry tags while preserving locally built images
+  and pinned rollback artifacts. Full redeploys keep otherwise unchanged external
+  services, including databases, running when their actual image content matches.
+  Docker validates every replacement image and freezes its reference before
+  activating any service; failed preparation leaves existing containers running.
+  Image preparation is all-or-nothing, while container replacement remains
+  sequential rather than a transaction across the whole stack.
+
+## 0.9.0
+
+Kovalio Actions brings repository CI to your own Linux and macOS servers and
+Cloud runners. This release also lets you move your Kovalio control plane between
+Desktop and a server, adds GitHub deployment Checks and shared notifications, and
+improves Cloud build scheduling, routing, monitoring and webmail. These notes cover
+all changes since 0.8.2.
+
+### Kovalio Actions
+
+- **Run CI independently of GitHub Actions** — workflows in `.kovalio/workflows/`
+  use GitHub-style YAML and run through Kovalio on selected destinations. Trigger
+  them manually, on repository pushes or pull requests, on schedules, through
+  authenticated dispatch, or from Jobs. GitHub can provide source, events and
+  commit Checks without running the workflow itself.
+- **Use existing GitHub workflows with Kovalio runners** — workflows in
+  `.github/workflows/` keep GitHub's orchestration, secrets, environments and Checks.
+  Register official runners on Kovalio destinations and target their self-hosted
+  labels. Jobs targeting GitHub-hosted labels still run on GitHub; importing a
+  workflow does not silently change its execution platform.
+- **One workflow editor** — import multiple workflow files from a repository or
+  create a standalone workflow. Topology, list and YAML views share the same draft.
+  Connected job and step nodes, inline step editing, per-file trigger rules, branch
+  controls and repository-change review keep setup in one flow. Repository sync
+  can apply updates automatically or wait for confirmation.
+- **Reusable workflows and advanced jobs** — local and authorized remote reusable
+  workflows support nested calls, typed inputs, secret forwarding and outputs.
+  Dependencies, matrices, expressions and job permissions use the pinned execution
+  engine rather than a second shell-only workflow implementation. Unsupported
+  constructs return explicit errors instead of being silently skipped.
+- **Choose runners by verified capabilities** — destinations report operating
+  system, architecture and available tools. Linux runners support container images
+  and explicit QEMU setup for supported cross-architecture execution; macOS runners
+  use native tools. Runner labels and job images are separate settings. Create a
+  runner from the shared server picker without leaving workflow setup.
+- **Review access before execution** — workflow access can be limited to your
+  account or selected repository users, with approval required for each attempt.
+  Approvals bind the actor, commit, attempt and destinations. Fork code is blocked
+  by default; explicitly approved fork execution uses disposable Cloud runners
+  without privileged secrets or write credentials. Work never falls back to an
+  unselected control-plane host.
+- **Follow runs without losing your place** — expandable jobs and steps sit beside
+  masked logs, with a topology view and a separate approvals tab. Waiting work has
+  visible progress; selection and log position survive refreshes. Independent runs
+  stream logs in Kovalio. GitHub-coordinated runs link to live GitHub logs and
+  import completed logs.
+- **Artifacts, caches and OIDC** — independent workflows support artifact/cache
+  actions through scoped storage access and configured backup destinations. Jobs
+  with `id-token: write` can request short-lived Kovalio OIDC tokens from an HTTPS
+  instance. Identity providers must explicitly trust the Kovalio issuer; these
+  are not GitHub-issued tokens. Signing keys travel with instance moves.
+- **Know the boundaries** — independent execution does not implement GitHub
+  protected environments or attestations. Windows runners and GitHub Enterprise
+  Server are not supported. A fresh independent run does not resume or replace a
+  failed GitHub run. Native runners and runners with a host Docker socket execute
+  trusted code with that server user's access; use disposable VMs for stronger
+  separation.
+
+### Cloud Actions destinations and funding
+
+- **Reuse a server or add one** — Actions can use an existing authorized Cloud
+  server pool or a dedicated managed server purchased through the normal catalog.
+  These use the server's existing capacity and billing.
+- **Temporary runners per job** — prepaid Actions profiles provide Linux VMs with
+  2 vCPU / 4 GiB RAM / 40 GiB disk, 4 / 8 / 80, or 8 / 16 / 160. Executable jobs
+  provision a temporary VM and remove it after cleanup; queued work allocates no
+  VM. Temporary runners use a separate prepaid balance covering provider compute
+  and transfer charges, rather than an application's monthly server allowance.
+- **Funding and recovery** — $5, $20, $50 and $100 top-ups use hosted checkout.
+  Provider-confirmed payment funds the runner budget; duplicate receipts cannot
+  grant credits twice, and background recovery continues if the browser closes.
+  Setup failures retain paid credit for retry. Pricing and estimated minutes use
+  the provider's current tariff, not guaranteed fixed minutes.
+- **Cloud operator setup** — temporary-runner purchases require enabled Cloud
+  billing, provider credentials and live pricing. Regular-server PAYG purchases
+  remain disabled. Verify a real paid Actions top-up before enabling the purchase
+  flow for customers; automated payment recovery tests and live VM execution do
+  not replace that checkout test.
+
+### GitHub Checks and notifications
+
+- **Deployment Checks enabled by default** — repository-backed deployments can
+  publish project/environment results and individual service Checks, including
+  deployment failures. Configure the selected Checks and their names or disable
+  reporting from project settings and the project wizard, in self-hosted and Cloud
+  installations.
+- **Checks setup shows actual access** — workflow setup displays the connected
+  GitHub account, repository and access status, with inline connect, review and
+  retry actions. Independent reporting requires a GitHub App with Checks write
+  access; a personal token or CLI source connection alone does not grant it.
+- **Add notification channels inline** — create a channel using the shared
+  Settings form, send a test, then select it without leaving the workflow.
+  Unverified channels remain unselected until verification succeeds. Completion
+  notifications cover selected outcomes with durable delivery and retry.
+- **One notification editor** — instance defaults and project overrides use the
+  same channel controls. Failed preference reads show an error and retry rather
+  than editable empty defaults; account switches discard stale settings.
+
+### Desktop connections and instance moves
+
+- **Move control to a server** — Settings → Instance can deploy an API-only
+  instance for Desktop access or an API and dashboard for browser access. Select a
+  connected or managed Cloud server, configure its address and review the move.
+  Projects, users, server connections, credentials, history and settings transfer
+  together while application workloads remain on their existing servers.
+- **Move back using the latest data** — a connected Desktop can receive the
+  current remote instance, including changes made on the server. Existing hosted
+  instances can also move to Desktop. Both ends verify compatible versions;
+  interrupted transfers retain a journal and recovery snapshot and can resume
+  without activating two controllers or reverting to stale local data.
+- **Connect without moving data** — enter an existing instance URL and sign in,
+  or use a short-lived connection code from your signed-in account. Desktop
+  connects to that instance with your permissions; returning to the local instance
+  resumes its separate data.
+- **Invitations open in Desktop** — team invitations offer email delivery through
+  the configured mail service or a copyable, recipient-bound link. Links open
+  Desktop when available, with a manual URL fallback. Recipients sign in and
+  review the instance, workspace, inviter and role before accepting. Team and
+  webhook settings link to the same hosted-instance setup when a public control
+  plane is required.
+
+### Managed Cloud servers, builds and hosting
+
+- **Manage server access in one place** — managed server tabs expose settings,
+  boot logs, SSH access, temporary credentials, Runtime API token reveal/rotation
+  and manually managed workloads. Outbound internet and hostname allowlists use
+  revision checks and preserve unrelated ingress, routes and private networking.
+- **Durable build admission** — explicitly submitted builds queue against their
+  selected server's saved offer and available resources. Different projects can
+  build concurrently when capacity allows; the same project's builds remain
+  serialized. Queue position, waiting reasons and upgrade actions are visible.
+  Image-only deployments do not reserve a source-build slot.
+- **Saved plan allowances** — new Hobby, Starter, Pro and Scale offers enforce
+  project/app, running-service and build-admission ceilings. Existing purchases
+  retain their saved terms. Physical CPU, free memory and host headroom can admit
+  fewer builds than the plan ceiling; explicit resource requests are not silently
+  reduced. These Cloud quota gates do not apply to self-hosted servers.
+- **Recover interrupted builds safely** — durable activity ownership coordinates
+  builds, backups and server maintenance across controllers. Capacity is released
+  after tracked commands and Docker-owned BuildKit workers are confirmed stopped.
+  Crash recovery settles interrupted deployment state before acknowledging its
+  execution, preserves live releases and retries failed recovery writes.
+- **Static sites default to Cloud Pages** — build on the selected managed server
+  and publish the static output without retaining an application container. Choose
+  Managed server hosting when an nginx container is preferred. Each release saves
+  its hosting choice for rollback; failed publication preserves the previous site.
+  Backend applications keep their server runtime even when static assets exist.
+- **More reliable application startup** — generated Node images respect declared
+  Node requirements and explicit image pins. Managed public Node listeners can
+  adapt loopback bindings without exposing private listeners. Cloud verifies
+  startup before reporting container deployments ready and surfaces crash details.
+- **Consistent package managers** — generated npm, pnpm, Yarn and Bun builds honor
+  explicit versions, supported lockfiles and monorepo parent settings, then verify
+  the executable actually used. Private catalog services retain private access;
+  public services use their selected domains. MinIO installation and required
+  catalog setup are more reliable.
+
+### Deployment, routing and monitoring fixes
+
+- **Choose another port explicitly** — when a host port is occupied, deployment
+  review can suggest a free alternative and let you confirm it. Existing ports do
+  not change silently. Bare redeployments recognize their own previous release,
+  and private service port access binds to localhost.
+- **Keep routing state consistent** — route repairs update the banner and route
+  cards together, retain repair logs across refreshes and reconnect interrupted
+  streams. Proxy overrides validate target capabilities before saving and preserve
+  existing configuration when unsupported.
+- **Verify Cloud HTTPS at the serving edge** — custom-domain checks validate the
+  publicly served certificate, hostname and chain rather than relying only on
+  provider metadata. Scheduled checks use bounded work and failure backoff;
+  unavailable observations stay unknown instead of becoming successful results.
+- **Distinguish connection loss from request failures** — an API request error no
+  longer marks unrelated services offline. Monitoring retains meaningful last
+  observations, reconnects dropped streams and offers retry for failed reads.
+  Terminals remain usable when status reads fail.
+- **Deployment outcomes in Monitoring** — projects show completed outcomes and
+  failed deployments alongside application monitoring. Project cards, grids and
+  backup history use more consistent spacing and responsive layouts.
+- **Build and runtime correctness** — preserve Dockerfile startup defaults,
+  native service source precedence, case-sensitive manifest names and monorepo
+  Docker build-context metadata. Compose projects keep service detection on
+  redeploy. Exec cancellation reliably reaps watchdog timers, including BusyBox
+  hosts. Cloud cleanup follows the saved keep-resources policy. Shared storage
+  removal keeps Longhorn's bounded native retry for an uninstall startup cache
+  race and waits for confirmed completion before cleanup.
+
+### Diagnostics, CLI, SDK and webmail
+
+- **Structured error reporting** — API boundaries, authorization failures,
+  deployments, jobs, streams and dashboard errors share a classified, redacted
+  event format with request references and bounded asynchronous delivery. Cloud
+  stores sanitized events in its own database. Automatic collection and upload
+  remain disabled for Desktop, self-hosted installations, native workers and CLI,
+  including Desktop connected to Cloud; operational errors still have local logs.
+- **Broader automation coverage** — native and remote SDK operations cover Actions,
+  instance connections, managed server controls, migrations, mail and terminals.
+  The CLI shares platform contracts, expands Cloud and remote operations, accepts
+  `/api` paths and positional environment pairs, and guides users to login on
+  authorization failures. Actions are available through `kovalio api`; this
+  release does not introduce a dedicated `kovalio actions` command group.
+- **Updated documentation** — Actions setup, independent versus GitHub execution,
+  runner access, Cloud funding, instance moves and API/SDK/CLI/MCP references cover
+  the new flows, with live execution verification records.
+- **Webmail improvements** — editable email signatures apply in the composer;
+  replies include the original message body. Sign-in recovery and managed
+  deployments are fixed. Cloud shows mail availability before loading unsupported
+  server controls; Desktop and self-hosted mail remain available.
+- **Additional compatibility fixes** — preserve cookie encoding in dashboard
+  server requests, complete partially applied instance-controller migrations,
+  filter invalid custom app templates, and add Farm.js configuration support and
+  its square icon. Whole-instance recovery rebinds the imported local administrator
+  atomically, preventing project reads from failing after a database wipe.
+- **Release verification** — required gates cover real Linux and macOS Actions
+  execution, instance moves, Docker deployment/rollback, scaling and shared
+  storage, HTTPS, database upgrades and installed SDK packages. Failed release
+  work can resume with verified successful checks and notarization checkpoints.
+
+### Updating
+
+Desktop 0.8.2 users can use the built-in updater. **Desktop users still on 0.8.0
+or 0.8.1 must download the [0.9.0 installer](https://github.com/Nextrium/kovalio/releases/tag/v0.9.0)
+and install it manually once.** Quit Kovalio and replace the application; keep
+application data to preserve projects, servers and settings. The server/CLI
+update path does not require this desktop recovery step. Update the API and
+dashboard together; instance moves require compatible versions at both ends.
+
+## 0.8.2
+
+### Desktop update recovery
+
+**Desktop users on 0.8.0 or 0.8.1: please install this update manually once.**
+The built-in updater in those versions can fail with **"Redirect was cancelled"**.
+Download the installer for your operating system from the
+[0.8.2 release](https://github.com/Nextrium/kovalio/releases/tag/v0.8.2), quit Kovalio,
+and replace the installed application. Keep your application data: your local
+projects, servers and settings are preserved. Subsequent desktop updates use the
+fixed downloader.
+
+- Fixed GitHub release redirects in the desktop updater while retaining trusted
+  download hosts, SHA-256 checks and publisher signature verification.
+- Added a real Electron download test to the existing CI and release test gate,
+  covering installer and proof redirects, blocked destinations, redirect loops,
+  cancellation and incomplete-download cleanup.
+- This redirect bug affects the desktop installer updater. The server/CLI update
+  path is separate and does not need this manual recovery step.
+
+## 0.8.1
+
+Kovalio Cloud now runs projects on managed servers with their own monthly plans.
+Share a server across applications, add another when you need it, and manage your
+Cloud resources alongside local projects from desktop or self-hosted Kovalio.
+This release also adds passkeys, authenticator 2FA and a private support inbox,
+expands CLI automation, and improves billing, migration and deployment recovery.
+
+### Managed Cloud servers
+
+- **One server, multiple projects** — each managed server has its own subscription
+  and shared CPU, RAM and disk. Builds, applications, Compose stacks and catalog
+  services use the existing Docker and Bare deployment engines. Creating a project
+  no longer allocates a separate VM or reserves another disk (#1036).
+- **Choose Docker or Direct execution** — use Docker for containers and Compose,
+  or run compatible source applications as supervised host processes with Direct.
+  The shared destination picker can select an existing server or start a purchase
+  for another. New eligible source apps default to Direct below 2 GiB RAM; saved
+  projects and explicit runtime choices are preserved (#1064).
+- **Use the capacity you purchased** — a service can use the server's full
+  available CPU and RAM, or use a custom container limit. Fractional CPU settings,
+  including Micro, reach Docker correctly. Source builds use available server
+  headroom and optional build caps; image-only installs do not start a source
+  builder. Applications, builds and the operating system still share the host.
+- **Inspect usage separately from capacity** — server monitoring distinguishes
+  the purchased disk size from measured usage. Project containers and volumes have
+  a disk breakdown, with shared images, build cache and system data shown
+  separately. Missing readings stay unknown, and undeployed drafts no longer
+  inflate running-service counts (#1011).
+- **Manage the server when you need to** — reuse server diagnostics, terminals,
+  listening-port checks and resource views. Networking controls outbound internet
+  access; the Activity tab holds provisioning and resize logs. Scheduled command
+  jobs can target shared or separately subscribed managed servers.
+- **Recover operations without losing neighboring projects** — provisioning,
+  resize and interrupted deployment work retain progress for retry. Resizing
+  restores previously running services while leaving intentionally stopped ones
+  stopped. Project deletion removes its own resources and preserves the shared
+  server; server deletion checks remaining projects and subscription state.
+
+### Cloud accounts on desktop and self-hosted Kovalio
+
+- **Your existing Cloud resources appear when you connect** — Cloud projects,
+  apps and managed servers join the local inventory. A server already linked to
+  the installation appears once. Cloud-owned settings, deployment history and
+  operations stay in Cloud rather than becoming local project copies (#1074).
+- **Buy and use managed servers from the same dashboard** — Cloud subscriptions
+  and provisioning remain in Cloud. Local projects can select an authorized
+  managed server through the same destination picker as SSH servers, using an
+  execution link for deployment, logs, terminals, jobs and backups.
+- **Account switches clear the previous account's state** — inventories, project
+  details, deployment history and billing responses follow the selected Cloud
+  account and organization. Connections are revalidated for live operations;
+  locally scoped automation credentials do not inherit the owner's Cloud account.
+
+### Billing and plans
+
+- **Monthly servers include their full paid period** — new monthly plans cover
+  purchased CPU, RAM and storage without a second compute-credit allowance or a
+  monthly build-time cap. New offers have no project or running-service count
+  limit; workloads share the server's physical capacity. Optional managed proxy
+  transfer and storage retained after coverage ends remain separate charges.
+- **Revised plans and Custom resources** — Hobby is $5/month for 1 vCPU, 4 GiB RAM
+  and 25 GiB disk; Starter is $20 for 2 vCPU, 8 GiB and 32 GiB; Pro is $39 for
+  4 vCPU, 16 GiB and 128 GiB; Scale is $99 for 8 vCPU, 32 GiB and 256 GiB. Custom
+  lets you choose CPU, RAM and disk and review a quote before checkout.
+- **Billing follows the selected server** — switch servers without losing the
+  page, inspect each subscription independently, or use **Get server** for a new
+  purchase. First-time customers see plans rather than empty usage screens.
+  Smaller upgrade comparisons keep compact cards and a separate current-plan
+  summary; payment methods and invoices share the server's Stripe portal.
+- **Review plan changes before applying them** — show the provider's prorated
+  amount, effective date and affected projects. Capacity upgrades apply after
+  confirmed payment; resource reductions and billing-mode changes wait until
+  renewal. Pending changes remain visible, and a resize requires restart consent.
+  Disks can grow but cannot shrink in place.
+- **Checkout has a visible recovery path** — payment confirmation, paid coverage
+  and server readiness are separate steps. Setup failures expose progress and
+  retry without asking for another purchase; the welcome dialog appears when
+  setup completes. Unavailable offers show a dedicated dialog with retry and a
+  support request for availability updates (#1062).
+- **Resume or cancel unfinished payments** — **Pending payments** lists each
+  server's saved offer and opens its original checkout. Provider-confirmed
+  cancellation lets you choose another plan or delete an unused, unpaid server.
+  Cloud and connected installations share the recovery flow, and switching
+  accounts discards the previous account's payment details and responses (#1067).
+- **Preview prepaid PAYG tiers** — compare three shared resource-pool tiers,
+  configure server resources and select a credit package in one calculator. The
+  estimate separates active vCPU-hours, reserved RAM and storage, with hourly
+  costs and balance-duration scenarios. Enterprise contact is available in both
+  purchase views. PAYG purchases remain disabled in this release (#1057).
+
+### Account security and GitHub
+
+- **Passkeys and authenticator 2FA** — Settings → Security supports passkey
+  registration and removal, authenticator QR setup, and single-use recovery codes.
+  Enabled 2FA also applies after social and passkey sign-in. These controls are
+  available on Cloud and self-hosted installations with local accounts (#984).
+- **Account protection remains consistent during failures** — credential changes
+  commit together, concurrent requests cannot reuse a challenge or recovery code,
+  and password resets do not disable 2FA. OAuth, invitation and MCP handoffs resume
+  after verification. Security setup state clears when the account changes.
+- **GitHub repository access is independent of sign-in** — one GitHub identity
+  can authorize repositories for multiple Kovalio accounts without transferring
+  login ownership. Reconnect existing installations from the shared connection
+  flow, including direct installation links, and see completion or failure for
+  each attempt (#992).
+- **Personal tokens work throughout the repository flow** — Git settings remain
+  reachable through the alternative connection option. A verified token can supply
+  repository and owner listings and private-source access when no GitHub App
+  connection is available. Account avatars and Git URL entry are clearer.
+
+### Support and onboarding
+
+- **A private Cloud support inbox** — submit deployment, billing, account or
+  general tickets, search your history, reply and resolve or reopen a conversation.
+  The same personal ticket history is available from Cloud-connected desktop and
+  self-hosted installations. Team membership does not expose another user's
+  tickets (#1073).
+- **Support and contact pages accept durable requests** — submissions are saved
+  before email delivery, with a receipt and notification to `support@nextrium.org`.
+  Delivery retries survive API restarts, and support replies appear in the inbox
+  and are emailed to the customer. Retried submissions reuse their original
+  receipt rather than creating another ticket (#970).
+- **Clearer first-run and account screens** — refreshed Cloud plan prompts,
+  purchase welcome dialogs, email-verification and password-reset completion
+  screens. The home page omits empty system-status cards for new Cloud accounts,
+  and already subscribed users do not keep seeing the first-purchase promotion.
+
+### Apps and migration
+
+- **Apps have their own place** — a dedicated Apps sidebar entry and list keep
+  catalog applications separate from source projects. Compact home rows, restored
+  empty states and clickable app illustrations make discovery less cluttered.
+- **A more consistent deployment wizard** — share destination and server controls
+  across Cloud and self-hosted modes, with Full/Custom power choices, filled
+  inputs, compact Build/Start settings, readable deployment-step icons and clearer
+  draft project details. App install forms support grouped and two-column layouts.
+- **App installation explains routing and resource choices** — public dashboards
+  start with domain routing and ask for confirmation before continuing without a
+  recommended domain. Self-hosted app CPU/RAM recommendations are advisory;
+  failed Cloud installs can be retried or cleaned up without treating an absent
+  runtime as a teardown failure (#1009, #1016).
+- **Import Docker applications into managed Cloud servers** — reuse the existing
+  migration engine for images, environment, volumes, bind data and routes. Cloud
+  can connect an external SSH server as a migration-only source. Target preparation,
+  saved progress, verification and explicit cutover support recovery; source data
+  is preserved and source-container retirement requires consent.
+- **Review imports as cards or topology** — compact expandable service cards are
+  the default, with a topology view, expand-all controls, repository linking and
+  clearer Custom, Free and Internal-only routing choices.
+
+### Builds, deployments and recovery
+
+- **Stop cancels the selected builder** — cancellation reaches the worker's
+  actual Docker or Bare runtime, including remote Git and archive preparation.
+  The UI shows **Stopping…** until cleanup finishes, then permits redeployment.
+  Cancelling a build preserves deployed containers that inherited build labels;
+  ambiguous service ownership still blocks activation (#1059).
+- **Build output stays readable** — Cloud Docker streams preserve raw bytes,
+  partial lines, UTF-8 characters and terminal progress updates. Uploads finish
+  correctly when stdin closes. Disk and inode exhaustion are explained separately
+  from memory failures, and temporary BuildKit cache is reclaimed after builds
+  (#1058, #1064).
+- **Unchanged Compose services stay running** — folder uploads and snapshot syncs
+  no longer mark unchanged image services dirty. Import metadata preserves
+  concurrent configuration edits; inherited project resource changes still apply
+  while respecting per-service overrides (#989).
+- **Pre-deploy backups finish before activation** — deployments wait for all
+  configured pre-deploy backups and their cleanup, including when reusing a build.
+  Failed backups offer retry, an explicit skip or stop. PostgreSQL dumps must
+  succeed, and suspiciously small dumps are rejected against recent comparable
+  backups before becoming restore points (#1060).
+- **Remote builds and static releases use the right paths** — subfolder refreshes
+  preserve root manifests and rescan at the project root. Static output resolves
+  relative to that root, and retained artifacts are checked on their deployment
+  destination for rollback. Directory-only `.dockerignore` negations are honored
+  (#1010, #1041).
+- **Health checks and shutdown respect the runtime** — configured single-app
+  readiness probes run through the deployment server; unreachable SSH leaves a
+  check unverified. Docker replacement honors stop signals and grace periods,
+  probe watchdogs are reaped, and Bare services retain the correct user privileges
+  and artifact ownership (#1043).
+- **Farm.js detection** — identify Farm.js applications and supply the framework's
+  build and output defaults (#1037).
+
+### Domains, networking and monitoring
+
+- **Free domains follow the selected managed server** — availability and quota
+  checks retain the destination through project creation, Compose synchronization
+  and deployment. Route changes are validated before related settings are saved;
+  editing an existing route at the limit does not count it as a new route (#1064).
+- **Connect Cloudflare from domain setup** — add and verify a DNS credential
+  without leaving the DNS panel, review proposed records, then apply them.
+  Cloudflare TXT quoting and Cloud certificate-status handling are corrected,
+  while certificate checks verify the domain's project binding (#977).
+- **More reliable wildcard HTTPS and Edge recovery** — DNS challenge hooks pass
+  Certbot validation, Compose installations detect Edge correctly, and challenge
+  route cleanup checks ownership. Whole-project rules handle a null path prefix
+  correctly. Projects no longer have the unrelated 20-public-endpoint schema cap
+  (#1054, #1003, #1017, #1045).
+- **Source updates remain visible until deployment completes** — the project
+  deployment tab indicates available updates; unchanged image services are not
+  refreshed unnecessarily. Updates on the local Kovalio instance use the
+  appropriate advisory flow, and resource reporting accepts current Docker
+  runtime limits (#1006, #1047).
+- **Connection and setup fixes** — recover Cloud Docker connections after
+  credential rotation, report missing proxy/bridge failures clearly, correct
+  registry TLS/WebSocket dependency compatibility, and handle Docker networks
+  without subnets during cluster setup (#970, #1068, #961).
+
+### SDK, CLI and platform fixes
+
+- **More administration through Ship SDK and the CLI** — add commands for project
+  resources, environments, storage and connections; credentials and DNS;
+  monitoring, notifications and webhooks; workspace access and audit history.
+  They use the shared platform operations and permission checks.
+- **Safer command targeting and environment edits** — each CLI invocation keeps
+  its selected endpoint, credential and organization. Directory links reject
+  mismatched contexts. Partial service environment edits preserve other values
+  and secret classification; full replacement is explicit. Deployment waits have
+  deadlines and expose pending decisions, and request logs can be followed through
+  the SDK's authorized Cloud stream.
+- **Clearer MCP Cloud workflows** — discover authorized managed destinations and
+  deploy desktop folders through a connected server. Explicit promotion to Cloud
+  can resume from its saved receipt after an interrupted response or cleanup,
+  without importing the project again (#1056).
+- **Webmail and dashboard fixes** — Spam, Not spam and Archive move messages into
+  the correct IMAP folders. Notification settings and icons recover from hydration
+  races, Teams accepts current Microsoft webhook hosts, member-access settings
+  avoid repeated refetches, and background project deletion preserves navigation
+  (#981, #1004, #1008, #1035, #1024, #1066).
+- **API startup and bulk-action validation** — capacity previews pass the startup
+  permission scan, and malformed bulk container requests are rejected instead of
+  being interpreted as an empty request (#1033, #994).
+- **Optional Cloud product analytics** — the hosted Cloud API can send configured
+  PostHog events for signup, deployment and verified checkout/payment outcomes.
+  Delivery is queued separately from those operations. Telemetry runs only on the
+  hosted Cloud API; local operations, logs, secrets and session recordings are
+  excluded.
+
+### Data transfer and upgrade notes
+
+- **Complete, portable exports** — instance and project archives include plaintext
+  environment values, server keys and credentials by default, without an export
+  password. Treat the archive as sensitive or explicitly omit secrets. Imports
+  still accept older encrypted archives and encrypt credentials with the
+  destination's key.
+- **Imports preserve scope and selected data** — instance imports default to
+  full replacement after confirmation. Project overwrite removes destination-only
+  records in selected categories and applies cleared credentials atomically.
+  Project analytics retain normalized hostnames, including `www`; unsupported
+  archive fields are rejected before changing data.
+- **Upgrade Cloud before connected clients** — new inventory and support features
+  require the matching Cloud API. Desktop-initiated cancellation fixes require an
+  updated desktop controller. Existing per-project Cloud deployments need an
+  explicit migration to managed servers; updating alone does not consolidate VMs
+  or replace saved subscription terms.
+- **Keep account-security configuration stable** — self-hosted passkeys require
+  HTTPS and a stable dashboard hostname through `KOVALIO_PUBLIC_URL` (localhost
+  is supported for development). Retain and back up `BETTER_AUTH_SECRET`, which
+  protects authenticator secrets and recovery codes.
+
+## 0.8.0
+
+Scale applications, PostgreSQL and Redis across your own servers, connect those
+servers through private networking, and share files between application instances.
+This release also adds the Node.js SDK, expands MCP automation, refreshes the
+dashboard and desktop experience, and brings the deployment, environment, routing,
+backup, mail and security fixes accumulated since 0.7.2.
+
+### Server clusters and private networking
+
+- **Connect servers across providers** — register and verify an existing private
+  network or prepare an Kovalio-managed WireGuard network across your servers.
+  Provider network groups retain their provider and network details; managed
+  networking also supports custom infrastructure (#899, #900).
+- **Networks and compute clusters have separate responsibilities** — the
+  Networking tab owns addresses, connectivity and network operations. The Clusters
+  tab groups selected servers from a private network and manages the runtime used
+  by their projects.
+- **Choose which servers can reach each other** — edit connections in the network
+  topology, allow traffic in both directions or one direction, or remove a
+  connection. Kovalio enforces the private-access policy on supported hosts and
+  shows the provider firewall rules to apply before setup. Cluster setup checks
+  that its selected servers have the bidirectional connectivity it requires.
+- **Test the network from the topology** — on-demand checks verify allowed paths
+  and confirm that denied directions reject new connections. Results include
+  TCP/UDP reachability, MTU, round-trip latency, loss and jitter; a selected pair
+  can run a bounded throughput test. Saved results remain available for diagnosis.
+- **Prepare, review, retry and clean up network changes** — missing prerequisites
+  can be installed automatically, address allocation and firewall requirements
+  are reviewed before apply, and reconnectable progress includes per-server steps
+  and errors. Interrupted work exposes explicit retry or rollback. Failed members
+  can be removed from setup, and removal reverts owned network changes.
+- **Prepare servers for application scaling** — self-hosted and desktop
+  controllers install k3s under the hood, join the selected SSH servers, and
+  verify node readiness, pod traffic, service routing and internal DNS. Saved
+  progress supports retry after failure or interruption; runtime removal checks
+  dependent workloads and owned infrastructure first (#912).
+
+### Application scaling
+
+- **Run an application or worker across your servers** — select a prepared
+  cluster, publish the application's image to a shared registry, and deploy
+  through the normal project flow. Set 1–100 replicas; subsequent replica changes
+  reuse the active immutable image without rebuilding. Kovalio Edge routes
+  public requests to the application, and the topology shows observed instances,
+  placement and readiness.
+- **Update, roll back and recover running applications** — cluster deployments
+  retain image history for rollback, and failed or cancelled candidate releases
+  preserve the active release. Kubernetes replaces failed instances within the
+  prepared cluster and routes to surviving ready instances after detecting an
+  unavailable worker. Revision checks reject stale changes to a running project.
+- **Mount shared files in application instances** — project-owned shared volumes
+  can be attached at configured paths, including read-only mounts. Instances on
+  different servers can read and write the same files; existing node-local mounts
+  require a separate data migration.
+
+### Databases and shared storage
+
+- **Choose standalone or clustered PostgreSQL** — managed databases have their
+  own resources, progress, credentials and lifecycle. PostgreSQL clusters provide
+  replicas, primary recovery, and private read/write and read-only endpoints.
+  The database controller owns replication and failover independently of the
+  application's replica count.
+- **Run Redis standalone or as a cluster** — Redis clusters distribute data
+  across shards with replicas. Grow or reduce the shard count after reviewing
+  the change and taking a verified recent backup. Redis Cluster requires a
+  cluster-aware client; resizing checks real cluster health and slot ownership.
+- **Back up and recover PostgreSQL and Redis** — configure an eligible S3
+  destination for manual, hourly or daily backups. Restore a verified archive
+  into a separate database, inspect it, then explicitly replace the application's
+  saved connection and redeploy. Redis archives preserve values and expiry and
+  are consistent per shard, rather than one transaction across all shards.
+- **Import existing databases and stage PostgreSQL upgrades** — import eligible
+  Docker PostgreSQL or Redis backups while the original application remains on
+  Docker. PostgreSQL 17-to-18 upgrades create a separate logical copy for checking
+  before connection replacement. Source data remains available; changes after
+  the captured recovery point need a fresh capture before final cutover.
+- **Share files with independent disk copies** — enable shared storage on at
+  least two independent servers, choose two or three copies, and create
+  project-owned volumes. Inspect attachment and copy health, grow a mounted
+  volume, and rebuild a lost disk copy.
+- **Recover files from outside the cluster** — take manual or scheduled external
+  backups and restore them into a new shared volume. Archives remain discoverable
+  after deleting the original volume or removing empty shared storage; archive
+  deletion is an explicit separate action.
+- **Keep data when removing a database** — removal can retain its data for later
+  recovery or explicitly delete it. Application, volume, storage and runtime
+  cleanup enforce dependencies and ownership, so an unfinished cleanup or retained
+  database cannot silently lose the infrastructure it still needs.
+
+### SDK, CLI and MCP
+
+- **A Node.js SDK alongside the CLI** — the `kovalio` package now provides
+  `KovalioClient` through `kovalio/client` for remote installations and
+  `createShip` through `kovalio/native` for an embedded engine without a separate
+  API server. Both use shared platform operations, validation and authorization.
+  Native instances have explicit start/close lifecycles and verified workspace
+  scopes; ESM and CommonJS are supported on Node.js 22 and newer (#887).
+- **MCP covers more of the operational lifecycle** — networking, cluster setup,
+  replica scaling, managed databases, shared files, backup/restore, migration,
+  routing and diagnostics have documented tools and ordered workflow prompts. Discovery
+  respects workspace permissions and instance mode; required arguments and DELETE
+  bodies survive dispatch, and path arguments cannot redirect a call to another
+  route. Generated API, CLI and MCP references describe the available operations
+  and explicitly excluded HTTP-only routes (#953).
+- **CLI workflows use the shared SDK** — native mode and remote clients share
+  deployment and source handling, and Jobs now has commands for its existing
+  management and execution flows. Re-login preserves custom context endpoints,
+  folder uploads require explicit opt-in, project display names can be changed
+  safely, and failed component installation returns a failure to the caller.
+
+### Deployments and builds
+
+- **Run release commands before activation** — configure `releaseCommands` in
+  Build settings, `kovalio.json` or the project API/SDK. Commands run in order
+  after building, using the candidate release's environment, with streamed logs
+  and a ten-minute budget per command. Failure, timeout or cancellation stops
+  activation. Single-app Docker and Bare deployments are supported; unsupported
+  deployment types reject configured commands. Rollbacks skip them, and rolling
+  back application code does not undo database changes (#592).
+- **Completion and elapsed time survive retries and refresh** — workers retry a
+  failed database completion acknowledgement without repeating deployment work.
+  Cancellation records its outcome and duration atomically; late worker results
+  cannot replace them. Both build views use the same persisted timing, including
+  queued starts, rejected retries and terminal events (#940).
+- **Rollback retention has a predictable limit** — Project → Advanced → Rollback
+  history defaults to five past deployments, with active and pinned deployments
+  kept in addition. Cleanup runs after deployment and retention changes, retries
+  failed removals, and preserves artifacts still referenced by another retained
+  release. Older history remains browsable with pagination and accurate snapshot
+  labels.
+- **More reliable source builds** — recursive Git submodules are fetched for
+  build checkouts; Ruby builds respect declared versions and preserve Rails
+  storage; PHP builds include EXIF and package assets needed by frontend builds.
+  JavaScript `PORT` assignments are detected, invalid empty monorepo creation is
+  rejected, and build-time service-DNS failures receive an actionable explanation.
+- **Deployment errors reach the UI** — rejected submissions show the API's
+  specific validation or configuration error. Build streams reconnect without
+  replaying output, and successful deployments can show live service logs.
+  Preview variable sets cannot be deployed onto a production project's runtime.
+
+### Environment and Compose
+
+- **Saved service variables stay visible** — the Environment tab reads effective
+  values from Kovalio, including Compose values, shared project variables and
+  explicit service overrides, with their sources. It remains usable when the
+  server is offline. Saves update only edited rows, preserve untouched secrets,
+  reject conflicting edits and remove an override by restoring inheritance
+  where available (#926).
+- **Compose updates apply without routine approval gates** — repository changes
+  merge automatically while explicit operator overrides remain. Saved environment
+  values survive omitted source keys, unresolved expressions and legacy review
+  resolution. Interpolation uses current configured values instead of stale scan
+  results; legacy pending reviews reconcile on redeploy (#893, #916).
+- **Recover and apply environment changes deliberately** — older or migrated
+  services can recover missing variables from their running container for review
+  and saving, without overwriting saved values. Apply compares against the running
+  service and recreates supported Docker services from their existing image,
+  retaining ports, networks, mounts and resource limits. Failed startup restores
+  the previous container; unavailable comparisons remain unknown, and unsupported
+  runtimes direct the operator to redeploy.
+- **Environment download and secret protection** — Download .env exports the
+  listed values, including saved secrets, using quoting that round-trips through
+  Upload .env. Inline service environment, build arguments and their saved
+  deployment/Compose snapshots are now encrypted at rest; API presentation masks
+  protected values and preserves them on round trips (#844).
+
+### Migration and portability
+
+- **Compose migration includes the domain handoff** — discovery reports existing
+  proxies and matches Traefik routes through private container addresses as well
+  as published ports. The wizard saves service environment and selected routes,
+  prepares Edge during migration, and requests confirmation before taking over
+  an existing proxy. Selected sites attach to their migrated services, existing
+  certificates are reused, and unresolved routing prevents automatic source
+  container removal (#905, #908).
+- **Reuse a service across projects** — shared service connections retain the
+  service's owner, data and connection settings instead of duplicating it. Existing
+  Docker private links require separate migration when moving an application to
+  a cluster.
+- **Export a project's configuration, environment and credentials** — project
+  settings download a portable plaintext file without a passphrase. The export
+  identifies its server and Cloud dependencies; import previews the contents and
+  requires explicit target mappings. Runtime data stays on its original server,
+  and Cloud projects require the same Kovalio Cloud account. Imported credentials
+  are encrypted with the destination instance's key. Configuration transfer does
+  not copy runtime volumes or perform a whole-instance server cutover.
+
+### Domains and certificates
+
+- **Wildcard HTTPS with automatic DNS or manual TXT verification** — project and
+  service domains such as `*.example.com` now open inline certificate setup.
+  Connected DNS providers automate verification; manual TXT orders retain their
+  progress across reconnects and controller restarts. API, SDK and MCP share the
+  same start, status, check and cancel operations. Existing certificates survive
+  failed attempts, and HTTPS is reported ready only after its route is active.
+  Manual certificates include renewal guidance in all nine dashboard languages
+  (#954).
+- **Manage multiple wildcard domains** — configure wildcard domains in Settings
+  and choose the domain to use during project setup (#819).
+
+- **Routing retries reconcile saved and live state** — Retry routing checks Edge,
+  reapplies project routes and synchronizes domains, with inline progress logs and
+  refreshed results. Live ownership checks recover stale hostname/host-port
+  reservations left by deleted or recreated projects. Repairs preserve complete
+  routes and canonical endpoints when aliases are removed (#915, #922, #925).
+- **Pending states explain what happens next** — domain details distinguish
+  verification in progress, scheduled retry and failure, show the reason and next
+  retry time, and offer a manual retry. Durable backoff prevents overlapping
+  background sweeps from repeatedly retrying the same domain. An SSH observation
+  failure no longer clears a working certificate or becomes a claim that HTTPS
+  is absent (#911, #922).
+- **Imported certificates and container routes recover correctly** — certificate
+  lookup follows managed lineages and avoids collisions after import; recovery
+  excludes ACME challenge ports from application upstreams. Static sites inside
+  containers route through their owning service, and Edge serves an Kovalio
+  error page for unavailable upstreams (#879, #913).
+
+### Backups and restore
+
+- **Back up now from the project, service or volume panel** — service shortcuts
+  reuse an applicable policy and run only the selected service. Project policies
+  skip stateless services and admit their eligible runs together. Progress shows
+  saved phases, elapsed time and transferred bytes, reconnects across workers,
+  and updates recent history even after the progress view is dismissed.
+- **Optional incremental backups** — policies can reuse verified unchanged
+  blocks, with a complete block index for each restore point. Retention preserves
+  blocks still referenced by another snapshot, and storage totals count shared
+  objects once. Full backups remain the default. Captures still scan the whole
+  source and transfer through the Kovalio backup worker.
+- **Retention and destinations remain consistent** — pruning runs after
+  successful capture and through the scheduled sweep, preserving protected copies
+  and backups used by active restores. Existing runs retain their original
+  destination when a policy changes, and failed cleanup remains retryable without
+  invalidating a successful backup. SFTP failures close streams and clean partial
+  uploads instead of leaving the worker stuck (#817).
+- **Restore validates before replacing data** — preparation and confirmed apply
+  share source/target checks, integrity verification and exclusive access to the
+  project or mail server. Runtime/stop failures abort before destructive writes;
+  partial-write failures are reported and do not automatically restart a service
+  on incomplete volume data. Redis/Valkey restore validates persistence settings,
+  and PostgreSQL restore uses a transaction for each supported artifact. Release
+  tests now exercise backup, incremental reuse, retention and restore with real
+  Docker volumes and databases (#892, #946).
+
+### GitHub and access
+
+- **Cloud GitHub connections finish in the dashboard** — installation completion
+  refreshes repository access and the connection state instead of leaving the
+  page loading after GitHub has finished. Device sign-in keeps its code and
+  instructions visible until completion; transient and rate-limit failures no
+  longer discard durable credentials (#920, #951).
+- **Repository selection stays in sync** — branches load on demand while keeping
+  selection and keyboard focus, and changing the branch rescans deployment
+  configuration. Partially successful push-webhook dispatches retry failed targets
+  without redeploying targets that already completed (#847, #870).
+- **Sign-in and invitations respect the configured flow** — clients can discover
+  enabled login providers, and signed-out invitees can reach account creation and
+  complete acceptance without the dashboard's prior navigation race.
+
+### Dashboard and desktop
+
+- **Shared icons and more consistent layouts** — dashboard and desktop use a
+  theme-aware icon catalog with bundled local assets. Service headers, tabs,
+  environment controls, volume forms, source settings and log controls have
+  consistent spacing and typography; mobile navigation and crowded rows are
+  improved (#942, #946).
+- **Topology stays inside the project** — the graph has an optional expanded
+  view, improved loading placeholders and compact service nodes. Clicking a node
+  opens its details directly; long runtime identifiers truncate with copy actions
+  rather than widening the panel.
+- **Deployment pages put actions and logs first** — Open site and Open project
+  remain prominent, multiple exposed domains can be selected, and preparation,
+  service status and single-app steps share clearer progress indicators. Logs
+  have bounded layout, search and copy controls; history filters survive returning
+  from a deployment.
+- **Backup pages show retained data and real run state** — global and destination
+  views share paginated history, restore actions and usage information. Successful
+  retained copies, active attempts and physical storage totals are distinguished;
+  history remains available after policy changes.
+- **Desktop startup follows the application theme** — a redesigned loading screen
+  uses shared colors, clearer progress and service startup states (#952).
+
+### Monitoring and runtime reliability
+
+- **Monitoring recovers after connection interruptions** — desktop connectivity
+  loss is distinguished from a confirmed remote runtime failure, with recheck and
+  reconnection handling. Overlapping status requests no longer stop polling or
+  replace newer results, and issue feeds remain available when a host adapter
+  cannot start. Services show a checking state while runtime status is unknown
+  (#927, #949, #951).
+- **Traffic views use the same time series** — overview and monitoring render
+  timestamped request buckets with clear time ranges, area/column views and loading
+  skeletons. Analytics failures stay within the affected view instead of appearing
+  as empty traffic or replacing fresh data with stale responses.
+- **Long-running resources are bounded and released** — container log retention
+  is bounded for newly created managed containers, session caches preserve active
+  work at capacity, and closed log, terminal and IMAP streams release their
+  subscriptions. Busy builds retain their SSH transport; abandoned terminal
+  handshakes release their slots and resumed shells remain bound to the authorized
+  target (#950, #951).
+- **Server administration reports actionable failures** — macOS hosts expose
+  system statistics, server responses match shared diagnostics contracts, and
+  deletion refuses hosts with active deployments. SSH group refresh preserves
+  active sessions after Docker installation.
+
+### Cloud and API
+
+- **Cloud billing follows the selected organization** — plans, checkout, credit
+  top-ups and renewal management use Oblien namespace entitlements. Purchased
+  limits survive catalog changes, deployment/recovery checks enforce available
+  capacity, and checkout completion verifies payment delivery rather than trusting
+  the return URL. Billing portals remain scoped to the organization (#910).
+- **Standalone APIs limit unauthenticated floods** — a separate per-IP guard runs
+  before authentication without consuming the route's own limit. Cloud mode or
+  explicit `KOVALIO_TRUST_EDGE=true` delegates that outer ceiling to the upstream
+  proxy while preserving per-route limits (#123).
+
+### Mail
+
+- **Check and renew the certificates mail clients actually use** — mail settings
+  show expiry and the certificates served by SMTP and IMAP, with actions to check
+  and renew them. Successful renewal reloads Postfix and Dovecot and verifies the
+  served certificates. Automatic renewal uses the shared scheduler; expiry,
+  renewal failures and stale served certificates appear in Health and Monitoring.
+  Scheduled renewal requires the Kovalio controller to remain running.
+- **Webmail refreshes without duplicate subscriptions** — inbox updates use a
+  single owned SSE/IMAP IDLE connection with cleanup on disconnect. Replies fill
+  recipients and subject correctly, Trash uses IMAP deletion, and mobile composer,
+  accessibility and browser-cache failures are corrected (#897, #904, #921, #950).
+- **Remote-content blocking also covers CSS** — disabling remote images prevents
+  CSS imports and URL-based fetches from leaking a read receipt (#220).
+- **Mail setup, delivery and alerts are more reliable** — setup distinguishes an
+  unverified public SMTP probe from a stopped server; database port selection
+  handles conflicts; mounted certificates and Amavis state recover on restart.
+  Relay TLS and SES MAIL FROM checks are corrected, delivery health evaluates the
+  full queue, and captured messages remain until notification delivery is durably
+  queued. Job and backup notifications include their relevant target, outcome and
+  log details (#834, #865, #867, #945, #951).
+
+### Release checks
+
+- **Continue an unpublished release with updated code** — reuse successful whole
+  checks only when their source and workflow inputs match, and rerun failed or
+  affected checks. Artifact reuse verifies the original run and immutable artifact
+  identity; concurrent tag changes and earlier publishing attempts prevent unsafe
+  continuation.
+- **Real application, database and shared-storage acceptance journeys** — release
+  checks exercise MCP dispatch, image publication, deployment, public routing,
+  scaling, updates, rollback, worker recovery and project cleanup. Separate
+  database tests verify real queries, replica/shard changes, backups, restores,
+  imports and upgraded copies. Shared-storage tests use independent Linux VMs for
+  SSH installation, cross-server writes, volume growth, disk-copy rebuilding and
+  external backup recovery. These heavier journeys run in the release gate or
+  on demand.
+
+### Upgrade notes
+
+- **Scaling scope in this release** — cluster management is available from
+  self-hosted and desktop controllers. Application scaling supports single apps
+  and workers with project-owned shared files. Compose application scaling,
+  CPU/traffic-driven autoscaling, automatic server provisioning and live cluster
+  membership changes are not included.
+- **Keep the database and encryption key together** — this release includes
+  database migrations and converts legacy plaintext service configuration when
+  the engine starts. Back up the database and retain the instance encryption key
+  (`BETTER_AUTH_SECRET` for API installations) before upgrading. Downgrading to a
+  version before this protection requires its matching database backup. Use Data
+  Transfer with secrets included when moving configuration between instances with
+  different keys.
+
+[Full comparison: v0.7.2…v0.8.0](https://github.com/Nextrium/kovalio/compare/v0.7.2...v0.8.0)
+
+## 0.7.2
+
+Soft maintenance patch for Docker build reliability. No breaking API changes or
+database migrations.
+
+### Builds
+
+- **Successful Docker builds are no longer rejected by diagnostic log text** —
+  fixes a regression present in 0.7.1 where successful workspace scripts reporting
+  `Exited with code 0` could fail deployment (#832). Single-image and Compose builds
+  now distinguish Docker Engine errors from application output, for both classic
+  and BuildKit builders. Diagnostic hints enrich real failures without overriding
+  successful completion or hiding Docker's error; SSH builds continue to use the
+  command's exit status. Cancellation and inactivity safeguards remain in place.
+
+## 0.7.1
+
+This release hardens the full deployment lifecycle, makes Compose reconciliation
+lossless, completes remote-server setup and CLI targeting, fixes external mail
+health and administration, and ships the invitation, DNS, catalog-routing, and
+update-experience work accumulated since 0.6.9.
+
+### Source control
+
+- **Self-hosted workspaces can own and manage multiple GitHub Apps** — Settings → Git now supports
+  one-click GitHub.com manifest creation and manual GitHub/GitHub Enterprise Server registration,
+  without an Kovalio Cloud or OAuth dependency. Private keys, client secrets, and webhook secrets
+  are encrypted at rest; source-specific JWTs mint short-lived repository-scoped tokens against the
+  correct API origin; GitHub sends verified lifecycle, push, and check webhooks directly to the
+  instance. Owners can install an App on multiple accounts, rotate and verify credentials, select a
+  default source, and safely delete one while project bindings move to an available replacement.
+  Existing environment-backed Apps, `gh`, personal tokens, and per-server SSH keys remain compatible
+  fallbacks (#782).
+- **GitHub App installation is tenant-safe end to end** — install callbacks bind a durable one-shot
+  nonce to the initiating user and workspace and verify the reported installation against the
+  configured App before atomically persisting and reconciling it. The cloud callback survives API
+  replicas/restarts, rejects removed workspace members, and cannot bind another tenant's
+  caller-supplied installation id. Installation rows, token caches, project bindings, lifecycle
+  webhooks, and reconnects are workspace-scoped; webhook arrival order never guesses a workspace
+  from membership order (#759).
+
+### Accounts and teams
+
+- **Self-hosted organization invitations now work for brand-new users** — the
+  claim page loads safely before sign-in, routes existing users back after
+  login, offers token-bound account creation only when authorized, and exposes
+  a copyable link beside each pending invitation. Invitation authorization,
+  identity, credential, personal workspace, and membership now commit under one
+  locked transaction, so cancellation races and failed signup cannot leave an
+  unauthorized or partial account that blocks retry. Accept, reject, cancel,
+  and signup mutations are serialized per invitation across API replicas. API
+  access logs and Edge request telemetry also redact invitation bearer tokens
+  and discard query strings before storage (#743).
+
+### DNS
+
+- **Service custom domains use the explicit DNS plan/apply workflow** — saving
+  a service route creates the same pending domain row as every other custom
+  domain, then the shared records panel previews provider changes and applies
+  them only when requested. The API documentation no longer promises a silent
+  provider write that the product deliberately does not perform (#760).
+
+### Server setup
+
+- **Remote servers always require Docker before Edge** — server readiness no
+  longer inherits the control plane's `DEPLOY_MODE`. Docker and Git are checked
+  for every managed target, while one shared dependency planner inserts and
+  orders Docker ahead of the container-based Edge across streamed setup,
+  `SystemManager`, and direct component installation guards (#767).
+
+### Builds
+
+- **`kovalio.json` environment now reaches Dockerfile builds end to end** — top-level project
+  variables are recovered from the trusted source, encrypted into each deployment snapshot, and passed
+  through the existing shared Docker build-argument resolver for first deploys, redeploys, webhooks,
+  folder uploads, and explicit single-app mode. Native `services[].buildArgs` adds per-image overrides
+  (`null` inherits the matching project value), while service `env` remains runtime-only (#795).
+- **BuildKit builds work from Bun-based self-hosted installations** — Docker's
+  reverse h2c session now bypasses Bun's incompatible `node:http` upgrade path
+  while retaining dockerode's BuildKit session and registry-auth service. Local
+  Compose builds using syntax directives, cache mounts, heredocs, and other
+  BuildKit-only Dockerfile features no longer fail on `/session` before the
+  Dockerfile starts (#745).
+
+### Updates
+
+- **Update prompts show the product changelog** — dashboard and desktop update
+  surfaces now read the matching version from the tagged `CHANGELOG.md` instead
+  of repeating the GitHub Release body. The native update panel keeps advisory
+  copy separate from a resizable, scrollable changelog, and all changelog actions
+  open the version page on `nextrium.org` rather than GitHub (#752).
+- **Successful deploys no longer re-advertise stale updates** — resolving the
+  tracked branch head refreshes its upstream cache while a deployment is in
+  progress, and successful deployments invalidate cached upstream state before
+  the UI refreshes. The update banner and issues feed therefore compare the live
+  deployment against a fresh upstream version instead of an older cached commit
+  or image digest (#726).
+
+### Catalog apps
+
+- **Port-only app endpoints are actually published** — an explicit port-only
+  choice now persists a fixed all-interface Docker binding, including for
+  catalog routes such as Supabase Kong that declare a served port but no Compose
+  `ports` entry. This makes the wizard's server URL and `{{publicUrl:…}}`
+  substitutions truthful. Retrying a failed draft reconciles the binding
+  idempotently, and switching to a domain removes or restores only the mapping
+  owned by the installer (#770).
+
+### Mail delivery
+
+- **Mail setup now proves public reachability before declaring success** — the
+  final setup step combines the target's listener table with bounded off-box TCP
+  checks for 25, 465, 587 and 993. The Health tab shows each port as a first-class
+  signal, reusing a coalesced 60-second sweep, and test-email timeouts now identify
+  provider firewalls/security groups/security lists/NSGs instead of blaming a
+  stopped SMTP daemon when Postfix is demonstrably listening (#755).
+- **Mail health no longer treats fake-IP IPv6 answers as broken DNS** — synthetic
+  ULA AAAA responses from Clash/sing-box are now `unknown`, matching the existing
+  A-record behavior. Together with the informational SpamAssassin row and
+  normalized split-string DKIM comparison, this closes all three false-positive
+  paths reported in #240.
+- **Relayed webmail keeps the correct split-delivery path** — webmail continues to
+  submit to the local Postfix on 465, which alone owns relay scope, DKIM signing,
+  and provider credentials. The identical timeout reported in #391 now receives
+  the shared public-port diagnosis; provider relay credentials are never copied
+  into the webmail container.
+- **The platform sender now self-heals instead of getting stuck on SMTP 535** —
+  cached `kovalio@<domain>` credentials are reused only while the live mailbox
+  and forwarding rows remain active. A deleted row is recreated automatically,
+  and an already-cached transporter rotates once and retries safely on an auth
+  rejection (#754).
+- **The platform mailbox is protected and repairable** — ordinary mailbox edit
+  and delete operations reject the Kovalio-owned sender, while the Mailboxes
+  tab exposes a dedicated password rotation/repair action that also works when
+  the row is missing.
+- **Mail configuration works with non-root SSH users** — relay maps and
+  additional-domain DKIM configuration now elevate only root-owned host-file
+  operations while Docker commands keep the login user's daemon context. Relay
+  credentials are published atomically as `0600`, and a server without root or
+  passwordless sudo receives an actionable typed refusal unless the mail bind
+  mount was explicitly made writable for that login (#756).
+
+### Deployment cancellation
+
+- **Cancelling after an image build now stops the whole deployment worker** —
+  cancellation propagates through post-build preflight, human prompts,
+  host-scoped provisioning locks, activation, health checks, routing, and both
+  single-service and Compose pipelines. A durable database signal also wakes a
+  worker running in another API process.
+- **Redeploy waits for real worker completion** — a cancelled row keeps its
+  execution lease until cleanup has finished, while the dashboard shows the
+  cancellation still stopping instead of offering a redeploy that cannot safely
+  start. The API and CLI report success only after that lease is released;
+  otherwise cancellation remains explicitly pending. Refreshing reattaches to
+  that server-backed state (#757).
+- **Cancellation cannot replace or tear down the live release** — the cancelled
+  transition is conditional and atomic, and cleanup excludes containers carried
+  forward from the active Compose release. If ownership cannot be proven,
+  cleanup fails closed.
+
+### Compose reconciliation
+
+- **Repository edits cannot silently erase service environment variables** —
+  removing one or more environment keys from Compose now preserves the running
+  service configuration and creates an explicit drift review, even when the
+  operator never edited the imported baseline. Accepting that review remains
+  the deliberate way to apply the deletion.
+- **Local-path Compose projects materialize their services automatically** —
+  `project create --local-path ... --type services` now uses the API's canonical
+  scanner and persists the detected rows immediately. Deploy and redeploy also
+  re-read the same local source through the existing three-way reconciler, so a
+  legacy zero-row project self-repairs instead of entering an empty services
+  pipeline (#751).
+- **Compose env expressions have one sync/deploy meaning** — raw manual syncs
+  preserve `${VAR}` provenance and resolve it from the final project/service
+  environment at deploy time, while Docker Compose-normalized CLI syncs carry an
+  explicit final-value marker so escaped `$$` is never expanded twice (#751).
+- **Terminal failures survive refresh** — the deployment lifecycle writes one
+  deduplicated terminal error into the durable build log for every lifecycle
+  failure path, including an empty Compose service set, instead of leaving the
+  explanation only in `deployment.error_message` (#751).
+
+### CLI
+
+- **New projects and deploys can target a registered SSH server** —
+  `project create --server <id>` stores the initial binding, while
+  `deploy --server <id>` drives Git and folder uploads through the same
+  org-scoped target resolver and deployment preflight as the dashboard. The
+  deployment response exposes a stable id for `--watch`, `project get` shows the
+  resolved target, and a failed deploy never retargets the project (#763).
+
+## 0.6.9
+
+This critical deployment-safety hotfix makes legacy Docker Compose ownership and
+routing fail closed. Existing unmanaged stacks can no longer be mistaken for an
+Kovalio deployment or silently duplicated, and an ordinary same-server
+redeploy cannot move a routed service onto a different host port.
+
+### Deployments and routing
+
+- **Existing Compose stacks are never adopted implicitly** — before changing
+  containers or routes, a normal deployment checks the target for an untracked
+  Docker Compose stack with the same project slug and service names. A collision
+  now stops with `FOREIGN_COMPOSE_STACK` and tells the operator to import/adopt,
+  remove, or rename it. Explicitly adopted containers and containers already
+  tracked by Kovalio continue normally.
+- **Same-server host ports stay locked across redeploys** — a routed service
+  keeps its active host port on its current physical server. If that port cannot
+  be reclaimed safely, deployment stops before routing changes instead of
+  allocating a new port and leaving the public hostname pointed at the wrong
+  workload. A real server migration may still allocate a new host port.
+- **Duplicate-container warnings require ownership evidence** — normal projects
+  no longer claim same-slug containers through Docker Compose labels alone.
+  Native Kovalio labels, the canonical managed name, or the tracked container
+  id establish ownership; Compose-label recovery remains available only for an
+  explicit adoption.
+
+### Compose reconciliation
+
+- **Legacy parser metadata does not create false repository drift** — adding
+  environment/build-argument template provenance to an older service baseline
+  is treated as a one-time metadata upgrade, not as a Compose edit. Real changes
+  arriving with that metadata are still reported, and operator-edited live
+  values remain intact while the baseline advances.
+
+### Monitoring
+
+- **Issues is now the Monitoring workspace** — the dashboard adds a Health view
+  for every tracked project service, with fleet counts and state charts for
+  healthy, unhealthy, crash-looping, down, and unknown workloads. Rows show the
+  serving server and last observation, and link back to the service that owns the
+  container.
+- **Health reads reuse the existing watcher** — the page reads an in-memory
+  snapshot produced by the grouped health sweep and Docker-event accelerator; it
+  does not create a poller per container or perform Docker I/O on page refresh.
+  Per-service monitoring can be disabled before the workload enters the watch,
+  inspection, event, or notification path.
+- **Fleet updates and rescans continue in the background** — bulk component
+  updates start together without holding a modal open, retain their durable
+  sessions across navigation and refresh, and allow an operator to reattach to a
+  specific log. The checker batch similarly exposes one shared progress session
+  so multiple tabs cannot multiply Git, DNS, Docker, or version scans.
+
+> **Upgrade priority: critical for legacy or externally created Compose
+> workloads.** Fully tracked Kovalio deployments are not expected to hit the
+> collision path, but installations that previously deployed a same-slug stack
+> outside the current control-plane records should upgrade before redeploying it.
+
+## 0.6.8
+
+Compose projects now deploy as the services they declare, with their build
+arguments and dynamic environment intact from import through rollback. Instance
+moves can go directly from one self-hosted installation to another without
+copying an encryption key, and the file workflow shows and filters what it will
+carry. This release also hardens custom-domain ownership, host-port allocation,
+Git credential boundaries, and edge recovery across Linux and macOS.
+
+### Instance transfer
+
+- **Move an instance directly, credentials included** — the destination creates a
+  single-use, ten-minute receive code for Replace or Merge mode; the source
+  encrypts the selected database rows and plaintext credential bundle directly
+  to that destination, and the destination immediately re-encrypts every
+  transferred secret under its own instance key.
+  Server SSH passwords and keys, environment variables, tokens, registry and DNS
+  credentials, and backup credentials move without sharing either instance's
+  `BETTER_AUTH_SECRET` or managing a transfer passphrase (#656).
+- **See and filter the export before downloading it** — Settings now shows the
+  durable row count and a count beside each optional history group. Analytics,
+  audit/notification activity, backup history, incident history, and migration
+  history can be included independently; configuration, projects, services,
+  servers, users, and credential records always stay in the portable core.
+  Leaving the selection absent preserves the legacy full export (#656).
+- **Credential-bearing files cannot be imported half-unlocked** — the offline
+  export/import path remains available, but a file containing a sealed credential
+  bundle now requires its passphrase before any database write. Invalid bundles
+  are rejected before restore rather than importing rows whose secrets were
+  silently scrubbed.
+
+### Compose and environments
+
+- **Compose services drive their own builds** — a project with `composePath` is
+  materialized into the service pipeline instead of falling through to one
+  generic Dockerfile build. Map and list forms of `build.args`, bare arguments,
+  and `${...}` expressions are stored per service and survive CLI sync,
+  reconciliation, migration adoption, redeploy snapshots, and rollback. Docker
+  socket, SSH, batch, and cloud builds all use the same argument resolver, and
+  Kovalio's build-command logging does not print argument values (#689).
+- **Removing Compose build arguments removes the stored arguments** — an empty
+  `args` map or a deleted `args` key clears stale values and interpolation
+  provenance, while snapshots created before build arguments existed remain
+  non-destructive during rollback (#689).
+- **Unsupported Compose builds fail before deployment** — malformed arguments,
+  repository-escaping or remote contexts, and build features Kovalio cannot
+  reproduce no longer leave the old service shape running silently. A declared
+  Compose project with no materialized rows is scanned once to bootstrap its
+  topology, while an explicit single-app choice remains single-app.
+- **Dynamic Compose environment resolves at deploy time** — raw expressions such
+  as
+  `postgresql://user:${POSTGRES_PASSWORD:?set it}@postgres:5432/app` are evaluated
+  against the final project, frozen-release, inline, and service-scoped layers.
+  Embedded requirements, passthrough keys, defaults, nested expressions, and
+  escaped dollars retain Compose semantics; an unresolved required variable
+  fails that service with the missing key named (#673).
+- **Manual service variables are durable overrides** — the service Environment
+  tab now owns service-scoped environment rows rather than rewriting the
+  Compose-owned `service.environment` object. Values added in the UI therefore
+  survive a Compose reparse and project redeploy. Saving an unrevealed secret —
+  including renaming its key — preserves its existing ciphertext instead of
+  storing the mask or deleting the value.
+
+### Deployments and routing
+
+- **Prebuilt container images can be tracked as releases** — a single-app
+  project can resolve versions from GitHub Releases or an HTTPS version feed,
+  optionally pin a version, and render that tag into a registry image template.
+  Deploy and Update pull the application image directly on Docker or Cloud — no
+  Git clone, Dockerfile build, or release archive — while drift detection compares
+  deployed and upstream semver. Successful Docker releases freeze the immutable
+  registry digest so rollback can reacquire the exact image after local retention
+  expires; source changes apply atomically across environments and are available
+  in both the dashboard Source tab and `kovalio project release-image` (#694).
+- **Apply really means restart without rebuild for a single app** — Docker and
+  host-mode projects reuse the active deployment's retained artifact even though
+  they have no service rows. Apply never fetches Git or silently turns into a
+  rebuild; if the artifact is gone, it says to Redeploy instead (#674).
+- **The DNS checkpoint covers Docker and every Compose route** — pressing Deploy
+  now shows records for single-app custom domains, service scalar routes, and
+  multi-route Compose endpoints. Multiple hostnames appear together, `www` is
+  grouped with its apex, and a remote deployment preview uses the selected
+  server's public address rather than this instance's address (#663).
+- **Redeploy cannot detach a custom domain** — deployment reconciliation preserves
+  both pending and verified custom-domain rows and their live targets when a
+  release omits them. A failed deployment rolls back only generated managed
+  routes, never user-owned custom configuration, and concurrent hostname claims
+  use database-authoritative ownership instead of letting the losing project
+  route another project's domain (#675).
+- **Stopped containers cannot turn an old hostname into another app** — loopback
+  ports now have database-enforced, physical-target-wide ownership across
+  organizations. Allocation reserves the port before Docker binds it, treats
+  local and “This Server” as one namespace, and persists every routed Compose
+  port through stopped and reconciling states. A stale vhost/TLS certificate can
+  therefore never be repointed accidentally when a later deployment starts
+  listening on the same number (#682, GHSA-284v-9jw3-jfhx).
+- **Retry routing repairs the edge first** — when `kovalio-edge` is stopped or
+  missing, Retry Routing reconciles and health-checks it before touching vhosts.
+  An unrecoverable edge returns an actionable warning immediately instead of
+  hanging until the route request times out (#693).
+- **Project deletion no longer deadlocks on a bare OpenResty listener** — route
+  cleanup validates the installed configuration and signals only the verified
+  running master instead of starting a second nginx process on ports 80/443.
+  Listener checks account for every socket owner, including mixed
+  `SO_REUSEPORT` listeners, and fail closed when ownership cannot be proven.
+  Delete flags now work consistently in query strings and JSON bodies;
+  `forceOrphan` records unfinished host cleanup durably before removing the
+  project so the garbage collector can retry it safely (#700).
+
+### Hosts and edge
+
+- **Docker source acquisition follows the actual transport** — preflight and the
+  build pipeline now share one source-location plan. Local socket and TCP daemon
+  builds prepare source on the API host, remote SSH Docker builds may clone on
+  the target, and bare or cloud builds retain their own boundaries. A local
+  server row therefore no longer asks a nonexistent remote clone path to use
+  ambient Git credentials (#654).
+- **macOS edge mounts use physical host paths** — bind sources are canonicalized
+  on the machine that owns the Docker daemon, so `/var` and `/etc` resolve to
+  their `/private/...` targets before Docker Desktop or OrbStack sees them. A
+  healthy-looking edge with stale logical mounts is recreated onto the same
+  vhost, certificate, ACME, and static-data directories (#692).
+
+### Security
+
+- **An explicit GitHub CLI config directory is an isolation boundary** — fallback
+  token discovery reads exactly the `hosts.yml` selected by GitHub CLI precedence
+  on Linux, macOS, and Windows. If `GH_CONFIG_DIR` or `XDG_CONFIG_HOME` is set but
+  missing or tokenless, Kovalio no longer falls through to another user's home
+  directory and borrows that credential (#687).
+
+### Kovalio Mail
+
+- **Inbound SMTP has DNS inside Postfix's chroot** — every mail-engine boot now
+  refreshes `resolv.conf` and the supporting NSS files inside the persistent
+  Postfix spool before the supervisor starts. The engine fails closed if no
+  resolver can be installed, rather than starting an SMTP service that rejects
+  every legitimate sender with `450 Helo Host not found` (#686).
+
+### Dashboard
+
+- **Project environments update without a refresh** — creating an environment
+  commits it to shared state immediately and reconciles the canonical list;
+  deleting one removes it from every affected cache and navigates to the best
+  surviving sibling. A failed follow-up read no longer makes a successful create
+  look like it failed (#657).
 
 ## 0.6.6
 
-Mail learns to receive, and third-party secrets get one home. Openship Mail now
+Mail learns to receive, and third-party secrets get one home. Kovalio Mail now
 captures, filters and reads inbound messages, and an arriving message can raise a
 notification. Alongside it, a single org-scoped credential store replaces the
 one-off DNS token table and unlocks private image pulls on any host. The app
@@ -20,7 +1576,7 @@ own page, and uploads stop failing at 1 MB.
   Editing and deleting a job now go through the same per-target server check that
   creating and running one already did, and a denial is indistinguishable from a
   job that doesn't exist. Reported externally; regression tests added.
-  Self-hosted instances with more than one trust level should upgrade; Openship
+  Self-hosted instances with more than one trust level should upgrade; Kovalio
   Cloud was never affected (the Jobs API is `localOnly`).
 
 ### Credentials
@@ -28,7 +1584,7 @@ own page, and uploads stop failing at 1 MB.
 - **One store for third-party secrets** — a provider registry (container
   registries, Cloudflare, and room for what comes next) behind one table, with
   every secret sealed in a single `enc1:` envelope rather than a column per field.
-  A credential is verified against its provider *before* it is stored, so a bad
+  A credential is verified against its provider _before_ it is stored, so a bad
   token is rejected where you paste it instead of where a deploy needs it.
 - **Private images pull on every host** — registry auth is resolved per image from
   that store (#581). On a remote host the config goes to a temporary
@@ -54,7 +1610,7 @@ own page, and uploads stop failing at 1 MB.
 - **`mail.inbound_received` is a notification** — inbound mail can drive a
   channel, in a mail group that appears only on self-hosted instances.
 
-### Openship Mail
+### Kovalio Mail
 
 - **Mailbox creation runs in the engine, not on the host** — `doveadm` and `chown`
   ran on the host, where they don't exist, so creating a mailbox returned a 500
@@ -86,8 +1642,8 @@ own page, and uploads stop failing at 1 MB.
   one pick, and a name matching something outside the selection could be adopted.
   A selection now carries container ids, falling back to names only for a service
   that has none.
-- **Openship's own stack is excluded, not a blocker** — the containers running
-  Openship are skipped with the reason named, instead of the whole migration
+- **Kovalio's own stack is excluded, not a blocker** — the containers running
+  Kovalio are skipped with the reason named, instead of the whole migration
   refusing to start.
 - **Two fixes to what a vhost scan imports** — nginx's own default vhost is skipped
   rather than adopted as a site, and prefix-relative document roots resolve
@@ -114,16 +1670,16 @@ own page, and uploads stop failing at 1 MB.
 
 ### Fixes
 
-- **`openship reset-admin-password` works on a Compose install** — it
-  authenticated with `~/.openship/internal-token`, a file the Compose path never
+- **`kovalio reset-admin-password` works on a Compose install** — it
+  authenticated with `~/.kovalio/internal-token`, a file the Compose path never
   writes: the api container is booted with the `INTERNAL_TOKEN` from
-  `~/.openship/compose/.env`. So on a Compose box the command *minted* a brand-new
+  `~/.kovalio/compose/.env`. So on a Compose box the command _minted_ a brand-new
   random token, sent that, and reported `Unauthorized` — the lockout-recovery
   command was unusable on exactly the install that needed it. Which token this box
   is running with is now resolved in one place, readers never mint, and a
   root-owned `.env` this user can't open says so (re-run with sudo) instead of
   reporting an authorization failure. Same fix reaches the control panel's "Reset
-  admin password", `openship doctor` (whose health readout came back empty on
+  admin password", `kovalio doctor` (whose health readout came back empty on
   every Compose stack), and a bare box's `:80/:443` takeover, which looked for the
   Compose token and skipped importing the migrated sites after stopping the
   operator's proxy.
@@ -142,7 +1698,7 @@ own page, and uploads stop failing at 1 MB.
   proof the server row exists. So a hostname with no row yet rendered a live
   Verify button that 404'd, along with a DNS-records panel that couldn't load.
 - **An abbreviated commit is not a new commit** — `POST /deployments` takes
-  `commitSha` as whatever the caller sends (`openship deploy --commit 1eeaf76`, the
+  `commitSha` as whatever the caller sends (`kovalio deploy --commit 1eeaf76`, the
   MCP deploy tool, a CI script), and git checks an abbreviation out happily: the
   right code shipped while the row recorded a name no comparison could match. The
   drift check compared it against the 40-char branch HEAD, and since both sides
@@ -159,10 +1715,10 @@ own page, and uploads stop failing at 1 MB.
 
 A hardening and reach release. Reported security issues are fixed (see Security
 below), the container→host control channel is provisioned and diagnosed end to end
-instead of failing quietly, and Openship now installs on any mainstream Linux — and on hosts
-where you don't log in as root. It also adds `openship edge` (the whole reverse
+instead of failing quietly, and Kovalio now installs on any mainstream Linux — and on hosts
+where you don't log in as root. It also adds `kovalio edge` (the whole reverse
 proxy from the terminal), real resource limits that respect the machine you own,
-an Openship Mail product shell with split outbound delivery, webmail rebuilt as an
+an Kovalio Mail product shell with split outbound delivery, webmail rebuilt as an
 ordinary catalog app, and five new one-click apps.
 
 ### Security
@@ -180,8 +1736,8 @@ ordinary catalog app, and five new one-click apps.
 
 ### The host control channel
 
-- **`openship up` provisions the container→host channel, and tells you when it
-  can't** — when Openship runs in Docker, a handful of operations are genuinely
+- **`kovalio up` provisions the container→host channel, and tells you when it
+  can't** — when Kovalio runs in Docker, a handful of operations are genuinely
   host-level (freeing a foreign proxy off `:80`/`:443`, host system config, the
   mail engine, writing a catalog app's generated config), and they reach the host
   over SSH on the internal bridge. Install now generates the key, appends a
@@ -196,12 +1752,12 @@ ordinary catalog app, and five new one-click apps.
   sshd listen address, key, and reachability are each probed and reported
   separately.
 - **One explanation, five surfaces** — the CLI preflight, the API's boot banner,
-  `openship doctor`, the dashboard's server banner, and the deploy log a host
+  `kovalio doctor`, the dashboard's server banner, and the deploy log a host
   operation dies in had drifted into different stories. They now read from one
   shared vocabulary, because every line is either "your install is fine, this one
   feature isn't" or "your install is broken" — and an operator who reads the
   wrong one either tears down a working box or ignores a dead feature for months.
-- **`openship update` repairs an unprovisioned channel** — an install from before
+- **`kovalio update` repairs an unprovisioned channel** — an install from before
   this work, or a raw `docker compose` install, can be fixed in place by updating,
   rather than re-running `up` and risking the environment. A deploy that needs the
   channel emits the notice once per deploy, before the fan-out, instead of once
@@ -212,12 +1768,12 @@ ordinary catalog app, and five new one-click apps.
 - **Documented for hand-rolled installs** — `.env.example` spells out all five
   steps (key, restricted authorized_keys line, sshd listen address, firewall
   rule, recreate the api because `env_file:` is read at container creation), and a
-  new [troubleshooting page](https://openship.io/docs/troubleshooting/host-channel)
+  new [troubleshooting page](https://nextrium.org/docs/troubleshooting/host-channel)
   walks the repair.
 
 ### Any Linux, and hosts that aren't root
 
-- **Openship installs on the distros it always claimed to** — Docker installation
+- **Kovalio installs on the distros it always claimed to** — Docker installation
   was `curl get.docker.com | sh` on every Linux, a script that hard-refuses
   Amazon Linux, AlmaLinux, Oracle Linux and Alpine. Each call site had its own
   package-manager table (there were five, and they disagreed), its own systemd
@@ -241,7 +1797,7 @@ ordinary catalog app, and five new one-click apps.
   build on a non-Debian box gets its runtime installed instead of a
   `not found` at build time.
 
-### `openship edge`
+### `kovalio edge`
 
 - **The whole reverse proxy, from the terminal** — a new top-level command:
   `edge up` stands the proxy up and serves `:80`/`:443`, `edge migrate` takes over
@@ -257,8 +1813,8 @@ ordinary catalog app, and five new one-click apps.
   control-plane half works from any machine, including desktop, against whichever
   context is active.
 - **Documented as both reference and walkthrough** — a new
-  [The edge](https://openship.io/docs/guides/the-edge) guide for the tasks, and a
-  full [command reference](https://openship.io/docs/cli/edge).
+  [The edge](https://nextrium.org/docs/guides/the-edge) guide for the tasks, and a
+  full [command reference](https://nextrium.org/docs/cli/edge).
 
 ### Resource limits
 
@@ -278,10 +1834,10 @@ ordinary catalog app, and five new one-click apps.
   allocate is rejected before any build work starts, with the machine's real
   numbers in the message.
 
-### Openship Mail
+### Kovalio Mail
 
 - **Run the instance as a mail product** — an instance can present itself as
-  Openship Mail (`OPENSHIP_PRODUCT`, or a toggle in Settings): the left rail
+  Kovalio Mail (`KOVALIO_PRODUCT`, or a toggle in Settings): the left rail
   becomes the mail control plane — the ten admin tabs promoted to nav entries
   across three headings, plus the host and settings rows an operator still needs —
   and the platform nav is hidden. This is presentation only, never an
@@ -306,7 +1862,7 @@ ordinary catalog app, and five new one-click apps.
 - **A mail console** — live engine output in the dashboard, so a setup that stalls
   can be read rather than guessed at.
 - **Backups you can schedule** — the mail admin Backup tab gains a real schedule
-  and retention plan, wired to the same pruning the rest of Openship uses.
+  and retention plan, wired to the same pruning the rest of Kovalio uses.
 - **Setup fails earlier and clearer** — a preflight checks the things that used to
   surface mid-stream (password shape, firewall step, DNS), and setup errors render
   in a banner instead of vanishing into the stream.
@@ -317,7 +1873,7 @@ ordinary catalog app, and five new one-click apps.
   generic installer, image, volume and routing pipeline as every other app, and
   installs from /apps just as well as from /emails. The mail-specific part is the
   only part that stayed: which IMAP/SMTP backend it belongs to — one of your
-  Openship mail servers, or an external provider.
+  Kovalio mail servers, or an external provider.
 - **The link is stored, not parsed out of a slug** — the old lookup read
   `webmail-<serverId>` back out of the project slug, which the generic installer
   never produces, and which mislinked any project someone happened to name
@@ -335,7 +1891,7 @@ ordinary catalog app, and five new one-click apps.
   project over the internal network.
 - **Badges that tell you what you're installing** — verified, unverified and
   hosting-mode badges with explanatory tooltips, so a community template isn't
-  visually indistinguishable from one Openship has booted and checked.
+  visually indistinguishable from one Kovalio has booted and checked.
 - **Catalog schema updates** — the published `app.schema.json` gains the fields
   behind the above, and the reference docs and "Add an app" guide were rewritten
   around them.
@@ -366,13 +1922,13 @@ ordinary catalog app, and five new one-click apps.
 
 ### DNS
 
-- **Cloudflare DNS, wired in** — connect a Cloudflare token and Openship writes the
+- **Cloudflare DNS, wired in** — connect a Cloudflare token and Kovalio writes the
   records a domain needs itself (#37), issues wildcard certificates over the
   DNS-01 challenge, and can route a domain through a tunnel instead of an open
   port.
 - **We only touch records we created** — the provider claims a record it wrote and
   leaves everything else in the zone alone, and it refuses to write a hostname it
-  hasn't claimed. Deleting a domain in Openship therefore cannot remove a record
+  hasn't claimed. Deleting a domain in Kovalio therefore cannot remove a record
   that was already there.
 
 ### Servers
@@ -425,7 +1981,7 @@ ordinary catalog app, and five new one-click apps.
   workload — built like any other app, run as an always-restart container with no
   port and no route, and checked for a start command instead of a port. Choose it
   from a project's Server / Worker / Static switch, or set `workload: worker` in
-  `openship.json`.
+  `kovalio.json`.
 
 ### Compose & install
 
@@ -440,11 +1996,11 @@ ordinary catalog app, and five new one-click apps.
   ahead of its images reaching the registry.
 - **A foreign Postgres data directory is refused, not adopted** — the volume's
   contents are probed before a cluster is started on top of them.
-- **`openship doctor` and `repair` cover more** — the host channel, an
+- **`kovalio doctor` and `repair` cover more** — the host channel, an
   unprovisioned install, and port conflicts, in the same run.
 - **Adopting a Compose stack no longer re-publishes its host ports** — a migrated
   `5432:5432` would bind host `5432` on the next deploy and collide with whatever
-  already held it (often Openship's own Postgres), aborting the deploy. Adoption
+  already held it (often Kovalio's own Postgres), aborting the deploy. Adoption
   keeps only the container port; the service is reached by name on the project
   network and re-exposed from the Domains tab. The warning tells apart a port that
   was published off-box — Docker's publish rule routes past the host firewall, so
@@ -494,7 +2050,7 @@ ordinary catalog app, and five new one-click apps.
 
 ### Docs & site
 
-- **New and rewritten pages** — "The edge" guide, the `openship edge` command
+- **New and rewritten pages** — "The edge" guide, the `kovalio edge` command
   reference, host-channel troubleshooting, a rewritten "Add an app" guide and app
   catalog reference, plus notes on installation, updating and logs/monitoring.
 - **Docs get social previews** — generated OG images per page.
@@ -555,7 +2111,7 @@ class.
 - **Give a service a custom internal hostname** — a service can carry a custom
   east-west DNS alias that resolves alongside its default name, set from the service's
   Settings tab and available to single-app, Compose, and monorepo services alike.
-  Openship normalizes it to a valid hostname and rejects one that collides with
+  Kovalio normalizes it to a valid hostname and rejects one that collides with
   another service on the same project network, and the internal-address card shows the
   alias its containers actually answer to. Self-hosted only.
 - **A clearer service Settings editor** — the service Settings tab groups fields into
@@ -567,7 +2123,7 @@ class.
 
 ### Container health & incidents
 
-- **Openship watches your containers around the clock, not just at deploy** — until
+- **Kovalio watches your containers around the clock, not just at deploy** — until
   now a container was health-checked exactly once, during the ~15s window right after
   a deploy, and then never looked at again unless a human was staring at the project
   page. A new health watch polls every server's Docker daemon once a minute (and
@@ -583,7 +2139,7 @@ class.
   before it notifies, and an in-flight deploy, an operator's own `docker stop`, or a
   disabled project never trips a false alarm.
 - **An unreachable server is one alert, not one per app on it** — when a box's Docker
-  daemon stops answering, Openship opens a single server-level incident that names how
+  daemon stops answering, Kovalio opens a single server-level incident that names how
   many projects it can no longer monitor, and freezes those projects' health rather
   than falsely marking them recovered. The record is durable, so a box that has been
   down for days does not re-page every time the control plane restarts.
@@ -670,11 +2226,11 @@ class.
   Cloudflare's published ranges as the connecting peer.
 - **Per-route rules reach the edge even when it isn't on the API's loopback** —
   pushing a project's route rules to a local edge now goes through the same resolved
-  edge-management path as the rest of Openship instead of assuming the edge lives on
+  edge-management path as the rest of Kovalio instead of assuming the edge lives on
   the API host's own loopback. On setups where it doesn't — such as the containerized
   edge — rate-limit, ban, and country rules now actually take effect.
 - **The "Edge ready" pill matches the server's real state** — edge readiness is now
-  read from whether Openship's edge container is actually running, the same fact the
+  read from whether Kovalio's edge container is actually running, the same fact the
   Infrastructure tab and System Health use. Before, a leftover bare-host OpenResty
   install could make the pill claim "ready" while the server tab reported the edge as
   down.
@@ -682,14 +2238,14 @@ class.
 ### Custom & free domains
 
 - **Free `.opsh.io` domains only route to a server whose control you've proven** —
-  Openship Cloud's shared edge now forwards a free subdomain to your server only after
+  Kovalio Cloud's shared edge now forwards a free subdomain to your server only after
   that server answers a challenge proving it owns the target, a proof that lasts 90
-  days and that Cloud re-checks about a week before it lapses. Openship prepares the
+  days and that Cloud re-checks about a week before it lapses. Kovalio prepares the
   box to answer the moment you set up its edge, so a free domain added later works
   without a redeploy, and a background sweep re-asserts, reads back over the server's
   own public address, and re-verifies anything expired — so a box left undeployed for
   months no longer silently loses its free URLs. A slug can't be pointed at someone
-  else's box, and a server that can't yet answer is told why. Requires Openship Cloud.
+  else's box, and a server that can't yet answer is told why. Requires Kovalio Cloud.
 - **Free and custom domains now work on static sites** — adding a free `.opsh.io`
   domain to a static project used to register nothing on the edge, so the URL fell
   through to the wildcard with no origin behind it; editing a static project's domain
@@ -699,7 +2255,7 @@ class.
   ACME order completed but a later step failed (the vhost rewrite, the reload, or the
   read-back), the domain stayed stuck in "provisioning" with no expiry recorded, which
   made it invisible to the renewal sweep — a valid certificate then sat on the edge
-  and expired ~90 days later. Openship now re-reads the edge after a failed issuance
+  and expired ~90 days later. Kovalio now re-reads the edge after a failed issuance
   and records a certificate that's actually present, so renewal stays scheduled.
 - **Invalid custom domains are rejected at the door** — setting a custom domain to
   something that isn't a public hostname (`localhost`, a bare IP, a single label, or a
@@ -722,15 +2278,15 @@ class.
 - **Mail runs as a self-contained engine instead of taking over your server** —
   setting up mail no longer installs iRedMail's daemons directly onto the host or
   reboots the box. Postfix, Dovecot, spam and virus filtering, and DKIM now run inside
-  a single `openship-mail` container with its vmail database in a Postgres sidecar,
+  a single `kovalio-mail` container with its vmail database in a Postgres sidecar,
   host-networked so mail still sees real client IPs and the edge stays out of the mail
   data path. Setup is down to eight steps whose only prerequisites are Docker and the
-  openship edge, and every piece of mail state (queue, maildirs, DKIM keys, config)
+  kovalio edge, and every piece of mail state (queue, maildirs, DKIM keys, config)
   lives on host bind mounts, so upgrading is a pull-and-recreate that keeps your data.
   Self-hosted only.
 - **Mail uses the same edge and TLS as everything else** — mail setup no longer stands
   up its own host OpenResty and certbot on the side. The certificate for
-  `mail.<domain>` is issued through the shared openship edge, the same path every other
+  `mail.<domain>` is issued through the shared kovalio edge, the same path every other
   domain's TLS takes, and it is now recorded for renewal like any other domain — a
   mail certificate on a containerized edge (no host certbot timer) used to simply
   expire ~90 days after install, silently; a failed renewal now raises a notification.
@@ -758,7 +2314,7 @@ class.
   Restart stopped does the same across every server at once. Self-hosted only.
 - **Auto-update your remote infrastructure on upgrade** — a new instance-wide toggle
   lets the control plane update every remote edge and mail container automatically when
-  you upgrade Openship (its `APP_VERSION` moves forward), so your fleet's infra tracks
+  you upgrade Kovalio (its `APP_VERSION` moves forward), so your fleet's infra tracks
   the version you're running with no manual sweep. It's server-side, so it works on
   desktop too, distinct from the desktop app's own auto-update, and off by default.
   Self-hosted only.
@@ -833,7 +2389,7 @@ class.
 
 - **Send alerts to Telegram** — Telegram joins email, Slack, Discord, and Teams as a
   notification channel: point a BotFather bot at a chat, group, or forum topic and
-  Openship delivers your deploy, health, and job alerts there. The bot token is stored
+  Kovalio delivers your deploy, health, and job alerts there. The bot token is stored
   encrypted, and the channel list shows which bot does the sending.
 - **Self-hosted notification settings drop the toggles that can never fire** — on a
   self-hosted box the billing notification categories are fed by the SaaS billing
@@ -842,19 +2398,19 @@ class.
 
 ### Install & packaging
 
-- **Openship now installs and updates on Node, never a global Bun** — the `curl | sh`
+- **Kovalio now installs and updates on Node, never a global Bun** — the `curl | sh`
   and PowerShell installers download a self-contained, sha256-verified CLI payload that
   runs under Node: they use your system Node 22+ if you have one and otherwise vendor an
-  official Node 22 from nodejs.org into `~/.openship`, and they quietly migrate you off
-  any previous global-Bun install without touching your own Bun. `openship update` takes
+  official Node 22 from nodejs.org into `~/.kovalio`, and they quietly migrate you off
+  any previous global-Bun install without touching your own Bun. `kovalio update` takes
   the same path — re-download the verified payload, refresh the runtime first — so an
   upgrade that raises the Node floor heals itself instead of breaking. This retires the
   Bun-vs-ssh2 crash class that could take out remote SSH operations.
-- **The mail server ships as an official image** — Openship's official multi-arch
+- **The mail server ships as an official image** — Kovalio's official multi-arch
   (amd64 + arm64) image set, built and published to GHCR and Docker Hub each release,
-  now includes `openship-mail` alongside the api, dashboard and edge images, so a
+  now includes `kovalio-mail` alongside the api, dashboard and edge images, so a
   self-hosted mail engine no longer has to be built from source.
-- **`openship up` now works under rootless Docker instead of failing cryptically** —
+- **`kovalio up` now works under rootless Docker instead of failing cryptically** —
   bringing up the compose stack on a rootless daemon used to abort the install with
   Docker's opaque "error while creating mount source path … permission denied," because
   a rootless daemon can't create the edge's bind-mount directories under root-owned
@@ -865,7 +2421,7 @@ class.
 
 - **A working deploy is never recorded as failed** — build output that carried a raw
   NUL byte or a broken Unicode character (as a failed `docker exec` does when it spills
-  its multiplexed stream, frame headers and all) made the log write fail, and Openship
+  its multiplexed stream, frame headers and all) made the log write fail, and Kovalio
   misread that rejected write as the deploy itself failing: a live, running deploy was
   marked failed and its containers torn down, while the deploy view stayed stuck on
   "Deploying." Stored build logs are now sanitized and size-capped, the outcome write
@@ -883,7 +2439,7 @@ class.
   `.opsh.io` domain could finish onboarding with no servers listed and nothing to
   deploy to, because registering the local "This Server" row hung off a bootstrap step
   that path never runs. The box now materializes its own deploy-target row when servers
-  are first listed, when it connects to Openship Cloud, and on admin reset. Attaching a
+  are first listed, when it connects to Kovalio Cloud, and on admin reset. Attaching a
   free `.opsh.io` domain to a project later no longer needs a redeploy first, since
   every deploy now primes the box to answer the ownership check. Self-hosted only.
 - **Service domains honor your upload limit and proxy settings** — a compose service's
@@ -921,7 +2477,7 @@ across the MCP integration and custom domains.
 - **Roll back any release, on every project** — the Rollback action used to be
   greyed out on projects using the default settings, because nothing marked their
   releases as restorable. It's now available on every successful release, and it
-  is a single action: Openship reuses the release's retained image when it's still
+  is a single action: Kovalio reuses the release's retained image when it's still
   on the server (seconds, no rebuild) and rebuilds that release's commit when it
   isn't. It can no longer dead-end — the "Redeploy this commit" fallback button is
   gone because the one action already covers it, and the confirmation tells you
@@ -956,7 +2512,7 @@ across the MCP integration and custom domains.
   controls are editable on a first deploy too, and the choice is applied when the
   project is created. They used to render read-only until the project existed,
   which was the one moment you were actually looking at them. The card also names
-  what a retained version *is* on your project — built files for a static site,
+  what a retained version _is_ on your project — built files for a static site,
   images otherwise — instead of talking about images either way.
 - **The wizard's Advanced panel says what's in it** — it listed only the build
   location while hiding the rollback window and clone location; it now names each
@@ -992,13 +2548,14 @@ Upgrade note: this release drops an unused `artifact_retained_at` column from th
 per-service deployment table. Nothing read or wrote it.
 
 ### MCP
+
 - **Guided deploy flows** — the MCP server now ships a prompt catalog
   (`deploy-from-git`, `deploy-a-folder`, `install-catalog-app`, and an
   orientation overview) so an AI client follows the correct tool sequence
   instead of reverse-engineering it from a flat list. Its write tools now carry
   typed request bodies end to end (projects, deployments, domains, webhooks,
   notifications, connections, apps), and every prompt points at
-  `github.com/oblien/openship/issues` when a client hits a platform bug.
+  `github.com/Nextrium/kovalio/issues` when a client hits a platform bug.
 - **Scoped tokens list the right tools** — a token granted a single GitHub repo
   (or the "create your own projects" scope) now correctly advertises the tools
   it can actually call. Previously the per-repo GitHub tools and the project
@@ -1006,11 +2563,12 @@ per-service deployment table. Nothing read or wrote it.
   nothing to work with.
 
 ### Custom domains
+
 - **`www` is its own domain, not an attachment to yours** — "Include www" always
   created a second hostname, but the pieces around it still treated the pair as
   one thing. Renewing SSL for a domain issued the `www` certificate inside the
   same operation, unguarded: a `www` that wasn't pointed at the server yet failed
-  *after* the apex had already succeeded, and the apex was reported as broken.
+  _after_ the apex had already succeeded, and the apex was reported as broken.
   Adding a domain with the switch on also showed you only the apex's DNS record,
   so `www` never resolved, its certificate could never be issued, and every
   deploy retried a hostname that had been set up to fail. Both hostnames now get
@@ -1027,7 +2585,7 @@ per-service deployment table. Nothing read or wrote it.
   "the connection closed before the operation reported a result — check the
   domain's status." The actual reason was discarded. The log now stays on screen in
   every outcome, with Copy log and Try again next to it. And if the connection
-  really does drop, Openship reads the domain's state back and tells you what
+  really does drop, Kovalio reads the domain's state back and tells you what
   happened instead of asking you to go and look.
 - **A finished run stops reporting itself as failed** — a keep-alive ping could
   race the final event of any live-log stream (verify, edge setup, deploys) and win,
@@ -1056,8 +2614,9 @@ reliable, and a batch of fixes lands across the control plane for a more stable
 release.
 
 ### CLI
+
 - **A finished install opens the control panel, not the setup wizard** — bare
-  `openship` (and the from-source `openship-dev`) now recognizes a Docker Compose
+  `kovalio` (and the from-source `kovalio-dev`) now recognizes a Docker Compose
   install (the default on Linux). Re-running after setup manages the running
   stack instead of walking you through name / email / domain from scratch again.
 - **Control-panel Start / Stop / Restart drive the actual stack** — on a compose
@@ -1066,6 +2625,7 @@ release.
   installed (which reported "stopped" for a healthy stack).
 
 ### Migrations & remote Docker
+
 - **The SSH → Docker bridge no longer hangs or false-fails a healthy server** —
   migrating from another platform (Coolify/Dokploy/Dokku) or adopting a running
   Docker host could stall the reachability check — or drop the request outright —
@@ -1075,12 +2635,14 @@ release.
   fresh connection when a channel opens dead. Contributed by @jbermudez00 (#271).
 
 ### Mail
+
 - **Mail-server setup works from the desktop app** — the iRedMail engine is now
   shipped inside the packaged desktop app (and the CLI bundle) and located by an
   explicit path, fixing the `Transfer iRedMail Engine … tar: could not chdir`
   failure on install.
 
 ### Fixes
+
 - **Self-hosted GitHub connect is token-first** — a remote (VPS) instance pastes
   an access token inline in the Library, with no `gh auth login` hints; the gh
   CLI path is now desktop-only, where it belongs.
@@ -1088,8 +2650,8 @@ release.
   picker no longer flashes on entry. A sensible target is applied silently and
   stays one click away in the summary bar at the top.
 - **The control plane stops listing a phantom service** — the self-managed
-  "Openship" project no longer shows a bogus public `openship` service (and its
-  stray `openship-openship.opsh.io` route) that matched no container and read
+  "Kovalio" project no longer shows a bogus public `kovalio` service (and its
+  stray `kovalio-kovalio.opsh.io` route) that matched no container and read
   "Stopped" forever.
 
 ## 0.4.0
@@ -1098,6 +2660,7 @@ A security fix for the edge, migrations that behave like a native repo project,
 and a batch of routing/reliability fixes.
 
 ### Security
+
 - **Unrouted HTTPS hosts are rejected, not cross-served** — the edge now owns a
   `443` default server that refuses any hostname it doesn't route (one you
   removed, never added, or merely pointed at the box's IP). Before this, such a
@@ -1106,10 +2669,11 @@ and a batch of routing/reliability fixes.
   bare and containerized edge. Critical — see the in-app advisory.
 
 ### Migrations
+
 - **A migrated project is now a native repo project** — a migrated compose stack
   redeploys like any repo project: it reclones and **rebuilds `build:` services**
   and pulls `image:` ones, instead of failing on a frozen build tag (`404 no such
-  image`). The running image is reused only **once**, at cutover.
+image`). The running image is reused only **once**, at cutover.
 - **The whole compose is the deployment plan** — the migrate screen lists every
   repo compose service, not just running containers, so a service with no
   container (e.g. `redis`, or an app that wasn't up) is built/pulled and routed
@@ -1118,13 +2682,14 @@ and a batch of routing/reliability fixes.
   project's network under its service-name alias, so a freshly-built app resolves
   `postgres:5432` by name, exactly like a native deploy.
 - **A migrated service reports the container it really runs as** — service state
-  is read live from the host and matched by identity (label → `openship-<slug>-<svc>`
-  name → tracked id → compose labels), so a container Openship adopted **in place**
+  is read live from the host and matched by identity (label → `kovalio-<slug>-<svc>`
+  name → tracked id → compose labels), so a container Kovalio adopted **in place**
   (its docker labels still name the previous project) no longer shows "Stopped"
   while it serves traffic. Each run's log now ends with the container, state and
   match for every service.
 
 ### Fixes
+
 - **Service state is never guessed from the database** — Start/Stop/Restart, logs,
   terminal, backup/restore and volume sizes resolve the container against the host
   first, so a redeploy that replaced it no longer leaves them failing with
@@ -1132,7 +2697,7 @@ and a batch of routing/reliability fixes.
   the running one. A crash-looping container now reads **Restarting** instead of a
   green "Running", and an unreachable host reads **Unknown** instead of echoing the
   last deploy status.
-- **Removing a route never wrongly demands Openship Cloud** — the free-domain gate
+- **Removing a route never wrongly demands Kovalio Cloud** — the free-domain gate
   classifies by hostname, so removing a custom-domain route (or any route) is no
   longer blocked by an unrelated free subdomain still in the set.
 - **Deleting a service can't hang** — runtime teardown is time-bounded, so a slow
@@ -1146,25 +2711,28 @@ Native Apple Silicon builds, drop-in compatibility with other platforms' deploy
 config, and a batch of self-hosting and reliability fixes.
 
 ### Downloads
+
 - **Native Apple Silicon (arm64) desktop app** — macOS now ships separate
   **arm64** and Intel **x64** dmgs (both built and SHA-256-checksummed in CI), so
   Apple Silicon Macs run natively instead of under Rosetta. Windows (x64) and
   Linux (AppImage) are unchanged.
 
 ### Deploy · stack detection
+
 - **Deploys repos already configured for another platform, as-is** — the stack
   detector now reads **`railway.toml`/`railway.json`** and **`vercel.json`**
   (build / install / start / output commands, framework, and routing) and folds
   them over its own detection. A repo that already tells Railway or Vercel how to
   build it deploys the same way here, no reconfiguration. Every config source
   runs through one shared parser registry (no per-source special-casing).
-- **`openship.json`** — an optional repo-root config to declare build, routing,
+- **`kovalio.json`** — an optional repo-root config to declare build, routing,
   env, and domains up front; it's authoritative over auto-detection and rides the
   same engine, for the repo root and each monorepo sub-app.
 
 ### Self-hosting
+
 - **Deploys to your own server by default** — a self-hosted instance targets the
-  server it runs on, never Openship Cloud, unless you explicitly choose cloud.
+  server it runs on, never Kovalio Cloud, unless you explicitly choose cloud.
 - **Health checks work when the control plane is containerized** — the
   post-deploy probe reaches your app through the host gateway, so a containerized
   self-host no longer fail-reverts an otherwise-healthy deploy.
@@ -1173,11 +2741,13 @@ config, and a batch of self-hosting and reliability fixes.
   a box already broken by the old pin.
 
 ### CLI
-- **`openship stop` actually stops** — the service and its children are reaped by
+
+- **`kovalio stop` actually stops** — the service and its children are reaped by
   process group and any ports it held are swept, so a restart can't strand the
   old process on a new port.
 
 ### Reliability & fixes
+
 - Malformed JSON request bodies now return **400**, not 500.
 - **Cloud static-output path is confined** — the Pages output path resolves
   through one shared, sandboxed resolver so a build can't escape its output dir.
@@ -1195,6 +2765,7 @@ Apps and Jobs grow up, a self-hosted server can now talk to GitHub on its own,
 Backups get a real home, and a batch of delete/login/database reliability fixes.
 
 ### Apps
+
 - **Day-2 app settings** — installed apps now expose a curated settings surface
   (schema-driven) so you can change an app's real config after install without
   digging through raw env. Edits go through a safe env-merge and tell you whether
@@ -1203,16 +2774,18 @@ Backups get a real home, and a batch of delete/login/database reliability fixes.
   business-only setup that creates the project on confirm; the technical deploy
   wizard is now the "Advanced" path (no more orphaned draft projects from a
   half-finished install).
-- **Openship Mail is a first-class app** — it appears in the catalog alongside
+- **Kovalio Mail is a first-class app** — it appears in the catalog alongside
   Convex and n8n and hands off to the mail wizard. The rest of the catalog shows
   as **Coming soon** (dimmed, not installable) for this release.
 
 ### Jobs
+
 - **Automated backups show up in Jobs** (read-only) — backup schedules run on the
   same job runner as everything else (zero duplication), so their next/last run
   sits right next to your system and custom jobs.
 
 ### Servers · GitHub
+
 - **Connect GitHub on a server** — each self-hosted server now authenticates to
   GitHub on its own, from a dedicated **GitHub** tab: sign in with a device code
   (like `gh`), paste a token, generate an SSH key to add to your account, or use
@@ -1222,16 +2795,19 @@ Backups get a real home, and a batch of delete/login/database reliability fixes.
   work without your desktop online.
 
 ### Backups
+
 - **Redesigned Backups** — per-destination storage stats, a sticky status rail,
   and clickable rows that open a per-destination detail page showing exactly which
   projects and services back up there.
 
 ### Cloud
-- **Per-user project cap** — Openship Cloud enforces a hard cap on projects per
+
+- **Per-user project cap** — Kovalio Cloud enforces a hard cap on projects per
   user (env `CLOUD_MAX_PROJECTS_PER_USER`, default 2), at both create and
   folder-upload/ensure. Self-hosted is unmetered.
 
 ### Reliability & polish
+
 - **Deletes never get stuck** — project deletion shows a real **Deleting** state,
   and when the source teardown can't complete you get a clean **"Delete from
   storage"** option that drops the record immediately (leftover resources are
@@ -1254,6 +2830,7 @@ A large feature + hardening release across the deploy flow, the app catalog,
 routing, servers, jobs, and the build toolchain.
 
 ### Deploy
+
 - Redesigned **"Where do you want to deploy?"** step: unified page-style header
   with the **Continue** action aligned to the config column, and a **collapsed,
   searchable server picker** (with an inline "Add your own server").
@@ -1262,6 +2839,7 @@ routing, servers, jobs, and the build toolchain.
   workspace-prepare, cloud local-build). Fixes `pnpm: not found` on deploy.
 
 ### Apps
+
 - **Searchable, category-tabbed one-click app catalog**, expanded to 15
   production-ready self-hosted apps: Convex, n8n, Ghost, Directus, NocoDB,
   Metabase, Grafana, Gitea, code-server, Uptime Kuma, Vaultwarden, FreshRSS,
@@ -1269,6 +2847,7 @@ routing, servers, jobs, and the build toolchain.
 - Home "Apps" card refreshed; catalog cards show real brand logos.
 
 ### Routing & domains (single source of truth)
+
 - Custom domains on **service-based projects** now flow through the same
   verify → DNS-records → SSL pipe as single-app domains: a verifiable pending
   row is minted on add/create/edit, one canonical hostname normalizer is shared
@@ -1276,24 +2855,29 @@ routing, servers, jobs, and the build toolchain.
   certbot is gated on verification (no wasted Let's Encrypt attempts).
 
 ### Servers
+
 - Redesigned servers page (tabs, live reachability, country flags).
 - Per-server **Git** auth tab (token / SSH key / deploy keys) with a
   comfortable full-width card; connect-on-server credentials honored in preflight.
 
 ### Jobs
+
 - Jobs page gains **search** + an at-a-glance **status filter sidebar**
   (running / failed / scheduled / disabled), shown once custom jobs exist.
 
 ### Team & workspace
+
 - **Invite member** is only offered where it works (team orgs on a multi-user
   instance); single-user/personal instances are guided to migrate or create a
   team org instead of hitting a dead end.
 
 ### Add service
-- The **Openship Cloud** image tab shows a "Connect to Openship Cloud" CTA when
+
+- The **Kovalio Cloud** image tab shows a "Connect to Kovalio Cloud" CTA when
   the instance isn't linked, and the source switcher has clearer contrast.
 
 ### Other
+
 - Docker migration flow, per-project/service backups, unified connectivity
   checks, Arabic (RTL) localization, marketing roadmap page, and desktop window
   polish (macOS traffic-light inset).

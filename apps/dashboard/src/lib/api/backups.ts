@@ -4,6 +4,7 @@
  * project.
  */
 
+import type { BackupDestinationStats, BackupDestinationHistory, ListBackupDestinationRunsInput, ListBackupRunsInput } from "@repo/contracts";
 import { api } from "./client";
 import { endpoints } from "./endpoints";
 
@@ -12,7 +13,7 @@ import { endpoints } from "./endpoints";
 export interface BackupDestinationSummary {
   id: string;
   name: string;
-  kind: "s3_compatible" | "sftp" | "openship_server" | "local" | "http_upload";
+  kind: "s3_compatible" | "sftp" | "kovalio_server" | "local" | "http_upload";
   endpoint: string | null;
   region: string | null;
   bucket: string | null;
@@ -31,9 +32,8 @@ export interface BackupDestinationSummary {
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;
-  /** Storage rollup for this destination (bytes stored, backups run, last run).
-   *  Present on the list endpoint; null when unavailable. */
-  stats: { storedBytes: number; runCount: number; lastRunAt: string | null } | null;
+  /** Stored bytes and separate counts for saved backups and other outcomes. */
+  stats: BackupDestinationStats | null;
 }
 
 export interface CreateDestinationInput {
@@ -153,9 +153,11 @@ export interface BackupRun {
   clientIp: string | null;
   startedAt: string;
   finishedAt: string | null;
+  lastEventAt?: string;
   bytesTransferred: number | null;
   objectKeyPrefix: string | null;
   manifestKey: string | null;
+  retentionLockedUntil?: string | null;
   artifacts: unknown[];
   errorMessage: string | null;
 }
@@ -188,6 +190,10 @@ export interface DestinationUsage {
 export const backupDestinationsApi = {
   list: () =>
     api.get<{ data: BackupDestinationSummary[] }>(endpoints.backupDestinations.list),
+  history: (options?: ListBackupDestinationRunsInput) =>
+    api.get<{ data: BackupDestinationHistory }>(endpoints.backupDestinations.history, { params: options }),
+  runs: (id: string, options?: ListBackupDestinationRunsInput) =>
+    api.get<{ data: BackupDestinationHistory }>(endpoints.backupDestinations.runs(id), { params: options }),
   get: (id: string) =>
     api.get<{ data: BackupDestinationSummary }>(endpoints.backupDestinations.get(id)),
   usage: (id: string) =>
@@ -244,9 +250,9 @@ export const backupsApi = {
     api.patch<{ data: BackupPolicy }>(endpoints.backups.updatePolicy(policyId), patch),
   deletePolicy: (policyId: string) =>
     api.delete<{ data: { ok: true } }>(endpoints.backups.deletePolicy(policyId)),
-  runNow: (policyId: string) =>
-    api.post<{ data: { runId: string } }>(endpoints.backups.runNow(policyId)),
-  listRuns: (projectId: string, opts?: { limit?: number; serviceId?: string }) =>
+  runNow: (policyId: string, input?: { serviceId: string }) =>
+    api.post<{ data: { runId: string; runIds?: string[] } }>(endpoints.backups.runNow(policyId), input),
+  listRuns: (projectId: string, opts?: ListBackupRunsInput) =>
     api.get<{ data: BackupRun[] }>(endpoints.backups.listRuns(projectId), {
       params: opts,
     }),

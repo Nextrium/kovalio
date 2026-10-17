@@ -1,7 +1,9 @@
 "use client";
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import { Icon as UiIcon } from "@repo/ui/icons";
+
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, GitCommitHorizontal, CornerUpRight, Ban, Webhook } from "lucide-react";
 import type { WebhookDelivery, WebhookDeliveryPage } from "@/lib/api/incoming-webhooks";
 
 /**
@@ -33,7 +35,8 @@ export function WebhookDeliveries({
         const page = await fetchPage(nextCursor);
         setRows((prev) => (nextCursor ? [...prev, ...page.deliveries] : page.deliveries));
         setCursor(page.nextCursor);
-      } catch {
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "dashboard/app/(dashboard)/projects/[id]/components/WebhookDeliveries");
         if (!nextCursor) setRows([]);
       } finally {
         setter(false);
@@ -50,7 +53,7 @@ export function WebhookDeliveries({
     <div className="rounded-2xl border border-border/50 bg-card p-5">
       <div className="flex items-start gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground">
-          <Webhook className="size-[18px]" />
+          <UiIcon name="webhook" className="size-[18px]" />
         </div>
         <div>
           <h2 className="text-[15px] font-semibold text-foreground">{title}</h2>
@@ -61,7 +64,7 @@ export function WebhookDeliveries({
       <div className="mt-4">
         {loading ? (
           <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Loading…
+            <UiIcon name="spinner" className="size-4 animate-spin" /> Loading…
           </div>
         ) : rows.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border/50 px-4 py-6 text-center text-sm text-muted-foreground">
@@ -81,7 +84,7 @@ export function WebhookDeliveries({
                 disabled={loadingMore}
                 className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border/50 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/40 disabled:opacity-50"
               >
-                {loadingMore ? <Loader2 className="size-4 animate-spin" /> : null} Load more
+                {loadingMore ? <UiIcon name="spinner" className="size-4 animate-spin" /> : null} Load more
               </button>
             )}
           </>
@@ -101,8 +104,8 @@ const OUTCOME_TONE: Record<string, string> = {
 };
 
 function sourceIcon(source: string) {
-  if (source === "forwarded") return <CornerUpRight className="size-3.5" />;
-  return <GitCommitHorizontal className="size-3.5" />;
+  if (source === "forwarded") return <UiIcon name="forward" className="size-3.5" />;
+  return <UiIcon name="git-commit" className="size-3.5" />;
 }
 
 function DeliveryRow({ d }: { d: WebhookDelivery }) {
@@ -121,7 +124,7 @@ function DeliveryRow({ d }: { d: WebhookDelivery }) {
       <span
         className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${tone}`}
       >
-        {d.outcome === "forwarded" ? <CornerUpRight className="size-3" /> : d.outcome === "ignored" ? <Ban className="size-3" /> : null}
+        {d.outcome === "forwarded" ? <UiIcon name="forward" className="size-3" /> : d.outcome === "ignored" ? <UiIcon name="ban" className="size-3" /> : null}
         {d.outcome}
       </span>
       <span className="flex min-w-0 flex-1 items-center gap-1.5 text-sm text-foreground">

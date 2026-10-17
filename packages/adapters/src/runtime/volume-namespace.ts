@@ -6,12 +6,12 @@
  * volume literally named `postgres_data`). Two projects that both author a common
  * name therefore share ONE daemon-level volume — silent cross-project data
  * corruption. Real `docker compose` avoids this by prefixing volume names with
- * the compose project; openship never did.
+ * the compose project; kovalio never did.
  *
  * This module is the single canonical place that maps a raw compose volume spec
- * to the actual Docker volume name, applying an `openship-<slug>-` prefix to
- * NAMED volumes (mirroring the existing `openship-<slug>` network +
- * `openship-<slug>-<service>` container conventions). Bind mounts (host paths)
+ * to the actual Docker volume name, applying an `kovalio-<slug>-` prefix to
+ * NAMED volumes (mirroring the existing `kovalio-<slug>` network +
+ * `kovalio-<slug>-<service>` container conventions). Bind mounts (host paths)
  * and anonymous volumes are left untouched. It's imported by both the runtime
  * (at container-create) and the backup executor (fallback path) so the scoped
  * name can never drift between deploy, teardown, backup, and restore.
@@ -19,13 +19,15 @@
  * Pure string logic, no dependencies — trivially unit-testable.
  */
 
+import { isHostPathSource } from "@repo/core";
+
 /** Trailing bind mode suffix (":ro" / ":rw" / SELinux / nocopy). Mirrors the
  *  regex in backup/executors/docker.ts so classification stays identical. */
 const MODE_SUFFIX = /:(ro|rw|z|Z|nocopy)$/;
 
 /** The project-scoped Docker volume name for a bare compose volume name. */
 export function scopedVolumeName(slug: string, name: string): string {
-  return `openship-${slug}-${name}`;
+  return `kovalio-${slug}-${name}`;
 }
 
 /**
@@ -40,7 +42,7 @@ export function scopedVolumeName(slug: string, name: string): string {
  * source rather than a whole spec.
  */
 export function ensureScopedVolumeName(slug: string, source: string): string {
-  const prefix = `openship-${slug}-`;
+  const prefix = `kovalio-${slug}-`;
   return source.startsWith(prefix) ? source : scopedVolumeName(slug, source);
 }
 
@@ -49,14 +51,7 @@ export function ensureScopedVolumeName(slug: string, source: string): string {
  * volumes get scoped; bind mounts must pass through untouched. Covers the `~`
  * (home) case that the legacy backup classifier missed.
  */
-export function isHostPathSource(source: string): boolean {
-  return (
-    source.startsWith("/") ||
-    source.startsWith("./") ||
-    source.startsWith("../") ||
-    source.startsWith("~")
-  );
-}
+export { isHostPathSource } from "@repo/core";
 
 /**
  * Rewrite each NAMED volume in a list of raw compose volume specs to its
@@ -71,7 +66,7 @@ export function scopeVolumeBinds(
   enabled: boolean,
 ): string[] {
   if (!enabled) return rawVolumes;
-  const prefix = `openship-${slug}-`;
+  const prefix = `kovalio-${slug}-`;
   return rawVolumes.map((spec) => {
     const modeMatch = spec.match(MODE_SUFFIX);
     const mode = modeMatch ? modeMatch[0] : "";

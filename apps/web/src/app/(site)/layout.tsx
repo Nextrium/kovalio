@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "../globals.css";
 
-const SITE_URL = "https://openship.io";
-const SITE_NAME = "Openship";
-const TITLE_DEFAULT = "Openship - Open Source, Self-Hostable Deployment Platform";
-const TITLE_TEMPLATE = "%s - Openship";
+const SITE_URL = "https://nextrium.org";
+const SITE_NAME = "Kovalio";
+const TITLE_DEFAULT = "Kovalio - Open Source, Self-Hostable Deployment Platform";
+const TITLE_TEMPLATE = "%s - Kovalio";
 const DESCRIPTION =
   "Deploy anything, own everything. Self-hostable, AI-powered deployment platform with free SSL, unlimited domains, instant rollbacks, and CLI/MCP support. Open source and free to self-host, forever.";
 
@@ -54,9 +54,7 @@ export const metadata: Metadata = {
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     other: [
       { url: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
@@ -73,11 +71,11 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Openship - Deploy Anything. Own Everything.",
+    title: "Kovalio - Deploy Anything. Own Everything.",
     description:
       "Open source, self-hostable deployment platform with AI-powered builds and instant rollbacks.",
-    creator: "@openship",
-    site: "@openship",
+    creator: "@kovalio",
+    site: "@kovalio",
   },
   robots: {
     index: true,
@@ -93,9 +91,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
     types: {
-      "application/rss+xml": [
-        { url: "/resources/rss.xml", title: "Openship Resources" },
-      ],
+      "application/rss+xml": [{ url: "/blog/rss.xml", title: "Kovalio Blog" }],
     },
   },
   // verification: {
@@ -130,15 +126,15 @@ const organizationLd = {
   description: DESCRIPTION,
   foundingDate: "2024",
   sameAs: [
-    "https://github.com/oblien/openship",
-    "https://x.com/openshipio",
+    "https://github.com/Nextrium/kovalio",
+    "https://x.com/kovalioio",
     "https://discord.gg/Q9eWNCeXjg",
   ],
   contactPoint: [
     {
       "@type": "ContactPoint",
       contactType: "customer support",
-      email: "hello@openship.io",
+      email: "hello@nextrium.org",
       availableLanguage: ["English"],
     },
   ],
@@ -166,11 +162,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link
-          rel="preconnect"
-          href="https://cdn.oblien.com"
-          crossOrigin="anonymous"
-        />
+        <link rel="preconnect" href="https://cdn.oblien.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://cdn.oblien.com" />
         <script
           type="application/ld+json"

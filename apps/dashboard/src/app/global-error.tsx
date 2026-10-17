@@ -1,4 +1,6 @@
 "use client";
+import { useEffect } from "react";
+import { reportClientError } from "@/lib/error-reporting";
 
 /**
  * Root global-error boundary. Next prerenders `/_global-error` at build time; its
@@ -19,6 +21,7 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => { reportClientError(error, { component: "global-error", handled: false }); }, [error]);
   return (
     <html lang="en">
       <head>
@@ -50,14 +53,14 @@ export default function GlobalError({
         <div className="ge-wrap">
           <div className="ge-brand">
             <div className="ge-mark" aria-hidden="true" />
-            <span className="ge-name">Openship</span>
+            <span className="ge-name">Kovalio</span>
           </div>
 
-          <h1 className="ge-title">Openship couldn&rsquo;t start</h1>
+          <h1 className="ge-title">Kovalio couldn&rsquo;t start</h1>
           <p className="ge-body">
             The dashboard failed to load. Your deployments and containers keep
             running — this is only the control panel. Try again, and if it
-            persists, restart Openship.
+            persists, restart Kovalio.
           </p>
 
           <button type="button" className="ge-btn" onClick={() => reset()}>
@@ -67,12 +70,12 @@ export default function GlobalError({
           {error?.digest && <p className="ge-code">Ref {error.digest}</p>}
 
           <div className="ge-links">
-            <a href="https://openship.io/docs" target="_blank" rel="noopener noreferrer">
+            <a href="https://nextrium.org/docs" target="_blank" rel="noopener noreferrer">
               Documentation
             </a>
             <span className="ge-dot" aria-hidden="true" />
             <a
-              href="https://github.com/oblien/openship/issues"
+              href="https://github.com/Nextrium/kovalio/issues"
               target="_blank"
               rel="noopener noreferrer"
             >

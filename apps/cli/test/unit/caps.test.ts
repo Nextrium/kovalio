@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ApiError } from "../../src/lib/api-client";
+import { ApiError } from "../../src/lib/ship-client";
 import { requireSelfHost } from "../../src/lib/caps";
 import type { ContextCaps } from "../../src/lib/config";
 
@@ -21,7 +21,7 @@ describe("requireSelfHost", () => {
     expect(() => requireSelfHost(caps(true))).not.toThrow();
   });
 
-  it("throws a 400 ApiError on Openship Cloud", () => {
+  it("throws a 400 ApiError on Kovalio Cloud", () => {
     try {
       requireSelfHost(caps(false));
       expect.unreachable("should have thrown");

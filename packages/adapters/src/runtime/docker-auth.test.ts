@@ -32,7 +32,7 @@ async function writeConfig(config: unknown): Promise<void> {
 const basic = (user: string, pass: string) => Buffer.from(`${user}:${pass}`).toString("base64");
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), "openship-docker-auth-"));
+  dir = await mkdtemp(join(tmpdir(), "kovalio-docker-auth-"));
   process.env.DOCKER_CONFIG = join(dir, ".docker");
 });
 
@@ -53,7 +53,7 @@ describe("registryForImage", () => {
   });
 
   it("reads a real registry host", () => {
-    expect(registryForImage("ghcr.io/oblien/openship-api:0.6.5")).toBe("ghcr.io");
+    expect(registryForImage("ghcr.io/nextrium/kovalio-api:0.6.5")).toBe("ghcr.io");
     expect(registryForImage("registry.example.com/org/img:tag")).toBe("registry.example.com");
     expect(registryForImage("registry.example.com:5000/org/img")).toBe("registry.example.com:5000");
     expect(registryForImage("localhost:5000/img")).toBe("localhost:5000");

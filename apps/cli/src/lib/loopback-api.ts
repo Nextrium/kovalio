@@ -1,16 +1,17 @@
 /**
  * Loopback control-plane helpers, shared by the interactive install wizard
  * (commands/wizard.ts), the headless installer (lib/instance-provision.ts),
- * `openship up` (commands/up.ts), doctor/repair and reset-admin-password. Single
+ * `kovalio up` (commands/up.ts), doctor/repair and reset-admin-password. Single
  * home for the internal-token-gated request + the boot/health polls, so there's
  * exactly ONE copy (no per-command duplication).
  *
  * The API is bound to loopback and gated by X-Internal-Token. WHICH token that is
  * depends on the install method, so it is resolved in one place (lib/internal-token)
  * rather than chosen per call site — the mistake that made every compose box answer
- * "Unauthorized" to `openship reset-admin-password`.
+ * "Unauthorized" to `kovalio reset-admin-password`.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import {
   internalTokenProblem,
   internalTokenRejectedProblem,
@@ -18,8 +19,8 @@ import {
 } from "./internal-token";
 import { OS_DIR } from "./paths";
 
-/** The CLI's state dir (internal-token, auth-secret, data, logs); ~/.openship
- *  by default, or OPENSHIP_HOME for a from-source install. Re-exported for the
+/** The CLI's state dir (internal-token, auth-secret, data, logs); ~/.kovalio
+ *  by default, or KOVALIO_HOME for a from-source install. Re-exported for the
  *  many callers that import it from here. */
 export { OS_DIR };
 
@@ -46,7 +47,7 @@ export type InternalCall =
  *
  * The distinction decides whether the request may be repeated: internalAuth answers
  * before the handler runs, so retrying it with another token repeats nothing — while
- * `/api/system/cloud-connect` answers 401 with "Could not verify with Openship Cloud"
+ * `/api/system/cloud-connect` answers 401 with "Could not verify with Kovalio Cloud"
  * AFTER exchanging a single-use PKCE code, where a retry would burn the code and the
  * rewritten message would blame the wrong thing entirely.
  *
@@ -97,16 +98,19 @@ export async function internalFetch(
     try {
       res = await fetch(url, {
         ...init,
+        // Internal credentials must never follow a redirect off this API.
+        redirect: "error",
         headers: {
           ...(init.headers as Record<string, string> | undefined),
           "X-Internal-Token": candidate,
         },
       });
     } catch (err) {
+      observeCaughtError(err, "cli/lib/loopback-api");
       return { kind: "unreachable", detail: (err as Error).message };
     }
     if (res.status !== 401) return { kind: "response", res };
-    const body = await res.text().catch(() => "");
+    const body = await res.text().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/lib/loopback-api"); return ""; });
     if (!isInternalAuthRejection(body)) return { kind: "response", res: replay(res, body) };
     refused = replay(res, body);
   }
@@ -127,7 +131,7 @@ export async function internalGet(port: string, path: string, token?: string): P
     token,
   );
   if (call.kind !== "response" || !call.res.ok) return null;
-  return await call.res.json().catch(() => null);
+  return await call.res.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/lib/loopback-api"); return null; });
 }
 
 export async function internalPost(
@@ -148,10 +152,10 @@ export async function internalPost(
     token,
   );
   // A token problem is reported as the error TEXT rather than a bare "failed": every
-  // caller of this prints `data.error`, so the fix (sudo, `openship up`, a port) lands
+  // caller of this prints `data.error`, so the fix (sudo, `kovalio up`, a port) lands
   // in front of the operator instead of a generic Unauthorized.
   if (call.kind !== "response") return { ok: false, data: { error: call.detail } };
-  const data = (await call.res.json().catch(() => ({}))) as Record<string, unknown>;
+  const data = (await call.res.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/lib/loopback-api"); return ({}); })) as Record<string, unknown>;
   // Keyed off the flag, not the status: a handler's own 401 keeps its message.
   if (call.tokenRejected && !token) {
     return { ok: false, data: { ...data, error: internalTokenRejectedProblem() } };
@@ -177,7 +181,8 @@ export async function waitHealthy(apiPort: string, seconds = 90): Promise<boolea
     try {
       await fetch(`http://127.0.0.1:${apiPort}/api/health`, { signal: AbortSignal.timeout(2000) });
       return true;
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "cli/lib/loopback-api");
       /* not up yet */
     }
   }
@@ -194,7 +199,8 @@ export async function waitDashboard(dashPort: string, seconds = 45): Promise<boo
         signal: AbortSignal.timeout(2000),
       });
       if (res.status > 0) return true;
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "cli/lib/loopback-api");
       /* not up yet */
     }
   }
@@ -209,7 +215,8 @@ export async function detectPublicIp(): Promise<string | null> {
       if (!res.ok) continue;
       const ip = (await res.text()).trim();
       if (/^[0-9.]+$/.test(ip) || ip.includes(":")) return ip;
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "cli/lib/loopback-api");
       /* try next */
     }
   }

@@ -1,17 +1,18 @@
 /**
- * `openship install` — lazy-download and install the Openship desktop app for
+ * `kovalio install` — lazy-download and install the Kovalio desktop app for
  * the current OS/arch.
  *
- * This talks to GitHub, NOT the Openship API: assets are published to
- * github.com/oblien/openship/releases (asset names match the desktop updater,
- * apps/desktop/src/main/updater.ts — Openship-arm64.dmg / Openship-x64.dmg /
- * Openship.AppImage, plus Openship-win32-x64.zip for the CLI install path).
+ * This talks to GitHub, NOT the Kovalio API: assets are published to
+ * github.com/Nextrium/kovalio/releases (asset names match the desktop updater,
+ * apps/desktop/src/main/updater.ts — Kovalio-arm64.dmg / Kovalio-x64.dmg /
+ * Kovalio.AppImage, plus Kovalio-win32-x64.zip for the CLI install path).
  *
  * Flow: resolve tag (--version, else releases/latest) → download the asset and
- * its <asset>.sha256 sidecar into ~/.openship/cache/releases/<tag>/ →
+ * its <asset>.sha256 sidecar into ~/.kovalio/cache/releases/<tag>/ →
  * stream-verify with node:crypto (fail-closed if the sidecar is missing, unless
  * --no-verify) → install per-OS and launch.
  */
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { Command } from "commander";
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { spawn, spawnSync } from "node:child_process";
@@ -33,11 +34,11 @@ type AssetKind = "dmg" | "appimage" | "zip";
 function assetForPlatform(): { name: string; kind: AssetKind } {
   const { platform, arch } = process;
   if (platform === "darwin") {
-    return { name: arch === "arm64" ? "Openship-arm64.dmg" : "Openship-x64.dmg", kind: "dmg" };
+    return { name: arch === "arm64" ? "Kovalio-arm64.dmg" : "Kovalio-x64.dmg", kind: "dmg" };
   }
-  if (platform === "win32") return { name: "Openship-win32-x64.zip", kind: "zip" };
+  if (platform === "win32") return { name: "Kovalio-win32-x64.zip", kind: "zip" };
   if (platform === "linux") {
-    return { name: arch === "arm64" ? "Openship-arm64.AppImage" : "Openship.AppImage", kind: "appimage" };
+    return { name: arch === "arm64" ? "Kovalio-arm64.AppImage" : "Kovalio.AppImage", kind: "appimage" };
   }
   throw new Error(`Unsupported platform: ${platform} (${arch})`);
 }
@@ -49,7 +50,8 @@ function installDmg(dmg: string): string {
   let dest = homeApps;
   try {
     mkdirSync(homeApps, { recursive: true });
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/commands/install");
     dest = "/Applications";
   }
 
@@ -60,15 +62,15 @@ function installDmg(dmg: string): string {
   const mount = (attach.stdout.match(/\/Volumes\/[^\n]*/g) ?? []).pop()?.trim();
   if (!mount) throw new Error("Could not determine the mounted volume");
 
-  let target = join(dest, "Openship.app");
+  let target = join(dest, "Kovalio.app");
   try {
-    const appInDmg = join(mount, "Openship.app");
-    if (!existsSync(appInDmg)) throw new Error("Openship.app not found in the disk image");
+    const appInDmg = join(mount, "Kovalio.app");
+    if (!existsSync(appInDmg)) throw new Error("Kovalio.app not found in the disk image");
     spawnSync("rm", ["-rf", target]);
     let copy = spawnSync("ditto", [appInDmg, target], { encoding: "utf8" });
     if (copy.status !== 0 && dest === homeApps) {
       // ~/Applications write failed (rare perms case) → fall back to /Applications.
-      target = join("/Applications", "Openship.app");
+      target = join("/Applications", "Kovalio.app");
       spawnSync("rm", ["-rf", target]);
       copy = spawnSync("ditto", [appInDmg, target], { encoding: "utf8" });
     }
@@ -86,17 +88,22 @@ function installAppImage(appImage: string): string {
 
 function installZip(zip: string): string {
   const localAppData = process.env.LOCALAPPDATA || join(homedir(), "AppData", "Local");
-  const target = join(localAppData, "Programs", "Openship");
+  const target = join(localAppData, "Programs", "Kovalio");
   mkdirSync(target, { recursive: true });
+  // Paths travel as environment variables, never inside the command text, so a
+  // quote or wildcard in a path can't change what PowerShell runs.
   const expand = spawnSync(
     "powershell",
     [
       "-NoProfile",
       "-NonInteractive",
       "-Command",
-      `Expand-Archive -Path '${zip}' -DestinationPath '${target}' -Force`,
+      "Expand-Archive -LiteralPath $env:KOVALIO_INSTALL_ZIP -DestinationPath $env:KOVALIO_INSTALL_DEST -Force",
     ],
-    { encoding: "utf8" },
+    {
+      encoding: "utf8",
+      env: { ...process.env, KOVALIO_INSTALL_ZIP: zip, KOVALIO_INSTALL_DEST: target },
+    },
   );
   if (expand.status !== 0) throw new Error(`Expand-Archive failed: ${expand.stderr?.trim()}`);
   return target;
@@ -110,20 +117,27 @@ function launch(kind: AssetKind, target: string): void {
   if (kind === "appimage") {
     // Try native launch; fall back to the FUSE-free extractor if it exits fast.
     const child = spawn(target, [], { detached: true, stdio: "ignore" });
-    child.on("error", () => {
+    child.on("error", (diagnosticFailure) => {
+      observeCaughtError(diagnosticFailure, "cli/commands/install");
       spawn(target, ["--appimage-extract-and-run"], { detached: true, stdio: "ignore" }).unref();
     });
     child.unref();
     return;
   }
-  // zip: find and start the exe under the install dir.
-  const exe = join(target, "Openship.exe");
-  const path = existsSync(exe) ? exe : target;
-  spawnSync("cmd", ["/c", "start", "", path]);
+  // zip: start the exe under the install dir directly (not via `cmd /c start`, which
+  // re-parses the path, so an `&` in the user's profile path would split it).
+  const exe = join(target, "Kovalio.exe");
+  if (existsSync(exe)) {
+    const child = spawn(exe, [], { detached: true, stdio: "ignore" });
+    child.on("error", (diagnosticFailure) => observeCaughtError(diagnosticFailure, "cli/commands/install"));
+    child.unref();
+    return;
+  }
+  spawnSync("explorer.exe", [target]);
 }
 
 export const installCommand = new Command("install")
-  .description("Download and install the Openship desktop app for this OS")
+  .description("Download and install the Kovalio desktop app for this OS")
   .option("--version <tag>", "Release tag to install (e.g. v1.2.3)")
   .option("--latest", "Install the latest release (default)")
   .option("--force", "Re-download even if a verified copy is cached")
@@ -245,7 +259,8 @@ export const installCommand = new Command("install")
     if (willLaunch) {
       try {
         launch(asset.kind, target);
-      } catch {
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "cli/commands/install");
         // Launch is best-effort; the install already succeeded.
       }
     }
@@ -253,6 +268,6 @@ export const installCommand = new Command("install")
     if (isJsonMode()) {
       printJson({ tag, asset: asset.name, path: target, cached: !downloaded, launched: willLaunch });
     } else {
-      ok(`\n  Openship ${tag} is installed.${willLaunch ? " Launching…" : ""}\n`);
+      ok(`\n  Kovalio ${tag} is installed.${willLaunch ? " Launching…" : ""}\n`);
     }
   });

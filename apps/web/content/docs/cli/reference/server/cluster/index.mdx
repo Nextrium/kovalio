@@ -1,0 +1,95 @@
+---
+title: server cluster
+description: Commands, arguments, and options for kovalio server cluster.
+cliGroup: kovalio server cluster
+---
+
+See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio server cluster
+
+Manage compute clusters, scaling runtimes and replicated storage
+
+```text
+kovalio server cluster [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list`](/docs/cli/reference/server/cluster#kovalio-server-cluster-list) | List compute clusters |
+| [`get <id>`](/docs/cli/reference/server/cluster#kovalio-server-cluster-get) | Read cluster members and scaling readiness |
+| [`create [options] [file]`](/docs/cli/reference/server/cluster#kovalio-server-cluster-create) | Create a compute cluster on an existing private network |
+| [`update [options] [file]`](/docs/cli/reference/server/cluster#kovalio-server-cluster-update) | Change cluster members at the reviewed revision |
+| [`remove [options] <id>`](/docs/cli/reference/server/cluster#kovalio-server-cluster-remove) | Remove an unused compute cluster at its current revision |
+| [`runtime`](/docs/cli/reference/server/cluster/runtime#kovalio-server-cluster-runtime) | Install or recover the shared scaling runtime |
+| [`storage`](/docs/cli/reference/server/cluster/storage#kovalio-server-cluster-storage) | Manage replicated cluster storage and its backup destination |
+
+## kovalio server cluster create
+
+Create a compute cluster on an existing private network
+
+```text
+kovalio server cluster create [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio server cluster get
+
+Read cluster members and scaling readiness
+
+```text
+kovalio server cluster get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Compute cluster ID |
+
+## kovalio server cluster list
+
+List compute clusters
+
+```text
+kovalio server cluster list [options]
+```
+
+## kovalio server cluster remove
+
+Remove an unused compute cluster at its current revision
+
+```text
+kovalio server cluster remove [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Compute cluster ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--revision <number>` | Revision from cluster get |
+| `-y, --yes` | Confirm cluster removal |
+
+## kovalio server cluster update
+
+Change cluster members at the reviewed revision
+
+```text
+kovalio server cluster update [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |

@@ -7,9 +7,9 @@
  *                                      external) — run under ELECTRON's Node,
  *                                      NOT a bun binary. See the note below.
  *   resources/dashboard/              the dashboard's own Next standalone output
- *   resources/migrations/             drizzle .sql  → OPENSHIP_MIGRATIONS_DIR
- *   resources/pglite/                 pglite.wasm + pglite.data → OPENSHIP_PGLITE_ASSETS_DIR
- *   resources/geoip/                  GeoLite2-Country.mmdb → OPENSHIP_GEOIP_DB
+ *   resources/migrations/             drizzle .sql  → KOVALIO_MIGRATIONS_DIR
+ *   resources/pglite/                 pglite.wasm + pglite.data → KOVALIO_PGLITE_ASSETS_DIR
+ *   resources/geoip/                  GeoLite2-Country.mmdb → KOVALIO_GEOIP_DB
  *   resources/engine/                 iRedMail engine tree → MAIL_SERVER_ENGINE_DIR
  *   resources/node_modules/           ssh2 + dockerode (external) resolved via NODE_PATH
  *
@@ -38,6 +38,8 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFil
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { stageCloudflared } from "../scripts/fetch-cloudflared.mjs";
+import { stageActionRunnerAssets } from "../../../packages/actions-runner/assets.mjs";
 
 const DESKTOP_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
 const REPO_ROOT = join(DESKTOP_DIR, "..", "..");
@@ -60,7 +62,7 @@ const TARGET_ARCH = process.env.FORGE_ARCH || process.arch; // "x64" | "arm64"
 const pkg = JSON.parse(
   readFileSync(join(DESKTOP_DIR, "package.json"), "utf8"),
 ) as { productName?: string; name?: string; version?: string };
-const APP_NAME = pkg.productName ?? pkg.name ?? "Openship";
+const APP_NAME = pkg.productName ?? pkg.name ?? "Kovalio";
 const APP_VERSION = pkg.version ?? "0.0.0";
 const TARGET = `${process.platform}/${TARGET_ARCH}`;
 
@@ -87,6 +89,14 @@ async function main(): Promise<void> {
   );
   rmSync(RESOURCES, { recursive: true, force: true });
   mkdirSync(RESOURCES, { recursive: true });
+
+  await step("staging verified Cloudflare SSH client", () => {
+    stageCloudflared(join(DESKTOP_DIR, "assets/cloudflared"), join(RESOURCES, "cloudflared"), process.env.FORGE_PLATFORM || process.platform, TARGET_ARCH);
+  });
+
+  await step("staging Actions runners for connected Linux and macOS servers", () => {
+    stageActionRunnerAssets(join(RESOURCES, "server/assets/actions-runner"));
+  });
 
   // 1. API → one Node-runnable bundle (NOT a bun --compile binary — see the
   //    file header for why the compiled binary can't reach Docker over SSH).
@@ -116,7 +126,7 @@ async function main(): Promise<void> {
     // as ESM. `private` keeps it from ever being mistaken for a publishable pkg.
     writeFileSync(
       join(serverDir, "package.json"),
-      JSON.stringify({ name: "openship-api-bundle", private: true, type: "module" }, null, 2),
+      JSON.stringify({ name: "kovalio-api-bundle", private: true, type: "module" }, null, 2),
     );
     process.stdout.write(`  index.js: ${sizeOf(join(serverDir, "index.js"))}\n`);
   });
@@ -208,7 +218,7 @@ async function main(): Promise<void> {
         ...process.env,
         NODE_ENV: "production",
         CLOUD_MODE: "false",
-        OPENSHIP_TARGET: "local",
+        KOVALIO_TARGET: "local",
       },
     });
   });
@@ -239,13 +249,13 @@ async function main(): Promise<void> {
   });
 
   // 3. Migrations — plain .sql shipped beside the bundle. The API reads them
-  //    via OPENSHIP_MIGRATIONS_DIR (set by the desktop at spawn).
+  //    via KOVALIO_MIGRATIONS_DIR (set by the desktop at spawn).
   await step("copying migrations → resources/migrations/", () => {
     cpSync(DB_DRIZZLE_DIR, join(RESOURCES, "migrations"), { recursive: true });
   });
 
   // 4. PGlite WASM + fs image — data files shipped beside the bundle. The API
-  //    hands them to PGlite via OPENSHIP_PGLITE_ASSETS_DIR (set at spawn).
+  //    hands them to PGlite via KOVALIO_PGLITE_ASSETS_DIR (set at spawn).
   await step("copying pglite assets → resources/pglite/", () => {
     const require = createRequire(join(REPO_ROOT, "packages/db/package.json"));
     const pgliteDist = dirname(require.resolve("@electric-sql/pglite"));
@@ -266,7 +276,7 @@ async function main(): Promise<void> {
   //    the desktop would silently download 8.8 MB from raw.githubusercontent.com
   //    on the first lookup (and show no flags offline) — the opposite of what
   //    geo-ip.ts documents ("production reads OUR shipped copy"). Handed over as
-  //    OPENSHIP_GEOIP_DB at spawn (services.ts).
+  //    KOVALIO_GEOIP_DB at spawn (services.ts).
   await step("copying geoip db → resources/geoip/", () => {
     const src = join(API_DIR, "assets/geoip");
     if (!existsSync(join(src, GEOIP_DB))) {
@@ -308,13 +318,13 @@ async function main(): Promise<void> {
   //   (packages/adapters/src/infra/lua-embedded.ts) so they travel inside the
   //   JS bundle with no path to lose — see scripts/embed-lua.ts.
   //
-  // NB: the openship + webmail RELEASE DISTS are not staged either — they are
+  // NB: the kovalio + webmail RELEASE DISTS are not staged either — they are
   //   downloaded (sha256-verified) from the matching GitHub release on first use,
   //   via resolveReleaseDist slot 3. Staging them would mean shipping a second
   //   copy of the dashboard standalone. To test a packaged build against a dist
   //   that has not been published yet, build it locally
   //   (`bun run build:server`) and launch the app with
-  //   OPENSHIP_RELEASE_DIST_PATH=<repo>/apps/api/release-dist — slot 1 — which
+  //   KOVALIO_RELEASE_DIST_PATH=<repo>/apps/api/release-dist — slot 1 — which
   //   gives the packaged app the same behaviour as a from-source dev run.
 
   process.stdout.write(

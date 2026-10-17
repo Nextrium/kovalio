@@ -1,14 +1,15 @@
 /**
- * Shared health-gathering + database-repair logic behind `openship doctor` and
- * the bare-`openship` control panel. Kept in one place so both entry points
+ * Shared health-gathering + database-repair logic behind `kovalio doctor` and
+ * the bare-`kovalio` control panel. Kept in one place so both entry points
  * present the same status readout and run the identical, well-tested repair
  * sequence.
  *
  * The repair itself lives here (not in the API) because a corrupt PGlite dir
  * crash-loops the API on boot — so recovery must run with the service STOPPED,
- * from this same-machine CLI, against ~/.openship/data directly. See lib/heal.ts.
+ * from this same-machine CLI, against ~/.kovalio/data directly. See lib/heal.ts.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -71,7 +72,7 @@ export async function internalGet(path: string, timeoutMs = 8000): Promise<any |
     signal: AbortSignal.timeout(timeoutMs),
   });
   if (call.kind !== "response" || !call.res.ok) return null;
-  return await call.res.json().catch(() => null);
+  return await call.res.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/lib/repair"); return null; });
 }
 
 /** Is the local API answering its liveness stub right now? */
@@ -81,7 +82,8 @@ export async function apiReachable(): Promise<boolean> {
       signal: AbortSignal.timeout(2500),
     });
     return res.ok;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/repair");
     return false;
   }
 }
@@ -117,7 +119,8 @@ export function lastServiceError(): string | null {
         .reverse()
         .find((l) => /error|locked|aborted|malformed|corrupt|throw|cannot|EADDRINUSE/i.test(l));
       if (hit) return hit.trim().slice(0, 240);
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "cli/lib/repair");
       /* ignore */
     }
   }
@@ -127,7 +130,7 @@ export function lastServiceError(): string | null {
 const CORRUPTION_RE = /aborted\(\)|malformed|corrupt|database disk image|locked/i;
 
 /** Heuristic: the box is installed but not running, and the log carries a
- *  DB-corruption signature — the case `openship doctor` exists to fix. */
+ *  DB-corruption signature — the case `kovalio doctor` exists to fix. */
 export function looksCorrupted(): boolean {
   const svc = serviceStatus();
   if (!svc.installed || svc.running) return false;
@@ -161,14 +164,14 @@ function mapState(dockerState: string): ServiceState {
   return "stopped"; // exited / created / paused
 }
 
-/** Live list of deployed-app containers (all openship deployments), via one
+/** Live list of deployed-app containers (all kovalio deployments), via one
  *  `docker ps`. Empty when docker isn't the runtime / isn't reachable. */
 export function dockerServices(): ServiceRow[] {
   if (!dockerAvailable()) return [];
-  const fmt = '{{.Names}}\t{{.State}}\t{{.Label "openship.project"}}';
+  const fmt = '{{.Names}}\t{{.State}}\t{{.Label "kovalio.project"}}';
   const r = spawnSync(
     "docker",
-    ["ps", "-a", "--filter", "label=openship.deployment", "--format", fmt],
+    ["ps", "-a", "--filter", "label=kovalio.deployment", "--format", fmt],
     { encoding: "utf8", timeout: 6000 },
   );
   if (r.status !== 0 || !r.stdout.trim()) return [];
@@ -205,7 +208,7 @@ export interface ComponentCheck {
 /**
  * The container→host SSH channel, dialed from inside the api container.
  *
- * `openship up --compose` provisions this channel (key + authorized_keys + env)
+ * `kovalio up --compose` provisions this channel (key + authorized_keys + env)
  * without ever sending a packet over it, so on a default-deny host it is dead from
  * birth and every host operation fails looking exactly like a bad key (#490). This
  * row is where an operator finds that out on purpose — the install-time preflight
@@ -219,7 +222,7 @@ async function hostControlCheck(api: ApiHostChannel | null): Promise<ComponentCh
   // Imported lazily: the probe shells out to `docker compose exec`, and doctor's
   // other checks must not pay for that module on a bare install.
   const { checkHostChannel } = await import("./host-channel-preflight");
-  return hostControlRow(await checkHostChannel().catch(() => null), api);
+  return hostControlRow(await checkHostChannel().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/lib/repair"); return null; }), api);
 }
 
 /**
@@ -244,7 +247,7 @@ const NEVER_PROVISIONED_DETAIL = `never provisioned — run \`${HOST_CHANNEL_PRO
  * split are pinned without shelling into a container.
  *
  * `api` is the fallback for an install shape the LOCAL probe can't see: it needs
- * `~/.openship/compose/docker-compose.yml` both to read the channel out of `.env` and to
+ * `~/.kovalio/compose/docker-compose.yml` both to read the channel out of `.env` and to
  * `docker compose exec` into the api container, and a stack brought up by running
  * `docker/docker-compose.yml` by hand has neither. That install used to get no row at all
  * — from the one command #509's error text names (see HOST_CHANNEL_NOT_PROVISIONED).
@@ -263,7 +266,7 @@ export function hostControlRow(
 
   if (!res?.configured) {
     // #509 closed the loop the wrong way round: the error an operator reads when a host
-    // op dies names `openship doctor` as the way to check this, and doctor printed no row
+    // op dies names `kovalio doctor` as the way to check this, and doctor printed no row
     // at all for the state that produces that error. A channel that was never provisioned
     // is exactly as broken as one that's firewalled off, and this is where an operator
     // finds that out.
@@ -310,7 +313,7 @@ export function hostControlRow(
     // Only a dropped SYN is the firewall shape, so it is the only row that names the
     // flag; pointing the others at ufw is the mistake the preflight exists to avoid.
     case "timeout":
-      return row("fail", `${why("timeout")} — open the host firewall: openship up --open-host-firewall`);
+      return row("fail", `${why("timeout")} — open the host firewall: kovalio up --open-host-firewall`);
     case "refused":
     case "unresolved":
     case "no_route":
@@ -350,7 +353,8 @@ export async function componentChecks(
       signal: AbortSignal.timeout(2500),
     });
     dashUp = res.status > 0;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/repair");
     /* down */
   }
   checks.push({
@@ -360,14 +364,14 @@ export async function componentChecks(
     detail: dashUp ? `serving on :${dashboardPort()}` : `not serving on :${dashboardPort()}`,
   });
 
-  // Edge (OpenResty) — our container is named `openship-edge`. Absent = not
+  // Edge (OpenResty) — our container is named `kovalio-edge`. Absent = not
   // installed (fine on a private/local box), so warn-not-fail.
-  const edge = dockerNameRunning("openship-edge");
+  const edge = dockerNameRunning("kovalio-edge");
   checks.push(
     edge == null
       ? { name: "Edge", id: "edge", state: "warn", detail: "docker unavailable — can't check" }
       : edge
-        ? { name: "Edge", id: "edge", state: "pass", detail: "openship-edge running" }
+        ? { name: "Edge", id: "edge", state: "pass", detail: "kovalio-edge running" }
         : { name: "Edge", id: "edge", state: "warn", detail: "not installed (fine for a local box)" },
   );
 
@@ -448,6 +452,7 @@ export async function runRepair(): Promise<RepairResult> {
     backupDir = backupDataDir();
     bk.stop(`Backup saved → ${chalk.dim(backupDir)}`);
   } catch (err) {
+    observeCaughtError(err, "cli/lib/repair");
     bk.stop("Backup failed — aborting to protect your data.", 1);
     await bringUp();
     return { healed: false, backupDir: null, detail: `Backup failed: ${(err as Error).message}` };
@@ -494,6 +499,7 @@ export async function runRepair(): Promise<RepairResult> {
       deepHeal();
       d.stop("Deep repair done.");
     } catch (err) {
+      observeCaughtError(err, "cli/lib/repair");
       d.stop(`Deep repair failed: ${(err as Error).message}`, 1);
     }
     healthy = await bringUp();
@@ -511,6 +517,7 @@ export async function runRepair(): Promise<RepairResult> {
       restoreBackup(backupDir!);
       r.stop("Backup restored.");
     } catch (err) {
+      observeCaughtError(err, "cli/lib/repair");
       r.stop(`Restore failed: ${(err as Error).message}`, 1);
     }
     await bringUp();

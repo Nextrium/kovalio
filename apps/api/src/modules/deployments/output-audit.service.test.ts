@@ -3,11 +3,11 @@ import {
   auditStaticOutput,
   outputFindingIsBroken,
   staticOutputTargets,
-} from "./output-audit.service";
+} from "@repo/platform/engine/modules/deployments/output-audit.service";
 import type { BuildLogger } from "@repo/adapters";
 
 const logger = { log: vi.fn() } as unknown as BuildLogger;
-const ROOT = "/opt/openship/static/dep_1";
+const ROOT = "/opt/kovalio/static/dep_1";
 
 describe("staticOutputTargets", () => {
 
@@ -31,7 +31,7 @@ describe("staticOutputTargets", () => {
 });
 
 describe("auditStaticOutput vantage point", () => {
-  const targets = [{ path: "/", servedPath: "/opt/openship/static/dep_1" }];
+  const targets = [{ path: "/", servedPath: "/opt/kovalio/static/dep_1" }];
 
   it("prefers the ROUTING provider — it sees what the proxy sees", async () => {
     // This is the whole point of the audit. For a containerized edge the vhost
@@ -53,7 +53,7 @@ describe("auditStaticOutput vantage point", () => {
       logger,
     );
 
-    expect(routing.probeStaticRoot).toHaveBeenCalledWith("/opt/openship/static/dep_1", {
+    expect(routing.probeStaticRoot).toHaveBeenCalledWith("/opt/kovalio/static/dep_1", {
       hostname: undefined,
       requestPath: "/",
     });

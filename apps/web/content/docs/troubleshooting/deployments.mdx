@@ -5,7 +5,7 @@ description: The build went red — here's how to read the failure and fix the u
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-A failed deploy is almost never a mystery. Openship checks your configuration *before* it spends any
+A failed deploy is almost never a mystery. Kovalio checks your configuration *before* it spends any
 resources, and once the build starts it streams every line to the build screen. So the reason is
 usually right there in front of you — you just need to know where to look.
 
@@ -24,7 +24,7 @@ noise. If the deploy stopped *before any build output appeared*, it failed a pre
 `Pre-deploy checks failed: Build configuration: Missing required fields: install command, start command`
 </Callout>
 
-**What it means** — Openship runs a set of *preflight* checks the moment you press Deploy, before it
+**What it means** — Kovalio runs a set of *preflight* checks the moment you press Deploy, before it
 clones anything or starts a build. If any check fails, nothing is provisioned and you get a `403` with
 the exact problems listed. This is a good failure: it's cheap, fast, and tells you precisely what to
 fix. The most common ones are covered in the sections below.
@@ -38,7 +38,7 @@ The build runs a command that doesn't match your app — for example it tries `n
 Vite app, or the deploy "succeeds" but serves the wrong files.
 </Callout>
 
-**What it means** — when you import a repo, Openship inspects it and guesses the framework, package
+**What it means** — when you import a repo, Kovalio inspects it and guesses the framework, package
 manager, and the install/build/start commands. It's right the vast majority of the time, but an unusual
 project layout (or a repo it can't recognize, detected as **`unknown`**) can lead to a wrong guess.
 
@@ -58,15 +58,45 @@ On the build/configuration step, correct the **Framework**, **Install command**,
 </Step>
 
 <Step>
-Deploy again. Openship remembers these values for future deploys and redeploys.
+Deploy again. Kovalio remembers these values for future deploys and redeploys.
 </Step>
 
 </Steps>
 
 <Callout type="info" title="Static sites don't run a start command">
-If your project is a static site, a leftover start command is harmless — it's ignored, the deploy
-continues, and the files are served from the edge.
+If your project is a static site, its application start command is ignored. A file-based release
+is served by the edge; a managed Docker deployment serves the built files from its generated web container.
 </Callout>
+
+## A Dockerfile image reports `bun`, `npm`, or another command not found
+
+When the selected project root contains a `Dockerfile`, detection selects the Dockerfile build.
+Its build instructions and image `ENTRYPOINT`/`CMD` are the defaults, even if the repository also
+contains framework configuration, package scripts, or lockfiles. The default port comes from
+`EXPOSE`; a package script that the image does not run does not determine the port.
+
+Leave **Start command** empty to use the image's default command. An explicit start command in
+project settings or `kovalio.json` overrides `CMD` and must exist in the final runtime image.
+This also applies to Dockerfile apps inside monorepos. An empty override does not make an image
+static: the image still runs its own process.
+
+Existing saved commands and previous deployment snapshots are preserved. If an older import saved
+an inferred package-manager command, clear that override or set the intended command, then deploy
+again. Updating Kovalio does not recreate existing containers.
+
+## The static build succeeds, but the output directory is missing
+
+**Output Directory** is relative to **Root Directory**, where the build command runs.
+For a site in `apps/site` that builds into `apps/site/out`, set:
+
+| Setting | Value |
+|---|---|
+| Root Directory | `apps/site` |
+| Output Directory | `out` |
+
+Do not repeat `apps/site` in Output Directory. Check that the build actually creates the folder
+and its intended public files. The release saves this resolved path for routing and rollback;
+the repository root is not published in place of a missing build output.
 
 ## A required command (or the port) is missing
 
@@ -91,7 +121,7 @@ lists must have a value.
 </Step>
 
 <Step>
-If your app **doesn't** need a build step, that's fine — but say so, so Openship doesn't expect a build
+If your app **doesn't** need a build step, that's fine — but say so, so Kovalio doesn't expect a build
 command. Likewise, a static site needs no start command or port.
 </Step>
 
@@ -104,16 +134,20 @@ Deploy again.
 ## The app isn't listening on the right port
 
 <Callout type="error">
-The build finishes, then the deploy fails at the end with:
-`Health check failed: the app never accepted a connection on port 3000 within 45s — it likely crashed on
-startup (check the runtime logs).`
+The build finishes, then an enabled readiness check reports that the app never answered at its
+published address within the configured timeout.
 </Callout>
 
-**What it means** — after starting your app, Openship waits up to 45 seconds for it to accept a
-connection on the configured port (the default is `3000`). If nothing ever answers, either the app
-crashed on startup or it's listening on a *different* port than the one Openship expects. This readiness
-gate runs for **Local** deploys; on a remote **Server** or **Cloud** the symptom instead is that the app
-builds and starts but the URL never responds.
+**What it means** — when `readiness.enabled` is `true`, Kovalio waits for your app to accept a TCP
+connection, or return an HTTP status below 500 at the configured `path`. The default timeout is 45
+seconds. If nothing answers, the app may have crashed, still be starting, or be listening on a
+different port. For single-app deployments, checks run on **Local** and **Server** targets using the
+deployment host's own connection. With the default `onFailure: "warn"`, the deployment stays live
+with a warning. Only `onFailure: "fail"` rejects the deployment through the existing rollback handling.
+
+If SSH fails or the probe cannot run, the log explicitly reports a **skipped** check and leaves the
+deployment unverified. This is not evidence that the app is unhealthy: check the deployment host's
+SSH connection and retry. This single-app probe is skipped on **Cloud** and **cluster** targets.
 
 **How to fix it**
 
@@ -126,7 +160,7 @@ first — the "port" message is often just the symptom of a crash.
 </Step>
 
 <Step>
-Make your app bind to the port Openship gives it. Read the port from the environment
+Make your app bind to the port Kovalio gives it. Read the port from the environment
 (`process.env.PORT` in Node, the equivalent in your language) rather than hard-coding one, and bind to
 `0.0.0.0`, not only `127.0.0.1`.
 </Step>
@@ -139,12 +173,38 @@ on. Correct it in the [deploy wizard](/docs/dashboard/deploy-wizard) if it doesn
 </Steps>
 
 <Callout type="warn" title="A different “port” problem: the port is already taken">
-On a Local or Server deploy, if another process already holds the port, the deploy pauses and asks what
-to do — a **Port In Use** prompt saying *"Port 3000 is occupied by … This may not be a previous
-deployment."* with **Free Port & Continue** or **Cancel Deploy**. Choose *Free Port* only if you
-recognize the occupant as a stale deployment; otherwise cancel and change the port. If it can't be freed
-you'll see *"Deploy aborted: port 3000 is in use by …"*.
+On a Local or Server deploy, if another workload already holds the port, the deploy pauses with a
+**Port In Use** dialog. For a single-app Docker deployment using a loopback host port, it also offers
+**Use port 20002** (the number varies) when another port can be verified as available. This leaves the
+existing workload running and continues with the built image. The app's internal port stays the same;
+the selected host port is saved after a successful deployment for future redeploys.
+
+Kovalio checks both live listeners and saved port reservations, then checks the exact suggestion again
+when you choose it. If it is no longer available, the dialog asks again. It never substitutes another
+port without your choice. If availability cannot be verified, the alternative is not offered.
+
+The existing **Stop … & Continue**, **I Freed It — Re-check**, and **Cancel Deploy** actions remain
+available where appropriate. Choose a stop action only if you recognize the occupant and intend to
+stop it. Direct (Bare) apps still use their configured application ports; change those in configuration
+if needed. Cancelling preserves the current port.
 </Callout>
+
+## The deployment is running, but the app only listens inside its container
+
+An exposed Docker app listening only on `127.0.0.1` or `::1` cannot receive traffic through
+its published port. Kovalio shows **Action required** in the deployment's existing port review
+and in Monitoring. This applies to Docker deployments on your servers and Kovalio Cloud.
+The deployment keeps running; this warning does not hold the release or trigger a rollback.
+
+Use **Open settings** to review the app's start command or configuration. If it should receive
+routed traffic, configure it to listen on `0.0.0.0` and redeploy. If it deliberately binds to
+loopback behind a proxy, route to that proxy instead. Changing only the port number or retrying
+routing does not change the app's bind address. **Skip** dismisses this deployment's warning;
+it does not repair or expose the app.
+
+The warning requires a confirmed loopback-only listener. An incomplete socket-table read or
+unavailable probe does not establish that. Bare apps can legitimately use host loopback and do
+not receive this Docker warning. Open **Domains** for a fresh port check after fixing the app.
 
 ## The app needs a bigger machine than this one
 
@@ -154,7 +214,7 @@ you'll see *"Deploy aborted: port 3000 is in use by …"*.
 </Callout>
 
 **What it means** — a few catalog apps are genuinely heavy (a nine-container analytics stack, a
-Postgres fork that wants 8 GB) and declare a host floor. Openship reads what your destination's
+Postgres fork that wants 8 GB) and declare a host floor. Kovalio reads what your destination's
 Docker daemon reports and compares. This is the *first* install of that app, so it stops rather than
 letting you watch nine containers get OOM-killed one by one.
 
@@ -177,7 +237,7 @@ it a minute after a resize.
 <Callout type="info" title="It only ever stops a first install">
 Once an app has deployed successfully, a shortfall is a warning, never a refusal — otherwise an app
 running on a box that turned out to be undersized could never be redeployed. Likewise, a machine
-Openship can't measure is never treated as too small, and Openship Cloud is sized from its tier, not
+Kovalio can't measure is never treated as too small, and Kovalio Cloud is sized from its tier, not
 from host hardware. See [Host requirements](/docs/reference/app-catalog).
 </Callout>
 
@@ -185,13 +245,13 @@ from host hardware. See [Host requirements](/docs/reference/app-catalog).
 
 <Callout type="error">
 The build dies partway through — often with `JavaScript heap out of memory`, a bare `Killed`, or a plain
-`exited with code 1`. Openship adds the hint: *"Build process was killed - typically because the target
+`exited with code 1`. Kovalio adds the hint: *"Build process was killed - typically because the target
 ran out of memory during the build."*
 </Callout>
 
 **What it means** — building a modern app (bundling, type-checking, image optimization) can briefly use a
 lot of RAM. When the machine runs out, the kernel kills the build process, and the underlying tool often
-reports only a generic non-zero exit. Openship scans the output for the tell-tale signs and surfaces the
+reports only a generic non-zero exit. Kovalio scans the output for the tell-tale signs and surfaces the
 real cause.
 
 **How to fix it** — the hint itself spells out the three options:
@@ -201,7 +261,7 @@ real cause.
 <Step>
 **Give the build more memory.** Raise the build memory limit for the project (build limits are separate
 from runtime limits — see [Sleep mode & resources](/docs/guides/sleep-mode-resources) and the
-[Projects API resources endpoint](/docs/api/projects)). On Openship Cloud, pick a larger resource tier.
+[Projects API resources endpoint](/docs/api/projects)). On Kovalio Cloud, pick a larger resource tier.
 </Step>
 
 <Step>
@@ -254,10 +314,10 @@ A [multi-service / compose](/docs/guides/compose-multi-service) project finishes
 log shows *"Deployed 2/3 services. 1 service still need attention."*
 </Callout>
 
-**What it means** — when a project runs several services, Openship deploys each one independently. If at
+**What it means** — when a project runs several services, Kovalio deploys each one independently. If at
 least one succeeds but others fail, the deploy lands in a special **partial failure** state: the healthy
 services are already live, but the deployment is *held for your decision* rather than reported as a clean
-success. Nothing is rolled back automatically — Openship waits for you to choose.
+success. Nothing is rolled back automatically — Kovalio waits for you to choose.
 
 **How to fix it**
 
@@ -290,14 +350,14 @@ there's nothing pending.
 ## A couple of other things you might hit
 
 <Callout type="warn" title="“A deployment is already in progress”">
-`A deployment is already in progress (dep_…). Cancel it first or wait for it to complete.` — Openship runs
+`A deployment is already in progress (dep_…). Cancel it first or wait for it to complete.` — Kovalio runs
 one deploy per project at a time. Wait for the current one to finish, or cancel it from the build screen,
 then try again.
 </Callout>
 
 <Callout type="warn" title="“Docker build failed…” / a non-zero exit code">
 `Docker build failed: docker build exited with code 1` (or a similar generic non-zero exit) means the
-failure is inside your build itself, not Openship. Scroll up in the build log to the first red error —
+failure is inside your build itself, not Kovalio. Scroll up in the build log to the first red error —
 that line is the real cause (a failing test, a TypeScript error, a missing dependency).
 </Callout>
 

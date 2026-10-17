@@ -1,14 +1,14 @@
 # syntax=docker/dockerfile:1
-# ─── openship-webmail ────────────────────────────────────────────────────────
+# ─── kovalio-webmail ────────────────────────────────────────────────────────
 # Zero webmail as a self-contained image: the pre-built client SPA plus the
 # Hono/Bun server that serves it and talks IMAP/SMTP.
 #
 # This is the WEBMAIL CLIENT, not the mail engine. `apps/email/Dockerfile` (no
-# suffix) builds `openship-mail` — the iRedMail daemon set. The two share this
+# suffix) builds `kovalio-mail` — the iRedMail daemon set. The two share this
 # directory and nothing else: webmail speaks only IMAP/SMTP, so it runs against
 # any backend (our engine, Gmail, Fastmail, a corporate Exchange) and is
 # versioned as its own product. It is installed like every other catalog app
-# (packages/core/src/apps/catalog/webmail.json) — openship's TypeScript holds no
+# (packages/core/src/apps/catalog/webmail.json) — kovalio's TypeScript holds no
 # webmail deployment facts.
 #
 # Why a published image and not a catalog `build` (the inline-Dockerfile mode
@@ -23,7 +23,7 @@
 # catalog names and redeploy:
 #
 #     docker build -f apps/email/Dockerfile.webmail \
-#       -t ghcr.io/oblien/openship-webmail:latest .
+#       -t ghcr.io/nextrium/kovalio-webmail:latest .
 #
 # Context is the repo root only because .github/workflows/docker-images.yml
 # builds every image with `context: .`; the COPYs below take four paths.
@@ -60,7 +60,7 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 
 # ONE build entrypoint, shared with the standalone release tarball that
 # .github/workflows/release.yml publishes (`bun run --cwd apps/email build` →
-# openship-email-<tag>-linux-amd64.tar.gz). The image and the tarball are the
+# kovalio-email-<tag>-linux-amd64.tar.gz). The image and the tarball are the
 # same bits from the same script, so they cannot drift.
 #
 # DIST_DIR moves the output off apps/email/dist — the path the script defaults

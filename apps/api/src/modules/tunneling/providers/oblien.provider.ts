@@ -3,7 +3,7 @@
  *
  * Credentials and resource control live entirely on the SaaS side:
  *   - The master client is constructed from CLOUD_MODE config and the
- *     stored session token (see lib/openship-cloud.ts).
+ *     stored session token (see lib/kovalio-cloud.ts).
  *   - Tunnels are scoped to an Oblien namespace per-organization,
  *     resolved via ensureNamespaceWithQuota (the quota-asserting entry point —
  *     a tunnel is billable capacity, so it must not precede a credit ceiling).
@@ -12,8 +12,9 @@
  *   - organizationId: string  (required — used to resolve namespace)
  */
 
-import { env } from "../../../config/env";
-import { getOblienClient, ensureNamespaceWithQuota } from "../../../lib/openship-cloud";
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
+import { env } from "@repo/platform/engine/config/env";
+import { getOblienClient, ensureNamespaceWithQuota } from "@repo/platform/engine/lib/kovalio-cloud";
 import type {
   TunnelAgent,
   TunnelProvider,
@@ -41,7 +42,7 @@ export const oblienProvider: TunnelProvider = {
       return {
         ok: false,
         reason:
-          "Oblien tunnels require CLOUD_MODE — this instance must be connected to Openship Cloud first.",
+          "Oblien tunnels require CLOUD_MODE — this instance must be connected to Kovalio Cloud first.",
       };
     }
     return { ok: true };
@@ -56,6 +57,7 @@ export const oblienProvider: TunnelProvider = {
       // quota-asserting entry point like every other spend path.
       namespace = await ensureNamespaceWithQuota(organizationId);
     } catch (err) {
+      observeCaughtError(err, "api/modules/tunneling/providers/oblien.provider");
       throw new ProvisionFailedError(
         "oblien",
         err instanceof Error ? err.message : String(err),
@@ -71,6 +73,7 @@ export const oblienProvider: TunnelProvider = {
         namespace,
       });
     } catch (err) {
+      observeCaughtError(err, "api/modules/tunneling/providers/oblien.provider");
       const message = err instanceof Error ? err.message : String(err);
       // Oblien returns a textual conflict error for slug collisions.
       // Don't swallow other failures behind the same code.
@@ -92,7 +95,7 @@ export const oblienProvider: TunnelProvider = {
     // string. Coerce + reject NaN so we never send DELETE /tunnels/NaN.
     const idNum = Number(externalId);
     if (!Number.isFinite(idNum)) {
-      console.warn(
+      errorDiagnostics.warn("api/modules/tunneling/providers/oblien.provider",
         "[tunneling.oblien] delete skipped — externalId is not a finite number",
         { externalId },
       );
@@ -107,7 +110,7 @@ export const oblienProvider: TunnelProvider = {
     // already-provisioned tunnel this is a re-attach (no new record).
     const tc = await getOblienClient().edgeTunnel.connect(
       {
-        name: `openship-tunnel-${record.externalId}`,
+        name: `kovalio-tunnel-${record.externalId}`,
         slug: record.slug || undefined,
         port,
       },

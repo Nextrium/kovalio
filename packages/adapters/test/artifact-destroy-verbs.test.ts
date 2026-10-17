@@ -9,7 +9,7 @@ import { BareRuntime } from "../src/runtime/bare";
  * This is issue #640 from the adapter side. A static deploy stores a host
  * DIRECTORY in `service_deployment.image_ref`; teardown classified any imageRef on
  * a Docker runtime as an image and called `removeImage`, and dockerode duly issued
- * `DELETE /images//opt/openship/static/...`. That failure is not a 404, so
+ * `DELETE /images//opt/kovalio/static/...`. That failure is not a 404, so
  * `removeImage` rethrew it, `runtime_cleanup` was marked failed, the atomicity gate
  * kept the project row, and the delete could never complete — on every retry.
  *
@@ -29,7 +29,7 @@ describe("DockerRuntime.removeImage", () => {
       "getImage",
     );
 
-    await expect(rt.removeImage("/opt/openship/static/.builds/bld_1-svc_1")).rejects.toThrow(
+    await expect(rt.removeImage("/opt/kovalio/static/.builds/bld_1-svc_1")).rejects.toThrow(
       /host directory, not an image reference/,
     );
     // The point of guarding here rather than at the call site: no request is even
@@ -37,7 +37,7 @@ describe("DockerRuntime.removeImage", () => {
     expect(getImage).not.toHaveBeenCalled();
   });
 
-  it("still accepts a real tag", async () => {
+  it("accepts a real tag while preserving Docker's in-use image protection", async () => {
     const rt = await DockerRuntime.create(dockerSocket);
     const remove = vi.fn(async () => {});
     vi.spyOn(
@@ -45,15 +45,15 @@ describe("DockerRuntime.removeImage", () => {
       "getImage",
     ).mockReturnValue({ remove } as never);
 
-    await rt.removeImage("openship/my-app:bld_1");
-    expect(remove).toHaveBeenCalledWith({ force: true });
+    await rt.removeImage("kovalio/my-app:bld_1");
+    expect(remove).toHaveBeenCalledWith({ force: false });
   });
 });
 
 describe("DockerRuntime.destroy on a path", () => {
   it("refuses a path outside the managed tree", async () => {
     const rt = await DockerRuntime.create(dockerSocket);
-    await expect(rt.destroy("/etc")).rejects.toThrow(/outside \/opt\/openship/);
+    await expect(rt.destroy("/etc")).rejects.toThrow(/outside \/opt\/kovalio/);
   });
 
   it("refuses to remove a remote path on the LOCAL filesystem", async () => {
@@ -67,7 +67,7 @@ describe("DockerRuntime.destroy on a path", () => {
     self.transport = { kind: "ssh" };
     self.connectionOptions = {};
 
-    await expect(rt.destroy("/opt/openship/static/releases/dep_1")).rejects.toThrow(
+    await expect(rt.destroy("/opt/kovalio/static/releases/dep_1")).rejects.toThrow(
       /no command executor/,
     );
   });
@@ -82,9 +82,9 @@ describe("DockerRuntime.destroy on a path", () => {
     self.transport = { kind: "ssh" };
     self.connectionOptions = { executor };
 
-    await rt.destroy("/opt/openship/static/releases/dep_1");
+    await rt.destroy("/opt/kovalio/static/releases/dep_1");
     expect(executor.exec).toHaveBeenCalledWith(
-      "rm -rf '/opt/openship/static/releases/dep_1'",
+      "rm -rf '/opt/kovalio/static/releases/dep_1'",
     );
   });
 });
@@ -100,27 +100,27 @@ describe("BareRuntime.destroy on a path", () => {
     // `executor.rm` swallows every error on BOTH implementations, so routing the
     // artifact destroy through it made the operation incapable of failing.
     const executor = makeExecutor();
-    const rt = new BareRuntime({ workDir: "/opt/openship/static", executor: executor as never });
+    const rt = new BareRuntime({ workDir: "/opt/kovalio/static", executor: executor as never });
 
-    await rt.destroy("/opt/openship/static/releases/dep_1");
-    expect(executor.exec).toHaveBeenCalledWith("rm -rf '/opt/openship/static/releases/dep_1'");
+    await rt.destroy("/opt/kovalio/static/releases/dep_1");
+    expect(executor.exec).toHaveBeenCalledWith("rm -rf '/opt/kovalio/static/releases/dep_1'");
     expect(executor.rm).not.toHaveBeenCalled();
   });
 
   it("refuses a path outside the managed tree", async () => {
     const executor = makeExecutor();
-    const rt = new BareRuntime({ workDir: "/opt/openship/static", executor: executor as never });
+    const rt = new BareRuntime({ workDir: "/opt/kovalio/static", executor: executor as never });
 
-    await expect(rt.destroy("/home/deploy/site")).rejects.toThrow(/outside \/opt\/openship/);
+    await expect(rt.destroy("/home/deploy/site")).rejects.toThrow(/outside \/opt\/kovalio/);
     expect(executor.exec).not.toHaveBeenCalled();
   });
 
   it("reports a removal that did not take", async () => {
     const executor = makeExecutor();
     executor.exists = vi.fn(async () => true);
-    const rt = new BareRuntime({ workDir: "/opt/openship/static", executor: executor as never });
+    const rt = new BareRuntime({ workDir: "/opt/kovalio/static", executor: executor as never });
 
-    await expect(rt.destroy("/opt/openship/static/releases/dep_1")).rejects.toThrow(
+    await expect(rt.destroy("/opt/kovalio/static/releases/dep_1")).rejects.toThrow(
       /still present/,
     );
   });

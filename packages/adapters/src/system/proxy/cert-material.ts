@@ -1,6 +1,6 @@
 /**
  * Certificate material — the ONE place a cert the box already serves is read,
- * validated, and classified before Openship adopts it.
+ * validated, and classified before Kovalio adopts it.
  *
  * Five call sites used to answer "is there a cert / where is it / what is it"
  * with three different rule sets: the takeover's own reader (isSafePath + cat),
@@ -9,7 +9,7 @@
  * about the same box, and none of them checked the two things that actually
  * matter — that the cert COVERS the hostname, and that it hasn't expired. A
  * mismatched cert would install and the row would go `sslStatus: active`, so a
- * browser saw a name mismatch on a domain Openship reported as healthy.
+ * browser saw a name mismatch on a domain Kovalio reported as healthy.
  *
  * `validateCertFor` is that check, and it fails CLOSED: anything it can't vouch
  * for returns a reason instead of a cert, and the caller falls through to ACME.
@@ -17,6 +17,7 @@
  * padlock is not.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { X509Certificate, createPrivateKey } from "node:crypto";
 import { safeErrorMessage } from "@repo/core";
 import type { CommandExecutor, ManualCert } from "../../types";
@@ -141,6 +142,7 @@ export function validateCertFor(host: string, pems: ManualCert, source: string):
   try {
     x509 = new X509Certificate(certPem);
   } catch (err) {
+    observeCaughtError(err, "adapters/system/proxy/cert-material");
     return { cert: null, reason: `${source}: unreadable certificate (${safeErrorMessage(err)})` };
   }
 
@@ -149,6 +151,7 @@ export function validateCertFor(host: string, pems: ManualCert, source: string):
       return { cert: null, reason: `${source}: private key does not match the certificate` };
     }
   } catch (err) {
+    observeCaughtError(err, "adapters/system/proxy/cert-material");
     return { cert: null, reason: `${source}: unreadable private key (${safeErrorMessage(err)})` };
   }
 
@@ -186,12 +189,12 @@ export function isSafeCertPath(p: string): boolean {
 }
 
 /**
- * Path segment holding the temporary self-signed certs Openship serves while a
+ * Path segment holding the temporary self-signed certs Kovalio serves while a
  * domain's real cert is still being issued (see `ensureBootstrapCert` in
  * infra/nginx.ts). Lives here, next to the adoption rules, because the ONE thing
  * that must never happen to this material is being adopted as a real cert.
  */
-export const BOOTSTRAP_CERT_SEGMENT = "openship-bootstrap";
+export const BOOTSTRAP_CERT_SEGMENT = "kovalio-bootstrap";
 
 /** Is this path one of our own placeholder certs rather than a real one? */
 export function isBootstrapCertPath(p: string): boolean {
@@ -209,7 +212,7 @@ export function isBootstrapCertPath(p: string): boolean {
  * frequently live only in its own volume, where a host read is indistinguishable
  * from "no cert".
  *
- * Openship's OWN placeholder certs are refused here, at the single funnel every
+ * Kovalio's OWN placeholder certs are refused here, at the single funnel every
  * declared-pair read passes through. A bootstrap cert would otherwise sail past
  * `validateCertFor` — right hostname, unexpired — and be classified
  * `renewable: false` (self-signed issuer), i.e. adopted as a bring-your-own cert

@@ -67,7 +67,7 @@ describe("generateDockerfile - static EXTRACT-ONLY (edge serves the files)", () 
     );
     // Extraction reads the builder's own dist dir; staging it elsewhere would
     // duplicate the whole output into another layer for nothing.
-    expect(df).not.toContain("/openship-static");
+    expect(df).not.toContain("/kovalio-static");
     expect(df).not.toMatch(/cp -a .*dist/);
   });
 

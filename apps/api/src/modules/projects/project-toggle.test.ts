@@ -34,7 +34,7 @@ const h = vi.hoisted(() => ({
     // A server project by default; the static cases flip `hasServer` off, which is
     // the same signal resolveDeployRouting reads to pick "static-file-serve".
     hasServer: true,
-    cloudWorkspaceId: null as string | null,
+    workspaceId: null as string | null,
     outputDirectory: "dist",
   },
   containerId: "app-container" as string | null,
@@ -60,6 +60,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@repo/db", () => ({
+  withAdvisoryLock: async (_key: string, fn: () => Promise<unknown>) => fn(),
   repos: {
     project: {
       findById: async () => ({ ...h.project }),
@@ -71,6 +72,7 @@ vi.mock("@repo/db", () => ({
     deployment: {
       findById: async () => ({
         id: "dep_1",
+        projectId: "proj_1",
         organizationId: "org_1",
         containerId: h.containerId,
         status: "ready",
@@ -87,7 +89,7 @@ vi.mock("@repo/db", () => ({
  * What the Docker daemon ACTUALLY answers when a release directory is handed to a
  * container action — measured against dockerode 4.0.9 + Docker 29.2.1:
  *
- *   getContainer("/opt/openship/static/releases/dep_1").stop()
+ *   getContainer("/opt/kovalio/static/releases/dep_1").stop()
  *     → statusCode 301, "(HTTP code 301) unexpected -  "
  *
  * The leading slash doubles in `/containers/<id>/stop`, and the daemon's router
@@ -106,11 +108,10 @@ const dockerPathIdError = () =>
  * file is about what pause/resume ORCHESTRATE: what gets stopped, in what order
  * relative to the `disabled_at` write, and what happens when the host says no.
  */
-vi.mock("../../lib/deployment-runtime", () => ({
+vi.mock("@repo/platform/engine/lib/deployment-runtime", async original => ({
+  ...await original<typeof import("@repo/platform/engine/lib/deployment-runtime")>(),
   deploymentContainerIds: async (dep: { containerId: string | null }) => {
-    const fromServices = h.serviceRows
-      .map((r) => r.containerId)
-      .filter((id): id is string => !!id);
+    const fromServices = h.serviceRows.map((r) => r.containerId).filter((id): id is string => !!id);
     if (fromServices.length > 0) return fromServices;
     return dep.containerId ? [dep.containerId] : [];
   },
@@ -140,7 +141,14 @@ vi.mock("../../lib/deployment-runtime", () => ({
   },
   withDeploymentPlatform: async (
     _dep: unknown,
-    fn: (resolved: { routing: unknown; serverId: string | null }) => Promise<unknown>,
+    fn: (resolved: {
+      routing: unknown;
+      executor: {
+        exec: (command: string) => Promise<{ stdout: string; stderr: string; code: number }>;
+      };
+      effectiveTarget: "server";
+      serverId: string | null;
+    }) => Promise<unknown>,
   ) => {
     try {
       return await fn({
@@ -150,6 +158,8 @@ vi.mock("../../lib/deployment-runtime", () => ({
             await h.removeRoute(hostname);
           },
         },
+        executor: { exec: async () => ({ stdout: "", stderr: "", code: 0 }) },
+        effectiveTarget: "server",
         serverId: "srv_1",
       });
     } finally {
@@ -161,7 +171,8 @@ vi.mock("../../lib/deployment-runtime", () => ({
   },
 }));
 
-vi.mock("@repo/adapters", () => ({
+vi.mock("@repo/adapters", async original => ({
+  ...await original<typeof import("@repo/adapters")>(),
   checkEdge: async () => ({ healthy: true, message: "" }),
   edgeProxy: async () => null,
   // Reached via lib/remote-state's `isAbsent`. Faithful to the real predicate's
@@ -172,33 +183,43 @@ vi.mock("@repo/adapters", () => ({
   isRemoteConnectionError: () => false,
 }));
 
-vi.mock("../../lib/managed-edge-proxy", () => ({
+vi.mock("@repo/platform/engine/lib/managed-edge-proxy", () => ({
   syncManagedEdgeRoutes: async () => ({ failures: [] }),
   edgeUnsyncedWarning: () => "",
 }));
-vi.mock("../../lib/routing-domains", () => ({ resolveManagedHostname: () => ({ isManaged: false }) }));
-vi.mock("../../lib/ssh-manager", () => ({
+vi.mock("@repo/platform/engine/lib/edge-reconcile", () => ({
+  reconcileServerEdge: async () => ({
+    converted: false,
+    updated: false,
+    edgeDown: false,
+  }),
+}));
+vi.mock("@repo/platform/engine/lib/routing-domains", () => ({
+  resolveManagedHostname: () => ({ isManaged: false }),
+}));
+vi.mock("@repo/platform/engine/lib/ssh-manager", () => ({
   sshManager: {
     withExecutor: async (_serverId: string, fn: (executor: unknown) => Promise<unknown>) =>
       fn({ exec: async () => ({ stdout: "", stderr: "", code: 0 }) }),
   },
 }));
-vi.mock("../domains/routing-apply.service", () => ({ applyProjectRouting: async () => {} }));
-vi.mock("../domains/project-route.service", () => ({
+vi.mock("@repo/platform/engine/modules/domains/routing-apply.service", () => ({ applyProjectRouting: async () => {} }));
+vi.mock("@repo/platform/engine/modules/domains/project-route.service", () => ({
   reapplyProjectLiveRoutes: async (...args: unknown[]) => h.reapplyLiveRoutes(...(args as [])),
 }));
 
-const load = () => import("./project-runtime.service");
+const load = () => import("@repo/platform/engine/modules/projects/project-runtime.service");
 
 /** dockerode's shape for "you asked me to stop a stopped container". */
-const notModified = () => Object.assign(new Error("container already stopped"), { statusCode: 304 });
+const notModified = () =>
+  Object.assign(new Error("container already stopped"), { statusCode: 304 });
 
 describe("project pause / resume", () => {
   beforeEach(() => {
     h.project.disabledAt = null;
     h.project.appTemplateId = null;
     h.project.hasServer = true;
-    h.project.cloudWorkspaceId = null;
+    h.project.workspaceId = null;
     h.containerId = "app-container";
     h.serviceRows = [];
     h.domainRows = [];
@@ -219,7 +240,7 @@ describe("project pause / resume", () => {
    */
   const asStaticProject = () => {
     h.project.hasServer = false;
-    h.containerId = "/opt/openship/static/releases/dep_1";
+    h.containerId = "/opt/kovalio/static/releases/dep_1";
     h.domainRows = [
       {
         id: "dom_1",
@@ -228,7 +249,7 @@ describe("project pause / resume", () => {
         domainType: "custom",
         verified: true,
         targetPort: null,
-        targetPath: "/opt/openship/static/releases/dep_1",
+        targetPath: "/opt/kovalio/static/releases/dep_1",
       },
       {
         id: "dom_2",
@@ -237,7 +258,7 @@ describe("project pause / resume", () => {
         domainType: "managed",
         verified: true,
         targetPort: null,
-        targetPath: "/opt/openship/static/releases/dep_1",
+        targetPath: "/opt/kovalio/static/releases/dep_1",
       },
       // Belongs to a service, not the project — pausing the project must not
       // deregister it.
@@ -346,12 +367,14 @@ describe("project pause / resume", () => {
     h.reapplyLiveRoutes.mockRejectedValue(new Error("EHOSTUNREACH"));
     const { enableProject } = await load();
 
-    await expect(enableProject("proj_1", "org_1")).rejects.toThrow(/re-apply/i);
+    // Route repair preserves the cause for the operator (#879), including when
+    // reached through resume. A failed re-apply must still leave it paused.
+    await expect(enableProject("proj_1", "org_1")).rejects.toThrow(/EHOSTUNREACH/);
     expect(h.project.disabledAt).toBeInstanceOf(Date);
   });
 
-  it("refuses to pause the Openship control plane", async () => {
-    h.project.appTemplateId = "openship";
+  it("refuses to pause the Kovalio control plane", async () => {
+    h.project.appTemplateId = "kovalio";
     const { disableProject } = await load();
 
     await expect(disableProject("proj_1", "org_1")).rejects.toThrow(/control plane/i);

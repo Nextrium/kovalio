@@ -1,8 +1,8 @@
 /**
- * The catalogue of third-party credentials Openship can hold, and the rules that make
+ * The catalogue of third-party credentials Kovalio can hold, and the rules that make
  * ONE table and ONE settings screen serve all of them.
  *
- * Openship needs other people's secrets for several unrelated jobs — write a DNS record,
+ * Kovalio needs other people's secrets for several unrelated jobs — write a DNS record,
  * pull a private image, push a backup — and each one grew its own storage, its own
  * verify flow and its own form. `dns_credential` holds a single token column; a backup
  * destination inlines FIVE encrypted columns; a notification channel keeps its own. Same
@@ -17,7 +17,7 @@
  * smaller number of screens.
  *
  * ALSO NOT HERE: `personal_access_token`. Those are INBOUND — somebody authenticating to
- * Openship — with different scoping and revocation. Same word "token", opposite
+ * Kovalio — with different scoping and revocation. Same word "token", opposite
  * direction; one screen for both would be the confusing kind of tidy.
  *
  * HOW A PROVIDER IS ADDED: an entry below. The field list drives the storage split
@@ -79,7 +79,7 @@ export interface CredentialProvider {
   readonly icon: string;
   readonly selector: CredentialSelector | null;
   readonly fields: readonly CredentialField[];
-  /** One sentence in the picker: what holding this lets Openship do. */
+  /** One sentence in the picker: what holding this lets Kovalio do. */
   readonly summary: string;
 }
 
@@ -125,7 +125,7 @@ export const CREDENTIAL_PROVIDERS = [
     label: "Cloudflare",
     capability: "dns",
     icon: "cloudflare",
-    summary: "Let Openship write the DNS records a custom domain needs, instead of printing them to paste.",
+    summary: "Let Kovalio write the DNS records a custom domain needs, instead of printing them to paste.",
     // Org-wide: the token addresses every zone it can see, so there is nothing to scope
     // it to. See CredentialSelector.
     selector: null,
@@ -135,7 +135,7 @@ export const CREDENTIAL_PROVIDERS = [
         label: "API token",
         type: "secret",
         required: true,
-        help: "A token with Zone:Read and DNS:Edit on the zones you want Openship to manage.",
+        help: "A token with Zone:Read and DNS:Edit on the zones you want Kovalio to manage.",
       },
     ],
   },

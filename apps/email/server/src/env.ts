@@ -97,14 +97,14 @@ export interface Env {
    *   assets/       - optional uploaded logo/favicon
    * The Zero server fully owns this directory: it serves `/branding.json`
    * publicly, and accepts authenticated `POST /admin/branding` writes
-   * from openship via the shared `BRANDING_ADMIN_TOKEN`. Branding never
-   * crosses host boundaries via SSH - openship calls the Zero server's
+   * from kovalio via the shared `BRANDING_ADMIN_TOKEN`. Branding never
+   * crosses host boundaries via SSH - kovalio calls the Zero server's
    * own HTTP API, so the Zero server can run anywhere reachable from
-   * openship.
+   * kovalio.
    */
   BRANDING_PATH: string;
   /**
-   * Shared secret authenticating openship's branding writes. Sent in
+   * Shared secret authenticating kovalio's branding writes. Sent in
    * the `X-Branding-Admin-Token` header on `POST /admin/branding`.
    * Generated in dev (persisted via dev-secrets) so `bun dev` works
    * without configuration; required in prod.
@@ -117,7 +117,7 @@ export const env: Env = {
   PORT: int('PORT', 3030),
 
   COOKIE_DOMAIN: optional('COOKIE_DOMAIN', 'localhost'),
-  // Defaults include the Zero client (:3000) and the openship dashboard
+  // Defaults include the Zero client (:3000) and the kovalio dashboard
   // (:3001) - the dashboard writes branding here via tRPC and needs CORS
   // to succeed for the operator-facing admin panel.
   TRUSTED_ORIGINS: optional('TRUSTED_ORIGINS', 'http://localhost:3000,http://localhost:3001')
@@ -129,9 +129,9 @@ export const env: Env = {
   SESSION_COOKIE_NAME: optional('SESSION_COOKIE_NAME', 'zero_session'),
   SESSION_TTL_SECONDS: int('SESSION_TTL_SECONDS', 60 * 60 * 24 * 30),
 
-  DEFAULT_IMAP_HOST: process.env.DEFAULT_IMAP_HOST,
+  DEFAULT_IMAP_HOST: process.env.DEFAULT_IMAP_HOST?.trim() || undefined,
   DEFAULT_IMAP_PORT: int('DEFAULT_IMAP_PORT', 993),
-  DEFAULT_SMTP_HOST: process.env.DEFAULT_SMTP_HOST,
+  DEFAULT_SMTP_HOST: process.env.DEFAULT_SMTP_HOST?.trim() || undefined,
   DEFAULT_SMTP_PORT: int('DEFAULT_SMTP_PORT', 587),
 
   SQLITE_PATH: optional('SQLITE_PATH', './data/zero.db'),

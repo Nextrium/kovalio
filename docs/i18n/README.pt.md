@@ -1,4 +1,4 @@
-<h1 align="center">Openship</h1>
+<h1 align="center">Kovalio</h1>
 
 <p align="center">
   Plataforma de deploy open source e auto-hospedável com CI/CD integrado.<br>
@@ -6,9 +6,9 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/openship"><img src="https://img.shields.io/npm/v/openship?color=0b7285&label=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/kovalio"><img src="https://img.shields.io/npm/v/kovalio?color=0b7285&label=npm" alt="npm version" /></a>
   <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License" /></a>
-  <a href="https://openship.io"><img src="https://img.shields.io/badge/website-openship.io-0b7285" alt="Website" /></a>
+  <a href="https://nextrium.org"><img src="https://img.shields.io/badge/website-nextrium.org-0b7285" alt="Website" /></a>
 </p>
 
 <p align="center">
@@ -22,10 +22,11 @@
   <a href="README.de.md"><img src="https://img.shields.io/badge/lang-Deutsch-555" alt="Deutsch" /></a>
   <a href="README.tr.md"><img src="https://img.shields.io/badge/lang-Türkçe-555" alt="Türkçe" /></a>
   <a href="README.ko.md"><img src="https://img.shields.io/badge/lang-한국어-555" alt="한국어" /></a>
+  <a href="README.ru.md"><img src="https://img.shields.io/badge/lang-Русский-555" alt="Русский" /></a>
 </p>
 
 <p align="center">
-  <img src="../screenshots/screen.png" alt="Openship dashboard" width="800" />
+  <img src="../screenshots/screen.png" alt="Kovalio dashboard" width="800" />
 </p>
 
 ---
@@ -33,29 +34,29 @@
 ## Início rápido
 
 ```bash
-npm i -g openship
-openship init
+npm i -g kovalio
+kovalio init
 ```
 
 É só isso. Ou, se você preferir Docker:
 
 ```bash
-git clone https://github.com/oblien/openship.git && cd openship
+git clone https://github.com/Nextrium/kovalio.git && cd kovalio
 cp .env.example .env
 docker compose up -d
 ```
 
-Ou baixe o app de desktop em [openship.io](https://openship.io).
+Ou baixe o app de desktop em [nextrium.org](https://nextrium.org).
 
 ---
 
 ## O que ele faz
 
-Aponte para um repositório. O Openship detecta sua stack, faz o build, configura tudo e publica — sem arquivos de configuração, sem pipelines, sem YAML.
+Aponte para um repositório. O Kovalio detecta sua stack, faz o build, configura tudo e publica — sem arquivos de configuração, sem pipelines, sem YAML.
 
 Bancos de dados, domínios, SSL, CDN, e-mail, backups — tudo gerenciado em um só lugar.
 
-Funciona com o **Openship Cloud** (gerenciado) ou **qualquer servidor Linux** que você tenha. Desenvolvedores solo publicando projetos paralelos e times rodando produção usam a mesma ferramenta.
+Funciona com o **Kovalio Cloud** (gerenciado) ou **qualquer servidor Linux** que você tenha. Desenvolvedores solo publicando projetos paralelos e times rodando produção usam a mesma ferramenta.
 
 ---
 
@@ -79,7 +80,7 @@ Funciona com o **Openship Cloud** (gerenciado) ou **qualquer servidor Linux** qu
 
 ## Faça deploy em qualquer lugar
 
-- **Openship Cloud** — gerenciado, autoescala, configuração zero
+- **Kovalio Cloud** — gerenciado, autoescala, configuração zero
 - **Qualquer VPS** — Hetzner, DigitalOcean, Linode, OVH e outros
 - **Servidores dedicados** — bare metal, colocation, homelab
 - **Multiservidor** — distribua as cargas entre máquinas
@@ -94,7 +95,7 @@ A mesma interface, não importa onde você faça deploy.
 - **Painel web** — a mesma interface no navegador, feita para times.
 - **CLI** — scriptável e amigável para CI.
 
-Uma **API REST** e o **MCP** (protocolo para agentes de IA) completam o conjunto para automação e integração com ferramentas. Referência completa de comandos e API em [openship.io/docs](https://openship.io/docs).
+Uma **API REST** e o **MCP** (protocolo para agentes de IA) completam o conjunto para automação e integração com ferramentas. Referência completa de comandos e API em [nextrium.org/docs](https://nextrium.org/docs).
 
 > [!NOTE]
 > A documentação ainda está em andamento — estamos preenchendo ativamente. Se algo estiver faltando ou pouco claro, [contribuições](../../CONTRIBUTING.md) são muito bem-vindas e nos ajudam a chegar lá mais rápido.
@@ -117,6 +118,6 @@ Veja [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## Licença
 
-O Openship é software **open source**, licenciado sob a [Licença Apache 2.0](../../LICENSE).
+O Kovalio é software **open source**, licenciado sob a [Licença Apache 2.0](../../LICENSE).
 
 Você pode usar, executar, modificar, auto-hospedar e distribuir — inclusive em produtos comerciais e de código fechado — sob os termos da licença Apache 2.0. Veja [LICENSE](../../LICENSE) para o texto completo.

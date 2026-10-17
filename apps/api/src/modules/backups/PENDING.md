@@ -47,20 +47,17 @@ Needs: cancel columns on `backup_run`, the route + controller + an orchestrator
 `cancel()`, a `signal` on `StreamPathOpts`/`ProducerOpts` threaded into `streamPath`
 so capture joins `createAbortWatch`, and a UI entry point.
 
-### No upload progress, and `uploading` stays out of the idle sweep
+### `uploading` still stays out of the idle sweep
 
-The idle predicate is `preparing | snapshotting | verifying`
-(`packages/db/src/repos/backup.repo.ts`); `uploading` is reachable only through the 6h
-absolute ceiling. Deliberate, because nothing heartbeats mid-stream:
-`HashingPassthrough` (`common/sha256-stream.ts:16-47`) has no progress callback and
-its byte count is readable only via `summary()`, which throws before the stream ends;
-`PutOpts` (`types.ts:450-464`) has no `onProgress`, so a destination cannot report
-upward (S3 tracks `httpUploadProgress` into a local counter only); and the
-orchestrator writes `bytesTransferred` only at artifact boundaries.
+Upload streams now report throttled cumulative `bytesTransferred` and bump
+`lastEventAt`, so the row can distinguish moving bytes from silence. That is not
+enough to sweep safely: changing the row to `server_error` does not abort the
+producer/destination promise holding the worker slot. It would report recovery
+without recovering capacity, and a resumed worker could race the terminal verdict.
 
-One change buys both halves: a throttled progress signal that writes
-`bytesTransferred` and bumps `lastEventAt` mid-upload, which lets `uploading` back
-into the idle branch and gives the UI real progress at the same time.
+Include `uploading` in the idle predicate only after capture cancellation above
+provides a durable abort request plus an in-process signal. The existing executor
+idle watchdogs and six-hour database ceiling remain the backstops meanwhile.
 
 ### A single artifact past ~281 GiB still cannot complete on S3
 
@@ -133,7 +130,7 @@ destination is full, what happens when the policy is gone.
 
 `startupTimeoutMs` appears exactly once in the repo and it is prose — the doc comment
 above `RestoreOpts` (`types.ts:330`), whose interface declares only `clearTarget` and
-`signal`. Honoring it means building the probe; `OpenshipReadiness` is its home.
+`signal`. Honoring it means building the probe; `KovalioReadiness` is its home.
 
 ## Detection
 
@@ -155,13 +152,13 @@ they can actually exec in, via `common/exec-target.ts`.)*
 ### A same-host source and destination could skip the API entirely
 
 The one narrow case the architecture review left open. When a source host and an
-`sftp` / `openship_server` destination resolve to the SAME server, the dump could run
+`sftp` / `kovalio_server` destination resolve to the SAME server, the dump could run
 there writing to that host's own filesystem — no credential travels, because the host
 writes to its own disk — recorded with a new `integrity: "host-reported"` value
 alongside the existing `sha256` / `size-only` / `deferred` vocabulary.
 
 Nothing exists. `host-reported` appears nowhere in code; the vocabulary is one ternary
-in `restore.orchestrator.ts`. `openship_server` resolves to the plain SFTP
+in `restore.orchestrator.ts`. `kovalio_server` resolves to the plain SFTP
 implementation with no locality check, and no source-vs-destination server comparison
 exists anywhere in the module. The `resolvePlan` worth imitating
 (`volume-transfer.ts`) keys off executor reference identity, not destination rows.
@@ -169,7 +166,7 @@ exists anywhere in the module. The `resolvePlan` worth imitating
 One cell, opt-in, not a refactor. Explicitly **not** the general "move the byte plane
 out of the API" proposal — that was reviewed and rejected: `presignPut` signs S3's
 single 5 GB PUT and cannot carry a 110 GB dump, it reaches one destination kind of
-four (`local` is impossible, `sftp`/`openship_server` would ship a root-equivalent
+four (`local` is impossible, `sftp`/`kovalio_server` would ship a root-equivalent
 private key to every source box), and a host-computed digest loses INDEPENDENCE, since
 a truncating upload downstream of a tee is invisible to a digest computed upstream.
 

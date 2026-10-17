@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../../../../packages/ui/src/AppLogo.tsx";
 @import "../styles/fonts.css";
 @import "../styles/theme.css";
 @import "../styles/landing.css";
@@ -37,7 +38,7 @@ body:has(.mail-home) {
 }
 .mail-home {
   color: #ffffff;
-  /* Flip openship landing's --th-* tokens to white-on-dark for any
+  /* Flip kovalio landing's --th-* tokens to white-on-dark for any
      shared component (e.g. Footer) rendered inside the mail page. */
   --th-text-heading:   rgba(255,255,255,1);
   --th-text-title:     rgba(255,255,255,.92);

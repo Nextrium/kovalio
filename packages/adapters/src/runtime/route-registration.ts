@@ -1,3 +1,4 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { DeployError, safeErrorMessage, type ProxySettings } from "@repo/core";
 import { edgeDownExplanation } from "../system/edge-exec-error";
 import { resolveServedStaticPath } from "./stack-output";
@@ -51,7 +52,7 @@ export interface RoutedDomainInput {
 }
 
 export interface RouteRegistrationOptions {
-  /** If set, the domain matching this hostname gets a /_openship/hooks/ location */
+  /** If set, the domain matching this hostname gets a /_kovalio/hooks/ location */
   webhookDomain?: string | null;
   /** The proxy target for webhook requests (e.g. http://127.0.0.1:4000/api/webhooks/) */
   webhookProxy?: string;
@@ -232,6 +233,7 @@ export async function registerResolvedRoutes(
       try {
         await ssl.provisionCert(domain.hostname);
       } catch (err) {
+        observeCaughtError(err, "adapters/runtime/route-registration");
         const message = safeErrorMessage(err);
         logger.log(
           `SSL provisioning failed for ${domain.hostname} (route is up on HTTP, retry from the Domains tab): ${message}\n`,
@@ -249,6 +251,7 @@ export async function registerResolvedRoutes(
         lastError = "";
         break;
       } catch (err) {
+        observeCaughtError(err, "adapters/runtime/route-registration");
         lastError = safeErrorMessage(err);
         // The EDGE container being down is not a transient this project grows out of:
         // every registerRoute execs into the edge, so if it is crash-looping, retrying

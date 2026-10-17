@@ -13,10 +13,10 @@ import { join } from "node:path";
  * operator-facing lines for a port that moved.
  */
 
-// OS_DIR is resolved at import time from OPENSHIP_HOME — point it at a temp dir
-// before loading the module so the tests never touch a real ~/.openship.
-const home = mkdtempSync(join(tmpdir(), "openship-ports-"));
-process.env.OPENSHIP_HOME = home;
+// OS_DIR is resolved at import time from KOVALIO_HOME — point it at a temp dir
+// before loading the module so the tests never touch a real ~/.kovalio.
+const home = mkdtempSync(join(tmpdir(), "kovalio-ports-"));
+process.env.KOVALIO_HOME = home;
 const PORTS_FILE = join(home, "ports.json");
 
 const { resolvePorts, isPortFree, getFreePort, portMoveNotice, stalePortOrigins } = await import(

@@ -5,7 +5,7 @@ description: Run your own mail server from the dashboard — provision or adopt 
 
 The **Email Server** screen (route `/emails`) is where you stand up a complete, self-hosted mail
 server on one of your own servers and then run it day to day — domains, mailboxes, DNS, health, backups.
-Openship installs the whole stack (Postfix, Dovecot, anti-spam, SSL, DKIM/SPF/DMARC) over SSH and then
+Kovalio installs the whole stack (Postfix, Dovecot, anti-spam, SSL, DKIM/SPF/DMARC) over SSH and then
 gives you an admin panel so you never have to touch the box by hand.
 
 You can run more than one. Each mail server lives on its own host (one mail setup per server), and the screen
@@ -13,25 +13,25 @@ lists them all so you pick which to manage — a single server opens straight in
 several land you on a **Mail servers** list with an **Add mail server** action to provision or adopt another.
 
 <Callout title="Self-hosted only">
-This screen manages a mail server on **your own connected server** over SSH. It isn't part of Openship
+This screen manages a mail server on **your own connected server** over SSH. It isn't part of Kovalio
 Cloud — you provision it against a server you've added under **Servers**. For a friendly walkthrough of the
 whole flow (including webmail), see [Email &amp; webmail](/docs/guides/email-webmail).
 </Callout>
 
 ## Why run your own — and how deliverability works
 
-Two things usually stop people self-hosting email, and Openship's model is built around exactly those two
+Two things usually stop people self-hosting email, and Kovalio's model is built around exactly those two
 gaps: **deliverability** (a brand-new server IP lands in spam) and the fact that transactional senders like
 **Amazon SES**, Postmark, or SendGrid **only send** — they give you no inbox, no IMAP, no webmail, and no
 ownership of your messages.
 
-- **You own the inbox.** Openship self-hosts the *receiving* side those providers don't offer — real Postfix +
+- **You own the inbox.** Kovalio self-hosts the *receiving* side those providers don't offer — real Postfix +
   Dovecot mailboxes, IMAP/POP3, and webmail — so your messages, domains, and mailbox data live on **your**
   server. You own the infrastructure and the data, not a vendor.
 - **You borrow the reputation for sending.** Outbound can go direct-to-MX, or **relay through a trusted
   provider's SMTP** (Amazon SES, or any SMTP relay). When you relay, your mail inherits the provider's warmed,
   high-reputation sending IPs — the deliverability of a managed sender — while everything else stays on your
-  box. Openship writes the Postfix relay (`relayhost` + SASL) for you and aligns SPF, DKIM, and MAIL FROM
+  box. Kovalio writes the Postfix relay (`relayhost` + SASL) for you and aligns SPF, DKIM, and MAIL FROM
   (SES-aware) so messages authenticate.
 
 <Callout title="A realistic promise" type="info">
@@ -63,14 +63,12 @@ server's domain (or name), its host, and a status pill:
 | Pill | Meaning |
 |---|---|
 | **Installing** | An install is currently running on this server. |
-| **Running** | Provisioned and managed by Openship. |
+| **Running** | Provisioned and managed by Kovalio. |
 | **Incomplete** | Registered, but the install didn't finish. |
 
 Click a card to open it. **Add mail server** starts a new provision/adopt. The trash icon (**Remove from
 list**) detaches a stale or mis-marked entry — this is dashboard-only and re-adoptable; it never uninstalls
 anything on the server.
-
-<Callout title="Screenshot">Mail servers list — cards with domain, host, and Installing/Running/Incomplete pill; **Add mail server** and the per-row trash button. *(screenshot pending)*</Callout>
 
 ## Set up a new mail server
 
@@ -88,10 +86,9 @@ anti-spam), a Let's Encrypt **SSL Certificate**, **DNS Configuration** (DKIM, SP
 **Admin Panel**. The **Prerequisites** box lists what you need first:
 
 - A domain with DNS access.
-- Port 25 not blocked by your provider.
+- Outbound port 25 allowed by your provider, plus inbound TCP 25, 465, 587, and 993 allowed in the
+  provider firewall/security group/security list/NSG.
 - A clean Ubuntu/Debian server (recommended).
-
-<Callout title="Screenshot">Mail Server Setup form — Domain and Admin Password fields, **Start Setup**, and the "What gets installed" / "Prerequisites" sidebar. *(screenshot pending)*</Callout>
 
 ### Watching the install
 
@@ -102,6 +99,20 @@ tracks **All steps** and, if ports 80/443 are already taken, surfaces a **Port C
 continuing.
 
 Twice during the install, the wizard pauses and needs you to act — first for DNS, then for reverse DNS.
+
+The final **Verify Public Mail Ports** step first confirms the daemons are listening on the server, then
+connects from the Kovalio API to the public DNS address on TCP 25, 465, 587, and 993. The API may run on the
+mail server itself. Missing or loopback-only listeners, failed client ports (465/587/993), and non-timeout
+errors on TCP 25 stop setup. Check both the host firewall and the cloud provider's firewall when a listening
+port cannot be reached.
+
+A timeout on **TCP 25 only** lets setup finish with a warning when that port has a non-loopback listener and
+465/587/993 all complete a TCP handshake. Public reachability remains **unverified** in Health. AWS
+[blocks outbound port 25 to public addresses by default](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html),
+which can prevent the API's check even when inbound mail works. The same timeout can also mean inbound TCP 25
+is blocked, so verify it from an independent host or send a test message from another mail provider before
+relying on receiving mail. An SMTP relay configured in **Sending**, such as Amazon SES, handles outgoing mail
+only; it does not make a blocked inbound port reachable.
 
 ### DNS hold — publish your records
 
@@ -114,8 +125,6 @@ SSL-certificate step.
 **Auto-configure DNS** opens a provider picker (Cloudflare, Hostinger, AWS Route 53, DigitalOcean,
 Namecheap, Google Cloud DNS). Direct API push is not shipped yet — each provider currently shows a
 "coming soon" note, so publish the records manually for now.
-
-<Callout title="Screenshot">DNS hold banner — the record cards with copy buttons, **Auto-configure DNS**, and **I've set the records - continue**. *(screenshot pending)*</Callout>
 
 ### PTR hold — set reverse DNS
 
@@ -132,13 +141,11 @@ IP and the hostname to point it at (`mail.<domain>`). It also gives you a verify
 `dig +short -x <ip>` should return `mail.<domain>.`. When it's set, click **I've set the PTRs - continue**
 and the install finishes with SSL.
 
-<Callout title="Screenshot">PTR hold banner — IPv4/IPv6 PTR cards, the `dig` verify hint, and **I've set the PTRs - continue**. *(screenshot pending)*</Callout>
-
 ## Adopt an existing mail server
 
-Already installed a mail server with Openship but lost the dashboard record (e.g. you re-imaged the
+Already installed a mail server with Kovalio but lost the dashboard record (e.g. you re-imaged the
 orchestrator)? On the setup form, click **Already have a mail server? Adopt it**. In the **Adopt existing
-mail server** dialog, pick the server and press **Scan server** — Openship reads the box (detects the mail
+mail server** dialog, pick the server and press **Scan server** — Kovalio reads the box (detects the mail
 stack and its on-server state file) without changing anything. If a mail stack is found, **Adopt** brings it
 back under management with no reinstall and no data loss.
 
@@ -167,15 +174,13 @@ during the first days of sending.
 Your day-one screen. The top card shows the mail server **Hostname** (`mail.<domain>`, click to copy) and a
 webmail action: **Open webmail** if webmail is deployed, or **Deploy webmail** if it isn't — the latter
 takes you into the webmail deploy flow for this server. A **Protocol details →** link jumps to the Advanced
-tab. A webmail deployed by Openship 0.6.1 or earlier also gets a **Replace webmail** link here — those installs
+tab. A webmail deployed by Kovalio 0.6.1 or earlier also gets a **Replace webmail** link here — those installs
 predate the webmail app and are replaced rather than redeployed (see
 [Email &amp; webmail](/docs/guides/email-webmail#step-3--deploy-the-webmail-app)).
 
 Below that, **Setup guides** deep-links to client walkthroughs (iOS &amp; macOS Mail, Android Gmail app,
 Desktop clients, Send via code). The right column shows **Mail stats** (Domains, Mailboxes, Aliases,
 Storage, Messages) and **Quick actions** (Add a mailbox, Add a domain, Review DNS records).
-
-<Callout title="Screenshot">Overview tab — mail server hostname card with **Open webmail** / **Deploy webmail**, Setup guides, and the Mail stats / Quick actions sidebar. *(screenshot pending)*</Callout>
 
 ### Domains
 
@@ -186,8 +191,6 @@ its MX/SPF/DKIM/DMARC records before mail flows. Row actions let you **Edit** (d
 active) or **Delete** (with a cascade checkbox when a domain still has mailboxes or aliases). Newly-added
 domains show a reputation warm-up banner.
 
-<Callout title="Screenshot">Domains tab — the domains table with Add domain, edit/delete row actions, and a pending-DNS banner for a new domain. *(screenshot pending)*</Callout>
-
 ### Mailboxes
 
 Always scoped to one domain via the picker at the top (defaults to the primary domain; the choice mirrors to
@@ -195,8 +198,6 @@ Always scoped to one domain via the picker at the top (defaults to the primary d
 the bootstrap account. **Add mailbox** collects the local part, full name, a password (with **Generate**),
 and a quota. Deleting offers **soft delete** (deactivates and queues cleanup) or **hard delete** (removes DB
 rows and the Maildir immediately); the postmaster account is protected from hard delete.
-
-<Callout title="Screenshot">Mailboxes tab — domain picker, the mailboxes table, and the Add mailbox modal. *(screenshot pending)*</Callout>
 
 ### Aliases
 
@@ -243,21 +244,31 @@ add at your DNS provider. **Published records check** runs a live public-DNS loo
 **Verify** (or **Rescan**) and each record comes back **Pass**, **Warning**, or **Fail**, with expected vs.
 actual values when something's off.
 
-<Callout title="Screenshot">DNS tab — domain picker, the "Records for publishing" card, and the "Published records check" results with pass/warn/fail pills. *(screenshot pending)*</Callout>
-
 ### Health
 
-The single "is everything working?" screen. A banner at the top aggregates a verdict, then two sections:
+If Kovalio cannot read the server, **Mail status unavailable** offers **Retry status**. Saved details
+remain visible when available, and current health is unknown until a check succeeds. A failed
+connection does not offer setup or engine repair, or start and stop mail services.
+
+The single "is everything working?" screen. A banner at the top aggregates a verdict across four sections:
 
 - **Daemons** — live systemd status of each mail process (Postfix, Dovecot, anti-spam, etc.), refreshed on a
   10-second poll. Each row has a **Logs** button and a menu to **Start**, **Stop**, or **Restart** that unit.
+- **Public mail ports** — combines the server's local listener table with connections from the Kovalio
+  control plane to the public DNS address on TCP 25, 465, 587, and 993. The UI poll reuses one result for 60
+  seconds, so this is a bounded health check rather than a continuous port watcher.
+- **Outbound delivery** — shows the direct/relay send path, queue depth, and actionable deferral reasons.
 - **DNS scan** — a live public-DNS check of every expected record, with a **Rescan** button.
 
-<Callout title="Screenshot">Health tab — the summary banner, the Daemons list with per-row Logs/actions, and the DNS scan section. *(screenshot pending)*</Callout>
+<Callout title="Provider firewall is a separate layer" type="warn">
+Opening UFW or firewalld on the server does not change OCI security lists, AWS security groups, GCP firewall
+rules, Azure NSGs, or another provider firewall. A row that says **Blocked** while the daemon is listening
+usually means this outer layer is dropping the connection.
+</Callout>
 
 ### Backup
 
-Backups run through Openship's general backup system, so the mail server is just another backup source.
+Backups run through Kovalio's general backup system, so the mail server is just another backup source.
 Choose **what to back up**: accounts, domains &amp; aliases (always included), **Mailbox message data** (the
 maildirs — can be large), and **DKIM keys &amp; secrets**.
 
@@ -270,9 +281,22 @@ Pick a **Destination** (managed on the [Backups](/docs/dashboard/backups) page) 
 schedule (Manual only / Daily / Weekly), then **Save settings** or **Back up now**. **Recent backups** lists
 each run; successful runs offer **Restore** (in place) and **Migrate** (onto another server).
 
-<Callout title="Screenshot">Backup tab — the include checkboxes, destination/schedule selectors, and the Recent backups list with Restore/Migrate. *(screenshot pending)*</Callout>
-
 ### Advanced
+
+**Mail certificate** shows expiry and the certificate served by SMTP (465/587) and IMAP (993).
+**Check certificate** refreshes those observations. **Renew certificate** uses the existing Kovalio
+edge to obtain a certificate when due, reloads Postfix and Dovecot, and checks the served certificates.
+A certificate that is still valid is reused, so repeated clicks do not create extra ACME orders.
+
+**Automatic renewal** is enabled by default for each mail server. It uses the shared **SSL certificate
+renewal** job; disabling the mail toggle leaves certificate monitoring active. Expiry, failed renewal,
+and services still serving an old certificate appear in **Health** and global **Monitoring**.
+The checks share a five-minute cache; Monitoring's re-scan refreshes them immediately.
+
+The Kovalio control plane must remain running for scheduled renewal. In Desktop, keep Kovalio open;
+for unattended operation, run a self-hosted control plane. When adopting a legacy mail host, Kovalio
+retires a host Certbot timer only if it manages this mail certificate alone. A timer that also manages
+other certificates is left unchanged and reported for migration.
 
 The power-user surface, top to bottom:
 
@@ -281,11 +305,9 @@ The power-user surface, top to bottom:
 - **Mail-stack tools** — **Restart stack** cycles every mail daemon at once (a quick fix after a deploy
   hiccup); it doesn't touch mailboxes, queues, or state.
 - **Danger zone** — **Re-run setup wizard** (**Open wizard**), **Reset on-server state** (**Reset state** —
-  clears Openship's tracking but leaves the running stack intact), and **Remove mail server** (**Remove** —
+  clears Kovalio's tracking but leaves the running stack intact), and **Remove mail server** (**Remove** —
   drops it from the list only, re-adoptable later).
 - **Install metadata** — Server ID, Primary domain, and the Started / Finished timestamps.
-
-<Callout title="Screenshot">Advanced tab — Protocol settings, Mail-stack tools, the Danger zone cards, and Install metadata. *(screenshot pending)*</Callout>
 
 ## Related
 

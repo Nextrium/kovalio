@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const BASE_URL = "https://openship.io";
+const BASE_URL = "https://nextrium.org";
 
 export default function robots(): MetadataRoute.Robots {
   return {

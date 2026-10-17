@@ -2,7 +2,7 @@
  * GATE 3 (source-side) for migrate-control-plane → server.
  *
  * Before exporting/transferring anything, confirm the TARGET is a self-hosted
- * single-tenant box — NEVER a multi-tenant Openship Cloud instance. An
+ * single-tenant box — NEVER a multi-tenant Kovalio Cloud instance. An
  * instance-scope `import --wipe` against the SaaS would TRUNCATE every tenant,
  * so this fails CLOSED: unreachable or unconfirmed → refuse.
  *
@@ -11,6 +11,7 @@
  * transfer target from four independent directions.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { safeErrorMessage } from "@repo/core";
 
 export interface TargetProbe {
@@ -25,7 +26,7 @@ export class TargetIsCloudError extends Error {
   readonly code = "TARGET_IS_CLOUD" as const;
   constructor(url: string) {
     super(
-      `Refusing to migrate: ${url} is a multi-tenant Openship Cloud instance, not a self-hosted box. ` +
+      `Refusing to migrate: ${url} is a multi-tenant Kovalio Cloud instance, not a self-hosted box. ` +
         `A whole-instance import would wipe every tenant.`,
     );
     this.name = "TargetIsCloudError";
@@ -50,12 +51,13 @@ export async function probeTarget(
   opts: { fetchImpl?: typeof fetch; timeoutMs?: number } = {},
 ): Promise<TargetProbe> {
   const f = opts.fetchImpl ?? fetch;
-  const url = baseUrl.replace(/\/+$/, "");
+  const url = baseUrl.replace(/(?<!\/)\/+$/, "");
   try {
     const res = await f(`${url}/api/health`, { signal: AbortSignal.timeout(opts.timeoutMs ?? 10000) });
-    const data = (await res.json().catch(() => ({}))) as { status?: string; cloudMode?: boolean };
+    const data = (await res.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/system/migration/target-probe"); return ({}); })) as { status?: string; cloudMode?: boolean };
     return { reachable: res.ok, cloudMode: data.cloudMode === true, status: data.status };
   } catch (err) {
+    observeCaughtError(err, "api/modules/system/migration/target-probe");
     return { reachable: false, cloudMode: false, error: safeErrorMessage(err) };
   }
 }

@@ -39,7 +39,7 @@ vi.mock("@repo/adapters", async () => ({
   resolveLocalEnvironmentSync: () => ({ os: "linux", distro: "alpine", isRoot: true }),
   LocalExecutor: class {},
   EDGE_CONTAINER_MOUNTS: [],
-  EDGE_HOST_STATE_DIR: "/tmp/openship-edge",
+  EDGE_HOST_STATE_DIR: "/tmp/kovalio-edge",
   invalidateEdgeContainer: () => {},
 }));
 vi.mock("@repo/adapters/proxy", () => ({ sanitizeEdgeVhosts: () => {} }));
@@ -70,7 +70,7 @@ async function run(): Promise<{ ok: boolean; said: string }> {
 
 describe("ensureDocker surfaces a refusal", () => {
   it("names the host the install plan refused", async () => {
-    h.plan = { supported: false, reason: "openSUSE Leap installs Docker with zypper, which Openship does not drive" };
+    h.plan = { supported: false, reason: "openSUSE Leap installs Docker with zypper, which Kovalio does not drive" };
 
     const { ok, said } = await run();
 
@@ -84,14 +84,14 @@ describe("ensureDocker surfaces a refusal", () => {
       value: {
         installCommand: "apk add docker",
         // The install works; starting it does not, because this box has no init.
-        service: { supported: false, reason: "no service manager Openship recognizes on alpine" },
+        service: { supported: false, reason: "no service manager Kovalio recognizes on alpine" },
       },
     };
 
     const { ok, said } = await run();
 
     expect(ok).toBe(false);
-    expect(said).toContain("no service manager Openship recognizes");
+    expect(said).toContain("no service manager Kovalio recognizes");
   });
 
   it("stays quiet when the plan is fine and only the daemon check fails", async () => {

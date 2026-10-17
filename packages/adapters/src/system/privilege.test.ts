@@ -116,7 +116,7 @@ describe("privilegedExecutor", () => {
    * THE REGRESSION. `onRefusedHost` decides whether to refuse and nothing else.
    *
    * It used to mean "and don't elevate either", so a `deploy@arch-box` got a plain
-   * unprivileged executor for `/etc/openresty` and `/root/.openship`. Sudo has nothing to
+   * unprivileged executor for `/etc/openresty` and `/root/.kovalio`. Sudo has nothing to
    * do with whether we recognize the distro, and conflating the two resurrected the
    * `deploy@host` bug on every host outside the allowlist — silently, because both
    * callers degrade rather than throw.
@@ -124,7 +124,7 @@ describe("privilegedExecutor", () => {
   it("still elevates on a host it won't provision — sudo doesn't depend on the distro", async () => {
     on(HOSTS.archSudo);
 
-    const grant = await privilegedExecutor(PLAIN, "Writing Openship server state", {
+    const grant = await privilegedExecutor(PLAIN, "Writing Kovalio server state", {
       onRefusedHost: "proceed",
     });
 
@@ -137,7 +137,7 @@ describe("privilegedExecutor", () => {
   it("proceeds unelevated only when there is genuinely no route to root", async () => {
     on(HOSTS.archStuck);
 
-    const grant = await privilegedExecutor(PLAIN, "Writing Openship server state", {
+    const grant = await privilegedExecutor(PLAIN, "Writing Kovalio server state", {
       onRefusedHost: "proceed",
     });
 

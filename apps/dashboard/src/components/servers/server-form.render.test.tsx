@@ -72,7 +72,7 @@ describe("ServerForm variants", () => {
     const page = placeholders(render({ server }));
     const modal = placeholders(render({ server, variant: "modal", onCancel: () => {} }));
     expect(modal).toEqual(page);
-    expect(page).toContain("-o StrictHostKeyChecking=no");
+    expect(page).toContain("-o ConnectTimeout=30");
     expect(page).toContain("user@bastion.example.com");
     expect(page).toContain("/root/.ssh/id_ed25519");
   });
@@ -83,7 +83,7 @@ describe("ServerForm variants", () => {
    * used to suggest `~/.ssh/id_rsa`, which can only ever fail — so the placeholder
    * shape and the hint about WHOSE filesystem it is are both load-bearing.
    */
-  it("asks for an absolute path on the Openship host, not a tilde path", () => {
+  it("asks for an absolute path on the Kovalio host, not a tilde path", () => {
     // A stored host path opens the key tab in "Host path" mode (a paste/upload
     // form has no path field). renderToStaticMarkup can't click the sub-toggle.
     const server = {
@@ -95,7 +95,7 @@ describe("ServerForm variants", () => {
 
     const html = render({ server });
     expect(placeholders(html)).not.toContain("~/.ssh/id_rsa");
-    expect(text(html)).toContain("Absolute path to the private key on the machine running Openship.");
+    expect(text(html)).toContain("Absolute path to the private key on the machine running Kovalio.");
   });
 
   /**
@@ -221,8 +221,8 @@ describe("ServerForm variants", () => {
   });
 
   it("only the modal variant is dismissable in place", () => {
-    expect(render({ variant: "modal", onCancel: () => {} })).toContain("lucide-x");
-    expect(render()).not.toContain("lucide-x");
+    expect(render({ variant: "modal", onCancel: () => {} })).toContain("data-icon=\"close\"");
+    expect(render()).not.toContain("data-icon=\"close\"");
   });
 
   it("lets the caller override the primary label in either chrome", () => {

@@ -1,0 +1,205 @@
+---
+title: domain
+description: Commands, arguments, and options for kovalio domain.
+cliGroup: kovalio domain
+---
+
+See the [workflow guide](/docs/cli/projects) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio domain
+
+Manage custom domains, DNS verification, and SSL certificates
+
+```text
+kovalio domain [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list [options]`](/docs/cli/reference/domain#kovalio-domain-list) | List a project's custom domains |
+| [`add [options] <hostname>`](/docs/cli/reference/domain#kovalio-domain-add) | Add a custom domain and route it on the next deploy |
+| [`preview <hostname>`](/docs/cli/reference/domain#kovalio-domain-preview) | Preview the DNS records a hostname would need (no changes saved) |
+| [`verify [options] <id>`](/docs/cli/reference/domain#kovalio-domain-verify) | Run DNS verification for a domain |
+| [`primary <id>`](/docs/cli/reference/domain#kovalio-domain-primary) | Make a domain the project's primary hostname |
+| [`records <id>`](/docs/cli/reference/domain#kovalio-domain-records) | Show the DNS records for an existing domain |
+| [`renew <id>`](/docs/cli/reference/domain#kovalio-domain-renew) | Renew the SSL certificate for a domain |
+| [`verify-ssl <id>`](/docs/cli/reference/domain#kovalio-domain-verify-ssl) | Recheck that a domain's SSL certificate is issued and valid (no reissue) |
+| [`renew-all`](/docs/cli/reference/domain#kovalio-domain-renew-all) | Renew SSL for every near-expiry domain in your organization |
+| [`dns`](/docs/cli/reference/domain/dns#kovalio-domain-dns) | Plan and apply provider-managed DNS records |
+| [`get <id>`](/docs/cli/reference/domain#kovalio-domain-get) | Show a domain and its routing configuration |
+| [`remove\|rm [options] <id>`](/docs/cli/reference/domain#kovalio-domain-remove) | Remove a domain and its managed route |
+| [`upload-cert [options] <id>`](/docs/cli/reference/domain#kovalio-domain-upload-cert) | Install a manual certificate through the shared hostname and key validation |
+| [`verify-pending [options]`](/docs/cli/reference/domain#kovalio-domain-verify-pending) | Retry eligible pending domains within the selected organization |
+
+## kovalio domain add
+
+Add a custom domain and route it on the next deploy
+
+```text
+kovalio domain add [options] <hostname>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `hostname` | Domain hostname (e.g. app.example.com) |
+
+| Option | Meaning |
+| --- | --- |
+| `-p, --project <id>` | Project ID to attach the domain to |
+| `--primary` | Mark this domain as the project's primary (default: false) |
+
+## kovalio domain get
+
+Show a domain and its routing configuration
+
+```text
+kovalio domain get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+## kovalio domain list
+
+List a project's custom domains
+
+```text
+kovalio domain list [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-p, --project <id>` | Project ID to list domains for |
+
+## kovalio domain preview
+
+Preview the DNS records a hostname would need (no changes saved)
+
+```text
+kovalio domain preview [options] <hostname>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `hostname` | Domain hostname to preview |
+
+## kovalio domain primary
+
+Make a domain the project's primary hostname
+
+```text
+kovalio domain primary [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+## kovalio domain records
+
+Show the DNS records for an existing domain
+
+```text
+kovalio domain records [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+## kovalio domain remove
+
+Remove a domain and its managed route
+
+```text
+kovalio domain remove|rm [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Skip confirmation |
+
+## kovalio domain renew
+
+Renew the SSL certificate for a domain
+
+```text
+kovalio domain renew [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+## kovalio domain renew-all
+
+Renew SSL for every near-expiry domain in your organization
+
+```text
+kovalio domain renew-all [options]
+```
+
+## kovalio domain upload-cert
+
+Install a manual certificate through the shared hostname and key validation
+
+```text
+kovalio domain upload-cert [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--cert <file>` | PEM certificate chain file |
+| `--key <file>` | PEM private key file |
+
+## kovalio domain verify
+
+Run DNS verification for a domain
+
+```text
+kovalio domain verify [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--force` | Recheck an already-verified hostname |
+| `--follow` | Stream DNS and certificate progress |
+| `--timeout <ms>` | Stop following after this deadline |
+
+## kovalio domain verify-pending
+
+Retry eligible pending domains within the selected organization
+
+```text
+kovalio domain verify-pending [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--limit <number>` | Maximum domains to inspect |
+| `--min-age <minutes>` | Minimum pending age in minutes |
+
+## kovalio domain verify-ssl
+
+Recheck that a domain's SSL certificate is issued and valid (no reissue)
+
+```text
+kovalio domain verify-ssl [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |

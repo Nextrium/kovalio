@@ -55,7 +55,7 @@ async function clientFor(opts: {
   return ((await res.json()) as { client: string | null }).client;
 }
 
-const CLI_UA = "openship-cli/0.5.0";
+const CLI_UA = "kovalio-cli/0.5.0";
 const BROWSER_UA = "Mozilla/5.0 (Macintosh)";
 
 const cookieCtx = { sessionKind: "cookie", principalKind: null };
@@ -71,23 +71,23 @@ describe("a claimed source is trusted only when it came from this process", () =
   });
 
   it("ignores a forged claim and derives the source instead", async () => {
-    const forged = { "x-openship-call-source": "mcp.deadbeefdeadbeefdeadbeefdeadbeef" };
+    const forged = { "x-kovalio-call-source": "mcp.deadbeefdeadbeefdeadbeefdeadbeef" };
     expect(await sourceFor({ headers: forged, ctx: patCtx })).toBe("api");
   });
 
   it("ignores a claim with no nonce at all", async () => {
-    expect(await sourceFor({ headers: { "x-openship-call-source": "mcp" }, ctx: patCtx })).toBe("api");
-    expect(await sourceFor({ headers: { "x-openship-call-source": ".mcp" }, ctx: patCtx })).toBe("api");
+    expect(await sourceFor({ headers: { "x-kovalio-call-source": "mcp" }, ctx: patCtx })).toBe("api");
+    expect(await sourceFor({ headers: { "x-kovalio-call-source": ".mcp" }, ctx: patCtx })).toBe("api");
   });
 
   it("ignores a valid nonce carrying a source that is not one of ours", async () => {
-    const nonce = internalSourceHeader("mcp")["x-openship-call-source"]!.split(".").pop()!;
-    const bogus = { "x-openship-call-source": `superuser.${nonce}` };
+    const nonce = internalSourceHeader("mcp")["x-kovalio-call-source"]!.split(".").pop()!;
+    const bogus = { "x-kovalio-call-source": `superuser.${nonce}` };
     expect(await sourceFor({ headers: bogus, ctx: patCtx })).toBe("api");
   });
 
   it("cannot be used to impersonate the dashboard either", async () => {
-    const forged = { "x-openship-call-source": "dashboard.not-the-nonce" };
+    const forged = { "x-kovalio-call-source": "dashboard.not-the-nonce" };
     expect(await sourceFor({ headers: forged, ctx: patCtx })).toBe("api");
   });
 });
@@ -138,7 +138,7 @@ describe("requests with no RequestContext", () => {
   it("credits the CLI for an UNAUTHENTICATED call it made", async () => {
     // `admin.bootstrapped` (setup.controller) is the case: the route runs before
     // any credential exists, so keying on `authorization` alone filed every
-    // `openship up` install under "dashboard". The UA is all there is to go on.
+    // `kovalio up` install under "dashboard". The UA is all there is to go on.
     expect(await sourceFor({ headers: { "user-agent": CLI_UA } })).toBe("cli");
     expect(await sourceFor({ headers: { "user-agent": BROWSER_UA } })).toBe("dashboard");
   });
@@ -194,17 +194,17 @@ describe("which client of the surface", () => {
   });
 
   it("ignores a forged claim — attribution a caller can write is worse than none", async () => {
-    const forged = { "x-openship-call-client": "oauth:someone-elses-agent.deadbeefdeadbeef" };
+    const forged = { "x-kovalio-call-client": "oauth:someone-elses-agent.deadbeefdeadbeef" };
     expect(await clientFor({ headers: forged })).toBeNull();
-    expect(await clientFor({ headers: { "x-openship-call-client": "oauth:x" } })).toBeNull();
+    expect(await clientFor({ headers: { "x-kovalio-call-client": "oauth:x" } })).toBeNull();
   });
 
   it("rejects a correctly-signed id that is not a principal id", async () => {
     // The nonce proves we sent it; it does not prove we assembled it from
     // something the column should hold, and the value reaches the audit UI.
-    const nonce = internalSourceHeader("mcp")["x-openship-call-source"]!.split(".").pop()!;
+    const nonce = internalSourceHeader("mcp")["x-kovalio-call-source"]!.split(".").pop()!;
     for (const bad of ["cli_abc", "oauth:", "session:abc", `oauth:${"x".repeat(129)}`, "oauth:a b"]) {
-      expect(await clientFor({ headers: { "x-openship-call-client": `${bad}.${nonce}` } }), bad).toBeNull();
+      expect(await clientFor({ headers: { "x-kovalio-call-client": `${bad}.${nonce}` } }), bad).toBeNull();
     }
   });
 

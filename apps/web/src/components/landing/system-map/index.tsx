@@ -1,4 +1,6 @@
 "use client";
+import { reportCaughtError } from "@repo/core/diagnostics";
+
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
@@ -233,7 +235,8 @@ export function SystemMap() {
         );
         io.observe(root);
       }, root);
-    } catch {
+    } catch (error) {
+      reportCaughtError(error, "web/components/landing/system-map/index");
       root.dataset.static = "1";
       for (const el of nodes) el.dataset.state = "warm";
       applyBeat(0);
@@ -285,7 +288,7 @@ export function SystemMap() {
             </h2>
             <p className="smap-sub">
               From a git push to a served request — this is the actual path your code
-              takes, and every box on it is something Openship runs for you.
+              takes, and every box on it is something Kovalio runs for you.
             </p>
           </header>
 

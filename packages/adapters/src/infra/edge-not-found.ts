@@ -29,7 +29,7 @@
  *   - no newline — a single line keeps the served bytes identical across the two
  *     writers (the baked conf re-indents shared blocks; a multi-line body would
  *     pick up that indentation on one path only).
- *   - no `#` — nginx is perfectly happy with one inside a quoted token; Openship's
+ *   - no `#` — nginx is perfectly happy with one inside a quoted token; Kovalio's
  *     OWN config reader was not. `stripComments` in the proxy importer cut every
  *     line at the first `#`, quoted or not, and it is what parses these files back
  *     (migrate scan, orphan sweep, cert carry). A CSS `#fff` truncated the line
@@ -69,7 +69,7 @@
  * (https:// means something redirected the plain-HTTP request), which is what
  * `certbotDiagnosis` now does.
  */
-export const EDGE_UNROUTED_SENTINEL = "openship-edge-unrouted";
+export const EDGE_UNROUTED_SENTINEL = "kovalio-edge-unrouted";
 
 /**
  * The page, in fragments. Joined with no separator, so every fragment must be
@@ -130,7 +130,7 @@ const HTML_FRAGMENTS: readonly string[] = [
   `<li>The deployment may have been removed or renamed</li>`,
   `<li>A newly added domain can take a few minutes to start serving</li>`,
   `</ul>`,
-  `<footer>Served by Openship</footer>`,
+  `<footer>Served by Kovalio</footer>`,
   `</main>`,
   `</body>`,
   `</html>`,

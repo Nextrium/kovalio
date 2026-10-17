@@ -2,7 +2,37 @@
  * Shared constants used across the monorepo.
  */
 
-export const APP_NAME = "Openship";
+export const APP_NAME = "Kovalio";
+export const SUPPORT_EMAIL = "support@nextrium.org";
+
+/** Authenticated organization admins may intentionally create a shareable
+ * invitation without asking the server to deliver email. Shared by the
+ * dashboard request and the API callback so this protocol cannot drift. */
+export const INVITATION_DELIVERY_HEADER = "x-kovalio-invitation-delivery";
+export const INVITATION_DELIVERY_LINK_ONLY = "link-only";
+
+/** Whether an invitation claim may create its recipient's account. */
+export type InvitationAccountCreation = "existing" | "public" | "invited" | "disabled";
+
+/**
+ * Better Auth invitation ids are URL-safe opaque bearer tokens. Keep their
+ * accepted shape and canonical dashboard route shared by API validation, email
+ * delivery, copied links, and post-auth redirect validation.
+ */
+export const INVITATION_ID_PATTERN = /^[A-Za-z0-9_-]{1,200}$/;
+
+export function isValidInvitationId(value: string): boolean {
+  return INVITATION_ID_PATTERN.test(value);
+}
+
+export function invitationClaimPath(invitationId: string): string {
+  return `/accept-invite/${encodeURIComponent(invitationId)}`;
+}
+
+export function isInvitationClaimPath(path: string): boolean {
+  const prefix = "/accept-invite/";
+  return path.startsWith(prefix) && isValidInvitationId(path.slice(prefix.length));
+}
 
 /**
  * Outbound links to our own properties — docs, support, community, socials.
@@ -15,26 +45,26 @@ export const APP_NAME = "Openship";
 /**
  * Where our published images live when nothing overrides it.
  *
- * `OPENSHIP_IMAGE_REGISTRY` overrides it everywhere. Shared because the fallback
+ * `KOVALIO_IMAGE_REGISTRY` overrides it everywhere. Shared because the fallback
  * was typed independently in the CLI's compose generator, the API's edge-image
  * pin and the adapters' edge installer — three defaults that had to agree for a
  * pull to resolve, with nothing making them.
  *
- * NOTE: the shipped compose YAML repeats it as `${OPENSHIP_IMAGE_REGISTRY:-…}`
+ * NOTE: the shipped compose YAML repeats it as `${KOVALIO_IMAGE_REGISTRY:-…}`
  * because compose interpolation can't read TypeScript. That copy is asserted
  * against this one by test.
  */
-export const DEFAULT_IMAGE_REGISTRY = "ghcr.io/oblien";
+export const DEFAULT_IMAGE_REGISTRY = "ghcr.io/nextrium";
 
 export const BRAND_LINKS = {
-  site: "https://openship.io",
-  docs: "https://openship.io/docs",
-  support: "https://openship.io/support",
-  contact: "https://openship.io/contact",
-  github: "https://github.com/oblien/openship",
-  issues: "https://github.com/oblien/openship/issues/new",
+  site: "https://nextrium.org",
+  docs: "https://nextrium.org/docs",
+  support: "https://nextrium.org/support",
+  contact: "https://nextrium.org/contact",
+  github: "https://github.com/Nextrium/kovalio",
+  issues: "https://github.com/Nextrium/kovalio/issues/new",
   community: "https://discord.gg/Q9eWNCeXjg",
-  x: "https://x.com/openship",
+  x: "https://x.com/kovalio",
 } as const;
 
 export const DEPLOYMENT_STATUSES = [
@@ -118,7 +148,6 @@ export const CREDIT_CONVERSION = {
  *     existed to detect. An unset price id is now simply `null`.
  */
 
-
 /**
  * #336: the sentinel a compose-service env value is masked to on API output.
  * Shared so the API (apps/api/src/lib/secret-env.ts) and the dashboard's env
@@ -144,3 +173,6 @@ export const isMaskedValue = (value: unknown): boolean => value === ENV_MASK;
  * which is the point. Existing NULL rows were backfilled by migration 0096.
  */
 export const DEFAULT_RETAIN_COUNT = 7;
+
+/** Startup advisory shared by the engine and its live-health recovery UI. */
+export const SERVICE_STARTING_HEALTH_WARNING = "healthcheck has not reported healthy yet";

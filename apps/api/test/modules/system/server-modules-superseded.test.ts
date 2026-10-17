@@ -39,13 +39,13 @@ vi.mock("@repo/adapters", () => ({
 
 const executor = { exec: vi.fn().mockResolvedValue("openresty/1.25.3.1") };
 
-vi.mock("../../../src/lib/ssh-manager", () => ({
+vi.mock("@repo/platform/engine/lib/ssh-manager", () => ({
   sshManager: {
     withExecutor: vi.fn(async (_id: string, fn: (e: unknown) => unknown) => fn(executor)),
   },
 }));
 
-import { scanServer, applyServerModule } from "../../../src/modules/system/server-modules.service";
+import { scanServer, applyServerModule } from "@repo/platform/engine/modules/system/server-modules.service";
 import { repos } from "@repo/db";
 import {
   ourEdgeContainerRunning,
@@ -99,7 +99,7 @@ describe("openresty module vs the container edge", () => {
     mocked.edgeContainer.mockResolvedValue(true);
 
     await expect(applyServerModule(server, "openresty", "all")).rejects.toThrow(
-      /do not apply here.*openship-edge container/s,
+      /do not apply here.*kovalio-edge container/s,
     );
     // The gate is BEFORE the runner, so nothing is written and nothing is stamped.
     expect(mocked.reconcile).not.toHaveBeenCalled();

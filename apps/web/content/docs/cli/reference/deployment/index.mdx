@@ -1,0 +1,339 @@
+---
+title: deployment
+description: Commands, arguments, and options for kovalio deployment.
+cliGroup: kovalio deployment
+---
+
+See the [workflow guide](/docs/cli/deploy) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio deployment
+
+Manage deployments (list, inspect, redeploy, rollback, …)
+
+```text
+kovalio deployment|deployments [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list [options]`](/docs/cli/reference/deployment#kovalio-deployment-list) | List deployments (org-wide, or scoped to a project) |
+| [`get <id>`](/docs/cli/reference/deployment#kovalio-deployment-get) | Show a single deployment |
+| [`info <id>`](/docs/cli/reference/deployment#kovalio-deployment-info) | Show container info for a deployment |
+| [`usage <id>`](/docs/cli/reference/deployment#kovalio-deployment-usage) | Show container resource usage for a deployment |
+| [`redeploy [options] <id>`](/docs/cli/reference/deployment#kovalio-deployment-redeploy) | Redeploy from an existing deployment |
+| [`rollback <id>`](/docs/cli/reference/deployment#kovalio-deployment-rollback) | Roll back to a previous deployment |
+| [`pin [options] <id>`](/docs/cli/reference/deployment#kovalio-deployment-pin) | Pin (or unpin) a deployment's rollback artifact |
+| [`cancel <id>`](/docs/cli/reference/deployment#kovalio-deployment-cancel) | Cancel an in-progress deployment |
+| [`restart <id>`](/docs/cli/reference/deployment#kovalio-deployment-restart) | Restart a deployment's container |
+| [`reject <id>`](/docs/cli/reference/deployment#kovalio-deployment-reject) | Reject a finished deployment awaiting a keep/reject decision |
+| [`keep <id>`](/docs/cli/reference/deployment#kovalio-deployment-keep) | Keep a finished deployment awaiting a keep/reject decision |
+| [`pending <id>`](/docs/cli/reference/deployment#kovalio-deployment-pending) | Show a deployment's current prompt and pending decisions |
+| [`respond [options] <id>`](/docs/cli/reference/deployment#kovalio-deployment-respond) | Answer a pending deployment prompt |
+| [`wait [options] <id>`](/docs/cli/reference/deployment#kovalio-deployment-wait) | Wait for the persisted deployment outcome or a decision that needs your response |
+| [`rm [options] <id>`](/docs/cli/reference/deployment#kovalio-deployment-rm) | Delete a deployment |
+| [`ssl`](/docs/cli/reference/deployment#kovalio-deployment-ssl) | SSL certificate operations |
+| [`restore-plan <id>`](/docs/cli/reference/deployment#kovalio-deployment-restore-plan) | Inspect retained artifacts and which services a rollback would rebuild |
+| [`actions <id>`](/docs/cli/reference/deployment#kovalio-deployment-actions) | Inspect pending deployment, routing and certificate actions |
+| [`status <id>`](/docs/cli/reference/deployment#kovalio-deployment-status) | Read the complete persisted deployment state and outstanding prompts |
+| [`skip-port-check [options] <id> <target>`](/docs/cli/reference/deployment#kovalio-deployment-skip-port-check) | Skip one explicitly selected deployment port check |
+
+## kovalio deployment actions
+
+Inspect pending deployment, routing and certificate actions
+
+```text
+kovalio deployment actions [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+## kovalio deployment cancel
+
+Cancel an in-progress deployment
+
+```text
+kovalio deployment cancel [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+## kovalio deployment get
+
+Show a single deployment
+
+```text
+kovalio deployment get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+## kovalio deployment info
+
+Show container info for a deployment
+
+```text
+kovalio deployment info [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+## kovalio deployment keep
+
+Keep a finished deployment awaiting a keep/reject decision
+
+```text
+kovalio deployment keep [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+## kovalio deployment list
+
+List deployments (org-wide, or scoped to a project)
+
+```text
+kovalio deployment list [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--project <id>` | Scope to a project (defaults to the linked project) |
+| `--env <environment>` | Filter by environment: production \| preview |
+| `--limit <n>` | Page size (1–100) (default: 50) |
+| `--page <number>` | Page number (default: 1) |
+| `--status <status>` | Deployment history status filter |
+| `--search <text>` | Search deployment history |
+| `--page-info` | Return complete records and pagination as JSON |
+
+## kovalio deployment pending
+
+Show a deployment's current prompt and pending decisions
+
+```text
+kovalio deployment pending [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+## kovalio deployment pin
+
+Pin (or unpin) a deployment's rollback artifact
+
+```text
+kovalio deployment pin [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--off` | Unpin instead of pin |
+
+## kovalio deployment redeploy
+
+Redeploy from an existing deployment
+
+```text
+kovalio deployment redeploy [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--use-existing-commit` | Rebuild the same commit instead of the latest on the branch |
+
+## kovalio deployment reject
+
+Reject a finished deployment awaiting a keep/reject decision
+
+```text
+kovalio deployment reject [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+## kovalio deployment respond
+
+Answer a pending deployment prompt
+
+```text
+kovalio deployment respond [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--action <action>` | An action ID offered by the pending prompt |
+
+## kovalio deployment restart
+
+Restart a deployment's container
+
+```text
+kovalio deployment restart [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+## kovalio deployment restore-plan
+
+Inspect retained artifacts and which services a rollback would rebuild
+
+```text
+kovalio deployment restore-plan [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+## kovalio deployment rm
+
+Delete a deployment
+
+```text
+kovalio deployment rm [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Skip the confirmation prompt |
+
+## kovalio deployment rollback
+
+Roll back to a previous deployment
+
+```text
+kovalio deployment rollback [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID to roll back to |
+
+## kovalio deployment skip-port-check
+
+Skip one explicitly selected deployment port check
+
+```text
+kovalio deployment skip-port-check [options] <id> <target>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+| `target` | Port number or target offered by the deployment |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Acknowledge skipping this readiness check |
+
+## kovalio deployment ssl
+
+SSL certificate operations
+
+```text
+kovalio deployment ssl [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`status <domain>`](/docs/cli/reference/deployment#kovalio-deployment-ssl-status) | Check SSL certificate status for a domain |
+| [`renew [options] <domain>`](/docs/cli/reference/deployment#kovalio-deployment-ssl-renew) | Renew (issue) an SSL certificate for a domain |
+
+## kovalio deployment ssl renew
+
+Renew (issue) an SSL certificate for a domain
+
+```text
+kovalio deployment ssl renew [options] <domain>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `domain` | Domain to renew |
+
+| Option | Meaning |
+| --- | --- |
+| `--www` | Also renew the www subdomain (separately — its own certificate) |
+
+## kovalio deployment ssl status
+
+Check SSL certificate status for a domain
+
+```text
+kovalio deployment ssl status [options] <domain>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `domain` | Domain to probe |
+
+## kovalio deployment status
+
+Read the complete persisted deployment state and outstanding prompts
+
+```text
+kovalio deployment status [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+## kovalio deployment usage
+
+Show container resource usage for a deployment
+
+```text
+kovalio deployment usage [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+## kovalio deployment wait
+
+Wait for the persisted deployment outcome or a decision that needs your response
+
+```text
+kovalio deployment wait [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Deployment ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--timeout <ms>` | Maximum wait duration; leaves the deployment running on timeout (default: 600000) |
+| `--interval <ms>` | Status polling interval (minimum 10 ms) (default: 1000) |

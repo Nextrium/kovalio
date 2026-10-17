@@ -49,20 +49,20 @@ const code = (src: string) =>
 
 describe("local backup destinations are gated at the consumer", () => {
   it("toAdapterRow is the funnel, and it asks before hydrating", () => {
-    const src = code(read("apps/api/src/modules/backup-destinations/hydrate-server.ts"));
+    const src = code(read("packages/platform/src/engine/modules/backup-destinations/hydrate-server.ts"));
 
     // The CALL, not the identifier — see `code()` above for why that distinction
     // is load-bearing. Must also be guarded by the local-kind check.
     const gateAt = src.search(/assertLocalDestinationAllowed\s*\(/);
     const localBranchAt = src.search(/row\.kind\s*===\s*["']local["']/);
-    const serverBranchAt = src.indexOf('row.kind === "openship_server"');
+    const serverBranchAt = src.indexOf('row.kind === "kovalio_server"');
     const passThroughAt = src.indexOf("return {");
 
     expect(gateAt, "toAdapterRow no longer CALLS the local-destination gate").toBeGreaterThan(-1);
     expect(localBranchAt, "the gate is no longer scoped to kind local").toBeGreaterThan(-1);
     expect(localBranchAt).toBeLessThan(gateAt);
     expect(serverBranchAt).toBeGreaterThan(-1);
-    // Before BOTH exits — the openship_server branch and the pass-through return.
+    // Before BOTH exits — the kovalio_server branch and the pass-through return.
     // A gate after the return is not a gate.
     expect(gateAt).toBeLessThan(serverBranchAt);
     expect(gateAt).toBeLessThan(passThroughAt);
@@ -71,9 +71,9 @@ describe("local backup destinations are gated at the consumer", () => {
   // If a consumer stops going through toAdapterRow, the gate above silently stops
   // covering it. This is the assertion that keeps that from happening quietly.
   const CONSUMERS: Array<{ what: string; file: string }> = [
-    { what: "backup run", file: "apps/api/src/modules/backups/backup.orchestrator.ts" },
-    { what: "retention prune", file: "apps/api/src/modules/backups/retention-prune.ts" },
-    { what: "restore", file: "apps/api/src/modules/backups/restore.orchestrator.ts" },
+    { what: "backup run", file: "packages/platform/src/engine/modules/backups/backup.orchestrator.ts" },
+    { what: "retention prune", file: "packages/platform/src/engine/modules/backups/retention-prune.ts" },
+    { what: "restore", file: "packages/platform/src/engine/modules/backups/restore.orchestrator.ts" },
   ];
 
   for (const { what, file } of CONSUMERS) {
@@ -94,7 +94,7 @@ describe("local backup destinations are gated at the consumer", () => {
   });
 
   it("the write-path check and the consumer check are the same implementation", () => {
-    const src = code(read("apps/api/src/modules/backup-destinations/destination.service.ts"));
+    const src = code(read("packages/platform/src/engine/modules/backup-destinations/destination.service.ts"));
     // destination.service.ts must DELEGATE, not carry a second copy of the policy —
     // two copies is how they came to disagree, with only one of them existing.
     expect(src).toMatch(/assertLocalDestinationAllowed\s*\(/);
@@ -106,23 +106,23 @@ describe("assertLocalDestinationAllowed", () => {
   it("refuses in cloud mode regardless of the allow flag", async () => {
     process.env.CLOUD_MODE = "true";
     process.env.BACKUP_ALLOW_LOCAL_DESTINATION = "true";
-    process.env.BACKUP_LOCAL_ROOT = "/var/lib/openship/backups";
+    process.env.BACKUP_LOCAL_ROOT = "/var/lib/kovalio/backups";
     vi.resetModules();
     const { assertLocalDestinationAllowed } = await import(
-      "../../../src/modules/backup-destinations/local-gate"
+      "@repo/platform/engine/modules/backup-destinations/local-gate"
     );
     await expect(
-      assertLocalDestinationAllowed("/var/lib/openship/backups/x"),
+      assertLocalDestinationAllowed("/var/lib/kovalio/backups/x"),
     ).rejects.toThrow(/disabled in cloud mode/i);
   });
 
   it("refuses a local row with no endpoint rather than resolving against CWD", async () => {
     process.env.CLOUD_MODE = "";
     process.env.BACKUP_ALLOW_LOCAL_DESTINATION = "true";
-    process.env.BACKUP_LOCAL_ROOT = "/var/lib/openship/backups";
+    process.env.BACKUP_LOCAL_ROOT = "/var/lib/kovalio/backups";
     vi.resetModules();
     const { assertLocalDestinationAllowed } = await import(
-      "../../../src/modules/backup-destinations/local-gate"
+      "@repo/platform/engine/modules/backup-destinations/local-gate"
     );
     await expect(assertLocalDestinationAllowed(null)).rejects.toThrow(/no endpoint/i);
   });

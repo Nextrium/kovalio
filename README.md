@@ -1,4 +1,4 @@
-<h1 align="center">Openship</h1>
+<h1 align="center">Kovalio</h1>
 
 <p align="center">
   Open-source, self-hostable deployment platform with built-in CI/CD.<br>
@@ -12,16 +12,16 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/openship"><img src="https://img.shields.io/npm/v/openship?color=0b7285&label=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/kovalio"><img src="https://img.shields.io/npm/v/kovalio?color=0b7285&label=npm" alt="npm version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License" /></a>
-  <a href="https://openship.io"><img src="https://img.shields.io/badge/website-openship.io-0b7285" alt="Website" /></a>
+  <a href="https://nextrium.org"><img src="https://img.shields.io/badge/website-nextrium.org-0b7285" alt="Website" /></a>
 </p>
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> ·
   <a href="#how-it-works">How It Works</a> ·
   <a href="#interfaces">Interfaces</a> ·
-  <a href="https://openship.io/docs">Docs</a> ·
+  <a href="https://nextrium.org/docs">Docs</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
@@ -36,26 +36,27 @@
   <a href="docs/i18n/README.de.md"><img src="https://img.shields.io/badge/lang-Deutsch-555" alt="Deutsch" /></a>
   <a href="docs/i18n/README.tr.md"><img src="https://img.shields.io/badge/lang-Türkçe-555" alt="Türkçe" /></a>
   <a href="docs/i18n/README.ko.md"><img src="https://img.shields.io/badge/lang-한국어-555" alt="한국어" /></a>
+  <a href="docs/i18n/README.ru.md"><img src="https://img.shields.io/badge/lang-Русский-555" alt="Русский" /></a>
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/screen.png" alt="Openship dashboard" width="800" />
+  <img src="docs/screenshots/screen.png" alt="Kovalio dashboard" width="800" />
 </p>
 
 ---
 
 ## Quick Start
 
-There's one decision to make first: **how you run Openship itself** (the control plane). Everything else is the same afterwards.
+There's one decision to make first: **how you run Kovalio itself** (the control plane). Everything else is the same afterwards.
 
-| If you're… | Run Openship as | Where your apps run |
+| If you're… | Run Kovalio as | Where your apps run |
 |---|---|---|
-| **Solo, one machine, no ops** | **Desktop app** | A server you connect over SSH, or Openship Cloud |
-| **A team — or you want push-to-deploy / to host apps on your own box** | **Self-hosted server** (`openship up`) | On that box (Compose mode) — or out to another server / Cloud (bare mode) |
-| **Not interested in running anything** | **Openship Cloud** | Managed sandboxes, zero setup |
+| **Solo, one machine, no ops** | **Desktop app** | A server you connect over SSH, or Kovalio Cloud |
+| **A team — or you want push-to-deploy / to host apps on your own box** | **Self-hosted server** (`kovalio up`) | On that box (Compose mode) — or out to another server / Cloud (bare mode) |
+| **Not interested in running anything** | **Kovalio Cloud** | Managed sandboxes, zero setup |
 
 > [!TIP]
-> **Solo? Use the desktop app.** It runs Openship's control plane on your own machine *only while the app is open* — nothing is left running on an always-on server, nothing is exposed publicly. You only need an always-on server install once you want **push-to-deploy (CI/CD)**, **team access**, or to **host apps on that box** — the things that need a public, always-on endpoint.
+> **Solo? Use the desktop app.** It runs Kovalio's control plane on your own machine *only while the app is open* — nothing is left running on an always-on server, nothing is exposed publicly. You only need an always-on server install once you want **push-to-deploy (CI/CD)**, **team access**, or to **host apps on that box** — the things that need a public, always-on endpoint.
 
 ### Solo — desktop app
 
@@ -63,83 +64,83 @@ The control plane runs locally and drives your servers over SSH. No login, no te
 
 | Platform | Download |
 |---|---|
-| **macOS** (Apple Silicon) | [Openship-arm64.dmg](https://github.com/oblien/openship/releases/latest/download/Openship-arm64.dmg) |
-| **macOS** (Intel) | [Openship-x64.dmg](https://github.com/oblien/openship/releases/latest/download/Openship-x64.dmg) |
-| **Windows** | [Openship-win32-x64.zip](https://github.com/oblien/openship/releases/latest/download/Openship-win32-x64.zip) |
-| **Linux** | [Openship.AppImage](https://github.com/oblien/openship/releases/latest/download/Openship.AppImage) |
+| **macOS** (Apple Silicon) | [Kovalio-arm64.dmg](https://github.com/Nextrium/kovalio/releases/latest/download/Kovalio-arm64.dmg) |
+| **macOS** (Intel) | [Kovalio-x64.dmg](https://github.com/Nextrium/kovalio/releases/latest/download/Kovalio-x64.dmg) |
+| **Windows** | [Kovalio-win32-x64.zip](https://github.com/Nextrium/kovalio/releases/latest/download/Kovalio-win32-x64.zip) |
+| **Linux** | [Kovalio.AppImage](https://github.com/Nextrium/kovalio/releases/latest/download/Kovalio.AppImage) |
 
-Linux: `chmod +x Openship.AppImage && ./Openship.AppImage`. Already have the CLI? `openship install` fetches and launches it. Links always point at the newest release.
+Linux: `chmod +x Kovalio.AppImage && ./Kovalio.AppImage`. Already have the CLI? `kovalio install` fetches and launches it. Links always point at the newest release.
 
-From the desktop app you connect a server (SSH) or Openship Cloud and deploy to it — the app itself doesn't host public apps on your laptop.
+From the desktop app you connect a server (SSH) or Kovalio Cloud and deploy to it — the app itself doesn't host public apps on your laptop.
 
 ### Team / always-on — self-hosted server
 
-Install the CLI (it bundles the API + dashboard), then run **`openship`** — an interactive wizard creates the first admin, wires your domain, and installs Openship as a boot service. Run it again anytime to manage the instance.
+Install the CLI (it bundles the API + dashboard), then run **`kovalio`** — an interactive wizard creates the first admin, wires your domain, and installs Kovalio as a boot service. Run it again anytime to manage the instance.
 
 ```bash
-curl -fsSL https://get.openship.io | sh          # install  (or: npm i -g openship — needs Node 22+)
-openship                                          # guided setup, then control panel
+curl -fsSL https://get.kovalio.nextrium.org | sh          # install  (or: npm i -g kovalio — needs Node 22+)
+kovalio                                          # guided setup, then control panel
 ```
 
 The install script brings its own Node when your system one is older than 22; a package-manager
 install runs on the Node you already have.
 
-For CI / headless boxes, skip the wizard and drive `openship up` directly:
+For CI / headless boxes, skip the wizard and drive `kovalio up` directly:
 
 ```bash
-openship up                                       # install + start as a background service (boots + auto-restarts)
-openship up --public-url https://openship.example.com   # + serve the dashboard on your domain (edge + TLS handled)
+kovalio up                                       # install + start as a background service (boots + auto-restarts)
+kovalio up --public-url https://kovalio.example.com   # + serve the dashboard on your domain (edge + TLS handled)
 ```
 
-**`openship up` picks how it runs for you:**
+**`kovalio up` picks how it runs for you:**
 
 - **On Linux with Docker → Compose mode** (the default). Brings up the full stack — Postgres, Redis, API, dashboard, and a containerized **OpenResty edge on :80/:443** — from published images. This is the flavor that **hosts your deployed apps on the same box**, with automatic domains + Let's Encrypt TLS. Force it with `--compose`.
 - **Everywhere else → bare mode** (macOS, Windows, or Linux without Docker). A single lightweight process with an embedded database — an always-on control plane that **deploys apps out to a server (SSH) or Cloud**, like the desktop app but always on and login-required. Force it with `--bare`.
 
-A self-hosted instance **always requires login** (the admin you create in setup). `openship open` opens the dashboard · `openship stop` stops it · `openship update` upgrades · `openship up --foreground` runs attached.
+A self-hosted instance **always requires login** (the admin you create in setup). `kovalio open` opens the dashboard · `kovalio stop` stops it · `kovalio update` upgrades · `kovalio up --foreground` runs attached.
 
 > **Preview an unreleased build (dev).** To run the CLI built straight from source — a branch, tag, or `main` ahead of the next release — install the from-source build:
 >
 > ```bash
-> curl -fsSL https://get.openship.io/dev | sh                  # main (default)
-> curl -fsSL https://get.openship.io/dev | OPENSHIP_REF=dev sh  # a branch/tag (var goes on sh, not curl)
-> openship-dev                                     # same CLI, built from source
-> openship-dev update                              # pull latest source + rebuild (no release needed)
+> curl -fsSL https://get.kovalio.nextrium.org/dev | sh                  # main (default)
+> curl -fsSL https://get.kovalio.nextrium.org/dev | KOVALIO_REF=dev sh  # a branch/tag (var goes on sh, not curl)
+> kovalio-dev                                     # same CLI, built from source
+> kovalio-dev update                              # pull latest source + rebuild (no release needed)
 > ```
 >
-> It installs as a **separate `openship-dev`** command with its own isolated home (`~/.openship-dev`) and boot service, so your production `openship` and its data are never touched. Needs Bun + git; it's an unverified dev build (the dashboard compile wants real RAM/CPU) — not a production path.
+> It installs as a **separate `kovalio-dev`** command with its own isolated home (`~/.kovalio-dev`) and boot service, so your production `kovalio` and its data are never touched. Needs Bun + git; it's an unverified dev build (the dashboard compile wants real RAM/CPU) — not a production path.
 
 **Deploy a project:**
 
 ```bash
 cd your-project
-openship init            # link this directory to a project
-openship deploy
+kovalio init            # link this directory to a project
+kovalio deploy
 ```
 
-Full server guide + complete CLI reference: **[openship.io/docs](https://openship.io/docs)**.
+Full server guide + complete CLI reference: **[nextrium.org/docs](https://nextrium.org/docs)**.
 
 <details>
 <summary>Shell completion (bash/zsh/fish)</summary>
 
-Two ways to enable Tab-completion for `openship`:
+Two ways to enable Tab-completion for `kovalio`:
 
 | | Setup | Trade-off |
 |---|---|---|
-| **Static file** (recommended) | `openship completion <shell> > <path>` | Instant shell startup. Regenerate after upgrading to pick up newly added commands. |
-| **Live-sourced** | add `source <(openship completion <shell>)` to your shell config | Always reflects the currently installed version. Adds a small delay to every new shell session. |
+| **Static file** (recommended) | `kovalio completion <shell> > <path>` | Instant shell startup. Regenerate after upgrading to pick up newly added commands. |
+| **Live-sourced** | add `source <(kovalio completion <shell>)` to your shell config | Always reflects the currently installed version. Adds a small delay to every new shell session. |
 
 **Static file:**
 ```bash
-openship completion bash > /etc/bash_completion.d/openship
-openship completion zsh  > ~/.zsh/completions/_openship
-openship completion fish > ~/.config/fish/completions/openship.fish
+kovalio completion bash > /etc/bash_completion.d/kovalio
+kovalio completion zsh  > ~/.zsh/completions/_kovalio
+kovalio completion fish > ~/.config/fish/completions/kovalio.fish
 ```
 Open a new terminal — done.
 
 **Live-sourced** (zsh example):
 ```bash
-echo 'source <(openship completion zsh)' >> ~/.zshrc
+echo 'source <(kovalio completion zsh)' >> ~/.zshrc
 ```
 
 </details>
@@ -147,21 +148,21 @@ echo 'source <(openship completion zsh)' >> ~/.zshrc
 <details>
 <summary>Self-host with raw Docker Compose (no CLI)</summary>
 
-The self-hosted stack lives in **`docker/docker-compose.yml`** and **pulls** published images from GitHub Container Registry (`ghcr.io/oblien/*`) — no build tooling, no monorepo compile. Run it from the repo root:
+The self-hosted stack lives in **`docker/docker-compose.yml`** and **pulls** published images from GitHub Container Registry (`ghcr.io/nextrium/*`) — no build tooling, no monorepo compile. Run it from the repo root:
 
 ```bash
-git clone https://github.com/oblien/openship.git && cd openship
+git clone https://github.com/Nextrium/kovalio.git && cd kovalio
 cp .env.example .env          # then edit
 docker compose --env-file .env -f docker/docker-compose.yml up -d
 ```
 
-The stack is **postgres + redis + api + dashboard + edge**. The `edge` is OpenResty on **:80/:443** as a container (`network_mode: host`) — routing + Let's Encrypt, no bare host install. **Linux only** (host networking); on mac/win use `openship up` (bare). The `api` container mounts the host Docker socket so the control plane can build + run your apps as host containers — it's host-privileged through the socket, so run it only on a trusted host.
+The stack is **postgres + redis + api + dashboard + edge**. The `edge` is OpenResty on **:80/:443** as a container (`network_mode: host`) — routing + Let's Encrypt, no bare host install. **Linux only** (host networking); on mac/win use `kovalio up` (bare). The `api` container mounts the host Docker socket so the control plane can build + run your apps as host containers — it's host-privileged through the socket, so run it only on a trusted host.
 
-**Upgrade:** pin `OPENSHIP_VERSION` in `.env` for reproducible pulls, then `docker compose --env-file .env -f docker/docker-compose.yml pull && … up -d`. `openship update` only reconciles a stack the CLI installed, and `openship up` would *adopt* this one — don't reach for either here. **Build from source instead:** add `-f docker/docker-compose.build.yml … up -d --build`.
+**Upgrade:** pin `KOVALIO_VERSION` in `.env` for reproducible pulls, then `docker compose --env-file .env -f docker/docker-compose.yml pull && … up -d`. `kovalio update` only reconciles a stack the CLI installed, and `kovalio up` would *adopt* this one — don't reach for either here. **Build from source instead:** add `-f docker/docker-compose.build.yml … up -d --build`.
 
-**Host operations** (`:80`/`:443` takeover, the mail engine, host terminal/port scans) need the container→host SSH channel, which `openship up` provisions and this path does not — the five manual steps are in `.env.example` under *Host operations from the container*, and the failure it produces is [Troubleshooting → Host control channel](https://openship.io/docs/troubleshooting/host-channel). Everything else, including deploys, works without it.
+**Host operations** (`:80`/`:443` takeover, the mail engine, host terminal/port scans) need the container→host SSH channel, which `kovalio up` provisions and this path does not — the five manual steps are in `.env.example` under *Host operations from the container*, and the failure it produces is [Troubleshooting → Host control channel](https://nextrium.org/docs/troubleshooting/host-channel). Everything else, including deploys, works without it.
 
-> The **root** `docker-compose.yml` is a different file: it's the SaaS / from-source **control plane** (builds from source, ships the marketing site, no edge/socket). It does **not** self-host your apps — use `docker/docker-compose.yml` above or `openship up`.
+> The **root** `docker-compose.yml` is a different file: it's the SaaS / from-source **control plane** (builds from source, ships the marketing site, no edge/socket). It does **not** self-host your apps — use `docker/docker-compose.yml` above or `kovalio up`.
 
 </details>
 
@@ -169,9 +170,9 @@ The stack is **postgres + redis + api + dashboard + edge**. The `edge` is OpenRe
 
 ## How It Works
 
-Point Openship at a source — a **GitHub repo**, a **local folder**, or a **prebuilt artifact** — and it runs one pipeline end to end:
+Point Kovalio at a source — a **GitHub repo**, a **local folder**, or a **prebuilt artifact** — and it runs one pipeline end to end:
 
-1. **Detect.** It reads your `package.json`, framework config, lockfiles, and any `docker-compose.yml` / `openship.json` to work out the stack, package manager, build/start commands, and port. Zero config files required; an `openship.json` overrides the guesses if you want control.
+1. **Detect.** It reads your `package.json`, framework config, lockfiles, and any `docker-compose.yml` / `kovalio.json` to work out the stack, package manager, build/start commands, and port. Zero config files required; an `kovalio.json` overrides the guesses if you want control.
 2. **Build.** On the target server or locally on the orchestrator, into a Docker image or a bare release. The resolved config is frozen into a snapshot, so redeploys and rollbacks re-run *exactly* what shipped.
 3. **Run.** As a container (published on loopback only — never a public port) or a supervised host process.
 4. **Route + secure.** The OpenResty edge writes a reverse-proxy vhost to your domain and issues a Let's Encrypt certificate (HTTP-01). Because routing and TLS happen *after* the app is up, a DNS or cert hiccup surfaces as "action required" — it never fails the deploy or takes your app down.
@@ -183,13 +184,14 @@ Databases, domains, SSL, CDN, mail, and backups are managed from the same place.
 
 ## Interfaces
 
-Three ways to drive the same backend:
+Choose how to work with Kovalio:
 
 - **Desktop app** — full GUI, real-time logs, one-click everything. Best for solo.
 - **Web dashboard** — the same UI in the browser, built for teams.
 - **CLI** — scriptable and CI-friendly; also how you install and manage a self-hosted instance.
+- **Ship SDK** — deploy and manage resources from JavaScript or TypeScript. Connect to an existing instance with `KovalioClient`, or embed the engine with `createShip`. Install with `npm install kovalio` (0.8.0+, Node.js 22+) and follow the [SDK guide](https://nextrium.org/docs/api/sdk).
 
-An **MCP** endpoint (for AI agents) and a **REST API** round it out for automation. Only routes that opt in are exposed as MCP tools, every call re-checks your permissions, and credential/token routes can never become tools. Full reference at [openship.io/docs](https://openship.io/docs).
+An **MCP** endpoint (for AI agents) and a **REST API** round it out for automation. Only routes that opt in are exposed as MCP tools, every call re-checks your permissions, and credential/token routes can never become tools. Full reference at [nextrium.org/docs](https://nextrium.org/docs).
 
 > [!NOTE]
 > The docs are actively being filled out. If something's missing or unclear, [contributions](CONTRIBUTING.md) are hugely welcome.
@@ -216,7 +218,7 @@ An **MCP** endpoint (for AI agents) and a **REST API** round it out for automati
 
 ## Deploy Anywhere
 
-- **Openship Cloud** — managed, auto-scaling, zero setup
+- **Kovalio Cloud** — managed, auto-scaling, zero setup
 - **Any VPS** — Hetzner, DigitalOcean, Linode, OVH, and the rest
 - **Dedicated servers** — bare metal, colo, homelab
 - **Multi-server** — spread workloads across machines
@@ -244,7 +246,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Found a vulnerability? We welcome your report — please disclose it **privately**,
 never in a public issue, PR, or discussion.
 
-- **Report it here (preferred):** [Report a vulnerability](https://github.com/oblien/openship/security/advisories/new) — a private GitHub advisory, visible only to you and the maintainers.
+- **Report it here (preferred):** [Report a vulnerability](https://github.com/Nextrium/kovalio/security/advisories/new) — a private GitHub advisory, visible only to you and the maintainers.
 - Scope, what to include, and our response/disclosure process: [SECURITY.md](SECURITY.md).
 
 Good-faith security research is **authorized** under our
@@ -253,8 +255,9 @@ first reports.
 
 ## License
 
-Openship is **open-source** software, licensed under the [Apache License 2.0](LICENSE).
-
-You may use, run, modify, self-host, and distribute it — including in commercial
-and closed-source products — under the terms of the Apache 2.0 license. See
-[LICENSE](LICENSE) for the full text.
+Kovalio-authored code is licensed under the [Apache License 2.0](LICENSE).
+Bundled third-party components retain their own licenses. In particular,
+the [iRedMail engine](apps/email/engine/LICENSE) is GPL-licensed and is included
+in several control-plane distributions even when mail setup is not used.
+See the [component and packaging inventory](docs/licensing.md) for the recorded
+license boundaries and outstanding upstream notice review.

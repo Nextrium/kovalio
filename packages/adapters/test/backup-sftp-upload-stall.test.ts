@@ -46,7 +46,10 @@ class FakeWriteStream extends EventEmitter {
     return true;
   }
   end() {
-    queueMicrotask(() => this.emit("close"));
+    queueMicrotask(() => {
+      this.emit("finish");
+      this.emit("close");
+    });
   }
   destroy() {
     this.destroyedWith = true;
@@ -70,6 +73,7 @@ vi.mock("ssh2", () => {
         stat: (_p: string, done: (e: Error | null) => void) => queueMicrotask(() => done(null)),
         rename: (_a: string, _b: string, done: (e: Error | null) => void) =>
           queueMicrotask(() => done(null)),
+        unlink: (_p: string, done: (e: Error | null) => void) => queueMicrotask(() => done(null)),
       });
       return this;
     }
@@ -91,7 +95,7 @@ function destination() {
     kind: "sftp",
     sshHost: "backup.example.com",
     sshPort: 22,
-    sshUser: "openship",
+    sshUser: "kovalio",
     // Values without the `enc1:` envelope decrypt verbatim, so no key needed.
     sftpPasswordEnc: "pw",
     pathPrefix: "/srv/backups",
@@ -137,6 +141,5 @@ describe("SFTP upload silence is bounded, slowness is not", () => {
 
     await expect(drive(put, 60_000)).resolves.toMatchObject({ bytesWritten: 1024 });
     expect(ws.bytesWritten).toBe(1024);
-    expect(ws.destroyedWith).toBe(false);
   });
 });

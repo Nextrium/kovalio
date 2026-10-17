@@ -5,10 +5,11 @@
  *
  * This is phase 2 of the compose takeover, and it is NOT optional: without it a
  * "Migrate N sites & take over" run stops the operator's nginx, binds 80/443, and
- * silently serves nothing for those N hostnames. Shared by `openship up` and the
+ * silently serves nothing for those N hostnames. Shared by `kovalio up` and the
  * interactive wizard so the two can't diverge on it again — the wizard used to
  * collect the sites and drop them on the floor.
  */
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import chalk from "chalk";
 import ora from "ora";
 import { EDGE_CONTAINER_NAME, edgeCrashReason, type ImportedSite } from "@repo/adapters/proxy";
@@ -23,7 +24,8 @@ export async function waitForApiHealth(port: string, tries: number): Promise<boo
     try {
       const r = await fetch(`http://127.0.0.1:${port}/api/health`, { signal: AbortSignal.timeout(2000) });
       if (r.ok) return true;
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "cli/lib/edge-import");
       /* not up yet */
     }
     await new Promise((r) => setTimeout(r, 1000));
@@ -46,7 +48,7 @@ export async function waitForEdgeRunning(tries: number): Promise<boolean> {
   for (let i = 0; i < tries; i++) {
     const out = await exec
       .exec(`docker inspect -f '{{.State.Running}}' ${EDGE_CONTAINER_NAME}`)
-      .catch(() => "");
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/lib/edge-import"); return ""; });
     if (out.trim() === "true") return true;
     await new Promise((r) => setTimeout(r, 1000));
   }
@@ -89,7 +91,7 @@ export async function importMigratedSites(
   ).start();
   if (!(await waitForApiHealth(apiPort, 60))) {
     const error = "API didn't become healthy in time";
-    spinner.warn(`${error} — migrated sites not imported. Re-run \`openship up\` to retry.`);
+    spinner.warn(`${error} — migrated sites not imported. Re-run \`kovalio up\` to retry.`);
     return { ok: false, registered: [], error };
   }
   // The edge must be RUNNING before we register: the reload execs into it, and a
@@ -97,7 +99,7 @@ export async function importMigratedSites(
   // fails against the edge's own not-yet-running container (the migration race).
   if (!(await waitForEdgeRunning(60))) {
     const error = `the ${EDGE_CONTAINER_NAME} container isn't running yet`;
-    spinner.warn(`${error} — migrated sites not imported. Re-run \`openship up\` to retry.`);
+    spinner.warn(`${error} — migrated sites not imported. Re-run \`kovalio up\` to retry.`);
     return { ok: false, registered: [], error };
   }
   try {
@@ -115,7 +117,7 @@ export async function importMigratedSites(
       return { ok: false, registered: [], error: call.detail };
     }
     const r = call.res;
-    const data = (await r.json().catch(() => ({}))) as {
+    const data = (await r.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/lib/edge-import"); return ({}); })) as {
       registered?: string[];
       warnings?: string[];
       error?: string;
@@ -136,7 +138,7 @@ export async function importMigratedSites(
     if (sites.length > 0 && registered.length === 0) {
       spinner.fail(
         `Migrated NONE of the ${sites.length} site${sites.length === 1 ? "" : "s"} — ` +
-          `Openship holds :80/:443 and ${sites.length === 1 ? "that hostname is" : "those hostnames are"} NOT being served.`,
+          `Kovalio holds :80/:443 and ${sites.length === 1 ? "that hostname is" : "those hostnames are"} NOT being served.`,
       );
       for (const w of warnings.slice(0, 8)) console.log(chalk.red(`    • ${w}`));
       // Every per-site error being "container is restarting" means ONE thing: the
@@ -154,7 +156,7 @@ export async function importMigratedSites(
       const back = startUnitHint("nginx");
       console.log(
         chalk.yellow(
-          `\n  Retry the import with \`openship up\` once the cause above is fixed, or put your\n` +
+          `\n  Retry the import with \`kovalio up\` once the cause above is fixed, or put your\n` +
             (back
               ? `  previous proxy back:  docker stop ${EDGE_CONTAINER_NAME} && ${back}\n`
               : `  previous proxy back by stopping ${EDGE_CONTAINER_NAME} and starting it the way\n` +
@@ -173,11 +175,12 @@ export async function importMigratedSites(
     }
 
     spinner.succeed(
-      `Migrated ${registered.length} site${registered.length === 1 ? "" : "s"} into Openship's edge.`,
+      `Migrated ${registered.length} site${registered.length === 1 ? "" : "s"} into Kovalio's edge.`,
     );
     for (const w of warnings.slice(0, 8)) console.log(chalk.dim(`    • ${w}`));
     return { ok: true, registered };
   } catch (e) {
+    observeCaughtError(e, "cli/lib/edge-import");
     const error = (e as Error).message;
     spinner.warn(`Site import failed: ${error}. Re-run to retry.`);
     return { ok: false, registered: [], error };

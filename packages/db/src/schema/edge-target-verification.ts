@@ -3,7 +3,7 @@ import { organization } from "./organization";
 import { servers } from "./servers";
 
 /**
- * Proof that a routing TARGET is controlled by us, as required by Openship Cloud's
+ * Proof that a routing TARGET is controlled by us, as required by Kovalio Cloud's
  * shared edge before it will forward `<slug>.opsh.io` there.
  *
  * Keyed on (organization, target) because that is what the upstream keys it on: one

@@ -1,0 +1,83 @@
+---
+title: domain dns challenge
+description: Commands, arguments, and options for kovalio domain dns challenge.
+cliGroup: kovalio domain dns challenge
+---
+
+See the [workflow guide](/docs/cli/projects) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio domain dns challenge
+
+Manage a DNS certificate challenge
+
+```text
+kovalio domain dns challenge [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`get <id>`](/docs/cli/reference/domain/dns/challenge#kovalio-domain-dns-challenge-get) | Inspect the current challenge and required TXT record |
+| [`start [options] <id>`](/docs/cli/reference/domain/dns/challenge#kovalio-domain-dns-challenge-start) | Start a certificate challenge through the shared certificate workflow |
+| [`check [options] <id>`](/docs/cli/reference/domain/dns/challenge#kovalio-domain-dns-challenge-check) | Check the TXT record for a specific challenge attempt |
+| [`cancel [options] <id>`](/docs/cli/reference/domain/dns/challenge#kovalio-domain-dns-challenge-cancel) | Cancel a specific challenge attempt |
+
+## kovalio domain dns challenge cancel
+
+Cancel a specific challenge attempt
+
+```text
+kovalio domain dns challenge cancel [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--attempt <id>` | Exact challenge attempt ID from start/get |
+
+## kovalio domain dns challenge check
+
+Check the TXT record for a specific challenge attempt
+
+```text
+kovalio domain dns challenge check [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--attempt <id>` | Exact challenge attempt ID from start/get |
+
+## kovalio domain dns challenge get
+
+Inspect the current challenge and required TXT record
+
+```text
+kovalio domain dns challenge get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+## kovalio domain dns challenge start
+
+Start a certificate challenge through the shared certificate workflow
+
+```text
+kovalio domain dns challenge start [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Domain ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--mode <mode>` | Use a DNS provider or add the TXT record yourself (choices: "automatic", "manual", default: "automatic") |
+| `--force` | Request a new certificate even if the current certificate is still valid |

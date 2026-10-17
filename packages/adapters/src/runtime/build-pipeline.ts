@@ -11,9 +11,16 @@
  * instance flows from build.service.ts → adapter → pipeline → deploy.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import type { BuildConfig, BuildStep, LogEntry, LogCallback } from "../types";
 import { safeErrorMessage, packageManagerEnsureCommand, nodeBinPathExport } from "@repo/core";
-import { sq, injectGitToken, assembleGitClone } from "./git-clone";
+import {
+  sq,
+  injectGitToken,
+  assembleGitClone,
+  gitShellCommand,
+  GIT_SUBMODULE_UPDATE_ARGS,
+} from "./git-clone";
 import { materializeGitSsh, shellGitSshWriter, type GitSshMaterial } from "./git-ssh-material";
 
 // Re-exported for the docker adapters that import these from here.
@@ -23,6 +30,7 @@ export {
   gitCredentialPair,
   toGitHubSshUrl,
   assembleGitClone,
+  gitShellCommand,
 } from "./git-clone";
 
 // ─── BuildLogger - single source of truth for step + log events ─────────────
@@ -36,7 +44,15 @@ export {
  * instead of constructing raw LogEntry objects.
  */
 export class BuildLogger {
-  constructor(private readonly onLog?: LogCallback) {}
+  constructor(
+    private readonly onLog?: LogCallback,
+    private readonly onBuildOutput?: (data: string, streamId: string) => void,
+  ) {}
+
+  /** Observe command output before rendering, without emitting another log entry. */
+  observeBuildOutput(data: string, streamId = "default"): void {
+    this.onBuildOutput?.(data, streamId);
+  }
 
   /** Emit a plain log line. */
   log(
@@ -90,7 +106,7 @@ export class BuildLogger {
  * exec API, docker exec) behind this interface.
  */
 export interface BuildEnvironment {
-  /** The working directory where the project is cloned (e.g. "/app", "/tmp/openship/proj-id") */
+  /** The working directory where the project is cloned (e.g. "/app", "/tmp/kovalio/proj-id") */
   readonly projectDir: string;
 
   /** When true, env vars are set at the container/workspace level - pipeline skips shell export prefix. */
@@ -109,7 +125,7 @@ export interface BuildEnvironment {
    * transfers source files into the build environment:
    *   - BareRuntime (local):  cp -a (same filesystem)
    *   - BareRuntime (SSH):    tar + pipe over SSH
-   *   - CloudRuntime:         tar.gz → Oblien transfer.upload API
+   *   - Managed Cloud:        tar.gz → the provider command/file transport
    *
    * Receives the logger so output streams to the terminal in real-time.
    * Throw to abort the build with a descriptive error.
@@ -184,7 +200,9 @@ export async function killProcessesUnderDir(
   const scan = (sig: string) =>
     `for p in /proc/[0-9]*; do c=$(readlink "$p/cwd" 2>/dev/null); ` +
     `case "$c" in ${patterns.join("|")}) kill -${sig} "\${p##*/}" 2>/dev/null || true;; esac; done`;
-  await executor.exec(`${scan("TERM")}; sleep 2; ${scan("KILL")}`).catch(() => {});
+  await executor.exec(`${scan("TERM")}; sleep 2; ${scan("KILL")}`).catch((diagnosticFailure) => {
+    observeCaughtError(diagnosticFailure, "adapters/runtime/build-pipeline");
+  });
 }
 
 export interface BuildPipelineResult {
@@ -292,13 +310,14 @@ export async function runBuildPipeline(
           }
 
           // Centralized clone assembly (token / relay / ssh / ambient) — see git-clone.ts.
-          const { cloneUrl, gitEnv: GIT_ENV, credFlag: CRED } = assembleGitClone({
+          const gitInvocation = assembleGitClone({
             repoUrl: config.repoUrl,
             gitToken: config.gitToken,
             gitCredentialHelperPath: config.gitCredentialHelperPath,
             ssh: sshMaterial,
             ambient: config.gitAmbient,
           });
+          const { cloneUrl, credFlag: CRED } = gitInvocation;
 
           try {
             if (config.commitSha) {
@@ -306,27 +325,44 @@ export async function runBuildPipeline(
               // commit for the vast majority of rollbacks, but still
               // far cheaper than a full history fetch. Older rollback
               // targets fall through to the unshallow fallback below.
-              try {
-                await exec(
-                  `${GIT_ENV} git ${CRED} clone --progress --depth 50 --branch ${sq(config.branch)} ${sq(cloneUrl)} ${sq(env.projectDir)} && cd ${sq(env.projectDir)} && git ${CRED} -c advice.detachedHead=false checkout ${sq(config.commitSha)}`,
-                );
-              } catch {
-                // Fallback: SHA not in the shallow window (rollback
-                // targets more than 50 commits old). Unshallow the
-                // clone and retry the checkout.
+              await exec(
+                gitShellCommand(
+                  gitInvocation,
+                  `clone --progress --depth 50 --branch ${sq(config.branch)} ${sq(cloneUrl)} ${sq(env.projectDir)}`,
+                ),
+              );
+              const commitPresent = await exec(
+                `cd ${sq(env.projectDir)} && git ${CRED} cat-file -e ${sq(`${config.commitSha}^{commit}`)}`,
+              ).then(
+                () => true,
+                () => { /* diagnostics-ignore: A nonzero file/commit presence probe selects the existing fetch fallback; actual fetch failures are reported. */ return false; },
+              );
+              if (!commitPresent) {
                 logger.log(
-                  `Checkout of ${config.commitSha} failed inside the depth-50 clone; running git fetch --unshallow and retrying.`,
+                  `Commit ${config.commitSha} is not in the depth-50 clone; fetching full history before checkout.`,
                   "warn",
                 );
                 await exec(
-                  `cd ${sq(env.projectDir)} && ${GIT_ENV} git ${CRED} fetch --progress --unshallow && git ${CRED} -c advice.detachedHead=false checkout ${sq(config.commitSha)}`,
+                  `cd ${sq(env.projectDir)} && ${gitShellCommand(gitInvocation, "fetch --progress --unshallow")}`,
                 );
               }
+              await exec(
+                `cd ${sq(env.projectDir)} && ${gitShellCommand(
+                  gitInvocation,
+                  `-c advice.detachedHead=false checkout ${sq(config.commitSha)}`,
+                )}`,
+              );
             } else {
               await exec(
-                `${GIT_ENV} git ${CRED} clone --progress --depth 1 --branch ${sq(config.branch)} ${sq(cloneUrl)} ${sq(env.projectDir)}`,
+                gitShellCommand(
+                  gitInvocation,
+                  `clone --progress --depth 1 --branch ${sq(config.branch)} ${sq(cloneUrl)} ${sq(env.projectDir)}`,
+                ),
               );
             }
+            await exec(
+              `cd ${sq(env.projectDir)} && ${gitShellCommand(gitInvocation, GIT_SUBMODULE_UPDATE_ARGS.join(" "))}`,
+            );
           } finally {
             // Always remove the ephemeral SSH key material, success or fail.
             await sshMaterial?.cleanup();
@@ -349,7 +385,7 @@ export async function runBuildPipeline(
     // Both the build dir and the repo root are added (monorepos hoist deps up).
     // Shared with the Dockerfile generator, which needs the same PATH for the
     // same reason — deriving it twice is how the two surfaces drifted apart and
-    // left the docker build strategy failing at exit 127 (openship#623).
+    // left the docker build strategy failing at exit 127 (kovalio#623).
     const binPathExport = nodeBinPathExport(config.packageManager, [buildDir, env.projectDir]);
 
     const inDir = (cmd: string) => {
@@ -368,7 +404,9 @@ export async function runBuildPipeline(
     // ── Step 2: Install ────────────────────────────────────────────
     currentStep = "install";
     if (config.installCommand) {
-      const installCmd = pmEnsure ? `${pmEnsure} && ${config.installCommand}` : config.installCommand;
+      const installCmd = pmEnsure
+        ? `${pmEnsure} && ${config.installCommand}`
+        : config.installCommand;
       await logger.runStep(
         "install",
         `Installing dependencies (${config.packageManager})`,
@@ -398,6 +436,7 @@ export async function runBuildPipeline(
 
     return { status: "deploying", durationMs };
   } catch (err) {
+    observeCaughtError(err, "adapters/runtime/build-pipeline");
     const durationMs = Date.now() - startTime;
     // A cancel is not a failure — report it distinctly so the caller marks the
     // deployment "cancelled" (not "failed") and doesn't roll it into onFailure.
@@ -411,7 +450,7 @@ export async function runBuildPipeline(
 }
 
 function resolveBuildDirectory(projectDir: string, rootDirectory?: string): string {
-  const normalized = rootDirectory?.trim().replace(/^\/+|\/+$/g, "");
+  const normalized = rootDirectory?.trim().replace(/^\/+|(?<!\/)\/+$/g, "");
   if (!normalized || normalized === ".") {
     return projectDir;
   }
@@ -442,7 +481,11 @@ export function parseLogLevel(message: string): LogEntry["level"] {
 export function detectBuildKillHint(output: string): string | null {
   if (!output) return null;
   const tail = output.slice(-4096);
-  if (/\bsigkill\b|\bKilled\b|out of memory|JavaScript heap out of memory|Allocation failed/i.test(tail)) {
+  if (
+    /\bsigkill\b|\bKilled\b|out of memory|JavaScript heap out of memory|Allocation failed/i.test(
+      tail,
+    )
+  ) {
     return (
       "Build process was killed - typically because the target ran out of memory during the build. " +
       "Increase RAM on the target, add swap, or build locally and ship the dist."
@@ -450,4 +493,3 @@ export function detectBuildKillHint(output: string): string | null {
   }
   return null;
 }
-

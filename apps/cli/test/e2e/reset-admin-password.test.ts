@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 /**
- * `openship reset-admin-password` against a box of each install method.
+ * `kovalio reset-admin-password` against a box of each install method.
  *
  * The reported failure: on a Compose install this command answered "Reset failed:
- * Unauthorized" every single time. It authenticated with `~/.openship/internal-token`,
+ * Unauthorized" every single time. It authenticated with `~/.kovalio/internal-token`,
  * which the compose path never writes — so on a compose-only box it MINTED a fresh
  * random token, sent that, and the api container (booted from the INTERNAL_TOKEN in
  * `compose/.env`) refused it. The lockout-recovery command was unusable on exactly the
@@ -65,7 +65,7 @@ afterEach(() => {
   fetchStub = undefined;
 });
 
-describe("openship reset-admin-password", () => {
+describe("kovalio reset-admin-password", () => {
   it("authenticates with the STACK's token on a compose install", async () => {
     h.files.set(COMPOSE_FILE, "services: {}\n");
     h.files.set(COMPOSE_ENV_FILE, "INTERNAL_TOKEN=stack-token\nAPI_PORT=4123\n");
@@ -118,7 +118,7 @@ describe("openship reset-admin-password", () => {
     expect(r.code).toBe(1);
     const text = r.out + r.err;
     expect(text).toMatch(/running with a different one/);
-    expect(text).toMatch(/openship up/);
+    expect(text).toMatch(/kovalio up/);
     // Both candidates were tried before giving up.
     expect(fetchStub!.calls.map((c) => c.headers["x-internal-token"])).toEqual([
       "rotated-token",

@@ -1,0 +1,199 @@
+---
+title: server managed
+description: Commands, arguments, and options for kovalio server managed.
+cliGroup: kovalio server managed
+---
+
+See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio server managed
+
+Manage subscription-owned Cloud servers and connected Cloud destinations
+
+```text
+kovalio server managed [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`outbound`](/docs/cli/reference/server/managed#kovalio-server-managed-outbound) | Inspect and configure a managed server's outbound connection |
+| [`list\|ls`](/docs/cli/reference/server/managed#kovalio-server-managed-list) | List managed servers visible to this connection |
+| [`available`](/docs/cli/reference/server/managed#kovalio-server-managed-available) | List Cloud servers available to link to this installation |
+| [`connect <id>`](/docs/cli/reference/server/managed#kovalio-server-managed-connect) | Connect an existing Cloud server using the verified installation binding |
+| [`create [options] <name>`](/docs/cli/reference/server/managed#kovalio-server-managed-create) | Create a managed server entry; use billing subscription create to purchase its plan |
+| [`ensure <id>`](/docs/cli/reference/server/managed#kovalio-server-managed-ensure) | Ensure this subscribed server is provisioned through its lifecycle worker |
+| [`resize-preview <id>`](/docs/cli/reference/server/managed#kovalio-server-managed-resize-preview) | Inspect pending capacity changes, their revision and affected projects |
+| [`resize [options] <id>`](/docs/cli/reference/server/managed#kovalio-server-managed-resize) | Apply the exact reviewed capacity revision through the existing server worker |
+| [`retry <id>`](/docs/cli/reference/server/managed#kovalio-server-managed-retry) | Retry the existing lifecycle operation without replacing its retained disk |
+| [`remove\|rm [options] <id>`](/docs/cli/reference/server/managed#kovalio-server-managed-remove) | Request managed server deletion through its guarded lifecycle workflow |
+
+## kovalio server managed available
+
+List Cloud servers available to link to this installation
+
+```text
+kovalio server managed available [options]
+```
+
+## kovalio server managed connect
+
+Connect an existing Cloud server using the verified installation binding
+
+```text
+kovalio server managed connect [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Authorized Cloud server ID |
+
+## kovalio server managed create
+
+Create a managed server entry; use billing subscription create to purchase its plan
+
+```text
+kovalio server managed create [options] <name>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `name` | New managed server name |
+
+| Option | Meaning |
+| --- | --- |
+| `--idempotency-key <key>` | Reuse this server entry after an uncertain create response |
+
+## kovalio server managed ensure
+
+Ensure this subscribed server is provisioned through its lifecycle worker
+
+```text
+kovalio server managed ensure [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Managed server ID |
+
+## kovalio server managed list
+
+List managed servers visible to this connection
+
+```text
+kovalio server managed list|ls [options]
+```
+
+## kovalio server managed outbound
+
+Inspect and configure a managed server's outbound connection
+
+```text
+kovalio server managed outbound [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`get <id>`](/docs/cli/reference/server/managed#kovalio-server-managed-outbound-get) | Read the current outbound IP, proxy metadata and revision without credentials |
+| [`options <id>`](/docs/cli/reference/server/managed#kovalio-server-managed-outbound-options) | List available managed outbound IPs and countries |
+| [`set [options] <id> <file>`](/docs/cli/reference/server/managed#kovalio-server-managed-outbound-set) | Apply an outbound connection change for all projects on this server |
+
+## kovalio server managed outbound get
+
+Read the current outbound IP, proxy metadata and revision without credentials
+
+```text
+kovalio server managed outbound get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+
+## kovalio server managed outbound options
+
+List available managed outbound IPs and countries
+
+```text
+kovalio server managed outbound options [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+
+## kovalio server managed outbound set
+
+Apply an outbound connection change for all projects on this server
+
+```text
+kovalio server managed outbound set [options] <id> <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Server ID |
+| `file` | Reviewed JSON with mode, expectedRevision, confirm and ip or proxy; - reads stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm the reviewed outbound change |
+
+## kovalio server managed remove
+
+Request managed server deletion through its guarded lifecycle workflow
+
+```text
+kovalio server managed remove|rm [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Managed server ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--idempotency-key <key>` | Stable key for this deletion |
+| `-y, --yes` | Confirm server deletion |
+
+## kovalio server managed resize
+
+Apply the exact reviewed capacity revision through the existing server worker
+
+```text
+kovalio server managed resize [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Managed server ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--revision <hash>` | Revision from resize-preview |
+| `--idempotency-key <key>` | Stable key for this resize |
+| `--confirm-restart` | Acknowledge the affected-project restarts |
+| `-y, --yes` | Confirm this resize |
+
+## kovalio server managed resize-preview
+
+Inspect pending capacity changes, their revision and affected projects
+
+```text
+kovalio server managed resize-preview [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Managed server ID |
+
+## kovalio server managed retry
+
+Retry the existing lifecycle operation without replacing its retained disk
+
+```text
+kovalio server managed retry [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Managed server ID |

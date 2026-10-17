@@ -1,0 +1,84 @@
+---
+title: notification channel
+description: Commands, arguments, and options for kovalio notification channel.
+cliGroup: kovalio notification channel
+---
+
+See the [workflow guide](/docs/cli/operations) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio notification channel
+
+Configure notification delivery channels
+
+```text
+kovalio notification channel [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list`](/docs/cli/reference/notification/channel#kovalio-notification-channel-list) | List your channels |
+| [`create <file>`](/docs/cli/reference/notification/channel#kovalio-notification-channel-create) | Create a channel; any returned signing secret is shown once |
+| [`update <id> <file>`](/docs/cli/reference/notification/channel#kovalio-notification-channel-update) | Update a channel |
+| [`test <id>`](/docs/cli/reference/notification/channel#kovalio-notification-channel-test) | Send a test notification to this channel |
+| [`remove\|rm [options] <id>`](/docs/cli/reference/notification/channel#kovalio-notification-channel-remove) | Remove a notification channel |
+
+## kovalio notification channel create
+
+Create a channel; any returned signing secret is shown once
+
+```text
+kovalio notification channel create [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON object containing kind, label and provider config |
+
+## kovalio notification channel list
+
+List your channels
+
+```text
+kovalio notification channel list [options]
+```
+
+## kovalio notification channel remove
+
+Remove a notification channel
+
+```text
+kovalio notification channel remove|rm [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Channel ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Skip confirmation |
+
+## kovalio notification channel test
+
+Send a test notification to this channel
+
+```text
+kovalio notification channel test [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Channel ID |
+
+## kovalio notification channel update
+
+Update a channel
+
+```text
+kovalio notification channel update [options] <id> <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Channel ID |
+| `file` | JSON patch containing label, enabled or config |

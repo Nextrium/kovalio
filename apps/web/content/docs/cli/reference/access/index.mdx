@@ -1,0 +1,191 @@
+---
+title: access
+description: Commands, arguments, and options for kovalio access.
+cliGroup: kovalio access
+---
+
+See the [workflow guide](/docs/cli/access) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio access
+
+Manage workspaces, members, invitations and resource grants
+
+```text
+kovalio access [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`workspaces`](/docs/cli/reference/access#kovalio-access-workspaces) | List accessible workspaces and whether this credential can select an organization |
+| [`organization`](/docs/cli/reference/access#kovalio-access-organization) | Show the current organization and member count |
+| [`create-team [options] <name>`](/docs/cli/reference/access#kovalio-access-create-team) | Create a team workspace; select its ID with the global --organization option |
+| [`resources [options] <type>`](/docs/cli/reference/access#kovalio-access-resources) | List resources available for permission grants |
+| [`members`](/docs/cli/reference/access#kovalio-access-members) | Manage membership in the selected workspace |
+| [`grants`](/docs/cli/reference/access#kovalio-access-grants) | Manage per-resource access grants |
+| [`invitations`](/docs/cli/reference/access/invitations#kovalio-access-invitations) | Manage workspace invitations |
+
+## kovalio access create-team
+
+Create a team workspace; select its ID with the global --organization option
+
+```text
+kovalio access create-team [options] <name>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `name` | Workspace name |
+
+| Option | Meaning |
+| --- | --- |
+| `--slug <slug>` | Workspace slug |
+
+## kovalio access grants
+
+Manage per-resource access grants
+
+```text
+kovalio access grants [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list <user>`](/docs/cli/reference/access#kovalio-access-grants-list) | List a user's resource grants |
+| [`set <file>`](/docs/cli/reference/access#kovalio-access-grants-set) | Create or update one resource grant |
+| [`replace [options] <file>`](/docs/cli/reference/access#kovalio-access-grants-replace) | Replace a user's complete resource grant set |
+| [`remove <id>`](/docs/cli/reference/access#kovalio-access-grants-remove) | Revoke one resource grant |
+
+## kovalio access grants list
+
+List a user's resource grants
+
+```text
+kovalio access grants list [options] <user>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `user` | User ID |
+
+## kovalio access grants remove
+
+Revoke one resource grant
+
+```text
+kovalio access grants remove [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Grant ID |
+
+## kovalio access grants replace
+
+Replace a user's complete resource grant set
+
+```text
+kovalio access grants replace [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON object with userId and the complete grants array |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Skip confirmation |
+
+## kovalio access grants set
+
+Create or update one resource grant
+
+```text
+kovalio access grants set [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON grant with userId, resourceType, resourceId and permissions |
+
+## kovalio access members
+
+Manage membership in the selected workspace
+
+```text
+kovalio access members [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list`](/docs/cli/reference/access#kovalio-access-members-list) | List workspace members |
+| [`role <id> <role>`](/docs/cli/reference/access#kovalio-access-members-role) | Change a member's role through the shared permission rules |
+| [`remove [options] <id>`](/docs/cli/reference/access#kovalio-access-members-remove) | Remove a workspace member |
+
+## kovalio access members list
+
+List workspace members
+
+```text
+kovalio access members list [options]
+```
+
+## kovalio access members remove
+
+Remove a workspace member
+
+```text
+kovalio access members remove [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Member ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Skip confirmation |
+
+## kovalio access members role
+
+Change a member's role through the shared permission rules
+
+```text
+kovalio access members role [options] <id> <role>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Member ID |
+| `role` | owner \| admin \| member \| restricted |
+
+## kovalio access organization
+
+Show the current organization and member count
+
+```text
+kovalio access organization [options]
+```
+
+## kovalio access resources
+
+List resources available for permission grants
+
+```text
+kovalio access resources [options] <type>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `type` | Resource type |
+
+| Option | Meaning |
+| --- | --- |
+| `--owner <id>` | Resource owner filter |
+
+## kovalio access workspaces
+
+List accessible workspaces and whether this credential can select an organization
+
+```text
+kovalio access workspaces [options]
+```

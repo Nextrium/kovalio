@@ -1,0 +1,44 @@
+---
+title: "Introducing Kovalio: Deploy Anything, Own Everything"
+description: "We're launching Kovalio - an open-source, self-hostable deployment platform. Here's why we built it and what it can do."
+date: "2026-03-01"
+category: "Announcement"
+author: "Kovalio Team"
+---
+
+Today we're open-sourcing Kovalio - a deployment platform you can run on your own servers.
+
+## Why we built this
+
+Cloud platforms like Vercel and Netlify are great for getting started. But as your app grows, so does the bill. Metered CPU, per-seat pricing, bandwidth caps - it adds up fast. And when you want to leave, you realize your infrastructure is locked into their proprietary systems.
+
+We wanted something different:
+
+- **Self-hosted first** - Run on any Linux server. A $20/month VPS handles what costs $200+ on managed platforms.
+- **Open source** - Apache-2.0 licensed. No black boxes, no vendor lock-in.
+- **AI-assisted** - Framework detection, build optimization, and configuration are handled automatically.
+
+## What you can deploy
+
+Kovalio supports any stack that runs in a container:
+
+- **Frontend frameworks** - Next.js, Nuxt, SvelteKit, Astro, Remix
+- **Backend** - Node.js, Python, Go, Rust, Ruby, PHP
+- **Databases** - Postgres, MySQL, Redis, MongoDB
+- **Full-stack** - Multi-service apps with shared networking
+
+## Getting started
+
+```bash
+curl -fsSL https://get.kovalio.nextrium.org | sh
+cd your-project
+kovalio deploy
+```
+
+Three commands. That's it.
+
+## What's next
+
+Explore the [feature directory](/features) for current deployment, Actions, networking, backups, migration, and team capabilities. The [documentation](/docs) explains setup and availability, and the [changelog](/changelog) tracks shipped releases.
+
+Star us on [GitHub](https://github.com/Nextrium/kovalio) and join the community.

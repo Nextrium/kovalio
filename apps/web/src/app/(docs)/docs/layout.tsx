@@ -43,15 +43,15 @@ export default function DocsRootLayout({ children }: { children: ReactNode }) {
                   borderColor: "currentColor",
                 }}
               />
-              <span style={{ fontWeight: 600 }}>Openship</span>
+              <span style={{ fontWeight: 600 }}>Kovalio</span>
             </span>
           ),
           url: "/",
         }}
-        githubUrl="https://github.com/oblien/openship"
+        githubUrl="https://github.com/Nextrium/kovalio"
         links={[
           { text: "Changelog", url: "/changelog" },
-          { text: "Resources", url: "/resources" },
+          { text: "Blog", url: "/blog" },
         ]}
       >
         {children}

@@ -1,19 +1,21 @@
+# syntax=docker/dockerfile:1
 # ─── Build stage ────────────────────────────────────────
-# Pinned to .bun-version (1.3.3) — reproducible official images.
-FROM oven/bun:1.3.3 AS builder
+# Pinned to .bun-version — reproducible official images.
+FROM oven/bun:1.3.14 AS builder
 WORKDIR /app
 
 COPY package.json bun.lock pnpm-workspace.yaml ./
 COPY tsconfig.base.json ./
+COPY patches/ ./patches/
 COPY packages/ ./packages/
 COPY apps/ ./apps/
 
 ENV NEXT_TELEMETRY_DISABLED=1
-# Same-origin API proxy (browser → /api/proxy/* → INTERNAL_API_URL). Baked at
-# build time (NEXT_PUBLIC_* is inlined) so the dashboard never calls a hardcoded
-# API host — works behind any reverse proxy / on a remote host.
 ENV NEXT_PUBLIC_API_PROXY=true
-RUN bun install && cd apps/dashboard && bun run build
+# Match the API image and the tested dependency graph on remote rebuilds.
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile \
+ && cd apps/dashboard && bun run build
 
 # ─── Production stage ──────────────────────────────────
 FROM node:22-alpine AS runner

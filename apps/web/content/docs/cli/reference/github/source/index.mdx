@@ -1,0 +1,136 @@
+---
+title: github source
+description: Commands, arguments, and options for kovalio github source.
+cliGroup: kovalio github source
+---
+
+See the [workflow guide](/docs/cli/access) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio github source
+
+Configure self-hosted GitHub Apps and their installations
+
+```text
+kovalio github source [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list`](/docs/cli/reference/github/source#kovalio-github-source-list) | List configured GitHub Apps and callback readiness |
+| [`manifest <name>`](/docs/cli/reference/github/source#kovalio-github-source-manifest) | Generate a GitHub App registration manifest |
+| [`convert <file>`](/docs/cli/reference/github/source#kovalio-github-source-convert) | Complete manifest registration with its matching state and code |
+| [`create <file>`](/docs/cli/reference/github/source#kovalio-github-source-create) | Register an existing GitHub App |
+| [`update <id> <file>`](/docs/cli/reference/github/source#kovalio-github-source-update) | Update a configured GitHub App |
+| [`verify <id>`](/docs/cli/reference/github/source#kovalio-github-source-verify) | Verify this App's configuration |
+| [`default <id>`](/docs/cli/reference/github/source#kovalio-github-source-default) | Use this App by default |
+| [`install <id>`](/docs/cli/reference/github/source#kovalio-github-source-install) | Create a URL to install this App on a GitHub account |
+| [`remove [options] <id>`](/docs/cli/reference/github/source#kovalio-github-source-remove) | Disconnect a configured GitHub App |
+
+## kovalio github source convert
+
+Complete manifest registration with its matching state and code
+
+```text
+kovalio github source convert [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON state and code from GitHub registration, or - for stdin |
+
+## kovalio github source create
+
+Register an existing GitHub App
+
+```text
+kovalio github source create [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON GitHub App credentials, or - for stdin |
+
+## kovalio github source default
+
+Use this App by default
+
+```text
+kovalio github source default [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Source ID |
+
+## kovalio github source install
+
+Create a URL to install this App on a GitHub account
+
+```text
+kovalio github source install [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Source ID |
+
+## kovalio github source list
+
+List configured GitHub Apps and callback readiness
+
+```text
+kovalio github source list [options]
+```
+
+## kovalio github source manifest
+
+Generate a GitHub App registration manifest
+
+```text
+kovalio github source manifest [options] <name>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `name` | App name |
+
+## kovalio github source remove
+
+Disconnect a configured GitHub App
+
+```text
+kovalio github source remove [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Source ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm source removal |
+
+## kovalio github source update
+
+Update a configured GitHub App
+
+```text
+kovalio github source update [options] <id> <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Source ID |
+| `file` | JSON changes, or - for stdin |
+
+## kovalio github source verify
+
+Verify this App's configuration
+
+```text
+kovalio github source verify [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Source ID |

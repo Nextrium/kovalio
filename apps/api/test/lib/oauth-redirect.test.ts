@@ -60,7 +60,7 @@ describe("findEquivalentLoopbackRedirectUri", () => {
   });
 
   it("rewrites the token request to the registered loopback URI", async () => {
-    const request = new Request("https://openship.test/api/auth/mcp/token", {
+    const request = new Request("https://kovalio.test/api/auth/mcp/token", {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -81,7 +81,7 @@ describe("findEquivalentLoopbackRedirectUri", () => {
 
   it("rewrites the authorize request before the redirect URI is persisted", async () => {
     const request = new Request(
-      "https://openship.test/api/auth/mcp/authorize?client_id=client&redirect_uri=" +
+      "https://kovalio.test/api/auth/mcp/authorize?client_id=client&redirect_uri=" +
         encodeURIComponent("http://127.0.0.1:19876/mcp/oauth/callback"),
     );
 
@@ -95,7 +95,7 @@ describe("findEquivalentLoopbackRedirectUri", () => {
   });
 
   it("leaves malformed token requests for Better Auth to reject", async () => {
-    const request = new Request("https://openship.test/api/auth/mcp/token", {
+    const request = new Request("https://kovalio.test/api/auth/mcp/token", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: "{",

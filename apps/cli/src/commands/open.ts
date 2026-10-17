@@ -1,3 +1,4 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { Command } from "commander";
 import chalk from "chalk";
 import { CLOUD_DASHBOARD_URL, LOCAL_API_URL } from "@repo/core";
@@ -5,8 +6,8 @@ import { waitForApi } from "@repo/onboarding";
 import { getApiUrl, getDashboardUrl } from "../lib/config";
 
 export const openCommand = new Command("open")
-  .description("Open the Openship dashboard in your browser")
-  .option("--cloud", "Open the hosted cloud dashboard (app.openship.io)")
+  .description("Open the Kovalio dashboard in your browser")
+  .option("--cloud", "Open the hosted cloud dashboard (kovalio.nextrium.org)")
   .option("--dashboard-url <url>", "Dashboard base URL to open")
   .option("--context <name>", "Context whose dashboard URL to open")
   .option("--path <path>", "Path to open on the dashboard (e.g. /settings)")
@@ -24,7 +25,7 @@ export const openCommand = new Command("open")
       if (!ready) {
         console.log(
           chalk.yellow(`\n  Heads up: the local API at ${apiUrl} isn't responding yet.`) +
-            chalk.dim("\n  Start it with `openship up`, or use --cloud.\n"),
+            chalk.dim("\n  Start it with `kovalio up`, or use --cloud.\n"),
         );
       }
     }
@@ -33,7 +34,8 @@ export const openCommand = new Command("open")
       const { default: open } = await import("open");
       await open(target);
       console.log(chalk.dim(`\n  Opening ${target}\n`));
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "cli/commands/open");
       console.log(chalk.dim("\n  Couldn't open a browser. Visit:\n") + chalk.cyan(`  ${target}\n`));
     }
   });

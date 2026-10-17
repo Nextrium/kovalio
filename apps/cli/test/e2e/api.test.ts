@@ -11,7 +11,7 @@ import { runCommand, stubFetch, type FetchStub } from "../helpers/harness";
 let fetchStub: FetchStub;
 afterEach(() => fetchStub?.restore());
 
-describe("openship api (raw passthrough)", () => {
+describe("kovalio api (raw passthrough)", () => {
   it("GETs the given path under /api and pretty-prints JSON", async () => {
     fetchStub = stubFetch(() => ({ json: { hello: "world" } }));
     const { out, code } = await runCommand(apiCommand, ["/projects"]);
@@ -19,6 +19,18 @@ describe("openship api (raw passthrough)", () => {
     expect(fetchStub.calls[0].method).toBe("GET");
     expect(fetchStub.calls[0].url).toBe("http://api.test/api/projects");
     expect(JSON.parse(out)).toEqual({ hello: "world" });
+  });
+
+  it("does not double the /api prefix when the path already has it (#1023)", async () => {
+    fetchStub = stubFetch(() => ({ json: {} }));
+    await runCommand(apiCommand, ["/api/projects/x"]);
+    await runCommand(apiCommand, ["api/projects/x"]);
+    await runCommand(apiCommand, ["/apis"]);
+    expect(fetchStub.calls.map((call) => call.url)).toEqual([
+      "http://api.test/api/projects/x",
+      "http://api.test/api/projects/x",
+      "http://api.test/api/apis",
+    ]);
   });
 
   it("defaults to POST when --data is given and forwards the raw body", async () => {

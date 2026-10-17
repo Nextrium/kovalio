@@ -5,10 +5,10 @@ import type { Context } from "hono";
  * `GET /api/system/health` must report whether this instance can drive its own host
  * (#509).
  *
- * The rollup is what `openship doctor` and external monitors call, and it had no
+ * The rollup is what `kovalio doctor` and external monitors call, and it had no
  * host-channel field at all — so on a containerized box whose channel was never
  * provisioned, install said success, this endpoint said healthy, and the first host
- * operation failed with text naming `openship doctor` as the way to check. The pinned
+ * operation failed with text naming `kovalio doctor` as the way to check. The pinned
  * properties: the state is reported, the remedy comes with it, a broken channel does
  * NOT fail the rollup, and nothing secret rides along.
  */
@@ -80,24 +80,24 @@ describe("GET /api/system/health — host channel", () => {
       ok: false,
       code: "not_configured",
       hint:
-        "Openship is running in a container with no host channel — OPENSHIP_HOST_SSH_HOST is " +
+        "Kovalio is running in a container with no host channel — KOVALIO_HOST_SSH_HOST is " +
         "unset, so there is no address to reach the host at and nothing has been dialed. " +
-        "Re-run `openship up` to provision the host channel. `openship doctor` reports whether it worked.",
+        "Re-run `kovalio up` to provision the host channel. `kovalio doctor` reports whether it worked.",
     });
     const body = await call();
     expect(body.hostChannel?.ok).toBe(false);
     expect(body.hostChannel?.state).toBe("not_configured");
     // Both halves: the repair runs on the host and the fault is observed in a
     // container, so "did it work" is a separate question from "did it succeed".
-    expect(body.hostChannel?.remedy).toContain("openship up");
-    expect(body.hostChannel?.remedy).toContain("openship doctor");
+    expect(body.hostChannel?.remedy).toContain("kovalio up");
+    expect(body.hostChannel?.remedy).toContain("kovalio doctor");
   });
 
   it("does not fail the rollup — a channelless box is degraded, not down", async () => {
     h.hostChannelHealth.mockResolvedValue({ ok: false, code: "not_configured", hint: "x" });
     const body = await call();
     // `ok` means the database answers. Folding the channel in would send
-    // `openship doctor --fix` at a database that is perfectly healthy.
+    // `kovalio doctor --fix` at a database that is perfectly healthy.
     expect(body.ok).toBe(true);
   });
 
@@ -128,22 +128,22 @@ describe("GET /api/system/health — host channel", () => {
       host: "host.docker.internal",
       port: 22,
       target: "root@host.docker.internal:22",
-      hint: "Cannot read the host SSH key at /var/lib/openship/ssh-keys/host_ed25519 (EACCES). Re-run `openship up` to reprovision it.",
+      hint: "Cannot read the host SSH key at /var/lib/kovalio/ssh-keys/host_ed25519 (EACCES). Re-run `kovalio up` to reprovision it.",
     });
     const body = await call();
     expect(body.hostChannel?.state).toBe("key_unreadable");
     expect(JSON.stringify(body)).not.toContain("ssh-keys");
     // Still actionable: the remedy for an unreadable key is the same reprovision +
     // verify pair, which names no path.
-    expect(body.hostChannel?.remedy).toContain("openship up");
-    expect(body.hostChannel?.remedy).toContain("openship doctor");
+    expect(body.hostChannel?.remedy).toContain("kovalio up");
+    expect(body.hostChannel?.remedy).toContain("kovalio doctor");
   });
 
   it("reports the explicit opt-out as its own state", async () => {
     h.hostChannelHealth.mockResolvedValue({
       ok: false,
       code: "disabled",
-      hint: "Host control is off (OPENSHIP_HOST_CONTROL=false). Re-run `openship up` without --no-host-control.",
+      hint: "Host control is off (KOVALIO_HOST_CONTROL=false). Re-run `kovalio up` without --no-host-control.",
     });
     const body = await call();
     expect(body.hostChannel?.state).toBe("disabled");

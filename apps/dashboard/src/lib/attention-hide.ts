@@ -14,6 +14,7 @@
  * itself read-only.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 export type AttentionCardKey = "broken" | "behind";
 
 /**
@@ -25,7 +26,7 @@ const WINDOW_MS: Record<AttentionCardKey, number> = {
   behind: 7 * 24 * 60 * 60 * 1000,
 };
 
-const storageKey = (card: AttentionCardKey) => `openship:attentionHidden:${card}`;
+const storageKey = (card: AttentionCardKey) => `kovalio:attentionHidden:${card}`;
 
 interface HiddenState {
   fp: string;
@@ -71,7 +72,8 @@ export function isHidden(card: AttentionCardKey, ids: string[], now = Date.now()
 export function hide(card: AttentionCardKey, ids: string[], now = Date.now()): void {
   try {
     localStorage.setItem(storageKey(card), JSON.stringify({ fp: fingerprint(ids), at: now }));
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/lib/attention-hide");
     /* private mode — the card simply doesn't stay hidden */
   }
 }

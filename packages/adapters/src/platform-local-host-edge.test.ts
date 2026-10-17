@@ -56,7 +56,7 @@ afterEach(() => {
 
 describe("local-host edge selection", () => {
   it("uses the shared container edge when the target is THIS machine", async () => {
-    vi.stubEnv("OPENSHIP_EDGE_MODE", "docker");
+    vi.stubEnv("KOVALIO_EDGE_MODE", "docker");
     const executor = stubExecutor();
 
     const platform = await createPlatform({
@@ -76,7 +76,7 @@ describe("local-host edge selection", () => {
   it("still treats an injected executor as remote when localHost is not set", async () => {
     // The inference has to survive for real server targets, which pass an executor
     // and mean it.
-    vi.stubEnv("OPENSHIP_EDGE_MODE", "docker");
+    vi.stubEnv("KOVALIO_EDGE_MODE", "docker");
     const executor = stubExecutor();
 
     const platform = await createPlatform({
@@ -90,7 +90,7 @@ describe("local-host edge selection", () => {
   });
 
   it("never takes the local-edge path for an ssh target, whatever localHost says", async () => {
-    vi.stubEnv("OPENSHIP_EDGE_MODE", "docker");
+    vi.stubEnv("KOVALIO_EDGE_MODE", "docker");
     const executor = stubExecutor();
 
     const platform = await createPlatform({

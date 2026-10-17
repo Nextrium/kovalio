@@ -1,4 +1,4 @@
--- Proof that a routing TARGET is ours, as Openship Cloud's shared edge now requires
+-- Proof that a routing TARGET is ours, as Kovalio Cloud's shared edge now requires
 -- before forwarding `<slug>.opsh.io` to it.
 --
 -- Keyed on (organization_id, target) because that is what the upstream keys it on:

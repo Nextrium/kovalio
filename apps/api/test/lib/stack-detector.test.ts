@@ -8,7 +8,7 @@ import {
   getStartCommand,
   resolvePackageJson,
   type RepoFile,
-} from "../../src/lib/stack-detector";
+} from "@repo/platform/engine/lib/stack-detector";
 
 /**
  * Helper: build a RepoFile[] from a flat string[] of filenames.
@@ -24,6 +24,49 @@ function files(...names: string[]): RepoFile[] {
     return { name, type: "file" };
   });
 }
+
+describe("repository-owned runtime defaults", () => {
+  it.each([
+    {
+      manifest: "next.config.js",
+      content: "export default {}",
+      packageJson: {
+        dependencies: { next: "^16" },
+        scripts: { start: "next start", build: "next build" },
+      },
+    },
+    {
+      manifest: "manage.py",
+      content: "from django.core.management import execute_from_command_line",
+      packageJson: { scripts: { start: "vite", build: "vite build" } },
+    },
+    {
+      manifest: "go.mod",
+      content: "module example.com/api",
+      packageJson: undefined,
+    },
+  ])(
+    "uses the Dockerfile for $manifest",
+    ({ manifest, content, packageJson }) => {
+      const result = detectStack(
+        files("Dockerfile", manifest, "package.json", "bun.lock"),
+        packageJson,
+        {
+          [manifest]: content,
+          Dockerfile: 'FROM scratch\nEXPOSE 8080\nENTRYPOINT ["/app"]',
+        },
+      );
+      expect(result).toMatchObject({
+        stack: "docker",
+        projectType: "docker",
+        installCommand: "",
+        buildCommand: "",
+        startCommand: "",
+        port: 8080,
+      });
+    },
+  );
+});
 
 // ─── Stack identification - table-driven across every supported framework ────
 
@@ -59,6 +102,24 @@ const POSITIVE_STACK_CASES: StackCase[] = [
     expectedStack: "vite",
   },
   // ── JS/TS Frontend & Fullstack ──────────────────────────────────────────
+  {
+    name: "Farm.js - farm.config.ts + @farm.js/core",
+    files: files("package.json", "farm.config.ts", "src/", "pnpm-lock.yaml"),
+    packageJson: {
+      dependencies: { "@farm.js/core": "^0.1.0", react: "^19.0.0" },
+      devDependencies: { "@farm.js/cli": "^0.1.0" },
+    },
+    expectedStack: "farmjs",
+    expectedCategory: "fullstack",
+    expectedProjectType: "app",
+    expectedStartCommand: "node .farm/.output/server/index.mjs",
+  },
+  {
+    name: "Farm.js - farm.config.mjs is also detected",
+    files: files("package.json", "farm.config.mjs"),
+    packageJson: { dependencies: { "@farm.js/core": "^0.1.0" } },
+    expectedStack: "farmjs",
+  },
   {
     name: "Next.js - next.config.js + next dep",
     files: files("package.json", "next.config.js"),
@@ -516,6 +577,18 @@ describe("detectStack - rule ordering & gate disambiguation", () => {
     expect(result.stack).toBe("nextjs");
   });
 
+  it("Farm.js requires both its config marker and package dependency", () => {
+    const configOnly = detectStack(files("package.json", "farm.config.ts"), {
+      dependencies: { react: "^19.0.0" },
+    });
+    expect(configOnly.stack).not.toBe("farmjs");
+
+    const dependencyOnly = detectStack(files("package.json"), {
+      dependencies: { "@farm.js/core": "^0.1.0" },
+    });
+    expect(dependencyOnly.stack).not.toBe("farmjs");
+  });
+
   it("Nuxt wins over plain vue when both deps are present", () => {
     const result = detectStack(files("package.json", "nuxt.config.ts"), {
       dependencies: { nuxt: "^3.0.0", vue: "^3.0.0" },
@@ -825,6 +898,18 @@ describe("getStartCommand", () => {
 // ─── Port detection ──────────────────────────────────────────────────────────
 
 describe("detectStack - port detection", () => {
+  it.each([
+    "PORT=4010 next start",
+    "cross-env NODE_ENV=production PORT=4010 next start",
+    "set PORT=4010 && next start",
+  ])("routes to the production script port from %s", (start) => {
+    const result = detectStack(files("package.json", "next.config.js"), {
+      dependencies: { next: "^15.0.0" },
+      scripts: { start, dev: "next dev --port 3001" },
+    });
+    expect(result.port).toBe(4010);
+  });
+
   it("falls back to STACKS[stack].defaultPort when no explicit port", () => {
     const result = detectStack(files("package.json", "next.config.js"), {
       dependencies: { next: "^15.0.0" },
@@ -863,14 +948,14 @@ describe("detectStack - port detection", () => {
     expect(result.port).toBe(9000);
   });
 
-  it("script port wins over Dockerfile EXPOSE", () => {
+  it("Dockerfile EXPOSE wins over scripts that the image does not run", () => {
     const result = detectStack(files("package.json", "Dockerfile"), {
       dependencies: { express: "^5.0.0" },
       scripts: { start: "node server.js --port 7000" },
     }, {
       Dockerfile: "EXPOSE 9000",
     });
-    expect(result.port).toBe(7000);
+    expect(result.port).toBe(9000);
   });
 
   it("framework default for Astro is 4321", () => {
@@ -895,12 +980,32 @@ describe("detectStack - output directory and build image", () => {
     expect(detectStack(files("package.json", "astro.config.mjs"), { dependencies: { astro: "^4" } }).outputDirectory).toBe("dist");
   });
 
+  it("uses Farm.js's universal output and Node server entry", () => {
+    const result = detectStack(files("package.json", "farm.config.ts"), {
+      dependencies: { "@farm.js/core": "^0.1.0" },
+    });
+    expect(result.outputDirectory).toBe(".farm/.output");
+    expect(result.productionPaths).toEqual([".farm/.output"]);
+    expect(result.buildCommand).toBe("farm build");
+    expect(result.startCommand).toBe("node .farm/.output/server/index.mjs");
+    expect(result.port).toBe(3000);
+  });
+
+  it("honors an explicit manager over stale lockfiles and carries Bun's version", () => {
+    const result = detectStack(files("package.json", "next.config.js", "pnpm-lock.yaml"), {
+      packageManager: "bun@1.2.10",
+      dependencies: { next: "^15.0.0" },
+    });
+    expect(result.packageManager).toBe("bun");
+    expect(result.buildImage).toBe("oven/bun:1.2.10");
+  });
+
   it("bun build image swaps to oven/bun for JS/TS stacks", () => {
     const result = detectStack(files("package.json", "next.config.js", "bun.lockb"), {
       dependencies: { next: "^15.0.0" },
     });
     expect(result.packageManager).toBe("bun");
-    expect(result.buildImage).toBe("oven/bun:latest");
+    expect(result.buildImage).toBe("oven/bun:1.3.14");
   });
 
   it("bun does NOT override build image for non-JS stacks", () => {
@@ -1192,13 +1297,12 @@ describe("detectStack - smart port detection scenarios", () => {
     expect(result.port).toBe(3000);
   });
 
-  it("ignores single-digit port matches (regex requires 2-5 digits)", () => {
+  it("accepts a declared single-digit TCP port", () => {
     const result = detectStack(files("package.json"), {
       dependencies: { express: "^5.0.0" },
-      // Port 5 is < 10, regex requires \d{2,5}, so it's ignored.
       scripts: { start: "node server.js -p 5" },
     });
-    expect(result.port).toBe(3000);
+    expect(result.port).toBe(5);
   });
 
   it("Next.js dev with -p shorthand resolves correctly", () => {
@@ -1371,7 +1475,7 @@ describe("detectStack - productionPaths reflect the stack registry", () => {
  * into `undefined`. When only the parsed half is lost, dependency matching still
  * identifies the framework (it reads the text) while command derivation used to
  * fall through to the registry's bare `next build` / `next start`. That pairing is
- * openship#623: a `bun install` that succeeded followed by `next: not found`.
+ * kovalio#623: a `bun install` that succeeded followed by `next: not found`.
  */
 const NEXT_PACKAGE_JSON = JSON.stringify({
   name: "my-next-app",
@@ -1444,5 +1548,73 @@ describe("detectStack - recovers scripts when only the manifest text survives (#
       }),
     });
     expect(result.port).toBe(4321);
+  });
+});
+
+
+describe("Ruby runtime version detection", () => {
+  const railsFiles = files("Gemfile", ".ruby-version", "Gemfile.lock", "bin/rails");
+  it.each([
+    [{ ".ruby-version": "3.4.1", "Gemfile.lock": "RUBY VERSION\n   ruby 3.3.6p108\n", Gemfile: 'ruby "3.2.2"' }, "3.4.1"],
+    [{ "Gemfile.lock": "RUBY VERSION\n   ruby 3.3.6p108\n", Gemfile: 'ruby ">= 3.2"' }, "3.3.6"],
+    [{ Gemfile: 'ruby "3.2.2"' }, "3.2.2"],
+  ])("uses the project version before the language default", (content, version) => {
+    expect(detectStack(railsFiles, undefined, content).buildImage).toBe(`ruby:${version}-slim`);
+  });
+  it("keeps the pin when metadata changes the detected framework", () => {
+    expect(detectStack(railsFiles, undefined, {
+      Gemfile: 'gem "rails"', ".ruby-version": "3.4.1",
+      "kovalio.json": JSON.stringify({ framework: "sinatra" }),
+    })).toMatchObject({ stack: "sinatra", buildImage: "ruby:3.4.1-slim" });
+  });
+  it("applies the pin when metadata first identifies the Ruby framework", () => {
+    expect(detectStack(files("kovalio.json", ".ruby-version"), undefined, {
+      ".ruby-version": "3.4.1", "kovalio.json": JSON.stringify({ framework: "rails" }),
+    })).toMatchObject({ stack: "rails", buildImage: "ruby:3.4.1-slim" });
+  });
+  it("does not pin a Dockerfile-owned image", () => {
+    expect(detectStack(files("Dockerfile", ".ruby-version"), undefined, {
+      ".ruby-version": "3.4.1",
+    })).toMatchObject({ stack: "docker", buildImage: "ubuntu:22.04" });
+  });
+});
+
+
+describe("repository Node engine compatibility", () => {
+  it("detects a plain Node server with its declared engine without project overrides", () => {
+    const result = detectStack(files("package.json", "server.mjs", "public/"), {
+      scripts: { start: "node server.mjs" },
+      engines: { node: ">=24" },
+    });
+    expect(result.stack).toBe("node");
+    expect(result.startCommand).toContain("start");
+    expect(result.buildImage).toBe("node:24");
+  });
+});
+
+describe("explicit deployment command precedence", () => {
+  it("preserves native configuration over imported Vercel commands", () => {
+    const result = detectStack(
+      files("package.json", "kovalio.json", "vercel.json"),
+      {
+        scripts: { start: "node server.mjs", build: "echo default" },
+      },
+      {
+        "kovalio.json": JSON.stringify({ buildCommand: "echo native" }),
+        "vercel.json": JSON.stringify({ buildCommand: "echo imported" }),
+      },
+    );
+    expect(result.buildCommand).toBe("echo native");
+  });
+  it("honors explicitly disabled Vercel build and install steps", () => {
+    const result = detectStack(
+      files("package.json", "vercel.json"),
+      {
+        scripts: { start: "node server.mjs", build: "echo must-not-run" },
+      },
+      { "vercel.json": JSON.stringify({ installCommand: "", buildCommand: "" }) },
+    );
+    expect(result.installCommand).toBe(":");
+    expect(result.buildCommand).toBe(":");
   });
 });

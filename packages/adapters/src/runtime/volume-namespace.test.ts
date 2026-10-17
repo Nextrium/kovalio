@@ -7,9 +7,9 @@ import {
 } from "./volume-namespace";
 
 describe("scopedVolumeName", () => {
-  it("prefixes with openship-<slug>-", () => {
+  it("prefixes with kovalio-<slug>-", () => {
     expect(scopedVolumeName("clincai", "postgres_data")).toBe(
-      "openship-clincai-postgres_data",
+      "kovalio-clincai-postgres_data",
     );
   });
 });
@@ -17,7 +17,7 @@ describe("scopedVolumeName", () => {
 describe("ensureScopedVolumeName", () => {
   it("scopes a bare name", () => {
     expect(ensureScopedVolumeName("clincai", "postgres_data")).toBe(
-      "openship-clincai-postgres_data",
+      "kovalio-clincai-postgres_data",
     );
   });
 
@@ -25,24 +25,24 @@ describe("ensureScopedVolumeName", () => {
     // The backup executor's DB fallback double-prefixed here, naming a volume that
     // has never existed — docker creates it empty on mount, so the capture archived
     // nothing and a restore wrote where nothing reads.
-    expect(ensureScopedVolumeName("clincai", "openship-clincai-postgres_data")).toBe(
-      "openship-clincai-postgres_data",
+    expect(ensureScopedVolumeName("clincai", "kovalio-clincai-postgres_data")).toBe(
+      "kovalio-clincai-postgres_data",
     );
   });
 
   it("still scopes a name that carries ANOTHER project's prefix", () => {
     // Not idempotence — that string is a foreign volume as far as this project is
     // concerned, and silently adopting it would cross a data boundary.
-    expect(ensureScopedVolumeName("clincai", "openship-other-pgdata")).toBe(
-      "openship-clincai-openship-other-pgdata",
+    expect(ensureScopedVolumeName("clincai", "kovalio-other-pgdata")).toBe(
+      "kovalio-clincai-kovalio-other-pgdata",
     );
   });
 
   it("agrees with scopeVolumeBinds on the same source", () => {
     // The two guards were written independently and diverged; a source and its spec
     // must resolve to the same volume or backup and deploy mount different things.
-    const spec = scopeVolumeBinds("clincai", ["openship-clincai-pgdata:/data"], true)[0]!;
-    expect(spec.split(":")[0]).toBe(ensureScopedVolumeName("clincai", "openship-clincai-pgdata"));
+    const spec = scopeVolumeBinds("clincai", ["kovalio-clincai-pgdata:/data"], true)[0]!;
+    expect(spec.split(":")[0]).toBe(ensureScopedVolumeName("clincai", "kovalio-clincai-pgdata"));
   });
 });
 
@@ -64,13 +64,13 @@ describe("scopeVolumeBinds", () => {
 
   it("scopes a named volume", () => {
     expect(scopeVolumeBinds(slug, ["postgres_data:/var/lib/postgresql/data"], true)).toEqual([
-      "openship-clincai-postgres_data:/var/lib/postgresql/data",
+      "kovalio-clincai-postgres_data:/var/lib/postgresql/data",
     ]);
   });
 
   it("preserves a trailing mode suffix", () => {
     expect(scopeVolumeBinds(slug, ["pgdata:/data:ro"], true)).toEqual([
-      "openship-clincai-pgdata:/data:ro",
+      "kovalio-clincai-pgdata:/data:ro",
     ]);
   });
 
@@ -103,9 +103,9 @@ describe("scopeVolumeBinds", () => {
         true,
       ),
     ).toEqual([
-      "openship-clincai-pgdata:/var/lib/postgresql/data",
+      "kovalio-clincai-pgdata:/var/lib/postgresql/data",
       "/etc/config:/config:ro",
-      "openship-clincai-redis_data:/data",
+      "kovalio-clincai-redis_data:/data",
     ]);
   });
 });

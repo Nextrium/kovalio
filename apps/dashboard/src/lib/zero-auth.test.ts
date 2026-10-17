@@ -47,7 +47,7 @@ describe("resolveZeroAuthLogin", () => {
       action: "explain",
       reason: "remote_browser",
     });
-    expect(decide({ pageOrigin: "https://openship.example.com" })).toEqual({
+    expect(decide({ pageOrigin: "https://kovalio.example.com" })).toEqual({
       action: "explain",
       reason: "remote_browser",
     });

@@ -13,11 +13,11 @@ describe("environmentErrorMessage", () => {
     const err = new ApiError(400, "Bad Request", {
       success: false,
       error:
-        "Connect Openship Cloud to use a free subdomain — free *.opsh.io domains route " +
-        "through the Openship Cloud edge. Add a custom domain instead, or connect Cloud in Settings.",
+        "Connect Kovalio Cloud to use a free subdomain — free *.opsh.io domains route " +
+        "through the Kovalio Cloud edge. Add a custom domain instead, or connect Cloud in Settings.",
     });
     const msg = environmentErrorMessage(err, "fallback");
-    expect(msg).toContain("Connect Openship Cloud");
+    expect(msg).toContain("Connect Kovalio Cloud");
     // The old code rendered ApiError.message, which is this and nothing else.
     expect(msg).not.toBe("API 400: Bad Request");
     expect(msg).not.toContain("API 400");
@@ -82,7 +82,7 @@ describe("environmentWizardHref", () => {
     // A plain slug decodes to null; a length-valid one decodes to mojibake and
     // yields a bogus {kind:"repo"}. Both were reachable, which is why the bug
     // looked intermittent across differently-named environments.
-    for (const projectSlug of ["openship-staging", "my-app-dev", "a/b", "shop-preview"]) {
+    for (const projectSlug of ["kovalio-staging", "my-app-dev", "a/b", "shop-preview"]) {
       const href = environmentWizardHref({ id: "proj_1", projectSlug });
       expect(decodeSlug(href.slice("/deploy/".length))).toEqual({
         kind: "project",

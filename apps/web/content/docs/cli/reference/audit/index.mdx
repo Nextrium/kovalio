@@ -1,0 +1,78 @@
+---
+title: audit
+description: Commands, arguments, and options for kovalio audit.
+cliGroup: kovalio audit
+---
+
+See the [workflow guide](/docs/cli/operations) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio audit
+
+Inspect audit events and retention settings
+
+```text
+kovalio audit [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list [options]`](/docs/cli/reference/audit#kovalio-audit-list) | List audit events with pagination |
+| [`facets [options]`](/docs/cli/reference/audit#kovalio-audit-facets) | Show counts and available audit filters |
+| [`settings`](/docs/cli/reference/audit#kovalio-audit-settings) | Manage audit logging and retention |
+
+## kovalio audit facets
+
+Show counts and available audit filters
+
+```text
+kovalio audit facets [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--query <file>` | JSON audit filters, dates, cursor or page settings |
+
+## kovalio audit list
+
+List audit events with pagination
+
+```text
+kovalio audit list [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--query <file>` | JSON audit filters, dates, cursor or page settings |
+
+## kovalio audit settings
+
+Manage audit logging and retention
+
+```text
+kovalio audit settings [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`get`](/docs/cli/reference/audit#kovalio-audit-settings-get) | Show audit settings and management capability |
+| [`set <file>`](/docs/cli/reference/audit#kovalio-audit-settings-set) | Update audit settings |
+
+## kovalio audit settings get
+
+Show audit settings and management capability
+
+```text
+kovalio audit settings get [options]
+```
+
+## kovalio audit settings set
+
+Update audit settings
+
+```text
+kovalio audit settings set [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON patch with enabled and/or retentionDays |

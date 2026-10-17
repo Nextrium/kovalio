@@ -3,7 +3,7 @@
  * to open the host firewall for it.
  *
  * `provisionHostSshChannel` generates a key, authorizes it, writes
- * `OPENSHIP_HOST_SSH_HOST=host.docker.internal` and reads the host's listener list —
+ * `KOVALIO_HOST_SSH_HOST=host.docker.internal` and reads the host's listener list —
  * none of which involves a packet from the container that will use the channel.
  * The prerequisite it can't satisfy is the host's own firewall: container→
  * `host-gateway` is a host-LOCAL destination, so it traverses `filter/INPUT`,
@@ -22,7 +22,7 @@
  * scrolls, so a box whose keygen failed used to reach its first deploy with every host
  * operation already dead (#509). Provisioning now names the cause as it happens
  * (`renderHostChannelIssue`); this is the surface that still says so on a LATER run, and
- * the one `openship doctor` reuses. "No channel" is only a non-event on a box that wanted
+ * the one `kovalio doctor` reuses. "No channel" is only a non-event on a box that wanted
  * none — see composeHostChannelExpected.
  *
  * Never fails `up`: this is a degraded install, not a failed one. Degraded in the exact
@@ -160,9 +160,9 @@ function blockedTail(): string {
  * undo. Always exits 0; an empty/garbled stdout is what means "couldn't run it".
  */
 const PROBE_SCRIPT = `const net = require("node:net");
-const s = net.connect({ host: process.env.OPENSHIP_PROBE_HOST, port: Number(process.env.OPENSHIP_PROBE_PORT) });
-const done = (m) => { console.log("openship-probe:" + m); try { s.destroy(); } catch {} process.exit(0); };
-s.setTimeout(Number(process.env.OPENSHIP_PROBE_TIMEOUT || 4000));
+const s = net.connect({ host: process.env.KOVALIO_PROBE_HOST, port: Number(process.env.KOVALIO_PROBE_PORT) });
+const done = (m) => { console.log("kovalio-probe:" + m); try { s.destroy(); } catch {} process.exit(0); };
+s.setTimeout(Number(process.env.KOVALIO_PROBE_TIMEOUT || 4000));
 s.on("connect", () => done("open"));
 s.on("timeout", () => done("timeout"));
 s.on("error", (e) => done("error:" + (e && e.code ? e.code : String(e && e.message))));`;
@@ -184,9 +184,9 @@ async function realProbe(host: string, port: number): Promise<ProbeResult> {
       "exec",
       "-T",
       "-e",
-      `OPENSHIP_PROBE_HOST=${host}`,
+      `KOVALIO_PROBE_HOST=${host}`,
       "-e",
-      `OPENSHIP_PROBE_PORT=${port}`,
+      `KOVALIO_PROBE_PORT=${port}`,
       "api",
       "bun",
       "-e",
@@ -194,7 +194,7 @@ async function realProbe(host: string, port: number): Promise<ProbeResult> {
     ],
     { cwd: composePaths.dir, encoding: "utf8", timeout: 30_000 },
   );
-  const token = (r.stdout || "").match(/openship-probe:(\S+)/)?.[1];
+  const token = (r.stdout || "").match(/kovalio-probe:(\S+)/)?.[1];
   if (!token) {
     const why = (r.stderr || r.stdout || r.error?.message || "").trim().split("\n").pop();
     return { code: "unavailable", detail: why || undefined };
@@ -214,7 +214,7 @@ async function realProbe(host: string, port: number): Promise<ProbeResult> {
  *
  * Read off the network rather than off the container: a container's own address
  * changes on every recreate, so a /32 rule would be correct exactly until the next
- * `openship up`.
+ * `kovalio up`.
  */
 function realSourceCidrs(): string[] {
   const id = spawnSync("docker", ["compose", "-f", composePaths.file, "ps", "-q", "api"], {
@@ -392,7 +392,7 @@ export interface HostChannelCheck {
  * Probe the channel and report. No printing, no host mutation.
  *
  * The read-only half of {@link verifyHostChannel}, for surfaces that report health
- * rather than repair it (`openship doctor`, which this file tells operators to come
+ * rather than repair it (`kovalio doctor`, which this file tells operators to come
  * back to). It runs the SAME probe from the SAME container, so the two can never
  * disagree about whether the channel works.
  */
@@ -464,7 +464,7 @@ export async function verifyHostChannel(
       chalk.dim(
         `\n${INDENT}Couldn't check the host channel from the api container` +
           `${probe.detail ? ` (${probe.detail})` : ""}.\n` +
-          `${INDENT}Verify it later with \`openship doctor\`.\n`,
+          `${INDENT}Verify it later with \`kovalio doctor\`.\n`,
       ),
     );
     return { status: "skipped", code: "unavailable" };
@@ -515,7 +515,7 @@ export async function verifyHostChannel(
   if (!manager.supported) return offerOnly(manager.reason);
   if (!firewallPersists(firewall)) {
     return offerOnly(
-      `Openship won't add this ${firewall} rule for you: it lives in the running ruleset ` +
+      `Kovalio won't add this ${firewall} rule for you: it lives in the running ruleset ` +
         `only, so it would not survive a reboot unless something saves it — and where that ` +
         `is depends on this box. A rule that quietly disappears is worse than one you ` +
         `installed knowing where it lives.`,
@@ -536,7 +536,7 @@ export async function verifyHostChannel(
         `\n${INDENT}Left the firewall alone — apply the rule above when you're ready.\n` +
           (deps.interactive
             ? ""
-            : `${INDENT}To have \`openship up\` add it for you: --open-host-firewall\n`),
+            : `${INDENT}To have \`kovalio up\` add it for you: --open-host-firewall\n`),
       ) + blockedTail(),
     );
     return { status: "blocked", code: probe.code, rule };

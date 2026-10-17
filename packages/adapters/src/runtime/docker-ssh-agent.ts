@@ -1,3 +1,4 @@
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import net from "node:net";
 import type { Duplex } from "node:stream";
 
@@ -14,21 +15,18 @@ import {
 import type { SshConfig, CommandExecutor } from "../types";
 import type { DockerConnectionOptions } from "./docker-transport";
 import { safeErrorMessage, withTimeout } from "@repo/core";
+import { SystemSshExecutor } from "../system/system-ssh-executor";
 
 const DEFAULT_REMOTE_DOCKER_SOCKET_PATH = "/var/run/docker.sock";
 const resolvedDockerSocketPathCache = new WeakMap<DockerConnectionOptions, Promise<string>>();
 
-// One-time streamlocal capability probe per bridge. Short so the Bun-compiled
-// desktop (where streamlocal hangs) falls through to dial-stdio quickly instead
-// of stalling behind the 25s reachability cap on every connection.
-const STREAMLOCAL_PROBE_TIMEOUT_MS = 8_000;
 // Per-CHANNEL data-flow verification for a real bridge request (see
-// `bridgeClient`). The one-time probe above only proves the FIRST channel on a
-// connection can move data; some sshd/ssh2 combinations then open every later
-// channel "dead" (open resolves, no byte ever crosses). Bound both the open and
-// the first-byte wait with this — deliberately short so most of the caller's
-// reachability budget (e.g. the 25s migration-scan cap) is left for the
-// dial-stdio fallback to actually complete when a channel proves dead.
+// `bridgeClient`) and for the one-time capability probe. The probe only proves
+// the FIRST channel on a connection can move data; some sshd/ssh2 combinations
+// then open every later channel "dead" (open resolves, no byte ever crosses).
+// Bound both the open and the first-byte wait with this — deliberately short so
+// most of the caller's reachability budget (e.g. the 25s migration-scan cap) is
+// left for the dial-stdio fallback to complete when a channel proves dead.
 const STREAMLOCAL_DATA_VERIFY_TIMEOUT_MS = 3_000;
 // How long a dial-stdio channel may say nothing before we commit the socket to it anyway.
 // NOT a verification gate — there is no transport left to fall back to. It is a REPORTING
@@ -55,6 +53,10 @@ function toSshConfig(opts: DockerConnectionOptions): SshConfig {
     privateKey: opts.privateKey,
     privateKeyPassphrase: opts.privateKeyPassphrase,
     sshAgent: opts.sshAgent,
+    sshTransport: opts.sshTransport,
+    sshJumpHost: opts.sshJumpHost,
+    sshArgs: opts.sshArgs,
+    useSystemSsh: opts.useSystemSsh,
   };
 }
 
@@ -86,7 +88,7 @@ const DOCKER_SOCKET_DISCOVERY_SCRIPT = [
   "set -eu",
   'uid="$(id -u 2>/dev/null || printf 0)"',
   'printf "%s\\n" "/var/run/docker.sock" "/run/docker.sock" "/run/podman/podman.sock" "/run/user/$uid/docker.sock" "$HOME/.docker/run/docker.sock" | while IFS= read -r candidate; do if [ -S "$candidate" ]; then printf "%s\\n" "$candidate"; fi; done',
-  'find /run/user -maxdepth 2 -type s \\( -name docker.sock -o -name podman.sock \\) -print 2>/dev/null || true',
+  "find /run/user -maxdepth 2 -type s \\( -name docker.sock -o -name podman.sock \\) -print 2>/dev/null || true",
   'for dir in /run /var/run "$HOME/.docker/run"; do',
   '  if [ -d "$dir" ]; then',
   '    find "$dir" -maxdepth 3 -type s \\( -name docker.sock -o -name podman.sock \\) -print 2>/dev/null || true',
@@ -116,12 +118,16 @@ async function discoverRemoteDockerSocketPathsWithExecutor(
   return normalizeSocketPathLines(output.split(/\r?\n/));
 }
 
-async function discoverRemoteDockerSocketPaths(
-  opts: DockerConnectionOptions,
-): Promise<string[]> {
+async function discoverRemoteDockerSocketPaths(opts: DockerConnectionOptions): Promise<string[]> {
   // Use pooled executor when available - no extra SSH connection needed
   if (opts.executor) {
     return discoverRemoteDockerSocketPathsWithExecutor(opts.executor);
+  }
+
+  if (opts.useSystemSsh) {
+    const executor = new SystemSshExecutor(toSshConfig(opts));
+    try { return await discoverRemoteDockerSocketPathsWithExecutor(executor); }
+    finally { await executor.dispose(); }
   }
 
   let conn: StreamLocalCapableClient | null = null;
@@ -134,9 +140,7 @@ async function discoverRemoteDockerSocketPaths(
   }
 }
 
-async function resolveRemoteDockerSocketPath(
-  opts: DockerConnectionOptions,
-): Promise<string> {
+async function resolveRemoteDockerSocketPath(opts: DockerConnectionOptions): Promise<string> {
   const configuredSocketPath = getConfiguredDockerSocketPath(opts);
   if (configuredSocketPath) {
     return configuredSocketPath;
@@ -157,7 +161,8 @@ async function resolveRemoteDockerSocketPath(
   // below, and a concurrent caller holding this same promise still gets the default.
   const pendingPath = discoverRemoteDockerSocketPaths(opts).then(
     (paths) => paths[0] ?? DEFAULT_REMOTE_DOCKER_SOCKET_PATH,
-    () => {
+    (diagnosticFailure) => {
+      observeCaughtError(diagnosticFailure, "adapters/runtime/docker-ssh-agent");
       resolvedDockerSocketPathCache.delete(opts);
       return DEFAULT_REMOTE_DOCKER_SOCKET_PATH;
     },
@@ -196,11 +201,13 @@ async function openStreamlocalUpstream(opts: DockerConnectionOptions): Promise<D
     return opts.executor.forwardUnixSocket(socketPath);
   }
 
+  if (opts.useSystemSsh) throw new Error("This connection uses Docker's OpenSSH command transport.");
+
   const client: StreamLocalCapableClient = await connectSshClient(toSshConfig(opts));
   try {
     const channel = await openSshUnixSocket(client, socketPath);
     channel.once("close", () => client.end());
-    channel.on("error", () => client.end());
+    channel.on("error", (eventDiagnosticError: unknown) => { observeCaughtError(eventDiagnosticError, "adapters/runtime/docker-ssh-agent"); return client.end(); });
     return channel;
   } catch (error) {
     client.end();
@@ -236,7 +243,8 @@ function respondBadGateway(client: net.Socket, reason: string): void {
         "\r\n" +
         body,
     );
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/runtime/docker-ssh-agent");
     // Peer already gone — nothing to tell anyone.
     client.destroy();
   }
@@ -266,7 +274,7 @@ function pipeThrough(
   // but this file documents three Bun-only stream divergences and an unanswered request
   // hanging is worse than a duplicate attempt — `respondBadGateway` is idempotent
   // (`writableEnded` short-circuits it), so the `close` path staying as-is costs nothing.
-  upstream.on("error", () => {
+  upstream.on("error", (eventDiagnosticError: unknown) => { observeCaughtError(eventDiagnosticError, "adapters/runtime/docker-ssh-agent");
     if (!answered) respondBadGateway(client, handoff.unansweredReason());
     upstream.destroy();
   });
@@ -317,10 +325,7 @@ function pipeThrough(
  * and `unshift`-then-`pipe` proved unreliable under the Bun runtime (the byte was silently
  * dropped).
  */
-type FirstByte =
-  | { kind: "data"; chunk: Buffer }
-  | { kind: "closed" }
-  | { kind: "silent" };
+type FirstByte = { kind: "data"; chunk: Buffer } | { kind: "closed" } | { kind: "silent" };
 
 function awaitFirstByte(upstream: Duplex, ms: number): Promise<FirstByte> {
   return new Promise((resolve) => {
@@ -331,7 +336,17 @@ function awaitFirstByte(upstream: Duplex, ms: number): Promise<FirstByte> {
       upstream.removeListener("close", onFail);
       resolve(outcome);
     };
-    const onData = (chunk: Buffer) => finish({ kind: "data", chunk });
+    const onData = (chunk: Buffer) => {
+      // Removing the last `data` listener does NOT put a Node/Bun readable back
+      // into paused mode. Without this pause the SSH channel remains flowing
+      // until the promise continuation installs `pipeThrough`, so a fast Docker
+      // response can discard every chunk after the first one in that tiny gap.
+      // Docker's SSH channel commonly emits 32 KiB chunks; losing the second
+      // chunk leaves dockerode waiting forever for the advertised Content-Length.
+      // `pipe()` resumes the source when the caller commits the channel.
+      upstream.pause();
+      finish({ kind: "data", chunk });
+    };
     const onFail = () => finish({ kind: "closed" });
     const timer = setTimeout(() => finish({ kind: "silent" }), ms);
     upstream.on("data", onData);
@@ -366,9 +381,9 @@ function sentence(text: string): string {
 }
 
 /** The message dockerode's caller ends up reading. `cause` is the part we actually know. */
-function bridgeFailureReason(opts: DockerConnectionOptions, cause: string): string {
+function bridgeFailureReason(opts: DockerConnectionOptions, cause: string, dockerHint = true): string {
   const host = opts.host?.trim() || "the remote host";
-  return `Could not reach the Docker daemon on ${host} over SSH: ${sentence(cause)} ${BRIDGE_FAILURE_HINT}`;
+  return `Could not reach the Docker daemon on ${host} over SSH: ${sentence(cause)}${dockerHint ? ` ${BRIDGE_FAILURE_HINT}` : ""}`;
 }
 
 /**
@@ -382,7 +397,8 @@ function upstreamClosedReason(
 ): string {
   return bridgeFailureReason(
     opts,
-    dialStdioDiagnostics(upstream) || `the ${transport} channel closed before answering the request`,
+    dialStdioDiagnostics(upstream) ||
+      `the ${transport} channel closed before answering the request`,
   );
 }
 
@@ -538,6 +554,7 @@ export function createDockerSshBridge(opts: DockerConnectionOptions): DockerSshB
   // Dedicated SSH client for the ephemeral dial-stdio path (no pooled executor).
   // Reused across channels for the bridge's lifetime; closed in close().
   let dialClient: StreamLocalCapableClient | null = null;
+  let systemExecutor: SystemSshExecutor | null = null;
   // Set once a streamlocal channel opens but proves dead (see `bridgeClient`):
   // some sshd/ssh2 combinations only reliably service the FIRST channel on a
   // connection, so once the pooled one has shown that, every dial-stdio channel
@@ -557,6 +574,10 @@ export function createDockerSshBridge(opts: DockerConnectionOptions): DockerSshB
     // attached it; any other executor implementation gets its error floor here.
     if (!forceEphemeral && opts.executor?.openDockerDialStdio) {
       return attachDialStdioDiagnostics(await opts.executor.openDockerDialStdio());
+    }
+    if (opts.useSystemSsh) {
+      systemExecutor ??= new SystemSshExecutor(toSshConfig(opts));
+      return systemExecutor.openDockerDialStdio();
     }
     // Ephemeral path: one dedicated SSH client, channel-multiplexed. Reset the
     // handle if the connection drops so the next call reconnects.
@@ -641,22 +662,23 @@ export function createDockerSshBridge(opts: DockerConnectionOptions): DockerSshB
     try {
       probe = await withTimeout(
         openStreamlocalUpstream(opts),
-        STREAMLOCAL_PROBE_TIMEOUT_MS,
-        `streamlocal open timed out after ${STREAMLOCAL_PROBE_TIMEOUT_MS / 1000}s`,
+        STREAMLOCAL_DATA_VERIFY_TIMEOUT_MS,
+        `streamlocal open timed out after ${STREAMLOCAL_DATA_VERIFY_TIMEOUT_MS / 1000}s`,
       );
       const stream = probe;
       const flowed = await new Promise<boolean>((resolve) => {
-        const timer = setTimeout(() => resolve(false), STREAMLOCAL_PROBE_TIMEOUT_MS);
+        const timer = setTimeout(() => resolve(false), STREAMLOCAL_DATA_VERIFY_TIMEOUT_MS);
         const settle = (ok: boolean) => {
           clearTimeout(timer);
           resolve(ok);
         };
         stream.once("data", () => settle(true)); // any byte back = data flows
-        stream.once("error", () => settle(false));
+        stream.once("error", (eventDiagnosticError: unknown) => { observeCaughtError(eventDiagnosticError, "adapters/runtime/docker-ssh-agent"); return settle(false); });
         stream.once("close", () => settle(false));
         try {
           stream.write("GET /_ping HTTP/1.0\r\nHost: localhost\r\n\r\n");
-        } catch {
+        } catch (diagnosticFailure) {
+          observeCaughtError(diagnosticFailure, "adapters/runtime/docker-ssh-agent");
           settle(false);
         }
       });
@@ -664,13 +686,13 @@ export function createDockerSshBridge(opts: DockerConnectionOptions): DockerSshB
         console.log(`[docker-ssh] upstream=streamlocal (${opts.host ?? "?"})`);
         return "streamlocal";
       }
-      console.warn(
+      errorDiagnostics.warn("adapters/runtime/docker-ssh-agent",
         `[docker-ssh] upstream=dial-stdio (${opts.host ?? "?"}) — streamlocal opened but no data flowed (Bun/ssh2)`,
       );
       return "dialstdio";
     } catch (err) {
-      console.warn(
-        `[docker-ssh] upstream=dial-stdio (${opts.host ?? "?"}) — streamlocal unavailable: ${safeErrorMessage(err)}`,
+      errorDiagnostics.warn("adapters/runtime/docker-ssh-agent",
+        `[docker-ssh] upstream=dial-stdio (${opts.host ?? "?"}) — streamlocal unavailable: ${safeErrorMessage(err)}`, err,
       );
       return "dialstdio";
     } finally {
@@ -691,7 +713,7 @@ export function createDockerSshBridge(opts: DockerConnectionOptions): DockerSshB
     client: net.Socket,
     reason: string,
   ): Promise<void> => {
-    console.warn(
+    errorDiagnostics.warn("adapters/runtime/docker-ssh-agent",
       `[docker-ssh] streamlocal unusable (${opts.host ?? "?"}): ${reason} — ` +
         "downgrading this bridge to dial-stdio (fresh connection) and replaying the buffered request.",
     );
@@ -731,6 +753,7 @@ export function createDockerSshBridge(opts: DockerConnectionOptions): DockerSshB
           `channel open timed out after ${STREAMLOCAL_DATA_VERIFY_TIMEOUT_MS / 1000}s`,
         );
       } catch (err) {
+        observeCaughtError(err, "adapters/runtime/docker-ssh-agent");
         await downgradeToDialStdio(capture, client, safeErrorMessage(err));
         return;
       }
@@ -775,8 +798,12 @@ export function createDockerSshBridge(opts: DockerConnectionOptions): DockerSshB
           : "channel opened but no data flowed",
       );
     } catch (err) {
-      console.warn(`[docker-ssh] bridge client failed (${opts.host ?? "?"}): ${safeErrorMessage(err)}`);
-      capture.fail(bridgeFailureReason(opts, safeErrorMessage(err)));
+      errorDiagnostics.warn("adapters/runtime/docker-ssh-agent",
+        `[docker-ssh] bridge client failed (${opts.host ?? "?"}): ${safeErrorMessage(err)}`, err,
+      );
+      // No Docker response was obtained. An SSH connection/authentication failure
+      // already explains the problem; it is not evidence of a missing daemon.
+      capture.fail(bridgeFailureReason(opts, safeErrorMessage(err), false));
     }
   };
 
@@ -789,7 +816,7 @@ export function createDockerSshBridge(opts: DockerConnectionOptions): DockerSshB
     // destroy — in that gap would be an unhandled 'error' event that crashes the
     // whole API process; one dead Docker request must never do that. Real
     // teardown still flows through close/pipeThrough; this only stops the throw.
-    client.on("error", () => {});
+    client.on("error", (eventDiagnosticError: unknown) => { observeCaughtError(eventDiagnosticError, "adapters/runtime/docker-ssh-agent"); });
     client.once("close", () => clients.delete(client));
     void bridgeClient(client);
   });
@@ -798,7 +825,9 @@ export function createDockerSshBridge(opts: DockerConnectionOptions): DockerSshB
   // permanent floor an accept-time error (EMFILE/ENFILE under fd pressure) would be
   // an unhandled 'error' event and crash the process. Log and keep serving.
   server.on("error", (err) => {
-    console.warn(`[docker-ssh] bridge listener error (${opts.host ?? "?"}): ${safeErrorMessage(err)}`);
+    errorDiagnostics.warn("adapters/runtime/docker-ssh-agent",
+      `[docker-ssh] bridge listener error (${opts.host ?? "?"}): ${safeErrorMessage(err)}`,
+    );
   });
 
   return {
@@ -827,6 +856,8 @@ export function createDockerSshBridge(opts: DockerConnectionOptions): DockerSshB
       clients.clear();
       dialClient?.end();
       dialClient = null;
+      void systemExecutor?.dispose();
+      systemExecutor = null;
       server.close();
     },
   };

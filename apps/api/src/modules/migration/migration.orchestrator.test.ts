@@ -4,7 +4,7 @@ import {
   planResumeTransfer,
   describeCutoverRemainder,
   type PendingItem,
-} from "./migration.orchestrator";
+} from "@repo/platform/engine/modules/migration/migration.orchestrator";
 
 describe("resolveScannedContainerId", () => {
   it("returns the scanned container id for a service that was discovered", () => {
@@ -22,9 +22,9 @@ describe("resolveScannedContainerId", () => {
 
 describe("planResumeTransfer", () => {
   const pendingVolume = (over: Partial<PendingItem> = {}): PendingItem => ({
-    key: "volume:openship-chatwoot-postgres-data",
+    key: "volume:kovalio-chatwoot-postgres-data",
     kind: "volume",
-    source: "openship-chatwoot-postgres-data",
+    source: "kovalio-chatwoot-postgres-data",
     reason: "error",
     ...over,
   });

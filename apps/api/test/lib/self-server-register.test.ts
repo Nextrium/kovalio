@@ -17,14 +17,14 @@ const resolveInstancePublicIp = vi.hoisted(() => vi.fn(async () => "203.0.113.9"
 const hostControlDisabled = vi.hoisted(() => vi.fn(() => false));
 
 vi.mock("@repo/db", () => ({ repos: { server: serverRepo } }));
-vi.mock("../../src/lib/box-org", () => ({ boxOwningOrgId }));
-vi.mock("../../src/lib/server-target", () => ({ resolveInstancePublicIp }));
+vi.mock("@repo/platform/engine/lib/box-org", () => ({ boxOwningOrgId }));
+vi.mock("@repo/platform/engine/lib/server-target", () => ({ resolveInstancePublicIp }));
 vi.mock("@repo/adapters", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@repo/adapters")>();
   return { ...actual, hostControlDisabled };
 });
 
-import { ensureLocalServer } from "../../src/lib/startup/self-server";
+import { ensureLocalServer } from "@repo/platform/engine/lib/startup/self-server";
 
 const readSrc = async (rel: string) =>
   (await import("node:fs")).readFileSync(new URL(rel, import.meta.url), "utf8");
@@ -35,14 +35,14 @@ beforeEach(() => {
   serverRepo.findLocal.mockResolvedValue(null);
   serverRepo.create.mockImplementation(async (data) => ({ id: "srv_1", ...data }));
   serverRepo.update.mockResolvedValue(undefined);
-  delete process.env.OPENSHIP_HOST_SSH_USER;
+  delete process.env.KOVALIO_HOST_SSH_USER;
   boxOwningOrgId.mockResolvedValue("org_usr_1");
   resolveInstancePublicIp.mockResolvedValue("203.0.113.9");
 });
 
 afterEach(() => {
   delete process.env.SERVER_IP;
-  delete process.env.OPENSHIP_HOST_SSH_USER;
+  delete process.env.KOVALIO_HOST_SSH_USER;
 });
 
 describe("ensureLocalServer", () => {
@@ -59,9 +59,9 @@ describe("ensureLocalServer", () => {
   });
 
   // The row's ssh_user must match the account the host channel logs in as — the CLI
-  // writes OPENSHIP_HOST_SSH_USER for the local channel (issue #489). Default "root".
-  it("stamps the record's ssh_user from OPENSHIP_HOST_SSH_USER", async () => {
-    process.env.OPENSHIP_HOST_SSH_USER = "ubuntu";
+  // writes KOVALIO_HOST_SSH_USER for the local channel (issue #489). Default "root".
+  it("stamps the record's ssh_user from KOVALIO_HOST_SSH_USER", async () => {
+    process.env.KOVALIO_HOST_SSH_USER = "ubuntu";
     await ensureLocalServer();
     expect(serverRepo.create).toHaveBeenCalledWith(expect.objectContaining({ sshUser: "ubuntu" }));
   });
@@ -69,7 +69,7 @@ describe("ensureLocalServer", () => {
   // Startup consistency check: a pre-existing row whose ssh_user drifted from the env
   // user actually dialed is reconciled in place (never a second row).
   it("reconciles a drifted ssh_user on the existing row", async () => {
-    process.env.OPENSHIP_HOST_SSH_USER = "ubuntu";
+    process.env.KOVALIO_HOST_SSH_USER = "ubuntu";
     serverRepo.findLocal.mockResolvedValue({ id: "srv_existing", isLocal: true, sshUser: "root" });
     const row = await ensureLocalServer();
     expect(serverRepo.update).toHaveBeenCalledWith("srv_existing", { sshUser: "ubuntu" });
@@ -169,13 +169,13 @@ describe("wiring", () => {
   });
 
   it("GET /servers self-heals, so no install order can show an empty list", async () => {
-    const src = await readSrc("../../src/modules/system/servers.controller.ts");
-    const list = src.slice(src.indexOf("export async function listServers"));
+    const src = await readSrc("../../../../packages/platform/src/engine/modules/system/server.operations.ts");
+    const list = src.slice(src.indexOf("async function listServers"));
     expect(list.indexOf("ensureLocalServer()")).toBeLessThan(list.indexOf("listByOrganization"));
   });
 
   it("createServer adopts through the primitive — no second creation site", async () => {
-    const src = await readSrc("../../src/modules/system/servers.controller.ts");
+    const src = await readSrc("../../../../packages/platform/src/engine/modules/system/server.operations.ts");
     expect(src).not.toContain("isLocal: true");
     expect(src).toContain("ensureLocalServer({ name:");
   });

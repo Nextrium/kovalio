@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# Release smoke gate for the `openship` CLI.
+# Release smoke gate for the `kovalio` CLI.
 #
 # The unit/e2e suite exercises command LOGIC against the SOURCE with mocks — it
 # never runs the published tsup BUNDLE, never goes through the shebang, and never
 # boots a real server. Every recent CLI break slipped through that gap:
 #
 #   0.4.4  "Dynamic require of events"  — bundle-only, and hidden under Bun
-#   #257   server exits: OPENSHIP_AUTH_MODE required — nothing booted the server
+#   #257   server exits: KOVALIO_AUTH_MODE required — nothing booted the server
 #   #261   `env: node: not found`       — shebang bypassed; no no-Node box tested
 #
 # This gate runs the ACTUAL built artifact across the runtimes and install
@@ -20,8 +20,9 @@
 set -u
 
 CLI_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-DIST="$CLI_DIR/dist/index.js"
-SERVER="$CLI_DIR/dist/server/index.js"
+PACKAGE_DIR="${SMOKE_PACKAGE_DIR:-$CLI_DIR/../../packages/kovalio}"
+DIST="$PACKAGE_DIR/dist/index.js"
+SERVER="$PACKAGE_DIR/dist/server/index.js"
 FAILED=0
 VER_RE='^[0-9]+\.[0-9]+\.[0-9]+'
 
@@ -32,7 +33,7 @@ group() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 # ── build ────────────────────────────────────────────────────────────────
 if [ "${SMOKE_SKIP_BUILD:-}" != "1" ]; then
   group "Building CLI (dist + staged server)…"
-  (cd "$CLI_DIR" && bun run build) >/dev/null 2>&1 || { echo "build failed"; exit 1; }
+  (cd "$PACKAGE_DIR" && bun run build) >/dev/null 2>&1 || { echo "build failed"; exit 1; }
 fi
 [ -f "$DIST" ] || { echo "no dist/index.js — build the CLI first"; exit 1; }
 
@@ -90,20 +91,20 @@ else
 fi
 
 # ── C5: real server boot (catches an env the CLI forgets to pass — #257) ────
-# Runs the REAL `openship up` env-building path against the REAL bundled server.
-# --no-ui keeps it offline (no dashboard download); --data-dir + OPENSHIP_HOME
+# Runs the REAL `kovalio up` env-building path against the REAL bundled server.
+# --no-ui keeps it offline (no dashboard download); --data-dir + KOVALIO_HOME
 # isolate it from any dev instance. `up` polls /api/health itself, so a server
-# that exits on a missing env var (e.g. OPENSHIP_AUTH_MODE) never goes healthy.
+# that exits on a missing env var (e.g. KOVALIO_AUTH_MODE) never goes healthy.
 if [ "${SMOKE_SKIP_BOOT:-}" = "1" ]; then
   group "C5 — server boot probe (SKIPPED via SMOKE_SKIP_BOOT=1)"
 elif [ ! -f "$SERVER" ]; then
   group "C5 — server boot probe"
   fail "no staged server bundle at dist/server/index.js"
 else
-  group "C5 — real server boot (openship up --foreground --no-ui)"
+  group "C5 — real server boot (kovalio up --foreground --no-ui)"
   PORT=$(( 40000 + (RANDOM % 20000) ))
   WORK="$(mktemp -d)"; LOG="$WORK/up.log"
-  OPENSHIP_HOME="$WORK/home" node "$DIST" up --foreground --no-ui \
+  KOVALIO_HOME="$WORK/home" node "$DIST" up --foreground --no-ui \
     --port "$PORT" --data-dir "$WORK/data" >"$LOG" 2>&1 &
   UP_PID=$!
   disown "$UP_PID" 2>/dev/null || true    # no "Terminated" job-control noise on kill
@@ -113,11 +114,11 @@ else
     kill -0 "$UP_PID" 2>/dev/null || break     # CLI exited early = boot failed
     sleep 0.5
   done
-  # Tear down the CLI and its detached API child. `openship stop` (same
-  # OPENSHIP_HOME) reaps the tracked server — the child carries the data dir in
+  # Tear down the CLI and its detached API child. `kovalio stop` (same
+  # KOVALIO_HOME) reaps the tracked server — the child carries the data dir in
   # its ENV, not argv, so pkill couldn't target it.
   kill "$UP_PID" 2>/dev/null
-  OPENSHIP_HOME="$WORK/home" node "$DIST" stop >/dev/null 2>&1 || true
+  KOVALIO_HOME="$WORK/home" node "$DIST" stop >/dev/null 2>&1 || true
   if [ "$ok" -eq 1 ]; then
     pass "API became healthy on :$PORT"
   else
@@ -125,8 +126,8 @@ else
     tail -n 25 "$LOG" | sed 's/^/      /'
   fi
   # Belt-and-suspenders: the #257 signature must never appear.
-  if grep -q "OPENSHIP_AUTH_MODE is required" "$LOG" 2>/dev/null; then
-    fail "server refused to boot: OPENSHIP_AUTH_MODE not declared by the CLI (#257)"
+  if grep -q "KOVALIO_AUTH_MODE is required" "$LOG" 2>/dev/null; then
+    fail "server refused to boot: KOVALIO_AUTH_MODE not declared by the CLI (#257)"
   fi
   rm -rf "$WORK"
 fi
@@ -138,10 +139,10 @@ fi
 # on a user's box, and that the payload carries zero native .node addons (the
 # reason the payload is arch-independent and built once).
 group "C6 — extracted payload (tarball install layout)"
-PAYLOAD="$(ls -1t "$CLI_DIR"/.cli-payload/openship-cli-*.tar.gz 2>/dev/null | head -n1)"
+PAYLOAD="$(ls -1t "$CLI_DIR"/.cli-payload/kovalio-cli-*.tar.gz 2>/dev/null | head -n1)"
 if [ -z "$PAYLOAD" ] && [ "${SMOKE_PAYLOAD:-}" = "1" ]; then
   (cd "$CLI_DIR" && bun run build:payload) >/dev/null 2>&1 || fail "build:payload failed"
-  PAYLOAD="$(ls -1t "$CLI_DIR"/.cli-payload/openship-cli-*.tar.gz 2>/dev/null | head -n1)"
+  PAYLOAD="$(ls -1t "$CLI_DIR"/.cli-payload/kovalio-cli-*.tar.gz 2>/dev/null | head -n1)"
 fi
 if [ -z "$PAYLOAD" ]; then
   printf '  \033[33m—\033[0m %s\n' "no payload tarball — build it with: bun run --cwd apps/cli build:payload (or SMOKE_PAYLOAD=1)"
@@ -171,15 +172,15 @@ else
 fi
 
 # ── C7: npm `bin` shebang is `node`, not `sh` (Windows launcher — #460) ─────
-# npm reads the shebang of the `bin` file to generate openship.cmd/.ps1 on
+# npm reads the shebang of the `bin` file to generate kovalio.cmd/.ps1 on
 # Windows. dist/index.js is a `#!/usr/bin/env sh` polyglot on purpose; if it
 # were the `bin`, npm emits `sh.exe` calls that break every Windows install.
 # The `bin` must be dist/node-entry.js with a plain `#!/usr/bin/env node`.
 group "C7 — npm bin shebang (Windows launcher regression, #460)"
-NODE_ENTRY="$CLI_DIR/dist/node-entry.js"
-BIN_FIELD="$(cd "$CLI_DIR" && node -e 'process.stdout.write(require("./package.json").bin.openship||"")' 2>/dev/null)"
+NODE_ENTRY="$PACKAGE_DIR/dist/node-entry.js"
+BIN_FIELD="$(cd "$PACKAGE_DIR" && node -e 'process.stdout.write(require("./package.json").bin.kovalio||"")' 2>/dev/null)"
 if [ "$BIN_FIELD" != "./dist/node-entry.js" ]; then
-  fail "package.json bin.openship is '$BIN_FIELD' (expected ./dist/node-entry.js — npm would read index.js's sh polyglot)"
+  fail "package.json bin.kovalio is '$BIN_FIELD' (expected ./dist/node-entry.js — npm would read index.js's sh polyglot)"
 elif [ ! -f "$NODE_ENTRY" ]; then
   fail "no dist/node-entry.js — tsup Bundle 2 didn't emit the npm bin target"
 elif ! head -n1 "$NODE_ENTRY" | grep -qx '#!/usr/bin/env node'; then

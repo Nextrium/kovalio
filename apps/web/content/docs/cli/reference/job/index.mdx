@@ -1,0 +1,146 @@
+---
+title: job
+description: Commands, arguments, and options for kovalio job.
+cliGroup: kovalio job
+---
+
+See the [workflow guide](/docs/guides/jobs) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio job
+
+Manage self-hosted jobs, schedules, and run logs
+
+```text
+kovalio job|jobs [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list`](/docs/cli/reference/job#kovalio-job-list) | List system and custom jobs |
+| [`get <key>`](/docs/cli/reference/job#kovalio-job-get) | Show a job's configuration and recent runs |
+| [`create [options]`](/docs/cli/reference/job#kovalio-job-create) | Create a scheduled command or saved workflow job |
+| [`update [options] <key>`](/docs/cli/reference/job#kovalio-job-update) | Update a job; built-ins accept schedule and enabled changes |
+| [`delete\|rm [options] <key>`](/docs/cli/reference/job#kovalio-job-delete) | Delete a custom job (system jobs cannot be deleted) |
+| [`run [options] <key>`](/docs/cli/reference/job#kovalio-job-run) | Run a job now; custom jobs return a run ID |
+| [`runs [options] <key>`](/docs/cli/reference/job#kovalio-job-runs) | List a job's run history |
+| [`logs [options] <runId>`](/docs/cli/reference/job#kovalio-job-logs) | Show stored run output, or the full run in JSON mode |
+| [`events`](/docs/cli/reference/job#kovalio-job-events) | List event types available as job triggers |
+| [`backup-schedules`](/docs/cli/reference/job#kovalio-job-backup-schedules) | List scheduled backups with their next and last runs |
+
+## kovalio job backup-schedules
+
+List scheduled backups with their next and last runs
+
+```text
+kovalio job backup-schedules [options]
+```
+
+## kovalio job create
+
+Create a scheduled command or saved workflow job
+
+```text
+kovalio job create [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--name <name>` | Job label |
+| `--server <id>` | Target server ID |
+| `--command <command>` | Shell command to execute on the server |
+| `--schedule <type>` | Schedule type (choices: "recurring", "once", "manual") |
+| `--cron <expression>` | Five-field cron expression |
+| `--at <iso>` | Run time for a once schedule |
+| `--file <path>` | JSON API body (workflowId/inputs or command settings); flags override file values |
+
+## kovalio job delete
+
+Delete a custom job (system jobs cannot be deleted)
+
+```text
+kovalio job delete|rm [options] <key>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm deletion |
+
+## kovalio job events
+
+List event types available as job triggers
+
+```text
+kovalio job events [options]
+```
+
+## kovalio job get
+
+Show a job's configuration and recent runs
+
+```text
+kovalio job get [options] <key>
+```
+
+## kovalio job list
+
+List system and custom jobs
+
+```text
+kovalio job list [options]
+```
+
+## kovalio job logs
+
+Show stored run output, or the full run in JSON mode
+
+```text
+kovalio job logs [options] <runId>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-f, --follow` | Stream output until completion; exit nonzero on failure |
+
+## kovalio job run
+
+Run a job now; custom jobs return a run ID
+
+```text
+kovalio job run [options] <key>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-f, --follow` | Stream the custom run until completion |
+
+## kovalio job runs
+
+List a job's run history
+
+```text
+kovalio job runs [options] <key>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--limit <n>` | Maximum number of runs (default 50) |
+
+## kovalio job update
+
+Update a job; built-ins accept schedule and enabled changes
+
+```text
+kovalio job update [options] <key>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--name <name>` | Job label |
+| `--server <id>` | Target server ID |
+| `--command <command>` | Shell command to execute on the server |
+| `--schedule <type>` | Schedule type (choices: "recurring", "once", "manual") |
+| `--cron <expression>` | Five-field cron expression |
+| `--at <iso>` | Run time for a once schedule |
+| `--file <path>` | JSON API body (workflowId/inputs or command settings); flags override file values |
+| `--enabled` | Enable the job |
+| `--no-enabled` | Disable the job |

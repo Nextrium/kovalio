@@ -1,5 +1,5 @@
 /**
- * Restore an Openship DB dump into the current database.
+ * Restore an Kovalio DB dump into the current database.
  *
  *   bun --cwd packages/db db:restore --in backup.json
  *   bun --cwd packages/db db:restore --in backup.json --wipe-first
@@ -16,12 +16,12 @@
  *     dumps.
  *
  * Used by the path-A wizard (operator's VPS receives the dump and
- * restores it during `openship migrate-to`) and the reverse-migration
+ * restores it during `kovalio migrate-to`) and the reverse-migration
  * flow (download from remote, restore locally).
  */
 
 import { readFileSync } from "node:fs";
-import { restoreSubgraph, type DatabaseDump } from "../src/dump";
+import type { DatabaseDump } from "../src/dump";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -75,6 +75,9 @@ async function main() {
   // as NULL even though they were valid ciphertext on dump. Re-link those
   // secrets via the app (settings / env-var editors / backup destinations)
   // after restore. There is intentionally no flag to disable this.
+  // Source-only command: use this installed PGlite package's own assets.
+  delete process.env.KOVALIO_PGLITE_ASSETS_DIR;
+  const { restoreSubgraph } = await import("../src/dump");
   await restoreSubgraph(dump, { mode, ...(remapOrgId ? { remapOrgId } : {}) });
 
   console.error("[db:restore] done.");

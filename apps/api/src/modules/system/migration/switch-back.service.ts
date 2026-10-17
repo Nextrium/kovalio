@@ -40,13 +40,14 @@
  * data movement and returns the settings patch + result.
  */
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import {
   restoreSubgraph,
   type DatabaseDump,
 } from "@repo/db";
-import { cloudClient } from "../../../lib/cloud/client";
-import { sshManager } from "../../../lib/ssh-manager";
-import { env } from "../../../config/env";
+import { cloudClient } from "@repo/platform/engine/lib/cloud/client";
+import { sshManager } from "@repo/platform/engine/lib/ssh-manager";
+import { env } from "@repo/platform/engine/config/env";
 import { stopTunnelAgent, teardownTunnel } from "../../tunneling";
 import { withMigration, type MigrationVariant } from "./with-migration";
 import type { Context } from "hono";
@@ -98,23 +99,23 @@ export class SwitchBackRemoteUnreachableError extends Error {
 
 /**
  * Path A: SSH into the operator's VPS, run db:dump on the deployed
- * openship instance, read the file back, return as a parsed dump.
+ * kovalio instance, read the file back, return as a parsed dump.
  *
  * `migrationServerId` was stamped on instance_settings during the
  * forward migration — that's our pointer to the right VPS.
  */
 async function pullDumpFromVps(serverId: string): Promise<DatabaseDump> {
   const stamp = Date.now();
-  const remoteDumpPath = `/tmp/openship-switchback-${stamp}.json`;
+  const remoteDumpPath = `/tmp/kovalio-switchback-${stamp}.json`;
   let payload: string | null = null;
 
   try {
-    // The deployed openship instance lives under
-    // /var/lib/openship/projects/openship-instance-<orgId>/current —
+    // The deployed kovalio instance lives under
+    // /var/lib/kovalio/projects/kovalio-instance-<orgId>/current —
     // same convention startWebmailDeploy uses. The org id is part
-    // of the slug; we wildcard it because there's one openship-instance
+    // of the slug; we wildcard it because there's one kovalio-instance
     // dir per VPS (single org per local install).
-    const remoteProjectDir = `/var/lib/openship/projects/openship-instance-*/current`;
+    const remoteProjectDir = `/var/lib/kovalio/projects/kovalio-instance-*/current`;
     // stripEncrypted defaults to false; switch-back wants the data
     // to come back clean (cloud session token decrypts on the local
     // host's secret), so we DO request stripped here — the operator
@@ -135,6 +136,7 @@ async function pullDumpFromVps(serverId: string): Promise<DatabaseDump> {
       await exec.exec(`rm -f ${remoteDumpPath}`);
     });
   } catch (err) {
+    observeCaughtError(err, "api/modules/system/migration/switch-back.service");
     const message = err instanceof Error ? err.message : String(err);
     throw new SwitchBackRemoteUnreachableError(message);
   }
@@ -145,6 +147,7 @@ async function pullDumpFromVps(serverId: string): Promise<DatabaseDump> {
   try {
     return JSON.parse(payload) as DatabaseDump;
   } catch (err) {
+    observeCaughtError(err, "api/modules/system/migration/switch-back.service");
     throw new SwitchBackRemoteUnreachableError(
       `dump was not valid JSON: ${err instanceof Error ? err.message : String(err)}`,
     );
@@ -246,9 +249,9 @@ export async function switchBackToSingleUser(
             // Don't fail the switch-back if the provider is unreachable —
             // the record will become orphaned but the operator's local
             // instance is back to single-user mode, which is the contract.
-            console.warn(
+            errorDiagnostics.warn("api/modules/system/migration/switch-back.service",
               "[switch-back] tunnel teardown failed:",
-              err instanceof Error ? err.message : err,
+              err instanceof Error ? err.message : err, err,
             );
           }
         }

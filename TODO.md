@@ -106,10 +106,10 @@ email + password.
 
 What's already there:
 
-- better-auth with the org plugin in `apps/api/src/lib/auth.ts`. The installed
+- better-auth with the org plugin in `packages/platform/src/engine/lib/auth.ts`. The installed
   plugin set includes **`generic-oauth`** — arbitrary OIDC/OAuth2 issuers, no new
   dependency. That's the cheap path.
-- Not `better-auth/plugins/oidc-provider` — that makes Openship *an* IdP, the
+- Not `better-auth/plugins/oidc-provider` — that makes Kovalio *an* IdP, the
   opposite direction. Per-org IdPs and SAML live in the separate
   `@better-auth/sso` package, which is **not** installed; only pull it in if
   per-org IdPs or SAML are genuinely required.
@@ -118,15 +118,12 @@ What's already there:
 
 The prerequisite nobody expects:
 
-- [ ] **The button can't just be added.** Social login is hidden on self-hosted
-      outright today — `{!selfHosted && <OAuthButtons/>}` at
-      `apps/dashboard/src/app/(auth)/login/page.tsx:312` and
-      `register/page.tsx` — because an operator with no `GITHUB_CLIENT_ID`
-      would get buttons that fail, and **nothing tells the dashboard which
-      providers are configured**. `OAuthButtons` hardcodes github+google. SSO
-      needs a server-advertised provider list (public, read-only, alongside the
-      `authMode`/`selfHosted` values `useAuthContext` already serves). That
-      endpoint doesn't exist yet and is the real first task.
+- [x] **Advertise configured login providers.** Shared system info and
+      `GET /health/env` expose `authProviders` (IDs and kinds only). The engine's
+      `auth-providers.ts` supplies the same credential predicate to Better Auth;
+      login and registration render only supported, advertised providers.
+      This completes discovery for existing GitHub/Google login. OIDC/SAML
+      integration and its account policies remain separate work.
 
 Decisions to settle before coding:
 
@@ -146,7 +143,7 @@ Decisions to settle before coding:
       (`apps/api/src/lib/auth-mode.ts`) have no login at all. SSO must be inert
       there, not a second door into a box that deliberately has none.
 - [ ] **Deprovisioning.** Removing someone from the IdP does not end their
-      Openship session or membership. `session.expiresIn` is 30 days — either
+      Kovalio session or membership. `session.expiresIn` is 30 days — either
       shorten it when SSO is on, or document the gap honestly. There's no SCIM
       and shouldn't be one for v1.
 - [ ] Gate on explicit env vars validated in `apps/api/src/config/env.ts`, and
@@ -227,9 +224,9 @@ What actually hardcodes GitHub — each is a decision, not a rename:
       already covers the generic case; GitLab releases would be a third mode.
 - [ ] **Dashboard speaks GitHub throughout**: `ServerGitHubConnect`,
       `GithubPermissionModal`, `DeployCredentialModal`, the deploy wizard's
-      import step, `ResourcePicker`. Needs a server-advertised provider list —
-      the SAME missing primitive as the SSO item above (`OAuthButtons` hardcodes
-      github+google). Build that endpoint once and both features use it.
+      import step, `ResourcePicker`. Git-provider capabilities still need a
+      server-advertised list; the existing `authProviders` field covers login
+      providers only and must not be used as a list of repository integrations.
 - [ ] **`gh` CLI as an ambient identity** (`sources/gh-cli-source.ts`,
       `github.local-auth.ts` parses `oauth_token` under `github.com:` in
       hosts.yml) has no equivalent worth matching. `glab` exists; decide
@@ -264,14 +261,14 @@ Decisions to settle before coding:
 ## Mail
 
 The end state is sketched in `apps/email/ARCHITECTURE.md` ("target state, not
-current"): openship provisions and talks to the mail server over an **HTTP admin
+current"): kovalio provisions and talks to the mail server over an **HTTP admin
 API**, and stops reaching into the box. Fold changes into that doc rather than
 writing a competing blueprint.
 
 ### Already shipped — do not re-plan it
 
 Mail is **no longer a host takeover**; it ships as an image and the API no longer
-transfers the engine tree or shells `iRedMail.sh`. `openship-mail` + a pinned
+transfers the engine tree or shells `iRedMail.sh`. `kovalio-mail` + a pinned
 `postgres:16-alpine` sidecar, launched by raw `docker run` on `--network host`
 (`infra/mail-container.ts`, `system/mail/ensure-container-mail.ts`), in the
 `docker-images.yml` matrix alongside `webmail`. Host ports, host-bind-mount state
@@ -305,11 +302,11 @@ and `/etc/letsencrypt` cert sharing are all settled there. Two consequences rema
 
 ### Standalone mail admin dashboard
 
-The admin panel is currently **inseparable from openship**:
+The admin panel is currently **inseparable from kovalio**:
 `apps/api/src/modules/mail/admin/*` drives the box over SSH and `psql`
 (`admin/psql-runner.ts` — "All vmail.* reads and writes go through this module"),
 and the UI lives at `apps/dashboard/src/app/(dashboard)/emails/`. So the mail
-server has no administration at all without an openship control plane attached —
+server has no administration at all without an kovalio control plane attached —
 we deleted iRedAdmin and put nothing self-contained in its place.
 
 Goal: mail ships as **server image + admin image**, administrable on its own.
@@ -320,13 +317,13 @@ Goal: mail ships as **server image + admin image**, administrable on its own.
       and `/admin` — which is **branding only**
       (`routes/branding-admin.ts`, token-gated by `BRANDING_ADMIN_TOKEN`). None of
       mailboxes, domains, DNS, relay, stats or test-send has a mail-side endpoint;
-      every one is still an SSH+psql call from openship. `ARCHITECTURE.md` still
+      every one is still an SSH+psql call from kovalio. `ARCHITECTURE.md` still
       states the as-built position: "There is intentionally **no public admin
       subdomain** … No HTTP admin surface to firewall, no token to rotate" — so
       this item is a reversal of a deliberate decision, and should be argued as
       one.
-- [ ] **Then openship's `/emails` becomes a client of that API**, not a second
-      implementation. (Today there is exactly ONE implementation — openship's
+- [ ] **Then kovalio's `/emails` becomes a client of that API**, not a second
+      implementation. (Today there is exactly ONE implementation — kovalio's
       SSH+psql — so the drift this warns about is prospective, not current.)
 - [ ] **Auth for the standalone case.** Mail-side auth is mailbox auth only
       ("the IMAP server is the identity provider"); there is no admin identity,
@@ -417,23 +414,26 @@ the JS asset stage also landed; the storage section below has what's left of tho
 ### A generic release phase
 
 Commands that run ONCE per deploy, after build and before cutover, failing the
-deploy on error. `queue:work`, `schedule:run`, `migrate --force`, `optimize` and
-`storage:link` appear nowhere in the tree today, so migrations, scheduled tasks
-and queued jobs silently never run.
+deploy on error.
 
-- [ ] Add release commands to the project + `openship.json`, snapshot them onto
-      the deployment, and run them from the deploy pipeline between build and
-      activate (`apps/api/src/modules/deployments/build-pipeline.ts` — the same
-      seam `deployConfig` is assembled in).
-- [ ] Laravel's set for 13.x: `migrate --force`, `optimize` (config/events/routes/
-      views), `storage:link`, and `reload` (13's umbrella for cycling long-running
-      services — supersedes `queue:restart` for deploys, also covers Reverb and
-      Octane).
-- [ ] Not the same thing as `#206` deploy hooks: those are an inbound trigger that
-      STARTS a deploy; this runs DURING one.
-- [ ] Until this exists, a stock SQLite Laravel app still needs its migrations run
-      by hand (the service terminal can do it) — a persistent volume stops data
-      LOSS, it doesn't bootstrap a schema.
+**Implemented (v1).** Optional ordered `releaseCommands` are stored on the project,
+frozen on deployment snapshots, and run by the shared engine after the candidate build
+and before activation. Configure them in the existing build wizard, `kovalio.json`, or
+API/SDK. Nothing is injected per framework.
+
+Docker uses temporary containers with the candidate image, shared runtime env/mount helpers,
+and connected-service networks. Bare links persistent paths before executing against the
+staged artifact. Failure, cancellation, or timeout prevents activation. Commands run
+outside the server's port-allocation lock, under the project's execution lease. Code
+rollbacks skip them and do not undo database changes; commands must be idempotent and
+compatible with the previous app.
+
+- [x] Shared configuration through source scans, native/HTTP SDK, and dashboard.
+- [x] Runtime and pipeline behavior tests, including failure/cancellation cleanup.
+- [x] Real Docker release tests in the release-gated E2E suite.
+- [x] Unsupported runtimes and full multi-service/static deployments fail before activation.
+- [ ] Per-service release commands for Compose/monorepo deployments.
+- [ ] Worker/scheduler roles remain separate from one-off release commands.
 
 ### Multi-role stacks
 
@@ -575,10 +575,10 @@ Re-verified against the tree 2026-08-20.
       promoting into `releases/<dep>-<svc>`; the output audit making one real HTTP
       request through the edge). Still unverified on a real box: the promote+audit
       over an SSH executor, and the docker-edge static serve path — which is a
-      shared host bind mount, NOT an `openship_static` volume (the volume survives
+      shared host bind mount, NOT an `kovalio_static` volume (the volume survives
       only as a one-time legacy migration in `compose.ts`).
 - [ ] **ARM64**: the Linux arm64 AppImage IS built (`release.yml` adds an
-      `ubuntu-24.04-arm` matrix entry producing `Openship-arm64.AppImage`, with x64
+      `ubuntu-24.04-arm` matrix entry producing `Kovalio-arm64.AppImage`, with x64
       keeping the legacy name for auto-update compatibility, and both the updater
       and the CLI installer are arch-aware). What remains: CI verification that the
       arm runner's AppImage actually works, plus **Windows arm64 desktop is not

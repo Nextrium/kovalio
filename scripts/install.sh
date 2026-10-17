@@ -1,21 +1,21 @@
 #!/bin/sh
-# Openship installer — https://get.openship.io
+# Kovalio installer — https://get.kovalio.nextrium.org
 #
-#   curl -fsSL https://get.openship.io | sh
+#   curl -fsSL https://get.kovalio.nextrium.org | sh
 #
-# Installs the Openship CLI as a self-contained, sha256-verified payload that
+# Installs the Kovalio CLI as a self-contained, sha256-verified payload that
 # runs under NODE. Node is the shipped runtime: this installer prefers a system
 # `node` >= 22 and otherwise vendors an official Node 22 from nodejs.org into
-# ~/.openship/runtime — it NEVER installs, pins, or gates the user's global
+# ~/.kovalio/runtime — it NEVER installs, pins, or gates the user's global
 # runtime (the source of the Bun-vs-ssh2 crash class, oven-sh/bun#18546).
 #
-# After install: `openship` (interactive) or `openship up` runs Openship locally
-# (API + dashboard); `openship install` fetches the desktop app.
+# After install: `kovalio` (interactive) or `kovalio up` runs Kovalio locally
+# (API + dashboard); `kovalio install` fetches the desktop app.
 #
 # Env overrides:
-#   OPENSHIP_VERSION=0.5.0        pin a CLI version (default: latest release)
-#   OPENSHIP_HOME=~/.openship     install root (data dir, runtime, launcher)
-#   OPENSHIP_CLI_ASSET_URL=…      download the payload tarball from here instead
+#   KOVALIO_VERSION=0.5.0        pin a CLI version (default: latest release)
+#   KOVALIO_HOME=~/.kovalio     install root (data dir, runtime, launcher)
+#   KOVALIO_CLI_ASSET_URL=…      download the payload tarball from here instead
 #                                 of GitHub (its .sha256 sidecar must sit beside
 #                                 it); for testing an unpublished build
 set -eu
@@ -23,15 +23,15 @@ set -eu
 info() { printf '\033[36m==>\033[0m %s\n' "$1"; }
 err()  { printf '\033[31merror:\033[0m %s\n' "$1" >&2; }
 
-REPO="oblien/openship"
+REPO="Nextrium/kovalio"
 NODE_MAJOR=22
 NODE_DIST="https://nodejs.org/dist"
 
-HOME_DIR="${OPENSHIP_HOME:-$HOME/.openship}"
+HOME_DIR="${KOVALIO_HOME:-$HOME/.kovalio}"
 CLI_DIR="$HOME_DIR/cli"
 RUNTIME_DIR="$HOME_DIR/runtime"
 BIN_DIR="$HOME_DIR/bin"
-LAUNCHER="$BIN_DIR/openship"
+LAUNCHER="$BIN_DIR/kovalio"
 
 command -v curl >/dev/null 2>&1 || { err "curl is required"; exit 1; }
 command -v tar  >/dev/null 2>&1 || { err "tar is required"; exit 1; }
@@ -47,8 +47,8 @@ sha256_of() {
 }
 
 # ── 1. Resolve the release tag ──────────────────────────────────────────────
-if [ -n "${OPENSHIP_VERSION:-}" ]; then
-  case "$OPENSHIP_VERSION" in v*) TAG="$OPENSHIP_VERSION" ;; *) TAG="v$OPENSHIP_VERSION" ;; esac
+if [ -n "${KOVALIO_VERSION:-}" ]; then
+  case "$KOVALIO_VERSION" in v*) TAG="$KOVALIO_VERSION" ;; *) TAG="v$KOVALIO_VERSION" ;; esac
 else
   info "Resolving the latest release…"
   TAG="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
@@ -58,14 +58,14 @@ else
 fi
 
 # ── 2. Download + verify + extract the payload → cli/<tag> ──────────────────
-ASSET="openship-cli-${TAG}.tar.gz"
-if [ -n "${OPENSHIP_CLI_ASSET_URL:-}" ]; then
-  ASSET_URL="$OPENSHIP_CLI_ASSET_URL"
+ASSET="kovalio-cli-${TAG}.tar.gz"
+if [ -n "${KOVALIO_CLI_ASSET_URL:-}" ]; then
+  ASSET_URL="$KOVALIO_CLI_ASSET_URL"
 else
   ASSET_URL="https://github.com/${REPO}/releases/download/${TAG}/${ASSET}"
 fi
 
-info "Downloading the Openship CLI (${TAG})…"
+info "Downloading the Kovalio CLI (${TAG})…"
 curl -fSL "$ASSET_URL" -o "$TMP/$ASSET"
 # Fail-closed: no sidecar → refuse to install an unverified payload.
 EXPECT="$(curl -fsSL "${ASSET_URL}.sha256" 2>/dev/null | awk '{print $1}' | head -n1)"
@@ -128,8 +128,8 @@ fi
 mkdir -p "$BIN_DIR"
 cat > "$LAUNCHER" <<'LAUNCHER_EOF'
 #!/bin/sh
-# Openship CLI launcher — runs the tarball-installed CLI under Node.
-# Managed by scripts/install.sh and `openship update`; manual edits are overwritten.
+# Kovalio CLI launcher — runs the tarball-installed CLI under Node.
+# Managed by scripts/install.sh and `kovalio update`; manual edits are overwritten.
 SELF="$0"
 while [ -L "$SELF" ]; do
   _t="$(readlink "$SELF")"
@@ -145,13 +145,13 @@ if command -v node >/dev/null 2>&1 && node -e 'process.exit(+process.versions.no
 elif [ -x "$VENDORED_NODE" ]; then
   exec "$VENDORED_NODE" "$CLI" "$@"
 else
-  echo "openship: no Node >= 22 found (system or vendored). Reinstall: curl -fsSL https://get.openship.io | sh" >&2
+  echo "kovalio: no Node >= 22 found (system or vendored). Reinstall: curl -fsSL https://get.kovalio.nextrium.org | sh" >&2
   exit 127
 fi
 LAUNCHER_EOF
 chmod +x "$LAUNCHER"
 
-# ── 5. Record the distribution marker (read by `openship update`) ───────────
+# ── 5. Record the distribution marker (read by `kovalio update`) ───────────
 cat > "$HOME_DIR/cli-install.json" <<EOF
 {
   "method": "tarball",
@@ -163,25 +163,25 @@ EOF
 
 # ── 6. Migrate off any previous Bun-global install (never touch the user's Bun) ─
 if command -v bun >/dev/null 2>&1; then
-  bun remove -g openship >/dev/null 2>&1 || true
+  bun remove -g kovalio >/dev/null 2>&1 || true
 fi
-rm -f "$HOME/.bun/bin/openship" 2>/dev/null || true
+rm -f "$HOME/.bun/bin/kovalio" 2>/dev/null || true
 
-# ── 7. Put `openship` on PATH ───────────────────────────────────────────────
+# ── 7. Put `kovalio` on PATH ───────────────────────────────────────────────
 LINKED=""
 for d in "/usr/local/bin" "$HOME/.local/bin"; do
   if [ -d "$d" ] && [ -w "$d" ]; then
-    ln -sf "$LAUNCHER" "$d/openship" && { LINKED="$d/openship"; break; }
+    ln -sf "$LAUNCHER" "$d/kovalio" && { LINKED="$d/kovalio"; break; }
   fi
 done
 if [ -z "$LINKED" ] && mkdir -p "$HOME/.local/bin" 2>/dev/null && [ -w "$HOME/.local/bin" ]; then
-  ln -sf "$LAUNCHER" "$HOME/.local/bin/openship" && LINKED="$HOME/.local/bin/openship"
+  ln -sf "$LAUNCHER" "$HOME/.local/bin/kovalio" && LINKED="$HOME/.local/bin/kovalio"
 fi
 
 # A leftover launcher earlier on PATH (e.g. ~/.bun/bin) would shadow ours.
-RESOLVED="$(command -v openship 2>/dev/null || true)"
+RESOLVED="$(command -v kovalio 2>/dev/null || true)"
 if [ -n "$RESOLVED" ] && [ "$RESOLVED" != "$LAUNCHER" ] && [ "$RESOLVED" != "$LINKED" ]; then
-  info "Note: another 'openship' is earlier on PATH ($RESOLVED). Remove it, or put $BIN_DIR first."
+  info "Note: another 'kovalio' is earlier on PATH ($RESOLVED). Remove it, or put $BIN_DIR first."
 fi
 
 # ── 8. Docker-group advisory (the CLI installs Docker itself when a deploy needs it) ─
@@ -197,17 +197,17 @@ fi
 # ── 9. Next steps ───────────────────────────────────────────────────────────
 cat <<EOF
 
-$(printf '\033[32m✔\033[0m') Openship installed (${TAG}, running under ${NODE_SOURCE} Node).
+$(printf '\033[32m✔\033[0m') Kovalio installed (${TAG}, running under ${NODE_SOURCE} Node).
 
-  $(printf '\033[1mopenship\033[0m')            # set up + deploy Openship (interactive)
+  $(printf '\033[1mkovalio\033[0m')            # connect to Cloud / a server, or install here
 
-  openship up         # or launch directly with defaults
-  openship --help     # all commands
+  kovalio up         # or launch directly with defaults
+  kovalio --help     # all commands
 EOF
 if [ -z "$LINKED" ]; then
   cat <<EOF
 
-'openship' isn't on your PATH yet. Add its bin dir:
+'kovalio' isn't on your PATH yet. Add its bin dir:
   export PATH="${BIN_DIR}:\$PATH"
 EOF
 fi

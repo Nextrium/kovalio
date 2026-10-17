@@ -27,7 +27,7 @@ describe("parseComposeNamespace", () => {
   it("REFUSES host, and says why in a way an operator can act on", () => {
     // The decision this module exists for: a host-netns container binds host
     // interfaces directly (voiding the loopback/edge invariant) and can reach
-    // Openship's own loopback API, which grants zero-auth to loopback callers.
+    // Kovalio's own loopback API, which grants zero-auth to loopback callers.
     for (const field of ["network_mode", "pid"] as const) {
       const parsed = parseComposeNamespace("host", field);
       expect(parsed?.ok).toBe(false);

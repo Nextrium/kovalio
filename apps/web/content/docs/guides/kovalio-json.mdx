@@ -1,0 +1,96 @@
+---
+title: Deploy with kovalio.json
+description: Add a declarative kovalio.json to your repo so Kovalio builds and deploys it the same way every time — in the wizard and headlessly on push.
+---
+
+Committing an `kovalio.json` to your repo root makes your deploy **reproducible**: the framework,
+build commands, env, domains, and scaling are declared in the repo instead of clicked through the
+wizard each time. It's the same idea as `vercel.json` or `railway.toml`.
+
+Kovalio still auto-detects everything — `kovalio.json` just **overrides** what you declare. So
+you only add the fields you want to pin. The full field list lives in the
+[reference](/docs/reference/kovalio-json).
+
+## 1. Scaffold it
+
+From your repo root:
+
+```bash
+kovalio config init
+```
+
+This writes a minimal `kovalio.json` with the `$schema` line (for editor autocomplete) plus any
+package manager / build command it can detect locally. Open it and add what you need.
+
+## 2. Declare your deploy
+
+A typical server app:
+
+```json
+{
+  "$schema": "https://nextrium.org/kovalio.schema.json",
+  "framework": "nextjs",
+  "buildCommand": "pnpm build",
+  "port": 3000,
+  "runtime": "docker",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://api.acme.com",
+    "DATABASE_URL": { "value": "postgres://…", "secret": true }
+  },
+  "domains": ["app.acme.com"]
+}
+```
+
+- **Secrets** — wrap the value in `{ "value": "…", "secret": true }` so it's encrypted at rest.
+- **Custom domain** — a dotted hostname is treated as custom; a bare label is a free subdomain.
+- **Migrations** — add
+  [`releaseCommands`](/docs/reference/kovalio-json#release-commands) (e.g.
+  `["php artisan migrate --force"]`) to run them once per deploy, after the build and before
+  the new version goes live. A failure there fails the deploy and the old version keeps serving.
+  Single-app projects only for now: attaching a service routes the project onto the compose
+  pipeline, where the commands are logged and skipped.
+- **Leave out** anything detection already gets right (most `installCommand`s, `outputDirectory`
+  for known frameworks, etc.).
+
+A static site is just:
+
+```json
+{
+  "$schema": "https://nextrium.org/kovalio.schema.json",
+  "framework": "vite",
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist",
+  "productionMode": "static"
+}
+```
+
+## 3. Validate
+
+```bash
+kovalio config validate
+```
+
+Fix any reported error (bad enum, out-of-range port, malformed service). Warnings (e.g. unknown
+keys) are non-fatal. Use `--json` for machine-readable output in CI.
+
+## 4. Deploy
+
+Deploy as usual — [from GitHub](/docs/guides/deploy-from-github), a
+[local folder](/docs/guides/deploy-local-folder), or the CLI. The wizard opens **pre-filled** from
+your `kovalio.json`; you can still tweak anything before deploying.
+
+Because [auto-deploy on push](/docs/guides/auto-deploy) and headless deploys run the same
+resolution, a push to your deploy branch honors `kovalio.json` with no wizard at all — which is
+the point: the repo describes its own deploy.
+
+<Callout title="Precedence">
+Detection runs first, then `kovalio.json` overrides field-by-field. If a deploy isn't picking up
+a value, confirm the field name against the [reference](/docs/reference/kovalio-json) and re-run
+`kovalio config validate`.
+</Callout>
+
+## Multi-service and monorepos
+
+Declare `services` for a compose project, or `monorepo` to override detected sub-apps — see the
+[reference](/docs/reference/kovalio-json#services-compose) for both. Note that `services` and
+`monorepo` are alternatives to a single-app config, not additions to it.

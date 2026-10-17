@@ -1,16 +1,16 @@
 ---
 title: MCP
-description: Let AI clients like Claude drive your Openship instance as tools, over the Model Context Protocol.
+description: Let AI clients like Claude drive your Kovalio instance as tools, over the Model Context Protocol.
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 **MCP (Model Context Protocol)** is a standard way for AI clients — Claude, Cursor, VS Code Copilot, and
-others — to call an app's features as *tools*. Point one of those clients at Openship and it can list your
+others — to call an app's features as *tools*. Point one of those clients at Kovalio and it can list your
 projects, kick off deployments, check logs, add domains, and more — using the exact same permissions you'd
 have yourself.
 
-The important part: it's not a second, looser door into Openship. **Every tool call re-runs the full auth
+The important part: it's not a second, looser door into Kovalio. **Every tool call re-runs the full auth
 and permission stack**, so an agent can only ever see and do what its credential is allowed to — nothing more.
 
 <Callout title="Where this lives in the dashboard">
@@ -21,7 +21,7 @@ of clients you've already connected.
 
 ## The endpoint
 
-There's one endpoint, and it's the same on self-hosted and Openship Cloud:
+There's one endpoint, and it's the same on self-hosted and Kovalio Cloud:
 
 ```
 POST /api/mcp
@@ -43,7 +43,7 @@ There are two ways to authenticate, and most clients pick one for you. Use the t
 
 <Tab value="OAuth (recommended)">
 
-Openship is a standards-compliant **OAuth 2.1** MCP server, so capable clients need nothing but the URL.
+Kovalio is a standards-compliant **OAuth 2.1** MCP server, so capable clients need nothing but the URL.
 
 <Steps>
 
@@ -53,14 +53,14 @@ Openship is a standards-compliant **OAuth 2.1** MCP server, so capable clients n
 Give the client your endpoint — `https://<your-host>/api/mcp`. In Claude Code that's one command:
 
 ```bash
-claude mcp add --transport http openship https://<your-host>/api/mcp
+claude mcp add --transport http kovalio https://<your-host>/api/mcp
 ```
 
 Codex registers the server and authorizes it as two commands:
 
 ```bash
-codex mcp add openship --url https://<your-host>/api/mcp
-codex mcp login openship
+codex mcp add kovalio --url https://<your-host>/api/mcp
+codex mcp login kovalio
 ```
 
 Other clients take it through their own UI; **Settings → MCP** has the exact snippet for each one.
@@ -70,7 +70,7 @@ Other clients take it through their own UI; **Settings → MCP** has the exact s
 ### Approve it in the browser
 
 For most clients this happens on the first connect: a browser window opens by itself. With Codex it's the
-explicit `codex mcp login openship` above — the server is registered without it, but every call comes back
+explicit `codex mcp login kovalio` above — the server is registered without it, but every call comes back
 unauthorized until you run it.
 
 Either way, that browser page is where you **choose what the client may do** — read-only or full control,
@@ -94,13 +94,13 @@ token](/docs/api/tokens). The client can never exceed what you granted, or what 
 
 <Callout title="Codex: local surfaces share one config; hosted tasks don't" type="warn">
 The Codex **CLI, desktop app, and IDE extension** all read the same local MCP configuration, so adding
-Openship once covers all three. Restart any of them that were already running — they read the config at
+Kovalio once covers all three. Restart any of them that were already running — they read the config at
 startup.
 
 A **hosted** Codex task is a different environment. It doesn't inherit your machine's MCP config, and it can
 only reach `https://<your-host>/api/mcp` if that environment has network access to your instance. For a
-private or LAN-only self-hosted Openship, it won't — the endpoint has to be reachable from wherever the agent
-actually runs. Openship Cloud, or a self-hosted instance on a public hostname, is reachable; a
+private or LAN-only self-hosted Kovalio, it won't — the endpoint has to be reachable from wherever the agent
+actually runs. Kovalio Cloud, or a self-hosted instance on a public hostname, is reachable; a
 `localhost`/private-network endpoint is not. See [remote access](/docs/getting-started/installation) for
 exposing an instance deliberately.
 </Callout>
@@ -118,7 +118,7 @@ and token into your client's config:
 ```json
 {
   "mcpServers": {
-    "openship": {
+    "kovalio": {
       "url": "https://<your-host>/api/mcp",
       "headers": { "Authorization": "Bearer opsh_pat_…" }
     }
@@ -129,7 +129,7 @@ and token into your client's config:
 For Claude Code, add the header on the command:
 
 ```bash
-claude mcp add --transport http openship https://<your-host>/api/mcp \
+claude mcp add --transport http kovalio https://<your-host>/api/mcp \
   --header "Authorization: Bearer opsh_pat_…"
 ```
 
@@ -153,10 +153,9 @@ This is the heart of the security model, and it's why MCP access is as safe as y
   bearer, and dispatches it through the same routes, validation, auth middleware, and per-resource permission
   check as a normal HTTP call.
 
-The practical upshot: a read-only token can only reach read tools, and a scoped token stays boxed into its
-granted resources. A scoped token isn't even *shown* the org-wide list and create tools — `get_projects`
-(list every project) simply won't appear in its `tools/list`; it sees only the per-resource tools for the
-resource types it was granted. And if a `tools/call` touches something outside that scope, it comes back
+A read-only token can only reach GET tools. A scoped token sees tools enabled by its grants, including
+collection tools when it has the matching wildcard permission. A grant to one project does not authorize
+listing every project. And if a `tools/call` touches something outside that scope, it comes back
 `404` — the scope doing its job. For the full protocol details (JSON-RPC methods, negotiation, error codes),
 see the [MCP API reference](/docs/api/mcp).
 
@@ -166,6 +165,19 @@ belong to and can never reach another org's projects, servers, or secrets — a 
 membership comes back `404`, just as it would in the dashboard. See [Isolation](/docs/security/isolation).
 
 ## Which tools map to which API
+
+To see your **workspace ID**, ask the agent to call `get_permissions_workspaces` with no arguments.
+Kovalio calls it `organizationId` in the API. The result lists workspace names and IDs, including empty
+workspaces, and identifies the current workspace and any credential binding.
+
+When installing an app or deploying Compose, pass the chosen `organizationId` alongside `body` on each
+tool call. The server uses that exact workspace. If several destinations are available, the agent's
+instructions tell it to clarify the destination before creating resources. See
+[workspace selection](/docs/api/mcp#discover-and-select-a-workspace) for examples.
+
+Tokens and OAuth connections created today are bound to one organization. To target another, authorize
+the connection or create a token in that workspace. Selecting an ID cannot widen a credential's scope,
+and it does not move an already installed app between organizations.
 
 Tools aren't a separate feature set — each one **maps onto a permission-tagged REST route**, and the tool name
 is built from that route's method and path. So `get_projects` is `GET /api/projects`, `post_domains` is
@@ -179,6 +191,7 @@ UI can flag a destructive call before it runs.
 
 | Tool name (examples) | REST route | Reference |
 |---|---|---|
+| `get_permissions_workspaces` | `/api/permissions/workspaces` | [Workspace discovery](/docs/api/permissions#list-workspaces) |
 | `get_projects`, `patch_projects_by_id` | `/api/projects` | [Projects API](/docs/api/projects) |
 | `get_deployments`, `post_deployments_build_access` | `/api/deployments` | [Deployments API](/docs/api/deployments) |
 | `get_projects_by_id_services`, `post_projects_by_id_services` | `/api/projects/:id/services` | [Services API](/docs/api/services) |
@@ -188,16 +201,22 @@ UI can flag a destructive call before it runs.
 | `get_notifications_channels` | `/api/notifications` | [Notifications API](/docs/api/notifications) |
 | `get_settings`, `patch_settings_build_mode` | `/api/settings` | [Settings API](/docs/api/settings) |
 | `get_projects_by_projectId_backup_policies`, `post_backup_policies_by_policyId_run` | `/api/backups` | [Backups API](/docs/api/backups) |
-| `get_cloud_status`, `get_cloud_workspaces` | `/api/cloud` | [Cloud API](/docs/api/cloud) |
+| `get_cloud_status` | `/api/cloud` | [Cloud API](/docs/api/cloud) |
+| `get_system_servers_destinations` | `/api/system/servers/destinations` | [Desktop folder → Cloud](/docs/api/mcp#deploy-a-desktop-folder-on-cloud) |
 | `get_jobs`, `post_jobs_by_key_run` | `/api/jobs` | [Jobs guide](/docs/guides/jobs) |
-| `get_apps_catalog`, `post_apps` | `/api/apps` | *(REST reference pending)* |
-| `get_updates`, `post_updates_scan` | `/api/updates` | [Updating Openship](/docs/guides/updating) |
+| `get_apps_catalog`, `post_apps` | `/api/apps` | [App catalog](/docs/api/apps) |
+| `get_updates`, `post_updates_scan` | `/api/updates` | [Updating Kovalio](/docs/guides/updating) |
 
 <Callout title="Credentials and auth are never exposed" type="info">
 The `tokens`, `auth`, and `mcp` modules are hard-blocked from ever becoming tools — a full-access MCP token
 can't mint itself a fresh credential or escape its own scope. Manage tokens and connected clients from the
 dashboard or the [Tokens API](/docs/api/tokens), not from an agent.
 </Callout>
+
+The [generated MCP catalog](/docs/api/mcp-tools) publishes the current tool names, descriptions and
+HTTP-only boundaries directly from the routes. The [cluster and scaling guide](/docs/guides/mcp-clusters-and-scaling)
+covers private networking, automated k3s setup, application replica changes, recovery and cleanup.
+Manual replica scaling is supported; metric-driven autoscaling and live worker joining are not implemented.
 
 ## Guided flows
 
@@ -221,7 +240,7 @@ curl -s https://<your-host>/api/mcp \
 
 This returns exactly the tools that token is allowed to call.
 
-## If something goes wrong
+## Troubleshooting
 
 <Callout title="401 — Missing or invalid access token" type="error">
 There's no bearer credential, or it's expired or revoked. The response includes a `WWW-Authenticate` header
@@ -246,7 +265,7 @@ access level (read-only or full control) and how many resources it can reach. **
 client's issued tokens immediately and drops its consent, so it has to re-authorize next time. The same list
 and controls are available programmatically via the [Tokens API](/docs/api/tokens).
 
-## What next?
+## Related guides
 
 <Cards>
   <Card title="MCP API reference" href="/docs/api/mcp" description="The JSON-RPC methods, protocol negotiation, and error codes behind /api/mcp." />

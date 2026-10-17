@@ -1,0 +1,81 @@
+---
+title: mail alias
+description: Commands, arguments, and options for kovalio mail alias.
+cliGroup: kovalio mail alias
+---
+
+See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio mail alias
+
+Manage forwards and catch-all addresses
+
+```text
+kovalio mail alias [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list [options] <server>`](/docs/cli/reference/mail/alias#kovalio-mail-alias-list) | List aliases for a domain |
+| [`create [options] <id> [file]`](/docs/cli/reference/mail/alias#kovalio-mail-alias-create) | Create a forwarding or catch-all address |
+| [`update [options] <parent> <id> [file]`](/docs/cli/reference/mail/alias#kovalio-mail-alias-update) | Enable or disable an alias |
+| [`remove [options] <server> <alias>`](/docs/cli/reference/mail/alias#kovalio-mail-alias-remove) | Remove an alias by its numeric ID |
+
+## kovalio mail alias create
+
+Create a forwarding or catch-all address
+
+```text
+kovalio mail alias create [options] <id> [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Resource ID |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio mail alias list
+
+List aliases for a domain
+
+```text
+kovalio mail alias list [options] <server>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--domain <domain>` | Mail domain |
+
+## kovalio mail alias remove
+
+Remove an alias by its numeric ID
+
+```text
+kovalio mail alias remove [options] <server> <alias>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm removal |
+
+## kovalio mail alias update
+
+Enable or disable an alias
+
+```text
+kovalio mail alias update [options] <parent> <id> [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `parent` | Parent resource ID |
+| `id` | Resource ID or name |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |

@@ -1,0 +1,87 @@
+---
+title: backup run
+description: Commands, arguments, and options for kovalio backup run.
+cliGroup: kovalio backup run
+---
+
+See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio backup run
+
+Backup runs (executions)
+
+```text
+kovalio backup run [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list [options]`](/docs/cli/reference/backup/run#kovalio-backup-run-list) | List backup runs for a project |
+| [`get [options] <runId>`](/docs/cli/reference/backup/run#kovalio-backup-run-get) | Show one run (optionally stream it) |
+| [`protect [options] <runId>`](/docs/cli/reference/backup/run#kovalio-backup-run-protect) | Protect a run from retention pruning (or release it) |
+| [`restore [options] <runId>`](/docs/cli/reference/backup/run#kovalio-backup-run-restore) | Prepare a restore from a run (stages it; apply separately) |
+
+## kovalio backup run get
+
+Show one run (optionally stream it)
+
+```text
+kovalio backup run get [options] <runId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `runId` | Backup run ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--follow` | Stream progress to completion |
+
+## kovalio backup run list
+
+List backup runs for a project
+
+```text
+kovalio backup run list [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--project <id>` | Project ID |
+| `--service <id>` | Filter to a single service |
+| `--limit <n>` | Max rows (default 50) |
+
+## kovalio backup run protect
+
+Protect a run from retention pruning (or release it)
+
+```text
+kovalio backup run protect [options] <runId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `runId` | Backup run ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--until <iso>` | Protect until this ISO timestamp |
+| `--release` | Clear the protection so retention can prune it |
+
+## kovalio backup run restore
+
+Prepare a restore from a run (stages it; apply separately)
+
+```text
+kovalio backup run restore [options] <runId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `runId` | Backup run ID to restore from |
+
+| Option | Meaning |
+| --- | --- |
+| `--mode <mode>` | in_place (default) or to_fork (default: "in_place") |
+| `--fork-server <id>` | Target mail server ID (required for --mode to_fork) |
+| `--follow` | Stream the preparation phase |

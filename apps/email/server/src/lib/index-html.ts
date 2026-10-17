@@ -3,7 +3,7 @@
  *
  * GH-568: `siteTitle` and `siteDescription` were write-only. PATCH accepted
  * them, `/branding.json` read them back, and the browser tab still said
- * "OpenShip Mail" - because the client is PREBUILT and those two values are
+ * "Kovalio Mail" - because the client is PREBUILT and those two values are
  * baked into `client/build/client/index.html` at image build time
  * (client/lib/site-config.ts supplies them to the root route's meta export).
  * The other four branding fields render client-side from `branding.get`, which
@@ -68,7 +68,7 @@ const SLOTS: readonly Slot['key'][] = [
  * `siteConfig`. React then CLAIMS the injected <title> and rewrites its text,
  * and appends duplicate description/og metas because it matches them by
  * `content`. Net effect without this: crawlers see the branded head, the
- * browser tab flips back to "OpenShip Mail" a moment after load.
+ * browser tab flips back to "Kovalio Mail" a moment after load.
  *
  * So the server hands the client the same values it just rendered, in the
  * document, and root.tsx reads them (client/lib/runtime-branding.ts). Client
@@ -81,7 +81,7 @@ const EMBED_ID = '__branding__';
 
 
 /**
- * Match by TAG SHAPE, never by the default value. Matching `"OpenShip Mail"`
+ * Match by TAG SHAPE, never by the default value. Matching `"Kovalio Mail"`
  * as a literal would stop working the moment client/lib/site-config.ts changes
  * - and a silent no-op is precisely the bug GH-568 reported, so this must not
  * be able to fail quietly.

@@ -37,7 +37,7 @@ describe("isEdgeDownFailure", () => {
   });
 
   it("recognises a container that has been removed or paused", () => {
-    expect(isEdgeDownFailure("Error: No such container: openship-edge")).toBe(true);
+    expect(isEdgeDownFailure("Error: No such container: kovalio-edge")).toBe(true);
     expect(isEdgeDownFailure("Container abc is paused, unpause it first")).toBe(true);
   });
 
@@ -50,7 +50,7 @@ describe("isEdgeDownFailure", () => {
       "cat: /etc/letsencrypt/live/x/fullchain.pem: No such file or directory",
       "nginx: [emerg] cannot load certificate \"/etc/letsencrypt/live/x/fullchain.pem\"",
       "Saving debug log to /var/log/letsencrypt/letsencrypt.log\nDNS problem: NXDOMAIN",
-      "command exited 1 in edge container openship-edge",
+      "command exited 1 in edge container kovalio-edge",
     ]) {
       expect(isEdgeDownFailure(benign), `matched: ${benign}`).toBe(false);
     }
@@ -60,16 +60,16 @@ describe("isEdgeDownFailure", () => {
 describe("explainEdgeDown", () => {
   it("names the container, its state and the [emerg] cause", () => {
     const msg = explainEdgeDown({
-      container: "openship-edge",
+      container: "kovalio-edge",
       status: "restarting",
       reason: 'cannot load certificate "/etc/letsencrypt/live/test.example.com/fullchain.pem"',
     });
 
-    expect(msg).toContain('"openship-edge"');
+    expect(msg).toContain('"kovalio-edge"');
     expect(msg).toContain("(restarting)");
     expect(msg).toContain("crash-looping");
     expect(msg).toContain("cannot load certificate");
-    expect(msg).toContain("docker start openship-edge");
+    expect(msg).toContain("docker start kovalio-edge");
   });
 
   // Load-bearing: this string is joined into a deploy warning with "; " and handed to
@@ -77,17 +77,17 @@ describe("explainEdgeDown", () => {
   // would reach the operator as fragments.
   it("is always a single line", () => {
     const withReason = explainEdgeDown({
-      container: "openship-edge",
+      container: "kovalio-edge",
       status: "restarting",
       reason: "bind() to 0.0.0.0:80 failed (98: Address already in use)\n  extra noise",
     });
     expect(withReason).not.toContain("\n");
-    expect(explainEdgeDown({ container: "openship-edge" })).not.toContain("\n");
+    expect(explainEdgeDown({ container: "kovalio-edge" })).not.toContain("\n");
   });
 
   it("falls back to pointing at the log when the cause can't be read", () => {
-    const msg = explainEdgeDown({ container: "openship-edge", status: "exited", reason: null });
-    expect(msg).toContain("docker logs --tail 40 openship-edge");
+    const msg = explainEdgeDown({ container: "kovalio-edge", status: "exited", reason: null });
+    expect(msg).toContain("docker logs --tail 40 kovalio-edge");
     // Not "crash-looping": `exited` needs starting, `restarting` will keep failing.
     // Telling an operator it's crash-looping when it merely stopped sends them
     // hunting for a config bug that isn't there.
@@ -95,15 +95,15 @@ describe("explainEdgeDown", () => {
   });
 
   it("still names the container when even the state is unreadable", () => {
-    const msg = explainEdgeDown({ container: "openship-edge" });
-    expect(msg).toContain('"openship-edge"');
+    const msg = explainEdgeDown({ container: "kovalio-edge" });
+    expect(msg).toContain('"kovalio-edge"');
     expect(msg).toContain(EDGE_DOWN_MARKER);
   });
 });
 
 describe("edgeDownExplanation / isEdgeDownMessage", () => {
   it("recovers our line from a blob that also holds the daemon's original error", () => {
-    const explanation = explainEdgeDown({ container: "openship-edge", status: "restarting" });
+    const explanation = explainEdgeDown({ container: "kovalio-edge", status: "restarting" });
     const blob = `Saving debug log to /var/log/letsencrypt\n${explanation}\n${DAEMON_RESTARTING}`;
 
     expect(edgeDownExplanation(blob)).toBe(explanation);

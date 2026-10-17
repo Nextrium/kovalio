@@ -1,6 +1,7 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import { Icon as UiIcon } from "@repo/ui/icons";
+
 import { ErrorView } from "@/components/error-view";
 import { useBrandName, useI18n } from "@/components/i18n-provider";
 
@@ -38,10 +39,10 @@ export function ApiUnavailable() {
           {
             label: c.apiDown.retry,
             onClick: () => window.location.reload(),
-            icon: <RefreshCw className="size-4" />,
+            icon: <UiIcon name="refresh" className="size-4" />,
           },
         ]}
-        docsHref="https://openship.io/docs/getting-started/installation"
+        docsHref="https://nextrium.org/docs/getting-started/installation"
         docsLabel={c.apiDown.docs}
         githubLabel={c.errorLinks.github}
       />

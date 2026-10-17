@@ -4,10 +4,10 @@
  *
  * Path: nodemailer over SMTP submission against the mail VPS's public
  * endpoint (`mail.<installDomain>:465`, implicit TLS). The orchestrator
- * authenticates as `openship@<senderDomain>` — either the shared platform
+ * authenticates as `kovalio@<senderDomain>` — either the shared platform
  * mailbox (when no fromDomain override or it matches the install domain)
  * or a per-domain test mailbox (when fromDomain names an additional
- * domain), provisioned on demand by `ensureOpenshipTestMailbox`. SMTP
+ * domain), provisioned on demand by `ensureKovalioTestMailbox`. SMTP
  * AUTH user is always the same address as the From header, so Postfix's
  * `reject_sender_login_mismatch` check is satisfied and amavis DKIM-signs
  * with the From-domain's key.
@@ -24,9 +24,11 @@
  *
  * Why nodemailer (vs. shelling sendmail on the mail VPS via SSH):
  *   1. The connection itself is the test. A failed AUTH means broken
- *      credentials, a TLS error means broken cert, a connect timeout
- *      means the SMTP daemon is down - all surface as real, distinct
- *      errors the operator can act on. The old sendmail-via-SSH path
+ *      credentials, a TLS error means broken cert, and a connect timeout
+ *      triggers the shared listener + public-port diagnosis. A timeout can
+ *      mean a stopped daemon OR an upstream/provider firewall dropping the
+ *      packets; claiming only the former sent operators to the wrong layer.
+ *      The old sendmail-via-SSH path
  *      could "succeed" with the message stuck in the local queue forever.
  *   2. Reuses the same code path the platform will use for any future
  *      transactional mail (e.g. user-invite emails, alerts), so a working
@@ -43,16 +45,22 @@
  * 465) so DKIM signs and SPF aligns from the first message.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import nodemailer, { type Transporter } from "nodemailer";
-import { decrypt } from "../../../lib/encryption";
-import { sshManager } from "../../../lib/ssh-manager";
-import { readState } from "../mail-state";
+import { sshManager } from "@repo/platform/engine/lib/ssh-manager";
+import { readState } from "@repo/platform/engine/modules/mail/mail-state";
 import { safeErrorMessage } from "@repo/core";
 import {
-  ensureOpenshipPlatformMailbox,
+  ensureKovalioPlatformMailbox,
   type PlatformMailboxCreds,
-} from "./platform-mailbox.service";
-import { ensureOpenshipTestMailbox } from "./test-mailbox.service";
+} from "@repo/platform/engine/modules/mail/admin/platform-mailbox.service";
+import { ensureKovalioTestMailbox } from "./test-mailbox.service";
+import { isSmtpAuthFailure } from "@repo/platform/engine/modules/mail/smtp-auth-error";
+import {
+  checkMailPortReachability,
+  mailReachabilityFailureMessage,
+  resolvePublicMailAddress,
+} from "@repo/platform/engine/modules/mail/mail-port-reachability.service";
 
 const EMAIL_RE = /^[a-z0-9._+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
 
@@ -72,33 +80,25 @@ const SUBMISSION_PORT = 465;
  * Queries public resolvers rather than the system stub for the reason in the
  * comment at the call site: on the mail host, `/etc/hosts` maps the mail
  * hostname to 127.0.1.1, which is useless (and wrong) from inside a container.
- * Falls back to the hostname untouched when public DNS can't answer — a remote
- * mail server reachable by name keeps working exactly as before, and a genuine
- * DNS problem still surfaces as the connect error it is, not as a lookup crash.
+ * Refuses when public DNS has no usable address. Falling back to the system
+ * resolver would reintroduce the `/etc/hosts`/fake-IP false path this lookup is
+ * specifically meant to avoid.
  */
-async function resolveSubmissionAddress(host: string): Promise<string> {
-  const { Resolver } = await import("node:dns/promises");
-  const resolver = new Resolver();
-  resolver.setServers(["1.1.1.1", "8.8.8.8"]);
-  const [v4] = await resolver.resolve4(host).catch(() => [] as string[]);
-  return v4 ?? host;
-}
-
 export class TestEmailError extends Error {}
 
 export interface SendTestEmailInput {
   to: string;
   /**
    * When provided AND not equal to the install domain, the test message is
-   * sent through a per-domain `openship@<fromDomain>` mailbox (provisioned
-   * on demand by `ensureOpenshipTestMailbox`). That mailbox is used as
+   * sent through a per-domain `kovalio@<fromDomain>` mailbox (provisioned
+   * on demand by `ensureKovalioTestMailbox`). That mailbox is used as
    * BOTH the SMTP AUTH user AND the From-header address — so MAIL FROM
    * matches the authenticated identity and Postfix's
    * `reject_sender_login_mismatch` check is satisfied (no more 554s).
    *
    * When absent (or equal to the install domain), falls back to the
-   * shared platform mailbox `openship@<installDomain>` via
-   * `ensureOpenshipPlatformMailbox`.
+   * shared platform mailbox `kovalio@<installDomain>` via
+   * `ensureKovalioPlatformMailbox`.
    *
    * The DKIM signature comes from amavis keyed by the From-domain — so a
    * per-domain test still exercises that domain's full DNS+DKIM path
@@ -120,16 +120,16 @@ export interface SendTestEmailResult {
  *
  * Identity selection:
  *   - `fromDomain` absent or equal to the install domain → AUTH+From as
- *     the shared platform mailbox `openship@<installDomain>` (sourced
+ *     the shared platform mailbox `kovalio@<installDomain>` (sourced
  *     from `state.platformMailbox`, backfilled via
- *     `ensureOpenshipPlatformMailbox` on first run).
+ *     `ensureKovalioPlatformMailbox` on first run).
  *   - `fromDomain` set to an additional domain → AUTH+From as
- *     `openship@<fromDomain>`, provisioned (or reused) by
- *     `ensureOpenshipTestMailbox`.
+ *     `kovalio@<fromDomain>`, provisioned (or reused) by
+ *     `ensureKovalioTestMailbox`.
  *
  * Either way, SMTP AUTH user equals the From-header address — that's what
  * Postfix's `reject_sender_login_mismatch` requires (we used to spoof
- * `postmaster@<fromDomain>` while auth'd as `openship@<installDomain>`
+ * `postmaster@<fromDomain>` while auth'd as `kovalio@<installDomain>`
  * and got 554s).
  *
  * Submission target is always `mail.<state.domain>:465` (implicit TLS) —
@@ -151,10 +151,10 @@ export async function sendTestEmail(
   }
 
   // fromDomain (optional) — when provided and not the install domain, we
-  // provision (or reuse) `openship@<fromDomain>` and authenticate as that
+  // provision (or reuse) `kovalio@<fromDomain>` and authenticate as that
   // mailbox AND send From that mailbox. SMTP AUTH user == MAIL FROM, so
   // Postfix's `reject_sender_login_mismatch` is satisfied (the old design
-  // auth'd as `openship@<installDomain>` while sending FROM
+  // auth'd as `kovalio@<installDomain>` while sending FROM
   // `postmaster@<fromDomain>` and got 554'd). amavis still DKIM-signs
   // with <fromDomain>'s key because the From-domain matches.
   if (input.fromDomain && !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(input.fromDomain)) {
@@ -165,7 +165,7 @@ export async function sendTestEmail(
 
   // 1. Read the install domain from state so we can decide whether
   //    `fromDomain` refers to an *additional* domain (needs its own
-  //    `openship@<fromDomain>` mailbox) or just restates the install
+  //    `kovalio@<fromDomain>` mailbox) or just restates the install
   //    domain (use the shared platform mailbox).
   const installDomain = await sshManager.withExecutor(serverId, async (exec) => {
     const state = await readState(exec);
@@ -178,10 +178,10 @@ export async function sendTestEmail(
   });
 
   // 2. Resolve creds. Both branches return the SAME shape — the SMTP AUTH
-  //    user and the From-header address are ALWAYS the same `openship@<d>`
+  //    user and the From-header address are ALWAYS the same `kovalio@<d>`
   //    address. Postfix's `reject_sender_login_mismatch` rejects MAIL FROM
   //    values that don't match the SASL-authenticated user; the old design
-  //    auth'd as `openship@<installDomain>` while spoofing
+  //    auth'd as `kovalio@<installDomain>` while spoofing
   //    `postmaster@<fromDomain>` and tripped exactly that check (554).
   let creds: {
     email: string;
@@ -191,12 +191,12 @@ export async function sendTestEmail(
     secure: boolean;
   };
   if (input.fromDomain && input.fromDomain !== installDomain) {
-    // Per-domain path: provision (or reuse) `openship@<fromDomain>`. If
+    // Per-domain path: provision (or reuse) `kovalio@<fromDomain>`. If
     // <fromDomain> is not in vmail.domain the ensure call throws — wrap
     // into TestEmailError so the dashboard surfaces a clean 4xx instead
     // of a 500.
     try {
-      const minted = await ensureOpenshipTestMailbox(serverId, input.fromDomain);
+      const minted = await ensureKovalioTestMailbox(serverId, input.fromDomain);
       creds = {
         email: minted.email,
         password: minted.password,
@@ -205,48 +205,25 @@ export async function sendTestEmail(
         secure: minted.secure,
       };
     } catch (err) {
+      observeCaughtError(err, "api/modules/mail/admin/test-email.service");
       throw new TestEmailError(
-        `Could not provision openship@${input.fromDomain}: ${safeErrorMessage(err)}`,
+        `Could not provision kovalio@${input.fromDomain}: ${safeErrorMessage(err)}`,
       );
     }
   } else {
-    // Install-domain path: the shared platform mailbox.
-    // Fast path is a pure state-file read; first-run / drift backfills
-    // via ensureOpenshipPlatformMailbox.
-    const cached = await sshManager.withExecutor(serverId, async (exec) => {
-      const state = await readState(exec);
-      return state?.platformMailbox;
-    });
-    if (cached && cached.email && cached.password) {
-      // Decrypt at-rest password (AES-256-GCM ciphertext on the happy path,
-      // legacy plaintext on pre-encryption installs).
-      let smtpPassword: string;
-      try {
-        smtpPassword = decrypt(cached.password);
-      } catch {
-        console.warn(
-          `[sendTestEmail] serverId=${serverId} platform mailbox password is legacy plaintext — rotate via /mail/admin/${serverId}/platform-mailbox/rotate to encrypt at rest.`,
-        );
-        smtpPassword = cached.password;
-      }
-      creds = {
-        email: cached.email,
-        password: smtpPassword,
-        smtpHost: cached.smtpHost,
-        smtpPort: 465,
-        secure: true,
-      };
-    } else {
-      const minted: PlatformMailboxCreds =
-        await ensureOpenshipPlatformMailbox(serverId);
-      creds = {
-        email: minted.email,
-        password: minted.password,
-        smtpHost: minted.smtpHost,
-        smtpPort: minted.smtpPort,
-        secure: minted.secure,
-      };
-    }
+    // Install-domain path: always go through the single reconciliation
+    // primitive. Reading state.platformMailbox here used to duplicate its fast
+    // path and bypass the live vmail check, which is how a deleted system
+    // mailbox kept producing 535 forever even after ensure* was hardened.
+    const minted: PlatformMailboxCreds =
+      await ensureKovalioPlatformMailbox(serverId);
+    creds = {
+      email: minted.email,
+      password: minted.password,
+      smtpHost: minted.smtpHost,
+      smtpPort: minted.smtpPort,
+      secure: minted.secure,
+    };
   }
 
   // Auth user == From address — no spoof, no MAIL FROM / SASL mismatch.
@@ -270,7 +247,7 @@ export async function sendTestEmail(
   // listens, and every send fails with `ECONNREFUSED 127.0.1.1:465` while
   // Postfix is healthy on 0.0.0.0:465. `servername` keeps TLS validating
   // against the hostname, so certificate checking is unchanged.
-  const connectHost = await resolveSubmissionAddress(smtpHost);
+  const connectHost = await resolvePublicMailAddress(smtpHost);
   const transporter: Transporter = nodemailer.createTransport({
     host: connectHost,
     tls: { servername: smtpHost },
@@ -289,22 +266,34 @@ export async function sendTestEmail(
   try {
     await transporter.verify();
   } catch (err) {
-    // With the platform-mailbox primitive owning both ends of the
-    // credential, a 535 here should be REALLY rare — it implies the
-    // doveadm hash in `vmail.mailbox` and the plaintext in
-    // `state.platformMailbox` got out of sync via some path that bypassed
-    // ensureOpenshipPlatformMailbox (manual psql update, restored state
-    // file from a different generation, etc.). Tell operators how to
-    // realign both ends in a single call.
-    const message = safeErrorMessage(err);
-    const looksLikeAuthFailure =
-      /\b535\b/.test(message) ||
-      /5\.7\.8/.test(message) ||
-      /authentication\s+failed/i.test(message) ||
-      /invalid\s+credentials/i.test(message);
-    const suffix = looksLikeAuthFailure
-      ? ` - the platform mailbox credential and the Dovecot hash appear to have drifted. Click "Rotate platform mailbox password" in the Mail admin panel (calls ensureOpenshipPlatformMailbox with { rotate: true }) to refresh both ends atomically, then retry.`
+    observeCaughtError(err, "api/modules/mail/admin/test-email.service");
+    // ensure* has already confirmed that the mailbox and forwarding rows are
+    // live. A 535 now means SMTP rejected the cached secret (or the mailbox was
+    // changed in the narrow race after reconciliation), so the explicit rotate
+    // action is the correct repair rather than claiming the mailbox is missing.
+    let suffix = isSmtpAuthFailure(err)
+      ? ` - SMTP rejected the reconciled platform credential. Click "Rotate platform mailbox password" in the Mailboxes tab to refresh both ends, then retry.`
       : ``;
+    if (isSmtpConnectTimeout(err)) {
+      try {
+        const reachability = await sshManager.withExecutor(serverId, (exec) =>
+          checkMailPortReachability(exec, smtpHost, {
+            cacheKey: `mail-health:${serverId}`,
+            force: true,
+          }),
+        );
+        const submission = reachability.ports.find((port) => port.port === SUBMISSION_PORT);
+        suffix = submission && submission.status !== "reachable" && submission.status !== "unknown"
+          ? ` - ${mailReachabilityFailureMessage(reachability, [SUBMISSION_PORT])}`
+          : ` - The connection timed out. The SMTP daemon may be unavailable, or a host/cloud provider firewall may be dropping TCP ${SUBMISSION_PORT}.`;
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "api/modules/mail/admin/test-email.service");
+        suffix =
+          ` - The connection timed out. The SMTP daemon may be unavailable, or a host/cloud ` +
+          `provider firewall may be dropping TCP ${SUBMISSION_PORT}.`;
+      }
+    }
+    transporter.close();
     throw wrapSmtpError(
       err,
       `SMTP submission check failed against ${smtpHost}:${SUBMISSION_PORT}${suffix}`,
@@ -331,6 +320,7 @@ export async function sendTestEmail(
       // against the sender domain automatically.
     });
   } catch (err) {
+    observeCaughtError(err, "api/modules/mail/admin/test-email.service");
     throw wrapSmtpError(err, `Mail server accepted auth but rejected delivery`);
   } finally {
     transporter.close();
@@ -342,6 +332,11 @@ export async function sendTestEmail(
     messageId: info.messageId,
     smtpResponse: info.response,
   };
+}
+
+function isSmtpConnectTimeout(err: unknown): boolean {
+  const candidate = err as { code?: unknown; message?: unknown } | null;
+  return candidate?.code === "ETIMEDOUT" || /(?:connection\s+)?tim(?:e|ed)\s*out/i.test(String(candidate?.message ?? ""));
 }
 
 // ─── Error helpers ──────────────────────────────────────────────────────────

@@ -9,7 +9,7 @@ import { edgeDefaultCatchAllConf } from "../../infra/openresty-lua";
 import type { CommandExecutor } from "../../types";
 
 /**
- * These cover the three guards that decide whether Openship tears down a working
+ * These cover the three guards that decide whether Kovalio tears down a working
  * edge — the place where a wrong answer is an outage, not a warning.
  *
  * `sanitizeEdgeVhosts` is exercised with a REAL LocalExecutor against REAL files in
@@ -42,7 +42,7 @@ const PLAIN_VHOST = `server {
 
 describe("sanitizeEdgeVhosts (real shell, real files)", () => {
   it("drops catch-alls, strips default_server, leaves plain vhosts alone", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "openship-vhosts-"));
+    const dir = await mkdtemp(join(tmpdir(), "kovalio-vhosts-"));
     await writeFile(join(dir, "_default.conf"), CATCH_ALL);
     await writeFile(join(dir, "onvo.conf"), REAL_VHOST_CLAIMING_DEFAULT);
     await writeFile(join(dir, "api-reflx.conf"), PLAIN_VHOST);
@@ -81,10 +81,10 @@ describe("sanitizeEdgeVhosts (real shell, real files)", () => {
     //
     // It gets dropped only because both blocks are `server_name _;`. That coupling is
     // invisible from openresty-lua.ts, which is the point of asserting it here.
-    const dir = await mkdtemp(join(tmpdir(), "openship-vhosts-real-"));
+    const dir = await mkdtemp(join(tmpdir(), "kovalio-vhosts-real-"));
     const real = edgeDefaultCatchAllConf({
-      certPath: "/usr/local/openresty/nginx/conf/openship-default-cert/fullchain.pem",
-      keyPath: "/usr/local/openresty/nginx/conf/openship-default-cert/privkey.pem",
+      certPath: "/usr/local/openresty/nginx/conf/kovalio-default-cert/fullchain.pem",
+      keyPath: "/usr/local/openresty/nginx/conf/kovalio-default-cert/privkey.pem",
     });
     expect(real).toContain("listen 443 ssl default_server;"); // guard the guard
     await writeFile(join(dir, "_default.conf"), real);
@@ -98,7 +98,7 @@ describe("sanitizeEdgeVhosts (real shell, real files)", () => {
   });
 
   it("is a no-op on an empty or missing dir", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "openship-vhosts-empty-"));
+    const dir = await mkdtemp(join(tmpdir(), "kovalio-vhosts-empty-"));
     const said: string[] = [];
     await sanitizeEdgeVhosts(new LocalExecutor(), dir, (l) => said.push(l.message));
     await sanitizeEdgeVhosts(new LocalExecutor(), join(dir, "nope"), (l) => said.push(l.message));
@@ -106,7 +106,7 @@ describe("sanitizeEdgeVhosts (real shell, real files)", () => {
   });
 
   it("is idempotent — a second pass changes nothing", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "openship-vhosts-idem-"));
+    const dir = await mkdtemp(join(tmpdir(), "kovalio-vhosts-idem-"));
     await writeFile(join(dir, "onvo.conf"), REAL_VHOST_CLAIMING_DEFAULT);
     await sanitizeEdgeVhosts(new LocalExecutor(), dir, () => {});
     const once = await readFile(join(dir, "onvo.conf"), "utf8");
@@ -117,7 +117,7 @@ describe("sanitizeEdgeVhosts (real shell, real files)", () => {
   });
 
   it("materializes valid symlinks and removes dangling links before the container mounts them", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "openship-vhosts-links-"));
+    const dir = await mkdtemp(join(tmpdir(), "kovalio-vhosts-links-"));
     const source = join(dir, "source.conf");
     const linked = join(dir, "linked.conf");
     const dangling = join(dir, "dangling.conf");

@@ -4,13 +4,14 @@
  * Given the foreign proxy owning 80/443 and the sites parsed from its config,
  * this: snapshots what it's about to stop (rollback journal on disk) → stops &
  * disables the foreign proxy → installs OpenResty → re-registers the imported
- * sites as Openship routes → reuses/issues their certs → verifies. Any failure
+ * sites as Kovalio routes → reuses/issues their certs → verifies. Any failure
  * rolls back (re-enable the foreign proxy) so the box is never left dark.
  *
  * The on-disk journal lets a crash mid-run be rolled back on the next boot
  * (recoverInterruptedTakeover), so an interrupted migrate can't strand 80/443.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { safeErrorMessage } from "@repo/core";
 import type { CommandExecutor, ManualCert } from "../../types";
 import type { RoutingProvider, SslProvider } from "../../infra/types";
@@ -45,7 +46,7 @@ export interface EdgeTakeoverOptions {
   /**
    * Cert PEMs the caller already read from the source proxy, keyed by hostname or
    * cert path. When omitted this harvests them itself (before stopping the proxy —
-   * see `runEdgeTakeover`). `openship up` supplies them because a containerized
+   * see `runEdgeTakeover`). `kovalio up` supplies them because a containerized
    * edge can't read the host filesystem.
    */
   certPems?: Record<string, ManualCert>;
@@ -71,7 +72,7 @@ export interface RegisterImportedSitesOptions {
   warnings: string[];
   /**
    * Inline cert PEMs for callers that read the foreign certs out-of-band. The
-   * containerized edge can't `cat` the HOST filesystem, so `openship up` reads the
+   * containerized edge can't `cat` the HOST filesystem, so `kovalio up` reads the
    * host PEMs and hands them here; the host takeover leaves this unset and the
    * certs are read via the executor.
    *
@@ -92,7 +93,7 @@ export interface RegisterImportedSitesOptions {
 }
 
 /**
- * Register a set of sites parsed from a foreign proxy as Openship routes on the
+ * Register a set of sites parsed from a foreign proxy as Kovalio routes on the
  * given routing/SSL provider — the executor-generic core shared by the HOST
  * takeover (`runEdgeTakeover`, NginxProvider on a LocalExecutor) and the
  * CONTAINER edge (the api's DockerEdgeExecutor provider, via the
@@ -118,11 +119,16 @@ export async function registerImportedSites(
     for (const domain of domains) {
       try {
         if (site.target.kind === "proxy") {
-          // Non-root locations become path-prefix proxy locations ahead of `/`
-          // so a fan-out vhost (`/ → A`, `/v3 → B`) is kept, not collapsed.
+          // Non-root locations, plus an exact `/`, become proxy locations ahead
+          // of the inclusive `/` (upstream or 404) so both fan-out and nginx
+          // exact matching survive the takeover.
           const proxyLocations = (site.routes ?? [])
-            .filter((r) => r.path !== "/")
-            .map((r) => ({ pathPrefix: r.path, targetUrl: r.url }));
+            .filter((r) => r.path !== "/" || r.exact)
+            .map((r) => ({
+              pathPrefix: r.path,
+              targetUrl: r.url,
+              ...(r.exact ? { exact: true } : {}),
+            }));
           await routing.registerRoute({
             domain,
             tls: site.ssl,
@@ -133,7 +139,9 @@ export async function registerImportedSites(
             // placeholder cert and the branded not-found page — so a live site reads
             // as "no application configured here" (#308).
             terminatesTlsLocally: site.ssl,
-            targetUrl: site.target.url,
+            ...(site.routes?.length && !site.routes.some((route) => route.path === "/" && !route.exact)
+              ? { notFound: true as const }
+              : { targetUrl: site.target.url }),
             ...(proxyLocations.length ? { proxyLocations } : {}),
             // Carry the source vhost's tunables (upload limit, upstream timeouts).
             // Taking the ports over swaps the config the site is served from, so
@@ -199,6 +207,7 @@ export async function registerImportedSites(
         opts.onLog(log(`Migrated ${domain} → ${site.target.kind === "proxy" ? site.target.url : site.target.root}`));
         registered.push(domain);
       } catch (err) {
+        observeCaughtError(err, "adapters/system/proxy/takeover");
         opts.warnings.push(`${domain}: ${safeErrorMessage(err)}`);
       }
     }
@@ -269,10 +278,10 @@ export async function runEdgeTakeover(
   // traefik keeps its cert store inside the container, so once it's stopped there's
   // no way left to read it and every migrated domain would silently fall back to a
   // fresh ACME issuance. Skipped when the caller already read them host-side
-  // (`openship up` does, because a containerized edge can't cat the host FS).
+  // (`kovalio up` does, because a containerized edge can't cat the host FS).
   let certPems = opts.certPems;
   if (!certPems) {
-    const source = await edgeProxy(executor, { status: opts.status }).catch(() => null);
+    const source = await edgeProxy(executor, { status: opts.status }).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/proxy/takeover"); return null; });
     if (source) {
       const harvest = await collectProxyCerts(source, opts.sites);
       certPems = harvest.certPems;
@@ -323,7 +332,7 @@ export async function runEdgeTakeover(
       // holder, an operator retries the same unprivileged takeover forever. "Stopped
       // the existing proxy" is also untrue on that arm — the stop is what was refused.
       elevationDegraded
-        ? `The ${ports} Openship could not run the stop as root on this host (see the privilege ` +
+        ? `The ${ports} Kovalio could not run the stop as root on this host (see the privilege ` +
           "warning above), so stopping the existing proxy was almost certainly refused — retrying " +
           "as this user will fail the same way. Reconnect as root, or as a user with passwordless sudo."
         : `Stopped the existing proxy, but ${ports} Find what else is holding the port and retry.`,
@@ -396,6 +405,7 @@ export async function runEdgeTakeover(
         if (route.tls) await nginx.provisionCert(route.domain);
         registered.push(route.domain);
       } catch (err) {
+        observeCaughtError(err, "adapters/system/proxy/takeover");
         warnings.push(`${route.domain}: ${safeErrorMessage(err)}`);
       }
     }
@@ -410,9 +420,10 @@ export async function runEdgeTakeover(
     journal.completed = true;
     await writeJournal(executor, journal);
     await clearJournal(executor);
-    onLog(log(`Takeover complete — ${registered.length} route(s) now served by Openship.`));
+    onLog(log(`Takeover complete — ${registered.length} route(s) now served by Kovalio.`));
     return { ok: true, rolledBack: false, registered, warnings };
   } catch (err) {
+    observeCaughtError(err, "adapters/system/proxy/takeover");
     warnings.push(safeErrorMessage(err));
     const rolledBack = await rollback(executor, journal, onLog);
     await clearJournal(executor);

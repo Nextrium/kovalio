@@ -16,10 +16,12 @@
     "storage"
   ],
   "framework": "docker-compose",
+  "minResources": { "cpuCores": 4, "memoryMb": 8192 },
   "services": [
     {
       "name": "db",
       "image": "supabase/postgres:17.6.1.136",
+      "resources": { "cpuCores": 1, "memoryMb": 3072, "diskMb": 40960 },
       "environment": {
         "POSTGRES_HOST": "/var/run/postgresql",
         "PGPORT": "5432",
@@ -51,6 +53,7 @@
     {
       "name": "kong",
       "image": "kong:3.9.1",
+      "resources": { "cpuCores": 0.5, "memoryMb": 768, "diskMb": 8192 },
       "exposedPort": 8000,
       "exposed": true,
       "routes": [
@@ -90,6 +93,7 @@
     {
       "name": "auth",
       "image": "supabase/gotrue:v2.189.0",
+      "resources": { "cpuCores": 0.25, "memoryMb": 256, "diskMb": 8192 },
       "dependsOn": [
         "db"
       ],
@@ -97,6 +101,7 @@
         "GOTRUE_API_HOST": "0.0.0.0",
         "GOTRUE_API_PORT": "9999",
         "API_EXTERNAL_URL": "{{publicUrl:kong}}",
+        "GOTRUE_SAML_EXTERNAL_URL": "{{publicUrl:kong}}/auth/v1",
         "GOTRUE_DB_DRIVER": "postgres",
         "GOTRUE_DB_DATABASE_URL": "postgres://supabase_auth_admin:{{config:POSTGRES_PASSWORD}}@db:5432/postgres",
         "GOTRUE_SITE_URL": "{{publicUrl:kong}}",
@@ -130,6 +135,7 @@
     {
       "name": "rest",
       "image": "postgrest/postgrest:v14.12",
+      "resources": { "cpuCores": 0.25, "memoryMb": 256, "diskMb": 8192 },
       "dependsOn": [
         "db"
       ],
@@ -147,6 +153,7 @@
     {
       "name": "realtime-dev.supabase-realtime",
       "image": "supabase/realtime:v2.102.3",
+      "resources": { "cpuCores": 0.5, "memoryMb": 1024, "diskMb": 8192 },
       "dependsOn": [
         "db"
       ],
@@ -174,6 +181,7 @@
     {
       "name": "storage",
       "image": "supabase/storage-api:v1.60.4",
+      "resources": { "cpuCores": 0.5, "memoryMb": 512, "diskMb": 8192 },
       "dependsOn": [
         "db",
         "rest",
@@ -215,6 +223,7 @@
     {
       "name": "imgproxy",
       "image": "darthsim/imgproxy:v3.30.1",
+      "resources": { "cpuCores": 0.25, "memoryMb": 512, "diskMb": 8192 },
       "environment": {
         "IMGPROXY_BIND": ":5001",
         "IMGPROXY_LOCAL_FILESYSTEM_ROOT": "/",
@@ -239,6 +248,7 @@
     {
       "name": "meta",
       "image": "supabase/postgres-meta:v0.96.6",
+      "resources": { "cpuCores": 0.25, "memoryMb": 256, "diskMb": 8192 },
       "dependsOn": [
         "db"
       ],
@@ -256,6 +266,7 @@
     {
       "name": "studio",
       "image": "supabase/studio:2026.07.07-sha-a6a04f2",
+      "resources": { "cpuCores": 0.5, "memoryMb": 1024, "diskMb": 8192 },
       "dependsOn": [
         "meta"
       ],
@@ -353,7 +364,7 @@
     {
       "service": "kong",
       "path": "/usr/local/kong/kong.yml",
-      "content": "_format_version: \"3.0\"\n_transform: true\n\nconsumers:\n  - username: DASHBOARD\n  - username: anon\n    keyauth_credentials:\n      - key: {{config:ANON_KEY}}\n  - username: service_role\n    keyauth_credentials:\n      - key: {{config:SERVICE_ROLE_KEY}}\n\nacls:\n  - consumer: anon\n    group: anon\n  - consumer: service_role\n    group: admin\n\nbasicauth_credentials:\n  - consumer: DASHBOARD\n    username: {{config:DASHBOARD_USERNAME}}\n    password: {{config:DASHBOARD_PASSWORD}}\n\nservices:\n  - name: auth-v1-open\n    url: http://auth:9999/verify\n    routes:\n      - name: auth-v1-open\n        strip_path: true\n        paths:\n          - /auth/v1/verify\n    plugins:\n      - name: cors\n  - name: auth-v1-open-callback\n    url: http://auth:9999/callback\n    routes:\n      - name: auth-v1-open-callback\n        strip_path: true\n        paths:\n          - /auth/v1/callback\n    plugins:\n      - name: cors\n  - name: auth-v1-open-authorize\n    url: http://auth:9999/authorize\n    routes:\n      - name: auth-v1-open-authorize\n        strip_path: true\n        paths:\n          - /auth/v1/authorize\n    plugins:\n      - name: cors\n  - name: auth-v1\n    url: http://auth:9999/\n    routes:\n      - name: auth-v1-all\n        strip_path: true\n        paths:\n          - /auth/v1/\n    plugins:\n      - name: cors\n      - name: key-auth\n        config:\n          hide_credentials: false\n      - name: acl\n        config:\n          hide_groups_header: true\n          allow:\n            - admin\n            - anon\n  - name: rest-v1\n    url: http://rest:3000/\n    routes:\n      - name: rest-v1-all\n        strip_path: true\n        paths:\n          - /rest/v1/\n    plugins:\n      - name: cors\n      - name: key-auth\n        config:\n          hide_credentials: true\n      - name: acl\n        config:\n          hide_groups_header: true\n          allow:\n            - admin\n            - anon\n  - name: graphql-v1\n    url: http://rest:3000/rpc/graphql\n    routes:\n      - name: graphql-v1-all\n        strip_path: true\n        paths:\n          - /graphql/v1\n    plugins:\n      - name: cors\n      - name: key-auth\n        config:\n          hide_credentials: true\n      - name: request-transformer\n        config:\n          add:\n            headers:\n              - Content-Profile:graphql_public\n      - name: acl\n        config:\n          hide_groups_header: true\n          allow:\n            - admin\n            - anon\n  - name: realtime-v1-ws\n    url: http://realtime-dev.supabase-realtime:4000/socket/\n    routes:\n      - name: realtime-v1-ws\n        strip_path: true\n        paths:\n          - /realtime/v1/\n    plugins:\n      - name: cors\n      - name: key-auth\n        config:\n          hide_credentials: false\n      - name: acl\n        config:\n          hide_groups_header: true\n          allow:\n            - admin\n            - anon\n  - name: storage-v1\n    url: http://storage:5000/\n    routes:\n      - name: storage-v1-all\n        strip_path: true\n        paths:\n          - /storage/v1/\n    plugins:\n      - name: cors\n  - name: meta\n    url: http://meta:8080/\n    routes:\n      - name: meta-all\n        strip_path: true\n        paths:\n          - /pg/\n    plugins:\n      - name: key-auth\n        config:\n          hide_credentials: false\n      - name: acl\n        config:\n          hide_groups_header: true\n          allow:\n            - admin\n  - name: dashboard\n    url: http://studio:3000/\n    routes:\n      - name: dashboard-all\n        strip_path: true\n        paths:\n          - /\n    plugins:\n      - name: cors\n      - name: basic-auth\n        config:\n          hide_credentials: true\n"
+      "content": "_format_version: \"3.0\"\n_transform: true\n\nconsumers:\n  - username: DASHBOARD\n  - username: anon\n    keyauth_credentials:\n      - key: {{config:ANON_KEY}}\n  - username: service_role\n    keyauth_credentials:\n      - key: {{config:SERVICE_ROLE_KEY}}\n\nacls:\n  - consumer: anon\n    group: anon\n  - consumer: service_role\n    group: admin\n\nbasicauth_credentials:\n  - consumer: DASHBOARD\n    username: {{config:DASHBOARD_USERNAME}}\n    password: {{config:DASHBOARD_PASSWORD}}\n\nservices:\n  - name: auth-v1-open\n    url: http://auth:9999/verify\n    routes:\n      - name: auth-v1-open\n        strip_path: true\n        paths:\n          - /auth/v1/verify\n    plugins:\n      - name: cors\n  - name: auth-v1-open-callback\n    url: http://auth:9999/callback\n    routes:\n      - name: auth-v1-open-callback\n        strip_path: true\n        paths:\n          - /auth/v1/callback\n    plugins:\n      - name: cors\n  - name: auth-v1-open-authorize\n    url: http://auth:9999/authorize\n    routes:\n      - name: auth-v1-open-authorize\n        strip_path: true\n        paths:\n          - /auth/v1/authorize\n    plugins:\n      - name: cors\n  - name: auth-v1-open-sso-acs\n    url: http://auth:9999/sso/saml/acs\n    routes:\n      - name: auth-v1-open-sso-acs\n        strip_path: true\n        paths:\n          - /auth/v1/sso/saml/acs\n    plugins:\n      - name: cors\n  - name: auth-v1-open-sso-metadata\n    url: http://auth:9999/sso/saml/metadata\n    routes:\n      - name: auth-v1-open-sso-metadata\n        strip_path: true\n        paths:\n          - /auth/v1/sso/saml/metadata\n    plugins:\n      - name: cors\n  - name: auth-v1\n    url: http://auth:9999/\n    routes:\n      - name: auth-v1-all\n        strip_path: true\n        paths:\n          - /auth/v1/\n    plugins:\n      - name: cors\n      - name: key-auth\n        config:\n          hide_credentials: false\n      - name: acl\n        config:\n          hide_groups_header: true\n          allow:\n            - admin\n            - anon\n  - name: rest-v1\n    url: http://rest:3000/\n    routes:\n      - name: rest-v1-all\n        strip_path: true\n        paths:\n          - /rest/v1/\n    plugins:\n      - name: cors\n      - name: key-auth\n        config:\n          hide_credentials: true\n      - name: acl\n        config:\n          hide_groups_header: true\n          allow:\n            - admin\n            - anon\n  - name: graphql-v1\n    url: http://rest:3000/rpc/graphql\n    routes:\n      - name: graphql-v1-all\n        strip_path: true\n        paths:\n          - /graphql/v1\n    plugins:\n      - name: cors\n      - name: key-auth\n        config:\n          hide_credentials: true\n      - name: request-transformer\n        config:\n          add:\n            headers:\n              - Content-Profile:graphql_public\n      - name: acl\n        config:\n          hide_groups_header: true\n          allow:\n            - admin\n            - anon\n  - name: realtime-v1-ws\n    url: http://realtime-dev.supabase-realtime:4000/socket/\n    routes:\n      - name: realtime-v1-ws\n        strip_path: true\n        paths:\n          - /realtime/v1/\n    plugins:\n      - name: cors\n      - name: key-auth\n        config:\n          hide_credentials: false\n      - name: acl\n        config:\n          hide_groups_header: true\n          allow:\n            - admin\n            - anon\n  - name: storage-v1\n    url: http://storage:5000/\n    routes:\n      - name: storage-v1-all\n        strip_path: true\n        paths:\n          - /storage/v1/\n    plugins:\n      - name: cors\n  - name: meta\n    url: http://meta:8080/\n    routes:\n      - name: meta-all\n        strip_path: true\n        paths:\n          - /pg/\n    plugins:\n      - name: key-auth\n        config:\n          hide_credentials: false\n      - name: acl\n        config:\n          hide_groups_header: true\n          allow:\n            - admin\n  - name: dashboard\n    url: http://studio:3000/\n    routes:\n      - name: dashboard-all\n        strip_path: true\n        paths:\n          - /\n    plugins:\n      - name: cors\n      - name: basic-auth\n        config:\n          hide_credentials: true\n"
     },
     {
       "service": "db",
@@ -481,5 +492,22 @@
         }
       ]
     }
-  ]
+  ],
+  "marketplace": {
+    "features": [
+      {
+        "title": "Postgres foundation",
+        "description": "Build on a relational database and SQL."
+      },
+      {
+        "title": "Application APIs",
+        "description": "Auth, REST, realtime, and storage in one stack."
+      },
+      {
+        "title": "Studio dashboard",
+        "description": "Inspect and manage the backend in your browser."
+      }
+    ],
+    "articleFile": "articles/supabase.md"
+  }
 }

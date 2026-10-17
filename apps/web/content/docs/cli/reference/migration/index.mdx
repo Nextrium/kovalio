@@ -1,0 +1,354 @@
+---
+title: migration
+description: Commands, arguments, and options for kovalio migration.
+cliGroup: kovalio migration
+---
+
+See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio migration
+
+Discover, import, move and copy Docker workloads between authorized servers, including Cloud
+
+```text
+kovalio migration [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`source`](/docs/cli/reference/migration#kovalio-migration-source) | Manage migration-only SSH sources; these cannot run general server commands |
+| [`scan [options] <server>`](/docs/cli/reference/migration#kovalio-migration-scan) | Read Docker services, container IDs, routes and volumes with environment values masked |
+| [`repo-compose [options] [file]`](/docs/cli/reference/migration#kovalio-migration-repo-compose) | Read repository Compose services with environment values masked |
+| [`preview [options] [file]`](/docs/cli/reference/migration#kovalio-migration-preview) | Inspect transfer size, blocked services, conflicts and downtime before moving |
+| [`adopt [options] [file]`](/docs/cli/reference/migration#kovalio-migration-adopt) | Register discovered services in place on a self-hosted controller |
+| [`reimport [options] [file]`](/docs/cli/reference/migration#kovalio-migration-reimport) | Recover a scanned orphaned Kovalio project with its original ID |
+| [`start [options] [file]`](/docs/cli/reference/migration#kovalio-migration-start) | Start the reviewed Docker migration; keep killOriginals false to review cutover |
+| [`project [options] [file]`](/docs/cli/reference/migration#kovalio-migration-project) | Move or copy an existing project; the run waits for explicit cutover |
+| [`reveal-env [options] [file]`](/docs/cli/reference/migration#kovalio-migration-reveal-env) | Print only the requested environment keys from one source container (secrets) |
+| [`get <id>`](/docs/cli/reference/migration#kovalio-migration-get) | Read durable state, logs, transfer progress, pending prompts and cutover token |
+| [`active <server>`](/docs/cli/reference/migration#kovalio-migration-active) | Find an active run before starting or reattaching to work |
+| [`list [options]`](/docs/cli/reference/migration#kovalio-migration-list) | List up to 50 runs for a server or project |
+| [`events <id>`](/docs/cli/reference/migration#kovalio-migration-events) | Reattach to a migration's progress without restarting it |
+| [`respond [options] <id>`](/docs/cli/reference/migration#kovalio-migration-respond) | Respond to the exact pending decision returned by migration get |
+| [`resume [options] <id> [file]`](/docs/cli/reference/migration#kovalio-migration-resume) | Resume a partial run with reviewed path overrides or skips |
+| [`cutover [options] <id>`](/docs/cli/reference/migration#kovalio-migration-cutover) | Confirm the reviewed target; never invents a cutover token or changes the retirement choice |
+| [`cancel [options] <id>`](/docs/cli/reference/migration#kovalio-migration-cancel) | Request cancellation and rollback; poll migration get until it finishes |
+| [`cleanup-target [options] <id>`](/docs/cli/reference/migration#kovalio-migration-cleanup-target) | Delete target volumes copied by a failed migration; source data remains |
+| [`remove [options] <id>`](/docs/cli/reference/migration#kovalio-migration-remove) | Delete a terminal run's history record; retain the migrated project and data |
+
+## kovalio migration active
+
+Find an active run before starting or reattaching to work
+
+```text
+kovalio migration active [options] <server>
+```
+
+## kovalio migration adopt
+
+Register discovered services in place on a self-hosted controller
+
+```text
+kovalio migration adopt [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |
+
+## kovalio migration cancel
+
+Request cancellation and rollback; poll migration get until it finishes
+
+```text
+kovalio migration cancel [options] <id>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm operation |
+
+## kovalio migration cleanup-target
+
+Delete target volumes copied by a failed migration; source data remains
+
+```text
+kovalio migration cleanup-target [options] <id>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm operation |
+
+## kovalio migration cutover
+
+Confirm the reviewed target; never invents a cutover token or changes the retirement choice
+
+```text
+kovalio migration cutover [options] <id>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--token-file <file>` | This run's confirmation token, or - for stdin |
+| `--originals <choice>` | Retain source containers or authorize their destruction (choices: "retain", "retire") |
+| `-y, --yes` | Confirm cutover |
+
+## kovalio migration events
+
+Reattach to a migration's progress without restarting it
+
+```text
+kovalio migration events [options] <id>
+```
+
+## kovalio migration get
+
+Read durable state, logs, transfer progress, pending prompts and cutover token
+
+```text
+kovalio migration get [options] <id>
+```
+
+## kovalio migration list
+
+List up to 50 runs for a server or project
+
+```text
+kovalio migration list [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--server <id>` | Source or target server |
+| `--project <id>` | Project ID |
+
+## kovalio migration preview
+
+Inspect transfer size, blocked services, conflicts and downtime before moving
+
+```text
+kovalio migration preview [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio migration project
+
+Move or copy an existing project; the run waits for explicit cutover
+
+```text
+kovalio migration project [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |
+
+## kovalio migration reimport
+
+Recover a scanned orphaned Kovalio project with its original ID
+
+```text
+kovalio migration reimport [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |
+
+## kovalio migration remove
+
+Delete a terminal run's history record; retain the migrated project and data
+
+```text
+kovalio migration remove [options] <id>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm operation |
+
+## kovalio migration repo-compose
+
+Read repository Compose services with environment values masked
+
+```text
+kovalio migration repo-compose [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio migration respond
+
+Respond to the exact pending decision returned by migration get
+
+```text
+kovalio migration respond [options] <id>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--prompt <id>` | Current pending prompt ID |
+| `--action <id>` | An action offered by that prompt |
+| `-y, --yes` | Confirm the offered action |
+
+## kovalio migration resume
+
+Resume a partial run with reviewed path overrides or skips
+
+```text
+kovalio migration resume [options] <id> [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Resource ID |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |
+
+## kovalio migration reveal-env
+
+Print only the requested environment keys from one source container (secrets)
+
+```text
+kovalio migration reveal-env [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |
+
+## kovalio migration scan
+
+Read Docker services, container IDs, routes and volumes with environment values masked
+
+```text
+kovalio migration scan [options] <server>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--flat-docker` | Include managed containers in the Docker scan |
+| `--follow` | Stream scan progress |
+| `--timeout <ms>` | Bound the streaming scan (default: 120000) |
+
+## kovalio migration source
+
+Manage migration-only SSH sources; these cannot run general server commands
+
+```text
+kovalio migration source [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list`](/docs/cli/reference/migration#kovalio-migration-source-list) | List registered migration sources |
+| [`test [options] [file]`](/docs/cli/reference/migration#kovalio-migration-source-test) | Verify source access and return its SSH fingerprint without saving it |
+| [`add [options] [file]`](/docs/cli/reference/migration#kovalio-migration-source-add) | Connect a source using credentials from a JSON file or stdin |
+| [`remove [options] <id>`](/docs/cli/reference/migration#kovalio-migration-source-remove) | Delete saved migration access; retain source workloads and data |
+
+## kovalio migration source add
+
+Connect a source using credentials from a JSON file or stdin
+
+```text
+kovalio migration source add [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio migration source list
+
+List registered migration sources
+
+```text
+kovalio migration source list [options]
+```
+
+## kovalio migration source remove
+
+Delete saved migration access; retain source workloads and data
+
+```text
+kovalio migration source remove [options] <id>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm disconnect |
+
+## kovalio migration source test
+
+Verify source access and return its SSH fingerprint without saving it
+
+```text
+kovalio migration source test [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio migration start
+
+Start the reviewed Docker migration; keep killOriginals false to review cutover
+
+```text
+kovalio migration start [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |

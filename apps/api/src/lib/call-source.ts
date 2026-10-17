@@ -7,7 +7,7 @@
  * That means an MCP-driven write and a scripted PAT write are indistinguishable
  * at the middleware layer unless the dispatcher says which it is.
  *
- * A plain `x-openship-source: mcp` header would say it — and so could anyone with
+ * A plain `x-kovalio-source: mcp` header would say it — and so could anyone with
  * curl, which matters because "what did the AI assistant do here" is a question
  * people will answer from this column. So the claim is signed with a nonce
  * generated at boot and never sent anywhere: only a request originating INSIDE
@@ -19,20 +19,15 @@
  * under one user, "mcp" alone can't tell you which one to revoke.
  */
 
-import { AsyncLocalStorage } from "node:async_hooks";
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import { runWithOperationSource, setOperationSource, isAuditSource, isAuditClientId, type AuditSource } from "@repo/platform/engine/lib/operation-source";
+export { AUDIT_SOURCES, isAuditSource, isAuditClientId, ambientCallSource, type AuditSource } from "@repo/platform/engine/lib/operation-source";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import type { Context } from "hono";
 import { getRequestContext } from "./request-context";
 
-export const AUDIT_SOURCES = ["dashboard", "mcp", "cli", "api", "webhook", "system"] as const;
-export type AuditSource = (typeof AUDIT_SOURCES)[number];
-
-export function isAuditSource(value: unknown): value is AuditSource {
-  return typeof value === "string" && (AUDIT_SOURCES as readonly string[]).includes(value);
-}
-
-const CALL_SOURCE_HEADER = "x-openship-call-source";
-const CALL_CLIENT_HEADER = "x-openship-call-client";
+const CALL_SOURCE_HEADER = "x-kovalio-call-source";
+const CALL_CLIENT_HEADER = "x-kovalio-call-client";
 
 /**
  * Shape of an attributable client id: the canonical principal id the auth layer
@@ -40,14 +35,6 @@ const CALL_CLIENT_HEADER = "x-openship-call-client";
  * because the value is persisted on audit_event and rendered in the audit UI —
  * the nonce proves it came from us, not that we assembled it from something sane.
  */
-const CLIENT_ID_PATTERN = /^(?:oauth|pat):[A-Za-z0-9_.\-]{1,128}$/;
-
-/** True for a well-formed source-client id. Also the query-param validator for
- *  the audit filter, so what can be stored and what can be filtered on agree. */
-export function isAuditClientId(value: unknown): value is string {
-  return typeof value === "string" && CLIENT_ID_PATTERN.test(value);
-}
-
 /**
  * Process-local secret. Regenerated on every boot: an in-flight forged header
  * from a previous process is worthless, and there is nothing to leak or rotate.
@@ -106,7 +93,7 @@ function trustedClaim(c: Context): AuditSource | null {
  */
 export function resolveCallClientId(c: Context): string | null {
   const claimed = signedPayload(c.req.header(CALL_CLIENT_HEADER));
-  return claimed && CLIENT_ID_PATTERN.test(claimed) ? claimed : null;
+  return isAuditClientId(claimed) ? claimed : null;
 }
 
 /**
@@ -116,7 +103,7 @@ export function resolveCallClientId(c: Context): string | null {
  *   cookie / zero-auth session → dashboard  (a browser, or a local single-user box)
  *   OAuth bearer               → mcp        (auth.ts resolves one through `getMcpSession`,
  *                                            so an OAuth principal IS an MCP session)
- *   PAT + an openship-cli UA   → cli
+ *   PAT + an kovalio-cli UA   → cli
  *   any other bearer           → api
  *   no request context at all  → system
  *
@@ -128,8 +115,7 @@ export function resolveCallSource(c: Context): AuditSource {
   const claim = trustedClaim(c);
   const resolved = claim ?? derive(c);
   // Share the best answer with emitters that run outside the handler chain.
-  const holder = ambient.getStore();
-  if (holder) holder.value = resolved;
+  setOperationSource(resolved);
   return resolved;
 }
 
@@ -137,7 +123,8 @@ function derive(c: Context): AuditSource {
   let ctx: ReturnType<typeof getRequestContext> | null = null;
   try {
     ctx = getRequestContext(c);
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "api/lib/call-source");
     return fromHeaders(c); // pre-auth, or a route that never builds a ctx
   }
 
@@ -147,7 +134,7 @@ function derive(c: Context): AuditSource {
 }
 
 function isCliAgent(c: Context): boolean {
-  return (c.req.header("user-agent") ?? "").startsWith("openship-cli");
+  return (c.req.header("user-agent") ?? "").startsWith("kovalio-cli");
 }
 
 /**
@@ -171,14 +158,7 @@ function fromHeaders(c: Context): AuditSource {
 // seed is header-derived (enough to separate a browser from a token) and gets
 // upgraded in place the moment a handler calls resolveCallSource.
 
-const ambient = new AsyncLocalStorage<{ value: AuditSource }>();
-
 /** Seed the per-request ambient source. Call once, in a global middleware. */
 export function runWithCallSource<T>(c: Context, fn: () => T): T {
-  return ambient.run({ value: trustedClaim(c) ?? fromHeaders(c) }, fn);
-}
-
-/** The current request's source, or null outside a request (crons, boot). */
-export function ambientCallSource(): AuditSource | null {
-  return ambient.getStore()?.value ?? null;
+  return runWithOperationSource(trustedClaim(c) ?? fromHeaders(c), fn);
 }

@@ -89,15 +89,16 @@ function parseAttributes(attrStr: string): Record<string, string> {
   return attrs;
 }
 
+const NAMED_XML_ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+
+// One pass, so each entity decodes exactly once: `&amp;lt;` is the text `&lt;`,
+// not `<` (sequential replaces decoded it twice).
 function decodeXmlEntities(str: string): string {
-  return str
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  return str.replace(/&(amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);/g, (_, entity: string) => {
+    if (entity.startsWith("#x")) return String.fromCharCode(parseInt(entity.slice(2), 16));
+    if (entity.startsWith("#")) return String.fromCharCode(Number(entity.slice(1)));
+    return NAMED_XML_ENTITIES[entity];
+  });
 }
 
 // ─── Search Helpers ──────────────────────────────────────────────────────────

@@ -62,9 +62,9 @@ describe("parseProbe", () => {
 
 describe("buildProbe", () => {
   it("shell-quotes the pid and every cgroup candidate", () => {
-    const cmd = buildProbe(4242, ["/sys/fs/cgroup/system.slice/openship-a.service"]);
+    const cmd = buildProbe(4242, ["/sys/fs/cgroup/system.slice/kovalio-a.service"]);
     expect(cmd).toContain("P='4242'");
-    expect(cmd).toContain("'/sys/fs/cgroup/system.slice/openship-a.service'");
+    expect(cmd).toContain("'/sys/fs/cgroup/system.slice/kovalio-a.service'");
   });
 
   it("samples CPU twice around one sleep, so the interval is known", () => {

@@ -2,7 +2,7 @@
  * Destination key paths for backup artifacts.
  *
  * Format — RELATIVE to the destination's own root:
- *   openship/<projectSlug>/<serviceName>/<runId>/<artifactName>
+ *   kovalio/<projectSlug>/<serviceName>/<runId>/<artifactName>
  *
  * ## `pathPrefix` belongs to the destination, not to the key
  *
@@ -10,14 +10,14 @@
  * applies its own: `s3.fullKey()` and `sftp.fullPath()` prepend it on every put,
  * get, head and delete, and `local` applies it at its root. `runPrefix` used to
  * prepend it as well, so an S3/R2 or SFTP destination with a prefix stored each
- * artifact one level DEEPER than the key the run recorded — `openship/openship/...`
- * written to `openship/openship/openship/...`.
+ * artifact one level DEEPER than the key the run recorded — `kovalio/kovalio/...`
+ * written to `kovalio/kovalio/kovalio/...`.
  *
  * Nothing noticed because it was symmetric: restore, verification and retention all
  * hand the same recorded key back to the same destination, which prepends the
  * prefix again and lands on the object. The operator is the one who paid, and
- * [#611](https://github.com/oblien/openship/issues/611) is what that costs — a run
- * reporting `objectKeyPrefix: "openship/openship/openship/postgres/bkr_…"`, and a
+ * [#611](https://github.com/Nextrium/kovalio/issues/611) is what that costs — a run
+ * reporting `objectKeyPrefix: "kovalio/kovalio/kovalio/postgres/bkr_…"`, and a
  * bucket listing at that prefix returning nothing at all, not even the
  * `manifest.json` the row points to. A backup you cannot locate is not obviously a
  * backup you have.
@@ -53,7 +53,7 @@ export interface KeyParts {
  *  refuse `..`, leading `/`, embedded null bytes, and Windows drive-style
  *  prefixes — even though projectSlug/serviceName come from columns that
  *  validate at write time, defense-in-depth costs nothing and keeps an
- *  attacker from poking a destination key like `openship/../../../etc/`
+ *  attacker from poking a destination key like `kovalio/../../../etc/`
  *  through the artifactName argument. */
 function assertSafeSegment(segment: string, originalParts: ReadonlyArray<string | null | undefined>): void {
   if (segment.includes("\0")) {
@@ -73,7 +73,7 @@ function joinKey(parts: Array<string | null | undefined>): string {
   const cleaned = parts
     .map((p) => (p ?? "").trim())
     .filter((p) => p.length > 0)
-    .map((p) => p.replace(/^\/+|\/+$/g, ""));
+    .map((p) => p.replace(/^\/+|(?<!\/)\/+$/g, ""));
 
   for (const segment of cleaned) {
     assertSafeSegment(segment, parts);
@@ -83,7 +83,7 @@ function joinKey(parts: Array<string | null | undefined>): string {
 
 /** Run-scoped directory key (the parent prefix for all artifacts in a run). */
 export function runPrefix(parts: KeyParts): string {
-  return joinKey(["openship", parts.projectSlug, parts.serviceName, parts.runId]);
+  return joinKey(["kovalio", parts.projectSlug, parts.serviceName, parts.runId]);
 }
 
 export function artifactKey(parts: KeyParts, artifactName: string): string {

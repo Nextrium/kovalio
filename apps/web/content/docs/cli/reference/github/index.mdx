@@ -1,0 +1,118 @@
+---
+title: github
+description: Commands, arguments, and options for kovalio github.
+cliGroup: kovalio github
+---
+
+See the [workflow guide](/docs/cli/access) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio github
+
+Connect GitHub, browse repositories and manage deployment sources
+
+```text
+kovalio github [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`status`](/docs/cli/reference/github#kovalio-github-status) | Show available connection methods and current GitHub access |
+| [`home`](/docs/cli/reference/github#kovalio-github-home) | Show connected accounts and recent repositories |
+| [`local-status`](/docs/cli/reference/github#kovalio-github-local-status) | Inspect GitHub credentials on the selected Kovalio instance |
+| [`connect [options]`](/docs/cli/reference/github#kovalio-github-connect) | Begin a connection; follow the returned browser, device or installation instructions |
+| [`poll [options]`](/docs/cli/reference/github#kovalio-github-poll) | Check whether a connection attempt completed |
+| [`claim [options] <installation>`](/docs/cli/reference/github#kovalio-github-claim) | Select an installation offered to the authenticated user |
+| [`token <file>`](/docs/cli/reference/github#kovalio-github-token) | Set the instance's GitHub personal token (self-hosted administrators) |
+| [`disconnect [options]`](/docs/cli/reference/github#kovalio-github-disconnect) | Disconnect a GitHub credential source |
+| [`repo`](/docs/cli/reference/github/repo#kovalio-github-repo) | Browse and manage repositories available to this connection |
+| [`source`](/docs/cli/reference/github/source#kovalio-github-source) | Configure self-hosted GitHub Apps and their installations |
+
+## kovalio github claim
+
+Select an installation offered to the authenticated user
+
+```text
+kovalio github claim [options] <installation>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `installation` | Installation ID offered by github connect |
+
+| Option | Meaning |
+| --- | --- |
+| `--state <state>` | Exact connection attempt state |
+
+## kovalio github connect
+
+Begin a connection; follow the returned browser, device or installation instructions
+
+```text
+kovalio github connect [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--source <method>` | Connection method (choices: "oauth", "cli") |
+| `--state <state>` | Resume this connection attempt |
+
+## kovalio github disconnect
+
+Disconnect a GitHub credential source
+
+```text
+kovalio github disconnect [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--source <method>` | Credential to disconnect (choices: "oauth", "cli", "all", default: "all") |
+| `-y, --yes` | Confirm disconnection |
+
+## kovalio github home
+
+Show connected accounts and recent repositories
+
+```text
+kovalio github home [options]
+```
+
+## kovalio github local-status
+
+Inspect GitHub credentials on the selected Kovalio instance
+
+```text
+kovalio github local-status [options]
+```
+
+## kovalio github poll
+
+Check whether a connection attempt completed
+
+```text
+kovalio github poll [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--state <state>` | Attempt state from github connect |
+
+## kovalio github status
+
+Show available connection methods and current GitHub access
+
+```text
+kovalio github status [options]
+```
+
+## kovalio github token
+
+Set the instance's GitHub personal token (self-hosted administrators)
+
+```text
+kovalio github token [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | Token file, or - for stdin |

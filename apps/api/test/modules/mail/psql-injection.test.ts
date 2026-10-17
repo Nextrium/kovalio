@@ -9,7 +9,7 @@
 import "./_setup-env"; // MUST be first — sets INTERNAL_TOKEN before config/env loads
 import { describe, expect, test } from "vitest";
 import type { CommandExecutor } from "@repo/adapters";
-import { transaction } from "../../../src/modules/mail/admin/psql-runner";
+import { transaction } from "@repo/platform/engine/modules/mail/admin/psql-runner";
 
 function capturingExecutor(sink: string[]): CommandExecutor {
   return {
@@ -19,7 +19,7 @@ function capturingExecutor(sink: string[]): CommandExecutor {
       // Answering the detection probe as a live engine keeps this a test of the
       // QUOTING, not of engine discovery — an unanswered probe resolves to
       // flavor "none" and throws before any SQL is built.
-      if (cmd.includes("{{.Config.Image}}")) return "true\topenship/mail:latest";
+      if (cmd.includes("{{.Config.Image}}")) return "true\tkovalio/mail:latest";
       sink.push(cmd);
       return "";
     },
@@ -28,7 +28,7 @@ function capturingExecutor(sink: string[]): CommandExecutor {
 
 // The exact PoC payload from the report, embedded in a mailbox INSERT.
 const EVIL_NAME =
-  "PoC\n__OPENSHIP_SQL_EOF__\n(id; hostname) > /tmp/CURL_RCE_PROOF 2>&1\n#";
+  "PoC\n__KOVALIO_SQL_EOF__\n(id; hostname) > /tmp/CURL_RCE_PROOF 2>&1\n#";
 const EVIL_STATEMENT = `INSERT INTO mailbox (username, name) VALUES ('a@b.com', '${EVIL_NAME.replace(/'/g, "''")}')`;
 
 describe("psql-runner transaction() — command injection is neutralized", () => {
@@ -48,13 +48,13 @@ describe("psql-runner transaction() — command injection is neutralized", () =>
     const cmds: string[] = [];
     await transaction(capturingExecutor(cmds), [EVIL_STATEMENT]);
     const cmd = cmds[0];
-    expect(cmd).toContain("docker exec openship-mail-db psql -U postgres -d vmail");
+    expect(cmd).toContain("docker exec kovalio-mail-db psql -U postgres -d vmail");
     expect(cmd).toContain(" -c '");
     // Everything after `-c '` up to the closing quote is a single argv token;
     // any inner single quote is escaped as '\'' so the payload can't break out.
     // (docker exec passes `-c <sql>` straight to psql — no second shell parse.)
     expect(
-      cmd.startsWith("docker exec openship-mail-db psql -U postgres -d vmail -A -t -v ON_ERROR_STOP=1 -c '"),
+      cmd.startsWith("docker exec kovalio-mail-db psql -U postgres -d vmail -A -t -v ON_ERROR_STOP=1 -c '"),
     ).toBe(true);
     expect(cmd.endsWith("'")).toBe(true);
   });
@@ -64,6 +64,6 @@ describe("psql-runner transaction() — command injection is neutralized", () =>
     await transaction(capturingExecutor(cmds), [EVIL_STATEMENT]);
     // The word may appear as DATA inside the quoted arg, but there must be no
     // heredoc for it to terminate — the structural guarantee is "no <<".
-    expect(cmds[0].includes("<<'__OPENSHIP_SQL_EOF__'")).toBe(false);
+    expect(cmds[0].includes("<<'__KOVALIO_SQL_EOF__'")).toBe(false);
   });
 });

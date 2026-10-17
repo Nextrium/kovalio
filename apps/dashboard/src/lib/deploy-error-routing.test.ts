@@ -8,7 +8,7 @@ import { deployErrorCloudCapability, shouldPromptCloudConnect } from "./deploy-e
  *
  * The regression they exist for — a compose deploy answered
  * `403 CLOUD_REQUIRED_MANAGED_COMPOSE_DOMAINS` ("Free subdomain
- * project-api.opsh.io requires Openship Cloud") showed the user NOTHING. Not a
+ * project-api.opsh.io requires Kovalio Cloud") showed the user NOTHING. Not a
  * toast, not a modal. `requireCloud` returns `true` immediately when the dashboard
  * already believes it is connected, so the caller's `if (!connected) showToast(...)`
  * read that short-circuit as "the user fixed it" and skipped the toast. The button

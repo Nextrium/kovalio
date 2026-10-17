@@ -7,22 +7,22 @@
 
 import { describe, test, expect, vi, beforeEach } from "vitest";
 
-vi.mock("@/config/env", () => ({
+vi.mock("@repo/platform/engine/config/env", () => ({
   env: {
     DEPLOY_MODE: "docker",
-    OPENSHIP_ALLOW_ZERO_AUTH: false,
-    OPENSHIP_REQUIRE_AUTH: false,
-    OPENSHIP_PUBLIC_URL: undefined as string | undefined,
+    KOVALIO_ALLOW_ZERO_AUTH: false,
+    KOVALIO_REQUIRE_AUTH: false,
+    KOVALIO_PUBLIC_URL: undefined as string | undefined,
   },
 }));
-vi.mock("@/lib/auth-mode", () => ({ getAuthMode: vi.fn(async () => "none") }));
+vi.mock("@repo/platform/engine/lib/auth-mode", () => ({ getAuthMode: vi.fn(async () => "none") }));
 vi.mock("@/middleware/loopback-peer", () => ({
   isLoopbackRequest: vi.fn(() => true),
   peerAddress: () => "203.0.113.9",
 }));
 
-import { env } from "@/config/env";
-import { getAuthMode } from "@/lib/auth-mode";
+import { env } from "@repo/platform/engine/config/env";
+import { getAuthMode } from "@repo/platform/engine/lib/auth-mode";
 import { isLoopbackRequest } from "@/middleware/loopback-peer";
 import { zeroAuthAllowed } from "@/middleware/zero-auth-guard";
 
@@ -31,9 +31,9 @@ const e = env as unknown as Record<string, unknown>;
 
 beforeEach(() => {
   e.DEPLOY_MODE = "docker";
-  e.OPENSHIP_ALLOW_ZERO_AUTH = false;
-  e.OPENSHIP_REQUIRE_AUTH = false;
-  e.OPENSHIP_PUBLIC_URL = undefined;
+  e.KOVALIO_ALLOW_ZERO_AUTH = false;
+  e.KOVALIO_REQUIRE_AUTH = false;
+  e.KOVALIO_PUBLIC_URL = undefined;
   (getAuthMode as ReturnType<typeof vi.fn>).mockResolvedValue("none");
   (isLoopbackRequest as ReturnType<typeof vi.fn>).mockReturnValue(true);
 });
@@ -49,14 +49,14 @@ describe("zeroAuthAllowed", () => {
   });
 
   test("mode=none + opt-in but NON-loopback peer → refused", async () => {
-    e.OPENSHIP_ALLOW_ZERO_AUTH = true;
+    e.KOVALIO_ALLOW_ZERO_AUTH = true;
     (isLoopbackRequest as ReturnType<typeof vi.fn>).mockReturnValue(false);
     expect((await zeroAuthAllowed(ctx)).ok).toBe(false);
   });
 
-  test("mode=none + publicly-served (OPENSHIP_PUBLIC_URL) → refused", async () => {
+  test("mode=none + publicly-served (KOVALIO_PUBLIC_URL) → refused", async () => {
     e.DEPLOY_MODE = "desktop";
-    e.OPENSHIP_PUBLIC_URL = "https://openship.example";
+    e.KOVALIO_PUBLIC_URL = "https://kovalio.example";
     expect((await zeroAuthAllowed(ctx)).ok).toBe(false);
   });
 
@@ -66,7 +66,7 @@ describe("zeroAuthAllowed", () => {
   });
 
   test("mode=none + docker + explicit opt-in + loopback → allowed", async () => {
-    e.OPENSHIP_ALLOW_ZERO_AUTH = true;
+    e.KOVALIO_ALLOW_ZERO_AUTH = true;
     expect((await zeroAuthAllowed(ctx)).ok).toBe(true);
   });
 });

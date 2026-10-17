@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * The state machine that proves to Openship Cloud that this box controls a routing
+ * The state machine that proves to Kovalio Cloud that this box controls a routing
  * target. Two rules outrank everything else here and are what these tests pin:
  *
  * 1. It is REACTIVE. It only runs after a sync came back `target_unverified`, so a
@@ -48,17 +48,17 @@ vi.mock("@repo/db", async () => {
     },
   };
 });
-vi.mock("../../src/lib/cloud/client", () => ({
+vi.mock("@repo/platform/engine/lib/cloud/client", () => ({
   cloudClient: () => ({ edgeProxy: { requestVerification, checkVerification } }),
 }));
 // `disposePlatform` is the release step edge-verify now calls on the platform it
 // resolved (it only wants `.routing`); a no-op stub keeps this suite focused.
-vi.mock("../../src/lib/deployment-runtime", () => ({
+vi.mock("@repo/platform/engine/lib/deployment-runtime", () => ({
   resolveTargetPlatform,
   disposePlatform: () => {},
 }));
 
-import { ensureTargetVerified } from "../../src/lib/edge-target-verify";
+import { ensureTargetVerified } from "@repo/platform/engine/lib/edge-target-verify";
 
 const TARGET = "http://203.0.113.10";
 const CHALLENGE = {

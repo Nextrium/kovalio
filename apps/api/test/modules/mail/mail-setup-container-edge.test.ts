@@ -2,7 +2,7 @@ import "./_setup-env";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 /**
- * There is ONE edge on a box and it is the `openship-edge` container.
+ * There is ONE edge on a box and it is the `kovalio-edge` container.
  *
  * The mail wizard used to apt-install a HOST OpenResty and certbot, which made it
  * the only flow with its own edge story — a second implementation of the same
@@ -44,7 +44,7 @@ vi.mock("@repo/adapters", async (importOriginal) => ({
 import {
   stepEnsureComponents,
   stepEnsureReverseProxy,
-} from "../../../src/modules/mail/mail.service";
+} from "@repo/platform/engine/modules/mail/mail.service";
 
 /** Records every command so a test can assert what was NOT run. */
 function fakeExecutor(responses: (cmd: string) => string = () => "") {
@@ -69,7 +69,7 @@ describe("step 1 — Docker, then the container edge", () => {
 
     expect(result.success).toBe(true);
     // rsync is gone: nothing is staged to the host any more (the mail engine ships
-    // as the openship-mail image), so the step installs Docker + brings up the edge.
+    // as the kovalio-mail image), so the step installs Docker + brings up the edge.
     expect(mocks.installRsync).not.toHaveBeenCalled();
     expect(mocks.installDocker).toHaveBeenCalledOnce();
     expect(mocks.installContainerEdge).toHaveBeenCalledOnce();

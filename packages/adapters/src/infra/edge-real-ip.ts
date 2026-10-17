@@ -49,7 +49,7 @@
  *     bucket and which ban rule applies to them.
  *
  * So the Cloudflare path uses the header Cloudflare guarantees. XFF remains available for
- * an operator's own proxy via `OPENSHIP_EDGE_REAL_IP_HEADER`, where `real_ip_recursive on`
+ * an operator's own proxy via `KOVALIO_EDGE_REAL_IP_HEADER`, where `real_ip_recursive on`
  * (always emitted below) makes the right-to-left walk the active behaviour.
  *
  * ── Shape on disk ────────────────────────────────────────────────────────────
@@ -62,21 +62,22 @@
  */
 
 import { SYSTEM } from "@repo/core";
+import { isIP } from "node:net";
 import { CLOUDFLARE_IPV4, CLOUDFLARE_IPV6 } from "./cloudflare-ips.generated";
 
 /** Filename of the generated real-ip include, inside the OpenResty conf dir. */
-export const EDGE_REAL_IP_CONF_NAME = "openship-real-ip.conf";
+export const EDGE_REAL_IP_CONF_NAME = "kovalio-real-ip.conf";
 
 /**
  * Header naming the true client, honoured only from a trusted peer.
  *
  * Overridable for an operator fronting the edge with their own proxy — set
- * `OPENSHIP_EDGE_REAL_IP_HEADER=X-Forwarded-For` together with
- * `OPENSHIP_EDGE_TRUSTED_PROXIES`. Read at config-generation time, so a change needs the
+ * `KOVALIO_EDGE_REAL_IP_HEADER=X-Forwarded-For` together with
+ * `KOVALIO_EDGE_TRUSTED_PROXIES`. Read at config-generation time, so a change needs the
  * routing to be re-applied (or the edge reinstalled), not merely a reload.
  */
 export function edgeRealIpHeader(): string {
-  const raw = process.env.OPENSHIP_EDGE_REAL_IP_HEADER?.trim();
+  const raw = process.env.KOVALIO_EDGE_REAL_IP_HEADER?.trim();
   // Header names only. This value lands in a config directive, so anything with
   // whitespace, a semicolon or a brace could close the directive and inject another —
   // an env var is a lower bar than a socket, but it is still not a place to concatenate
@@ -94,13 +95,22 @@ export function edgeRealIpHeader(): string {
  * box. Being silently ignored is the better failure for a value that only widens trust.
  */
 export function edgeTrustedProxies(): string[] {
-  const raw = process.env.OPENSHIP_EDGE_TRUSTED_PROXIES?.trim();
+  const raw = process.env.KOVALIO_EDGE_TRUSTED_PROXIES?.trim();
   if (!raw) return [];
-  const CIDR = /^(?:(?:\d{1,3}\.){3}\d{1,3}|[0-9a-fA-F:]+)(?:\/\d{1,3})?$/;
   return raw
     .split(/[,\s]+/)
     .map((s) => s.trim())
-    .filter((s) => s.length > 0 && s.length <= 64 && CIDR.test(s));
+    .filter((s) => {
+      if (!s || s.length > 64) return false;
+      const [address = "", prefix, ...extra] = s.split("/");
+      const family = isIP(address);
+      // nginx cannot use interface-scoped IPv6 literals in set_real_ip_from.
+      if (!family || address.includes("%") || extra.length) return false;
+      return (
+        prefix === undefined ||
+        (/^(?:0|[1-9]\d{0,2})$/.test(prefix) && Number(prefix) <= (family === 4 ? 32 : 128))
+      );
+    });
 }
 
 /**
@@ -115,7 +125,7 @@ export function edgeRealIpConf(): string {
   const extra = edgeTrustedProxies();
 
   const lines: string[] = [
-    "# Openship — recover the real client address from a trusted front proxy.",
+    "# Kovalio — recover the real client address from a trusted front proxy.",
     "#",
     "# GENERATED. Source: packages/adapters/src/infra/edge-real-ip.ts",
     "#",
@@ -141,7 +151,7 @@ export function edgeRealIpConf(): string {
           "# with it their rate-limit bucket and which ban rules miss them.",
         ]
       : [
-          "# NOT the default (CF-Connecting-IP) — set via OPENSHIP_EDGE_REAL_IP_HEADER.",
+          "# NOT the default (CF-Connecting-IP) — set via KOVALIO_EDGE_REAL_IP_HEADER.",
           "# If this is X-Forwarded-For, note that proxies APPEND to it, so the header is",
           "# partly client-controlled; real_ip_recursive below is what makes nginx walk it",
           "# from the right and stop at the last untrusted hop, which is the real client.",
@@ -165,7 +175,7 @@ export function edgeRealIpConf(): string {
   if (extra.length > 0) {
     lines.push(
       "",
-      "# Operator-declared proxies (OPENSHIP_EDGE_TRUSTED_PROXIES). Each of these can set",
+      "# Operator-declared proxies (KOVALIO_EDGE_TRUSTED_PROXIES). Each of these can set",
       "# the header above and be believed, so keep the list to hosts you control.",
       ...extra.map((c) => `set_real_ip_from ${c};`),
     );
@@ -175,7 +185,54 @@ export function edgeRealIpConf(): string {
 }
 
 /**
- * Header Openship Cloud's edge names the client in.
+ * Filename of the operator real-ip include on the CONTAINERIZED edge.
+ *
+ * That edge's `nginx.conf` is baked into the image, where {@link edgeRealIpConf} was
+ * rendered at build time with no operator env, so `KOVALIO_EDGE_TRUSTED_PROXIES`
+ * never reached it. The only directory the api can write is the bind-mounted
+ * sites-enabled, which the baked `http {}` already includes. The leading `_` keeps the
+ * file out of the route namespace, like `_default.conf` and `_management.conf`.
+ */
+export const EDGE_CONTAINER_REAL_IP_CONF_NAME = "_kovalio-real-ip.conf";
+
+/**
+ * The operator half of the real-ip block, for the containerized edge.
+ *
+ * Only `set_real_ip_from` lines: they accumulate, so they extend the baked Cloudflare
+ * list. `real_ip_header` and `real_ip_recursive` cannot be set twice in one scope —
+ * nginx refuses the config as `[emerg] ... is duplicate` — so the baked header stands
+ * and an override is recorded in the file instead of breaking every reload.
+ *
+ * Written even when empty, so that removing the env var removes the trust on the next
+ * apply instead of leaving the last list behind.
+ */
+export function edgeContainerRealIpConf(): string {
+  const header = edgeRealIpHeader();
+  const extra = edgeTrustedProxies();
+  const lines: string[] = [
+    "# Kovalio — operator-declared front proxies for the containerized edge.",
+    "#",
+    "# GENERATED on every routing apply. Source: packages/adapters/src/infra/edge-real-ip.ts",
+    "#",
+    "# The baked nginx.conf already trusts Cloudflare's ranges and reads the client",
+    "# address from its real_ip_header. This file adds KOVALIO_EDGE_TRUSTED_PROXIES, for",
+    "# a proxy in front of this edge that is not Cloudflare (for example a tunnel",
+    "# connector on this host). Each of these can set that header and be believed, so",
+    "# keep the list to hosts you control.",
+  ];
+  if (header.toLowerCase() !== "cf-connecting-ip") {
+    lines.push(
+      "#",
+      `# KOVALIO_EDGE_REAL_IP_HEADER=${header} is NOT applied here: the baked config`,
+      "# already sets real_ip_header, and nginx rejects a second one in the same scope.",
+    );
+  }
+  lines.push("", ...extra.map((c) => `set_real_ip_from ${c};`));
+  return lines.join("\n") + "\n";
+}
+
+/**
+ * Header Kovalio Cloud's edge names the client in.
  *
  * Not CF-Connecting-IP: the Cloud edge is a proxy in its own right, and the header it
  * OVERWRITES on the way to the origin is `X-Real-IP`. Two different fronts, two
@@ -185,7 +242,7 @@ export function edgeRealIpConf(): string {
 export const CLOUD_EDGE_REAL_IP_HEADER = "X-Real-IP";
 
 /**
- * Is this hostname one Openship Cloud's shared edge fronts?
+ * Is this hostname one Kovalio Cloud's shared edge fronts?
  *
  * A free `<slug>.opsh.io` host is served by Cloud's edge, which proxies to this box on
  * plain :80 — so for that vhost, and only that vhost, the TCP peer is the Cloud edge
@@ -198,7 +255,7 @@ export const CLOUD_EDGE_REAL_IP_HEADER = "X-Real-IP";
  * visitor a free choice of source address.
  */
 export function isCloudFrontedHost(hostname: string): boolean {
-  const host = hostname.trim().toLowerCase().replace(/\.+$/, "");
+  const host = hostname.trim().toLowerCase().replace(/(?<!\.)\.+$/, "");
   const suffix = `.${SYSTEM.DOMAINS.CLOUD_DOMAIN.toLowerCase()}`;
   return host.length > suffix.length && host.endsWith(suffix);
 }
@@ -223,7 +280,7 @@ export function isCloudFrontedHost(hostname: string): boolean {
  */
 export function cloudEdgeRealIpConf(indent = "    "): string {
   const lines: string[] = [
-    "# Openship Cloud's edge fronts this free host, so the peer is the edge and the",
+    "# Kovalio Cloud's edge fronts this free host, so the peer is the edge and the",
     "# visitor is named in X-Real-IP (which that front OVERWRITES). The http-scope block",
     "# reads CF-Connecting-IP for Cloudflare-fronted custom domains, and there is one",
     "# real_ip_header per scope — hence this override.",

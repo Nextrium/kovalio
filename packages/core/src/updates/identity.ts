@@ -1,5 +1,5 @@
 /**
- * Unified "version identity" for anything Openship can update — one discriminated
+ * Unified "version identity" for anything Kovalio can update — one discriminated
  * shape covering the three drift kinds so a single resolver/scanner and a single
  * banner can treat git projects, release/dist projects, the self-app, and
  * image-based apps the same way. This is the commit-OR-tag unification: instead
@@ -52,7 +52,7 @@ export type CommitShaMatch = "same" | "different" | "unknown";
  * Do two commit refs name the same commit? Deliberately not string equality: the
  * two sides come from different places. A branch HEAD arrives from the GitHub API
  * as all 40 hex chars, while a deployment's stored sha is whatever the caller that
- * triggered it supplied — `openship deploy --commit 1eeaf76`, an MCP call, a CI
+ * triggered it supplied — `kovalio deploy --commit 1eeaf76`, an MCP call, a CI
  * script — and git checks that out happily, so the deploy is correct while the row
  * records an abbreviation. Comparing those by bytes reads one commit as two, and
  * since every surface renders `sha.slice(0, 7)`, the operator is told "new commit

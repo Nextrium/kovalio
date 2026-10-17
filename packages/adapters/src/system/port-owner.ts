@@ -1,5 +1,5 @@
 /**
- * Who owns a host port, and what Openship is ALLOWED to stop to take it.
+ * Who owns a host port, and what Kovalio is ALLOWED to stop to take it.
  *
  * Lifted out of the deploy-time port probe, and shared with the edge takeover,
  * because both resolved a port's owner the same wrong way. The process LISTENING on
@@ -18,7 +18,7 @@
  *     listener at all — the publish is pure iptables DNAT);
  *   - which systemd units may be stopped, for each of the two callers, since they
  *     want different answers about proxies and only one of them is a takeover;
- *   - which containers are Openship's OWN, because the control plane runs as a
+ *   - which containers are Kovalio's OWN, because the control plane runs as a
  *     compose stack and "stop the container on port 4000" is otherwise a way for a
  *     deploy to stop the API running it.
  */
@@ -30,12 +30,13 @@ import type { ExecOnly } from "../types";
 import type { ProxyKind } from "./types";
 import { tryExec } from "./probe-exec";
 
-/** The labels `DockerRuntime.labels()` stamps on everything Openship creates. */
-export const OPENSHIP_LABEL = {
-  project: "openship.project",
-  deployment: "openship.deployment",
-  service: "openship.service",
-  build: "openship.build",
+/** Labels Kovalio stamps on what it creates: `DockerRuntime.labels()`, plus `role` from `deployRole`. */
+export const KOVALIO_LABEL = {
+  project: "kovalio.project",
+  deployment: "kovalio.deployment",
+  service: "kovalio.service",
+  build: "kovalio.build",
+  role: "kovalio.role",
 } as const;
 
 /** A container publishing a host port, with the labels that decide ownership. */
@@ -74,10 +75,10 @@ const PS_FIELDS = [
   "{{.ID}}",
   "{{.Names}}",
   "{{.Image}}",
-  `{{.Label "${OPENSHIP_LABEL.project}"}}`,
-  `{{.Label "${OPENSHIP_LABEL.deployment}"}}`,
-  `{{.Label "${OPENSHIP_LABEL.service}"}}`,
-  `{{.Label "${OPENSHIP_LABEL.build}"}}`,
+  `{{.Label "${KOVALIO_LABEL.project}"}}`,
+  `{{.Label "${KOVALIO_LABEL.deployment}"}}`,
+  `{{.Label "${KOVALIO_LABEL.service}"}}`,
+  `{{.Label "${KOVALIO_LABEL.build}"}}`,
   '{{.Label "com.docker.compose.project"}}',
   '{{.Label "com.docker.compose.service"}}',
 ];
@@ -211,32 +212,32 @@ export async function describeContainerById(
 
 /**
  * The edge we ship as a container: compose service `edge`, published image
- * `…/openship-edge`, default container name `openship-edge`. Recognized by name OR
+ * `…/kovalio-edge`, default container name `kovalio-edge`. Recognized by name OR
  * image so a host-networked OR bridged edge counts as OUR edge. Matching the image
  * is the stable signal — the container name is configurable via
- * OPENSHIP_EDGE_CONTAINER.
+ * KOVALIO_EDGE_CONTAINER.
  *
  * Lives here rather than next to the edge probe so the port-conflict path can refuse
  * to offer it as a stop target without importing upward into `proxy/detect` (which
  * imports the port probe, so that direction is a cycle). Re-exported there for its
  * existing callers.
  */
-export const EDGE_CONTAINER_NAME = "openship-edge";
+export const EDGE_CONTAINER_NAME = "kovalio-edge";
 
 export function isOurEdgeContainer(name?: string, image?: string): boolean {
-  return /openship-edge/i.test(`${name ?? ""} ${image ?? ""}`);
+  return /kovalio-edge/i.test(`${name ?? ""} ${image ?? ""}`);
 }
 
-/** A container Openship created — `openship.project` is stamped on every one. */
-export function isOpenshipContainer(container: PortContainer): boolean {
+/** A container Kovalio created — `kovalio.project` is stamped on every one. */
+export function isKovalioContainer(container: PortContainer): boolean {
   return Boolean(container.projectId);
 }
 
 /**
  * A build helper, not a running app: it carries a build session and NEITHER a
  * deployment nor a service. The build label alone does not prove it — docker copies
- * image labels onto containers run from `openship/<app>:bld_…`, so a real deployment
- * inherits `openship.build` too.
+ * image labels onto containers run from `kovalio/<app>:bld_…`, so a real deployment
+ * inherits `kovalio.build` too.
  *
  * Keyed on the three markers rather than on a label bag or a container shape, because
  * the two callers hold different shapes — the migration scan has raw labels, the port
@@ -260,32 +261,32 @@ export function isBuildHelperContainer(container: PortContainer): boolean {
 }
 
 /** The images the control plane itself runs as. */
-const PLATFORM_IMAGE_RE = /(?:^|\/)openship-(?:api|dashboard|edge)(?::|$)/i;
-/** Containers Openship creates under a fixed name rather than through compose. */
+const PLATFORM_IMAGE_RE = /(?:^|\/)kovalio-(?:api|dashboard|edge)(?::|$)/i;
+/** Containers Kovalio creates under a fixed name rather than through compose. */
 const PLATFORM_NAMES = new Set<string>([EDGE_CONTAINER_NAME, MAIL_CONTAINER, MAIL_DB_CONTAINER]);
 
 /**
- * Is this container part of Openship ITSELF, rather than something it deployed?
+ * Is this container part of Kovalio ITSELF, rather than something it deployed?
  *
- * `openship up` runs the control plane as a compose stack — api on 4000, dashboard on
- * 3001, plus postgres and redis — and the mail engine adds `openship-mail` on the SMTP
- * ports. None of them carry an `openship.project` label, so without this they read as
+ * `kovalio up` runs the control plane as a compose stack — api on 4000, dashboard on
+ * 3001, plus postgres and redis — and the mail engine adds `kovalio-mail` on the SMTP
+ * ports. None of them carry an `kovalio.project` label, so without this they read as
  * ordinary foreign containers and a deploy that wanted one of those ports would offer
  * "Stop Container & Continue" for the API serving the request.
  *
- * Name and image cover everything Openship publishes under its own identity. The
+ * Name and image cover everything Kovalio publishes under its own identity. The
  * stack's postgres/redis run stock images under compose service names, so the only
  * thing marking THEM as ours is the compose project they share with the api — one
  * extra query, and only for a candidate that is part of some compose project.
  */
-export async function isOpenshipPlatformContainer(
+export async function isKovalioPlatformContainer(
   executor: ExecOnly,
   container: PortContainer,
 ): Promise<boolean> {
   if (PLATFORM_NAMES.has(container.name)) return true;
   if (isOurEdgeContainer(container.name, container.image)) return true;
   if (PLATFORM_IMAGE_RE.test(container.image)) return true;
-  // A container Openship deployed is a project's, never the platform's — and it is a
+  // A container Kovalio deployed is a project's, never the platform's — and it is a
   // legitimate stop target, so don't let its compose project drag it in here.
   if (container.projectId || !container.composeProject) return false;
 
@@ -331,25 +332,25 @@ export function isContainerPortForwarder(command: string | undefined): boolean {
 }
 
 /**
- * The one systemd unit shape Openship installs per deployment — the bare/systemd
- * supervisor's `openship-{deploymentId}.service`.
+ * The one systemd unit shape Kovalio installs per deployment — the bare/systemd
+ * supervisor's `kovalio-{deploymentId}.service`.
  *
- * Pinned to the `dep_` id prefix rather than a bare `openship-*` wildcard because the
- * control plane's own units share that namespace: `openship.service`, and a dev
- * install's `openship-dev.service` which a wildcard reads as a managed deployment
- * with id "dev" — and then offers to stop Openship itself.
+ * Pinned to the `dep_` id prefix rather than a bare `kovalio-*` wildcard because the
+ * control plane's own units share that namespace: `kovalio.service`, and a dev
+ * install's `kovalio-dev.service` which a wildcard reads as a managed deployment
+ * with id "dev" — and then offers to stop Kovalio itself.
  */
-const MANAGED_DEPLOYMENT_UNIT_RE = /^openship-(dep_[A-Za-z0-9_-]+)\.service$/;
+const MANAGED_DEPLOYMENT_UNIT_RE = /^kovalio-(dep_[A-Za-z0-9_-]+)\.service$/;
 
 /**
  * The unit name the systemd supervisor installs for a deployment — the WRITER of the
  * convention {@link managedDeploymentIdFromUnit} reads back. Both live here because a
  * drift between them is silent and one-directional: the reader simply stops recognizing
- * the unit as Openship's and the deploy is told a stale deployment of its own is a
+ * the unit as Kovalio's and the deploy is told a stale deployment of its own is a
  * foreign process it must not touch.
  */
 export function managedDeploymentUnitName(deploymentId: string): string {
-  return `openship-${deploymentId}.service`;
+  return `kovalio-${deploymentId}.service`;
 }
 
 /** The deployment id a unit name belongs to, or null if it isn't a deployment unit. */
@@ -388,8 +389,8 @@ const PROTECTED_UNITS = new Set([
   "systemd-networkd",
   "systemd-logind",
   // The control plane itself, and a from-source dev install of it.
-  "openship",
-  "openship-dev",
+  "kovalio",
+  "kovalio-dev",
 ]);
 
 /** `user@1000.service` — the operator's entire session manager, and where a rootless
@@ -433,10 +434,10 @@ function isProtectedUnit(unit: string): boolean {
  * established that the unit really is the port's owner (see
  * {@link isContainerPortForwarder}: for a published container port it never is).
  *
- * Openship's own per-deployment unit is always allowed. A genuine third-party service
+ * Kovalio's own per-deployment unit is always allowed. A genuine third-party service
  * — an `mysql.service` actually holding its port — stays allowed, because stopping it
  * is a real answer to a port conflict and the prompt names it. Proxies are NOT: on an
- * Openship host the proxy on :80 fronts every routed domain, so trading it for one
+ * Kovalio host the proxy on :80 fronts every routed domain, so trading it for one
  * app's port is never what the operator meant.
  */
 export function mayStopUnitForAppPort(unit: string | undefined): boolean {

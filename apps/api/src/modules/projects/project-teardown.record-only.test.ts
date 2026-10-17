@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { repos } from "@repo/db";
 
 /**
- * Record-only ("Remove from Openship only") delete contract.
+ * Record-only ("Remove from Kovalio only") delete contract.
  *
  * The UI promises "Nothing on the server is touched — the app keeps running with
  * its data". That is a HARD guarantee, so this pins every destructive door shut:
@@ -11,7 +12,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
  *                            manifest, so a skipped cleanup keeps the vhost
  *                            serving)
  *   • no webmail teardown  → the mail server's proxy vhost for it stays up
- *   • no manifest rewrite  → the server's .openship manifest still lists the
+ *   • no manifest rewrite  → the server's .kovalio manifest still lists the
  *                            project, so a later Docker scan can re-import it
  *   • no orphan records    → nothing for the GC sweep to reclaim later
  *   • force-cancel of an in-flight deploy keeps what it provisioned (the
@@ -25,6 +26,10 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 const h = vi.hoisted(() => ({
   project: null as Record<string, unknown> | null,
   activeDeployments: [] as Array<{ id: string; status: string }>,
+  activeDeploymentReadError: null as Error | null,
+  keepDeploymentsActive: false,
+  activeBackupRuns: [] as Array<{ id: string; status: string }>,
+  activeMigration: null as { id: string; status: string } | null,
   // Serves the active list once, then empty — so the quiesce poll converges
   // instead of burning the 5s timeout.
   listByProjectCalls: 0,
@@ -32,6 +37,7 @@ const h = vi.hoisted(() => ({
   /** Links from the app being deleted into the projects using it. */
   consumers: [] as Array<{
     id: string;
+    sourceServiceId?: string | null;
     targetProjectId: string;
     envKey: string;
     mode: string;
@@ -49,63 +55,101 @@ const h = vi.hoisted(() => ({
   ),
 
   claimDeletion: vi.fn(async () => true),
+  beginDeletionCleanup: vi.fn(async () => true),
   deleteHard: vi.fn(async () => {}),
   clearDeletionInProgress: vi.fn(async () => {}),
+  markDeletionFailed: vi.fn(async (_id: string, _error: string) => {}),
   listByGroup: vi.fn(async () => [{ id: "p1" }]),
   softDeleteGroup: vi.fn(async () => {}),
-  orphanCreate: vi.fn(async () => {}),
+  orphanCreate: vi.fn(async (_row: Record<string, unknown>) => ({ id: "orphan-created" })),
+  orphanDelete: vi.fn(async () => {}),
+  orphanListByProject: vi.fn(async () => [] as Array<Record<string, unknown>>),
 
   collectProjectManifest: vi.fn(async () => ({ projectId: "p1", resources: [] })),
   executeCleanup: vi.fn(async () => ({ total: 0, succeeded: 0, failed: [] })),
+  disposeManifestRuntimes: vi.fn(),
   removeProjectFromServerManifests: vi.fn(async () => {}),
   cancelBuildSession: vi.fn(async () => ({ success: true })),
+  cancelMigration: vi.fn(async () => {
+    h.activeMigration = null;
+    return { ok: true as const };
+  }),
+  cancelQueuedBackup: vi.fn(async (id: string) => {
+    const run = h.activeBackupRuns.find((candidate) => candidate.id === id);
+    if (run?.status !== "queued") return false;
+    h.activeBackupRuns = h.activeBackupRuns.filter((candidate) => candidate.id !== id);
+    return true;
+  }),
+  transitionBackupRun: vi.fn(async () => {}),
   deleteGitHubWebhook: vi.fn(async () => {}),
   cleanupWebmailInstall: vi.fn(async (): Promise<string | null> => null),
 }));
 
 vi.mock("@repo/db", () => ({
   repos: {
+    clusterDatabase: { list: vi.fn(async () => []) },
     project: {
       findById: vi.fn(async () => h.project),
       claimDeletion: h.claimDeletion,
+      beginDeletionCleanup: h.beginDeletionCleanup,
       deleteHard: h.deleteHard,
       clearDeletionInProgress: h.clearDeletionInProgress,
+      markDeletionFailed: h.markDeletionFailed,
       listByGroup: h.listByGroup,
     },
     projectGroup: { softDelete: h.softDeleteGroup },
     deployment: {
-      listByProject: vi.fn(async () => ({
-        rows: h.listByProjectCalls++ === 0 ? h.activeDeployments : [],
-      })),
+      listInFlightByProject: vi.fn(async () => {
+        if (h.activeDeploymentReadError) throw h.activeDeploymentReadError;
+        return h.listByProjectCalls++ === 0 || h.keepDeploymentsActive ? h.activeDeployments : [];
+      }),
     },
-    backupRun: { listInFlightByProject: vi.fn(async () => []) },
+    backupRun: {
+      listInFlightByProject: vi.fn(async () => h.activeBackupRuns),
+      cancelQueuedBeforeExecution: h.cancelQueuedBackup,
+      transition: h.transitionBackupRun,
+    },
     backupRestore: { listInFlightByProject: vi.fn(async () => []) },
-    orphanedResource: { create: h.orphanCreate },
+    dockerMigrationRun: { findActiveForProject: vi.fn(async () => h.activeMigration) },
+    orphanedResource: {
+      create: h.orphanCreate,
+      delete: h.orphanDelete,
+      listByProject: h.orphanListByProject,
+    },
     projectConnection: { listBySource: vi.fn(async () => h.consumers) },
   },
 }));
 
-vi.mock("./project-connection.service", () => ({
+vi.mock("@repo/platform/engine/modules/projects/project-connection.service", () => ({
   unlinkConsumersOfSource: h.unlinkConsumersOfSource,
 }));
 
-vi.mock("./project-cleanup.service", () => ({
+vi.mock("@repo/platform/engine/modules/projects/project-cleanup.service", () => ({
   collectProjectManifest: h.collectProjectManifest,
   executeCleanup: h.executeCleanup,
+  disposeManifestRuntimes: h.disposeManifestRuntimes,
+  hasPendingTimedOutCleanup: vi.fn(() => false),
 }));
-vi.mock("../../lib/openship-manifest-sync", () => ({
+vi.mock("@repo/platform/engine/lib/project-runtime-lock", () => ({
+  withProjectStateLock: async (_id: string, work: () => Promise<unknown>) => work(),
+  withProjectRuntimeLock: async (_projectId: string, run: () => Promise<unknown>) => run(),
+}));
+vi.mock("@repo/platform/engine/lib/kovalio-manifest-sync", () => ({
   removeProjectFromServerManifests: h.removeProjectFromServerManifests,
 }));
-vi.mock("../deployments/build.service", () => ({
+vi.mock("@repo/platform/engine/modules/deployments/build.service", () => ({
   cancelBuildSession: h.cancelBuildSession,
 }));
-vi.mock("../github/github.service", () => ({ deleteWebhook: h.deleteGitHubWebhook }));
-vi.mock("../mail/webmail/webmail-install.service", () => ({
+vi.mock("@repo/platform/engine/modules/migration/migration.orchestrator", () => ({
+  migrationOrchestrator: { cancel: h.cancelMigration },
+}));
+vi.mock("@repo/platform/engine/modules/github/github.service", () => ({ deleteWebhook: h.deleteGitHubWebhook }));
+vi.mock("@repo/platform/engine/modules/mail/webmail/webmail-install.service", () => ({
   cleanupWebmailInstall: h.cleanupWebmailInstall,
 }));
-vi.mock("../../config", () => ({ env: { CLOUD_MODE: false } }));
+vi.mock("@repo/platform/engine/config/index", () => ({ env: { CLOUD_MODE: false } }));
 
-import { teardownProject, type TeardownStep } from "./project-teardown";
+import { teardownProject, type TeardownStep } from "@repo/platform/engine/modules/projects/project-teardown";
 
 const ctx = { organizationId: "org1", userId: "u1" } as never;
 
@@ -116,7 +160,7 @@ const projectFixture = (over: Record<string, unknown> = {}) => ({
   slug: "app",
   framework: "nextjs",
   appTemplateId: null,
-  cloudWorkspaceId: null,
+  workspaceId: null,
   webhookId: null,
   gitOwner: null,
   gitRepo: null,
@@ -131,8 +175,23 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.project = projectFixture();
   h.activeDeployments = [];
+  h.activeDeploymentReadError = null;
+  h.keepDeploymentsActive = false;
+  h.beginDeletionCleanup.mockResolvedValue(true);
+  h.activeBackupRuns = [];
+  h.activeMigration = null;
   h.listByProjectCalls = 0;
   h.consumers = [];
+});
+
+describe("teardownProject — dependency inspection", () => {
+  it.each([false, true])("keeps the project when its stored-data guard cannot be checked (recordOnly=%s)", async recordOnly => {
+    vi.mocked(repos.project.findById).mockRejectedValueOnce(new Error("Database unavailable"));
+    await expect(teardownProject(ctx, "p1", { force: true, recordOnly })).rejects.toThrow("Database unavailable");
+    expect(h.claimDeletion).not.toHaveBeenCalled();
+    expect(h.executeCleanup).not.toHaveBeenCalled();
+    expect(h.deleteHard).not.toHaveBeenCalled();
+  });
 });
 
 describe("teardownProject — the GitHub webhook step vs. repo write access", () => {
@@ -170,6 +229,17 @@ describe("teardownProject — the GitHub webhook step vs. repo write access", ()
 });
 
 describe("teardownProject — deleting a linked app unlinks it from the projects using it", () => {
+  it.each([false, true])("preserves a shared service and its consumers before cleanup (recordOnly=%s)", async recordOnly => {
+    h.consumers = [{ id: "shared-link", sourceServiceId: "db", targetProjectId: "consumer", envKey: "DATABASE_URL", mode: "internal" }];
+    const result = await teardownProject(ctx, "p1", { force: true, recordOnly });
+    expect(result.rowDeleted).toBe(false);
+    expect(stepOf(result.steps, "load_project")?.error).toMatch(/Disconnect/);
+    expect(h.collectProjectManifest).not.toHaveBeenCalled();
+    expect(h.executeCleanup).not.toHaveBeenCalled();
+    expect(h.deleteHard).not.toHaveBeenCalled();
+    expect(h.unlinkConsumersOfSource).not.toHaveBeenCalled();
+  });
+
   it("unlinks every consuming project instead of refusing the delete", async () => {
     // `project_connection.sourceProjectId` is ON DELETE RESTRICT, so the links
     // have to go before the row can drop. The consuming projects are NOT touched
@@ -226,6 +296,7 @@ describe("teardownProject — deleting a linked app unlinks it from the projects
     expect(res.rowDeleted).toBe(false);
     expect(h.deleteHard).not.toHaveBeenCalled();
     expect(stepOf(res.steps, "unlink_consumers")?.status).toBe("failed");
+    expect(res.canForceOrphan).toBe(false);
   });
 
   it("unlinks on a record-only delete too — the row (and its links) still go", async () => {
@@ -246,6 +317,185 @@ describe("teardownProject — deleting a linked app unlinks it from the projects
     expect(res.rowDeleted).toBe(true);
     expect(h.unlinkConsumersOfSource).not.toHaveBeenCalled();
     expect(stepOf(res.steps, "unlink_consumers")).toBeUndefined();
+  });
+});
+
+describe("teardownProject — force-orphan contract", () => {
+  it("rechecks active work under the deletion lock for a graceful delete", async () => {
+    h.activeDeployments = [{ id: "dep-race", status: "queued" }];
+
+    const res = await teardownProject(ctx, "p1", { force: false });
+
+    expect(res.rejection).toBe("active_work");
+    expect(res.active?.activeDeploymentIds).toEqual(["dep-race"]);
+    expect(res.rowDeleted).toBe(false);
+    expect(h.collectProjectManifest).not.toHaveBeenCalled();
+    expect(h.deleteHard).not.toHaveBeenCalled();
+  });
+
+  it("fails closed and releases the lock when active work cannot be read", async () => {
+    h.activeDeploymentReadError = new Error("work table unavailable");
+
+    await expect(teardownProject(ctx, "p1", { force: false })).rejects.toThrow(
+      /work table unavailable/,
+    );
+
+    expect(h.clearDeletionInProgress).toHaveBeenCalledWith("p1");
+    expect(h.collectProjectManifest).not.toHaveBeenCalled();
+    expect(h.deleteHard).not.toHaveBeenCalled();
+  });
+
+  it("cancels active work when forceOrphan is requested directly", async () => {
+    h.activeDeployments = [{ id: "d1", status: "building" }];
+
+    const res = await teardownProject(ctx, "p1", { force: false, forceOrphan: true });
+
+    expect(h.cancelBuildSession).toHaveBeenCalledWith("d1", { keepProvisioned: true });
+    expect(res.rowDeleted).toBe(true);
+  });
+
+  it("waits for a Docker migration's orchestrated rollback before deleting", async () => {
+    h.activeMigration = { id: "dmr-1", status: "moving_data" };
+
+    const res = await teardownProject(ctx, "p1", { force: true });
+
+    expect(h.cancelMigration).toHaveBeenCalledWith("dmr-1", "org1");
+    expect(stepOf(res.steps, "cancel_in_flight")?.status).toBe("ok");
+    expect(res.rowDeleted).toBe(true);
+  });
+
+  it("keeps the row and resources tracked when forced cancellation never quiesces", async () => {
+    vi.useFakeTimers();
+    try {
+      h.activeDeployments = [{ id: "d1", status: "building" }];
+      h.keepDeploymentsActive = true;
+
+      const pending = teardownProject(ctx, "p1", { force: false, forceOrphan: true });
+      await vi.advanceTimersByTimeAsync(5_500);
+      const res = await pending;
+
+      expect(stepOf(res.steps, "cancel_in_flight")?.status).toBe("failed");
+      expect(stepOf(res.steps, "delete_db_row")?.details).toMatch(/did not quiesce/i);
+      expect(res.rowDeleted).toBe(false);
+      expect(res.canForceOrphan).toBe(false);
+      expect(h.collectProjectManifest).not.toHaveBeenCalled();
+      expect(h.executeCleanup).not.toHaveBeenCalled();
+      expect(h.unlinkConsumersOfSource).not.toHaveBeenCalled();
+      expect(h.deleteHard).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("never pretends an active backup capture was cancelled by changing only its row", async () => {
+    vi.useFakeTimers();
+    try {
+      h.activeBackupRuns = [{ id: "backup-1", status: "uploading" }];
+
+      const pending = teardownProject(ctx, "p1", { force: false, forceOrphan: true });
+      await vi.advanceTimersByTimeAsync(5_500);
+      const res = await pending;
+
+      expect(h.transitionBackupRun).not.toHaveBeenCalled();
+      expect(stepOf(res.steps, "cancel_in_flight")?.error).toMatch(
+        /backup capture cannot be cancelled safely/i,
+      );
+      expect(res.rowDeleted).toBe(false);
+      expect(res.canForceOrphan).toBe(false);
+      expect(h.collectProjectManifest).not.toHaveBeenCalled();
+      expect(h.deleteHard).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("cancels an unclaimed queued backup instead of waiting forever", async () => {
+    h.activeBackupRuns = [{ id: "backup-queued", status: "queued" }];
+
+    const res = await teardownProject(ctx, "p1", { force: true });
+
+    expect(h.cancelQueuedBackup).toHaveBeenCalledWith("backup-queued", "p1", "org1");
+    expect(stepOf(res.steps, "cancel_in_flight")?.status).toBe("ok");
+    expect(res.rowDeleted).toBe(true);
+  });
+
+  it("offers force-orphan only after reachable resource destruction fails", async () => {
+    h.collectProjectManifest.mockResolvedValueOnce({
+      projectId: "p1",
+      resources: [{ type: "container", ref: "c1", label: "container c1" }],
+    } as never);
+    h.executeCleanup.mockResolvedValueOnce({
+      total: 1,
+      succeeded: 0,
+      failed: [{ label: "container c1", error: "ssh timeout" }],
+    } as never);
+
+    const res = await teardownProject(ctx, "p1", { force: false });
+
+    expect(res.rowDeleted).toBe(false);
+    expect(res.canForceOrphan).toBe(true);
+  });
+
+  it("keeps failed Cloud cleanup retryable without offering a forbidden force-orphan action", async () => {
+    h.project = projectFixture({ workspaceId: "ws1" });
+    h.collectProjectManifest.mockResolvedValueOnce({
+      projectId: "p1",
+      resources: [{ type: "route", ref: "app.opsh.io", label: "app route" }],
+    } as never);
+    h.executeCleanup.mockResolvedValueOnce({
+      total: 1,
+      succeeded: 0,
+      failed: [{ label: "app route", error: "provider unavailable" }],
+    } as never);
+
+    const result = await teardownProject(ctx, "p1", { force: false });
+
+    expect(result.rowDeleted).toBe(false);
+    expect(result.canForceOrphan).toBe(false);
+    expect(h.deleteHard).not.toHaveBeenCalled();
+    expect(h.orphanCreate).not.toHaveBeenCalled();
+    expect(h.clearDeletionInProgress).not.toHaveBeenCalled();
+    expect(h.markDeletionFailed).toHaveBeenCalled();
+    expect(stepOf(result.steps, "runtime_cleanup")?.error).toContain("provider unavailable");
+
+    h.collectProjectManifest.mockResolvedValueOnce({
+      projectId: "p1",
+      resources: [{ type: "route", ref: "app.opsh.io", label: "app route" }],
+    } as never);
+    h.executeCleanup.mockResolvedValueOnce({ total: 1, succeeded: 1, failed: [] });
+    const retried = await teardownProject(ctx, "p1", { force: false });
+    expect(retried.rowDeleted).toBe(true);
+    expect(h.executeCleanup).toHaveBeenCalledTimes(2);
+    expect(h.orphanCreate).not.toHaveBeenCalled();
+  });
+
+  it("does not offer force-orphan when manifest collection itself fails", async () => {
+    h.collectProjectManifest.mockRejectedValueOnce(new Error("deployment metadata unavailable"));
+
+    const res = await teardownProject(ctx, "p1", { force: false });
+
+    expect(res.rowDeleted).toBe(false);
+    expect(res.canForceOrphan).toBe(false);
+    expect(stepOf(res.steps, "runtime_cleanup")?.error).toMatch(/manifest collection failed/i);
+  });
+
+  it("does not offer force-orphan when webmail cleanup also failed", async () => {
+    h.collectProjectManifest.mockResolvedValueOnce({
+      projectId: "p1",
+      resources: [{ type: "container", ref: "c1", label: "container c1" }],
+    } as never);
+    h.executeCleanup.mockResolvedValueOnce({
+      total: 1,
+      succeeded: 0,
+      failed: [{ label: "container c1", error: "ssh timeout" }],
+    } as never);
+    h.cleanupWebmailInstall.mockRejectedValueOnce(new Error("mail host unavailable"));
+
+    const res = await teardownProject(ctx, "p1", { force: false });
+
+    expect(res.rowDeleted).toBe(false);
+    expect(res.canForceOrphan).toBe(false);
+    expect(stepOf(res.steps, "webmail")?.status).toBe("failed");
   });
 });
 
@@ -293,14 +543,21 @@ describe("teardownProject — record-only delete touches nothing on the server",
 
   it("still tears the runtime down when the same cancel runs for a REAL delete", async () => {
     h.activeDeployments = [{ id: "d1", status: "building" }];
+    h.collectProjectManifest.mockResolvedValueOnce({
+      projectId: "p1",
+      resources: [{ type: "container", ref: "c1", label: "container c1" }],
+    } as never);
 
     await teardownProject(ctx, "p1", { force: true, recordOnly: false });
 
-    expect(h.cancelBuildSession).toHaveBeenCalledWith("d1", { keepProvisioned: false });
+    // Cancellation itself must not clean underneath a still-running worker;
+    // canonical runtime cleanup runs only after the worker lease is gone.
+    expect(h.cancelBuildSession).toHaveBeenCalledWith("d1", { keepProvisioned: true });
+    expect(h.executeCleanup).toHaveBeenCalled();
   });
 
   it("ignores recordOnly for a cloud project — Oblien resources must be reclaimed", async () => {
-    h.project = projectFixture({ cloudWorkspaceId: "ws1" });
+    h.project = projectFixture({ workspaceId: "ws1" });
 
     await teardownProject(ctx, "p1", { force: false, recordOnly: true });
 
@@ -324,4 +581,402 @@ describe("teardownProject — record-only delete touches nothing on the server",
     expect(h.removeProjectFromServerManifests).toHaveBeenCalled();
     expect(stepOf(res.steps, "runtime_cleanup")?.status).toBe("ok");
   });
+});
+
+describe("teardownProject — cluster namespace cleanup", () => {
+  it.each([true, false])(
+    "preserves project cleanup with remaining workloads: %s",
+    async (hasWorkloads) => {
+      const manifest = {
+        projectId: "p1",
+        organizationId: "org1",
+        projectCleanup: true,
+        resources: hasWorkloads
+          ? [{ type: "container", ref: "k8s:release", label: "application" }]
+          : [],
+        runtimes: [{ name: "kubernetes", cleanupProject: vi.fn() }],
+      };
+      h.collectProjectManifest.mockResolvedValueOnce(manifest as never);
+
+      const result = await teardownProject(ctx, "p1", { force: false });
+
+      // Namespace cleanup remains necessary after a previous attempt removed
+      // every workload and route. It must not be filtered out or skipped.
+      expect(h.executeCleanup).toHaveBeenCalledWith(manifest);
+      expect(stepOf(result.steps, "runtime_cleanup")?.status).toBe("ok");
+      expect(result.rowDeleted).toBe(true);
+    },
+  );
+
+  it("retains the project for retry when its remaining namespace cannot be cleaned", async () => {
+    h.collectProjectManifest.mockResolvedValueOnce({
+      projectId: "p1",
+      organizationId: "org1",
+      projectCleanup: true,
+      resources: [],
+      runtimes: [{ name: "kubernetes", cleanupProject: vi.fn() }],
+    } as never);
+    h.executeCleanup.mockResolvedValueOnce({
+      total: 1,
+      succeeded: 0,
+      failed: [{ label: "Cluster project namespace", error: "Persistent storage remains" }],
+    } as never);
+
+    const result = await teardownProject(ctx, "p1", { force: false });
+
+    expect(result.rowDeleted).toBe(false);
+    expect(result.canForceOrphan).toBe(false);
+    expect(stepOf(result.steps, "runtime_cleanup")?.error).toContain("Persistent storage remains");
+    expect(h.deleteHard).not.toHaveBeenCalled();
+    expect(h.clearDeletionInProgress).not.toHaveBeenCalled();
+    expect(h.markDeletionFailed).toHaveBeenCalled();
+  });
+});
+
+describe("teardownProject — deferred multi-target cleanup", () => {
+  it("checkpoints a named volume before container cleanup so a failed retry cannot forget it", async () => {
+    h.collectProjectManifest
+      .mockResolvedValueOnce({
+        projectId: "p1",
+        organizationId: "org1",
+        resources: [
+          {
+            type: "container",
+            ref: "container-with-data",
+            label: "container with data",
+            runtime: { name: "docker" },
+            targetKey: "local",
+            runtimeMode: "docker",
+          },
+          {
+            type: "volume",
+            ref: "app-data",
+            label: "deployment volume app-data",
+            runtime: { name: "docker" },
+            targetKey: "local",
+            runtimeMode: "docker",
+          },
+        ],
+      } as never)
+      // The container is gone on retry, so its mount inventory is gone too.
+      .mockResolvedValueOnce({
+        projectId: "p1",
+        organizationId: "org1",
+        resources: [],
+      } as never);
+    h.executeCleanup.mockResolvedValueOnce({
+      total: 2,
+      succeeded: 1,
+      failed: [
+        {
+          type: "volume",
+          ref: "app-data",
+          label: "deployment volume app-data",
+          error: "volume removal failed",
+        },
+      ],
+    } as never);
+
+    const first = await teardownProject(ctx, "p1", { force: false, wipeVolumes: true });
+    const second = await teardownProject(ctx, "p1", { force: false, wipeVolumes: true });
+
+    expect(first.rowDeleted).toBe(false);
+    expect(second.rowDeleted).toBe(true);
+    expect(h.orphanCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: "p1",
+        resourceType: "volume",
+        ref: "app-data",
+        targetKey: "local",
+      }),
+    );
+    expect(h.orphanCreate.mock.invocationCallOrder[0]).toBeLessThan(
+      h.executeCleanup.mock.invocationCallOrder[0]!,
+    );
+    // The checkpoint survives the failed first pass and the row deletion on the
+    // second; GC can now remove the forgotten volume idempotently.
+    expect(h.orphanDelete).not.toHaveBeenCalledWith("orphan-created");
+  });
+
+  it("records every known route on an unreachable historical target", async () => {
+    h.collectProjectManifest.mockResolvedValueOnce({
+      projectId: "p1",
+      organizationId: "org1",
+      resources: [
+        {
+          type: "unreachable",
+          deferredResourceType: "project_target_sweep",
+          ref: "p1",
+          label: "remote target sweep",
+          runtime: null,
+          serverId: "server-old",
+          targetKey: "server:server-old",
+          runtimeMode: "docker",
+          payload: {
+            slug: "app",
+            wipeVolumes: true,
+            containerIds: ["container-remote"],
+            imageRefs: [],
+            artifactRefs: [],
+            volumeNames: [],
+          },
+        },
+        {
+          type: "route",
+          ref: "app.example.com",
+          label: "route app.example.com",
+          runtime: null,
+        },
+      ],
+      routeContexts: [],
+      unreachableRouteTargets: [{ serverId: "server-old", runtimeMode: "docker" }],
+    } as never);
+    h.executeCleanup.mockResolvedValueOnce({ total: 1, succeeded: 1, failed: [] });
+
+    const res = await teardownProject(ctx, "p1", { force: false });
+
+    expect(res.rowDeleted).toBe(true);
+    expect(h.orphanCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        serverId: "server-old",
+        targetKey: "server:server-old",
+        resourceType: "project_target_sweep",
+        ref: "p1",
+        runtimeMode: "docker",
+        payload: {
+          slug: "app",
+          wipeVolumes: true,
+          containerIds: ["container-remote"],
+          imageRefs: [],
+          artifactRefs: [],
+          volumeNames: [],
+        },
+      }),
+    );
+    expect(h.orphanCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        serverId: "server-old",
+        resourceType: "route",
+        ref: "app.example.com",
+        runtimeMode: "docker",
+      }),
+    );
+  });
+
+  it("force-orphans each resource on its own historical target", async () => {
+    h.collectProjectManifest.mockResolvedValueOnce({
+      projectId: "p1",
+      organizationId: "org1",
+      resources: [
+        {
+          type: "container",
+          ref: "container-a",
+          label: "container a",
+          runtime: { name: "docker" },
+          serverId: "server-a",
+          runtimeMode: "docker",
+        },
+        {
+          type: "artifact",
+          ref: "/srv/releases/b",
+          label: "artifact b",
+          runtime: { name: "bare" },
+          serverId: "server-b",
+          runtimeMode: "bare",
+        },
+        {
+          type: "route",
+          ref: "app.example.com",
+          label: "route app.example.com",
+          runtime: null,
+        },
+      ],
+      routeContexts: [
+        {
+          key: "host-c",
+          serverId: "server-c",
+          runtimeMode: "docker",
+          routing: {},
+          hostPortTarget: {},
+          edgeProxy: {},
+        },
+      ],
+      unreachableRouteTargets: [{ serverId: "server-d", runtimeMode: "bare" }],
+    } as never);
+
+    const res = await teardownProject(ctx, "p1", { force: false, forceOrphan: true });
+
+    expect(res.rowDeleted).toBe(true);
+    const created = h.orphanCreate.mock.calls.map(([row]) => row);
+    expect(created).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ref: "container-a",
+          serverId: "server-a",
+          runtimeMode: "docker",
+        }),
+        expect.objectContaining({
+          ref: "/srv/releases/b",
+          serverId: "server-b",
+          runtimeMode: "bare",
+        }),
+        expect.objectContaining({
+          resourceType: "route",
+          ref: "app.example.com",
+          serverId: "server-c",
+        }),
+        expect.objectContaining({
+          resourceType: "route",
+          ref: "app.example.com",
+          serverId: "server-d",
+        }),
+      ]),
+    );
+    expect(h.disposeManifestRuntimes).toHaveBeenCalledOnce();
+    expect(h.executeCleanup).not.toHaveBeenCalled();
+  });
+
+  it("force-orphans host-port claims even when the project has no hostname route", async () => {
+    h.collectProjectManifest.mockResolvedValueOnce({
+      projectId: "p1",
+      organizationId: "org1",
+      resources: [],
+      routeContexts: [
+        {
+          key: "host:claim-target",
+          serverId: "server-claims",
+          runtimeMode: "docker",
+          routing: {},
+          hostPortTarget: {},
+          edgeProxy: {},
+        },
+      ],
+    } as never);
+
+    const res = await teardownProject(ctx, "p1", { force: false, forceOrphan: true });
+
+    expect(res.rowDeleted).toBe(true);
+    expect(h.orphanCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        serverId: "server-claims",
+        resourceType: "host_port_claims",
+        ref: "host:claim-target",
+        runtimeMode: "docker",
+      }),
+    );
+    expect(h.executeCleanup).not.toHaveBeenCalled();
+  });
+
+  it("keeps the project row when durable orphan tracking fails", async () => {
+    h.collectProjectManifest.mockResolvedValueOnce({
+      projectId: "p1",
+      organizationId: "org1",
+      resources: [
+        {
+          type: "unreachable",
+          ref: "container-remote",
+          label: "remote container",
+          runtime: null,
+          serverId: "server-old",
+          runtimeMode: "docker",
+        },
+        {
+          type: "route",
+          ref: "app.example.com",
+          label: "route app.example.com",
+          runtime: null,
+        },
+      ],
+      routeContexts: [],
+      unreachableRouteTargets: [{ serverId: "server-old", runtimeMode: "docker" }],
+    } as never);
+    h.executeCleanup.mockResolvedValueOnce({ total: 1, succeeded: 1, failed: [] });
+    h.orphanCreate
+      .mockResolvedValueOnce({ id: "tracked-before-failure" })
+      .mockRejectedValueOnce(new Error("database unavailable"));
+
+    const res = await teardownProject(ctx, "p1", { force: false });
+
+    expect(res.rowDeleted).toBe(false);
+    expect(stepOf(res.steps, "persist_orphans")).toEqual(
+      expect.objectContaining({
+        status: "failed",
+        error: expect.stringContaining("database unavailable"),
+      }),
+    );
+    expect(h.deleteHard).not.toHaveBeenCalled();
+    expect(h.orphanDelete).toHaveBeenCalledWith("tracked-before-failure");
+    expect(h.clearDeletionInProgress).not.toHaveBeenCalled();
+    expect(h.markDeletionFailed).toHaveBeenCalled();
+  });
+});
+
+describe("teardownProject — durable deletion intent", () => {
+  it("does not remove resources if the cleanup fence could not be persisted", async () => {
+    h.beginDeletionCleanup.mockResolvedValueOnce(false);
+    await expect(teardownProject(ctx, "p1", { force: false })).rejects.toMatchObject({
+      code: "PROJECT_CLEANUP_NOT_CLAIMED",
+    });
+    expect(h.executeCleanup).not.toHaveBeenCalled();
+    expect(h.deleteGitHubWebhook).not.toHaveBeenCalled();
+    expect(h.deleteHard).not.toHaveBeenCalled();
+    expect(h.clearDeletionInProgress).toHaveBeenCalledWith("p1");
+  });
+
+  it("does not infer failure recovery policy from the presence of a validation callback", async () => {
+    h.collectProjectManifest.mockRejectedValueOnce(new Error("cleanup unavailable"));
+    const result = await teardownProject(ctx, "p1", {
+      force: false,
+      validateConfiguration: async () => {},
+    });
+    expect(result.rowDeleted).toBe(false);
+    expect(h.clearDeletionInProgress).not.toHaveBeenCalled();
+    expect(h.markDeletionFailed).toHaveBeenCalledWith(
+      "p1",
+      expect.stringContaining("cleanup unavailable"),
+    );
+  });
+
+  it("keeps failed cleanup fenced and a later retry can finish", async () => {
+    h.project = projectFixture({ activeDeploymentId: "ready-release" });
+    h.collectProjectManifest.mockResolvedValueOnce({
+      projectId: "p1",
+      resources: [{ type: "container", ref: "c1", label: "container c1" }],
+    } as never);
+    h.executeCleanup.mockResolvedValueOnce({
+      total: 1,
+      succeeded: 0,
+      failed: [{ label: "Project storage", error: "cache in use" }],
+    } as never);
+    const failed = await teardownProject(ctx, "p1", { force: false });
+    expect(failed.rowDeleted).toBe(false);
+    expect(h.clearDeletionInProgress).not.toHaveBeenCalled();
+    expect(h.markDeletionFailed).toHaveBeenCalledWith(
+      "p1",
+      expect.stringContaining("cache in use"),
+    );
+    h.project = projectFixture({
+      deletionInProgress: true,
+      lifecycleOperation: { kind: "delete", status: "failed", error: "cache in use" },
+    });
+    const retry = await teardownProject(ctx, "p1", { force: false });
+    expect(retry.rowDeleted).toBe(true);
+    expect(h.deleteHard).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    { kind: "delete", status: "running" },
+    { kind: "delete", status: "failed", error: "cleanup interrupted" },
+  ])(
+    "does not reopen a $status cleanup when a retry preflight fails",
+    async (lifecycleOperation) => {
+      h.project = projectFixture({ deletionInProgress: true, lifecycleOperation });
+      h.activeDeploymentReadError = new Error("work table unavailable");
+      await expect(teardownProject(ctx, "p1", { force: false })).rejects.toThrow(
+        "work table unavailable",
+      );
+      expect(h.clearDeletionInProgress).not.toHaveBeenCalled();
+      expect(h.markDeletionFailed).toHaveBeenCalledWith("p1", "work table unavailable");
+    },
+  );
 });

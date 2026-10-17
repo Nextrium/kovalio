@@ -5,14 +5,14 @@
  * wants to show: domain/mailbox/alias totals + storage usage. Counts are
  * authoritative live values from the source tables, NOT the
  * `vmail.domain.mailboxes` counter (which iRedAdmin keeps in sync but can
- * drift if something outside openship writes the tables).
+ * drift if something outside kovalio writes the tables).
  *
  * Storage comes from `vmail.used_quota` - Dovecot updates this on every
  * LOGOUT, so the value is "what each mailbox occupies as of the last
  * client session." Good enough for a dashboard; not a real-time number.
  */
 
-import { queryOne } from "./psql-runner";
+import { queryOne } from "@repo/platform/engine/modules/mail/admin/psql-runner";
 
 export interface MailServerStats {
   domains: { total: number; active: number };

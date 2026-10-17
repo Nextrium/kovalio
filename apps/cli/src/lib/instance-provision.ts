@@ -2,7 +2,7 @@
  * Headless instance provisioning — the non-interactive counterpart to the
  * `@clack` install wizard (commands/wizard.ts). Turns install flags into the
  * exact loopback API calls the wizard makes (bootstrap-admin + self-register),
- * so `openship up --non-interactive …` provisions a box end-to-end without a TTY.
+ * so `kovalio up --non-interactive …` provisions a box end-to-end without a TTY.
  *
  * The loopback API is internal-token-gated. A caller that just brought a stack up
  * passes the token it wrote (so this module has no dependency on the `up` command —
@@ -14,6 +14,7 @@
  * copy the wizard uses (no duplication).
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { isValidEmail } from "@repo/core";
 import { internalFetch, internalPost, waitHealthy, bootstrapAdmin } from "./loopback-api";
 
@@ -82,12 +83,12 @@ export interface InstallFlags {
 /**
  * Resolve headless install inputs from flags/env. Throws HeadlessInputError with
  * a precise message on anything missing/invalid — never silently defaults a
- * credential. Admin password falls back to OPENSHIP_ADMIN_PASSWORD so it stays
+ * credential. Admin password falls back to KOVALIO_ADMIN_PASSWORD so it stays
  * out of argv/shell history.
  */
 export function resolveInstallInputs(flags: InstallFlags): InstallInputs {
   const email = flags.adminEmail?.trim();
-  const password = flags.adminPassword ?? process.env.OPENSHIP_ADMIN_PASSWORD;
+  const password = flags.adminPassword ?? process.env.KOVALIO_ADMIN_PASSWORD;
   const name = flags.adminName?.trim() || (email ? email.split("@")[0]! : "");
 
   if (!email || !isValidEmail(email)) {
@@ -95,7 +96,7 @@ export function resolveInstallInputs(flags: InstallFlags): InstallInputs {
   }
   if (!password || password.length < 8) {
     throw new HeadlessInputError(
-      "Missing --admin-password (or OPENSHIP_ADMIN_PASSWORD env), min 8 chars, for a non-interactive install.",
+      "Missing --admin-password (or KOVALIO_ADMIN_PASSWORD env), min 8 chars, for a non-interactive install.",
     );
   }
   const admin = { name: name || "Admin", email, password };
@@ -222,7 +223,8 @@ async function drainProvisionStream(
         }
       }
     }
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/instance-provision");
     /* best-effort: the edge/cert work continues server-side and retries on boot */
   }
   return { completed: false, detail };
@@ -252,12 +254,12 @@ export async function headlessProvision(opts: {
   dashPort?: string;
   inputs: InstallInputs;
   /** Internal token for the loopback calls. Bare install → omit (falls back to
-   *  the ~/.openship token file); Compose install → the stack's compose/.env
+   *  the ~/.kovalio token file); Compose install → the stack's compose/.env
    *  token (composeInternalToken). */
   token?: string;
   /** Install method. Informational: the provisioning calls are now identical for
    *  both — the api picks the host OpenResty or the container edge from
-   *  OPENSHIP_EDGE_MODE, so the CLI doesn't branch on it. */
+   *  KOVALIO_EDGE_MODE, so the CLI doesn't branch on it. */
   method?: "bare" | "compose";
   onLog?: (msg: string) => void;
   /** Interactive recovery for a taken free subdomain: return a new slug, or null
@@ -270,7 +272,7 @@ export async function headlessProvision(opts: {
 
   log("Waiting for the API to become healthy…");
   if (!(await waitHealthy(port))) {
-    throw new HeadlessInputError("The API did not become healthy in time — check `openship logs`.");
+    throw new HeadlessInputError("The API did not become healthy in time — check `kovalio logs`.");
   }
 
   log("Creating the admin account…");
@@ -299,7 +301,7 @@ export async function headlessProvision(opts: {
   } else if (d.kind === "custom") {
     // Same call on compose and bare. It used to be skipped on compose out of a
     // fear that self-register would install + take over the HOST's OpenResty and
-    // fight the container edge — it doesn't: with OPENSHIP_EDGE_MODE=docker,
+    // fight the container edge — it doesn't: with KOVALIO_EDGE_MODE=docker,
     // `ensureSelfEdgeInfra` returns early and installs nothing, then
     // provisionSelfAppEdge routes + issues the cert THROUGH the edge container
     // (vhost to the shared sites volume, `openresty -s reload` + certbot via
@@ -378,14 +380,14 @@ export async function headlessProvision(opts: {
     }
     if (!res.ok) {
       // Say what actually went wrong. This used to append "needs the box connected
-      // to Openship Cloud first" to EVERY failure, which flatly contradicts the
-      // "Connected to Openship Cloud as …" line printed seconds earlier when the
+      // to Kovalio Cloud first" to EVERY failure, which flatly contradicts the
+      // "Connected to Kovalio Cloud as …" line printed seconds earlier when the
       // real cause was a taken slug.
       warnings.push(
         isSlugTaken(res.data)
           ? `Free domain not created: "${slug}.opsh.io" is already taken. Re-run and choose a different subdomain, or add one later in Settings → Domains.`
           : `Free .opsh.io domain not registered: ${res.data?.error || "failed"}. ` +
-              `A free domain needs the box connected to Openship Cloud — connect it in Settings → Cloud, or use --domain-kind byo/custom.`,
+              `A free domain needs the box connected to Kovalio Cloud — connect it in Settings → Cloud, or use --domain-kind byo/custom.`,
       );
     }
   }

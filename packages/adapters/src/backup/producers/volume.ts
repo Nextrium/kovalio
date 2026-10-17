@@ -16,6 +16,9 @@
 
 import type { Readable } from "node:stream";
 import { recordedCodec } from "../common/dump-pipeline";
+import { matchBackupSource } from "../common/source-match";
+import { sourceArchiveName } from "../common/source-names";
+import { yieldArtifact } from "../common/artifact-stream";
 import { registerProducer } from "../registry";
 import type {
   Artifact,
@@ -48,7 +51,7 @@ class VolumeCopyProducerImpl implements BackupProducer {
       // The container id is in the message because it is the whole diagnosis. With
       // one, the live container was inspected and genuinely has no volume or bind
       // mounts. Without one, we only ever saw the service row's `volumes` column,
-      // which is empty for services Openship adopted rather than deployed (the
+      // which is empty for services Kovalio adopted rather than deployed (the
       // control plane's own compose stack is the reported case: its rows are
       // created from running containers and carry no volume specs).
       throw new Error(
@@ -57,15 +60,21 @@ class VolumeCopyProducerImpl implements BackupProducer {
             ? `Its live container (${service.containerId.slice(0, 12)}) reports no volume or bind ` +
               `mounts, so there is no persistent data here to capture.`
             : `No container was resolved for it, so only the service's recorded volumes could be ` +
-              `checked and it has none. If this service does hold data, redeploy it so Openship ` +
+              `checked and it has none. If this service does hold data, redeploy it so Kovalio ` +
               `records its volumes, or point the policy at a database payload instead of a volume ` +
               `snapshot.`),
       );
     }
 
-    const selected = opts.sourceIds && opts.sourceIds.length > 0
-      ? sources.filter((s) => opts.sourceIds!.includes(s.id))
-      : sources.filter((s) => s.type !== "tmpfs");
+    const requested = opts.sourceIds?.length ? opts.sourceIds.map(id => {
+      const source = matchBackupSource(sources, id);
+      if (!source || source.type === "tmpfs") {
+        throw new Error(`Selected backup source "${id}" is missing, ambiguous, or temporary on service "${service.name}". No partial snapshot was captured.`);
+      }
+      return source;
+    }) : sources.filter(source => source.type !== "tmpfs");
+    // A volume mounted at two paths is still one store, not two artifacts.
+    const selected = [...new Map(requested.map(source => [`${source.type}:${source.source}`, source])).values()];
 
     // Every candidate filtered out is the same failure one step later: an explicit
     // `sourceIds` that matches nothing, or a service whose only mounts are tmpfs
@@ -92,10 +101,8 @@ class VolumeCopyProducerImpl implements BackupProducer {
         quiesce: opts.quiesce,
       });
 
-      // The artifact stream is the executor's stdout. The orchestrator
-      // pipes it onward + tracks any awaitExit failures.
-      yield {
-        name: `volume-${sanitizeArtifactName(source.id)}.tar${
+      yield* yieldArtifact({
+        name: `volume-${sourceArchiveName(source.source)}.tar${
           compression === "zstd" ? ".zst" : compression === "gzip" ? ".gz" : ""
         }`,
         stream: stdout as unknown as Readable,
@@ -113,18 +120,9 @@ class VolumeCopyProducerImpl implements BackupProducer {
           // instead. `quiesced` means the container was frozen for the copy.
           consistency: opts.quiesce ? "quiesced" : "crash",
         },
-      };
-
-      // After the orchestrator finishes consuming the stream, the
-      // helper container exits. If it exited non-zero, surface the
-      // error here — the orchestrator awaits this side too via the
-      // artifact stream's `end` event.
-      const exit = await awaitExit;
-      if (exit.code !== 0) {
-        throw new Error(
-          `tar exited ${exit.code} while backing up ${source.id}: ${exit.stderr.slice(0, 500)}`,
-        );
-      }
+      }, awaitExit, exit =>
+        `tar exited ${exit.code} while backing up ${source.id}: ${exit.stderr.slice(0, 500)}`,
+      );
     }
   }
 
@@ -156,10 +154,6 @@ class VolumeCopyProducerImpl implements BackupProducer {
       signal: opts.signal,
     });
   }
-}
-
-function sanitizeArtifactName(id: string): string {
-  return id.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
 }
 
 export const VolumeCopyProducer = new VolumeCopyProducerImpl();

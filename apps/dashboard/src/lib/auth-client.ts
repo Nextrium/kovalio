@@ -1,18 +1,23 @@
 import { createAuthClient } from "better-auth/react";
-import { organizationClient, emailOTPClient } from "better-auth/client/plugins";
+import { organizationClient, emailOTPClient, twoFactorClient } from "better-auth/client/plugins";
+import { passkeyClient } from "@better-auth/passkey/client";
 import { getAuthBaseUrl } from "@/lib/api/urls";
+import { reportClientError } from "./error-reporting";
 
 /**
  * API base URL - auth requests go directly to the selected API origin.
  *
  * Local SaaS uses localhost:4100. Public-host dev and production use
- * api.openship.io so Better Auth can share cookies with app.openship.io.
+ * api.nextrium.org so Better Auth can share cookies with kovalio.nextrium.org.
  */
 const AUTH_BASE_URL = getAuthBaseUrl();
 
 export const authClient = createAuthClient({
   baseURL: AUTH_BASE_URL,
   fetchOptions: {
+    onError: (context) => {
+      if (!context.response?.headers.get("X-Request-ID")) reportClientError(context.error, { component: "auth-client" });
+    },
     credentials: "include",
     // Disable retry to prevent infinite loops on 429
     retry: {
@@ -21,8 +26,15 @@ export const authClient = createAuthClient({
       delay: 0,
     },
   },
-  plugins: [organizationClient(), emailOTPClient()],
+  plugins: [organizationClient(), emailOTPClient(), passkeyClient(), twoFactorClient()],
 });
+
+/** Password creation for a freshly authenticated OAuth-only account. */
+export function setAccountPassword(newPassword: string) {
+  return authClient.$fetch<{ status: boolean }>("/account-security/set-password", {
+    method: "POST", body: { newPassword },
+  });
+}
 
 export const {
   signIn,

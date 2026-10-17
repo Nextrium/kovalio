@@ -17,7 +17,7 @@ import type { MultiServiceDeployConfig, MultiServiceGroupHandle } from "./types"
  * look at what was passed.
  */
 
-const GROUP: MultiServiceGroupHandle = { id: "net-openship-demo" } as MultiServiceGroupHandle;
+const GROUP: MultiServiceGroupHandle = { id: "net-kovalio-demo" } as MultiServiceGroupHandle;
 
 function baseConfig(overrides: Partial<MultiServiceDeployConfig> = {}): MultiServiceDeployConfig {
   return {
@@ -38,7 +38,7 @@ function baseConfig(overrides: Partial<MultiServiceDeployConfig> = {}): MultiSer
 function recordingDaemon() {
   const creates: Array<Record<string, any>> = [];
   const docker = {
-    getContainer: () => ({ remove: async () => undefined }),
+    getContainer: () => ({ stop: async () => undefined, remove: async () => undefined }),
     createContainer: async (args: Record<string, any>) => {
       creates.push(args);
       return {
@@ -56,7 +56,7 @@ function recordingDaemon() {
 async function createWith(config: MultiServiceDeployConfig) {
   const { docker, creates } = recordingDaemon();
   const runtime = await DockerRuntime.create({
-    dockerSocketPath: "/tmp/openship-test-absent.sock",
+    dockerSocketPath: "/tmp/kovalio-test-absent.sock",
   });
   (runtime as unknown as { _docker: unknown })._docker = docker;
   await runtime.deployServiceWorkload(GROUP, config);

@@ -1,10 +1,10 @@
 import type { Context, Next } from "hono";
-import { env } from "../config";
+import { env } from "@repo/platform/engine/config/index";
 
 /**
  * Middleware that restricts a route to self-hosted instances only.
  *
- * Returns 404 when CLOUD_MODE=true (i.e. the managed openship.io SaaS).
+ * Returns 404 when CLOUD_MODE=true (i.e. the managed nextrium.org SaaS).
  * Self-hosted deployments (docker, bare, desktop) - even those using
  * GitHub App auth or OAuth - retain full local filesystem access.
  *

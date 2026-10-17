@@ -3,7 +3,7 @@
  *
  *   POST /api/system/migration/preflight    — read-only readiness check
  *   POST /api/system/migration/start        — kick off the migration
- *   POST /api/system/migration/start-cloud  — migrate to Openship Cloud
+ *   POST /api/system/migration/start-cloud  — migrate to Kovalio Cloud
  *   POST /api/system/migration/start-tunnel — migrate behind a tunnel
  *   POST /api/system/migration/switch-back  — reverse migration
  *
@@ -20,6 +20,7 @@
  * enforces it in switch-back.service.
  */
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import type { Context } from "hono";
 import { repos } from "@repo/db";
 import { getRequestContext } from "../../../lib/request-context";
@@ -27,7 +28,7 @@ import { assertInstanceAdmin } from "../../../middleware/instance-admin";
 import { runPreflight, type DomainChoice } from "./preflight.service";
 import {
   migrateInstanceToServer,
-  MigrationPreflightFailedError,
+  ServerMigrationUnavailableError,
 } from "./migrate-instance.service";
 import {
   migrateInstanceToCloud,
@@ -47,7 +48,7 @@ import {
   TunnelProvisionFailedError,
   TunnelMustBeCloudConnectedError,
 } from "./migrate-to-tunnel.service";
-import { OpenshipReleaseDistMissingError } from "./openship-dist";
+import { KovalioReleaseDistMissingError } from "./kovalio-dist";
 import {
   MigrationAlreadyInProgressError,
   MigrationLockAcquireError,
@@ -111,10 +112,8 @@ export async function preflight(c: Context) {
  *
  * Body: { serverId, domain }
  *
- * Runs preflight, ensures the openship project row, dumps + restores
- * the DB to the remote, flips teamMode. Synchronous (not SSE) for v1;
- * the heavy lifting (deploy pipeline) is driven by the dashboard as a
- * follow-up step using the standard /api/deployments/:id/build SSE.
+ * Whole-instance remote cutover is unavailable; returns a clear 501 before
+ * creating a project, exporting credentials, or modifying the target.
  */
 export async function start(c: Context) {
   const ctx = getRequestContext(c);
@@ -154,10 +153,10 @@ export async function start(c: Context) {
       migrationTargetUrl: result.migrationTargetUrl,
     });
   } catch (err) {
-    if (err instanceof MigrationPreflightFailedError) {
-      return c.json({ error: err.message, checks: err.checks }, 412);
+    if (err instanceof ServerMigrationUnavailableError) {
+      return c.json({ error: err.message, code: err.code }, 501);
     }
-    if (err instanceof OpenshipReleaseDistMissingError) {
+    if (err instanceof KovalioReleaseDistMissingError) {
       return c.json({ error: err.message, code: err.code }, 412);
     }
     if (err instanceof MigrationAlreadyInProgressError) {
@@ -167,7 +166,7 @@ export async function start(c: Context) {
       return c.json({ error: err.message, code: err.code }, 503);
     }
     const message = err instanceof Error ? err.message : "Migration failed.";
-    console.error("[migration.start] failed:", err);
+    errorDiagnostics.error("api/modules/system/migration/migration.controller", "[migration.start] failed:", err);
     return c.json({ error: message }, 500);
   }
 }
@@ -175,12 +174,12 @@ export async function start(c: Context) {
 /**
  * POST /api/system/migration/start-cloud
  *
- * Path B — migrate to Openship Cloud. Body: { allowNonEmptyTarget? }.
+ * Path B — migrate to Kovalio Cloud. Body: { allowNonEmptyTarget? }.
  *
- * Dumps the local DB, uploads it to api.openship.io/api/cloud/ingest-subgraph
+ * Dumps the local DB, uploads it to api.nextrium.org/api/cloud/ingest-subgraph
  * (authenticated as the org owner via the stored cloud session token),
  * flips local teamMode to "cloud_hosted". Dashboard launcher then
- * points at app.openship.io.
+ * points at kovalio.nextrium.org.
  */
 export async function startCloud(c: Context) {
   const ctx = getRequestContext(c);
@@ -199,7 +198,7 @@ export async function startCloud(c: Context) {
 
   const body = await c.req
     .json<{ allowNonEmptyTarget?: boolean }>()
-    .catch(() => ({} as { allowNonEmptyTarget?: boolean }));
+    .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/system/migration/migration.controller"); return ({} as { allowNonEmptyTarget?: boolean }); });
 
   try {
     const result = await migrateInstanceToCloud({
@@ -234,7 +233,7 @@ export async function startCloud(c: Context) {
       return c.json({ error: err.message, code: err.code }, 503);
     }
     const message = err instanceof Error ? err.message : "Cloud migration failed.";
-    console.error("[migration.startCloud] failed:", err);
+    errorDiagnostics.error("api/modules/system/migration/migration.controller", "[migration.startCloud] failed:", err);
     return c.json({ error: message }, 500);
   }
 }
@@ -266,7 +265,7 @@ export async function startTunnel(c: Context) {
 
   const body = await c.req
     .json<{ slug?: string }>()
-    .catch(() => ({} as { slug?: string }));
+    .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/system/migration/migration.controller"); return ({} as { slug?: string }); });
   if (!body.slug || typeof body.slug !== "string") {
     return c.json({ error: "Body must include a non-empty slug string." }, 400);
   }
@@ -304,7 +303,7 @@ export async function startTunnel(c: Context) {
       return c.json({ error: err.message, code: err.code }, 503);
     }
     const message = err instanceof Error ? err.message : "Tunnel migration failed.";
-    console.error("[migration.startTunnel] failed:", err);
+    errorDiagnostics.error("api/modules/system/migration/migration.controller", "[migration.startTunnel] failed:", err);
     return c.json({ error: message }, 500);
   }
 }
@@ -329,7 +328,7 @@ export async function switchBack(c: Context) {
 
   const body = await c.req
     .json<{ abandonRemote?: boolean }>()
-    .catch(() => ({} as { abandonRemote?: boolean }));
+    .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/system/migration/migration.controller"); return ({} as { abandonRemote?: boolean }); });
 
   try {
     const result = await switchBackToSingleUser({
@@ -360,7 +359,7 @@ export async function switchBack(c: Context) {
       return c.json({ error: err.message, code: err.code }, 503);
     }
     const message = err instanceof Error ? err.message : "Switch-back failed.";
-    console.error("[migration.switchBack] failed:", err);
+    errorDiagnostics.error("api/modules/system/migration/migration.controller", "[migration.switchBack] failed:", err);
     return c.json({ error: message }, 500);
   }
 }

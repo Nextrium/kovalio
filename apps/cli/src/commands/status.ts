@@ -1,16 +1,18 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import { exitCommand, rethrowCommandExit } from "../lib/command-exit";
 /**
- * `openship status` — what's running on THIS machine + the active context's API.
+ * `kovalio status` — what's running on THIS machine + the active context's API.
  *
  * Two parts:
- *   1. Local service — is the `openship up` service installed/running, and on
+ *   1. Local service — is the `kovalio up` service installed/running, and on
  *      which resolved ports (they're dynamic; the remembered pair lives in
- *      ~/.openship/ports.json). Always shown, even when the API is down.
+ *      ~/.kovalio/ports.json). Always shown, even when the API is down.
  *   2. API — GET /api/health + /api/health/env for the active context (best
  *      effort; a stopped server shows "not reachable", not a hard crash).
  */
 import { Command } from "commander";
 import chalk from "chalk";
-import { apiRequest, getApiUrl, ApiError } from "../lib/api-client";
+import { getRemoteClient, nativeSession, isNativeMode, ApiError } from "../lib/ship-client";
 import { getActiveContext } from "../lib/config";
 import { serviceStatus } from "../lib/service";
 import { readInstallMethod, composePs } from "../lib/compose";
@@ -33,20 +35,36 @@ interface HealthEnv {
 }
 
 export const statusCommand = new Command("status")
-  .description("Show the local Openship service (installed/running, ports) and the active context's API health")
+  .description("Show the local Kovalio service (installed/running, ports) and the active context's API health")
   .action(async () => {
+    if (isNativeMode()) {
+      const session = nativeSession()!;
+      const env = await session.client.system.info();
+      const result = { mode: "native", instanceId: session.ship.instanceId, organizationId: session.client.organizationId, env };
+      if (isJsonMode()) printJson(result);
+      else {
+        console.log(chalk.bold("\n  Kovalio status\n"));
+        console.log(`  Instance       ${result.instanceId}`);
+        console.log(`  Organization   ${result.organizationId}`);
+        console.log(`  Connection     native SDK`);
+        console.log(`  Deploy         ${env.deployMode}\n`);
+      }
+      return;
+    }
     const context = getActiveContext();
-    const apiUrl = getApiUrl();
+    const apiUrl = getRemoteClient().http.apiUrl;
 
     // Compose install → the bare service manager reads "not installed", which is
     // misleading. Show the stack (docker compose ps) + a health probe instead.
     if (readInstallMethod() === "compose" && !isJsonMode()) {
-      console.log(chalk.bold("\n  Openship status (Docker Compose)\n"));
+      console.log(chalk.bold("\n  Kovalio status (Docker Compose)\n"));
       composePs();
       try {
-        const h = await apiRequest<Health>("/health", { signal: AbortSignal.timeout(8000) });
+        const h = await getRemoteClient().http.request<Health>("/health", { signal: AbortSignal.timeout(8000) });
         console.log(chalk.dim(`\n  API: ${apiUrl} — `) + chalk.green(h.status ?? "ok") + "\n");
       } catch (e) {
+        observeCaughtError(e, "cli/commands/status");
+      rethrowCommandExit(e);
         const msg = e instanceof ApiError ? e.message : (e as Error).message;
         console.log(chalk.dim(`\n  API: ${apiUrl} — `) + chalk.red("not reachable") + chalk.dim(`  ${msg}\n`));
       }
@@ -61,16 +79,18 @@ export const statusCommand = new Command("status")
     let reachable = true;
     let unreachableMsg = "";
     try {
-      health = await apiRequest<Health>("/health", { signal: AbortSignal.timeout(8000) });
-      envInfo = await apiRequest<HealthEnv>("/health/env", { signal: AbortSignal.timeout(8000) });
+      health = await getRemoteClient().http.request<Health>("/health", { signal: AbortSignal.timeout(8000) });
+      envInfo = await getRemoteClient().http.request<HealthEnv>("/health/env", { signal: AbortSignal.timeout(8000) });
     } catch (e) {
+      observeCaughtError(e, "cli/commands/status");
+      rethrowCommandExit(e);
       reachable = false;
       unreachableMsg = e instanceof ApiError ? e.message : (e as Error).message;
     }
 
     if (isJsonMode()) {
       printJson({ context, apiUrl, service: svc, ports, reachable, health, env: envInfo });
-      process.exit(reachable ? 0 : 1);
+      exitCommand(reachable ? 0 : 1);
     }
 
     const row = (label: string, value: unknown) =>
@@ -83,7 +103,7 @@ export const statusCommand = new Command("status")
         : chalk.dim("not installed");
 
     let out =
-      chalk.bold("\n  Openship status\n\n") +
+      chalk.bold("\n  Kovalio status\n\n") +
       row("Service", serviceState) +
       row("Manager", svc.kind === "unsupported" ? chalk.dim("none") : svc.kind) +
       (ports.api ? row("API port", ports.api) : "") +
@@ -104,9 +124,9 @@ export const statusCommand = new Command("status")
       out +=
         row("Health", chalk.red("not reachable")) +
         chalk.dim(`  ${unreachableMsg}\n`) +
-        chalk.dim(svc.running ? "  (service is up — it may still be starting)\n" : "  Start it with `openship up`.\n");
+        chalk.dim(svc.running ? "  (service is up — it may still be starting)\n" : "  Start it with `kovalio up`.\n");
     }
 
     process.stdout.write(out + "\n");
-    if (!reachable) process.exit(1);
+    if (!reachable) exitCommand(1);
   });

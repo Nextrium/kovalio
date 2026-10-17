@@ -12,7 +12,7 @@
  *     live process in the container, and whether the write only takes effect after
  *     the service is power-cycled (`apps/api/src/modules/backups/restore.orchestrator.ts`);
  *   - the policy service, which must refuse a policy that cannot produce a
- *     restorable artifact (`apps/api/src/modules/backups/backup.service.ts`);
+ *     restorable artifact (`packages/platform/src/engine/modules/backups/backup.service.ts`);
  *   - the dashboard, which has to tell the operator what will happen before it does
  *     (`apps/dashboard/src/components/backup/PolicyEditor.tsx`).
  *
@@ -21,7 +21,7 @@
  *
  *   - The image→kind table was duplicated between the producers and the dialog, and
  *     the dialog's copy was labelled "display-only … drift here is cosmetic". It was
- *     not: [#611](https://github.com/oblien/openship/issues/611) is an operator
+ *     not: [#611](https://github.com/Nextrium/kovalio/issues/611) is an operator
  *     reading *"Detected PostgreSQL — Auto backs it up with pg_dump"* while the run
  *     silently took a volume snapshot of nothing. That copy was consolidated into
  *     `backup-image-detect.ts`; the TABLE now lives here and that module is the
@@ -297,7 +297,7 @@ export type PayloadConfigKey = (typeof PAYLOAD_CONFIG_KEYS)[number];
  * read would have refused every mail policy and every restore that turns verification
  * off.
  */
-export const UNIVERSAL_PAYLOAD_CONFIG_KEYS = ["verifyOnPrepare", "mail"] as const;
+export const UNIVERSAL_PAYLOAD_CONFIG_KEYS = ["verifyOnPrepare", "mail", "incremental"] as const;
 export type UniversalPayloadConfigKey = (typeof UNIVERSAL_PAYLOAD_CONFIG_KEYS)[number];
 
 /**
@@ -389,10 +389,10 @@ export const BACKUP_PAYLOADS: Record<PayloadKind, BackupPayloadSpec> = {
   },
   redis_rdb: {
     kind: "redis_rdb",
-    label: "Redis",
+    label: "Redis / Valkey",
     method: "RDB snapshot",
     shape: "database",
-    images: { names: ["redis"], namespaces: ["redis"] },
+    images: { names: ["redis", "valkey/valkey"], namespaces: ["redis"] },
     restoreNeedsLiveContainer: true,
     // The one kind whose write is inert until the service restarts. See the field doc.
     restoreAppliesAfterBounce: true,
@@ -630,7 +630,7 @@ const SYSTEM_ROOTS: readonly string[] = [
 export function normalizeBackupPath(input: string): string {
   const collapsed = input.trim().replace(/\/{2,}/g, "/");
   if (collapsed === "/") return "/";
-  return collapsed.replace(/\/+$/, "");
+  return collapsed.replace(/(?<!\/)\/+$/, "");
 }
 
 /**
@@ -713,6 +713,14 @@ export function validatePolicyPayload(
   }
   const resolved: PolicyPayloadKind = isPolicyPayloadKind(kind) ? kind : PAYLOAD_KIND_AUTO;
   const cfg = config ?? {};
+  for (const key of ["incremental", "quiesce", "clearPath", "verifyOnPrepare"]) {
+    if (cfg[key] !== undefined && typeof cfg[key] !== "boolean") return `Backup option "${key}" must be true or false.`;
+  }
+  for (const key of ["sourceIds", "exclude"]) {
+    if (cfg[key] !== undefined && (!Array.isArray(cfg[key]) || !(cfg[key] as unknown[]).every(value => typeof value === "string" && value.trim()))) {
+      return `Backup option "${key}" must be a list of non-empty strings.`;
+    }
+  }
 
   // A key no producer reads is a typo, and a typo here is a policy that looks
   // configured and captures nothing. Cross-kind keys are deliberately NOT refused: a

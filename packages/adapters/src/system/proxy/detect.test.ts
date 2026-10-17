@@ -22,7 +22,7 @@ function makeExecutor(rules: Array<[string, string]>): CommandExecutor {
 
 /**
  * One line of the `docker ps --no-trunc --format …` output the shared port-owner
- * resolver reads: id, name, image, then the four `openship.*` label columns — empty
+ * resolver reads: id, name, image, then the four `kovalio.*` label columns — empty
  * here, because everything these fixtures put on 80/443 is somebody else's.
  */
 function psLine(name: string, image: string): string {
@@ -38,7 +38,7 @@ describe("probeEdge classification", () => {
   });
 
   test("known when a DEPRECATED bare host OpenResty owns the ports (a migration source)", async () => {
-    // The edge is a CONTAINER. A bare host OpenResty — even one an older Openship
+    // The edge is a CONTAINER. A bare host OpenResty — even one an older Kovalio
     // apt-installed, with our Lua still on disk — is therefore a proxy to MIGRATE
     // FROM, exactly like a distro nginx: `known` (recognized AND importable), never
     // `ours`. Calling it ours is what returned canProceedClean, so the consent gate
@@ -57,7 +57,7 @@ describe("probeEdge classification", () => {
     expect(status.classification).toBe("known");
     expect(status.canProceedClean).toBe(false);
     expect(status.occupants.every((o) => o.proxy === "openresty")).toBe(true);
-    expect(status.occupants.every((o) => o.managedByOpenship === false)).toBe(true);
+    expect(status.occupants.every((o) => o.managedByKovalio === false)).toBe(true);
     // One proxy on both ports → ONE stop target, and it's the unit (durable).
     const targets = stopTargetsForStatus(status);
     expect(targets).toHaveLength(1);
@@ -73,7 +73,7 @@ describe("probeEdge classification", () => {
     const status = await probeEdge(
       makeExecutor([
         ["{{.State.Status}}", "restarting"],
-        ["docker ps --filter name=openship-edge", "openship-edge"],
+        ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
         ["sport = :80", 'LISTEN 0 511 *:80 *:* users:(("nginx",pid=1234,fd=6))'],
         ["sport = :443", 'LISTEN 0 511 *:443 *:* users:(("nginx",pid=1234,fd=8))'],
         ["-p 1234 -o args=", "nginx: master process /usr/sbin/nginx -g daemon on;"],
@@ -82,7 +82,7 @@ describe("probeEdge classification", () => {
     );
     expect(status.classification).toBe("known");
     expect(status.canProceedClean).toBe(false);
-    expect(status.occupants.every((o) => o.managedByOpenship === false)).toBe(true);
+    expect(status.occupants.every((o) => o.managedByKovalio === false)).toBe(true);
   });
 
   test("known when a foreign nginx (systemd) owns the ports", async () => {
@@ -120,18 +120,18 @@ describe("probeEdge classification", () => {
     expect(status.classification).toBe("known");
     expect(status.canProceedClean).toBe(false);
     expect(status.occupants.length).toBeGreaterThan(0);
-    expect(status.occupants.every((o) => o.managedByOpenship === false)).toBe(true);
+    expect(status.occupants.every((o) => o.managedByKovalio === false)).toBe(true);
   });
 
-  test("ours when the edge is our host-networked openship-edge container", async () => {
-    // Container-edge topology: OpenResty runs as the `openship-edge` container
+  test("ours when the edge is our host-networked kovalio-edge container", async () => {
+    // Container-edge topology: OpenResty runs as the `kovalio-edge` container
     // with host networking, so (a) our Lua is INSIDE the container (host test -f
     // misses it) and (b) `docker ps --filter publish` matches nothing (host net).
     // It must still classify as OURS — the container name lookup + openresty
     // listener prove it — not a foreign proxy we'd try to take over.
     const status = await probeEdge(
       makeExecutor([
-        ["docker ps --filter name=openship-edge", "openship-edge"],
+        ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
         ["sport = :80", 'LISTEN 0 511 *:80 *:* users:(("nginx",pid=777,fd=6))'],
         ["sport = :443", 'LISTEN 0 511 *:443 *:* users:(("nginx",pid=777,fd=8))'],
         ["-p 777 -o args=", "nginx: master process /usr/local/openresty/nginx/sbin/nginx"],
@@ -143,14 +143,14 @@ describe("probeEdge classification", () => {
   });
 
   test("REGRESSION: host-net edge container is OURS even when the host can't prove the listener binary", async () => {
-    // The self-takeover bug: our openship-edge runs host-networked, but the host
+    // The self-takeover bug: our kovalio-edge runs host-networked, but the host
     // renders the master as a bare `nginx: master process nginx …` (no openresty
     // prefix) and `readlink /proc/<pid>/exe` is denied — so listenerIsOurOpenResty
     // returns false. The RUNNING edge container must STILL make the edge ours;
     // otherwise ensureEdgeClear takes over (kills) our own edge and installs a rival.
     const status = await probeEdge(
       makeExecutor([
-        ["docker ps --filter name=openship-edge", "openship-edge"],
+        ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
         ["sport = :80", 'LISTEN 0 511 *:80 *:* users:(("nginx",pid=777,fd=6))'],
         ["sport = :443", 'LISTEN 0 511 *:443 *:* users:(("nginx",pid=777,fd=8))'],
         ["-p 777 -o args=", "nginx: master process nginx -g daemon off;"], // no openresty prefix
@@ -162,12 +162,12 @@ describe("probeEdge classification", () => {
     expect(status.canProceedClean).toBe(true);
   });
 
-  test("ours when a RENAMED edge container runs our image (OPENSHIP_EDGE_CONTAINER)", async () => {
+  test("ours when a RENAMED edge container runs our image (KOVALIO_EDGE_CONTAINER)", async () => {
     // Default-name filter misses a renamed container; the full listing matches by
     // image, so a custom-named edge is still ours (never a self-takeover target).
     const status = await probeEdge(
       makeExecutor([
-        ["docker ps --format '{{.Names}}\t{{.Image}}'", "my-edge\tghcr.io/oblien/openship-edge:latest"],
+        ["docker ps --format '{{.Names}}\t{{.Image}}'", "my-edge\tghcr.io/nextrium/kovalio-edge:latest"],
         ["sport = :80", 'LISTEN 0 511 *:80 *:* users:(("nginx",pid=777,fd=6))'],
         ["sport = :443", 'LISTEN 0 511 *:443 *:* users:(("nginx",pid=777,fd=8))'],
         ["-p 777 -o args=", "nginx: master process nginx -g daemon off;"],
@@ -184,22 +184,22 @@ describe("probeEdge classification", () => {
     // the port stays a takeover target (can't co-bind with our edge anyway).
     const status = await probeEdge(
       makeExecutor([
-        ["docker ps --filter name=openship-edge", "openship-edge"],
+        ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
         ["--filter publish=80", psLine("traefik-1", "traefik:v3.0")],
         ["--filter publish=443", psLine("traefik-1", "traefik:v3.0")],
       ]),
     );
     expect(status.classification).toBe("known");
-    expect(status.occupants.every((o) => o.managedByOpenship === false)).toBe(true);
+    expect(status.occupants.every((o) => o.managedByKovalio === false)).toBe(true);
   });
 
-  test("ours when a BRIDGED openship-edge container publishes 80/443", async () => {
+  test("ours when a BRIDGED kovalio-edge container publishes 80/443", async () => {
     // Bridge mode: the edge container publishes the ports, so `docker ps --filter
-    // publish` matches it. Recognized as ours by the openship-edge image name.
+    // publish` matches it. Recognized as ours by the kovalio-edge image name.
     const status = await probeEdge(
       makeExecutor([
-        ["--filter publish=80", psLine("openship-edge", "ghcr.io/oblien/openship-edge:latest")],
-        ["--filter publish=443", psLine("openship-edge", "ghcr.io/oblien/openship-edge:latest")],
+        ["--filter publish=80", psLine("kovalio-edge", "ghcr.io/nextrium/kovalio-edge:latest")],
+        ["--filter publish=443", psLine("kovalio-edge", "ghcr.io/nextrium/kovalio-edge:latest")],
       ]),
     );
     expect(status.classification).toBe("ours");
@@ -253,7 +253,7 @@ describe("probeEdge classification", () => {
     // container is what proves the listener is ours.
     const status = await probeEdge(
       makeExecutor([
-        ["docker ps --filter name=openship-edge", "openship-edge"],
+        ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
         ["sport = :80", 'LISTEN 0 511 *:80 *:* users:(("nginx",pid=910,fd=6))'],
         ["sport = :443", 'LISTEN 0 511 *:443 *:* users:(("nginx",pid=910,fd=8))'],
         ["-p 910 -o args=", "nginx: worker process"],
@@ -396,10 +396,10 @@ describe("resolveOurEdgeContainer memoization", () => {
   }
 
   test("asks the box once, then answers from the memo", async () => {
-    const { executor, state } = countingExecutor("openship-edge");
-    expect(await resolveOurEdgeContainer(executor)).toBe("openship-edge");
-    expect(await resolveOurEdgeContainer(executor)).toBe("openship-edge");
-    expect(await resolveOurEdgeContainer(executor)).toBe("openship-edge");
+    const { executor, state } = countingExecutor("kovalio-edge");
+    expect(await resolveOurEdgeContainer(executor)).toBe("kovalio-edge");
+    expect(await resolveOurEdgeContainer(executor)).toBe("kovalio-edge");
+    expect(await resolveOurEdgeContainer(executor)).toBe("kovalio-edge");
     expect(state.probes).toBe(1);
   });
 
@@ -412,25 +412,25 @@ describe("resolveOurEdgeContainer memoization", () => {
   });
 
   test("never serves one box's answer for another", async () => {
-    const a = countingExecutor("openship-edge");
+    const a = countingExecutor("kovalio-edge");
     const b = countingExecutor("");
-    expect(await resolveOurEdgeContainer(a.executor)).toBe("openship-edge");
+    expect(await resolveOurEdgeContainer(a.executor)).toBe("kovalio-edge");
     // Same question, different machine: a bare server must not inherit the
     // container name from the one probed before it.
     expect(await resolveOurEdgeContainer(b.executor)).toBeNull();
-    expect(await resolveOurEdgeContainer(a.executor)).toBe("openship-edge");
+    expect(await resolveOurEdgeContainer(a.executor)).toBe("kovalio-edge");
   });
 
   test("fresh: true bypasses the memo — the install/uninstall contract", async () => {
-    const { executor, state } = countingExecutor("openship-edge");
+    const { executor, state } = countingExecutor("kovalio-edge");
     await resolveOurEdgeContainer(executor);
     await resolveOurEdgeContainer(executor, { fresh: true });
     expect(state.probes).toBe(2);
   });
 
   test("invalidating one executor re-probes only that box", async () => {
-    const a = countingExecutor("openship-edge");
-    const b = countingExecutor("openship-edge");
+    const a = countingExecutor("kovalio-edge");
+    const b = countingExecutor("kovalio-edge");
     await resolveOurEdgeContainer(a.executor);
     await resolveOurEdgeContainer(b.executor);
 
@@ -442,8 +442,8 @@ describe("resolveOurEdgeContainer memoization", () => {
   });
 
   test("invalidating with no executor clears every box", async () => {
-    const a = countingExecutor("openship-edge");
-    const b = countingExecutor("openship-edge");
+    const a = countingExecutor("kovalio-edge");
+    const b = countingExecutor("kovalio-edge");
     await resolveOurEdgeContainer(a.executor);
     await resolveOurEdgeContainer(b.executor);
 
@@ -459,12 +459,12 @@ describe("resolveOurEdgeContainer memoization", () => {
     // created) and the next reader must not be told the previous story.
     let present = true;
     const executor = {
-      exec: async (cmd: string) => (cmd.startsWith("docker ps") && present ? "openship-edge" : ""),
+      exec: async (cmd: string) => (cmd.startsWith("docker ps") && present ? "kovalio-edge" : ""),
     } as unknown as CommandExecutor;
 
-    expect(await resolveOurEdgeContainer(executor)).toBe("openship-edge");
+    expect(await resolveOurEdgeContainer(executor)).toBe("kovalio-edge");
     present = false;
-    expect(await resolveOurEdgeContainer(executor)).toBe("openship-edge"); // still memoized
+    expect(await resolveOurEdgeContainer(executor)).toBe("kovalio-edge"); // still memoized
     invalidateEdgeContainer(executor);
     expect(await resolveOurEdgeContainer(executor)).toBeNull();
   });
@@ -478,10 +478,10 @@ describe("detectEdgeContainer", () => {
 
   test("finds a RUNNING edge by name and reports its image", async () => {
     expect(
-      await detectEdgeContainer(psa("openship-edge\tghcr.io/oblien/openship-edge:0.5.0\trunning")),
+      await detectEdgeContainer(psa("kovalio-edge\tghcr.io/nextrium/kovalio-edge:0.5.0\trunning")),
     ).toEqual({
-      name: "openship-edge",
-      image: "ghcr.io/oblien/openship-edge:0.5.0",
+      name: "kovalio-edge",
+      image: "ghcr.io/nextrium/kovalio-edge:0.5.0",
       running: true,
       exists: true,
     });
@@ -489,13 +489,13 @@ describe("detectEdgeContainer", () => {
 
   test("finds a STOPPED edge — exists but not running (the track-if-installed case)", async () => {
     expect(
-      await detectEdgeContainer(psa("openship-edge\tghcr.io/oblien/openship-edge:0.4.0\texited")),
-    ).toMatchObject({ name: "openship-edge", running: false, exists: true });
+      await detectEdgeContainer(psa("kovalio-edge\tghcr.io/nextrium/kovalio-edge:0.4.0\texited")),
+    ).toMatchObject({ name: "kovalio-edge", running: false, exists: true });
   });
 
   test("matches a container renamed off the default name but running our image", async () => {
     expect(
-      await detectEdgeContainer(psa("my-proxy\tghcr.io/oblien/openship-edge:0.5.0\trunning")),
+      await detectEdgeContainer(psa("my-proxy\tghcr.io/nextrium/kovalio-edge:0.5.0\trunning")),
     ).toMatchObject({ name: "my-proxy", running: true, exists: true });
   });
 

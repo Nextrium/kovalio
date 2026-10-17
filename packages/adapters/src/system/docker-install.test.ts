@@ -7,7 +7,7 @@ import type { CommandExecutor } from "../types";
 
 /**
  * #491: "Ensure System Components" ran `curl -fsSL https://get.docker.com | sh`
- * unconditionally — on a box already running Docker, and running Openship itself
+ * unconditionally — on a box already running Docker, and running Kovalio itself
  * under it. Two ways that hurt, both reported from the same host:
  *
  *   - held packages (`apt-mark hold docker-ce …`) → apt refused, and the only thing
@@ -199,7 +199,7 @@ describe("installDocker", () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain("Held packages were changed");
     expect(result.error).toContain("exit 100");
-    // A hold is a decision — name it, and say Openship won't override it.
+    // A hold is a decision — name it, and say Kovalio won't override it.
     expect(result.error).toMatch(/apt-mark hold/);
     // Never the doubled generic string the issue reported.
     expect(result.error).not.toBe("Docker install failed");

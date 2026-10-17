@@ -89,11 +89,11 @@ describe("internalFetch", () => {
     // blame the wrong thing entirely. Only internalAuth's own `{"error":"Unauthorized"}`
     // is a token rejection.
     h.tokens = ["first", "second"];
-    fetchStub = stubFetch(() => ({ status: 401, json: { error: "Could not verify with Openship Cloud" } }));
+    fetchStub = stubFetch(() => ({ status: 401, json: { error: "Could not verify with Kovalio Cloud" } }));
 
     const res = await internalPost("4000", "/api/system/cloud-connect", { code: "abc" });
     expect(res.ok).toBe(false);
-    expect(res.data.error).toBe("Could not verify with Openship Cloud");
+    expect(res.data.error).toBe("Could not verify with Kovalio Cloud");
     expect(sentTokens()).toEqual(["first"]);
   });
 
@@ -112,7 +112,7 @@ describe("internalFetch", () => {
   });
 
   it("keeps a caller-supplied token exactly as given (no retry, no resolution)", async () => {
-    // `openship up`'s compose provisioning holds the token it just wrote; second-guessing
+    // `kovalio up`'s compose provisioning holds the token it just wrote; second-guessing
     // it would authenticate against the wrong api on a box with two installs.
     h.tokens = ["resolved"];
     fetchStub = stubFetch(() => ({ status: 401, json: { error: "Unauthorized" } }));
@@ -126,7 +126,7 @@ describe("internalFetch", () => {
 
   it("makes NO request when there is no token, and says which store failed", async () => {
     h.tokens = [];
-    h.problem = `can't read /root/.openship/compose/.env (EACCES) — re-run with sudo`;
+    h.problem = `can't read /root/.kovalio/compose/.env (EACCES) — re-run with sudo`;
     fetchStub = stubFetch(() => ({ status: 200, json: { ok: true } }));
 
     const call = await internalFetch("4000", "/api/system/health");

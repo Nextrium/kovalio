@@ -1,15 +1,16 @@
 /**
  * Distribution marker for the tarball-installed CLI, written by
- * scripts/install.sh (and install.ps1) at ~/.openship/cli-install.json and read
- * by `openship update` + the service backend.
+ * scripts/install.sh (and install.ps1) at ~/.kovalio/cli-install.json and read
+ * by `kovalio update` + the service backend.
  *
- * Its presence flips `openship update` from "reinstall the published npm/bun
+ * Its presence flips `kovalio update` from "reinstall the published npm/bun
  * package" to "re-download the verified payload tarball and repoint
  * cli/current" (lib/cli-payload.ts) — the Node-runtime distribution that
- * replaces `bun add -g openship`. Distinct from the `install-method` file
+ * replaces `bun add -g kovalio`. Distinct from the `install-method` file
  * (compose vs bare), which is a SERVICE dimension, orthogonal to how the CLI
  * binary itself was delivered. Parallels lib/source-install.ts.
  */
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -35,7 +36,7 @@ export function parseCliInstall(raw: string): CliInstall | null {
     return {
       method: "tarball",
       tag: obj.tag,
-      launcher: typeof obj.launcher === "string" ? obj.launcher : join(OS_DIR, "bin", "openship"),
+      launcher: typeof obj.launcher === "string" ? obj.launcher : join(OS_DIR, "bin", "kovalio"),
       runtime: obj.runtime === "vendored" ? "vendored" : "system",
     };
   } catch {
@@ -48,12 +49,13 @@ export function readCliInstall(): CliInstall | null {
   if (!existsSync(MARKER)) return null;
   try {
     return parseCliInstall(readFileSync(MARKER, "utf8"));
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/cli-install");
     return null;
   }
 }
 
-/** Persist the marker (used by `openship update` to record the new tag/runtime). */
+/** Persist the marker (used by `kovalio update` to record the new tag/runtime). */
 export function writeCliInstall(info: CliInstall): void {
   mkdirSync(OS_DIR, { recursive: true });
   writeFileSync(MARKER, `${JSON.stringify(info, null, 2)}\n`);

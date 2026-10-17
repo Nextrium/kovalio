@@ -19,13 +19,13 @@ import { DockerRuntime, ownsBuiltImage } from "../src/runtime/docker";
  * The caller's keep-set answers "does another RETAINED release still need this
  * tag" (per project, from the DB). This answers the prior question: "is the tag
  * even ours to delete", which no keep-set can cover — it is per-project, while a
- * migrated tag can be shared across projects and carries no Openship label.
+ * migrated tag can be shared across projects and carries no Kovalio label.
  */
 describe("ownsBuiltImage", () => {
   it("claims only tags minted by our own builds", () => {
-    // Matches `imageTag()`: openship/<slug>:<sessionId>.
-    expect(ownsBuiltImage("openship/my-app:bld_123-svc_web")).toBe(true);
-    expect(ownsBuiltImage("openship/build:bld_123")).toBe(true);
+    // Matches `imageTag()`: kovalio/<slug>:<sessionId>.
+    expect(ownsBuiltImage("kovalio/my-app:bld_123-svc_web")).toBe(true);
+    expect(ownsBuiltImage("kovalio/build:bld_123")).toBe(true);
   });
 
   it("disclaims adopted and pulled tags", () => {
@@ -35,10 +35,11 @@ describe("ownsBuiltImage", () => {
     expect(ownsBuiltImage("postgres:17")).toBe(false);
     expect(ownsBuiltImage("redis:7-alpine")).toBe(false);
     expect(ownsBuiltImage("ghcr.io/acme/api:v1")).toBe(false);
+    expect(ownsBuiltImage("kovalio/agent:v1")).toBe(false);
     // Near-misses must not pass: a registry HOST that merely contains our name,
-    // or a repo whose owner is called "openship" on some other registry.
-    expect(ownsBuiltImage("registry.io/openship/app:1")).toBe(false);
-    expect(ownsBuiltImage("notopenship/app:1")).toBe(false);
+    // or a repo whose owner is called "kovalio" on some other registry.
+    expect(ownsBuiltImage("registry.io/kovalio/app:1")).toBe(false);
+    expect(ownsBuiltImage("notkovalio/app:1")).toBe(false);
   });
 });
 
@@ -62,11 +63,11 @@ describe("DockerRuntime.purge() image ownership", () => {
     await runtime.purge({
       id: "dep1",
       projectId: "proj1",
-      imageRef: "openship/my-app:bld_1-svc_web",
+      imageRef: "kovalio/my-app:bld_1-svc_web",
       containerId: "app-id",
     } as any);
 
-    expect(calls.removed).toEqual(["openship/my-app:bld_1-svc_web"]);
+    expect(calls.removed).toEqual(["kovalio/my-app:bld_1-svc_web"]);
   });
 
   it("leaves a migration-adopted shared tag alone, but still destroys the container", async () => {

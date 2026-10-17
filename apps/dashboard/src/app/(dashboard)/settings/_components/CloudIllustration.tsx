@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * Openship Cloud connect illustration — your instance on the left, the cloud on
+ * Kovalio Cloud connect illustration — your instance on the left, the cloud on
  * the right, a dashed link carrying traffic between them, and a domain chip with
  * a lock for the free managed domain + automatic SSL.
  *

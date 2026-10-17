@@ -1,5 +1,13 @@
 import type { Deployment } from "./types";
 import type { Dictionary } from "@/i18n";
+import { DEPLOYMENT_HISTORY_STATUSES, type DeploymentHistoryFilter } from "@repo/core";
+
+/** UI aliases and raw API statuses use the same groups as server-side history. */
+function historyGroup(status: string): DeploymentHistoryFilter | undefined {
+  if (Object.hasOwn(DEPLOYMENT_HISTORY_STATUSES, status)) return status as DeploymentHistoryFilter;
+  return (Object.keys(DEPLOYMENT_HISTORY_STATUSES) as DeploymentHistoryFilter[])
+    .find((group) => (DEPLOYMENT_HISTORY_STATUSES[group] as readonly string[]).includes(status));
+}
 
 export const mapRowToDeployment = (row: any): Deployment => {
   const statusMap: Record<string, Deployment["status"]> = {
@@ -14,6 +22,8 @@ export const mapRowToDeployment = (row: any): Deployment => {
     status: statusMap[row.status] ?? row.status,
     domain: row.url ?? "",
     framework: row.framework ?? "",
+    serviceDeploymentMode: row.meta?.serviceDeploymentMode === "services" || row.meta?.serviceDeploymentMode === "single"
+      ? row.meta.serviceDeploymentMode : undefined,
     commit: {
       hash: row.commitSha?.slice(0, 7) ?? "N/A",
       fullHash: row.commitSha ?? null,
@@ -79,7 +89,7 @@ export const getStatusConfig = (status: string) => {
   switch (status) {
     case "success":
       return {
-        icon: 'checkmark-72-1658234612.png',
+        icon: "check" as const,
         color: "var(--color-success)",
         bgColor: "bg-success-bg",
         borderColor: "border-success-border",
@@ -87,7 +97,7 @@ export const getStatusConfig = (status: string) => {
       };
     case "failed":
       return {
-        icon: 'close remove-802-1662363936.png',
+        icon: "close" as const,
         color: "var(--color-danger)",
         bgColor: "bg-danger-bg",
         borderColor: "border-danger-border",
@@ -95,7 +105,7 @@ export const getStatusConfig = (status: string) => {
       };
     case "canceled":
       return {
-        icon: 'close%20circle-73-1658234612.png',
+        icon: "x-circle" as const,
         color: "var(--color-neutral)",
         bgColor: "bg-muted/60",
         borderColor: "border-border/50",
@@ -103,7 +113,7 @@ export const getStatusConfig = (status: string) => {
       };
     case "building":
       return {
-        icon: 'loading-51-1663582768.png',
+        icon: "spinner" as const,
         color: "var(--color-info)",
         bgColor: "bg-info-bg",
         borderColor: "border-info-border",
@@ -111,7 +121,7 @@ export const getStatusConfig = (status: string) => {
       };
     case "deploying":
       return {
-        icon: 'loading-51-1663582768.png',
+        icon: "spinner" as const,
         color: "var(--color-info)",
         bgColor: "bg-info-bg",
         borderColor: "border-info-border",
@@ -119,7 +129,7 @@ export const getStatusConfig = (status: string) => {
       };
     case "cancelled":
       return {
-        icon: 'close%20circle-73-1658234612.png',
+        icon: "x-circle" as const,
         color: "var(--color-neutral)",
         bgColor: "bg-muted/60",
         borderColor: "border-border/50",
@@ -131,7 +141,7 @@ export const getStatusConfig = (status: string) => {
       // of `statusMap` above so it isn't folded into "canceled", which would tell
       // the operator to redeploy something that is already current.
       return {
-        icon: 'checkmark-72-1658234612.png',
+        icon: "check" as const,
         color: "var(--color-neutral)",
         bgColor: "bg-muted/60",
         borderColor: "border-border/50",
@@ -143,7 +153,7 @@ export const getStatusConfig = (status: string) => {
       // deploy as live, but the chip surfaces that the build wasn't
       // wholly green.
       return {
-        icon: 'circle%20clock-39-1658435834.png',
+        icon: "clock" as const,
         color: "var(--color-warning)",
         bgColor: "bg-warning-bg",
         borderColor: "border-warning-border",
@@ -154,7 +164,7 @@ export const getStatusConfig = (status: string) => {
       // if it had replaced a previous deployment, that predecessor was restored
       // (otherwise the project falls back to draft). Record + logs are kept.
       return {
-        icon: 'close%20circle-73-1658234612.png',
+        icon: "x-circle" as const,
         color: "var(--color-neutral)",
         bgColor: "bg-muted/60",
         borderColor: "border-border/50",
@@ -165,7 +175,7 @@ export const getStatusConfig = (status: string) => {
       // outcome is being verified against the live host. Not a failure; the
       // status resolves to deployed/failed once the host is reachable.
       return {
-        icon: 'loading-51-1663582768.png',
+        icon: "spinner" as const,
         color: "var(--color-warning)",
         bgColor: "bg-warning-bg",
         borderColor: "border-warning-border",
@@ -177,7 +187,7 @@ export const getStatusConfig = (status: string) => {
       // red "Failed" there is a next step, so it reads amber to match the project
       // card's "Action Required" badge rather than looking like a dead end.
       return {
-        icon: 'circle%20clock-39-1658435834.png',
+        icon: "clock" as const,
         color: "var(--color-warning)",
         bgColor: "bg-warning-bg",
         borderColor: "border-warning-border",
@@ -185,7 +195,7 @@ export const getStatusConfig = (status: string) => {
       };
     default:
       return {
-        icon: 'circle%20clock-39-1658435834.png',
+        icon: "clock" as const,
         color: "var(--color-warning)",
         bgColor: "bg-warning-bg",
         borderColor: "border-warning-border",
@@ -209,7 +219,7 @@ export const sortDeploymentsByDate = (deployments: Deployment[]): Deployment[] =
 export const filterDeployments = (
   deployments: Deployment[],
   filters: {
-    status?: "all" | "success" | "failed" | "building" | "pending" | "canceled";
+    status?: "all" | DeploymentHistoryFilter;
     searchQuery?: string;
     projectId?: string | "all";
   }
@@ -217,17 +227,8 @@ export const filterDeployments = (
   const { status = "all", searchQuery = "", projectId = "all" } = filters;
 
   return deployments.filter((deployment) => {
-    // Handle both "canceled" and "cancelled" spellings; and count a blocked
-    // deploy under "Failed" — it genuinely didn't ship, so hiding it from that
-    // tab would make a real failure invisible. The chip still reads "Action
-    // required" so the difference isn't lost.
-    const deploymentStatus =
-      deployment.status === 'cancelled'
-        ? 'canceled'
-        : deployment.status === 'action_required'
-          ? 'failed'
-          : deployment.status;
-    const matchesStatus = status === "all" || deploymentStatus === status;
+    const group = historyGroup(deployment.status);
+    const matchesStatus = status === "all" || group === status || (status === "active" && (group === "building" || group === "pending"));
     const matchesSearch =
       !searchQuery ||
       deployment.commit.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -244,23 +245,11 @@ export const filterDeployments = (
  * Calculates deployment statistics
  */
 export const calculateDeploymentStats = (deployments: Deployment[]) => {
-  return {
-    total: deployments.length,
-    // `no_changes` is a success that shipped nothing — counted here for the same
-    // reason `action_required` is counted as failed below: it is in `total`, so
-    // leaving it in no bucket would quietly deflate the success rate, and an
-    // unchanged redeploy of an image-only stack is routine.
-    success: deployments.filter((d) => d.status === "success" || d.status === "no_changes")
-      .length,
-    // Blocked deploys count as failed here for the same reason they show under
-    // the Failed filter — they didn't ship. Keeping them out would quietly
-    // inflate the success rate.
-    failed: deployments.filter((d) => d.status === "failed" || d.status === "action_required")
-      .length,
-    building: deployments.filter((d) => d.status === "building").length,
-    pending: deployments.filter((d) => d.status === "pending").length,
-    // Handle both "canceled" and "cancelled" spellings
-    canceled: deployments.filter((d) => d.status === "canceled" || d.status === "cancelled").length,
-  };
+  const counts = { total: deployments.length, success: 0, failed: 0, building: 0, pending: 0, canceled: 0, active: 0 };
+  for (const deployment of deployments) {
+    const group = historyGroup(deployment.status);
+    if (group) counts[group] += 1;
+    if (group === "building" || group === "pending") counts.active += 1;
+  }
+  return counts;
 };
-

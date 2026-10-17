@@ -1,3 +1,4 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { spawn } from "node:child_process";
 import { createWriteStream } from "node:fs";
 import { chmod, mkdtemp, rm as fsRm, writeFile as fsWriteFile } from "node:fs/promises";
@@ -7,8 +8,15 @@ import { join } from "node:path";
 import { formatBytes } from "@repo/core";
 import { getTarCreateEnv } from "../archive";
 import type { LogEntry, SshConfig } from "../types";
-import { emitBufferedLines, flushBufferedLines, hasLocalCommand, logEntry, sq } from "./local-shell";
+import {
+  emitBufferedLines,
+  flushBufferedLines,
+  hasLocalCommand,
+  logEntry,
+  sq,
+} from "./local-shell";
 import { reconcileKnownHosts } from "./ssh-support";
+import { buildSshTransportArgs } from "./system-ssh";
 
 /**
  * Shared helpers for the single-archive source transfer: pack the tree into ONE
@@ -32,7 +40,10 @@ type LogCallback = (log: LogEntry) => void;
  */
 export function packLocalArchive(tarArgs: string[], outFile: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const tar = spawn("tar", tarArgs, { stdio: ["ignore", "pipe", "pipe"], env: getTarCreateEnv() });
+    const tar = spawn("tar", tarArgs, {
+      stdio: ["ignore", "pipe", "pipe"],
+      env: getTarCreateEnv(),
+    });
     const out = createWriteStream(outFile);
     let stderr = "";
     let tarCode: number | null = null;
@@ -41,7 +52,12 @@ export function packLocalArchive(tarArgs: string[], outFile: string): Promise<vo
     const settle = () => {
       if (!tarClosed || !outClosed) return;
       if (tarCode === 0) resolve();
-      else reject(new Error(`tar failed (exit ${tarCode})${stderr.trim() ? `: ${stderr.trim().slice(-300)}` : ""}`));
+      else
+        reject(
+          new Error(
+            `tar failed (exit ${tarCode})${stderr.trim() ? `: ${stderr.trim().slice(-300)}` : ""}`,
+          ),
+        );
     };
     tar.stderr.on("data", (d: Buffer) => {
       stderr += d.toString();
@@ -80,7 +96,9 @@ export async function extractRemoteArchive(
 ): Promise<void> {
   const received = Number((await exec(`wc -c < ${sq(remoteArchive)}`)).trim());
   if (received !== expectedBytes) {
-    await exec(`rm -f ${sq(remoteArchive)}`).catch(() => {});
+    await exec(`rm -f ${sq(remoteArchive)}`).catch((diagnosticFailure) => {
+      observeCaughtError(diagnosticFailure, "adapters/system/remote-transfer");
+    });
     throw new Error(`upload truncated: sent ${expectedBytes} bytes, server received ${received}`);
   }
   await exec(
@@ -97,6 +115,20 @@ export interface RsyncDeps {
 }
 
 /**
+ * Make text key material acceptable to the OpenSSH binary used by rsync.
+ *
+ * ssh2 accepts an OpenSSH private key without a final line feed, while the
+ * OpenSSH client rejects that exact file as "invalid format". Pasted keys also
+ * commonly arrive with Windows line endings. Keep the credential as stored, but
+ * normalize the short-lived file we hand to `ssh -i`.
+ */
+export function formatPrivateKeyForOpenSsh(privateKey: string): string {
+  const normalized = privateKey.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+
+  return normalized.endsWith("\n") ? normalized : `${normalized}\n`;
+}
+
+/**
  * Whether the fast rsync transport is usable for this connection. rsync runs the
  * REAL OpenSSH client (10-30 MB/s vs ssh2's ~0.5-1), so we prefer it — but it
  * needs the local rsync+ssh binaries, the remote rsync binary, and (password
@@ -105,8 +137,14 @@ export interface RsyncDeps {
 export async function canUseRemoteRsync(
   deps: RsyncDeps,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
+  // Native Windows rsync is not part of the supported toolchain; SFTP/streaming
+  // also avoids mixing Windows and POSIX path parsing in rsync's -e command.
+  if (process.platform === "win32") return { ok: false, reason: "using the SSH transfer on Windows" };
   if (deps.config.privateKey && deps.config.privateKeyPassphrase && !deps.config.sshAgent) {
-    return { ok: false, reason: "encrypted SSH keys without an agent are not supported by non-interactive rsync" };
+    return {
+      ok: false,
+      reason: "encrypted SSH keys without an agent are not supported by non-interactive rsync",
+    };
   }
 
   const [localRsync, localSsh, localSshpass, remoteRsync] = await Promise.all([
@@ -118,7 +156,8 @@ export async function canUseRemoteRsync(
 
   if (!localRsync) return { ok: false, reason: "local rsync is not installed" };
   if (!localSsh) return { ok: false, reason: "local ssh is not installed" };
-  if (!localSshpass) return { ok: false, reason: "local sshpass is not installed for password-based rsync" };
+  if (!localSshpass)
+    return { ok: false, reason: "local sshpass is not installed for password-based rsync" };
   if (!remoteRsync) return { ok: false, reason: "remote rsync is not installed" };
 
   return { ok: true };
@@ -127,7 +166,7 @@ export async function canUseRemoteRsync(
 /** Build the `-e` transport command rsync uses (ssh, or sshpass+ssh for password
  *  auth). Password is passed via the SSHPASS env var (set in runRsync), never in
  *  argv. */
-function buildRsyncSshCommand(config: SshConfig, keyPath?: string): string {
+export function buildRsyncSshCommand(config: SshConfig, keyPath?: string): string {
   const args = config.password
     ? [
         "sshpass",
@@ -162,7 +201,12 @@ function buildRsyncSshCommand(config: SshConfig, keyPath?: string): string {
     args.push("-i", keyPath, "-o", "IdentitiesOnly=yes");
   }
 
-  return args.map(sq).join(" ");
+  args.push(...buildSshTransportArgs(config));
+
+  // rsync parses -e itself: it accepts doubled quotes within a quoted word,
+  // not the POSIX shell '\'' escape. ProxyCommand contains its own quoting,
+  // which must survive this first parser intact (especially paths with spaces).
+  return args.map(arg => `"${arg.replaceAll('"', '""')}"`).join(" ");
 }
 
 /** Materialize config.privateKey to a temp file (0600) for rsync's `-i`, clean up
@@ -175,15 +219,17 @@ async function withTemporaryPrivateKey<T>(
     return fn();
   }
 
-  const tempDir = await mkdtemp(join(tmpdir(), "openship-rsync-key-"));
+  const tempDir = await mkdtemp(join(tmpdir(), "kovalio-rsync-key-"));
   const keyPath = join(tempDir, "id_rsa");
 
   try {
-    await fsWriteFile(keyPath, config.privateKey);
+    await fsWriteFile(keyPath, formatPrivateKeyForOpenSsh(config.privateKey), { mode: 0o600 });
     await chmod(keyPath, 0o600);
     return await fn(keyPath);
   } finally {
-    await fsRm(tempDir, { recursive: true, force: true }).catch(() => {});
+    await fsRm(tempDir, { recursive: true, force: true }).catch((diagnosticFailure) => {
+      observeCaughtError(diagnosticFailure, "adapters/system/remote-transfer");
+    });
   }
 }
 
@@ -199,6 +245,7 @@ async function runRsync(
       cwd,
       env: {
         ...getTarCreateEnv(),
+        ...(config.sshAgent ? { SSH_AUTH_SOCK: config.sshAgent } : {}),
         ...(config.password ? { SSHPASS: config.password } : {}),
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -215,7 +262,7 @@ async function runRsync(
       emitBufferedLines(chunk, stderrState, (line) => onLog?.(logEntry(line)));
     });
 
-    proc.on("error", (err) => {
+    proc.on("error", (err) => { observeCaughtError(err, "adapters/system/remote-transfer");
       reject(new Error(`rsync failed to start: ${err.message}`));
     });
 
@@ -244,7 +291,7 @@ export async function uploadFileWithRsync(
   onLog?: LogCallback,
   opts?: { retries?: number },
 ): Promise<void> {
-  await reconcileKnownHosts(deps.config);
+  if (deps.config.sshTransport !== "cloudflare") await reconcileKnownHosts(deps.config);
   const retries = Math.max(1, opts?.retries ?? 3);
   const host = deps.config.host.includes(":") ? `[${deps.config.host}]` : deps.config.host;
   const user = deps.config.username ?? "root";
@@ -252,7 +299,7 @@ export async function uploadFileWithRsync(
   // shell), so it must NOT be shell-quoted. rsync 3.2.4+ defaults to
   // protected-args and sends the arg to the remote WITHOUT shell splitting —
   // wrapping it in `sq()` would send literal quotes, breaking as
-  // `change_dir "/root/'/tmp…"`. openship remote paths are generated (no spaces/
+  // `change_dir "/root/'/tmp…"`. kovalio remote paths are generated (no spaces/
   // metachars), so the raw path is correct on both modern and legacy rsync.
   const target = `${user}@${host}:${remoteFile}`;
 
@@ -260,7 +307,12 @@ export async function uploadFileWithRsync(
     let lastCode = 1;
     for (let attempt = 1; attempt <= retries; attempt++) {
       if (attempt > 1) {
-        onLog?.(logEntry(`Connection dropped — resuming upload (attempt ${attempt}/${retries})...`, "warn"));
+        onLog?.(
+          logEntry(
+            `Connection dropped — resuming upload (attempt ${attempt}/${retries})...`,
+            "warn",
+          ),
+        );
       }
       const args = [
         "-a", // already gzipped, so no `-z`

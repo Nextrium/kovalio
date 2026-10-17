@@ -1,15 +1,16 @@
 /**
  * Stage the self-contained, ARCH-INDEPENDENT CLI payload that `scripts/install.sh`
  * (and Windows `install.ps1`) download and run under Node — the distribution that
- * replaces `bun add -g openship`. See the plan in the repo: Node is the shipped
+ * replaces `bun add -g kovalio`. See the plan in the repo: Node is the shipped
  * runtime, Bun is only the build tool.
  *
- * Produces .cli-payload/openship-cli-<tag>.tar.gz (+ .sha256), whose contents are:
+ * Produces .cli-payload/kovalio-cli-<tag>.tar.gz (+ .sha256), whose contents are:
  *   dist/            the tsup CLI bundle (index.js) + staged API (server/) — pure
  *                    JS/WASM, @repo/* inlined, ssh2/dockerode/cpu-features external
  *   node_modules/    the FULL prod closure (commander/chalk/ora/open/@clack +
  *                    ssh2/dockerode + transitive), installed with --omit=optional
- *                    so cpu-features (ssh2's only native dep) is dropped → ZERO
+ *                    and --ignore-scripts so optional native dependencies and
+ *                    ssh2's crypto build hook cannot introduce host-specific
  *                    .node files → the tree runs unchanged on x64 AND arm64.
  *   package.json     workspace-stripped, "type":"module" — mirrors the published
  *                    npm layout so dist/index.js + dist/server/index.js resolve
@@ -30,19 +31,21 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   rmSync,
   statSync,
   writeFileSync,
 } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const CLI_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
-const DIST = join(CLI_DIR, "dist");
+const PACKAGE_DIR = join(CLI_DIR, "../../packages/kovalio");
+const DIST = join(PACKAGE_DIR, "dist");
 const OUT = join(CLI_DIR, ".cli-payload");
 const STAGE = join(OUT, "stage");
 
-const pkg = JSON.parse(readFileSync(join(CLI_DIR, "package.json"), "utf8")) as {
+const pkg = JSON.parse(readFileSync(join(PACKAGE_DIR, "package.json"), "utf8")) as {
   name: string;
   version: string;
   type?: string;
@@ -52,9 +55,9 @@ const pkg = JSON.parse(readFileSync(join(CLI_DIR, "package.json"), "utf8")) as {
 
 // The release job runs on a tag push, so GITHUB_REF_NAME is the version tag
 // (e.g. v0.5.0); local builds fall back to v<version>. The asset name mirrors
-// the dashboard bundle's `openship-dashboard-<tag>.tar.gz`.
+// the dashboard bundle's `kovalio-dashboard-<tag>.tar.gz`.
 const TAG = process.env.GITHUB_REF_NAME || `v${pkg.version}`;
-const ASSET = `openship-cli-${TAG}.tar.gz`;
+const ASSET = `kovalio-cli-${TAG}.tar.gz`;
 
 if (!existsSync(join(DIST, "index.js"))) {
   console.error(`[stage-cli-payload] ${join(DIST, "index.js")} missing — run \`tsup\` first.`);
@@ -93,10 +96,10 @@ writeFileSync(
 console.log(`[stage-cli-payload] stripped workspace deps: ${stripped.join(", ") || "(none)"}`);
 
 // 3. Install the FULL prod closure into the stage. `--omit=optional` drops
-//    ssh2's only native dep (cpu-features → node-gyp, host-arch, no prebuild),
-//    yielding a zero-`.node`, arch-independent tree; ssh2 falls back to pure-JS
-//    crypto. `--omit=dev` skips devDependencies (none listed here, but explicit).
-console.log("[stage-cli-payload] npm install (prod closure, --omit=optional) …");
+//    cpu-features, but ssh2's own install hook also compiles a crypto addon when
+//    a compiler is available. Disable hooks too; ssh2 supports pure-JS crypto.
+//    `--omit=dev` skips devDependencies (none listed here, but explicit).
+console.log("[stage-cli-payload] npm install (prod closure, no native build hooks) …");
 execFileSync(
   "npm",
   [
@@ -105,6 +108,7 @@ execFileSync(
     STAGE,
     "--omit=dev",
     "--omit=optional",
+    "--ignore-scripts",
     "--no-audit",
     "--no-fund",
     "--no-package-lock",
@@ -161,6 +165,21 @@ if (!/^\d+\.\d+\.\d+/.test(ver)) {
   process.exit(1);
 }
 console.log(`[stage-cli-payload] payload loads ✓  (dist/index.js --version → ${ver})`);
+
+// A dependency may start shipping a prebuilt addon without an install hook.
+// Enforce portability in this build job, before the archive can be published.
+const directories = [STAGE];
+while (directories.length > 0) {
+  const directory = directories.pop()!;
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) directories.push(path);
+    else if (entry.name.endsWith(".node"))
+      throw new Error(
+        `[stage-cli-payload] Native addon ${relative(STAGE, path)} prevents this payload from running across CPU architectures.`,
+      );
+  }
+}
 
 // 5. Tarball + sha256 sidecar (`<hash>  <name>`, matching sha256sum so the CLI's
 //    parseSha256 reads it). Hashing streams the file — the closure is tens of MB.

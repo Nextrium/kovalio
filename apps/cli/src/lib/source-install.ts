@@ -1,13 +1,14 @@
 /**
  * "Installed from source" plumbing shared by the from-source installer
- * (scripts/install-source.sh) and `openship update`'s quick-rebuild path.
+ * (scripts/install-source.sh) and `kovalio update`'s quick-rebuild path.
  *
- * A source install is marked by ~/.openship/source-install.json. Its presence
- * is what flips `openship update` from "reinstall the published npm package" to
+ * A source install is marked by ~/.kovalio/source-install.json. Its presence
+ * is what flips `kovalio update` from "reinstall the published npm package" to
  * "pull the git checkout and rebuild the CLI like `bun dev`" — a quick update
  * with no npm release in the loop. Reuses the clone/build primitives from
  * from-source.ts so the two code paths can't drift.
  */
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -42,7 +43,8 @@ export function readSourceInstall(): SourceInstall | null {
   if (!existsSync(MARKER)) return null;
   try {
     return parseSourceInstall(readFileSync(MARKER, "utf8"));
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/source-install");
     return null;
   }
 }
@@ -83,7 +85,9 @@ export async function rebuildFromSource(info: SourceInstall): Promise<string> {
   await run("git", ["fetch", "origin", info.ref, "--tags"], info.dir);
   await run("git", ["checkout", info.ref], info.dir);
   // Fast-forward a branch; a pinned tag/sha stays put (best-effort).
-  await run("git", ["pull", "--ff-only", "origin", info.ref], info.dir).catch(() => {});
+  await run("git", ["pull", "--ff-only", "origin", info.ref], info.dir).catch((diagnosticFailure) => {
+    observeCaughtError(diagnosticFailure, "cli/lib/source-install");
+  });
 
   const cliDir = join(info.dir, "apps/cli");
   await run("bun", ["install"], info.dir);

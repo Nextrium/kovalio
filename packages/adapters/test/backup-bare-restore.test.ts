@@ -77,7 +77,7 @@ function executorFor(exec: unknown): BareBackupExecutor {
  * and would fail these tests for a reason that has nothing to do with the code.
  */
 function gzippedTar(contents: string): { archive: Buffer; name: string } {
-  const stage = mkdtempSync(join(tmpdir(), "openship-bare-src-"));
+  const stage = mkdtempSync(join(tmpdir(), "kovalio-bare-src-"));
   writeFileSync(join(stage, "vmail.txt"), contents);
   const out = spawnSync("tar", ["-c", "-C", stage, "."], { maxBuffer: 1 << 28 });
   expect(out.status, out.stderr?.toString()).toBe(0);
@@ -95,11 +95,11 @@ function runAsRemoteShell(command: string, input: Buffer, env?: NodeJS.ProcessEn
 
 describe("bare restore survives the transport's quoting", () => {
   it("actually extracts the archive instead of exiting 127", async () => {
-    const target = mkdtempSync(join(tmpdir(), "openship-bare-dst-"));
+    const target = mkdtempSync(join(tmpdir(), "kovalio-bare-dst-"));
     const { archive, name } = gzippedTar("hello maildir");
     const { exec, captured } = fakeExec();
 
-    await executorFor(exec).receiveStream(service, target, Readable.from([archive]), {
+    await executorFor(exec).receiveStream({ ...service, volumes: [target] }, target, Readable.from([archive]), {
       compression: "gzip",
       clearTarget: true,
     });
@@ -116,12 +116,12 @@ describe("bare restore survives the transport's quoting", () => {
     // The quoting is only correct if it survives a value that needs quoting. A path
     // with an apostrophe is the cheapest such value, and it is what broke every
     // hand-rolled escape this module used to carry.
-    const base = mkdtempSync(join(tmpdir(), "openship-bare-q-"));
+    const base = mkdtempSync(join(tmpdir(), "kovalio-bare-q-"));
     const target = join(base, "it's mail");
     const { archive, name } = gzippedTar("quoted ok");
     const { exec, captured } = fakeExec();
 
-    await executorFor(exec).receiveStream(service, target, Readable.from([archive]), {
+    await executorFor(exec).receiveStream({ ...service, volumes: [target] }, target, Readable.from([archive]), {
       compression: "gzip",
       clearTarget: true,
     });
@@ -138,7 +138,7 @@ describe("bare restore refuses to clear a target it cannot decompress into", () 
     // only the tools the script legitimately needs, so `zstd` is genuinely absent —
     // asserting on the generated text could never have caught this, because the old
     // text was *valid*; it just deleted first and reported tar's exit 0.
-    const bin = mkdtempSync(join(tmpdir(), "openship-bare-bin-"));
+    const bin = mkdtempSync(join(tmpdir(), "kovalio-bare-bin-"));
     for (const tool of ["mkdir", "rm", "tar", "cat", "env", "sh"]) {
       for (const dir of ["/bin", "/usr/bin"]) {
         const src = join(dir, tool);
@@ -150,12 +150,12 @@ describe("bare restore refuses to clear a target it cannot decompress into", () 
     }
     expect(existsSync(join(bin, "tar"))).toBe(true);
 
-    const target = mkdtempSync(join(tmpdir(), "openship-bare-keep-"));
+    const target = mkdtempSync(join(tmpdir(), "kovalio-bare-keep-"));
     mkdirSync(join(target, "Maildir"), { recursive: true });
     writeFileSync(join(target, "Maildir", "important.eml"), "do not delete me");
 
     const { exec, captured } = fakeExec();
-    await executorFor(exec).receiveStream(service, target, Readable.from([Buffer.from("junk")]), {
+    await executorFor(exec).receiveStream({ ...service, volumes: [target] }, target, Readable.from([Buffer.from("junk")]), {
       compression: "zstd",
       clearTarget: true,
     });

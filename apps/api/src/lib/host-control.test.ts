@@ -34,7 +34,7 @@ vi.mock("@repo/db", () => ({
 // @repo/adapters is NOT mocked: the point is that syncHostControlOverride mutates
 // the REAL adapters override that hostControlDisabled reads.
 const { resolveHostControlEnabled, syncHostControlOverride, clearHostControlCache } = await import(
-  "./host-control"
+  "@repo/platform/engine/lib/host-control"
 );
 const { hostControlDisabled, setHostControlOverride } = await import("@repo/adapters");
 
@@ -43,21 +43,21 @@ beforeEach(() => {
   state.row = { hostControlEnabled: null };
   clearHostControlCache();
   setHostControlOverride(null);
-  delete process.env.OPENSHIP_HOST_CONTROL;
+  delete process.env.KOVALIO_HOST_CONTROL;
 });
 
 describe("resolveHostControlEnabled — precedence", () => {
   it("is false off a self-hosted target, whatever is stored or in the env", async () => {
     state.target = "desktop";
     state.row = { hostControlEnabled: true };
-    process.env.OPENSHIP_HOST_CONTROL = "true";
+    process.env.KOVALIO_HOST_CONTROL = "true";
     // Agrees with localServerOwnerOrg, which withholds the isLocal row off a
     // self-hosted target — the client gate must not advertise what the backend refuses.
     expect(await resolveHostControlEnabled()).toBe(false);
   });
 
   it("honours a stored TRUE over env=false (DB overrides the install flag)", async () => {
-    process.env.OPENSHIP_HOST_CONTROL = "false"; // installed --no-host-control
+    process.env.KOVALIO_HOST_CONTROL = "false"; // installed --no-host-control
     state.row = { hostControlEnabled: true }; // …then re-enabled from Settings
     expect(await resolveHostControlEnabled()).toBe(true);
   });
@@ -73,13 +73,13 @@ describe("resolveHostControlEnabled — precedence", () => {
     expect(await resolveHostControlEnabled()).toBe(true);
 
     clearHostControlCache();
-    process.env.OPENSHIP_HOST_CONTROL = "false";
+    process.env.KOVALIO_HOST_CONTROL = "false";
     expect(await resolveHostControlEnabled()).toBe(false);
   });
 
   it("falls back to the env default when there is no settings row at all", async () => {
     state.row = null;
-    process.env.OPENSHIP_HOST_CONTROL = "false";
+    process.env.KOVALIO_HOST_CONTROL = "false";
     expect(await resolveHostControlEnabled()).toBe(false);
   });
 });
@@ -92,7 +92,7 @@ describe("syncHostControlOverride — pushes the disabled-polarity override into
   });
 
   it("stored TRUE enables the gate even when the env says false", async () => {
-    process.env.OPENSHIP_HOST_CONTROL = "false";
+    process.env.KOVALIO_HOST_CONTROL = "false";
     state.row = { hostControlEnabled: true };
     await syncHostControlOverride();
     expect(hostControlDisabled()).toBe(false);
@@ -100,12 +100,12 @@ describe("syncHostControlOverride — pushes the disabled-polarity override into
 
   it("stored NULL clears the override so the env floor governs again", async () => {
     // Prove it's the env, not a stale override: flip the env and re-sync.
-    process.env.OPENSHIP_HOST_CONTROL = "false";
+    process.env.KOVALIO_HOST_CONTROL = "false";
     state.row = { hostControlEnabled: null };
     await syncHostControlOverride();
     expect(hostControlDisabled()).toBe(true); // env floor
 
-    delete process.env.OPENSHIP_HOST_CONTROL;
+    delete process.env.KOVALIO_HOST_CONTROL;
     await syncHostControlOverride();
     expect(hostControlDisabled()).toBe(false); // env floor, override still cleared
   });
@@ -119,9 +119,18 @@ describe("syncHostControlOverride — pushes the disabled-polarity override into
     // enable latched — it clears the override so the env floor decides.
     const { repos } = await import("@repo/db");
     const getSpy = vi.spyOn(repos.instanceSettings, "get").mockRejectedValueOnce(new Error("db down"));
-    process.env.OPENSHIP_HOST_CONTROL = "false";
+    process.env.KOVALIO_HOST_CONTROL = "false";
     await expect(syncHostControlOverride()).resolves.toBeUndefined();
     expect(hostControlDisabled()).toBe(true); // fell back to the env floor
     getSpy.mockRestore();
   });
 });
+
+// The application seams moved with the shared engine.
+vi.mock("@repo/platform/engine/lib/platform-config", () => ({
+  resolvePlatformConfig: () => ({ target: state.target }),
+}));
+
+vi.mock("@repo/platform/engine/lib/resource-access", () => ({
+  resolvePlatformConfig: () => ({ target: state.target }),
+}));

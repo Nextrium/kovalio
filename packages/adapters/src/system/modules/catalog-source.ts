@@ -5,13 +5,14 @@
  *
  * Resolution order (mirrors readLua's disk-first/embedded-fallback in
  * openresty-lua.ts): remote pinned catalog → embedded fallback. A dev dir
- * override (OPENSHIP_MODULE_CATALOG_DIR) is still signature-checked.
+ * override (KOVALIO_MODULE_CATALOG_DIR) is still signature-checked.
  *
  * Fetching happens HOST-SIDE (the API/orchestrator has Node + the baked pubkey);
  * we push already-verified bytes down to the target server. Fetch hardening
  * mirrors downloadTarballOnRemote (source-tarball.ts): fail on HTTP error, retry.
  */
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import type { ModuleCatalog, VerifiedCatalog } from "./types";
 import {
   CATALOG_PUBKEYS,
@@ -25,9 +26,9 @@ import { EMBEDDED_CATALOG } from "./catalog-embedded";
 
 /** Pinned catalog coordinates, baked at build time; env overrides for dev/ops. */
 const CATALOG_BASE_URL =
-  process.env.OPENSHIP_MODULE_CATALOG_BASE_URL?.trim() ||
-  "https://raw.githubusercontent.com/openship/native-modules";
-const CATALOG_REF = process.env.OPENSHIP_MODULE_CATALOG_REF?.trim() || "main";
+  process.env.KOVALIO_MODULE_CATALOG_BASE_URL?.trim() ||
+  "https://raw.githubusercontent.com/kovalio/native-modules";
+const CATALOG_REF = process.env.KOVALIO_MODULE_CATALOG_REF?.trim() || "main";
 
 export interface CatalogLoadResult {
   catalog?: VerifiedCatalog;
@@ -120,7 +121,7 @@ export async function fetchRemoteCatalog(module: string): Promise<CatalogLoadRes
   const dir = `${CATALOG_BASE_URL}/${CATALOG_REF}/modules/${module}`;
   const [manifest, sig] = await Promise.all([
     fetchBytes(`${dir}/catalog.json`),
-    fetchBytes(`${dir}/catalog.json.sig`).catch(() => null),
+    fetchBytes(`${dir}/catalog.json.sig`).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/modules/catalog-source"); return null; }),
   ]);
   if (!manifest) return {}; // not published remotely
   // Parse first (unverified) only to learn which assets to fetch; the real trust
@@ -154,15 +155,15 @@ export async function resolveVerifiedCatalog(module: string): Promise<VerifiedCa
     const remote = await fetchRemoteCatalog(module);
     if (remote.catalog) return remote.catalog;
     if (remote.error) {
-      console.warn(`[modules] remote catalog for ${module} rejected: ${remote.error}`);
+      errorDiagnostics.warn("adapters/system/modules/catalog-source", `[modules] remote catalog for ${module} rejected: ${remote.error}`);
     }
   } catch (err) {
-    console.warn(`[modules] remote catalog fetch for ${module} failed: ${(err as Error).message}`);
+    errorDiagnostics.warn("adapters/system/modules/catalog-source", `[modules] remote catalog fetch for ${module} failed: ${(err as Error).message}`, err);
   }
   const embedded = loadEmbeddedCatalog(module);
   if (embedded.catalog) return embedded.catalog;
   if (embedded.error) {
-    console.warn(`[modules] embedded catalog for ${module} rejected: ${embedded.error}`);
+    errorDiagnostics.warn("adapters/system/modules/catalog-source", `[modules] embedded catalog for ${module} rejected: ${embedded.error}`);
   }
   return null;
 }

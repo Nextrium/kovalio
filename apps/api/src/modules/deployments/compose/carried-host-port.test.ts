@@ -11,7 +11,7 @@ import { pickHostPort } from "@repo/adapters";
  * the host changes. A migration replays the source's port on a target that knows nothing about
  * it, and if anything there holds it Docker refuses the bind:
  *
- *   driver failed programming external connectivity on endpoint openship-clincai-api:
+ *   driver failed programming external connectivity on endpoint kovalio-clincai-api:
  *   Bind for 127.0.0.1:20001 failed: port is already allocated
  *
  * — which took down `api` and, by dependency, `dashboard` and `web`: 3 of 5 services, on a
@@ -49,17 +49,25 @@ describe("pickHostPort's preferred-port contract", () => {
 
 describe("the deploy routes the carried port through the allocator", () => {
   const src = readFileSync(
-    new URL("./deploy.service.ts", import.meta.url),
+    new URL(
+      "../../../../../../packages/platform/src/engine/modules/deployments/compose/deploy.service.ts",
+      import.meta.url,
+    ),
     "utf8",
   );
-  /** The loopback-port allocation block, bounded by its own loop. */
+  // Inspect the allocation helper, which handles both routed and port-only
+  // publishes, without depending on the name of its internal loop variable.
   const block = (() => {
-    const from = src.indexOf("for (const containerPort of routedContainerPorts) {");
-    return src.slice(from, src.indexOf("usedHostPorts.add(hostPort);", from));
+    const from = src.indexOf("const prepareServiceHostPorts = async (");
+    if (from === -1) throw new Error("Host-port allocation helper was not found");
+    const to = src.indexOf("\n  };", from);
+    if (to === -1) throw new Error("Host-port allocation helper boundary was not found");
+    return src.slice(from, to);
   })();
 
   it("passes the carried port as `preferred`, not as the answer", () => {
-    expect(block).toContain("preferred: carried");
+    expect(block).toContain("cachedPreferred");
+    expect(block).toContain("allocateAndReservePinnedHostPort");
   });
 
   it("no longer short-circuits the allocator when a carried port exists", () => {
@@ -68,19 +76,42 @@ describe("the deploy routes the carried port through the allocator", () => {
     expect(block).not.toMatch(/if \(carried\) \{\s*hostPort = carried;/);
   });
 
-  it("still avoids ports this same deploy already handed out", () => {
-    expect(block).toContain("avoid: usedHostPorts");
+  it("still avoids durable host claims and ports this same deploy already handed out", () => {
+    expect(block).toContain("claims: pinnedHostPortClaims");
+    expect(block).toContain("allocatedHostPorts");
+    expect(block).toContain("additionalAvoid: allocatedHostPorts");
+    expect(block).toContain("pinnedHostPortClaims.push(allocation.claim)");
   });
 
-  it("says so when it had to move a carried port", () => {
-    // Otherwise a port silently changing between deploys looks like a bug from the outside.
-    expect(block).toContain("hostPort !== carried");
-    expect(block).toContain("is taken on this server");
+  it("relocates unavailable preferences and reports the managed route cutover", () => {
+    expect(block).toContain("allocation.port !== allocation.preferred");
+    expect(block).toContain("reuseOccupiedPreferred:");
+    expect(block).toContain("will update managed routes during cutover");
+    expect(block).not.toContain("lockPreferred");
   });
 
   it("keeps the unreadable-occupancy warning, which is a different failure", () => {
     // A scan that could not run is not "nothing is listening" (#490) — with `preferred` set,
     // that case now returns the carried port, so the warning is the only signal.
     expect(block).toContain("allocation.scanned");
+  });
+
+  it("migrates/converges the edge before importing its ports into allocation", () => {
+    const edgePreflight = src.indexOf("const edge = await ensureEdge(");
+    const strictInventory = src.indexOf("await prepareTargetPinnedHostPorts({");
+
+    expect(edgePreflight).toBeGreaterThan(-1);
+    expect(strictInventory).toBeGreaterThan(edgePreflight);
+    expect(src.slice(edgePreflight, strictInventory)).toContain("ensureRoutingReady");
+  });
+
+  it("validates every resolved loopback target under its service owner before routing", () => {
+    const resolverStart = src.indexOf("resolveTargetUrl:", src.indexOf("const deployEnv"));
+    const resolverEnd = src.indexOf("const deployResult = await runDeployPipeline", resolverStart);
+    const resolver = src.slice(resolverStart, resolverEnd);
+
+    expect(resolver).toContain("reserveResolvedLoopbackRoutes");
+    expect(resolver).toContain("serviceId: svc.id");
+    expect(resolver).toContain("containerPort: port");
   });
 });

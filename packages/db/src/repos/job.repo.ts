@@ -33,35 +33,37 @@ export function createJobRepo(db: Database) {
 
     /**
      * Seed/refresh a built-in system job. Creates it with the default cron +
-     * enabled on first boot; on later boots only the label is refreshed so an
+     * enabled preference on first boot; on later boots only the label is refreshed so an
      * operator's cron/enabled overrides survive.
      */
     async upsertSystem(data: {
       key: string;
       label: string;
       defaultCron: string;
+      defaultEnabled?: boolean;
     }): Promise<Job> {
-      const existing = await this.findByKey(data.key);
-      if (existing) {
-        if (existing.label !== data.label) {
-          await db
-            .update(job)
-            .set({ label: data.label, updatedAt: new Date() })
-            .where(eq(job.key, data.key));
-        }
-        return { ...existing, label: data.label };
-      }
-      const row: NewJob = {
-        id: generateId("job"),
-        key: data.key,
-        kind: "system",
-        label: data.label,
-        cronExpression: data.defaultCron,
-        enabled: true,
-        actionType: "builtin",
-      };
-      await db.insert(job).values(row);
-      return { ...row, createdAt: new Date(), updatedAt: new Date() } as Job;
+      const now = new Date();
+      const [row] = await db
+        .insert(job)
+        .values({
+          id: generateId("job"),
+          key: data.key,
+          kind: "system",
+          label: data.label,
+          cronExpression: data.defaultCron,
+          enabled: data.defaultEnabled ?? true,
+          actionType: "builtin",
+        })
+        // Boot reconciliation and a request-side self-heal can race. The key is
+        // the single owner identity, so converge on that row instead of letting
+        // the losing insert fail. Only code-owned display metadata is refreshed;
+        // the operator's enabled/cron choices remain authoritative.
+        .onConflictDoUpdate({
+          target: job.key,
+          set: { label: data.label, updatedAt: now },
+        })
+        .returning();
+      return row;
     },
 
     async update(

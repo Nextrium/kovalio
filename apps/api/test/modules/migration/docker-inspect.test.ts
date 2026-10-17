@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { DockerContainerDetail, DockerNetworkInfo, DockerVolumeInfo } from "@repo/adapters";
-import { declaredKey, reconcileStack } from "../../../src/modules/migration/docker-reconcile";
-import { parseComposeFile, type ComposeService } from "../../../src/lib/compose-parser";
+import { declaredKey, reconcileStack } from "@repo/platform/engine/modules/migration/docker-reconcile";
+import { parseComposeFile, type ComposeService } from "@repo/platform/engine/lib/compose-parser";
 
 /** Declarations are keyed by COMPOSE PROJECT + service, not by bare service name: a
  *  host can run two stacks that both declare `postgres`, and a flat map let the first
@@ -20,6 +20,12 @@ const COMPOSE = `
 services:
   web:
     image: myapp-web:latest
+    build:
+      context: ../../
+      dockerfile: services/shared/Dockerfile
+      args:
+        APP_PACKAGE: "@myorg/web"
+        INHERIT_FROM_ENV:
     depends_on: [db]
     ports: ["8080:3000"]
   db:
@@ -55,7 +61,12 @@ const DB: DockerContainerDetail = {
   networks: ["myapp_default", "myapp_backend"],
   mounts: [
     { type: "volume", name: "myapp_pgdata", destination: "/var/lib/postgresql/data", rw: true },
-    { type: "bind", source: "/etc/myapp/pg.conf", destination: "/etc/postgresql/postgresql.conf", rw: false },
+    {
+      type: "bind",
+      source: "/etc/myapp/pg.conf",
+      destination: "/etc/postgresql/postgresql.conf",
+      rw: false,
+    },
   ],
   ports: [{ privatePort: 5432, type: "tcp" }],
   restart: { name: "always" },
@@ -141,6 +152,12 @@ describe("reconcileStack", () => {
   it("merges compose declaration with inspect truth for compose services", () => {
     const web = stack.services.find((s) => s.name === "web")!;
     expect(web.source).toBe("compose");
+    expect(web.build).toBe("../../");
+    expect(web.dockerfile).toBe("services/shared/Dockerfile");
+    expect(web.buildArgs).toEqual({
+      APP_PACKAGE: "@myorg/web",
+      INHERIT_FROM_ENV: null,
+    });
     expect(web.dependsOn).toEqual(["db"]);
     expect(web.ports).toEqual(["8080:3000"]);
     // PATH is filtered as docker-injected noise; app env survives.
@@ -148,7 +165,7 @@ describe("reconcileStack", () => {
   });
 
   it("does not read another stack's declaration for a same-named service", () => {
-    // The #584 host shape: Openship's own stack and the user's stack both declare a
+    // The #584 host shape: Kovalio's own stack and the user's stack both declare a
     // service called `postgres`. With a flat name-keyed map the first file read won for
     // BOTH, so the user's container was reconciled against OUR declaration — importing
     // our depends_on (and our declared-env set, which decides env provenance).
@@ -165,7 +182,7 @@ services:
     depends_on: [migration]
 `;
     const declared = new Map([
-      ...declaredMap(ours, "openship"),
+      ...declaredMap(ours, "kovalio"),
       ...declaredMap(theirs, "dependabot"),
     ]);
     const theirPg: DockerContainerDetail = {
@@ -207,9 +224,7 @@ services:
   });
 
   it("reports only in-use named volumes, with their consumers", () => {
-    expect(stack.volumes).toEqual([
-      { name: "myapp_pgdata", driver: "local", inUseBy: ["db"] },
-    ]);
+    expect(stack.volumes).toEqual([{ name: "myapp_pgdata", driver: "local", inUseBy: ["db"] }]);
   });
 
   it("warns about custom networks it will flatten", () => {

@@ -15,7 +15,7 @@ const line = (over: Record<string, unknown> = {}) =>
   JSON.stringify({
     Type: "container",
     Action: "die",
-    Actor: { ID: "abc123def456", Attributes: { name: "openship-app-1" } },
+    Actor: { ID: "abc123def456", Attributes: { name: "kovalio-app-1" } },
     time: 1_770_000_000,
     timeNano: 1_770_000_000_123_456_789,
     ...over,

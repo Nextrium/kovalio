@@ -119,11 +119,11 @@ Plugins selected: Authenticator dns-cloudflare, Installer None
     // line. No certbot lens applies — and the tail fallback would chop that explanation
     // into fragments joined by " · ", which is how the useful half gets lost.
     const explanation =
-      `the edge container is not running ("openship-edge") (restarting) — it is crash-looping, ` +
+      `the edge container is not running ("kovalio-edge") (restarting) — it is crash-looping, ` +
       `so nothing that runs through the edge on this server can work — certificate issuance, ` +
       `config reloads and route changes all go through it. OpenResty is refusing to start: ` +
       `cannot load certificate "/etc/letsencrypt/live/hekai.org/fullchain.pem". Fix that, then ` +
-      "`docker start openship-edge` and retry.";
+      "`docker start kovalio-edge` and retry.";
     const out = `${OPENER}\nRequesting a certificate for hekai.org\n${explanation}\nError response from daemon: Container b896 is restarting, wait until the container is running`;
 
     expect(summarizeCertbotFailure(out, "hekai.org")).toBe(explanation);

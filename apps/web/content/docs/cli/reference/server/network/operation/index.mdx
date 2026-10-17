@@ -1,0 +1,120 @@
+---
+title: server network operation
+description: Commands, arguments, and options for kovalio server network operation.
+cliGroup: kovalio server network operation
+---
+
+See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio server network operation
+
+Review and execute an exact managed-network plan
+
+```text
+kovalio server network operation [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`plan [options] [file]`](/docs/cli/reference/server/network/operation#kovalio-server-network-operation-plan) | Plan managed-network configuration or removal with an idempotent request ID |
+| [`get <id>`](/docs/cli/reference/server/network/operation#kovalio-server-network-operation-get) | Read a plan, its hash and execution progress |
+| [`apply [options] <id>`](/docs/cli/reference/server/network/operation#kovalio-server-network-operation-apply) | Apply, resume or roll back a reviewed plan without rebuilding it |
+| [`discard [options] [file]`](/docs/cli/reference/server/network/operation#kovalio-server-network-operation-discard) | Discard a plan using its exact hash |
+| [`remove-member [options] [file]`](/docs/cli/reference/server/network/operation#kovalio-server-network-operation-remove-member) | Remove a host using the operation's exact plan hash and sequence |
+| [`events [options] <id>`](/docs/cli/reference/server/network/operation#kovalio-server-network-operation-events) | Stream plan execution and recovery progress |
+
+## kovalio server network operation apply
+
+Apply, resume or roll back a reviewed plan without rebuilding it
+
+```text
+kovalio server network operation apply [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Operation ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--plan-hash <hash>` | Exact hash of the plan you reviewed |
+| `--action <action>` | Execution action (choices: "apply", "resume", "rollback", default: "apply") |
+| `-y, --yes` | Confirm this plan's host changes |
+
+## kovalio server network operation discard
+
+Discard a plan using its exact hash
+
+```text
+kovalio server network operation discard [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |
+
+## kovalio server network operation events
+
+Stream plan execution and recovery progress
+
+```text
+kovalio server network operation events [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Operation ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--timeout <ms>` | Stop after this deadline |
+
+## kovalio server network operation get
+
+Read a plan, its hash and execution progress
+
+```text
+kovalio server network operation get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Operation ID |
+
+## kovalio server network operation plan
+
+Plan managed-network configuration or removal with an idempotent request ID
+
+```text
+kovalio server network operation plan [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio server network operation remove-member
+
+Remove a host using the operation's exact plan hash and sequence
+
+```text
+kovalio server network operation remove-member [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |

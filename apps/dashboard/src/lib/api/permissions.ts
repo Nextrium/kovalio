@@ -1,12 +1,15 @@
 import {
   RESOURCE_TYPE_LABELS as CORE_RESOURCE_TYPE_LABELS,
   RESOURCE_TYPE_LABELS_SINGULAR,
+  INVITATION_DELIVERY_HEADER,
+  INVITATION_DELIVERY_LINK_ONLY,
   type GrantableResourceType,
   type Permission,
   type SourceAccessScope,
 } from "@repo/core";
 import { api } from "./client";
 import { endpoints } from "./endpoints";
+import type { PermissionOperations } from "@repo/contracts";
 
 /**
  * Resource-grant types + client. Canonical home for the grant shapes shared by
@@ -78,6 +81,19 @@ export const permissionsApi = {
   replaceGrants: (userId: string, grants: PickerGrant[]) =>
     api.put<{ data?: ResourceGrant[] }>(endpoints.permissions.grants, { userId, grants }),
 
-  inviteWithGrants: (body: { email: string; role: string; grants: PickerGrant[] }) =>
-    api.post(endpoints.permissions.inviteWithGrants, body),
+  inviteWithGrants: (
+    body: { email: string; role: string; grants: PickerGrant[] },
+    options?: { linkOnly?: boolean },
+  ) =>
+    api.post<{ data: Awaited<ReturnType<PermissionOperations["inviteWithGrants"]>> }>(
+      endpoints.permissions.inviteWithGrants,
+      body,
+      options?.linkOnly
+        ? {
+            headers: {
+              [INVITATION_DELIVERY_HEADER]: INVITATION_DELIVERY_LINK_ONLY,
+            },
+          }
+        : undefined,
+    ),
 };

@@ -9,11 +9,12 @@
  *   - Logs via journalctl (structured, rotated automatically)
  *   - Language-agnostic - any start command works
  *
- * Unit naming: openship-{deploymentId}.service
+ * Unit naming: kovalio-{deploymentId}.service
  * Unit location: /etc/systemd/system/ (standard for admin-created units)
  */
 
-import type { CommandExecutor, LogEntry, LogCallback, ResourceUsage } from "../../types";
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import type { CommandExecutor, LogEntry, LogCallback, ResourceUsage, RuntimeLogStreamOptions } from "../../types";
 import type { ProcessSupervisor, SupervisorDeployOpts } from "./types";
 import { sampleBareUsage, ZERO_USAGE } from "./usage";
 import { sq, parseLogLevel } from "../build-pipeline";
@@ -45,11 +46,19 @@ export function escapeSystemdEnvValue(value: string): string {
 
 export class SystemdSupervisor implements ProcessSupervisor {
   readonly name = "systemd";
+  private readonly artifactExecutor: CommandExecutor;
+  private readonly user?: string;
 
   constructor(
     private readonly executor: CommandExecutor,
     private readonly workDir: string,
-  ) {}
+    // System services may need sudo; release files and their metadata must
+    // remain owned by the deployment login so later builds can still use them.
+    options: { artifactExecutor?: CommandExecutor; user?: string } = {},
+  ) {
+    this.artifactExecutor = options.artifactExecutor ?? executor;
+    this.user = options.user;
+  }
 
   // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -66,21 +75,22 @@ export class SystemdSupervisor implements ProcessSupervisor {
   }
 
   private async writeArtifactPath(id: string, path: string): Promise<void> {
-    await this.executor.mkdir(`${this.workDir}/.artifacts`);
-    await this.executor.writeFile(this.artifactFile(id), path);
+    await this.artifactExecutor.mkdir(`${this.workDir}/.artifacts`);
+    await this.artifactExecutor.writeFile(this.artifactFile(id), path);
   }
 
   private async readArtifactPath(id: string): Promise<string | null> {
     try {
-      const content = await this.executor.readFile(this.artifactFile(id));
+      const content = await this.artifactExecutor.readFile(this.artifactFile(id));
       return content.trim() || null;
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "adapters/runtime/supervisor/systemd");
       return null;
     }
   }
 
   private async removeArtifactPath(id: string): Promise<void> {
-    await this.executor.rm(this.artifactFile(id));
+    await this.artifactExecutor.rm(this.artifactFile(id));
   }
 
   /**
@@ -96,13 +106,16 @@ export class SystemdSupervisor implements ProcessSupervisor {
       .filter(([key]) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(key))
       .map(([k, v]) => `Environment="${k}=${escapeSystemdEnvValue(v)}"`)
       .join("\n");
+    // User= takes the literal login from id -un, not a quoted word list like
+    // Environment=. Quotes would become part of the account name (217/USER).
+    const userLine = this.user ? `\nUser=${this.user.replaceAll("%", "%%")}` : "";
 
     return `[Unit]
-Description=Openship deployment ${opts.deploymentId}
+Description=Kovalio deployment ${opts.deploymentId}
 After=network.target
 
 [Service]
-Type=exec
+Type=exec${userLine}
 WorkingDirectory=${opts.workDir}
 ExecStart=/bin/sh -lc ${sq(opts.startCommand)}
 ${envLines}
@@ -150,7 +163,8 @@ WantedBy=multi-user.target
           `journalctl -u ${sq(unitName)} -n 10 --no-pager 2>/dev/null`,
         );
         hint = tail.trim();
-      } catch { /* journal may not be readable */ }
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "adapters/runtime/supervisor/systemd"); /* journal may not be readable */ }
 
       // Detect EADDRINUSE - another process is holding the port
       if (hint.includes("EADDRINUSE")) {
@@ -175,7 +189,8 @@ WantedBy=multi-user.target
     const unitName = this.unitName(deploymentId);
     try {
       await this.executor.exec(`systemctl stop ${sq(unitName)} 2>/dev/null || true`);
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "adapters/runtime/supervisor/systemd");
       // Unit may not exist - that's OK
     }
   }
@@ -183,6 +198,10 @@ WantedBy=multi-user.target
   async start(deploymentId: string): Promise<void> {
     const unitName = this.unitName(deploymentId);
     await this.executor.exec(`systemctl start ${sq(unitName)}`);
+  }
+
+  async canStart(deploymentId: string): Promise<boolean> {
+    return this.executor.exists(this.unitPath(deploymentId));
   }
 
   async restart(deploymentId: string): Promise<void> {
@@ -208,7 +227,7 @@ WantedBy=multi-user.target
     // Clean up artifact directory
     const artifactPath = await this.readArtifactPath(deploymentId);
     if (artifactPath) {
-      await this.executor.rm(artifactPath);
+      await this.artifactExecutor.rm(artifactPath);
     }
     await this.removeArtifactPath(deploymentId);
   }
@@ -220,7 +239,8 @@ WantedBy=multi-user.target
         `systemctl is-active ${sq(unitName)} 2>/dev/null || true`,
       );
       return result.trim() === "active";
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "adapters/runtime/supervisor/systemd");
       return false;
     }
   }
@@ -248,7 +268,8 @@ WantedBy=multi-user.target
         `/sys/fs/cgroup/system.slice/${unitName}`,
         `/sys/fs/cgroup/system.slice/${unitName}/init.scope`,
       ]);
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "adapters/runtime/supervisor/systemd");
       return { ...ZERO_USAGE };
     }
   }
@@ -273,7 +294,8 @@ WantedBy=multi-user.target
             level: parseLogLevel(line),
           };
         });
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "adapters/runtime/supervisor/systemd");
       return [];
     }
   }
@@ -281,7 +303,7 @@ WantedBy=multi-user.target
   async streamLogs(
     deploymentId: string,
     onLog: LogCallback,
-    opts?: { tail?: number },
+    opts?: RuntimeLogStreamOptions,
   ): Promise<() => void> {
     const unitName = this.unitName(deploymentId);
     const tailN = opts?.tail ?? 100;
@@ -299,13 +321,25 @@ WantedBy=multi-user.target
         onLog(cleaned);
       },
     );
-    promise.catch(() => {});
+    void promise.then(
+      (result) => {
+        if (!stopped) opts?.onEnd?.(result.code === 0
+          ? undefined
+          : new Error(`Log reader exited with code ${result.code}`));
+      },
+      (error) => {
+        observeCaughtError(error, "adapters/runtime/supervisor/systemd");
+        if (!stopped) opts?.onEnd?.(error instanceof Error ? error : new Error(String(error)));
+      },
+    );
 
     return () => {
       stopped = true;
       this.executor
         .exec(`pkill -f ${sq(`journalctl.*${unitName}`)} 2>/dev/null || true`)
-        .catch(() => {});
+        .catch((diagnosticFailure) => {
+          observeCaughtError(diagnosticFailure, "adapters/runtime/supervisor/systemd");
+        });
     };
   }
 }

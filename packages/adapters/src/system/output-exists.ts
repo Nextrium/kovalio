@@ -18,6 +18,7 @@
  * instead of `served === false` turns "no signal" into a false alarm.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import type { PortProbeExecutor } from "./port-listen";
 
 export interface OutputProbeResult {
@@ -51,6 +52,8 @@ export interface StaticProbeOptions {
   requestPath?: string;
   /** Port the edge serves plain HTTP on. Defaults to 80. */
   edgePort?: number;
+  /** Provider-owned edge origin; omitted for the server's loopback proxy. */
+  edgeOrigin?: string;
   /** curl's --max-time, in seconds. Defaults to 3 — it has to fit inside the
    *  on-demand check's overall budget. */
   timeoutSeconds?: number;
@@ -89,14 +92,18 @@ function buildCommand(servedPath: string, opts?: StaticProbeOptions): string {
   if (host && SAFE_HOST.test(host) && safeRequestPath(path)) {
     const port = opts?.edgePort ?? 80;
     const maxTime = opts?.timeoutSeconds ?? 3;
+    const origin = opts?.edgeOrigin ?? `http://127.0.0.1:${port}`;
+    // Only an HTTP origin, never credentials, shell syntax or a different path.
+    if (!/^https?:\/\/[A-Za-z0-9.-]+(?::[0-9]{1,5})?$/.test(origin) ||
+        !Number.isFinite(maxTime) || maxTime <= 0) return [...parts, "true"].join("; ");
     // `%{num_connects}` is the TCP verdict and curl's exit code is NOT: curl exits
     // 28 for a timeout both before AND after connecting, so a dropped SYN and a
     // slow-but-answering edge are indistinguishable by status alone. 0 connects
     // means we learned nothing about the path.
     // `X-Forwarded-Proto: https` is what makes this probe exercise the SERVE path
     // instead of the redirect. On a route with a real certificate the :80 block opens
-    // with HTTPS_UPGRADE — `if ($openship_redirect_https) { return 301 … }` — and
-    // `$openship_redirect_https` is 1 unless the request claims https (FORWARD_VARS
+    // with HTTPS_UPGRADE — `if ($kovalio_redirect_https) { return 301 … }` — and
+    // `$kovalio_redirect_https` is 1 unless the request claims https (FORWARD_VARS
     // in infra/nginx.ts). So a plain `Host:`-only request was answered 301 without
     // the doc root ever being touched, `statusIsServed` mapped 3xx to served, and
     // `outputFindingIsBroken` let that override the correct `!hasIndex` verdict: a
@@ -108,7 +115,7 @@ function buildCommand(servedPath: string, opts?: StaticProbeOptions): string {
       `if command -v curl >/dev/null 2>&1; then ` +
         `echo "HTTP $(curl -sS -o /dev/null -w '%{http_code} %{num_connects}' ` +
         `--max-time ${maxTime} -H 'Host: ${host}' -H 'X-Forwarded-Proto: https' ` +
-        `'http://127.0.0.1:${port}${path}' 2>/dev/null)"; fi`,
+        `'${origin}${path}' 2>/dev/null)"; fi`,
     );
   }
 
@@ -157,7 +164,8 @@ export async function probeStaticOutput(
       checked: true,
       ...parseHttp(out),
     };
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/system/output-exists");
     return { found: false, hasIndex: false, checked: false };
   }
 }

@@ -1,6 +1,6 @@
 /**
  * Pure update-resolution logic shared by the desktop in-app updater
- * (apps/desktop/src/main/updater.ts) and the CLI `openship update` command.
+ * (apps/desktop/src/main/updater.ts) and the CLI `kovalio update` command.
  *
  * Kept here (no I/O, no Electron/Node-fs) so the exact asset-selection + version
  * gate is unit-testable with synthetic GitHub `releases/latest` payloads — the
@@ -9,7 +9,7 @@
 
 import { compareSemver } from "./semver";
 import { findAnnouncement } from "./advisories";
-import type { Advisory, AdvisoryManifest } from "./types";
+import type { Advisory, AdvisoryManifest, ReleaseFeedSnapshot } from "./types";
 
 /** The GitHub `releases/latest` fields we consume. */
 export interface GithubReleasePayload {
@@ -40,18 +40,21 @@ export type DesktopUpdateCheck =
     }
   | { available: false };
 
+/** One desktop-owned check feeds both the installer and dashboard advisories. */
+export type DesktopUpdateSnapshot = DesktopUpdateCheck & ReleaseFeedSnapshot;
+
 /**
  * Installer asset name the release pipeline publishes for a platform/arch.
  * Must match `.github/workflows/release.yml` exactly: macOS ships per-arch dmgs,
  * Windows a single x64 zip (NOT a Squirrel Setup.exe — forge uses maker-zip),
- * Linux a per-arch AppImage — x64 keeps the legacy `Openship.AppImage` name
+ * Linux a per-arch AppImage — x64 keeps the legacy `Kovalio.AppImage` name
  * (so already-installed x64 clients keep auto-updating), arm64 is a distinct
  * asset. Returns null for an unknown platform.
  */
 export function desktopAssetName(platform: string, arch: string): string | null {
-  if (platform === "darwin") return arch === "arm64" ? "Openship-arm64.dmg" : "Openship-x64.dmg";
-  if (platform === "win32") return "Openship-win32-x64.zip";
-  if (platform === "linux") return arch === "arm64" ? "Openship-arm64.AppImage" : "Openship.AppImage";
+  if (platform === "darwin") return arch === "arm64" ? "Kovalio-arm64.dmg" : "Kovalio-x64.dmg";
+  if (platform === "win32") return "Kovalio-win32-x64.zip";
+  if (platform === "linux") return arch === "arm64" ? "Kovalio-arm64.AppImage" : "Kovalio.AppImage";
   return null;
 }
 
@@ -71,10 +74,12 @@ export function resolveDesktopUpdate(input: {
   platform: string;
   arch: string;
   currentVersion: string;
+  /** Exact tagged CHANGELOG section. Falls back to the release body for legacy callers. */
+  changelogNotes?: string | null;
   /** Parsed advisory manifest for the release tag. Absent/null → never prompt. */
   manifest?: AdvisoryManifest | null;
 }): DesktopUpdateCheck {
-  const { releasePayload, platform, arch, currentVersion, manifest } = input;
+  const { releasePayload, platform, arch, currentVersion, changelogNotes, manifest } = input;
   const latest = (releasePayload?.tag_name ?? "").replace(/^v/, "");
   if (!latest || compareSemver(latest, currentVersion) <= 0) return { available: false };
 
@@ -87,7 +92,10 @@ export function resolveDesktopUpdate(input: {
   return {
     available: true,
     version: latest,
-    notes: releasePayload?.body ?? "",
+    // `undefined` preserves compatibility for callers that have not fetched the
+    // changelog. `null` means the tagged changelog was unavailable: show no
+    // notes instead of falling back to the unrelated GitHub release body.
+    notes: changelogNotes === undefined ? (releasePayload?.body ?? "") : (changelogNotes ?? ""),
     asset: { name: asset.name, url: asset.browser_download_url, size: asset.size },
     // Mode "desktop": a VPS-only advisory (edge/OpenResty, compose) must never
     // pop a modal in the desktop app, and vice versa.
@@ -95,7 +103,7 @@ export function resolveDesktopUpdate(input: {
   };
 }
 
-// ─── CLI (`openship update`) ─────────────────────────────────────────────────
+// ─── CLI (`kovalio update`) ─────────────────────────────────────────────────
 
 export type CliPackageManager = "bun" | "npm";
 
@@ -112,6 +120,6 @@ export function resolveCliUpdatePlan(current: string, latest: string): CliUpdate
 
 /** The global re-install command for the detected package manager. */
 export function cliInstallCommand(pm: CliPackageManager, version: string): string {
-  const ref = `openship@${version || "latest"}`;
+  const ref = `kovalio@${version || "latest"}`;
   return pm === "bun" ? `bun add -g ${ref}` : `npm install -g ${ref}`;
 }

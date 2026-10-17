@@ -18,7 +18,7 @@ import {
 
 /**
  * This module is the single source of truth for five surfaces (CLI preflight, API boot
- * banner, `openship doctor`, the dashboard banner, the deploy log), and it had no tests
+ * banner, `kovalio doctor`, the dashboard banner, the deploy log), and it had no tests
  * at all. What's pinned here is the two properties the module's own comments claim and
  * nothing enforced — the properties whose failure is silent:
  *
@@ -218,30 +218,30 @@ describe("the command that starts sshd is this host's, not Debian's", () => {
  */
 describe("hostChannelAccount — the one place the channel account is decided", () => {
   it("uses what provisioning wrote", () => {
-    expect(hostChannelAccount({ OPENSHIP_HOST_SSH_USER: "deploy" })).toBe("deploy");
+    expect(hostChannelAccount({ KOVALIO_HOST_SSH_USER: "deploy" })).toBe("deploy");
   });
 
   it("defaults to root when nothing was provisioned", () => {
     expect(hostChannelAccount({})).toBe(HOST_CHANNEL_DEFAULT_ACCOUNT);
-    expect(hostChannelAccount({ OPENSHIP_HOST_SSH_USER: undefined })).toBe("root");
+    expect(hostChannelAccount({ KOVALIO_HOST_SSH_USER: undefined })).toBe("root");
   });
 
   it("treats a blank or whitespace value as unset, not as an empty username", () => {
-    // `.env` round-trips can leave `OPENSHIP_HOST_SSH_USER=`; dialing "" fails with an
+    // `.env` round-trips can leave `KOVALIO_HOST_SSH_USER=`; dialing "" fails with an
     // sshd error that names no account at all.
-    expect(hostChannelAccount({ OPENSHIP_HOST_SSH_USER: "" })).toBe("root");
-    expect(hostChannelAccount({ OPENSHIP_HOST_SSH_USER: "   " })).toBe("root");
+    expect(hostChannelAccount({ KOVALIO_HOST_SSH_USER: "" })).toBe("root");
+    expect(hostChannelAccount({ KOVALIO_HOST_SSH_USER: "   " })).toBe("root");
   });
 
   it("trims, so a stray newline from a written .env cannot become part of the account", () => {
-    expect(hostChannelAccount({ OPENSHIP_HOST_SSH_USER: " deploy\n" })).toBe("deploy");
+    expect(hostChannelAccount({ KOVALIO_HOST_SSH_USER: " deploy\n" })).toBe("deploy");
   });
 
   it("answers identically for a live process env and a parsed .env record", () => {
     // The two callers read from different sources; the whole point is that the source
     // cannot change the answer.
-    const parsed: Record<string, string> = { OPENSHIP_HOST_SSH_USER: "deploy" };
-    const live: NodeJS.ProcessEnv = { OPENSHIP_HOST_SSH_USER: "deploy" };
+    const parsed: Record<string, string> = { KOVALIO_HOST_SSH_USER: "deploy" };
+    const live: NodeJS.ProcessEnv = { KOVALIO_HOST_SSH_USER: "deploy" };
     expect(hostChannelAccount(parsed)).toBe(hostChannelAccount(live));
   });
 });

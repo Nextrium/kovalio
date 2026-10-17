@@ -9,7 +9,7 @@ Once your app is online, the next question is always the same: *what is it actua
 how you find out. Think of them like a diary the app keeps — every time it starts, prints a message, or handles
 a visitor, it writes a line. When something goes wrong, that diary is the first place to look.
 
-Openship gives you two kinds of diary and one big-picture view:
+Kovalio gives you two kinds of diary and one big-picture view:
 
 - **Runtime logs** — what your app itself prints (startup messages, errors, `console.log`). This is what you
   want when the app is crashing or misbehaving.
@@ -46,8 +46,6 @@ From the dashboard, open the project you want to inspect. The project page has a
 This is your live window into the running app. Inside it you'll find two sub-tabs at the top: **Terminal** and
 **Server**. The next two sections explain each one.
 
-<Callout title="Screenshot">The project **Logs** tab, showing the **Terminal** / **Server** sub-tab switcher at the top. *(screenshot pending)*</Callout>
-
 </Step>
 
 </Steps>
@@ -67,8 +65,6 @@ A few things worth knowing:
 - **Copy, Download, Clear.** The buttons on the right let you copy the visible logs to your clipboard, save them
   to a `.txt` file, or clear the view.
 
-<Callout title="Screenshot">The **Terminal** sub-tab mid-stream: the live green dot, the **Stop** button, and log lines scrolling in. *(screenshot pending)*</Callout>
-
 <Callout title="More than one service? Pick which one to watch" type="info">
 If your project runs several services (a docker-compose stack, for example), a small **Runtime log target**
 picker appears above the terminal. Choose the project runtime or a specific service to see just its output.
@@ -76,7 +72,7 @@ picker appears above the terminal. Choose the project runtime or a specific serv
 
 <Callout title="Static sites don't have a Terminal tab" type="info">
 A static site is just files — there's no process running to print anything — so there are no runtime logs and
-the **Terminal** sub-tab is hidden. On **Openship Cloud**, a static site still gets request logs, shown on a
+the **Terminal** sub-tab is hidden. On **Kovalio Cloud**, a static site still gets request logs, shown on a
 single sub-tab labelled **Requests**. On a **self-hosted** static deploy there's no runtime to stream, so the
 Logs tab simply reads *"No runtime logs."* That's expected, not a bug.
 </Callout>
@@ -92,8 +88,6 @@ Each line tells you:
 - the visitor's **IP address** and country, the bytes in and out, and their browser (user agent).
 
 Like the Terminal, this view is **live** — new requests appear at the top as they happen.
-
-<Callout title="Screenshot">The **Server** sub-tab: a list of requests each showing method, path, status code, and response time. *(screenshot pending)*</Callout>
 
 <Callout title="Reading status codes" type="info">
 The colour is the quick tell. **Green (2xx)** means success. **Amber (4xx)** means the visitor asked for
@@ -117,8 +111,6 @@ Open the project's **Overview** tab and you'll see it:
 This is the same request data as the Server sub-tab, just counted up. Empty at first — it fills in as traffic
 arrives.
 
-<Callout title="Screenshot">The project **Overview** tab: the Server Requests / Unique IPs / Avg Response / Bandwidth Out stat cards above the Traffic chart. *(screenshot pending)*</Callout>
-
 ## Where to look when something is wrong
 
 A quick map so you don't have to guess:
@@ -131,30 +123,46 @@ A quick map so you don't have to guess:
 - **The deployment itself failed** (it never went live) → open that deployment from the **Deployments** tab and
   read its build log — that's a separate stream from the runtime logs above.
 
-## Prefer the terminal?
+## When monitoring cannot connect
 
-Everything above is available from the CLI too. First grab your project's ID with `openship project list`, then:
+**Connection unavailable** means Kovalio could not observe the affected servers. Their current
+workload health is **unknown**. For example, `ENETUNREACH` means the machine running Kovalio has
+no usable network route to the target; it does not establish that the target's apps stopped.
+Monitoring combines these explicit network failures into one notice with the affected server names.
+Open **Technical details** for the original diagnostic.
+
+A timeout or refused connection to one server stays a separate **Server unreachable** notice.
+Previously confirmed workload failures remain visible through either kind of connection loss.
+After restoring connectivity, press **Recheck**, or let the next enabled monitoring check run.
+A successful observation clears the connection notice. Checking status does not restart services.
+
+If your browser loses its connection to Kovalio, a shared connection notice warns that displayed
+status may be out of date. This is separate from the connection between Kovalio and your servers.
+
+## CLI
+
+Everything above is available from the CLI too. First grab your project's ID with `kovalio project list`, then:
 
 ```bash
 # Runtime (container) logs — what your app prints
-openship project logs <project-id>              # recent lines
-openship project logs <project-id> --tail 200   # last 200 lines
-openship project logs <project-id> -f           # follow / stream live
+kovalio project logs <project-id>              # recent lines
+kovalio project logs <project-id> --tail 200   # last 200 lines
+kovalio project logs <project-id> -f           # follow / stream live
 
 # HTTP request logs — every web request that hit the app
-openship project server-logs <project-id>                 # recent entries (JSON)
-openship project server-logs <project-id> --limit 200     # up to 200 entries
-openship project server-logs <project-id> --domain yourapp.com   # one domain only
-openship project server-logs <project-id> -f              # stream live
+kovalio project server-logs <project-id>                 # recent entries (JSON)
+kovalio project server-logs <project-id> --limit 200     # up to 200 entries
+kovalio project server-logs <project-id> --domain yourapp.com   # one domain only
+kovalio project server-logs <project-id> -f              # stream live
 
-# A specific deployment's build/run log (grab the id with: openship deployment list)
-openship logs <deployment-id>          # snapshot
-openship logs <deployment-id> --tail 100
-openship logs <deployment-id> -f       # stream until the deployment finishes
+# A specific deployment's build/run log (grab the id with: kovalio deployment list)
+kovalio logs <deployment-id>          # snapshot
+kovalio logs <deployment-id> --tail 100
+kovalio logs <deployment-id> -f       # stream until the deployment finishes
 ```
 
 <Callout title="Live request streaming is self-hosted only (for now)" type="info">
-`openship project server-logs -f` streams live on self-hosted projects. For Openship Cloud projects the CLI
+`kovalio project server-logs -f` streams live on self-hosted projects. For Kovalio Cloud projects the CLI
 prints the recent entries instead and points you to the dashboard for the live tail — the **Server** sub-tab
 there streams cloud requests fine.
 </Callout>
@@ -163,15 +171,15 @@ there streams cloud requests fine.
 The commands above read one project. To manage the reverse proxy those requests pass through — a traffic
 overview and per-domain analytics, route rules, registering domains on a port, or taking over a proxy
 that's already on `:80/:443` — see [The edge](/docs/guides/the-edge) guide (or the
-[`openship edge`](/docs/cli/edge) command reference).
+[`kovalio edge`](/docs/cli/edge) command reference).
 </Callout>
 
-## If something goes wrong
+## Troubleshooting
 
 <Callout title="The Terminal tab is empty or says “Press Start”" type="warn">
 Either the app hasn't printed anything yet, or it isn't running. Make sure the deployment is live (check the
 **Deployments** tab), then press **Start**. If the project is a **static site**, there's no Terminal at all —
-on Openship Cloud use the **Requests** sub-tab; a self-hosted static deploy has no runtime logs to show.
+on Kovalio Cloud use the **Requests** sub-tab; a self-hosted static deploy has no runtime logs to show.
 </Callout>
 
 <Callout title="“Container exited with code …” pops up" type="error">
@@ -189,11 +197,11 @@ points at that second case.
 
 <Callout title="The CLI says “Failed to connect to terminal logs”" type="error">
 This means the project isn't running, so there's no live stream to attach to. Confirm the deployment is up
-(`openship project list` shows its status), start it if needed, then try `openship project logs <project-id> -f`
+(`kovalio project list` shows its status), start it if needed, then try `kovalio project logs <project-id> -f`
 again.
 </Callout>
 
-## What next?
+## Related guides
 
 <Cards>
   <Card title="Roll back or redeploy" href="/docs/guides/rollback-redeploy" description="Found a bad release in the logs? Get back to a working version fast." />

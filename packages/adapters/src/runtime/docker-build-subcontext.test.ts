@@ -2,11 +2,15 @@ import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Readable } from "node:stream";
+import { finished } from "node:stream/promises";
 import { createGunzip } from "node:zlib";
 import { promisify } from "node:util";
 
+import Dockerode from "dockerode";
 import { afterAll, describe, expect, it, vi } from "vitest";
 
+import { statusResponse } from "../../test/fixtures/docker-buildkit";
 import type { BuildConfig, CommandExecutor } from "../types";
 
 import { BuildLogger } from "./build-pipeline";
@@ -30,7 +34,10 @@ function tarEntries(archive: Buffer): string[] {
       continue;
     }
     const name = header.subarray(0, 100).toString("latin1").replace(/\0.*$/, "");
-    const size = parseInt(header.subarray(124, 136).toString("latin1").replace(/\0.*$/, "").trim() || "0", 8);
+    const size = parseInt(
+      header.subarray(124, 136).toString("latin1").replace(/\0.*$/, "").trim() || "0",
+      8,
+    );
     if (name) names.push(name.replace(/\/$/, ""));
     offset += 512 + Math.ceil(size / 512) * 512;
   }
@@ -50,7 +57,9 @@ afterAll(async () => {
  */
 
 /** A repo with a self-contained `svc/` service dir and a decoy root Dockerfile. */
-async function makeRepo(): Promise<string> {
+async function makeRepo(
+  dockerfile = "FROM python:3.12\nCOPY requirements.txt /\n",
+): Promise<string> {
   const repo = await mkdtemp(join(tmpdir(), "dbsc-repo-"));
   cleanups.push(() => rm(repo, { recursive: true, force: true }));
 
@@ -62,7 +71,7 @@ async function makeRepo(): Promise<string> {
   await writeFile(join(repo, "Dockerfile"), "FROM node:22\n");
   await writeFile(join(repo, "root-only.txt"), "root\n");
   await mkdir(join(repo, "svc"), { recursive: true });
-  await writeFile(join(repo, "svc", "Dockerfile.api"), "FROM python:3.12\nCOPY requirements.txt /\n");
+  await writeFile(join(repo, "svc", "Dockerfile.api"), dockerfile);
   await writeFile(join(repo, "svc", "requirements.txt"), "flask\n");
 
   await exec("git", ["-C", repo, "add", "-A", "-f"]);
@@ -97,7 +106,7 @@ function serviceConfig(localPath: string, overrides: Partial<BuildConfig> = {}):
 }
 
 function runtimeFor(
-  transport: { kind: "ssh" | "local"; description: string },
+  transport: { kind: "ssh" | "local" | "socket" | "tcp"; description: string },
   extra: Record<string, unknown>,
 ) {
   const runtime = Object.create(DockerRuntime.prototype) as DockerRuntime & Record<string, unknown>;
@@ -112,11 +121,11 @@ function runtimeFor(
   return runtime;
 }
 
-function spec(config: BuildConfig) {
+function spec(config: BuildConfig, logger = new BuildLogger(() => {})) {
   return {
     config,
     serviceName: "api",
-    logger: new BuildLogger(() => {}),
+    logger,
     requireRepositoryDockerfile: true,
   };
 }
@@ -124,6 +133,7 @@ function spec(config: BuildConfig) {
 describe("remote docker build — declared build context (#634)", () => {
   it("runs docker build INSIDE the service directory with a context-relative -f", async () => {
     const commands: string[] = [];
+    const logs: string[] = [];
     const executor: CommandExecutor = {
       exec: vi.fn(async (command: string) => {
         commands.push(command);
@@ -144,8 +154,13 @@ describe("remote docker build — declared build context (#634)", () => {
     );
 
     const results = await runtime.buildImages(
-      [spec(serviceConfig(await makeRepo()))],
-      new BuildLogger(() => {}),
+      [
+        spec(
+          serviceConfig(await makeRepo(), { buildArgs: { APP_PACKAGE: "@myorg/api" } }),
+          new BuildLogger((entry) => logs.push(entry.message)),
+        ),
+      ],
+      new BuildLogger((entry) => logs.push(entry.message)),
     );
 
     expect(results[0]!.result.status).toBe("deploying");
@@ -154,15 +169,18 @@ describe("remote docker build — declared build context (#634)", () => {
     expect(buildCmd).toBeDefined();
     // The context is the SERVICE dir, so `.` means `svc` and the Dockerfile path is
     // relative to it. A tree-root `cd` plus `-f svc/Dockerfile.api` is the bug.
-    expect(buildCmd).toMatch(/cd '\/tmp\/openship-build-sess-svc\/svc' &&/);
+    expect(buildCmd).toMatch(/cd '\/tmp\/kovalio-build-sess-svc\/svc' &&/);
     expect(buildCmd).toContain("-f 'Dockerfile.api'");
     expect(buildCmd).not.toContain("svc/Dockerfile.api");
     expect(buildCmd.trimEnd().endsWith(" .")).toBe(true);
+    expect(buildCmd).toContain("--build-arg 'APP_PACKAGE=@myorg/api'");
+    expect(logs.join("\n")).toContain("values hidden");
+    expect(logs.join("\n")).not.toContain("@myorg/api");
 
     // The whole TREE still ships: one transfer is shared by every service in a batch.
     expect(transferBuildContext).toHaveBeenCalledWith(
-      expect.stringContaining("openship-docker-context-"),
-      "/tmp/openship-build-sess-svc",
+      expect.stringContaining("kovalio-docker-context-"),
+      "/tmp/kovalio-build-sess-svc",
       expect.anything(),
     );
   });
@@ -197,7 +215,7 @@ describe("remote docker build — declared build context (#634)", () => {
     );
 
     const buildCmd = commands.find((c) => /docker build\b/.test(c) && c.includes(" -t "))!;
-    expect(buildCmd).toMatch(/cd '\/tmp\/openship-build-sess-svc' &&/);
+    expect(buildCmd).toMatch(/cd '\/tmp\/kovalio-build-sess-svc' &&/);
   });
 
   async function buildCommandWithProbeOutput(probeOutput: string): Promise<string> {
@@ -223,13 +241,14 @@ describe("remote docker build — declared build context (#634)", () => {
   }
 
   it("opts into BuildKit when the host answers the probe", async () => {
-    const buildCmd = await buildCommandWithProbeOutput("OPENSHIP_BUILDKIT_OK\n");
+    const buildCmd = await buildCommandWithProbeOutput("KOVALIO_BUILDKIT_OK\n");
 
     expect(buildCmd).toContain("DOCKER_BUILDKIT=1 docker build");
     // `--progress` is a buildx flag; `--force-rm` is a legacy one. Each belongs to
     // exactly one builder.
     expect(buildCmd).toContain("--progress=plain");
     expect(buildCmd).not.toContain("--force-rm");
+    expect(buildCmd).not.toContain("--add-host");
   });
 
   it("keeps the legacy builder — and drops --progress — when the probe is unanswered", async () => {
@@ -241,6 +260,7 @@ describe("remote docker build — declared build context (#634)", () => {
     expect(buildCmd).not.toContain("DOCKER_BUILDKIT=1");
     expect(buildCmd).not.toContain("--progress");
     expect(buildCmd).toContain("--force-rm");
+    expect(buildCmd).toMatch(/--add-host 'kovalio-build-[0-9a-f-]+\.invalid:127\.0\.0\.1'/);
   });
 
   it("does not read a version banner as buildx", async () => {
@@ -285,14 +305,17 @@ describe("mixed batch — one tree, different contexts (#634)", () => {
   it("gives each service its own context and its own .dockerignore", async () => {
     const packed = new Map<string, string[]>();
     const dockerfiles = new Map<string, string>();
+    const buildArgs = new Map<string, unknown>();
     const order = ["web", "api"];
     let call = 0;
 
     const buildImage = vi.fn(async (body: NodeJS.ReadableStream, opts: Record<string, unknown>) => {
       const name = order[call++]!;
       dockerfiles.set(name, String(opts.dockerfile));
+      buildArgs.set(name, opts.buildargs);
       const chunks: Buffer[] = [];
-      for await (const chunk of body.pipe(createGunzip())) chunks.push(Buffer.from(chunk as Buffer));
+      for await (const chunk of body.pipe(createGunzip()))
+        chunks.push(Buffer.from(chunk as Buffer));
       packed.set(name, tarEntries(Buffer.concat(chunks)));
       return { on: () => {}, pipe: () => {} } as unknown as NodeJS.ReadableStream;
     });
@@ -312,6 +335,7 @@ describe("mixed batch — one tree, different contexts (#634)", () => {
               rootDirectory: "",
               buildContextDirectory: "",
               dockerfilePath: undefined,
+              buildArgs: { APP_PACKAGE: "@myorg/web" },
             }),
           ),
           serviceName: "web",
@@ -323,6 +347,7 @@ describe("mixed batch — one tree, different contexts (#634)", () => {
               rootDirectory: "api",
               buildContextDirectory: "api",
               dockerfilePath: "Dockerfile",
+              buildArgs: { APP_PACKAGE: "@myorg/api" },
             }),
           ),
           serviceName: "api",
@@ -336,13 +361,15 @@ describe("mixed batch — one tree, different contexts (#634)", () => {
     // The subdir service builds from ITS directory — the root `.dockerignore`'s `api`
     // rule is not its file and must not have deleted the tree it needs.
     expect(dockerfiles.get("api")).toBe("Dockerfile");
-    expect(packed.get("api")).toEqual(["Dockerfile", "requirements.txt"]);
+    expect(packed.get("api")).toEqual([".", "Dockerfile", "requirements.txt"]);
 
     // And the ROOT service still gets the root `.dockerignore` applied — the prune was
     // skipped for the shared tree, so it has to arrive as a pack-time filter instead.
     // Losing this half is the silent hole: secrets and ignored dirs into the image.
     expect(dockerfiles.get("web")).toBe("Dockerfile");
-    expect(packed.get("web")).toEqual([".dockerignore", "Dockerfile", "web", "web/index.html"]);
+    expect(packed.get("web")).toEqual([".", ".dockerignore", "Dockerfile", "web", "web/index.html"]);
+    expect(buildArgs.get("web")).toMatchObject({ APP_PACKAGE: "@myorg/web" });
+    expect(buildArgs.get("api")).toMatchObject({ APP_PACKAGE: "@myorg/api" });
   });
 });
 
@@ -385,12 +412,88 @@ describe("dockerode docker build — declared build context (#634)", () => {
     expect(options.dockerfile).toBe("Dockerfile.api");
     // Exactly the service directory — nothing from above it. A context that reached
     // one directory too high is the COPY failure in #634.
-    expect(tar).toEqual(["Dockerfile.api", "requirements.txt"]);
+    expect(tar).toEqual([".", "Dockerfile.api", "requirements.txt"]);
   });
 
   it("leaves the default builder selected for a plain Dockerfile", async () => {
     const { options } = await capturedTar();
 
     expect(options.version).toBeUndefined();
+  });
+});
+
+describe.each([
+  { mode: "single", transport: "socket" },
+  { mode: "single", transport: "tcp" },
+  { mode: "single", transport: "ssh" },
+  { mode: "batch", transport: "socket" },
+  { mode: "batch", transport: "tcp" },
+  { mode: "batch", transport: "ssh" },
+] as const)("$transport Engine API $mode build results", ({ mode, transport }) => {
+  describe.each(["classic", "buildkit"])("%s builder", (builder) => {
+    it.each([false, true])(
+      "keeps results authoritative and isolated across builds (firstFails=%s)",
+      async (firstFails) => {
+        const repo = await makeRepo(
+          builder === "buildkit" ? "# syntax=docker/dockerfile:1\nFROM scratch\n" : undefined,
+        );
+        const verifyImageBuilt = vi.fn(async () => {});
+        let buildCount = 0;
+        const daemonError = "failed to solve: process exited with code 1";
+        const buildImage = vi.fn(async (body: Readable, _options: Record<string, unknown>) => {
+          await finished(body.resume());
+          const output =
+            "fixture: Process exited with code 1\n@workspace/web build: Exited with code 0\n";
+          const events: object[] = [
+            builder === "classic"
+              ? { stream: output }
+              : {
+                  id: "moby.buildkit.trace",
+                  aux: statusResponse({ logs: [{ vertex: "sha256:build", msg: output }] }),
+                },
+          ];
+          if (buildCount === 0 && firstFails) events.push({ error: daemonError });
+          else events.push({ aux: { ID: "sha256:built-image" } });
+          buildCount += 1;
+          return Readable.from(events.map((event) => `${JSON.stringify(event)}\n`));
+        });
+        const runtime = runtimeFor(
+          { kind: transport, description: `${transport} Engine API` },
+          {
+            _docker: {
+              buildImage,
+              modem: new Dockerode({ socketPath: "/tmp/kovalio-test-absent.sock" }).modem,
+            },
+            verifyImageBuilt,
+          },
+        );
+        const configs = ["first", "next"].map((name) =>
+          serviceConfig(repo, {
+            sessionId: `result-${transport}-${mode}-${builder}-${firstFails}-${name}`,
+          }),
+        );
+        const results = [];
+        if (mode === "single") {
+          for (const config of configs) results.push(await runtime.build(config));
+        } else {
+          const batch = await runtime.buildImages(
+            configs.map((config, index) => ({ ...spec(config), serviceName: `service-${index}` })),
+            new BuildLogger(),
+          );
+          results.push(...batch.map((entry) => entry.result));
+        }
+
+        expect(results.map((result) => result.status)).toEqual([
+          firstFails ? "failed" : "deploying",
+          "deploying",
+        ]);
+        if (firstFails) expect(results[0]?.errorMessage).toContain(daemonError);
+        expect(buildImage).toHaveBeenCalledTimes(2);
+        for (const [, options] of buildImage.mock.calls) {
+          expect(options.version).toBe(builder === "buildkit" ? "2" : undefined);
+        }
+        expect(verifyImageBuilt).toHaveBeenCalledTimes(firstFails ? 1 : 2);
+      },
+    );
   });
 });

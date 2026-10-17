@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
  * A from-source ("dev") install must BUILD the images we own from its checkout,
  * never pull them: it tracks a branch, so `__CLI_VERSION__` names an unreleased
  * tag and `docker compose pull` dies with `denied` from the registry — which is
- * exactly how a dev `openship` run got as far as stopping the host's nginx and
+ * exactly how a dev `kovalio` run got as far as stopping the host's nginx and
  * then failed with the stack down.
  */
 
@@ -25,7 +25,7 @@ vi.mock("node:child_process", () => ({
     // Fresh install: no pre-existing postgres volume, so the password-reconcile
     // path (which would add its own `up -d --wait postgres`) stays out of the
     // pull/build sequence these tests pin.
-    if (cmd === "docker" && args[0] === "volume") return { status: 1, stdout: "", stderr: "" };
+    if (cmd === "docker" && args[0] === "volume") return { status: 1, stdout: "", stderr: `Error: No such volume: ${args[2]}` };
     return { status: 0, stdout: "", stderr: "" };
   },
 }));
@@ -33,6 +33,7 @@ vi.mock("node:child_process", () => ({
 vi.mock("node:fs", () => ({
   existsSync: (p: string) => h.existing.has(String(p)),
   mkdirSync: () => undefined,
+  realpathSync: (p: string) => String(p),
   readFileSync: (p: string) => h.written.get(String(p)) ?? "",
   writeFileSync: (p: string, data: string) => {
     h.written.set(String(p), String(data));
@@ -76,7 +77,7 @@ vi.mock("@repo/adapters", async () => {
 import { EDGE_CONTAINER_MOUNTS } from "../../../../packages/adapters/src/infra/openresty-lua";
 import { composeUp, sourceBuildDir } from "../../src/lib/compose";
 
-const REPO = "/root/.openship-dev/cli-src";
+const REPO = "/root/.kovalio-dev/cli-src";
 const DOCKERFILES = [
   `${REPO}/apps/api/Dockerfile`,
   `${REPO}/apps/dashboard/Dockerfile`,
@@ -110,7 +111,7 @@ beforeEach(() => {
 
 describe("composeUp — from-source install", () => {
   it("builds api/dashboard/edge from the checkout and never pulls them", async () => {
-    h.sourceInstall = { repo: "oblien/openship", ref: "main", dir: REPO };
+    h.sourceInstall = { repo: "Nextrium/kovalio", ref: "main", dir: REPO };
     for (const f of DOCKERFILES) h.existing.add(f);
 
     const res = await composeUp({ version: "0.3.0" });
@@ -143,14 +144,14 @@ describe("composeUp — from-source install", () => {
   });
 
   it("falls back to pulling when the checkout has no Dockerfiles (stale marker)", async () => {
-    h.sourceInstall = { repo: "oblien/openship", ref: "main", dir: "/gone" };
+    h.sourceInstall = { repo: "Nextrium/kovalio", ref: "main", dir: "/gone" };
     const res = await composeUp({ version: "0.3.0" });
     expect(res.ok).toBe(true);
     expect(verbs()).toEqual([["pull"], ["up", "-d"]]);
   });
 
   it("build:false forces the pull path even on a source install", async () => {
-    h.sourceInstall = { repo: "oblien/openship", ref: "main", dir: REPO };
+    h.sourceInstall = { repo: "Nextrium/kovalio", ref: "main", dir: REPO };
     for (const f of DOCKERFILES) h.existing.add(f);
 
     await composeUp({ version: "0.3.0", build: false });

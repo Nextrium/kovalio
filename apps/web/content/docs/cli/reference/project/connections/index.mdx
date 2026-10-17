@@ -1,0 +1,103 @@
+---
+title: project connections
+description: Commands, arguments, and options for kovalio project connections.
+cliGroup: kovalio project connections
+---
+
+See the [workflow guide](/docs/cli/projects) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio project connections
+
+Wire app outputs into a project's environment through the engine
+
+```text
+kovalio project connections [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list <id>`](/docs/cli/reference/project/connections#kovalio-project-connections-list) | List this project's incoming app connections |
+| [`candidates <id>`](/docs/cli/reference/project/connections#kovalio-project-connections-candidates) | List apps that can supply connection outputs |
+| [`consumers <id>`](/docs/cli/reference/project/connections#kovalio-project-connections-consumers) | List projects consuming this project's outputs |
+| [`create <id> <file>`](/docs/cli/reference/project/connections#kovalio-project-connections-create) | Connect one app output; redeploy to apply it |
+| [`bundle <id> <file>`](/docs/cli/reference/project/connections#kovalio-project-connections-bundle) | Connect several app outputs atomically; redeploy to apply them |
+| [`remove\|rm [options] <id> <connection>`](/docs/cli/reference/project/connections#kovalio-project-connections-remove) | Remove an app connection |
+
+## kovalio project connections bundle
+
+Connect several app outputs atomically; redeploy to apply them
+
+```text
+kovalio project connections bundle [options] <id> <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Target project ID |
+| `file` | JSON connection bundle with sourceProjectId and items |
+
+## kovalio project connections candidates
+
+List apps that can supply connection outputs
+
+```text
+kovalio project connections candidates [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Project ID |
+
+## kovalio project connections consumers
+
+List projects consuming this project's outputs
+
+```text
+kovalio project connections consumers [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Project ID |
+
+## kovalio project connections create
+
+Connect one app output; redeploy to apply it
+
+```text
+kovalio project connections create [options] <id> <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Target project ID |
+| `file` | JSON connection with sourceProjectId, outputId, envKey and optional mode |
+
+## kovalio project connections list
+
+List this project's incoming app connections
+
+```text
+kovalio project connections list [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Project ID |
+
+## kovalio project connections remove
+
+Remove an app connection
+
+```text
+kovalio project connections remove|rm [options] <id> <connection>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Target project ID |
+| `connection` | Connection ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Skip confirmation |

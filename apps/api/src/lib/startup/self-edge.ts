@@ -10,13 +10,14 @@
  *
  * Single-flight so the boot reconcile + the wizard endpoint never install twice
  * at once. Linux only, and only where the resolver says we can elevate (root or
- * passwordless sudo) on a host family Openship has a package manager for; a no-op
+ * passwordless sudo) on a host family Kovalio has a package manager for; a no-op
  * elsewhere.
  */
 
-import { env } from "../../config/env";
-import { pinnedEdgeImage, withPinnedEdgeImage } from "../edge-image";
-import { resolveAcmeProviderOptions } from "../acme-config";
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import { env } from "@repo/platform/engine/config/env";
+import { pinnedEdgeImage, withPinnedEdgeImage } from "@repo/platform/engine/lib/edge-image";
+import { edgeProviderOptions } from "@repo/platform/engine/lib/edge-provider-options";
 
 export interface SelfEdgeInfraProgress {
   onLog?: (message: string, level?: "info" | "warn" | "error") => void;
@@ -47,7 +48,7 @@ export interface SelfEdgeOptions {
   /** Operator accepted reclaiming ports 80/443 from an existing proxy. Without
    *  it, an occupied edge makes the install throw rather than blind-kill. */
   edgeTakeover?: boolean;
-  /** Operator accepted MIGRATING the existing proxy's sites into Openship
+  /** Operator accepted MIGRATING the existing proxy's sites into Kovalio
    *  before taking over (full scan → import → takeover). */
   edgeMigrate?: boolean;
   /** Corrected static roots (keyed by primary hostname) the wizard copied into the
@@ -84,13 +85,13 @@ async function runEnsure(
     else console.log(`[edge] ${message}`);
   };
 
-  // Docker-edge (compose): the edge runs as the `openship-edge` container bound
+  // Docker-edge (compose): the edge runs as the `kovalio-edge` container bound
   // to host :80/:443 via host networking — there is NO host OpenResty to
   // apt-install, and a `LocalExecutor` here would target the api CONTAINER, not
   // the host. The route + cert are still applied through the containerized edge
   // by the normal pipeline (DockerEdgeExecutor). Freeing a foreign proxy off
-  // :80/:443 is handled by `openship up` on the host, not from inside here.
-  if (process.env.OPENSHIP_EDGE_MODE === "docker") {
+  // :80/:443 is handled by `kovalio up` on the host, not from inside here.
+  if (process.env.KOVALIO_EDGE_MODE === "docker") {
     log("docker edge mode — edge runs as a container; skipping host OpenResty install.");
     return { ok: true };
   }
@@ -137,7 +138,7 @@ async function runEnsure(
 
   // Lazy, like @repo/adapters above: deliver pulls in the deploy runtime (db, ssh,
   // dockerode), which must stay off the boot path on the topologies that skip early.
-  const { deliverManagedImage } = await import("../deliver-managed-image");
+  const { deliverManagedImage } = await import("@repo/platform/engine/lib/deliver-managed-image");
 
   // Stage-B APPLY, build-only: this host IS the target, so build the edge from our
   // source onto the local daemon before either bring-up path pulls the pinned tag.
@@ -162,8 +163,8 @@ async function runEnsure(
       {
         status,
         sites: scan.sites,
-        acmeEmail: env.OPENSHIP_ACME_EMAIL,
-        nginx: resolveAcmeProviderOptions(),
+        acmeEmail: env.KOVALIO_ACME_EMAIL,
+        nginx: edgeProviderOptions(),
         extraRoutes: [],
         // Pin the edge the takeover installs. `setDefaultEdgeImage` at boot already
         // covers this, but state it here too: this is the ONE caller of
@@ -199,12 +200,13 @@ async function runEnsure(
       let siteCount = 0;
       try {
         siteCount = (await importSites(executor, status)).sites.length;
-      } catch {
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "api/lib/startup/self-edge");
         /* best-effort site count only */
       }
       const sitesNote = siteCount > 0 ? ` serving ${siteCount} site${siteCount === 1 ? "" : "s"}` : "";
       log(
-        `An existing proxy (${owner})${sitesNote} is using ports 80 and 443. Openship needs its own ` +
+        `An existing proxy (${owner})${sitesNote} is using ports 80 and 443. Kovalio needs its own ` +
           `load balancer (OpenResty) there for managed HTTPS — left it running. Re-run setup and choose ` +
           `migrate or take-over to continue.`,
         "warn",

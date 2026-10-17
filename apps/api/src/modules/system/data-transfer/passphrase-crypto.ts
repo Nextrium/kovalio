@@ -9,10 +9,11 @@
  * fails the GCM auth tag and surfaces as WrongPassphraseError.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { randomBytes, scryptSync } from "node:crypto";
 
-import { decryptWithKey, encryptWithKey } from "../../../lib/encryption";
-import type { SealedSecrets, SecretBundle } from "./types";
+import { decryptWithKey, encryptWithKey } from "@repo/platform/engine/lib/encryption";
+import type { PlaintextSecrets, SealedSecrets, SecretBundle, TransferSecrets } from "./types";
 
 const KDF = { algo: "scrypt" as const, N: 32768, r: 8, p: 1, keyLen: 32 };
 // scrypt needs maxmem >= 128*N*r (~32 MiB here); give headroom, and it also
@@ -52,9 +53,29 @@ export function openSecretBundle(sealed: SealedSecrets, passphrase: string): Sec
   try {
     const key = deriveKey(passphrase, Buffer.from(sealed.kdf.salt, "base64"), sealed.kdf);
     return JSON.parse(decryptWithKey(key, sealed.blob)) as SecretBundle;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "api/modules/system/data-transfer/passphrase-crypto");
     // Wrong key (GCM auth failure), bad KDF params, or malformed JSON — all mean
     // "this passphrase can't open this file".
     throw new WrongPassphraseError();
   }
+}
+
+export function isPlaintextSecrets(secrets: TransferSecrets): secrets is PlaintextSecrets {
+  return "encoding" in secrets && secrets.encoding === "plaintext";
+}
+
+export function transferSecretsRequirePassphrase(secrets: TransferSecrets | null): boolean {
+  return !!secrets && !isPlaintextSecrets(secrets);
+}
+
+/** Read plaintext exports or unlock a legacy password-protected bundle. */
+export function openTransferSecrets(
+  secrets: TransferSecrets | null,
+  passphrase?: string,
+): SecretBundle | null {
+  if (!secrets) return null;
+  if (isPlaintextSecrets(secrets)) return { version: secrets.version, entries: secrets.entries };
+  if (!passphrase) throw new WrongPassphraseError();
+  return openSecretBundle(secrets, passphrase);
 }

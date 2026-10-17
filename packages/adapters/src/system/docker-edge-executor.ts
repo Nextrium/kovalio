@@ -1,3 +1,4 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import Dockerode from "dockerode";
 import { PassThrough } from "node:stream";
 
@@ -76,7 +77,7 @@ export class DockerEdgeExecutor implements CommandExecutor {
    * that fails must not replace the real failure with an error about diagnosing it.
    *
    * The condition this exists for used to be reported as `(HTTP code 409) … container
-   * <64-hex-id> is not running`: the RESOLVED id, no name, no cause. During `openship
+   * <64-hex-id> is not running`: the RESOLVED id, no name, no cause. During `kovalio
    * up` migration that surfaced as six identical 409s against the edge's own id while
    * it was still starting, and from the cert flow it surfaced as a container the
    * operator had no reason to think was involved at all.
@@ -87,11 +88,11 @@ export class DockerEdgeExecutor implements CommandExecutor {
     const status = await container
       .inspect()
       .then((info) => info.State?.Status ?? null)
-      .catch(() => null);
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/docker-edge-executor"); return null; });
     const logs = await container
       .logs({ stdout: true, stderr: true, tail: 40, follow: false })
       .then((out) => (Buffer.isBuffer(out) ? out.toString("utf8") : String(out)))
-      .catch(() => null);
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/docker-edge-executor"); return null; });
     const explanation = explainEdgeDown({
       container: this.containerName,
       status,
@@ -214,8 +215,12 @@ export class DockerEdgeExecutor implements CommandExecutor {
     if (code !== 0) throw new Error(stderr.trim() || `Failed to rename ${from}`);
   }
 
-  async writeFile(path: string, content: string): Promise<void> {
-    if (this.fileMode === "mounted") return this.files.writeFile(path, content);
+  async writeFile(path: string, content: string, opts?: { mode?: number }): Promise<void> {
+    if (this.fileMode === "mounted") {
+      return opts === undefined
+        ? this.files.writeFile(path, content)
+        : this.files.writeFile(path, content, opts);
+    }
 
     // base64 in the COMMAND, never on stdin: `run()` deliberately doesn't hijack
     // the connection (see the note above — hijack breaks every exec under Bun),
@@ -224,13 +229,17 @@ export class DockerEdgeExecutor implements CommandExecutor {
     const encoded = Buffer.from(content, "utf8").toString("base64");
     const dir = path.replace(/\/[^/]*$/, "");
     if (dir && dir !== path) await this.exec(`mkdir -p ${sq(dir)}`);
+    if (opts?.mode !== undefined) {
+      // Tighten the destination before the first decoded payload byte lands.
+      await this.exec(`: > ${sq(path)} && chmod ${opts.mode.toString(8)} ${sq(path)}`);
+    }
     if (encoded.length === 0) {
-      await this.exec(`: > ${sq(path)}`);
+      if (opts?.mode === undefined) await this.exec(`: > ${sq(path)}`);
       return;
     }
     for (let offset = 0; offset < encoded.length; offset += WRITE_CHUNK) {
       const chunk = encoded.slice(offset, offset + WRITE_CHUNK);
-      const redirect = offset === 0 ? ">" : ">>";
+      const redirect = offset === 0 && opts?.mode === undefined ? ">" : ">>";
       await this.exec(`printf '%s' ${sq(chunk)} | base64 -d ${redirect} ${sq(path)}`);
     }
   }

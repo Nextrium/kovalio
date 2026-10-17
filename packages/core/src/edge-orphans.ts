@@ -1,19 +1,19 @@
 /**
  * @module edge-orphans
  *
- * Which vhosts is the edge serving that Openship no longer tracks?
+ * Which vhosts is the edge serving that Kovalio no longer tracks?
  *
  * ── Why this exists ─────────────────────────────────────────────────────────
  * Edge config lives on the HOST, deliberately (see the edge bind-mount design),
  * and one supported flow drops the DB rows while leaving it in place:
- * record-only delete ("Remove from Openship only") promises "nothing on the
+ * record-only delete ("Remove from Kovalio only") promises "nothing on the
  * server is touched", which explicitly includes NOT removing the route. So a
  * project can stop existing while its vhost keeps answering.
  *
  * For a port-based vhost that is loud and self-announcing: the container is gone,
  * so it serves 502 and somebody notices. For a STATIC vhost it is silent — the
  * built files are still on disk under the release dir, so it keeps returning
- * 200 with the old project's content, on a hostname Openship may well have since
+ * 200 with the old project's content, on a hostname Kovalio may well have since
  * handed to someone else. Nothing in the product looked for this.
  *
  * ── What it does NOT do ─────────────────────────────────────────────────────
@@ -74,11 +74,13 @@ export interface UntrackedEdgeSite {
  * plus label length and total length bounds this never had.
  */
 function isReportableHostname(raw: string): boolean {
-  return isValidCustomHostname(normalizeServedHostname(raw));
+  const norm = normalizeServedHostname(raw);
+  if (norm.startsWith("*.")) return false;
+  return isValidCustomHostname(norm);
 }
 
 /**
- * Vhosts serving hostnames Openship has no record of.
+ * Vhosts serving hostnames Kovalio has no record of.
  *
  * A vhost is tracked when ANY of its `server_name`s is known — one file serves
  * them all, so a single match means the file is accounted for. That direction
@@ -104,7 +106,9 @@ export function findUntrackedEdgeSites(input: {
   const seen = new Set<string>();
 
   for (const site of input.sites) {
-    const names = (site.serverNames ?? []).filter(isReportableHostname).map(normalizeServedHostname);
+    const names = (site.serverNames ?? [])
+      .filter(isReportableHostname)
+      .map(normalizeServedHostname);
     if (names.length === 0) continue;
     // Any known name ⇒ the vhost is accounted for.
     if (names.some((n) => known.has(n))) continue;

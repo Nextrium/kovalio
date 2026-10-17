@@ -18,30 +18,30 @@ vi.mock("../../../src/lib/controller-helpers", () => ({
   platform: () => ({ target: "desktop" }),
 }));
 
-vi.mock("../../../src/lib/cloud/client", () => ({
+vi.mock("@repo/platform/engine/lib/cloud/client", () => ({
   cloudClient,
 }));
 
-vi.mock("../../../src/lib/cloud/session", () => ({
+vi.mock("@repo/platform/engine/lib/cloud/session", () => ({
   // De-conflation reads this when a cloud preflight comes back null; stub
   // it so the mock surface is complete even on that branch.
   isCloudConnectedForOrg: vi.fn().mockResolvedValue(true),
 }));
 
-vi.mock("../../../src/lib/cloud-preflight", () => ({
+vi.mock("@repo/platform/engine/lib/cloud-preflight", () => ({
   runCloudPreflight,
 }));
 
 // Keep the custom-domain DNS branch (checkCustomDomainSelfHosted) off the network
 // and deterministic — a custom host resolves to "no records yet" (a warn on the
 // `domain` check), never a cloud requirement. Isolates the cloud-gating assertions.
-vi.mock("../../../src/lib/dns-resolver", () => ({
+vi.mock("@repo/platform/engine/lib/dns-resolver", () => ({
   resolveRecords: vi.fn().mockResolvedValue([]),
   lookupAddresses: vi.fn().mockResolvedValue([]),
 }));
 
-import { runPreflightChecks } from "../../../src/modules/deployments/preflight";
-import { isCloudConnectedForOrg } from "../../../src/lib/cloud/session";
+import { runPreflightChecks } from "@repo/platform/engine/modules/deployments/preflight";
+import { isCloudConnectedForOrg } from "@repo/platform/engine/lib/cloud/session";
 
 describe("runPreflightChecks", () => {
   beforeEach(() => {
@@ -53,9 +53,10 @@ describe("runPreflightChecks", () => {
       slug: input.slug
         ? {
             available: input.slug !== "taken-endpoint",
-            message: input.slug === "taken-endpoint"
-              ? "\"taken-endpoint.openship.test\" is already taken. Choose a different subdomain."
-              : undefined,
+            message:
+              input.slug === "taken-endpoint"
+                ? '"taken-endpoint.kovalio.test" is already taken. Choose a different subdomain.'
+                : undefined,
           }
         : undefined,
     }));
@@ -65,27 +66,39 @@ describe("runPreflightChecks", () => {
     );
   });
 
+  it.each(["services", "single"] as const)("uses shared Docker volume support for %s managed-server projects", async mode => {
+    const result = await runPreflightChecks({ deployTarget: "cloud", organizationId: "org-1", serviceDeploymentMode: mode,
+      buildStrategy: "server", framework: "docker", buildImage: "node:22", hasServer: true, port: 8080 } as any,
+    { multiService: true, composeServices: [{ name: "db", image: "postgres:17", ports: ["5432"], exposed: false,
+      enabled: true, volumes: ["data:/var/lib/postgresql/data"], dependsOn: [] }] as any });
+    expect(result.checks.some(check => check.id === "cloud-storage")).toBe(false);
+    expect(result.checks.find(check => check.id === "config")).toMatchObject({ status: "pass" });
+  });
+
   it("checks free-domain availability for every public endpoint", async () => {
-    const result = await runPreflightChecks({
-      repoUrl: "https://github.com/acme/app.git",
-      branch: "main",
-      buildImage: "node:22",
-      installCommand: "npm install",
-      buildCommand: "npm run build",
-      startCommand: "npm start",
-      port: 3000,
-      hasBuild: true,
-      hasServer: true,
-      deployTarget: "server",
-      organizationId: "org-1",
-    } as any, {
-      ctx: { userId: "user-1", organizationId: "org-1" } as any,
-      buildStrategy: "local",
-      publicEndpoints: [
-        { port: 3000, domain: "taken-endpoint", domainType: "free" },
-        { port: 4000, domain: "ok-endpoint", domainType: "free" },
-      ],
-    });
+    const result = await runPreflightChecks(
+      {
+        repoUrl: "https://github.com/acme/app.git",
+        branch: "main",
+        buildImage: "node:22",
+        installCommand: "npm install",
+        buildCommand: "npm run build",
+        startCommand: "npm start",
+        port: 3000,
+        hasBuild: true,
+        hasServer: true,
+        deployTarget: "server",
+        organizationId: "org-1",
+      } as any,
+      {
+        ctx: { userId: "user-1", organizationId: "org-1" } as any,
+        buildStrategy: "local",
+        publicEndpoints: [
+          { port: 3000, domain: "taken-endpoint", domainType: "free" },
+          { port: 4000, domain: "ok-endpoint", domainType: "free" },
+        ],
+      },
+    );
 
     expect(result.ok).toBe(false);
     expect(result.checks).toEqual(
@@ -102,34 +115,35 @@ describe("runPreflightChecks", () => {
         }),
       ]),
     );
-    expect(
-      preflightFn.mock.calls.some(([input]) => input && input.slug === "taken-endpoint"),
-    ).toBe(true);
-    expect(
-      preflightFn.mock.calls.some(([input]) => input && input.slug === "ok-endpoint"),
-    ).toBe(true);
+    expect(preflightFn.mock.calls.some(([input]) => input && input.slug === "taken-endpoint")).toBe(
+      true,
+    );
+    expect(preflightFn.mock.calls.some(([input]) => input && input.slug === "ok-endpoint")).toBe(
+      true,
+    );
   });
 
   it("accepts static path-targeted public endpoints", async () => {
-    const result = await runPreflightChecks({
-      repoUrl: "https://github.com/acme/docs.git",
-      branch: "main",
-      buildImage: "node:22",
-      installCommand: "npm install",
-      buildCommand: "npm run build",
-      startCommand: "",
-      port: 3000,
-      hasBuild: true,
-      hasServer: false,
-      deployTarget: "cloud",
-      organizationId: "org-1",
-    } as any, {
-      ctx: { userId: "user-1", organizationId: "org-1" } as any,
-      buildStrategy: "local",
-      publicEndpoints: [
-        { targetPath: "/docs", domain: "docs-site", domainType: "free" },
-      ],
-    });
+    const result = await runPreflightChecks(
+      {
+        repoUrl: "https://github.com/acme/docs.git",
+        branch: "main",
+        buildImage: "node:22",
+        installCommand: "npm install",
+        buildCommand: "npm run build",
+        startCommand: "",
+        port: 3000,
+        hasBuild: true,
+        hasServer: false,
+        deployTarget: "cloud",
+        organizationId: "org-1",
+      } as any,
+      {
+        ctx: { userId: "user-1", organizationId: "org-1" } as any,
+        buildStrategy: "local",
+        publicEndpoints: [{ targetPath: "/docs", domain: "docs-site", domainType: "free" }],
+      },
+    );
 
     expect(result.ok).toBe(true);
     expect(result.checks.some((check) => check.status === "fail")).toBe(false);
@@ -192,7 +206,7 @@ describe("runPreflightChecks", () => {
       {
         repoUrl: "",
         branch: "",
-        sourceStaged: true,
+        localPath: "/tmp/kovalio-upload/source",
         framework: "docker",
         buildImage: "ubuntu:22.04",
         installCommand: "",
@@ -218,12 +232,112 @@ describe("runPreflightChecks", () => {
     expect(result.checks.some((check) => check.message?.includes("start command"))).toBe(false);
   });
 
+  it.each(["cloud", "server", "local"])("does not require a Docker image for an explicit bare build on %s", async deployTarget => {
+    const result = await runPreflightChecks({
+      repoUrl: "", branch: "", localPath: "/tmp/kovalio-source", framework: "python",
+      runtimeMode: "bare", buildImage: "", installCommand: "", buildCommand: "",
+      startCommand: "python3 app.py", port: 8080, hasBuild: false, hasServer: true,
+      deployTarget, organizationId: "org-1",
+    } as any, { buildStrategy: "local" });
+    expect(result.checks.find(check => check.id === "config")).toMatchObject({ status: "pass" });
+  });
+
+  it("still requires the build image when a static bare release is built in Docker", async () => {
+    const result = await runPreflightChecks({
+      repoUrl: "", branch: "", localPath: "/tmp/kovalio-source", framework: "vite",
+      runtimeMode: "bare", buildImage: "", installCommand: "npm ci", buildCommand: "npm run build",
+      startCommand: "", hasBuild: true, hasServer: false, workload: "static", outputDirectory: "dist",
+      serverId: "server-a", deployTarget: "server", organizationId: "org-1",
+    } as any, { buildStrategy: "local" });
+    expect(result.checks.find(check => check.id === "config")).toMatchObject({
+      status: "fail", message: expect.stringContaining("build image"),
+    });
+  });
+
+  it("still requires a Docker image for a container build", async () => {
+    const result = await runPreflightChecks({
+      repoUrl: "", branch: "", localPath: "/tmp/kovalio-source", framework: "python",
+      runtimeMode: "docker", buildImage: "", installCommand: "", buildCommand: "",
+      startCommand: "python3 app.py", port: 8080, hasBuild: false, hasServer: true,
+      deployTarget: "cloud", organizationId: "org-1",
+    } as any, { buildStrategy: "local" });
+    expect(result.checks.find(check => check.id === "config")).toMatchObject({
+      status: "fail", message: expect.stringContaining("build image"),
+    });
+  });
+
+  it("accepts a source-less single-app release image and its image-owned command", async () => {
+    const result = await runPreflightChecks(
+      {
+        repoUrl: "",
+        branch: "",
+        localPath: undefined,
+        releaseImageRef: "ghcr.io/acme/app:v1.2.3",
+        framework: "node",
+        buildImage: "",
+        installCommand: "",
+        buildCommand: "",
+        startCommand: "",
+        port: 8080,
+        hasBuild: false,
+        hasServer: true,
+        source: "image",
+        build: "prebuilt",
+        workload: "web",
+        deployTarget: "server",
+        organizationId: "org-1",
+      } as any,
+      {
+        ctx: { userId: "user-1", organizationId: "org-1" } as any,
+        buildStrategy: "local",
+      },
+    );
+
+    const config = result.checks.find((check) => check.id === "config");
+    expect(result.ok).toBe(true);
+    expect(config).toMatchObject({ status: "pass" });
+    expect(config?.message ?? "").not.toMatch(
+      /repository URL|local path|branch|build image|install command|start command/,
+    );
+  });
+
+  it("rejects a project-level release image in the multi-service pipeline", async () => {
+    const result = await runPreflightChecks(
+      {
+        repoUrl: "",
+        branch: "",
+        releaseImageRef: "ghcr.io/acme/app:v1.2.3",
+        port: 8080,
+        hasBuild: false,
+        hasServer: true,
+        source: "image",
+        build: "prebuilt",
+        workload: "web",
+        deployTarget: "server",
+        organizationId: "org-1",
+      } as any,
+      {
+        ctx: { userId: "user-1", organizationId: "org-1" } as any,
+        buildStrategy: "local",
+        multiService: true,
+        composeServices: [],
+      },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.checks.find((check) => check.id === "config")).toMatchObject({
+      label: "Service configuration",
+      status: "fail",
+      message: expect.stringContaining("deploys one app"),
+    });
+  });
+
   it("still requires a port for a single Dockerfile web project", async () => {
     const result = await runPreflightChecks(
       {
         repoUrl: "",
         branch: "",
-        sourceStaged: true,
+        localPath: "/tmp/kovalio-upload/source",
         framework: "docker",
         installCommand: "",
         buildCommand: "",
@@ -284,9 +398,7 @@ describe("runPreflightChecks", () => {
         }),
       ]),
     );
-    expect(
-      result.checks.find((c) => c.id === "config")?.message,
-    ).toContain("orphaned-app");
+    expect(result.checks.find((c) => c.id === "config")?.message).toContain("orphaned-app");
   });
 
   it("still hard-fails a monorepo sub-app missing commands when it HAS been deployed before", async () => {
@@ -398,10 +510,7 @@ describe("runPreflightChecks", () => {
     });
 
     it("a buildpack worker with no run command fails for the command, not the port", async () => {
-      const result = await runPreflightChecks(
-        { ...workerBase, startCommand: "" } as any,
-        opts,
-      );
+      const result = await runPreflightChecks({ ...workerBase, startCommand: "" } as any, opts);
       const config = result.checks.find((c) => c.id === "config");
       expect(config?.status).toBe("fail");
       expect(config?.message ?? "").toContain("start command");
@@ -599,11 +708,9 @@ describe("runPreflightChecks", () => {
       );
 
       expect(result.ok).toBe(false);
-      expect(
-        result.checks.some(
-          (c) => c.code === "CLOUD_REQUIRED_MANAGED_COMPOSE_DOMAINS",
-        ),
-      ).toBe(true);
+      expect(result.checks.some((c) => c.code === "CLOUD_REQUIRED_MANAGED_COMPOSE_DOMAINS")).toBe(
+        true,
+      );
     });
 
     it("does NOT false-fail a CONNECTED org's compose deploy on a service that inherits the default *.opsh.io subdomain", async () => {
@@ -660,3 +767,12 @@ describe("runPreflightChecks", () => {
     });
   });
 });
+
+// The application seams moved with the shared engine.
+vi.mock("@repo/platform/engine/lib/platform-config", () => ({
+  platform: () => ({ target: "desktop" }),
+}));
+
+vi.mock("@repo/platform/engine/lib/resource-access", () => ({
+  platform: () => ({ target: "desktop" }),
+}));

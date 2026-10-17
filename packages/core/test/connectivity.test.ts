@@ -33,7 +33,7 @@ describe("classifyConnectivityError", () => {
     // the path. `access denied` / `read-only` already classified correctly, so
     // two ways of saying the same thing disagreed.
     for (const m of [
-      "EACCES: permission denied, open '/backups/openship/db.sql'",
+      "EACCES: permission denied, open '/backups/kovalio/db.sql'",
       "EACCES: permission denied, mkdir '/mnt/backup/nightly'",
       "EROFS: read-only file system, open '/srv/backups/x'",
     ]) {
@@ -57,6 +57,8 @@ describe("classifyConnectivityError", () => {
   it("maps handshake / channel / reset to protocol_error", () => {
     expect(classifyConnectivityError("Handshake failed").code).toBe("protocol_error");
     expect(classifyConnectivityError("Channel open failure: open failed").code).toBe("protocol_error");
+    expect(classifyConnectivityError("Unable to exec").code).toBe("protocol_error");
+    expect(classifyConnectivityError("sudo: unable to execute helper").code).toBe("unknown");
   });
 
   it("classifies a socket destroyed with no reply, rather than leaving it unknown", () => {

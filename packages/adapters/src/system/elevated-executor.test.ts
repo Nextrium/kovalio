@@ -99,7 +99,7 @@ describe("elevatedExecutor", () => {
     );
     // 96 bits from randomBytes: /tmp is world-LISTABLE even when our dir isn't, so the
     // visible name must be both unguessable and free of any hint about the target path.
-    expect(dir).toMatch(/^\/tmp\/\.openship-elev-[0-9a-f]{24}$/);
+    expect(dir).toMatch(/^\/tmp\/\.kovalio-elev-[0-9a-f]{24}$/);
     expect(staged).toBe(`${dir}/payload`);
     expect(writeFile.mock.calls[0]?.[1]).toBe("worker_processes 1;");
   });
@@ -120,6 +120,22 @@ describe("elevatedExecutor", () => {
       ),
     );
     expect(String(exec.mock.calls[2]?.[0])).toBe(`rm -rf ${sq(stageDirOf(staged))}`);
+  });
+
+  it("creates a private-mode payload before publishing a secret", async () => {
+    const { inner, writeFile, exec } = fakeExecutor();
+
+    await elevatedExecutor(inner).writeFile("/etc/postfix/sasl_passwd", "relay-secret", {
+      mode: 0o600,
+    });
+
+    const staged = String(writeFile.mock.calls[0]?.[0]);
+    expect(writeFile).toHaveBeenCalledWith(staged, "relay-secret", { mode: 0o600 });
+    expect(writeFile.mock.invocationCallOrder[0]!).toBeLessThan(exec.mock.invocationCallOrder[1]!);
+    // The content travels through the file channel, never argv/process listings.
+    expect(exec.mock.calls.map((call) => String(call[0])).join("\n")).not.toContain(
+      "relay-secret",
+    );
   });
 
   it("removes the staged plaintext when the elevated publish fails, and still throws", async () => {
@@ -233,7 +249,7 @@ describe("elevatedExecutor", () => {
  * because Docker created it for the edge's bind mount.
  */
 describe("ensureOwnedDir", () => {
-  const PATH = "/opt/openship/static";
+  const PATH = "/opt/kovalio/static";
 
   /** A target that denies unelevated writes unless the tree is already ours. */
   function target(opts: { canSudo: boolean; alreadyWritable?: boolean; loginUser?: string }) {
@@ -251,7 +267,7 @@ describe("ensureOwnedDir", () => {
         if (command === "id -un") return `${user}\n`;
         if (command.startsWith("sudo -n ")) return "";
         if (command.includes("mkdir -p") && !opts.alreadyWritable) {
-          throw new Error("mkdir: cannot create directory '/opt/openship': Permission denied");
+          throw new Error("mkdir: cannot create directory '/opt/kovalio': Permission denied");
         }
         return "";
       }),
@@ -304,7 +320,7 @@ describe("ensureOwnedDir", () => {
     const { executor } = target({ canSudo: false });
 
     await expect(ensureOwnedDir(executor, PATH)).rejects.toThrow(
-      /sudo mkdir -p \/opt\/openship\/static/,
+      /sudo mkdir -p \/opt\/kovalio\/static/,
     );
   });
 });

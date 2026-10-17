@@ -3,7 +3,7 @@ import { servers } from "./servers";
 import { organization } from "./organization";
 
 /**
- * Cached drift state for an Openship-managed CONTAINER on a server — one row per
+ * Cached drift state for an Kovalio-managed CONTAINER on a server — one row per
  * (server, component). The container sibling of `server_module_status`: that
  * table tracks host-native modules (OpenResty binary + Lua migrations); this
  * tracks the versioned images the control plane ships — the edge (every box) and

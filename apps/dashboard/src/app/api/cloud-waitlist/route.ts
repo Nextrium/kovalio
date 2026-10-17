@@ -1,7 +1,8 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { NextResponse } from "next/server";
 
 // TODO: removed — temporary Cloud-waitlist forwarder for the SaaS deploy gate.
-// Delete when Openship Cloud launches (along with CloudWaitlistModal + the gate).
+// Delete when Kovalio Cloud launches (along with CloudWaitlistModal + the gate).
 
 /**
  * Cloud "notify me" waitlist submit. Forwards the email to the external
@@ -18,11 +19,14 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as { email?: unknown };
     email = typeof body?.email === "string" ? body.email.trim() : "";
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/app/api/cloud-waitlist/route");
     /* malformed body → falls through to the validation error below */
   }
 
-  if (!EMAIL_RE.test(email)) {
+  // Length first: 254 is the longest valid address, and EMAIL_RE backtracks
+  // quadratically on long dotted input this public endpoint would otherwise accept.
+  if (email.length > 254 || !EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 
@@ -42,7 +46,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Couldn't reach the waitlist. Try again." }, { status: 502 });
     }
     return NextResponse.json({ ok: true, forwarded: true });
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/app/api/cloud-waitlist/route");
     return NextResponse.json({ error: "Couldn't reach the waitlist. Try again." }, { status: 502 });
   }
 }

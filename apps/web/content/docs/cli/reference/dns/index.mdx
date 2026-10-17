@@ -1,0 +1,105 @@
+---
+title: dns
+description: Commands, arguments, and options for kovalio dns.
+cliGroup: kovalio dns
+---
+
+See the [workflow guide](/docs/cli/projects) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio dns
+
+Manage DNS providers and zone access
+
+```text
+kovalio dns [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`providers`](/docs/cli/reference/dns#kovalio-dns-providers) | List DNS providers, scopes and token setup links |
+| [`verify-zone <hostname>`](/docs/cli/reference/dns#kovalio-dns-verify-zone) | Check DNS zone access |
+| [`credentials`](/docs/cli/reference/dns#kovalio-dns-credentials) | Manage DNS automation credentials |
+| [`ingress`](/docs/cli/reference/dns/ingress#kovalio-dns-ingress) | Manage Cloudflare public ingress on connected self-hosted servers |
+
+## kovalio dns credentials
+
+Manage DNS automation credentials
+
+```text
+kovalio dns credentials [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list`](/docs/cli/reference/dns#kovalio-dns-credentials-list) | List masked DNS credentials |
+| [`get <id>`](/docs/cli/reference/dns#kovalio-dns-credentials-get) | Show a masked DNS credential |
+| [`add <file>`](/docs/cli/reference/dns#kovalio-dns-credentials-add) | Store DNS credentials for automatic records and certificates |
+| [`remove\|rm [options] <id>`](/docs/cli/reference/dns#kovalio-dns-credentials-remove) | Remove DNS automation credentials |
+
+## kovalio dns credentials add
+
+Store DNS credentials for automatic records and certificates
+
+```text
+kovalio dns credentials add [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON object containing provider, name and apiToken |
+
+## kovalio dns credentials get
+
+Show a masked DNS credential
+
+```text
+kovalio dns credentials get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Credential ID |
+
+## kovalio dns credentials list
+
+List masked DNS credentials
+
+```text
+kovalio dns credentials list [options]
+```
+
+## kovalio dns credentials remove
+
+Remove DNS automation credentials
+
+```text
+kovalio dns credentials remove|rm [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Credential ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Skip confirmation |
+
+## kovalio dns providers
+
+List DNS providers, scopes and token setup links
+
+```text
+kovalio dns providers [options]
+```
+
+## kovalio dns verify-zone
+
+Check DNS zone access
+
+```text
+kovalio dns verify-zone [options] <hostname>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `hostname` | Hostname to resolve against your DNS credentials |

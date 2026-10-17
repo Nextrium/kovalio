@@ -4,7 +4,7 @@ import { resolveServedStaticPath, resolveStaticOutputPath } from "./stack-output
 // The result is served / exported as a document root, so it MUST stay inside
 // `base`. Covers both callers: bare (base = workDir) and cloud Pages (base = /app).
 describe("resolveStaticOutputPath", () => {
-  const WORK = "/opt/openship/releases/dep_123";
+  const WORK = "/opt/kovalio/releases/dep_123";
 
   test("empty / '.' → base itself", () => {
     expect(resolveStaticOutputPath(WORK, "")).toBe(WORK);
@@ -44,7 +44,7 @@ describe("resolveStaticOutputPath", () => {
  * another: a real 404 reading as healthy. One rule now, pinned here.
  */
 describe("resolveServedStaticPath", () => {
-  const ROOT = "/var/www/openship/site-42";
+  const ROOT = "/var/www/kovalio/site-42";
 
   test("'/' serves the root itself", () => {
     expect(resolveServedStaticPath(ROOT, "/")).toBe(ROOT);

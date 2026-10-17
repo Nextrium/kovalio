@@ -16,20 +16,38 @@
  * cannot serve both, and the old one installed nothing on whichever it guessed against.
  */
 
-import { answered, refused, shellQuote, type Answer } from "@repo/core";
+import { answered, refused, shellQuote, IPTABLES_PROBES, type Answer } from "@repo/core";
 
 import type { EnvironmentProfile } from "../system/environment";
 import { envOps, hostRefusal, opScript, type EnvOps, type Op } from "../system/environment-ops";
-import type {
-  ToolchainCheckEntry,
-  ToolchainInstallPlan,
-  ToolStep,
-  ToolStepUser,
-} from "./types";
+import type { ToolchainCheckEntry, ToolchainInstallPlan, ToolStep, ToolStepUser } from "./types";
 
 // ─── Check recipes ───────────────────────────────────────────────────────────
 
 const CHECKS = {
+  "iscsi-tools": {
+    label: "iSCSI tools",
+    versionCommand: "iscsiadm --version",
+    parseVersion: (output: string) =>
+      output.match(/([0-9]+\.[0-9]+(?:\.[0-9]+)?)/)?.[1] ?? output.trim(),
+    missingMessage: "iSCSI tools are required for replicated volumes",
+    installable: true,
+  },
+  "nfs-client": {
+    label: "NFS client",
+    versionCommand: "mount.nfs -V",
+    parseVersion: (output: string) =>
+      output.match(/([0-9]+\.[0-9]+(?:\.[0-9]+)?)/)?.[1] ?? output.trim(),
+    missingMessage: "The NFS client is required for shared volumes",
+    installable: true,
+  },
+  curl: {
+    label: "curl",
+    versionCommand: "curl --version",
+    parseVersion: (output: string) => output.match(/^curl ([0-9.]+)/)?.[1] ?? output.trim(),
+    missingMessage: "curl is not installed",
+    installable: true,
+  },
   node: {
     label: "Node.js",
     versionCommand: "node --version",
@@ -79,6 +97,28 @@ const CHECKS = {
     versionCommand: "python3 --version",
     parseVersion: (output: string) => output.match(/Python (\S+)/)?.[1] ?? output.trim(),
     missingMessage: "Python 3 is not installed",
+    installable: true,
+  },
+  iproute2: {
+    label: "iproute2",
+    versionCommand: "ip -Version",
+    parseVersion: (output: string) => output.match(/iproute2[,-]([0-9.]+)/)?.[1] ?? output.trim(),
+    missingMessage: "iproute2 is not installed",
+    installable: true,
+  },
+  iptables: {
+    label: "iptables",
+    versionCommand: IPTABLES_PROBES.version,
+    parseVersion: (output: string) => output.match(/iptables v([0-9.]+)/)?.[1] ?? output.trim(),
+    missingMessage: "iptables is required to enforce private connection policies on this host",
+    installable: true,
+  },
+  "wireguard-tools": {
+    label: "WireGuard tools",
+    versionCommand: "wg --version",
+    parseVersion: (output: string) =>
+      output.match(/wireguard-tools v([0-9.]+)/)?.[1] ?? output.trim(),
+    missingMessage: "WireGuard tools are not installed",
     installable: true,
   },
   pip: {
@@ -272,7 +312,7 @@ const COMPOSER_INSTALL =
   "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer";
 
 const NO_EPEL =
-  "and Openship does not enable third-party repositories (EPEL) on a host it did not " +
+  "and Kovalio does not enable third-party repositories (EPEL) on a host it did not " +
   "provision. Install it yourself, or build in a container.";
 
 const NO_GRADLE_RPM =
@@ -291,7 +331,7 @@ const NO_ELIXIR_RPM = `The RHEL family ships no elixir or erlang package ${NO_EP
  * Probed rather than installed outright because an index refresh is the slow half of this
  * whole recipe on apt and unzip is already there on a full install — and because a host
  * with no package manager has no install to render, where the probe leaves the pure-curl
- * recipe intact instead of turning bun into the one curl-installed toolchain Openship
+ * recipe intact instead of turning bun into the one curl-installed toolchain Kovalio
  * refuses on a box it would have worked on.
  */
 function ensureUnzip(ops: EnvOps): ToolSteps {
@@ -362,12 +402,12 @@ const RECIPES: Record<InstallableTool, ToolRecipe> = {
     steps: (ops): ToolSteps => {
       // bun.sh/install is a bash script and Alpine ships busybox ash, so the pipe ends in
       // `bash: not found` (exit 127) reported as a failed install. Installing bash to work
-      // around it would be Openship adding a shell to someone's host to satisfy a vendor
+      // around it would be Kovalio adding a shell to someone's host to satisfy a vendor
       // script, and there is no apk `bun` to prefer instead.
       if (ops.profile.libc === "musl") {
         return refused(
           "Bun's official installer is a bash script and this host is musl-based (Alpine), " +
-            "which ships busybox ash and no bash. Openship will not add a shell to a host " +
+            "which ships busybox ash and no bash. Kovalio will not add a shell to a host " +
             "to satisfy an installer. Use Node for this project, or build in a container.",
         );
       }
@@ -438,6 +478,11 @@ const RECIPES: Record<InstallableTool, ToolRecipe> = {
           ),
   },
 
+  curl: {
+    verify: "curl --version",
+    steps: (ops) => asRoot(ops.pkgInstall(["curl", "ca-certificates"])),
+  },
+
   python3: {
     verify: "python3 --version",
     steps: (ops) =>
@@ -450,6 +495,88 @@ const RECIPES: Record<InstallableTool, ToolRecipe> = {
           apk: answered(["python3", "py3-pip"]),
           brew: answered(["python3"]),
         }),
+      ),
+  },
+
+  "iscsi-tools": {
+    verify: "iscsiadm --version",
+    steps: (ops) =>
+      asRoot(
+        ops.pkgInstallVariants(
+          {
+            apt: answered(["open-iscsi"]),
+            dnf: answered(["iscsi-initiator-utils"]),
+            yum: answered(["iscsi-initiator-utils"]),
+            apk: answered(["open-iscsi"]),
+            brew: refused("Replicated storage requires Linux."),
+          },
+          { installRecommends: false },
+        ),
+      ),
+  },
+  "nfs-client": {
+    verify: "mount.nfs -V",
+    steps: (ops) =>
+      asRoot(
+        ops.pkgInstallVariants(
+          {
+            apt: answered(["nfs-common"]),
+            dnf: answered(["nfs-utils"]),
+            yum: answered(["nfs-utils"]),
+            apk: answered(["nfs-utils"]),
+            brew: refused("Shared cluster storage requires Linux."),
+          },
+          { installRecommends: false },
+        ),
+      ),
+  },
+  iproute2: {
+    verify: "ip -Version",
+    steps: (ops) =>
+      asRoot(
+        ops.pkgInstallVariants(
+          {
+            apt: answered(["iproute2"]),
+            dnf: answered(["iproute"]),
+            yum: answered(["iproute"]),
+            apk: answered(["iproute2"]),
+            brew: refused("iproute2 requires Linux. Choose a Linux server for managed networking."),
+          },
+          { installRecommends: false },
+        ),
+      ),
+  },
+  "wireguard-tools": {
+    verify: "wg --version",
+    steps: (ops) =>
+      asRoot(
+        ops.pkgInstallVariants(
+          {
+            apt: answered(["wireguard-tools"]),
+            dnf: answered(["wireguard-tools"]),
+            yum: answered(["wireguard-tools"]),
+            apk: answered(["wireguard-tools"]),
+            brew: refused("Managed WireGuard networking requires Linux. Choose a Linux server."),
+          },
+          { installRecommends: false },
+        ),
+      ),
+  },
+
+  iptables: {
+    verify: IPTABLES_PROBES.version,
+    steps: (ops) =>
+      asRoot(
+        ops.pkgInstallVariants(
+          {
+            apt: answered(["iptables"]),
+            dnf: answered(["iptables"]),
+            yum: answered(["iptables"]),
+            apk: answered(["iptables"]),
+            brew: refused("Private connection policies require Linux."),
+          },
+          { installRecommends: false },
+        ),
       ),
   },
 
@@ -524,13 +651,13 @@ const RECIPES: Record<InstallableTool, ToolRecipe> = {
       if (ops.profile.packageManager === "brew") return asRoot(ops.pkgInstall(["composer"]));
       // Alpine splits PHP into one package per extension, and composer.phar needs `phar`
       // and `openssl` — neither of which comes with the `php83` the PHP recipe installs.
-      // The upstream installer's own check then fails on a missing extension. Openship
+      // The upstream installer's own check then fails on a missing extension. Kovalio
       // will not guess at per-extension package names it has not verified on a real host,
       // so this is a refusal that names what is missing rather than an opaque exit.
       if (ops.profile.libc === "musl") {
         return refused(
           "Composer needs PHP's phar and openssl extensions, and on musl hosts (Alpine) " +
-            "those ship as separate packages that Openship does not install. Add " +
+            "those ship as separate packages that Kovalio does not install. Add " +
             "php-phar and php-openssl for your PHP version yourself, or build in a " +
             "container.",
         );
@@ -556,7 +683,7 @@ const RECIPES: Record<InstallableTool, ToolRecipe> = {
           // the silent wrong answer, so name the release as the problem instead.
           yum: refused(
             "This host's release carries no OpenJDK 21 package — the newest it has is Java " +
-              "8/11, and Openship will not install a JDK older than the toolchain asks for. " +
+              "8/11, and Kovalio will not install a JDK older than the toolchain asks for. " +
               "Use a newer OS release, or build in a container.",
           ),
           apk: answered(["openjdk21-jdk"]),
@@ -593,7 +720,7 @@ const RECIPES: Record<InstallableTool, ToolRecipe> = {
       if (ops.profile.packageManager === "brew") return asRoot(ops.pkgInstall(["dotnet"]));
       if (ops.profile.os !== "linux") {
         return refused(
-          `Openship installs the .NET SDK on Linux, and on macOS through Homebrew. This ` +
+          `Kovalio installs the .NET SDK on Linux, and on macOS through Homebrew. This ` +
             `host reports os=${ops.profile.os}.`,
         );
       }
@@ -641,7 +768,7 @@ const INSTALLS: Record<string, InstallPlanFactory> = Object.fromEntries(
     (profile: EnvironmentProfile): ToolchainInstallPlan => {
       // Not every recipe touches a command method — bun and bundler are pure `curl`/`gem`
       // — so the host gate has to be applied here rather than left to `envOps`, or a host
-      // Openship refused would still get a toolchain installed on it.
+      // Kovalio refused would still get a toolchain installed on it.
       const gate = hostRefusal(profile);
       if (gate !== null) return refused(gate);
 

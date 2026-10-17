@@ -3,18 +3,21 @@ import {
   hasPinnedArtifacts,
   pinnedAppImage,
   pinnedImageForService,
+  refreshAppDeploymentId,
   snapshotNeedsGitSource,
+  snapshotNeedsProjectSource,
   withoutPinnedArtifacts,
-} from "./pinned-artifacts";
+  strictRefreshImages,
+} from "@repo/platform/engine/modules/deployments/pinned-artifacts";
 
 describe("pinned artifact lookup", () => {
   const snapshot = {
-    handoverImages: { web: "openship/app-web:bld_1", api: "  ", db: "postgres:16" },
-    handoverAppImage: "openship/app:bld_1",
+    handoverImages: { web: "kovalio/app-web:bld_1", api: "  ", db: "postgres:16" },
+    handoverAppImage: "kovalio/app:bld_1",
   };
 
   it("resolves a service's pinned image by NAME", () => {
-    expect(pinnedImageForService(snapshot, "web")).toBe("openship/app-web:bld_1");
+    expect(pinnedImageForService(snapshot, "web")).toBe("kovalio/app-web:bld_1");
     expect(pinnedImageForService(snapshot, "db")).toBe("postgres:16");
   });
 
@@ -31,11 +34,35 @@ describe("pinned artifact lookup", () => {
     expect(hasPinnedArtifacts(snapshot)).toBe(true);
     expect(hasPinnedArtifacts({ handoverImages: { web: "  " } })).toBe(false);
     expect(hasPinnedArtifacts({})).toBe(false);
+    expect(hasPinnedArtifacts({ refreshAppDeploymentId: "dep_live" })).toBe(true);
   });
 
-  it("strips both fields and leaves the rest of the snapshot alone", () => {
-    const stripped = withoutPinnedArtifacts({ ...snapshot, hasBuild: true });
+  it("strips pinned artifacts and one-deployment execution intent", () => {
+    const stripped = withoutPinnedArtifacts({
+      ...snapshot,
+      refreshAppDeploymentId: "dep_live",
+      targetServiceIds: ["svc-api"],
+      strictServiceScope: true,
+      refreshServiceIds: ["svc-api"],
+      forcePullImages: true,
+      capacityAdjustment: { key: "capacity-request", requestHash: "hash" },
+      hasBuild: true,
+    });
     expect(stripped).toEqual({ hasBuild: true });
+  });
+
+  it("waives a build reservation only for a strict refresh of every selected service", () => {
+    const meta = { ...snapshot, strictServiceScope: true, targetServiceIds: ["web", "db"], refreshServiceIds: ["web", "db"] };
+    expect(strictRefreshImages(meta)).toEqual(snapshot.handoverImages);
+    expect(strictRefreshImages({ ...meta, refreshServiceIds: ["web"] })).toBeUndefined();
+    expect(strictRefreshImages({ ...meta, strictServiceScope: false })).toBeUndefined();
+    expect(strictRefreshImages({ ...meta, targetServiceIds: [] })).toBeUndefined();
+    expect(strictRefreshImages(snapshot)).toBeUndefined();
+  });
+
+  it("normalizes the active deployment marker", () => {
+    expect(refreshAppDeploymentId({ refreshAppDeploymentId: " dep_live " })).toBe("dep_live");
+    expect(refreshAppDeploymentId({ refreshAppDeploymentId: " " })).toBeUndefined();
   });
 });
 
@@ -45,7 +72,14 @@ describe("snapshotNeedsGitSource — the clone / token / GitHub-access gate", ()
   it("single app: a git repo needs source normally, not when its image is pinned", () => {
     expect(snapshotNeedsGitSource({ repoUrl: repo, hasBuild: true })).toBe(true);
     expect(
-      snapshotNeedsGitSource({ repoUrl: repo, hasBuild: true, handoverAppImage: "openship/app:1" }),
+      snapshotNeedsGitSource({ repoUrl: repo, hasBuild: true, handoverAppImage: "kovalio/app:1" }),
+    ).toBe(false);
+    expect(
+      snapshotNeedsGitSource({
+        repoUrl: repo,
+        hasBuild: true,
+        refreshAppDeploymentId: "dep_live",
+      }),
     ).toBe(false);
   });
 
@@ -69,7 +103,7 @@ describe("snapshotNeedsGitSource — the clone / token / GitHub-access gate", ()
     // A staged local directory is not cloned.
     expect(snapshotNeedsGitSource({ localPath: "/srv/app", hasBuild: true })).toBe(false);
     // A folder upload is not cloned.
-    expect(snapshotNeedsGitSource({ uploadWorkspaceId: "up_1", hasBuild: true })).toBe(false);
+    expect(snapshotNeedsGitSource({ localPath: "/uploads/up_1", hasBuild: true })).toBe(false);
     // A release/dist tarball deploys verbatim.
     expect(snapshotNeedsGitSource({ releaseVersion: "1.2.3", hasBuild: true })).toBe(false);
     // An explicit image source is never cloned.
@@ -90,7 +124,7 @@ describe("snapshotNeedsGitSource — the clone / token / GitHub-access gate", ()
     expect(
       snapshotNeedsGitSource({
         composeServices: services,
-        handoverImages: { web: "openship/app-web:bld_1" },
+        handoverImages: { web: "kovalio/app-web:bld_1" },
       }),
     ).toBe(false);
   });
@@ -102,7 +136,7 @@ describe("snapshotNeedsGitSource — the clone / token / GitHub-access gate", ()
           { name: "web", build: "./web" },
           { name: "api", kind: "monorepo" },
         ],
-        handoverImages: { web: "openship/app-web:bld_1" },
+        handoverImages: { web: "kovalio/app-web:bld_1" },
       }),
     ).toBe(true);
   });
@@ -110,10 +144,7 @@ describe("snapshotNeedsGitSource — the clone / token / GitHub-access gate", ()
   it("compose: disabled services don't force a clone", () => {
     expect(
       snapshotNeedsGitSource({
-        composeServices: [
-          { name: "web", build: "./web", enabled: false },
-          { name: "db" },
-        ],
+        composeServices: [{ name: "web", build: "./web", enabled: false }, { name: "db" }],
       }),
     ).toBe(false);
   });
@@ -125,5 +156,38 @@ describe("snapshotNeedsGitSource — the clone / token / GitHub-access gate", ()
     expect(
       snapshotNeedsGitSource({ composeServices: [{ name: "app", dockerfile: "Dockerfile" }] }),
     ).toBe(true);
+  });
+
+  it("requires repository files for image services with relative mounts, including pinned restores", () => {
+    const snapshot = {
+      repoUrl: repo,
+      composeServices: [{ name: "web", image: "nginx:alpine", volumes: ["./config:/etc/nginx:ro"] }],
+      handoverImages: { web: "nginx:alpine" },
+    };
+    expect(snapshotNeedsProjectSource(snapshot)).toBe(true);
+    expect(snapshotNeedsGitSource(snapshot)).toBe(true);
+    expect(snapshotNeedsGitSource({ ...snapshot, composeServices: [{ name: "web", volumes: ["data:/data"] }] })).toBe(false);
+  });
+
+  it("stages uploaded Compose source without asking for a Git credential", () => {
+    const snapshot = { localPath: "/uploads/upload-a", composeServices: [{ name: "web", build: "." }] };
+    expect(snapshotNeedsProjectSource(snapshot)).toBe(true);
+    expect(snapshotNeedsGitSource(snapshot)).toBe(false);
+    expect(snapshotNeedsGitSource({ ...snapshot, localPath: "/source" })).toBe(false);
+  });
+
+  it("uses inline catalog files without requiring a project repository", () => {
+    const snapshot = { composeServices: [
+      { name: "web", kind: "monorepo", dockerfile: "Dockerfile", advanced: { build: { dockerfile: "FROM alpine" } } },
+      { name: "sidecar", volumes: ["./web/config:/config:ro"] },
+    ] };
+    expect(snapshotNeedsProjectSource(snapshot)).toBe(false);
+    expect(snapshotNeedsGitSource(snapshot)).toBe(false);
+  });
+
+  it("does not clone for a monorepo service running an existing image", () => {
+    expect(snapshotNeedsGitSource({ repoUrl: repo, composeServices: [
+      { name: "web", kind: "monorepo", image: "nginx:alpine" },
+    ] })).toBe(false);
   });
 });

@@ -1,22 +1,22 @@
 ---
 title: Isolation
-description: How Openship keeps deployments and projects apart — separate containers, per-project networks and volumes, and enforced resource limits.
+description: How Kovalio keeps deployments and projects apart — separate containers, per-project networks and volumes, and enforced resource limits.
 ---
 
-Think of your Openship server like an apartment building. Every app you deploy gets its own unit: its own front door, its own electricity meter, its own mailbox. Neighbors can't wander into your unit, and one noisy tenant can't drain the whole building's power. This page explains the walls Openship puts up between your apps — what each one is, and how strong it is on each runtime.
+Think of your Kovalio server like an apartment building. Every app you deploy gets its own unit: its own front door, its own electricity meter, its own mailbox. Neighbors can't wander into your unit, and one noisy tenant can't drain the whole building's power. This page explains the walls Kovalio puts up between your apps — what each one is, and how strong it is on each runtime.
 
 ## Scoping comes first
 
 Before anything runs, access is decided by **organization** (a workspace that owns projects) and **project**. Every API request passes through one permission check, and an organization id from the client is only trusted if you're actually a member. So one team can never list, deploy, or tear down another team's projects. That control-plane boundary is covered in the [permission model](/docs/security/permissions); the rest of this page is about the walls between apps *at runtime*, once a deploy is live.
 
-Everything Openship creates on a host is stamped with the project and deployment it belongs to, using Docker **labels** (key/value tags attached to a container):
+Everything Kovalio creates on a host is stamped with the project and deployment it belongs to, using Docker **labels** (key/value tags attached to a container):
 
-- `openship.project` — which project owns it.
-- `openship.deployment` — which specific deploy created it.
-- `openship.service` — which service, for multi-service (compose) projects.
-- `openship.build` — which build session produced a build image, so half-finished build artifacts can be reclaimed too.
+- `kovalio.project` — which project owns it.
+- `kovalio.deployment` — which specific deploy created it.
+- `kovalio.service` — which service, for multi-service (compose) projects.
+- `kovalio.build` — which build session produced a build image, so half-finished build artifacts can be reclaimed too.
 
-These labels are how Openship reliably finds and cleans up only its own resources — for example, reclaiming a leftover container from a deploy that failed halfway, without touching anything else on the machine.
+These labels are how Kovalio reliably finds and cleans up only its own resources — for example, reclaiming a leftover container from a deploy that failed halfway, without touching anything else on the machine.
 
 ## One container per deployment
 
@@ -24,16 +24,16 @@ On the **Docker** runtime, each deployment runs inside its own **container** —
 
 | What | Name pattern |
 |---|---|
-| Single-app deployment | `openship-<project>-<deployment>` |
-| A service in a compose project | `openship-<slug>-<service>` |
-| Project network | `openship-<slug>` |
-| Project-scoped named volume | `openship-<slug>-<name>` |
+| Single-app deployment | `kovalio-<project>-<deployment>` |
+| A service in a compose project | `kovalio-<slug>-<service>` |
+| Project network | `kovalio-<slug>` |
+| Project-scoped named volume | `kovalio-<slug>-<name>` |
 
-A single-app container publishes on a **random host port**, and Openship's built-in router (**OpenResty**, an nginx-based reverse proxy) forwards traffic to it — so nothing is exposed on a predictable port that another app could clash with.
+A single-app container publishes on a **random host port**, and Kovalio's built-in router (**OpenResty**, an nginx-based reverse proxy) forwards traffic to it — so nothing is exposed on a predictable port that another app could clash with.
 
 ## Per-project networks
 
-For a project with multiple services (say a web app plus a database), Openship creates one private **bridge network** — a virtual LAN that only the containers attached to it can use — named `openship-<slug>`. Every service in that project joins it and can reach the others by service name, like `http://database:5432`.
+For a project with multiple services (say a web app plus a database), Kovalio creates one private **bridge network** — a virtual LAN that only the containers attached to it can use — named `kovalio-<slug>`. Every service in that project joins it and can reach the others by service name, like `http://database:5432`.
 
 Because each project gets its **own** network, a service in one project cannot address a service in another by name. And a service only opens a port to the outside world if it explicitly asks to — otherwise it's reachable only by its siblings inside the project network.
 
@@ -45,10 +45,10 @@ Two different projects can both have a service called `api` or `db` without any 
 
 A **named volume** is a managed disk that Docker keeps around between restarts (databases use them so data survives a redeploy). The catch: if two projects both ask for a volume literally named `postgres_data`, plain Docker hands them the *same* disk — silent cross-project data mixing.
 
-Openship prevents this by prefixing every named volume with the project: `openship-<slug>-<name>`. Two projects that both declare `postgres_data` get two separate disks that can never touch. Bind mounts (a specific host path you chose) and anonymous volumes are left exactly as written.
+Kovalio prevents this by prefixing every named volume with the project: `kovalio-<slug>-<name>`. Two projects that both declare `postgres_data` get two separate disks that can never touch. Bind mounts (a specific host path you chose) and anonymous volumes are left exactly as written.
 
 <Callout title="Older services and name clashes" type="warn">
-Services created before volume-scoping keep their original bare volume names. To protect them, Openship refuses to deploy a **new** project whose volume name is already in use by another project's container, and tells you to rename it — so no deploy can quietly adopt another project's data.
+Services created before volume-scoping keep their original bare volume names. To protect them, Kovalio refuses to deploy a **new** project whose volume name is already in use by another project's container, and tells you to rename it — so no deploy can quietly adopt another project's data.
 </Callout>
 
 ## Resource limits
@@ -59,15 +59,23 @@ Each deployment is given a budget so one app can't starve the others. A budget h
 - **Memory** (`memoryMb`) — a hard ceiling in megabytes.
 - **Disk** (`diskMb`) — writable disk in megabytes.
 
-Defaults for a running app are **1 core, 512 MB memory, and 5 GB disk**. Builds get a bigger budget (up to **4 cores and 8 GB**) because bundlers are memory-hungry, then the running app drops back to its production size. You can change a project's budget from its settings, within these ranges: CPU `0.25`–`4`, memory `128`–`8192` MB, disk `64`–`204800` MB.
+Self-hosted projects are unlimited by default; explicit limits are bounded by the target
+machine. Cloud requires a concrete allocation within the organization's purchased terms
+and Oblien's effective limits. Resource presets include fractional CPU, down to 0.25 vCPU.
 
-<Callout title="Screenshot">Project settings → Resources, showing the CPU / memory / disk controls for production and build. *(screenshot pending)*</Callout>
+On Kovalio Cloud, builds use available CPU/RAM from the same pool as runtime, optionally
+bounded by a saved build cap. Existing runtime allocations remain reserved. Build workers
+are removed and temporary CPU/RAM is reconciled after the operation; a failed or pending
+provider resize is not reported as released capacity. See [resource settings](/docs/guides/sleep-mode-resources).
 
-How strictly the budget is enforced depends on the runtime. On Docker, **memory is a hard cap** — cross it and the container is killed and restarted — while **CPU is a relative weight**: under contention a `2`-core app gets roughly twice the CPU time of a `1`-core one, but an idle machine lets either use what's free.
+For Docker containers, a configured memory limit is a hard cap; exceeding it can cause
+an out-of-memory kill. Configured CPU limits use Docker CPU quotas, so an idle host does
+not let a capped container exceed its assigned CPU budget. Cloud Docker builds enforce
+their selected limits on a separate BuildKit worker container within the project workspace.
 
 ## How the runtimes compare
 
-Openship can run your app three ways, and the isolation strength differs. Pick the tab that matches where you deploy.
+Kovalio can run your app three ways, and the isolation strength differs. Pick the tab that matches where you deploy.
 
 <Tabs items={['Docker', 'Server (no Docker)', 'Cloud']}>
 
@@ -85,7 +93,7 @@ Multi-service (compose) projects add a **private per-project network** and **pro
 
 <Tab value="Server (no Docker)">
 
-For hosts without Docker, Openship runs your app **directly as a process** on the machine, supervised by systemd (Linux) or a lightweight `nohup` fallback (macOS). Each deployment gets its own release directory and its own supervised process (on Linux, a dedicated systemd unit named `openship-<deployment>.service`).
+For hosts without Docker, Kovalio runs your app **directly as a process** on the machine, supervised by systemd (Linux) or a lightweight `nohup` fallback (macOS). Each deployment gets its own release directory and its own supervised process (on Linux, a dedicated systemd unit named `kovalio-<deployment>.service`).
 
 This is lighter, but the walls are thinner: processes **share the host's filesystem, network, and users**, and this mode does **not** enforce CPU or memory caps. systemd additionally gives you automatic restart-on-crash and reboot survival; the `nohup` fallback does not.
 
@@ -97,7 +105,7 @@ Because bare processes share the host and aren't resource-capped, run only apps 
 
 <Tab value="Cloud">
 
-On Openship Cloud, each deployment runs in its own isolated cloud **workspace** — a separate instance, not a shared box. You choose a size tier that maps to concrete CPU / memory / disk:
+On Kovalio Cloud, each deployment runs in its own isolated cloud **workspace** — a separate instance, not a shared box. You choose a size tier that maps to concrete CPU / memory / disk:
 
 | Tier | CPU | Memory | Disk |
 |---|---|---|---|
@@ -112,10 +120,10 @@ A **custom** tier lets you set exact values. See [the local ↔ cloud boundary](
 
 </Tabs>
 
-## What next?
+## Related guides
 
 <Cards>
   <Card title="Permission model" href="/docs/security/permissions" description="Roles, resource grants, and the single check every request passes through." />
-  <Card title="The local ↔ cloud boundary" href="/docs/security/cloud-boundary" description="How self-hosted instances talk to Openship Cloud without leaking data." />
+  <Card title="The local ↔ cloud boundary" href="/docs/security/cloud-boundary" description="How self-hosted instances talk to Kovalio Cloud without leaking data." />
   <Card title="Authentication" href="/docs/security/auth" description="Sessions, tokens, and how credentials are custodied." />
 </Cards>

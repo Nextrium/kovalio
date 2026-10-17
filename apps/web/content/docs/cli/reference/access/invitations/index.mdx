@@ -1,0 +1,109 @@
+---
+title: access invitations
+description: Commands, arguments, and options for kovalio access invitations.
+cliGroup: kovalio access invitations
+---
+
+See the [workflow guide](/docs/cli/access) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio access invitations
+
+Manage workspace invitations
+
+```text
+kovalio access invitations [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list`](/docs/cli/reference/access/invitations#kovalio-access-invitations-list) | List pending invitations |
+| [`create <file>`](/docs/cli/reference/access/invitations#kovalio-access-invitations-create) | Invite a member with optional resource grants |
+| [`accept <id>`](/docs/cli/reference/access/invitations#kovalio-access-invitations-accept) | accept a workspace invitation |
+| [`reject <id>`](/docs/cli/reference/access/invitations#kovalio-access-invitations-reject) | reject a workspace invitation |
+| [`cancel <id>`](/docs/cli/reference/access/invitations#kovalio-access-invitations-cancel) | cancel a workspace invitation |
+| [`resend [options] <id>`](/docs/cli/reference/access/invitations#kovalio-access-invitations-resend) | Resend an existing invitation |
+| [`materialize <id>`](/docs/cli/reference/access/invitations#kovalio-access-invitations-materialize) | Recover resource grants from an already-accepted invitation |
+
+## kovalio access invitations accept
+
+accept a workspace invitation
+
+```text
+kovalio access invitations accept [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Invitation ID |
+
+## kovalio access invitations cancel
+
+cancel a workspace invitation
+
+```text
+kovalio access invitations cancel [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Invitation ID |
+
+## kovalio access invitations create
+
+Invite a member with optional resource grants
+
+```text
+kovalio access invitations create [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON invitation with email, optional role, grants and delivery |
+
+## kovalio access invitations list
+
+List pending invitations
+
+```text
+kovalio access invitations list [options]
+```
+
+## kovalio access invitations materialize
+
+Recover resource grants from an already-accepted invitation
+
+```text
+kovalio access invitations materialize [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Accepted invitation ID |
+
+## kovalio access invitations reject
+
+reject a workspace invitation
+
+```text
+kovalio access invitations reject [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Invitation ID |
+
+## kovalio access invitations resend
+
+Resend an existing invitation
+
+```text
+kovalio access invitations resend [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Invitation ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--delivery <mode>` | email \| link |

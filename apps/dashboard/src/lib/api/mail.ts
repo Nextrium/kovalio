@@ -1,3 +1,5 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import type { MailDeliveryHealth, MailWebmailRecoveryCandidate } from "@repo/contracts";
 import type { RelayProviderId } from "@repo/core";
 import { api, ApiError, getApiBaseUrl, getActiveOrganizationId, getApiErrorCode } from "./client";
 import { endpoints } from "./endpoints";
@@ -95,20 +97,33 @@ export interface MailDeferral {
  * `250 OK`, so a wrong SASL password looks identical to a healthy box until you
  * read the queue.
  */
-export interface MailDeliveryHealth {
-  status: MailDeliveryStatus;
-  mode: MailOutboundMode;
-  /** The smarthost as `host:port`, when relaying. */
-  relayHost?: string;
-  relayScope?: "all" | "selected";
-  /** Domains whose senders relay — only meaningful under `selected` scope. */
-  relayDomains?: string[];
-  /** Messages in the queue, from postqueue's own total (never a sampled count). */
-  queued: number;
-  /** The queue was larger than the window we read, so `deferrals` is a sample. */
-  sampled: boolean;
-  deferrals: MailDeferral[];
-  /** Why the status is `unknown` — the probe's own words. */
+export type { MailDeliveryHealth } from "@repo/contracts";
+
+export type MailPortReachabilityStatus =
+  | "reachable"
+  | "blocked"
+  | "not_listening"
+  | "not_exposed"
+  | "unknown";
+
+export interface MailPortReachabilityCheck {
+  key: "smtp" | "smtps" | "submission" | "imaps";
+  port: number;
+  label: string;
+  status: MailPortReachabilityStatus;
+  listening: boolean | null;
+  exposed: boolean | null;
+  reachable: boolean | null;
+  failure?: "timeout" | "refused" | "unresolved" | "no_route" | "error";
+  detail?: string;
+}
+
+export interface MailPortReachability {
+  hostname: string;
+  address: string | null;
+  checkedAt: number;
+  status: "ok" | "fail" | "unknown";
+  ports: MailPortReachabilityCheck[];
   detail?: string;
 }
 
@@ -117,6 +132,8 @@ export interface MailHealthResponse {
   components: MailComponentHealth[];
   definitions: MailComponentDef[];
   delivery: MailDeliveryHealth;
+  reachability: MailPortReachability | null;
+  certificate: import("@repo/core").MailCertificateHealth | null;
 }
 
 /**
@@ -142,6 +159,8 @@ export interface MailCredentials {
  * exposed here.
  */
 export interface MailWebmailSummary {
+  serverId?: string | null;
+  workspaceId?: string | null;
   installed: boolean;
   hostname: string;
   url: string;
@@ -154,9 +173,9 @@ export interface MailWebmailSummary {
   routingUnknown?: boolean;
   /**
    * The webmail catalog project that owns this deploy — webmail is an ordinary
-   * openship app, and the projects UI is where it's managed.
+   * kovalio app, and the projects UI is where it's managed.
    *
-   * NULL when the webmail was adopted or deployed outside openship: it's running
+   * NULL when the webmail was adopted or deployed outside kovalio: it's running
    * on the box, but there is no project row to link to. That's an offer to install
    * — never a dead end, and never a claim that webmail is down: `installed` alone
    * says that, and an older API that doesn't send this field would otherwise read
@@ -164,7 +183,7 @@ export interface MailWebmailSummary {
    */
   projectId?: string | null;
   /**
-   * Deployed by a pre-catalog Openship (webmail as a shipped bundle, not an image).
+   * Deployed by a pre-catalog Kovalio (webmail as a shipped bundle, not an image).
    * It runs and reports `installed`, but it can only be REPLACED — a redeploy has
    * no pipeline to run — so the UI offers the upgrade instead of staying silent.
    */
@@ -214,9 +233,11 @@ export interface MailSetupStatus {
   credentials?: MailCredentials;
   /** Webmail deploy record. Absent when no webmail is deployed yet. */
   webmail?: MailWebmailSummary;
+  /** Read-only suggestions; selecting and submitting grants the missing link explicitly. */
+  webmailRecoveryCandidates?: MailWebmailRecoveryCandidate[];
   /**
    * Live mail-engine topology, probed on the same connection that read the state
-   * file. `container` = the openship-mail engine; `host` = a LEGACY systemd
+   * file. `container` = the kovalio-mail engine; `host` = a LEGACY systemd
    * Postfix/Dovecot install (every mail box provisioned before the engine image);
    * `none` = nothing serving mail on the box at all.
    *
@@ -225,6 +246,8 @@ export interface MailSetupStatus {
    * as broken.
    */
   engine?: MailEngineState;
+  /** The live engine check was inconclusive; never offer a repair from this state. */
+  observationError?: string;
   steps: MailStepStatus[];
   /** Server-buffered log lines, rehydrated on page reload. */
   logs?: MailSessionLogLine[];
@@ -402,7 +425,7 @@ export const mailApi = {
 
   /**
    * Get current setup status for a server. State lives ON the target
-   * VPS now (not in openship's DB), so a serverId is required to know
+   * VPS now (not in kovalio's DB), so a serverId is required to know
    * whose state we're reading. Returns the "no install" shape if the
    * server can't be reached or the state file doesn't exist.
    */
@@ -534,7 +557,7 @@ export const mailApi = {
     // raises so callers unwrap it with getApiErrorMessage/getApiErrorCode;
     // throwing the raw body put a JSON blob in front of the operator.
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
+      const text = await res.text().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/lib/api/mail"); return ""; });
       let body: unknown = text;
       try {
         body = JSON.parse(text);
@@ -639,8 +662,11 @@ export const mailApi = {
    * Live health of every mail-core daemon on the target server. The Mail
    * tab polls this every ~10 s to render running/stopped pills.
    */
-  getHealth: (serverId: string) =>
-    api.get<MailHealthResponse>(endpoints.mail.health(serverId)),
+  getHealth: (serverId: string, refreshReachability = false) =>
+    api.get<MailHealthResponse>(
+      `${endpoints.mail.health(serverId)}${refreshReachability ? "?refreshReachability=1" : ""}`,
+      { timeout: 60_000 },
+    ),
 
   /** Standalone port 80/443 scan */
   checkPorts: (serverId: string) =>
@@ -658,7 +684,7 @@ export const mailApi = {
 
   // ── Webmail deploy ────────────────────────────────────────────────────────
   webmail: {
-    /** Hosts the webmail can be deployed to (mail server + other openship servers). */
+    /** Hosts the webmail can be deployed to (mail server + other kovalio servers). */
     listTargets: (serverId: string) =>
       api.get<{ options: WebmailTargetOption[] }>(
         `${endpoints.mail.webmail.targets}?serverId=${encodeURIComponent(serverId)}`,
@@ -670,8 +696,8 @@ export const mailApi = {
      * /build/[deploymentId] and subscribes to the standard SSE endpoint.
      *
      * `target` discriminator:
-     *   { kind: "self", serverId } - host on an openship-managed server
-     *   { kind: "cloud" }          - host on Opshcloud
+     *   { kind: "self", serverId } - host on an kovalio-managed server
+     *   { kind: "cloud", serverId } - host on the selected managed Cloud server
      *
      * A pre-catalog webmail (`MailWebmailSummary.legacy`) can't be redeployed:
      * without `replaceLegacy` the API answers 409 `LEGACY_WEBMAIL`, and with it the
@@ -683,8 +709,9 @@ export const mailApi = {
       hostname: string;
       target:
         | { kind: "self"; serverId: string }
-        | { kind: "cloud" };
+        | { kind: "cloud"; serverId?: string };
       replaceLegacy?: boolean;
+      reconnectProjectId?: string;
     }) =>
       api.post<{ deploymentId: string; projectId: string }>(
         endpoints.mail.webmail.deployProject,
@@ -716,4 +743,3 @@ export const mailApi = {
       ),
   },
 };
-

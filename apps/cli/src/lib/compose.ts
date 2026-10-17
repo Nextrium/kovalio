@@ -1,16 +1,18 @@
 /**
- * Docker Compose install backend for `openship up`.
+ * Docker Compose install backend for `kovalio up`.
  *
  * The alternative to the "bare" process service (lib/service.ts): instead of
  * running the bundled API + downloaded dashboard as host processes (PGlite,
  * in-process jobs), bring up the published images as a compose stack —
  * postgres + redis + api + dashboard + the OpenResty `edge` container on
  * :80/:443. The api drives the edge + deployed app containers through the
- * mounted Docker socket (see OPENSHIP_EDGE_MODE=docker).
+ * mounted Docker socket (see KOVALIO_EDGE_MODE=docker).
  *
- * Lifecycle (up/stop/update/status) routes here when ~/.openship/install-method
+ * Lifecycle (up/stop/update/status) routes here when ~/.kovalio/install-method
  * is "compose"; otherwise the bare service backend handles it.
  */
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import { reportCliMessage } from "./output";
 import { spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import {
@@ -18,13 +20,14 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   renameSync,
   rmSync,
   statSync,
   writeFileSync,
 } from "node:fs";
 import { homedir, userInfo } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 
 import {
   LocalExecutor,
@@ -37,6 +40,7 @@ import {
   resolveLocalEnvironmentSync,
 } from "@repo/adapters";
 import { sanitizeEdgeVhosts } from "@repo/adapters/proxy";
+import { DEFAULT_CONTAINER_LOG_CONFIG } from "@repo/adapters/container-logging";
 import {
   DEFAULT_IMAGE_REGISTRY,
   explainHostChannelCause,
@@ -69,6 +73,48 @@ const EDGE_SITES_HOST_DIR = `${EDGE_HOST_STATE_DIR}/sites-enabled`;
 const EDGE_ACME_HOST_DIR = `${EDGE_HOST_STATE_DIR}/acme`;
 
 /**
+ * Physical bind source for the local Docker daemon.
+ *
+ * Docker Desktop and OrbStack need macOS's physical `/private/var` and
+ * `/private/etc` paths; handing the daemon their `/var` and `/etc` symlink aliases
+ * can mount empty VM directories instead (#692). Resolve as deeply as the local
+ * filesystem allows so a first install still works before the leaf exists.
+ * Linux deliberately keeps the stable logical paths used by existing installs.
+ */
+export function canonicalComposeHostPath(
+  target: string,
+  platform: NodeJS.Platform = process.platform,
+  resolvePath: (path: string) => string = realpathSync,
+): string {
+  if (platform !== "darwin") return target;
+  try {
+    return resolvePath(target);
+  } catch {
+    let parent = target;
+    while (parent !== dirname(parent)) {
+      parent = dirname(parent);
+      try {
+        return join(resolvePath(parent), relative(parent, target));
+      } catch (diagnosticFailure) {
+      // Missing mount roots are expected before the first installation.
+    if ((diagnosticFailure as NodeJS.ErrnoException)?.code !== "ENOENT")
+      observeCaughtError(diagnosticFailure, "cli/lib/compose");
+
+        // Keep walking to the closest existing ancestor.
+      }
+    }
+    throw new Error(`Could not resolve edge bind-mount source ${target} on this Mac.`);
+  }
+}
+
+function composeEdgeMounts(): ReadonlyArray<{ host: string; container: string }> {
+  return EDGE_CONTAINER_MOUNTS.map((mount) => ({
+    ...mount,
+    host: canonicalComposeHostPath(mount.host),
+  }));
+}
+
+/**
  * The edge's bind mounts as compose YAML lines.
  *
  * Generated from `EDGE_CONTAINER_MOUNTS` — the same array `buildEdgeRunCommand`
@@ -80,11 +126,11 @@ const EDGE_ACME_HOST_DIR = `${EDGE_HOST_STATE_DIR}/acme`;
  * `:z` relabels for SELinux-enforcing hosts; a no-op elsewhere.
  */
 function edgeVolumeYaml(indent: string): string {
-  return EDGE_CONTAINER_MOUNTS.map((m) => `${indent}- ${m.host}:${m.container}:z`).join("\n");
+  return composeEdgeMounts().map((m) => `${indent}- ${m.host}:${m.container}:z`).join("\n");
 }
 
 /** Marker the API service's volume list carries until {@link renderComposeYaml} fills it. */
-const DOCKER_CONFIG_MOUNT_MARKER = "__OPENSHIP_DOCKER_CONFIG_MOUNT__";
+const DOCKER_CONFIG_MOUNT_MARKER = "__KOVALIO_DOCKER_CONFIG_MOUNT__";
 
 /**
  * The API's read-only Docker-config mount, or nothing when the host has none.
@@ -105,7 +151,8 @@ function dockerConfigMountYaml(indent: string): string {
   const path = resolve(process.env.DOCKER_CONFIG || join(homedir(), ".docker"), "config.json");
   try {
     if (!statSync(path).isFile()) return "";
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/compose");
     return ""; // no config on this host — mount nothing
   }
   return [
@@ -160,7 +207,8 @@ export function readInstallMethod(): InstallMethod | null {
   try {
     const v = readFileSync(INSTALL_METHOD_FILE, "utf8").trim();
     return v === "compose" || v === "bare" ? v : null;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/compose");
     return null;
   }
 }
@@ -232,7 +280,7 @@ export function dockerGap(state: DockerState = dockerState()): DockerGap | null 
       hint: thisHost().profile.isRoot
         ? start
           ? `Start it with: ${start}`
-          : "Start the Docker daemon — this host has no service manager Openship recognizes."
+          : "Start the Docker daemon — this host has no service manager Kovalio recognizes."
         : `Add your user to the docker group: sudo usermod -aG docker ${userInfo().username} — then log out and back in (or run: newgrp docker). If the daemon is stopped: ${start ?? "start it the way this host starts services"}`,
     };
   }
@@ -381,7 +429,7 @@ export async function ensureDocker(opts: EnsureDockerOpts = {}): Promise<boolean
         clearInterval(tick);
         resolve(code);
       };
-      child.on("error", () => done(1));
+      child.on("error", (diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/lib/compose"); return done(1); });
       child.on("close", (code) => done(code ?? 1));
     });
 
@@ -423,7 +471,7 @@ export interface ComposeUpOpts {
   extraTrustedOrigins?: string;
   trustProxy?: boolean;
   registry?: string;
-  /** Image tag to pin (`--image-version`). Falls back to `OPENSHIP_VERSION` in the
+  /** Image tag to pin (`--image-version`). Falls back to `KOVALIO_VERSION` in the
    *  environment, then this CLI's version — the #486 escape hatch for a tag whose
    *  images the registry doesn't have yet. See resolveImageVersion. */
   version?: string;
@@ -450,33 +498,40 @@ export interface ComposeUpOpts {
    */
   resetSecrets?: boolean;
   /**
-   * Install as Openship Mail: the dashboard's default shell is the mail control
-   * plane rather than the full platform (`OPENSHIP_PRODUCT`). Absent on a re-run
+   * Install as Kovalio Mail: the dashboard's default shell is the mail control
+   * plane rather than the full platform (`KOVALIO_PRODUCT`). Absent on a re-run
    * keeps whatever the install chose — see resolveEnvConfig.
    */
   mail?: boolean;
 }
 
 /** Pinned compose stack. Vars come from the generated .env (env_file + interpolation). */
-const COMPOSE_YAML = `# Managed by \`openship up\` — do not edit; re-run \`openship up\` to regenerate.
+const COMPOSE_YAML = `# Managed by \`kovalio up\` — do not edit; re-run \`kovalio up\` to regenerate.
+x-logging: &default-logging
+  driver: "${DEFAULT_CONTAINER_LOG_CONFIG.Type}"
+  options:
+    max-size: "${DEFAULT_CONTAINER_LOG_CONFIG.Config["max-size"]}"
+    max-file: "${DEFAULT_CONTAINER_LOG_CONFIG.Config["max-file"]}"
+
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    logging: *default-logging
     environment:
       # Keep the data dir in a subdirectory of the volume so a fresh install never
       # runs initdb against a bare mount root (which fails on quirky host
-      # filesystems with EPERM — #350). OPENSHIP_PGDATA is decided ONCE at install
+      # filesystems with EPERM — #350). KOVALIO_PGDATA is decided ONCE at install
       # by the CLI (fresh → subdir, pre-existing volume → root) and preserved in
       # .env, so this never moves an existing database.
-      PGDATA: \${OPENSHIP_PGDATA:-/var/lib/postgresql/data/pgdata}
-      POSTGRES_USER: \${POSTGRES_USER:-openship}
-      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD:?missing from .env — re-run openship up to regenerate it}
-      POSTGRES_DB: \${POSTGRES_DB:-openship}
+      PGDATA: \${KOVALIO_PGDATA:-/var/lib/postgresql/data/pgdata}
+      POSTGRES_USER: \${POSTGRES_USER:-kovalio}
+      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD:?missing from .env — re-run kovalio up to regenerate it}
+      POSTGRES_DB: \${POSTGRES_DB:-kovalio}
     expose: ["5432"]
     volumes: [postgres_data:/var/lib/postgresql/data]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \${POSTGRES_USER:-openship} -d \${POSTGRES_DB:-openship}"]
+      test: ["CMD-SHELL", "pg_isready -U \${POSTGRES_USER:-kovalio} -d \${POSTGRES_DB:-kovalio}"]
       interval: 5s
       timeout: 3s
       retries: 12
@@ -484,6 +539,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    logging: *default-logging
     command: ["redis-server", "--appendonly", "yes"]
     expose: ["6379"]
     volumes: [redis_data:/data]
@@ -494,28 +550,29 @@ services:
       retries: 12
 
   api:
-    image: \${OPENSHIP_IMAGE_REGISTRY:-ghcr.io/oblien}/openship-api:\${OPENSHIP_VERSION:-latest}
+    image: \${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-api:\${KOVALIO_VERSION:-latest}
     restart: unless-stopped
+    logging: *default-logging
     # Loopback by default — the host-net edge reaches it over loopback, so nothing
-    # sits on a public interface. OPENSHIP_BIND_ADDR opts into a public/LAN interface
-    # (set by \`openship up\` when a public URL is configured for off-box access).
-    ports: ["\${OPENSHIP_BIND_ADDR:-127.0.0.1}:\${API_PORT:-4000}:\${API_PORT:-4000}"]
+    # sits on a public interface. KOVALIO_BIND_ADDR opts into a public/LAN interface
+    # (set by \`kovalio up\` when a public URL is configured for off-box access).
+    ports: ["\${KOVALIO_BIND_ADDR:-127.0.0.1}:\${API_PORT:-4000}:\${API_PORT:-4000}"]
     volumes:
       # The daemon socket, at the path the api's own default expects INSIDE the
       # container. The HOST side is a variable because it MOVES: a rootless daemon
       # keeps its socket under the invoking user's runtime dir, and Docker creates a
       # missing bind source as an empty DIRECTORY instead of failing — so the rootful
       # path there brings the stack up and then fails every container operation in
-      # the transport, naming neither the path nor the cause (#482). \`openship up\`
-      # writes OPENSHIP_DOCKER_SOCKET when the detected path isn't this default.
-      - \${OPENSHIP_DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
+      # the transport, naming neither the path nor the cause (#482). \`kovalio up\`
+      # writes KOVALIO_DOCKER_SOCKET when the detected path isn't this default.
+      - \${KOVALIO_DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
       # Registry credentials for private-image pulls. The API talks to the daemon over
       # the socket above via dockerode, which — unlike the docker CLI — reads no
       # config.json of its own, so a private pull went out anonymous on a logged-in
       # host (#581). Mounted READ-ONLY and only into this service; absent entirely when
       # the host has no config, so nothing is invented. Substituted at write time (the
       # path depends on DOCKER_CONFIG and on the file existing), hence the marker.
-__OPENSHIP_DOCKER_CONFIG_MOUNT__
+__KOVALIO_DOCKER_CONFIG_MOUNT__
       # Routing state shared with the edge, as HOST BIND MOUNTS (generated from
       # EDGE_CONTAINER_MOUNTS): the vhost tree, /etc/letsencrypt, the ACME webroot
       # and the static doc-roots the API writes and the edge serves. Named volumes
@@ -523,25 +580,25 @@ __OPENSHIP_DOCKER_CONFIG_MOUNT__
       # cert reuse, mail cert symlinks), each of which then silently saw "nothing".
 ${edgeVolumeYaml("      ")}
       # Host-op SSH key (createHostExecutor → host.docker.internal). /dev/null
-      # when the host channel isn't provisioned → OPENSHIP_HOST_SSH_HOST stays
+      # when the host channel isn't provisioned → KOVALIO_HOST_SSH_HOST stays
       # unset, and host operations REFUSE (they'd otherwise run against this
       # container's filesystem, #509) while ordinary deploys keep working over
       # the socket below.
-      - \${OPENSHIP_HOST_KEY_PATH:-/dev/null}:/run/secrets/openship_host_key:ro
+      - \${KOVALIO_HOST_KEY_PATH:-/dev/null}:/run/secrets/kovalio_host_key:ro
     # \`host-gateway\` is resolved by the daemon and is right on a stock rootful
     # install. It is NOT universally right: under rootless Docker it lands in
     # RootlessKit's namespace rather than the host's, so the host's sshd isn't
-    # there (#482). OPENSHIP_HOST_GATEWAY re-points the alias (e.g. at the box's
-    # LAN address) without patching this file, which \`openship up\` rewrites.
-    extra_hosts: ["host.docker.internal:\${OPENSHIP_HOST_GATEWAY:-host-gateway}"]
+    # there (#482). KOVALIO_HOST_GATEWAY re-points the alias (e.g. at the box's
+    # LAN address) without patching this file, which \`kovalio up\` rewrites.
+    extra_hosts: ["host.docker.internal:\${KOVALIO_HOST_GATEWAY:-host-gateway}"]
     env_file: [.env]
     environment:
       NODE_ENV: production
       PORT: "\${API_PORT:-4000}"
-      DATABASE_URL: postgresql://\${POSTGRES_USER:-openship}:\${POSTGRES_PASSWORD:?missing from .env — re-run openship up to regenerate it}@postgres:5432/\${POSTGRES_DB:-openship}
+      DATABASE_URL: postgresql://\${POSTGRES_USER:-kovalio}:\${POSTGRES_PASSWORD:?missing from .env — re-run kovalio up to regenerate it}@postgres:5432/\${POSTGRES_DB:-kovalio}
       REDIS_URL: redis://redis:6379
-      OPENSHIP_EDGE_MODE: docker
-      OPENSHIP_EDGE_CONTAINER: openship-edge
+      KOVALIO_EDGE_MODE: docker
+      KOVALIO_EDGE_CONTAINER: kovalio-edge
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -553,10 +610,11 @@ ${edgeVolumeYaml("      ")}
       start_period: 40s
 
   dashboard:
-    image: \${OPENSHIP_IMAGE_REGISTRY:-ghcr.io/oblien}/openship-dashboard:\${OPENSHIP_VERSION:-latest}
+    image: \${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-dashboard:\${KOVALIO_VERSION:-latest}
     restart: unless-stopped
-    # Loopback by default (see api note); OPENSHIP_BIND_ADDR opts into a public interface.
-    ports: ["\${OPENSHIP_BIND_ADDR:-127.0.0.1}:\${DASHBOARD_PORT:-3001}:\${DASHBOARD_PORT:-3001}"]
+    logging: *default-logging
+    # Loopback by default (see api note); KOVALIO_BIND_ADDR opts into a public interface.
+    ports: ["\${KOVALIO_BIND_ADDR:-127.0.0.1}:\${DASHBOARD_PORT:-3001}:\${DASHBOARD_PORT:-3001}"]
     env_file: [.env]
     environment:
       NODE_ENV: production
@@ -566,16 +624,17 @@ ${edgeVolumeYaml("      ")}
       api: { condition: service_healthy }
 
   edge:
-    image: \${OPENSHIP_IMAGE_REGISTRY:-ghcr.io/oblien}/openship-edge:\${OPENSHIP_VERSION:-latest}
+    image: \${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-edge:\${KOVALIO_VERSION:-latest}
     # PINNED, and it must stay pinned: the api reaches the edge by NAME through
-    # DockerEdgeExecutor (OPENSHIP_EDGE_CONTAINER above), and "ours" edge
-    # detection greps \`docker ps --filter name=openship-edge\`. Without this,
+    # DockerEdgeExecutor (KOVALIO_EDGE_CONTAINER above), and "ours" edge
+    # detection greps \`docker ps --filter name=kovalio-edge\`. Without this,
     # compose derives \`<project>-edge-1\` from the directory and every
-    # \`docker exec\` into the edge fails with "No such container: openship-edge" —
+    # \`docker exec\` into the edge fails with "No such container: kovalio-edge" —
     # which silently migrated 0 sites after the operator's proxy was stopped.
     # Safe here: the edge is a singleton (host networking, one per box).
-    container_name: openship-edge
+    container_name: kovalio-edge
     restart: unless-stopped
+    logging: *default-logging
     network_mode: host
     volumes:
 ${edgeVolumeYaml("      ")}
@@ -609,7 +668,7 @@ const GENERATED_SECRET_KEYS = ["POSTGRES_PASSWORD", "BETTER_AUTH_SECRET", "INTER
  * `.env`, the thing that would tell us the name, is exactly what we can't read.
  */
 function survivingDbVolume(prev: Record<string, string>): string | null {
-  const candidates = new Set([prev.COMPOSE_PROJECT_NAME, "openship", "compose"]);
+  const candidates = new Set([prev.COMPOSE_PROJECT_NAME, "kovalio", "compose"]);
   for (const project of candidates) {
     if (project && dbVolumeExists(project)) return `${project}_postgres_data`;
   }
@@ -623,10 +682,10 @@ function survivingDbVolume(prev: Record<string, string>): string | null {
  * `keepSecret` reuses whatever `.env` yields and generates the rest, which is right on a
  * first install and silently destructive on a re-run whose `.env` stopped yielding —
  * unreadable (root-owned 0600 and this run isn't root; `sudo` pointing HOME at a
- * different `~/.openship`), truncated by an interrupted write, or restored from a backup
+ * different `~/.kovalio`), truncated by an interrupted write, or restored from a backup
  * without it. `up` then regenerated the secrets AND overwrote the file, so the only copy
  * of the real values was gone before anything looked wrong. What the operator saw, later,
- * was the api crash-looping on `password authentication failed for user "openship"` —
+ * was the api crash-looping on `password authentication failed for user "kovalio"` —
  * because the data volume still holds the ORIGINAL password.
  *
  * A surviving data volume is the evidence, since it outlives every way `.env` can go bad.
@@ -647,7 +706,7 @@ function secretRotationRisk(
  * The same check against the `.env` on disk, for callers that must stop BEFORE anything
  * writes it. Every entry point that reaches `materialize` gates on this — `up` and the
  * wizard ahead of their prefetch (which materializes too), and composeUp itself for
- * `openship update`. Cheap enough to run more than once: one `docker volume inspect`.
+ * `kovalio update`. Cheap enough to run more than once: one `docker volume inspect`.
  */
 export function composeSecretRotationRisk(
   opts: ComposeUpOpts = {},
@@ -691,10 +750,10 @@ export function renderSecretRotationRefusal(
  * The first version of this branched only on whether `.env.bak` existed, so on the shape
  * that reaches it most often it said "restore `.env` from a backup, or copy the keys above
  * out of one" — about a file that had never existed. That install is one we ADOPTED:
- * `docker/docker-compose.yml` pins `name: openship`, the same project name this CLI pins
- * (composeProjectName), so `openship up` on a box already running the raw compose stack
- * takes over its containers and its `openship_postgres_data`. The operator got there by
- * following #509's own advice to re-run `openship up`, and there is nothing of ours on
+ * `docker/docker-compose.yml` pins `name: kovalio`, the same project name this CLI pins
+ * (composeProjectName), so `kovalio up` on a box already running the raw compose stack
+ * takes over its containers and its `kovalio_postgres_data`. The operator got there by
+ * following #509's own advice to re-run `kovalio up`, and there is nothing of ours on
  * disk to put back — the values are in the container we're about to replace.
  *
  * `--reset-secrets` is named in every branch and framed in every branch as what it is: it
@@ -705,7 +764,7 @@ function secretRecoveryAdvice(rotation: { volume: string; keys: string[] }): str
   const adopted = adoptedStack(projectOfDbVolume(rotation.volume));
   if (adopted) {
     return (
-      `  This stack was not created by \`openship up\`: it is already running under the compose\n` +
+      `  This stack was not created by \`kovalio up\`: it is already running under the compose\n` +
       `  project name we pin, so this run would ADOPT it.\n\n` +
       `    project:      ${adopted.project}\n` +
       `    started from: ${adopted.configFiles || "an unlabelled `docker run`"}\n` +
@@ -719,19 +778,19 @@ function secretRecoveryAdvice(rotation: { volume: string; keys: string[] }): str
       `  without it this stack comes up on empty volumes beside the data above.\n\n` +
       `  Only if that container is gone and the values exist nowhere else — this DESTROYS them,\n` +
       `  leaving every environment variable stored in the database permanently unreadable:\n` +
-      `    openship up --reset-secrets\n`
+      `    kovalio up --reset-secrets\n`
     );
   }
   return (
     `  Put the original values back and re-run:\n` +
     (existsSync(ENV_BACKUP_FILE)
-      ? `    cp ${ENV_BACKUP_FILE} ${ENV_FILE}     # the .env a previous \`openship up\` replaced\n`
+      ? `    cp ${ENV_BACKUP_FILE} ${ENV_FILE}     # the .env a previous \`kovalio up\` replaced\n`
       : `    restore ${ENV_FILE} from a backup, or copy the keys above out of one\n`) +
     `  If the file is there but this user can't read it, re-run as the user that owns it\n` +
     `  (or as root) rather than letting the secrets be regenerated.\n\n` +
     `  To reset instead — the database password gets realigned, but every stored environment\n` +
     `  variable becomes permanently unreadable:\n` +
-    `    openship up --reset-secrets\n`
+    `    kovalio up --reset-secrets\n`
   );
 }
 
@@ -771,7 +830,7 @@ const HOST_CHANNEL_DEFAULT_HOST = "host.docker.internal";
 const HOST_CHANNEL_DEFAULT_PORT = 22;
 
 /** Marks the authorized_keys line as ours, so re-runs can revoke the previous one. */
-const HOST_KEY_COMMENT = "openship-host-executor";
+const HOST_KEY_COMMENT = "kovalio-host-executor";
 
 /**
  * Source addresses allowed to use the host-executor key.
@@ -818,10 +877,10 @@ function hostKeyAuthLine(pub: string): string {
 
 /**
  * PURE. The new contents of `authorized_keys` with our host-executor key present
- * exactly once, restricted, and every earlier openship line revoked.
+ * exactly once, restricted, and every earlier kovalio line revoked.
  *
  * Revoking matters twice over. An install whose key dir was wiped (a re-run after
- * `rm -rf ~/.openship`) used to leave the OLD public key authorized forever — a
+ * `rm -rf ~/.kovalio`) used to leave the OLD public key authorized forever — a
  * credential no amount of re-running could take back. And an install predating the
  * `from=`/`restrict` hardening would keep its unrestricted line alongside the new
  * one, so sshd would still honour the wide grant and the hardening would be purely
@@ -932,7 +991,7 @@ const ROOT_AUTHORIZED_KEYS = "/root/.ssh/authorized_keys";
  * shell (the operator types `sudo -i`). SFTP cannot be elevated either, which is why
  * `scratchDir()` exists beside `stateDir()` in adapters.
  *
- * An operator who WANTS a root channel runs the installer as root — `sudo openship up`
+ * An operator who WANTS a root channel runs the installer as root — `sudo kovalio up`
  * makes the invoker uid 0, and root is therefore the FIRST candidate on that arm. That is
  * deliberately the only way to end up with a standing root credential: this function will
  * not mint one for an account it is not logging in as.
@@ -945,7 +1004,7 @@ const ROOT_AUTHORIZED_KEYS = "/root/.ssh/authorized_keys";
  * follows root as the fallback. It is only ever reached when root's dial actually fails,
  * so a working root install is never migrated out from under an operator who asked for it.
  *
- * Nothing has to move for that migration: the on-box state under /root/.openship is
+ * Nothing has to move for that migration: the on-box state under /root/.kovalio is
  * reached through `privilegedExecutor`, which elevates.
  *
  * `carried` is promoted to the front when it names a candidate we already have, purely to
@@ -1042,7 +1101,8 @@ export function chooseHostChannelUser(input: {
 function hasPasswordlessSudo(): boolean {
   try {
     return spawnSync("sudo", ["-n", "-k", "true"], { stdio: "ignore" }).status === 0;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/compose");
     return false;
   }
 }
@@ -1067,7 +1127,7 @@ type HostChannelPlanCfg = {
   hostControl: boolean;
   /** `--host-ssh-user`, or the pin a previous run of it left in `.env`. */
   hostSshUser?: string;
-  /** The account the previous run SETTLED on (`.env` OPENSHIP_HOST_SSH_USER) — continuity,
+  /** The account the previous run SETTLED on (`.env` KOVALIO_HOST_SSH_USER) — continuity,
    *  not a pin: it is tried first and falls through like any other candidate. */
   hostSshUserCarried?: string;
 };
@@ -1090,7 +1150,8 @@ function plannedHostChannel(
   try {
     const info = userInfo();
     invoker = { uid: info.uid, username: info.username, home: info.homedir };
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/compose");
     invoker = { uid: -1, username: process.env.USER || process.env.LOGNAME || "root", home: homedir() };
   }
   const pin = cfg.hostSshUser?.trim();
@@ -1115,7 +1176,8 @@ function passwdHome(user: string): string | null {
     const r = spawnSync("getent", ["passwd", user], { encoding: "utf8" });
     if (r.status !== 0) return null;
     return (r.stdout ?? "").split("\n")[0]?.split(":")[5]?.trim() || null;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/compose");
     return null;
   }
 }
@@ -1160,7 +1222,7 @@ function authorizeKeyAt(authKeysPath: string, pub: string): void {
 }
 
 /**
- * Openship no longer AUTHORIZES a root key on a non-root box — `chooseHostChannelUser`
+ * Kovalio no longer AUTHORIZES a root key on a non-root box — `chooseHostChannelUser`
  * logs in as the invoker and elevates instead, so there is nothing to mint. The revoke
  * below is deliberately kept: an install provisioned by an older CLI has a root line we
  * are no longer using, and leaving a standing root credential behind would be worse than
@@ -1181,7 +1243,8 @@ function revokeKeyAt(authKeysPath: string): boolean {
     writeFileSync(authKeysPath, stripHostAuthorizedKeys(existing), { mode: 0o600 });
     chmodSync(authKeysPath, 0o600);
     return true;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/compose");
     return false;
   }
 }
@@ -1210,7 +1273,7 @@ function revokeRootKeyViaSudo(): boolean {
  * `--no-host-control` on a box that already HAD a channel: take the credential back.
  *
  * Refusing to use a key is not the same as not having one. The flag used to leave both
- * halves in place — the private key under `~/.openship/compose/host-ssh` and the line in
+ * halves in place — the private key under `~/.kovalio/compose/host-ssh` and the line in
  * `authorized_keys` — so "turns the channel off" was true of this install's behaviour and
  * false of the box's attack surface, which is the half an operator sets the flag for.
  *
@@ -1224,7 +1287,7 @@ function revokeRootKeyViaSudo(): boolean {
  */
 function retireHostSshChannel(prev: Record<string, string>): void {
   const keyDir = join(COMPOSE_DIR, "host-ssh");
-  if (!existsSync(keyDir) && !prev.OPENSHIP_HOST_SSH_HOST) return;
+  if (!existsSync(keyDir) && !prev.KOVALIO_HOST_SSH_HOST) return;
 
   const invokerKeys = join(homedir(), ".ssh", "authorized_keys");
   // Which file holds the line is what the channel logged in AS — root unless provisioning
@@ -1254,19 +1317,20 @@ function retireHostSshChannel(prev: Record<string, string>): void {
 
   try {
     rmSync(keyDir, { recursive: true, force: true });
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/compose");
     /* the key is unusable the moment the channel is off; a leftover file is not a grant */
   }
 
   const stuck = accountKeys;
-  // Names the `.env` half too: dropping OPENSHIP_HOST_SSH_* is the ONE case where those
+  // Names the `.env` half too: dropping KOVALIO_HOST_SSH_* is the ONE case where those
   // keys legitimately disappear (a provisioning failure now carries them forward instead
   // — see carriedHostChannel), so the withdrawal has to be the thing that says so.
   console.log(
     revoked && alsoInvoker
-      ? "  Host control off: dropped OPENSHIP_HOST_SSH_* from .env, deleted the host key and\n" +
+      ? "  Host control off: dropped KOVALIO_HOST_SSH_* from .env, deleted the host key and\n" +
           "  revoked its authorized_keys line."
-      : `  Host control off: dropped OPENSHIP_HOST_SSH_* from .env and deleted the host key (it\n` +
+      : `  Host control off: dropped KOVALIO_HOST_SSH_* from .env and deleted the host key (it\n` +
           `  can no longer be used). Removing its line needs root — run:\n` +
           `  sudo sed -i '/${HOST_KEY_COMMENT}/d' ${stuck}`,
   );
@@ -1361,8 +1425,8 @@ interface HostChannelProvision {
  *
  * So it stays best-effort — a keygen failure must not abort an otherwise-good install —
  * but it now returns WHY rather than a bare null. That reason exists nowhere else: every
- * later surface (the install preflight, the API banner, `openship doctor`, the deploy
- * log) sees only an unset OPENSHIP_HOST_SSH_HOST, which is why a failed keygen used to
+ * later surface (the install preflight, the API banner, `kovalio doctor`, the deploy
+ * log) sees only an unset KOVALIO_HOST_SSH_HOST, which is why a failed keygen used to
  * look exactly like an operator who had opted out.
  *
  * Not a new privilege: the api container already holds host-root-equivalent access
@@ -1458,14 +1522,14 @@ function provisionHostSshChannel(
       }
       if (elevation === "none") {
         // #489's failure mode, now also reached by a non-root login whose sudo genuinely
-        // doesn't work: host ops on root-owned paths (mail state under /root/.openship, the
+        // doesn't work: host ops on root-owned paths (mail state under /root/.kovalio, the
         // edge, the recovery manifest) WILL fail. Keep the channel — non-root host ops
         // still work — but say so loudly.
-        console.warn(
+        reportCliMessage("warn",
           "  ⚠ Host control needs root, and this channel has no route to it: it logs in as\n" +
             `    \`${candidate.user}\`, and \`sudo -n\` was refused over that session. Mail and edge\n` +
             "    host operations will fail. Grant that account passwordless sudo, or re-run\n" +
-            "    `openship up` as root, to fix. Continuing with a limited host channel.",
+            "    `kovalio up` as root, to fix. Continuing with a limited host channel.",
         );
       }
       if (candidate.source === "sudo-user") {
@@ -1475,7 +1539,7 @@ function provisionHostSshChannel(
           `  → Host channel settled on \`${candidate.user}\` rather than root: this host refused a\n` +
             "    root login, and that account's key was accepted. It elevates per operation with\n" +
             "    sudo, so no standing root credential is created. Pin one with\n" +
-            "    `openship up --host-ssh-user <name>`.",
+            "    `kovalio up --host-ssh-user <name>`.",
         );
       }
       return { channel: { user: candidate.user, keyPath }, issue: undefined };
@@ -1506,6 +1570,7 @@ function provisionHostSshChannel(
       },
     };
   } catch (err) {
+    observeCaughtError(err, "cli/lib/compose");
     return { channel: null, issue: { code: "error", detail: (err as Error)?.message } };
   }
 }
@@ -1536,7 +1601,8 @@ function permitRootLoginSetting(port: number): string | null {
     );
     if (r.status !== 0) return null;
     return /^permitrootlogin\s+(\S+)/m.exec(r.stdout ?? "")?.[1] ?? null;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/compose");
     return null;
   }
 }
@@ -1607,7 +1673,7 @@ type ChannelAuthCheck =
  * bridge half is what `probeHostSshd` and the firewall probe already cover.
  *
  * `BatchMode=yes` is load-bearing: without it a host that falls back to password auth
- * would sit at a prompt inside `openship up` forever. `UserKnownHostsFile=/dev/null`
+ * would sit at a prompt inside `kovalio up` forever. `UserKnownHostsFile=/dev/null`
  * keeps a verification dial from writing an entry for a host the operator never asked to
  * trust, and `PreferredAuthentications=publickey` stops a success arriving via some other
  * method — which would report the channel working when its key is not.
@@ -1638,7 +1704,7 @@ function verifyChannelAuth(user: string, keyPath: string, port: number): Channel
   const stdout = r.stdout || "";
   // The probe's own marker, not the exit code: the remote script ends in `exit 0` so that
   // a REFUSED sudo (an ordinary, non-fatal answer) can't be read as a failed login.
-  const sudo = /openship-sudo=(ok|refused)/.exec(stdout)?.[1];
+  const sudo = /kovalio-sudo=(ok|refused)/.exec(stdout)?.[1];
   if (r.status === 0 && sudo) {
     return { state: "ok", elevation: sudo === "ok" ? "ok" : "refused" };
   }
@@ -1668,8 +1734,8 @@ function verifyChannelAuth(user: string, keyPath: string, port: number): Channel
  * from a refused LOGIN, which is the confusion this whole classifier exists to remove.
  */
 const CHANNEL_PROBE_COMMAND =
-  "if sudo -n -k true 2>/dev/null; then echo openship-sudo=ok; " +
-  "else echo openship-sudo=refused; fi; exit 0";
+  "if sudo -n -k true 2>/dev/null; then echo kovalio-sudo=ok; " +
+  "else echo kovalio-sudo=refused; fi; exit 0";
 
 /**
  * The one line of ssh's output an operator needs, out of `-v`'s several dozen.
@@ -1755,7 +1821,7 @@ export function listensOnPort(listing: string, port: number): boolean {
 /**
  * The host channel this install ALREADY had, when provisioning failed this run.
  *
- * #509's quieter half: all five OPENSHIP_HOST_* keys are omittable-managed
+ * #509's quieter half: all five KOVALIO_HOST_* keys are omittable-managed
  * (OMITTABLE_MANAGED_KEYS), so a run that produces no channel deletes them from `.env` —
  * and because `.env` then differs, compose force-recreates the api WITHOUT them. A
  * transient keygen failure therefore took host control off a box where it had worked for
@@ -1764,13 +1830,13 @@ export function listensOnPort(listing: string, port: number): boolean {
  * `--no-host-control`, which says so (retireHostSshChannel).
  *
  * Gated on the private key still being there, because the key IS the channel: an env
- * pointing OPENSHIP_HOST_KEY_PATH at a path with no file makes the daemon create a
+ * pointing KOVALIO_HOST_KEY_PATH at a path with no file makes the daemon create a
  * DIRECTORY as the bind source, and the api then mounts a directory where it expects a
  * key. A channel whose key is gone is not one to carry.
  */
 function carriedHostChannel(prev: Record<string, string>): { user: string; keyPath: string } | null {
-  const keyPath = prev.OPENSHIP_HOST_KEY_PATH?.trim();
-  if (!prev.OPENSHIP_HOST_SSH_HOST?.trim() || !keyPath || !existsSync(keyPath)) return null;
+  const keyPath = prev.KOVALIO_HOST_KEY_PATH?.trim();
+  if (!prev.KOVALIO_HOST_SSH_HOST?.trim() || !keyPath || !existsSync(keyPath)) return null;
   return { user: hostChannelAccount(prev), keyPath };
 }
 
@@ -1790,7 +1856,7 @@ function hostIssueNote(text: string): string {
  * The CAUSE is only ever visible here — see provisionHostSshChannel — so this is the one
  * surface that can name it. Everything AROUND the cause comes from @repo/core (what still
  * works, what doesn't, how to re-check) so the install log, the API's boot banner, the
- * dashboard banner and `openship doctor` read as one account of the same box rather than
+ * dashboard banner and `kovalio doctor` read as one account of the same box rather than
  * four independent ones.
  *
  * Never fatal, and worded so: a degraded install is not a failed one.
@@ -1864,7 +1930,7 @@ export function renderHostChannelIssue(
         `\`PermitRootLogin forced-commands-only\` does to a key with no \`command=\` of its ` +
         `own, and it is indistinguishable from a working channel until a host operation ` +
         `runs. Either permit this account a normal login, or use an account that has one: ` +
-        `\`openship up --host-ssh-user <name>\`.`;
+        `\`kovalio up --host-ssh-user <name>\`.`;
       break;
     case "auth-refused": {
       // The one cause here an operator can act on immediately, so it names the accounts we
@@ -1885,10 +1951,10 @@ export function renderHostChannelIssue(
         `\`Permission denied (publickey)\` is the same message for an account that may not ` +
         `log in, an \`authorized_keys\` sshd doesn't read for it, and a home directory whose ` +
         `permissions it rejects. Three things fix it:\n` +
-        `  • name an account that CAN log in: \`openship up --host-ssh-user <name>\`\n` +
+        `  • name an account that CAN log in: \`kovalio up --host-ssh-user <name>\`\n` +
         `  • permit root a key login: \`PermitRootLogin prohibit-password\` (still refuses ` +
         `passwords), or scope it to the container with a \`Match Address\` block\n` +
-        `  • or leave host control off: \`openship up --no-host-control\`\n` +
+        `  • or leave host control off: \`kovalio up --no-host-control\`\n` +
         `Until one of them is done the api container will be refused every time it dials ` +
         `${ctx.target}.`;
       break;
@@ -1913,7 +1979,7 @@ export function renderHostChannelIssue(
               "instead of losing it to this failure.",
           )
         : hostIssueNote(
-            "OPENSHIP_HOST_SSH_HOST is therefore unset, and host operations refuse rather " +
+            "KOVALIO_HOST_SSH_HOST is therefore unset, and host operations refuse rather " +
               "than run against the api container's own filesystem.",
           );
 
@@ -1931,21 +1997,21 @@ export function renderHostChannelIssue(
 /**
  * The compose project name — the prefix on every container, volume and network.
  *
- * Unset, compose derives it from the project DIRECTORY (`~/.openship/compose`),
+ * Unset, compose derives it from the project DIRECTORY (`~/.kovalio/compose`),
  * which is why the stack read `compose-api-1` / `compose_postgres_data` instead of
- * naming itself. Pinned to `openship` so it does.
+ * naming itself. Pinned to `kovalio` so it does.
  *
  * But the project name is also the volume prefix, so changing it on a LIVE install
  * would repoint `postgres_data` and `certs` at fresh empty volumes — the database
  * and issued certificates would look wiped (they'd still be on disk under the old
  * prefix, but nothing would mount them). So: an install that already has a `.env`
  * without this key predates the pin and keeps its directory-derived `compose` name;
- * only fresh installs get `openship`. Docker Compose reads COMPOSE_PROJECT_NAME
+ * only fresh installs get `kovalio`. Docker Compose reads COMPOSE_PROJECT_NAME
  * from the project dir's .env, so pinning it here needs no flag at the call site.
  */
 function composeProjectName(prev: Record<string, string>): string {
   if (prev.COMPOSE_PROJECT_NAME) return prev.COMPOSE_PROJECT_NAME;
-  return Object.keys(prev).length > 0 ? "compose" : "openship";
+  return Object.keys(prev).length > 0 ? "compose" : "kovalio";
 }
 
 const PGDATA_ROOT = "/var/lib/postgresql/data";
@@ -1956,7 +2022,7 @@ const PGDATA_ROOT = "/var/lib/postgresql/data";
  *
  * `PG_VERSION` sits at the top of a Postgres cluster directory, so whether it's at
  * `/from` or `/from/pgdata` tells us which layout an existing install used — the
- * only sound basis for OPENSHIP_PGDATA on a volume this run didn't create (#487). A
+ * only sound basis for KOVALIO_PGDATA on a volume this run didn't create (#487). A
  * throwaway read-only container is the only way to read a named volume's contents
  * (same idiom as migrateEdgeState above). `lost+found` is filtered from the
  * emptiness check: Docker provisions a fresh ext4 volume with exactly that one
@@ -1970,23 +2036,37 @@ const PGDATA_ROOT = "/var/lib/postgresql/data";
  *   unknown — docker/daemon unavailable — never guess
  */
 type PgProbe = "root" | "sub" | "empty" | "foreign" | "unknown";
-function probePgDataDir(volume: string): PgProbe {
+type PgDataRisk = { volume: string; reason?: "unavailable"; detail?: string };
+type PgDataResolution =
+  | { path: string; risk: null }
+  | { path: null; risk: PgDataRisk };
+
+function probePgDataDir(volume: string): { layout: PgProbe; detail?: string } {
   const r = spawnSync(
     "docker",
     [
       "run", "--rm",
       "-v", `${volume}:/from:ro`,
       "alpine:3", "sh", "-c",
-      "if [ -f /from/PG_VERSION ]; then echo root; " +
+      "entries=$(ls -A /from) || exit 1; " +
+        "if [ -f /from/PG_VERSION ]; then echo root; " +
         "elif [ -f /from/pgdata/PG_VERSION ]; then echo sub; " +
-        "elif [ -z \"$(ls -A /from 2>/dev/null | grep -v '^lost+found$')\" ]; then echo empty; " +
+        "elif [ -z \"$(printf '%s\\n' \"$entries\" | grep -v '^lost+found$')\" ]; then echo empty; " +
         "else echo foreign; fi",
     ],
-    { encoding: "utf8" },
+    { encoding: "utf8", timeout: 60_000 },
   );
-  if (r.status !== 0) return "unknown";
+  if (r.status !== 0) {
+    return {
+      layout: "unknown",
+      detail:
+        r.error?.message || r.stderr?.trim() || "The volume probe failed without an error message.",
+    };
+  }
   const out = `${r.stdout ?? ""}`.trim();
-  return out === "root" || out === "sub" || out === "empty" || out === "foreign" ? out : "unknown";
+  return out === "root" || out === "sub" || out === "empty" || out === "foreign"
+    ? { layout: out }
+    : { layout: "unknown", detail: "The volume probe returned no recognized layout." };
 }
 
 /**
@@ -2005,56 +2085,67 @@ function probePgDataDir(volume: string): PgProbe {
  * must READ the volume, not guess from its mere existence. The old heuristic
  * ("volume exists → root") wrote the root while the cluster was really in the
  * subdir, so Postgres ran initdb over a non-empty dir and the whole stack died
- * (#487). Take the root ONLY when PG_VERSION is actually there; anything else
- * resolves to the subdir (the compose default and how every install since #350
- * was created), and the `foreign` case is stopped by the gate before it matters.
+ * (#487). Unknown or unrecognized layouts have no resolved path. The preview
+ * reports that refusal, and the writer must stop before changing configuration.
  */
-function resolvePgData(prev: Record<string, string>): string {
+function resolvePgData(prev: Record<string, string>): PgDataResolution {
   const SUB = `${PGDATA_ROOT}/pgdata`;
-  if (prev.OPENSHIP_PGDATA) return prev.OPENSHIP_PGDATA; // decided already — never move it
+  if (prev.KOVALIO_PGDATA) return { path: prev.KOVALIO_PGDATA, risk: null };
   const volume = survivingDbVolume(prev);
-  if (!volume) return SUB; // fresh install → compose default
-  return probePgDataDir(volume) === "root" ? PGDATA_ROOT : SUB;
+  if (!volume) return { path: SUB, risk: null };
+  const probe = probePgDataDir(volume);
+  if (probe.layout === "unknown") {
+    return { path: null, risk: { volume, reason: "unavailable", detail: probe.detail } };
+  }
+  if (probe.layout === "foreign") return { path: null, risk: { volume } };
+  return { path: probe.layout === "root" ? PGDATA_ROOT : SUB, risk: null };
 }
 
 /**
  * #487: a data volume this run didn't create holds data we don't recognize — no
  * cluster at the root or the pgdata/ subdir, but not empty either. Writing a
- * guessed OPENSHIP_PGDATA here is how #487 destroyed installs, so callers stop and
- * make the operator pin the path themselves. Non-null ONLY for the `foreign` probe
- * result; `root`/`sub`/`empty`/`unknown` are all handled safely by resolvePgData.
+ * guessed KOVALIO_PGDATA here is how #487 destroyed installs, so callers stop and
+ * make the operator pin the path themselves. A failed probe is also unresolved;
+ * it cannot establish that either path is safe.
  */
-function pgDataDetectionRisk(prev: Record<string, string>): { volume: string } | null {
-  if (prev.OPENSHIP_PGDATA) return null; // already pinned — resolvePgData won't probe
-  const volume = survivingDbVolume(prev);
-  if (!volume) return null;
-  return probePgDataDir(volume) === "foreign" ? { volume } : null;
+function pgDataDetectionRisk(prev: Record<string, string>): PgDataRisk | null {
+  return resolvePgData(prev).risk;
 }
 
 /**
  * The same check against the `.env` on disk, for callers that must stop BEFORE
  * anything writes it — mirrors composeSecretRotationRisk. The probe runs only on
- * the rare transition run (volume present, key unpinned); once OPENSHIP_PGDATA is
+ * the rare transition run (volume present, key unpinned); once KOVALIO_PGDATA is
  * written every future run short-circuits in resolvePgData/pgDataDetectionRisk, so
  * paying for one extra `docker run` on that single run needs no memoization.
  */
-export function composePgDataRisk(_opts: ComposeUpOpts = {}): { volume: string } | null {
+export function composePgDataRisk(_opts: ComposeUpOpts = {}): PgDataRisk | null {
   // No opt waives this — unlike --reset-secrets for the rotation gate, "reset the secrets"
   // is not consent to guess where the cluster lives. The escape hatch is pinning the path.
   return pgDataDetectionRisk(readEnvFile());
 }
 
 /**
- * What to tell the operator when `up` refuses to write a guessed OPENSHIP_PGDATA.
+ * What to tell the operator when `up` refuses to write a guessed KOVALIO_PGDATA.
  * Shared with the dry run (same reason as renderSecretRotationRefusal) so the
  * preview and the real run describe this state identically. Names the volume, both
  * candidate paths, and the one-line escape hatch — pinning the key by hand.
  */
 export function renderPgDataRefusal(
-  risk: { volume: string },
+  risk: PgDataRisk,
   opts: { dryRun?: boolean } = {},
 ): string {
   const SUB = `${PGDATA_ROOT}/pgdata`;
+  if (risk.reason === "unavailable") {
+    return (
+      `\n  ${opts.dryRun ? "A real run would REFUSE here" : "Refusing to continue"}:` +
+      ` the Postgres data directory could not be inspected.\n\n` +
+      `    volume: ${risk.volume}\n` +
+      (risk.detail ? `    reason: ${risk.detail}\n` : "") +
+      `\n  No configuration has been written. Resolve the probe error above, then retry.\n` +
+      `  KOVALIO_PGDATA must not be guessed from a failed probe.\n`
+    );
+  }
   return (
     `\n  ${opts.dryRun ? "A real run would REFUSE here" : "Refusing to continue"}:` +
     ` this install's data volume holds data, but not a Postgres cluster we recognize.\n\n` +
@@ -2063,7 +2154,7 @@ export function renderPgDataRefusal(
     `  Guessing where the cluster lives is how a wrong path makes Postgres run initdb over\n` +
     `  your existing data and orphan it, so nothing has been written. If you know the layout,\n` +
     `  pin it and re-run:\n\n` +
-    `    echo 'OPENSHIP_PGDATA=${SUB}' >> ${ENV_FILE}     # or ${PGDATA_ROOT} if the cluster is at the root\n`
+    `    echo 'KOVALIO_PGDATA=${SUB}' >> ${ENV_FILE}     # or ${PGDATA_ROOT} if the cluster is at the root\n`
   );
 }
 
@@ -2134,7 +2225,7 @@ function fromOurComposeFile(row: { configFiles: string }): boolean {
  * Identified by compose's own `project.config_files` label pointing at OUR
  * compose file, so this can never match an unrelated stack that happens to have a
  * service called `edge` — and by construction it only ever lists containers a
- * previous `openship up` created. Volumes are deliberately NOT touched: they hold
+ * previous `kovalio up` created. Volumes are deliberately NOT touched: they hold
  * the database and issued certificates.
  */
 function orphanedStackContainers(project: string): Array<{ name: string; project: string }> {
@@ -2147,9 +2238,9 @@ function orphanedStackContainers(project: string): Array<{ name: string; project
  * PURE. Evidence that the stack under `project` is one we did NOT create — so a run
  * that reuses its volumes is ADOPTING it.
  *
- * `docker/docker-compose.yml` pins `name: openship`, the same project name this CLI
+ * `docker/docker-compose.yml` pins `name: kovalio`, the same project name this CLI
  * pins, so the two stacks collide by design: same container names, same
- * `openship_postgres_data`. Compose's own labels are the evidence — rows under our
+ * `kovalio_postgres_data`. Compose's own labels are the evidence — rows under our
  * project name whose `config_files` names some OTHER compose file (or names nothing at
  * all, a label-less `docker run`). One row created from OUR file means the stack is
  * ours (compose relabels what it adopts), so nothing is reported.
@@ -2185,7 +2276,7 @@ function adoptedStack(
  * Reconcile the DB password against a data volume that PREDATES this `.env`.
  *
  * Postgres only applies `POSTGRES_PASSWORD` when it initializes an EMPTY data
- * dir. So an install that regenerated its secrets (a wiped `~/.openship`, a
+ * dir. So an install that regenerated its secrets (a wiped `~/.kovalio`, a
  * restored backup, a manually deleted `.env`) while `<project>_postgres_data`
  * survived leaves the volume on the OLD password and the api presenting the new
  * one — the api then crash-loops on `password authentication failed for user`
@@ -2261,7 +2352,7 @@ function reconcileDbPassword(user: string, password: string): void {
         `    existing data volume was initialized with a different password.\n\n` +
         `    Fix it one of two ways:\n` +
         `      • restore the .env that created the volume, or\n` +
-        `      • start fresh (DESTROYS DB DATA):  openship uninstall  then  openship up\n`,
+        `      • start fresh (DESTROYS DB DATA):  kovalio uninstall  then  kovalio up\n`,
     );
   }
 }
@@ -2279,14 +2370,14 @@ function removeOrphanedStack(project: string): void {
 }
 
 /**
- * Clear a stray `openship-edge` that THIS compose project doesn't own, so `up`
+ * Clear a stray `kovalio-edge` that THIS compose project doesn't own, so `up`
  * can create its own.
  *
  * The edge is the one service pinned to a fixed `container_name` (everything else
- * reaches it by name — `OPENSHIP_EDGE_CONTAINER`, the `docker ps --filter
- * name=openship-edge` detection, `docker exec`), and a fixed name is a collision
+ * reaches it by name — `KOVALIO_EDGE_CONTAINER`, the `docker ps --filter
+ * name=kovalio-edge` detection, `docker exec`), and a fixed name is a collision
  * hazard: compose only ever recreates a container it LABELS as its own, so a
- * container called `openship-edge` left by any other owner makes `up` abort with
+ * container called `kovalio-edge` left by any other owner makes `up` abort with
  * "the container name is already in use". `removeOrphanedStack` can't reach it —
  * that matches our exact `config_files` label, so a foreign-project edge, a
  * from-source `docker/docker-compose.yml` edge, or a label-less `docker run` edge
@@ -2299,13 +2390,13 @@ function removeOrphanedStack(project: string): void {
  * owns it (same project + our compose file), where `up` recreates it cleanly.
  */
 /**
- * From a `docker ps -a` sweep (see PS_SWEEP_FORMAT), whether a stray `openship-edge`
+ * From a `docker ps -a` sweep (see PS_SWEEP_FORMAT), whether a stray `kovalio-edge`
  * must be force-removed before `up`: it exists AND is not owned by THIS compose
  * project (same project name AND our compose file among the config files). No such
  * row → false. Pure, so the decision is unit-tested directly.
  */
 export function edgeNameNeedsReclaim(psStdout: string, project: string): boolean {
-  const row = parsePsSweep(psStdout).find((c) => c.name === "openship-edge");
+  const row = parsePsSweep(psStdout).find((c) => c.name === "kovalio-edge");
   if (!row) return false; // no such container — nothing in the way
   return !(row.project === project && fromOurComposeFile(row));
 }
@@ -2315,9 +2406,9 @@ function reconcileEdgeContainerName(project: string): void {
   if (!sweep) return;
   if (!edgeNameNeedsReclaim(sweep, project)) return;
   console.log(
-    "  Replacing an unmanaged `openship-edge` container so compose can own it (config is on the host, so no routes are lost).",
+    "  Replacing an unmanaged `kovalio-edge` container so compose can own it (config is on the host, so no routes are lost).",
   );
-  spawnSync("docker", ["rm", "-f", "openship-edge"], { stdio: "ignore" });
+  spawnSync("docker", ["rm", "-f", "kovalio-edge"], { stdio: "ignore" });
 }
 
 /**
@@ -2336,10 +2427,10 @@ function reconcileEdgeContainerName(project: string): void {
  */
 function migrateLegacyEdgeVolumes(project: string): void {
   const pairs = [
-    { volume: `${project}_openship_sites`, host: EDGE_SITES_HOST_DIR },
-    { volume: `${project}_openship_certs`, host: "/etc/letsencrypt" },
-    { volume: `${project}_openship_acme`, host: EDGE_ACME_HOST_DIR },
-    { volume: `${project}_openship_static`, host: "/opt/openship/static" },
+    { volume: `${project}_kovalio_sites`, host: EDGE_SITES_HOST_DIR },
+    { volume: `${project}_kovalio_certs`, host: "/etc/letsencrypt" },
+    { volume: `${project}_kovalio_acme`, host: EDGE_ACME_HOST_DIR },
+    { volume: `${project}_kovalio_static`, host: "/opt/kovalio/static" },
   ];
   const ls = spawnSync("docker", ["volume", "ls", "--format", "{{.Name}}"], { encoding: "utf8" });
   if (ls.status !== 0 || !ls.stdout) return;
@@ -2379,7 +2470,7 @@ function migrateLegacyEdgeVolumes(project: string): void {
 /**
  * Warn when a previous project's data volumes exist but won't be mounted, so a
  * project-name change can never look like silent data loss. Legacy installs
- * declared the volume key `openship_sites`, so any `<project>_openship_sites`
+ * declared the volume key `kovalio_sites`, so any `<project>_kovalio_sites`
  * names a prior stack of ours.
  */
 function warnOrphanedVolumes(project: string): void {
@@ -2389,8 +2480,8 @@ function warnOrphanedVolumes(project: string): void {
     r.stdout
       .split("\n")
       .map((l) => l.trim())
-      .filter((l) => l.endsWith("_openship_sites"))
-      .map((l) => l.slice(0, -"_openship_sites".length))
+      .filter((l) => l.endsWith("_kovalio_sites"))
+      .map((l) => l.slice(0, -"_kovalio_sites".length))
       .filter((p) => p && p !== project),
   );
   if (others.size === 0) return;
@@ -2398,16 +2489,16 @@ function warnOrphanedVolumes(project: string): void {
     `  Note: volumes from a previous install (project "${[...others].join(", ")}") are still on disk\n` +
       `  and are NOT mounted by this stack — its database starts fresh. (Certificates and\n` +
       `  vhosts now live on the host, so those carry over.)\n` +
-      `  Remove them with \`docker volume ls | grep _openship_\` once you're sure they aren't needed.`,
+      `  Remove them with \`docker volume ls | grep _kovalio_\` once you're sure they aren't needed.`,
   );
 }
 
 /**
  * Operator configuration that must SURVIVE a plain re-run.
  *
- * `openship up` regenerates `.env` from scratch, so anything it doesn't write is
- * gone. That made a bare `openship up` (the natural thing to do after
- * `openship update`) silently drop the public URL — and `OPENSHIP_PUBLIC_URL` is
+ * `kovalio up` regenerates `.env` from scratch, so anything it doesn't write is
+ * gone. That made a bare `kovalio up` (the natural thing to do after
+ * `kovalio update`) silently drop the public URL — and `KOVALIO_PUBLIC_URL` is
  * what puts the operator's domain in the API's `trustedOrigins`. The stack came
  * back up serving reads fine and 403ing every mutation with
  * `ORIGIN_REJECTED`, which points at neither the cause nor the fix.
@@ -2428,13 +2519,13 @@ function keepConfig(
 }
 
 const ACME_ENV_KEYS = [
-  "OPENSHIP_ACME_EMAIL",
-  "OPENSHIP_ACME_DIRECTORY_URL",
-  "OPENSHIP_ACME_EAB_KID",
-  "OPENSHIP_ACME_EAB_HMAC_KEY",
-  "OPENSHIP_ACME_KEY_TYPE",
-  "OPENSHIP_ACME_CA_BUNDLE",
-  "OPENSHIP_ACME_TOS_AGREED",
+  "KOVALIO_ACME_EMAIL",
+  "KOVALIO_ACME_DIRECTORY_URL",
+  "KOVALIO_ACME_EAB_KID",
+  "KOVALIO_ACME_EAB_HMAC_KEY",
+  "KOVALIO_ACME_KEY_TYPE",
+  "KOVALIO_ACME_CA_BUNDLE",
+  "KOVALIO_ACME_TOS_AGREED",
 ] as const;
 
 /**
@@ -2443,15 +2534,15 @@ const ACME_ENV_KEYS = [
  * template's `host-gateway` fallback stays in charge of the default.
  */
 function hostGatewayEnv(prev: Record<string, string>): string[] {
-  const value = process.env.OPENSHIP_HOST_GATEWAY?.trim() || prev.OPENSHIP_HOST_GATEWAY?.trim();
-  return value ? [`OPENSHIP_HOST_GATEWAY=${value}`] : [];
+  const value = process.env.KOVALIO_HOST_GATEWAY?.trim() || prev.KOVALIO_HOST_GATEWAY?.trim();
+  return value ? [`KOVALIO_HOST_GATEWAY=${value}`] : [];
 }
 
 /**
  * Where a ROOTLESS daemon's socket lives, in the order worth trying — each one
  * existence-checked by the caller, so a wrong guess costs nothing.
  *
- * `$SUDO_UID` is not redundant with `userInfo()`: under `sudo openship up` both
+ * `$SUDO_UID` is not redundant with `userInfo()`: under `sudo kovalio up` both
  * `$XDG_RUNTIME_DIR` and the passwd entry describe ROOT, and /run/user/0 is not
  * where the operator's rootless daemon is — the sudo trap plannedHostChannel and
  * elevatedExecutor's owner lookup already work around.
@@ -2462,7 +2553,8 @@ function rootlessSocketCandidates(): string[] {
   let uid: number | undefined;
   try {
     uid = userInfo().uid;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/compose");
     /* no passwd entry — the two env-derived candidates are all we have */
   }
   return [
@@ -2496,15 +2588,15 @@ function detectDockerSocketPath(): string {
 
 /** The socket this run mounts, and whether an operator pinned it rather than us detecting it. */
 function resolveDockerSocket(prev: Record<string, string>): { path: string; pinned: boolean } {
-  const pinned = process.env.OPENSHIP_DOCKER_SOCKET?.trim() || prev.OPENSHIP_DOCKER_SOCKET?.trim();
+  const pinned = process.env.KOVALIO_DOCKER_SOCKET?.trim() || prev.KOVALIO_DOCKER_SOCKET?.trim();
   return pinned ? { path: pinned, pinned: true } : { path: detectDockerSocketPath(), pinned: false };
 }
 
 /**
- * `OPENSHIP_DOCKER_SOCKET` for this run, or nothing.
+ * `KOVALIO_DOCKER_SOCKET` for this run, or nothing.
  *
  * A PINNED value always round-trips (shell over `.env`): half of #482 was that every
- * `openship up` rewrote a hand-fixed `.env` back to the value that didn't work. A
+ * `kovalio up` rewrote a hand-fixed `.env` back to the value that didn't work. A
  * DETECTED default is omitted, so the template's `:-/var/run/docker.sock` stays the
  * one place the default lives and nothing pins a path a later daemon change breaks.
  *
@@ -2517,7 +2609,7 @@ function resolveDockerSocket(prev: Record<string, string>): { path: string; pinn
  */
 function dockerSocketEnv(prev: Record<string, string>): string[] {
   const { path, pinned } = resolveDockerSocket(prev);
-  return pinned || path !== DEFAULT_DOCKER_SOCKET_PATH ? [`OPENSHIP_DOCKER_SOCKET=${path}`] : [];
+  return pinned || path !== DEFAULT_DOCKER_SOCKET_PATH ? [`KOVALIO_DOCKER_SOCKET=${path}`] : [];
 }
 
 /**
@@ -2527,18 +2619,18 @@ function dockerSocketEnv(prev: Record<string, string>): string[] {
  * — the stack comes up healthy, `/api/system/check` 502s, and the api log carries a
  * transport error ("Was there a typo in the url or port?") naming no path at all,
  * which is how #482 was reported. A warning rather than a refusal: detection can be
- * wrong in ways an operator's `.env` fixes, and `openship update` on a live box must
+ * wrong in ways an operator's `.env` fixes, and `kovalio update` on a live box must
  * not become unrunnable over it.
  */
 function warnMissingDockerSocket(path: string): void {
-  console.warn(
+  reportCliMessage("warn",
     `\n  ! The Docker socket this install mounts into the api isn't there:\n` +
       `      ${path}\n` +
       `    Docker will create that path as an empty DIRECTORY, so the stack will come up\n` +
       `    and then fail every container operation with a transport error naming neither\n` +
       `    this path nor the cause (#482). Point it at the real socket:\n` +
       `      docker context inspect --format '{{.Endpoints.docker.Host}}'\n` +
-      `      OPENSHIP_DOCKER_SOCKET=/run/user/$(id -u)/docker.sock openship up --compose\n` +
+      `      KOVALIO_DOCKER_SOCKET=/run/user/$(id -u)/docker.sock kovalio up --compose\n` +
       `    (a rootless daemon keeps its socket under the daemon user's runtime dir).\n`,
   );
 }
@@ -2567,7 +2659,7 @@ export function resolveEnvConfig(
   extraTrustedOrigins?: string;
   registry: string;
   hostControl: boolean;
-  /** Which shell the dashboard defaults to (Openship Mail vs the full platform). */
+  /** Which shell the dashboard defaults to (Kovalio Mail vs the full platform). */
   productMode: "platform" | "mail";
   /** Where the api container reaches this machine's sshd for host ops. */
   hostSshHost: string;
@@ -2577,7 +2669,7 @@ export function resolveEnvConfig(
   /** The account the previous run settled on — continuity, not a pin. */
   hostSshUserCarried?: string;
 } {
-  const publicUrl = keepConfig(prev, "OPENSHIP_PUBLIC_URL", opts.publicUrl);
+  const publicUrl = keepConfig(prev, "KOVALIO_PUBLIC_URL", opts.publicUrl);
   // Bind interface. An explicit setting always wins and is carried across re-runs
   // (an operator who pinned one interface made a security decision; regenerating
   // `.env` without it must not silently republish the api + dashboard everywhere).
@@ -2586,10 +2678,10 @@ export function resolveEnvConfig(
   //     publish on all interfaces (matches prior behavior; never breaks a remote
   //     install whose `.env` predates this key or that is reached by IP:port).
   //   • no public URL (a local / same-host install) → leave it unset so the
-  //     compose loopback default (${OPENSHIP_BIND_ADDR:-127.0.0.1}) applies and the
+  //     compose loopback default (${KOVALIO_BIND_ADDR:-127.0.0.1}) applies and the
   //     ports never touch a public interface. The host-net edge still fronts any
   //     domains over loopback, so a domain-fronted box can also pin 127.0.0.1.
-  const bindAddr = keepConfig(prev, "OPENSHIP_BIND_ADDR") ?? (publicUrl ? "0.0.0.0" : undefined);
+  const bindAddr = keepConfig(prev, "KOVALIO_BIND_ADDR") ?? (publicUrl ? "0.0.0.0" : undefined);
   return {
     apiPort: keepConfig(prev, "API_PORT", opts.apiPort) ?? String(DEFAULT_API_PORT),
     dashPort: keepConfig(prev, "DASHBOARD_PORT", opts.dashboardPort) ?? String(DEFAULT_DASHBOARD_PORT),
@@ -2598,45 +2690,45 @@ export function resolveEnvConfig(
     // A public URL always implies a proxy in front; otherwise keep whatever the
     // install was configured with.
     trustProxy: Boolean(opts.trustProxy) || Boolean(publicUrl) || prev.TRUST_PROXY === "true",
-    ...(keepConfig(prev, "OPENSHIP_EXTRA_TRUSTED_ORIGINS", opts.extraTrustedOrigins)
+    ...(keepConfig(prev, "KOVALIO_EXTRA_TRUSTED_ORIGINS", opts.extraTrustedOrigins)
       ? {
           extraTrustedOrigins: keepConfig(
             prev,
-            "OPENSHIP_EXTRA_TRUSTED_ORIGINS",
+            "KOVALIO_EXTRA_TRUSTED_ORIGINS",
             opts.extraTrustedOrigins,
           ),
         }
       : {}),
-    registry: keepConfig(prev, "OPENSHIP_IMAGE_REGISTRY", opts.registry) ?? DEFAULT_IMAGE_REGISTRY,
+    registry: keepConfig(prev, "KOVALIO_IMAGE_REGISTRY", opts.registry) ?? DEFAULT_IMAGE_REGISTRY,
     // Tri-state: the flag is absent on a plain re-run, so fall back to what the
     // install chose rather than silently re-granting host control.
     hostControl:
-      opts.noHostControl === undefined ? prev.OPENSHIP_HOST_CONTROL !== "false" : !opts.noHostControl,
+      opts.noHostControl === undefined ? prev.KOVALIO_HOST_CONTROL !== "false" : !opts.noHostControl,
     // Sticky too: `--mail` is only the install-time default, so a plain re-run
-    // (or `openship update`) must not hand a mail box back the platform shell.
+    // (or `kovalio update`) must not hand a mail box back the platform shell.
     // Turning it OFF is the dashboard's job — Settings → Instance stores the mode
     // in the database, which wins over this env var either way.
-    productMode: opts.mail || keepConfig(prev, "OPENSHIP_PRODUCT") === "mail" ? "mail" : "platform",
+    productMode: opts.mail || keepConfig(prev, "KOVALIO_PRODUCT") === "mail" ? "mail" : "platform",
     // Sticky like every other operator choice here. These were literals in
     // `renderEnv`, so a box where `host.docker.internal:22` is simply not the
     // right address — rootless Docker, sshd on another port — had nowhere to say
-    // so, and every `openship up` overwrote a hand-edited `.env` back to the
+    // so, and every `kovalio up` overwrote a hand-edited `.env` back to the
     // value that didn't work (#490/#482).
     hostSshHost:
-      keepConfig(prev, "OPENSHIP_HOST_SSH_HOST", opts.hostSshHost) ?? HOST_CHANNEL_DEFAULT_HOST,
+      keepConfig(prev, "KOVALIO_HOST_SSH_HOST", opts.hostSshHost) ?? HOST_CHANNEL_DEFAULT_HOST,
     hostSshPort:
-      keepConfig(prev, "OPENSHIP_HOST_SSH_PORT", opts.hostSshPort) ??
+      keepConfig(prev, "KOVALIO_HOST_SSH_PORT", opts.hostSshPort) ??
       String(HOST_CHANNEL_DEFAULT_PORT),
     // Sticky like its siblings, but kept in its OWN key rather than reusing
-    // OPENSHIP_HOST_SSH_USER. That key records what provisioning SETTLED on, and the two
+    // KOVALIO_HOST_SSH_USER. That key records what provisioning SETTLED on, and the two
     // must not be conflated: reading a settled value back as a pin would freeze the account
     // a box happens to have — including the refused `root` on every install #527 broke — and
     // the fallback that repairs them could never run.
-    ...(keepConfig(prev, "OPENSHIP_HOST_SSH_USER_PIN", opts.hostSshUser)
-      ? { hostSshUser: keepConfig(prev, "OPENSHIP_HOST_SSH_USER_PIN", opts.hostSshUser) }
+    ...(keepConfig(prev, "KOVALIO_HOST_SSH_USER_PIN", opts.hostSshUser)
+      ? { hostSshUser: keepConfig(prev, "KOVALIO_HOST_SSH_USER_PIN", opts.hostSshUser) }
       : {}),
-    ...(prev.OPENSHIP_HOST_SSH_USER?.trim()
-      ? { hostSshUserCarried: prev.OPENSHIP_HOST_SSH_USER.trim() }
+    ...(prev.KOVALIO_HOST_SSH_USER?.trim()
+      ? { hostSshUserCarried: prev.KOVALIO_HOST_SSH_USER.trim() }
       : {}),
   };
 }
@@ -2655,10 +2747,10 @@ export function composeEnvPorts(): { api?: number; dashboard?: number } {
 
 /** The interface the stack publishes the api + dashboard on (compose default). */
 export function composeBindAddr(): string {
-  // Match the compose template fallback (${OPENSHIP_BIND_ADDR:-127.0.0.1}): when
+  // Match the compose template fallback (${KOVALIO_BIND_ADDR:-127.0.0.1}): when
   // `.env` pins no interface the ports bind loopback, so port-conflict probing
   // must check loopback too, not the whole box.
-  return readEnvFile().OPENSHIP_BIND_ADDR?.trim() || "127.0.0.1";
+  return readEnvFile().KOVALIO_BIND_ADDR?.trim() || "127.0.0.1";
 }
 
 /**
@@ -2670,11 +2762,11 @@ export function composeBindAddr(): string {
  */
 export function composeHostChannel(): { host: string; port: number; user: string } | null {
   const env = readEnvFile();
-  const host = env.OPENSHIP_HOST_SSH_HOST?.trim();
+  const host = env.KOVALIO_HOST_SSH_HOST?.trim();
   if (!host) return null;
   return {
     host,
-    port: toPort(env.OPENSHIP_HOST_SSH_PORT) ?? 22,
+    port: toPort(env.KOVALIO_HOST_SSH_PORT) ?? 22,
     user: hostChannelAccount(env),
   };
 }
@@ -2695,7 +2787,7 @@ export function composeHostChannel(): { host: string; port: number; user: string
  * warns at install time (renderHostChannelIssue), but that line is gone the moment the
  * terminal scrolls — a later reader still needs to work it out from disk. This is the
  * difference, read off two facts there: the compose file (the same "is there an install
- * here" test composeDown/composeUninstall use) and OPENSHIP_HOST_CONTROL, which renderEnv
+ * here" test composeDown/composeUninstall use) and KOVALIO_HOST_CONTROL, which renderEnv
  * writes on every run, true or false.
  *
  * Not `readInstallMethod()`: nothing ever writes `bare`, so that marker stays `compose`
@@ -2703,7 +2795,7 @@ export function composeHostChannel(): { host: string; port: number; user: string
  */
 export function composeHostChannelExpected(): boolean {
   if (!existsSync(COMPOSE_FILE)) return false;
-  return readEnvFile().OPENSHIP_HOST_CONTROL !== "false";
+  return readEnvFile().KOVALIO_HOST_CONTROL !== "false";
 }
 
 /**
@@ -2712,7 +2804,7 @@ export function composeHostChannelExpected(): boolean {
  */
 export function composeTrustedOriginUrls(): string[] {
   const env = readEnvFile();
-  return [env.OPENSHIP_PUBLIC_URL, env.OPENSHIP_EXTRA_TRUSTED_ORIGINS].filter(
+  return [env.KOVALIO_PUBLIC_URL, env.KOVALIO_EXTRA_TRUSTED_ORIGINS].filter(
     (v): v is string => !!v?.trim(),
   );
 }
@@ -2788,21 +2880,21 @@ export async function resolveComposePorts(
  * here revokes a working channel and recreates the api without it.
  */
 const OMITTABLE_MANAGED_KEYS: ReadonlySet<string> = new Set([
-  "OPENSHIP_HOST_SSH_HOST",
-  "OPENSHIP_HOST_SSH_USER",
-  "OPENSHIP_HOST_SSH_USER_PIN",
-  "OPENSHIP_HOST_SSH_PORT",
-  "OPENSHIP_HOST_SSH_KEY",
-  "OPENSHIP_HOST_KEY_PATH",
-  "OPENSHIP_HOST_GATEWAY",
+  "KOVALIO_HOST_SSH_HOST",
+  "KOVALIO_HOST_SSH_USER",
+  "KOVALIO_HOST_SSH_USER_PIN",
+  "KOVALIO_HOST_SSH_PORT",
+  "KOVALIO_HOST_SSH_KEY",
+  "KOVALIO_HOST_KEY_PATH",
+  "KOVALIO_HOST_GATEWAY",
   "TRUST_PROXY",
 ]);
 
 const envKeyOf = (line: string): string | undefined => line.match(/^([A-Z0-9_]+)=/)?.[1];
 
 /**
- * #485: `openship up` regenerated `.env` from a fixed key list, so any variable an
- * operator had added by hand — OPENSHIP_AUTH_MODE, and anything bespoke — was dropped on
+ * #485: `kovalio up` regenerated `.env` from a fixed key list, so any variable an
+ * operator had added by hand — KOVALIO_AUTH_MODE, and anything bespoke — was dropped on
  * the next run or upgrade, silently and with no diff. Every documented "add this to your
  * `.env`" workaround therefore lasted exactly until the next `up`.
  *
@@ -2824,22 +2916,22 @@ export function operatorEnvPassthrough(
 }
 
 const PRESERVED_ENV_HEADER =
-  "# Preserved from your existing .env — set by you, not by `openship up` (#485).";
+  "# Preserved from your existing .env — set by you, not by `kovalio up` (#485).";
 
 /**
  * The image tag the stack pins THIS run. An explicit `--image-version` wins; then
- * `OPENSHIP_VERSION` from the environment — the operator's escape hatch when the CLI
+ * `KOVALIO_VERSION` from the environment — the operator's escape hatch when the CLI
  * reached npm ahead of its images reaching the registry (#486), which no flag or env
  * var used to be able to redirect; then the CLI's own version; then `latest`.
  *
- * Deliberately NOT carried from the previous `.env`: `openship update` repins by
+ * Deliberately NOT carried from the previous `.env`: `kovalio update` repins by
  * bumping exactly this key, and a plain re-run tracking the CLI's version is the
  * intent. The escape hatch is a one-shot override, not a sticky pin.
  */
 export function resolveImageVersion(opts: ComposeUpOpts): string {
   return (
     opts.version?.trim() ||
-    process.env.OPENSHIP_VERSION?.trim() ||
+    process.env.KOVALIO_VERSION?.trim() ||
     (typeof __CLI_VERSION__ === "string" ? __CLI_VERSION__ : "latest")
   );
 }
@@ -2854,17 +2946,18 @@ function managedEnvLines(
   host: { user: string; keyPath: string } | null,
   cfg: ReturnType<typeof resolveEnvConfig>,
   prev: Record<string, string>,
+  pgData: string,
 ): string[] {
   const lines: string[] = [
-    "# Managed by `openship up`. Secrets are generated once and preserved.",
+    "# Managed by `kovalio up`. Secrets are generated once and preserved.",
     // Do NOT edit on a live install — it is the volume prefix (see composeProjectName).
     `COMPOSE_PROJECT_NAME=${composeProjectName(prev)}`,
     "CLOUD_MODE=false",
-    "OPENSHIP_TARGET=local",
-    "OPENSHIP_REQUIRE_AUTH=true",
+    "KOVALIO_TARGET=local",
+    "KOVALIO_REQUIRE_AUTH=true",
     // Read by createHostExecutor (throws when false) and by the servers list
     // (hides the local row). Written explicitly so the policy is visible in .env.
-    `OPENSHIP_HOST_CONTROL=${cfg.hostControl ? "true" : "false"}`,
+    `KOVALIO_HOST_CONTROL=${cfg.hostControl ? "true" : "false"}`,
     // The host side of the api's docker socket mount, when it isn't the rootful
     // default. Unlike the host channel above this is NOT optional plumbing — every
     // deploy goes through it — so it is resolved on every run, host control or not.
@@ -2873,12 +2966,12 @@ function managedEnvLines(
     // "platform" default: that keeps the key permanently in the managed set, so
     // the #485 passthrough can never mistake it for operator config (which would
     // pin it and make the Settings → Instance toggle look broken after an `up`).
-    `OPENSHIP_PRODUCT=${cfg.productMode}`,
-    `OPENSHIP_IMAGE_REGISTRY=${cfg.registry}`,
-    `OPENSHIP_VERSION=${resolveImageVersion(opts)}`,
+    `KOVALIO_PRODUCT=${cfg.productMode}`,
+    `KOVALIO_IMAGE_REGISTRY=${cfg.registry}`,
+    `KOVALIO_VERSION=${resolveImageVersion(opts)}`,
     `POSTGRES_PASSWORD=${keepSecret(prev, "POSTGRES_PASSWORD")}`,
-    // Pinned once (see resolvePgData): fresh install → subdir, existing volume → root.
-    `OPENSHIP_PGDATA=${resolvePgData(prev)}`,
+    // Pin the path established by resolvePgData; existing clusters may use either layout.
+    `KOVALIO_PGDATA=${pgData}`,
     `BETTER_AUTH_SECRET=${keepSecret(prev, "BETTER_AUTH_SECRET")}`,
     `INTERNAL_TOKEN=${keepSecret(prev, "INTERNAL_TOKEN")}`,
     `API_PORT=${cfg.apiPort}`,
@@ -2887,31 +2980,31 @@ function managedEnvLines(
     // the operator's domain at the dashboard through this (self-deploy.ts), and it
     // silently defaults to 3001 when unset. Ports are dynamic now, so leaving it
     // out publishes a domain routed to a port nothing is listening on.
-    `OPENSHIP_DASHBOARD_PORT=${cfg.dashPort}`,
+    `KOVALIO_DASHBOARD_PORT=${cfg.dashPort}`,
     // Alternate CA/EAB values are operator configuration (including one secret),
-    // so a routine `openship up`/upgrade must not silently discard them.
+    // so a routine `kovalio up`/upgrade must not silently discard them.
     ...renderAcmeEnv(prev),
   ];
-  if (cfg.bindAddr) lines.push(`OPENSHIP_BIND_ADDR=${cfg.bindAddr}`);
+  if (cfg.bindAddr) lines.push(`KOVALIO_BIND_ADDR=${cfg.bindAddr}`);
   // The origin allowlist. Losing either of these is the ORIGIN_REJECTED failure
   // described on keepConfig — they are written whenever they are known, never
   // conditionally on this run having been given a flag.
-  if (cfg.publicUrl) lines.push(`OPENSHIP_PUBLIC_URL=${cfg.publicUrl}`);
+  if (cfg.publicUrl) lines.push(`KOVALIO_PUBLIC_URL=${cfg.publicUrl}`);
   if (cfg.extraTrustedOrigins) {
-    lines.push(`OPENSHIP_EXTRA_TRUSTED_ORIGINS=${cfg.extraTrustedOrigins}`);
+    lines.push(`KOVALIO_EXTRA_TRUSTED_ORIGINS=${cfg.extraTrustedOrigins}`);
   }
   if (cfg.trustProxy) lines.push("TRUST_PROXY=true");
   if (host) {
-    // Activates createHostExecutor → SSH to the host; OPENSHIP_HOST_KEY_PATH is
-    // the compose-side source for the /run/secrets/openship_host_key mount.
+    // Activates createHostExecutor → SSH to the host; KOVALIO_HOST_KEY_PATH is
+    // the compose-side source for the /run/secrets/kovalio_host_key mount.
     lines.push(
-      `OPENSHIP_HOST_SSH_HOST=${cfg.hostSshHost}`,
+      `KOVALIO_HOST_SSH_HOST=${cfg.hostSshHost}`,
       // What provisioning SETTLED on this run — a fact about the box, not a setting. The
       // operator's pin, when there is one, is written OUTSIDE this block (see below).
-      `OPENSHIP_HOST_SSH_USER=${host.user}`,
-      `OPENSHIP_HOST_SSH_PORT=${cfg.hostSshPort}`,
-      "OPENSHIP_HOST_SSH_KEY=/run/secrets/openship_host_key",
-      `OPENSHIP_HOST_KEY_PATH=${host.keyPath}`,
+      `KOVALIO_HOST_SSH_USER=${host.user}`,
+      `KOVALIO_HOST_SSH_PORT=${cfg.hostSshPort}`,
+      "KOVALIO_HOST_SSH_KEY=/run/secrets/kovalio_host_key",
+      `KOVALIO_HOST_KEY_PATH=${host.keyPath}`,
       // What `host.docker.internal` resolves to inside the container. Carried from
       // the shell or the previous `.env` (never defaulted — an unset value lets the
       // compose template's `host-gateway` fallback apply).
@@ -2923,7 +3016,7 @@ function managedEnvLines(
   // refuses produces no channel at all — and dropping the pin on exactly that run would
   // lose it the moment it mattered, so the next `up` (after the operator fixed sshd) would
   // re-decide from scratch and land back on the account they had ruled out.
-  if (cfg.hostSshUser) lines.push(`OPENSHIP_HOST_SSH_USER_PIN=${cfg.hostSshUser}`);
+  if (cfg.hostSshUser) lines.push(`KOVALIO_HOST_SSH_USER_PIN=${cfg.hostSshUser}`);
   return lines;
 }
 
@@ -2937,8 +3030,9 @@ function renderEnvAndCarried(
   host: { user: string; keyPath: string } | null,
   cfg: ReturnType<typeof resolveEnvConfig>,
   prev: Record<string, string>,
+  pgData: string,
 ): { text: string; carried: string[] } {
-  const lines = managedEnvLines(opts, host, cfg, prev);
+  const lines = managedEnvLines(opts, host, cfg, prev, pgData);
   const managed = new Set(lines.map(envKeyOf).filter((k): k is string => !!k));
   const preserved = operatorEnvPassthrough(managed, prev);
   const body = preserved.length ? [...lines, "", PRESERVED_ENV_HEADER, ...preserved] : lines;
@@ -2948,20 +3042,12 @@ function renderEnvAndCarried(
   };
 }
 
-function renderEnv(
-  opts: ComposeUpOpts,
-  host: { user: string; keyPath: string } | null,
-  cfg: ReturnType<typeof resolveEnvConfig>,
-): string {
-  return renderEnvAndCarried(opts, host, cfg, readEnvFile()).text;
-}
-
 /**
  * The monorepo checkout to BUILD the stack from, when this is a from-source
- * ("dev") install — `openship-dev`, whose marker records the checkout dir.
+ * ("dev") install — `kovalio-dev`, whose marker records the checkout dir.
  *
  * A dev install tracks a branch, so its `__CLI_VERSION__` names a release tag
- * that isn't published: pulling `ghcr.io/oblien/openship-*:<that version>` fails
+ * that isn't published: pulling `ghcr.io/nextrium/kovalio-*:<that version>` fails
  * with `denied`. The checkout has the Dockerfiles, so build the three images we
  * own from it instead of pulling — same stack, same compose file, one override.
  * Returns null (→ pull path) when there's no checkout or no Dockerfiles in it.
@@ -2982,7 +3068,7 @@ function renderBuildOverride(repoDir: string): string {
       dockerfile: ${s.dockerfile}
 `,
   ).join("");
-  return `# Managed by \`openship up\` (from-source install) — builds instead of pulls.
+  return `# Managed by \`kovalio up\` (from-source install) — builds instead of pulls.
 services:
 ${services}`;
 }
@@ -3000,8 +3086,14 @@ function materialize(opts: ComposeUpOpts): {
    */
   envChanged: boolean;
 } {
-  mkdirSync(COMPOSE_DIR, { recursive: true, mode: 0o700 });
   const prev = readEnvFile();
+  // Revalidate the exact input that will be written, before host provisioning or
+  // file mutation. Earlier UI/preflight checks cannot authorize a later guess.
+  const rotation = opts.resetSecrets ? null : secretRotationRisk(prev);
+  if (rotation) throw new Error(renderSecretRotationRefusal(rotation));
+  const pgData = resolvePgData(prev);
+  if (pgData.risk) throw new Error(renderPgDataRefusal(pgData.risk));
+  mkdirSync(COMPOSE_DIR, { recursive: true, mode: 0o700 });
   const cfg = resolveEnvConfig(prev, opts);
   // --no-host-control: never generate/authorize a host key in the first place, and on a
   // box that already had one, take it back rather than only stopping short of using it —
@@ -3026,7 +3118,7 @@ function materialize(opts: ComposeUpOpts): {
   // ComposePrefetchResult) and `alreadyFetched` is exactly "the prefetch already did one",
   // so keying on it says this once rather than printing a dozen lines twice over.
   if (provision.issue && !opts.alreadyFetched) {
-    console.warn(
+    reportCliMessage("warn",
       renderHostChannelIssue(provision.issue, {
         target: `${cfg.hostSshHost}:${cfg.hostSshPort}`,
         kept,
@@ -3039,10 +3131,11 @@ function materialize(opts: ComposeUpOpts): {
   let before = "";
   try {
     before = readFileSync(ENV_FILE, "utf8");
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/lib/compose");
     /* first install — no previous env, so everything is "changed" */
   }
-  const { text: rendered, carried } = renderEnvAndCarried(opts, host, cfg, prev);
+  const { text: rendered, carried } = renderEnvAndCarried(opts, host, cfg, prev, pgData.path);
   writeFileSync(COMPOSE_FILE, renderComposeYaml());
   writeEnvFile(rendered, before);
   // #485: the old rewrite silently DROPPED operator-set keys. Now they survive — say so,
@@ -3090,7 +3183,7 @@ const SECRET_ENV_KEY = /(PASSWORD|SECRET|TOKEN|HMAC_KEY)$/;
  * `materialize` WITHOUT the writes — everything a `--dry-run` needs to describe
  * the stack this run would install.
  *
- * The `.env` is rendered by `renderEnv` itself (masked), not re-listed here: a
+ * The `.env` uses the same renderer as the writer (masked), not a separate key list: a
  * hand-kept copy of the interesting keys is exactly how a preview starts lying —
  * a key added to the writer would silently go missing from the plan.
  */
@@ -3115,9 +3208,9 @@ export interface ComposePlan {
   secretRotation: { volume: string; keys: string[] } | null;
   /**
    * Set when a surviving data volume holds data we can't place (#487) — a real run
-   * REFUSES rather than write a guessed OPENSHIP_PGDATA, so the preview names it too.
+   * REFUSES rather than write a guessed KOVALIO_PGDATA, so the preview names it too.
    */
-  pgDataRisk: { volume: string } | null;
+  pgDataRisk: PgDataRisk | null;
   /** True when a `.env` is already there — this would be a re-run, not a fresh install. */
   existing: boolean;
   /** Host directories the edge's bind mounts need (created on a real run). */
@@ -3135,7 +3228,11 @@ export function composePlan(opts: ComposeUpOpts): ComposePlan {
   const hostChannel = previewHostChannel(cfg);
   const settings: Array<{ key: string; value: string }> = [];
   const newSecrets: string[] = [];
-  for (const line of renderEnv(opts, hostChannel, cfg).split("\n")) {
+  const pgData = resolvePgData(prev);
+  const rendered = renderEnvAndCarried(
+    opts, hostChannel, cfg, prev, pgData.path ?? "<unresolved>",
+  ).text;
+  for (const line of rendered.split("\n")) {
     const at = line.indexOf("=");
     if (at < 1 || line.startsWith("#")) continue;
     const key = line.slice(0, at);
@@ -3162,9 +3259,9 @@ export function composePlan(opts: ComposeUpOpts): ComposePlan {
     settings,
     newSecrets,
     secretRotation: opts.resetSecrets ? null : secretRotationRisk(prev),
-    pgDataRisk: pgDataDetectionRisk(prev),
+    pgDataRisk: pgData.risk,
     existing: Object.keys(prev).length > 0,
-    mountDirs: EDGE_CONTAINER_MOUNTS.map((m) => m.host),
+    mountDirs: composeEdgeMounts().map((m) => m.host),
     buildDir,
     hostChannel,
   };
@@ -3173,9 +3270,15 @@ export function composePlan(opts: ComposeUpOpts): ComposePlan {
 /** Does this project's postgres data volume already exist (i.e. predate this run)? */
 function dbVolumeExists(project: string): boolean {
   const r = spawnSync("docker", ["volume", "inspect", `${project}_postgres_data`], {
-    stdio: "ignore",
+    encoding: "utf8",
+    timeout: 30_000,
   });
-  return r.status === 0;
+  if (r.status === 0) return true;
+  if (!r.error && /no such volume\b/i.test(r.stderr ?? "")) return false;
+  const reason = r.error?.message || r.stderr?.trim() || `docker exited ${r.status ?? "without a status"}`;
+  throw new Error(
+    `Cannot inspect database volume ${project}_postgres_data: ${reason}. Check Docker access and retry.`,
+  );
 }
 
 /** Run `docker compose <args>` in the compose dir, inheriting stdio. */
@@ -3203,7 +3306,7 @@ function compose(args: string[], opts?: { quiet?: boolean; withBuildOverride?: b
 export function missingPinnedImages(registry: string, version: string): string[] | null {
   const missing: string[] = [];
   for (const { service } of BUILT_SERVICES) {
-    const ref = `${registry}/openship-${service}:${version}`;
+    const ref = `${registry}/kovalio-${service}:${version}`;
     const r = spawnSync("docker", ["manifest", "inspect", ref], { encoding: "utf8" });
     if (r.status === 0) continue;
     const stderr = `${r.stderr ?? ""}`.toLowerCase();
@@ -3231,7 +3334,7 @@ export function pinnedImagesReady(opts: ComposeUpOpts): boolean {
   const missing = missingPinnedImages(resolveEnvConfig(prev, opts).registry, version);
   if (!missing || missing.length === 0) return true;
 
-  const prevVersion = prev.OPENSHIP_VERSION?.trim();
+  const prevVersion = prev.KOVALIO_VERSION?.trim();
   const out = [
     "",
     `  The pinned image tag \`${version}\` isn't in the registry yet:`,
@@ -3243,14 +3346,14 @@ export function pinnedImagesReady(opts: ComposeUpOpts): boolean {
     "  Any one of these gets you moving:",
     "    • Wait a few minutes and re-run — the images usually land right after a release.",
     "    • Pin a tag that exists:",
-    "        openship up --compose --image-version <tag>",
-    "        OPENSHIP_VERSION=<tag> openship up --compose",
+    "        kovalio up --compose --image-version <tag>",
+    "        KOVALIO_VERSION=<tag> kovalio up --compose",
   ];
   if (prevVersion && prevVersion !== version) {
     out.push(`    • Your current install runs \`${prevVersion}\`, a tag known good on this box.`);
   }
   out.push("");
-  console.error(out.join("\n"));
+  reportCliMessage("error", out.join("\n"));
   return false;
 }
 
@@ -3280,8 +3383,8 @@ export interface ComposePrefetchResult {
    * disk IS this write, so `composeUp`'s own comparison always read "unchanged" and the
    * env-consuming services were never recreated — `.env` showed the fix while the
    * containers kept the environment they were created with. That is what made #509's
-   * remedy hollow: `openship up` provisioned the host channel into `.env` and left the
-   * api container running without OPENSHIP_HOST_SSH_HOST, so the very next deploy failed
+   * remedy hollow: `kovalio up` provisioned the host channel into `.env` and left the
+   * api container running without KOVALIO_HOST_SSH_HOST, so the very next deploy failed
    * with the same error the operator had just run `up` to fix.
    */
   envChanged: boolean;
@@ -3292,7 +3395,12 @@ export function composePrefetch(opts: ComposeUpOpts): ComposePrefetchResult {
   // forgets. See composeSecretRotationRisk.
   const rotation = composeSecretRotationRisk(opts);
   if (rotation) {
-    console.error(renderSecretRotationRefusal(rotation));
+    reportCliMessage("error", renderSecretRotationRefusal(rotation));
+    return { ok: false, envChanged: false };
+  }
+  const pgData = composePgDataRisk(opts);
+  if (pgData) {
+    reportCliMessage("error", renderPgDataRefusal(pgData));
     return { ok: false, envChanged: false };
   }
   const { buildDir, envChanged } = materialize(opts);
@@ -3323,7 +3431,7 @@ export function composePrefetch(opts: ComposeUpOpts): ComposePrefetchResult {
  */
 function ensureEdgeMountDirs(): string[] {
   const failed: string[] = [];
-  for (const { host } of EDGE_CONTAINER_MOUNTS) {
+  for (const { host } of composeEdgeMounts()) {
     try {
       mkdirSync(host, { recursive: true });
     } catch (err) {
@@ -3345,14 +3453,14 @@ function isRootlessDocker(): boolean {
 }
 
 /**
- * `openship up` (compose): write files, then either PULL the pinned images
+ * `kovalio up` (compose): write files, then either PULL the pinned images
  * (normal install) or BUILD api/dashboard/edge from the source checkout (dev
  * install). Postgres/redis are upstream images and are pulled either way.
  */
 export async function composeUp(
   opts: ComposeUpOpts,
 ): Promise<{ ok: boolean; apiPort: string; dashPort: string; refused?: boolean }> {
-  // #486 gate for callers that DON'T prefetch (openship update → composeUpdate). The
+  // #486 gate for callers that DON'T prefetch (kovalio update → composeUpdate). The
   // prefetch path already checked and set alreadyFetched, so it's skipped there. Runs
   // before materialize: a tag the registry lacks must fail without writing files.
   if (!opts.alreadyFetched && !pinnedImagesReady(opts)) {
@@ -3366,19 +3474,17 @@ export async function composeUp(
   const rotation = composeSecretRotationRisk(opts);
   if (rotation) {
     const pre = resolveEnvConfig(readEnvFile(), opts);
-    console.error(renderSecretRotationRefusal(rotation));
+    reportCliMessage("error", renderSecretRotationRefusal(rotation));
     // `refused` separates "this can't work" from "this didn't work": callers must not
     // offer a retry, because nothing about re-running changes the answer.
     return { ok: false, refused: true, apiPort: pre.apiPort, dashPort: pre.dashPort };
   }
-  // #487: an existing data volume holds data we can't place. resolvePgData would fall back
-  // to the subdir, but if the cluster is elsewhere that still orphans it — so refuse and let
-  // the operator pin OPENSHIP_PGDATA rather than write a guess. Same "stop before materialize"
-  // reasoning as the rotation gate: once `.env` is rewritten the safe recovery is harder.
+  // #487: an existing data volume could not be inspected or holds data we can't place.
+  // Refuse before materialize: rewriting `.env` with a guess makes recovery harder.
   const pgData = composePgDataRisk(opts);
   if (pgData) {
     const pre = resolveEnvConfig(readEnvFile(), opts);
-    console.error(renderPgDataRefusal(pgData));
+    reportCliMessage("error", renderPgDataRefusal(pgData));
     return { ok: false, refused: true, apiPort: pre.apiPort, dashPort: pre.dashPort };
   }
   const { buildDir, cfg, envChanged: rendered } = materialize(opts);
@@ -3399,7 +3505,7 @@ export async function composeUp(
   // `[emerg] a duplicate default server` — every time, forever, because the file is on
   // the host and outlives the container. Compose never carried anything, so it never
   // ran this; the file was created by some earlier path and then poisoned every
-  // `openship up` after it. Sanitize what we're about to mount, every start.
+  // `kovalio up` after it. Sanitize what we're about to mount, every start.
   const up = (extra: { withBuildOverride?: boolean } = {}) =>
     compose(
       envChanged
@@ -3412,9 +3518,9 @@ export async function composeUp(
   // (host-networked edge) and 4000/3001, leaving the new edge in a bind() crash
   // loop while the old one serves stale vhosts. Clear it before bringing ours up.
   const env = readEnvFile();
-  const project = env.COMPOSE_PROJECT_NAME || "openship";
+  const project = env.COMPOSE_PROJECT_NAME || "kovalio";
   removeOrphanedStack(project);
-  // The edge's pinned container_name collides with any openship-edge this project
+  // The edge's pinned container_name collides with any kovalio-edge this project
   // doesn't own — a takeover's `docker run` edge, a from-source stack — which aborts
   // `up` with a name conflict that removeOrphanedStack can't clear. Take the name.
   reconcileEdgeContainerName(project);
@@ -3432,10 +3538,10 @@ export async function composeUp(
   const unmakeableMounts = ensureEdgeMountDirs();
   if (unmakeableMounts.length && isRootlessDocker()) {
     const dirs = unmakeableMounts.join(" ");
-    console.error(
+    reportCliMessage("error",
       `\n  Rootless Docker can't create the edge's host directories under root-owned paths:\n` +
         `    ${unmakeableMounts.join("\n    ")}\n\n` +
-        `  Create them once (owned by your user), then re-run \`openship up --compose\`:\n` +
+        `  Create them once (owned by your user), then re-run \`kovalio up --compose\`:\n` +
         `    sudo mkdir -p ${dirs}\n` +
         `    sudo chown -R "$(id -un)" ${dirs}\n`,
     );
@@ -3449,16 +3555,18 @@ export async function composeUp(
   // Runs whenever the volume exists — NOT only when this run minted new secrets.
   // Gating on "the .env had no password" only caught the first bad run: after it,
   // the .env HAS a password, so the guard never fired again and the install stayed
-  // broken through every subsequent `openship up`. The mismatch is between the
+  // broken through every subsequent `kovalio up`. The mismatch is between the
   // VOLUME and the `.env`, which is not something the `.env`'s own history can tell
   // us. The ALTER is idempotent, so on a healthy install this is a no-op.
   if (dbVolumeExists(project)) {
-    reconcileDbPassword(env.POSTGRES_USER || "openship", env.POSTGRES_PASSWORD ?? "");
+    reconcileDbPassword(env.POSTGRES_USER || "kovalio", env.POSTGRES_PASSWORD ?? "");
   }
 
   await sanitizeEdgeVhosts(new LocalExecutor(), EDGE_SITES_HOST_DIR, (l) =>
     console.log(`  ${l.message}`),
-  ).catch(() => {});
+  ).catch((diagnosticFailure) => {
+    observeCaughtError(diagnosticFailure, "cli/lib/compose");
+  });
 
   if (buildDir) {
     // Only the upstream images can be pulled; ours don't exist in a registry for
@@ -3489,7 +3597,7 @@ export async function composeUp(
 }
 
 /**
- * Compose just created (or replaced) `openship-edge` behind the detector's back —
+ * Compose just created (or replaced) `kovalio-edge` behind the detector's back —
  * `ensureContainerEdge` isn't in this path, so nothing else invalidates the
  * memoized "is our edge running" answer. This process cached `null` during
  * preflight, moments ago.
@@ -3504,7 +3612,7 @@ export function composeDown(): boolean {
 }
 
 /**
- * `openship uninstall` (compose): tear the stack down INCLUDING its volumes, and
+ * `kovalio uninstall` (compose): tear the stack down INCLUDING its volumes, and
  * optionally delete the images we own.
  *
  * `down -v` is the destructive part — those volumes hold the database. Only ever
@@ -3512,7 +3620,7 @@ export function composeDown(): boolean {
  * containers from an earlier project name so an uninstall doesn't leave a stale
  * edge holding :80/:443.
  *
- * Edge state on the HOST (`/etc/letsencrypt`, /var/lib/openship/edge, the static
+ * Edge state on the HOST (`/etc/letsencrypt`, /var/lib/kovalio/edge, the static
  * doc-roots) is deliberately LEFT IN PLACE: issued certificates outlive an
  * uninstall/reinstall, and `/etc/letsencrypt` may be shared with a mail server or
  * anything else on the box. Removing it is the operator's call, not ours.
@@ -3532,10 +3640,10 @@ export function composeUninstall(opts: { removeImages?: boolean } = {}): {
 
   if (opts.removeImages) {
     const env = readEnvFile();
-    const registry = env.OPENSHIP_IMAGE_REGISTRY || DEFAULT_IMAGE_REGISTRY;
-    const version = env.OPENSHIP_VERSION || "latest";
+    const registry = env.KOVALIO_IMAGE_REGISTRY || DEFAULT_IMAGE_REGISTRY;
+    const version = env.KOVALIO_VERSION || "latest";
     for (const { service } of BUILT_SERVICES) {
-      const ref = `${registry}/openship-${service}:${version}`;
+      const ref = `${registry}/kovalio-${service}:${version}`;
       // Ours by exact tag. Upstream postgres/redis are left alone — they're
       // commonly shared with whatever else the operator runs on this box.
       if (spawnSync("docker", ["image", "rm", "-f", ref], { stdio: "ignore" }).status === 0) {
@@ -3547,16 +3655,16 @@ export function composeUninstall(opts: { removeImages?: boolean } = {}): {
 }
 
 /**
- * `openship update` (compose): the WHOLE update, so nothing has to be run after it.
+ * `kovalio update` (compose): the WHOLE update, so nothing has to be run after it.
  *
  * This is `composeUp` with the version repinned, deliberately — not a narrower
  * pull+up. The new CLI ships a new compose template (services, mounts, env keys)
  * and `composeUp` is the only thing that writes it, which is why operators ended
- * up running `openship up` afterwards to pick it up. That follow-up is what broke
+ * up running `kovalio up` afterwards to pick it up. That follow-up is what broke
  * installs: it regenerated `.env` from flags it wasn't given. Now the update path
  * regenerates both files itself, carrying every operator setting forward
  * (`resolveEnvConfig`), and force-recreates the env-consuming services when the
- * result differs. `openship up` afterwards is harmless but unnecessary.
+ * result differs. `kovalio up` afterwards is harmless but unnecessary.
  *
  * Covers both install shapes: a from-source install rebuilds from its checkout
  * (no published image for the branch it tracks), a normal one pulls.
@@ -3589,9 +3697,9 @@ export function composeRunning(): boolean {
  *  "Start" for a compose install. Files already exist, so this is a plain
  *  `up -d`, NOT the full composeUp (materialize + pull/build). */
 export function composeStart(): boolean {
-  // Same name-conflict guard as composeUp: a foreign openship-edge would abort this
+  // Same name-conflict guard as composeUp: a foreign kovalio-edge would abort this
   // bare `up` too. Cheap when the edge is already ours (a no-op).
-  reconcileEdgeContainerName(readEnvFile().COMPOSE_PROJECT_NAME || "openship");
+  reconcileEdgeContainerName(readEnvFile().COMPOSE_PROJECT_NAME || "kovalio");
   return compose(["up", "-d"], { quiet: true }) === 0;
 }
 
@@ -3602,7 +3710,7 @@ export function composeRestart(): boolean {
 
 /**
  * The stack's INTERNAL_TOKEN, read from the generated compose `.env` — NOT the
- * bare-mode `~/.openship/internal-token`. The compose api container is booted
+ * bare-mode `~/.kovalio/internal-token`. The compose api container is booted
  * with this value (renderEnv → keepSecret), so the CLI must use it to reach
  * internal-token-gated endpoints.
  *

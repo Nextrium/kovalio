@@ -1,6 +1,10 @@
 import { api } from "./client";
 import { endpoints } from "./endpoints";
 
+/** Cross-card refresh signal for Settings → Git. Source management and the
+ * generic credential card intentionally own different API calls. */
+export const GITHUB_SOURCES_CHANGED_EVENT = "kovalio:github-sources-changed";
+
 /** Query for the server-paginated repo list (all optional). */
 export interface RepoListQuery {
   page?: number;
@@ -24,6 +28,77 @@ export interface RepoPageResponse<TRepo = unknown> {
   totalPages: number;
 }
 
+export interface GitHubSourceInstallation {
+  id: number;
+  owner: string;
+  ownerType: string;
+  avatarUrl: string;
+  suspendedAt: string | null;
+}
+
+export interface GitHubSource {
+  id: string;
+  name: string;
+  provider: "github";
+  appId: number;
+  slug: string;
+  clientId: string | null;
+  appName: string | null;
+  avatarUrl: string | null;
+  apiBaseUrl: string;
+  webBaseUrl: string;
+  webhookUrl: string;
+  setupUrl: string;
+  appUrl: string;
+  managementUrl: string;
+  isDefault: boolean;
+  status: string;
+  lastVerifiedAt: string | null;
+  lastError: string | null;
+  installations: GitHubSourceInstallation[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GitHubSourceConfiguration {
+  publicReady: boolean;
+  publicUrl: string | null;
+  webhookUrl: string;
+  setupUrl: string;
+}
+
+export interface ManualGitHubSourceInput {
+  name: string;
+  appId: number;
+  clientId?: string;
+  clientSecret?: string;
+  privateKeyPem: string;
+  webhookSecret: string;
+  apiBaseUrl?: string;
+  webBaseUrl?: string;
+  isDefault?: boolean;
+}
+
+export interface UpdateGitHubSourceInput {
+  name?: string;
+  appId?: number;
+  clientId?: string | null;
+  clientSecret?: string;
+  privateKeyPem?: string;
+  webhookSecret?: string;
+  apiBaseUrl?: string;
+  webBaseUrl?: string;
+}
+
+export interface BranchPageResponse {
+  data: Array<{ name: string; sha?: string; protected?: boolean }>;
+  pagination: {
+    page: number;
+    perPage: number;
+    hasMore: boolean;
+  };
+}
+
 /* ------------------------------------------------------------------ */
 /*  /github/status request dedup (in-flight only — NOT a cache)        */
 /* ------------------------------------------------------------------ */
@@ -39,7 +114,7 @@ let statusInflight: Promise<unknown> | null = null;
 
 function getStatusDeduped<T = unknown>(force = false): Promise<T> {
   if (!force && statusInflight) return statusInflight as Promise<T>;
-  const work = api.get<T>(endpoints.github.status).finally(() => {
+  const work = api.get<T>(endpoints.github.status, { dedupe: !force }).finally(() => {
     if (statusInflight === work) statusInflight = null;
   });
   statusInflight = work;
@@ -48,6 +123,12 @@ function getStatusDeduped<T = unknown>(force = false): Promise<T> {
 
 function invalidateStatus(): void {
   statusInflight = null;
+}
+
+/** Notify every GitHub consumer only after a credential/source mutation commits. */
+export function notifyGitHubSourcesChanged(): void {
+  invalidateStatus();
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(GITHUB_SOURCES_CHANGED_EVENT));
 }
 
 /* ------------------------------------------------------------------ */
@@ -62,7 +143,7 @@ export interface RepoTreeEntry {
 
 export const githubApi = {
   /** Dashboard home - user info, orgs, recent repos */
-  getUserHome: () => api.get<any>(endpoints.github.userHome),
+  getUserHome: (force = false) => api.get<any>(endpoints.github.userHome, { dedupe: !force }),
 
   /**
    * A repo's whole tree, flat and recursive — one call, so the path picker can
@@ -71,27 +152,28 @@ export const githubApi = {
    */
   getRepoTree: (owner: string, repo: string, branch?: string) =>
     api.get<{ data: RepoTreeEntry[] }>(
-      endpoints.github.repoTree(owner, repo) + (branch ? `?branch=${encodeURIComponent(branch)}` : ""),
+      endpoints.github.repoTree(owner, repo) +
+        (branch ? `?branch=${encodeURIComponent(branch)}` : ""),
     ),
 
   /** Repos for a specific GitHub org */
-  getOrgRepos: (owner: string) =>
-    api.get<any>(endpoints.github.orgRepos(owner)),
+  getOrgRepos: (owner: string) => api.get<any>(endpoints.github.orgRepos(owner)),
 
   /** Repos for a specific GitHub user. Server-paginated: pass page/perPage/
    *  search/visibility/sort and read the authoritative `count`/`total` back
    *  (omit the params to get the full set, as MCP + legacy callers do). */
-  getUserRepos: (owner: string, params?: RepoListQuery) =>
+  getUserRepos: (owner: string, params?: RepoListQuery, force = false) =>
     api.get<RepoPageResponse>(endpoints.github.userRepos, {
       params: { owner, ...params },
+      dedupe: !force,
     }),
 
   /** List a repo's branches (used before a project exists — e.g. the migration
    *  wizard's link-repo step, which can't use projectsApi.getBranches). */
-  listBranches: (owner: string, repo: string) =>
-    api.get<{ data: Array<{ name: string }> }>(
-      endpoints.github.repoBranches(owner, repo),
-    ),
+  listBranches: (owner: string, repo: string, page = 1) =>
+    api.get<BranchPageResponse>(endpoints.github.repoBranches(owner, repo), {
+      params: { page },
+    }),
 
   /**
    * Mint a short-lived GitHub App installation token for cloning a repo and
@@ -104,7 +186,8 @@ export const githubApi = {
     ),
 
   /** Check GitHub connection status (live, no dedup). */
-  getStatus: () => api.get<any>(endpoints.github.status),
+  getStatus: (options?: { includeInstallUrl?: boolean }) =>
+    api.get<any>(endpoints.github.status, { params: options, dedupe: false }),
 
   /**
    * GitHub connection status, de-duplicated across CONCURRENT callers (Settings
@@ -118,14 +201,14 @@ export const githubApi = {
   /**
    * Start a GitHub connection. Pass `source` from the dashboard's
    * dual-source settings panel:
-   *   - "oauth" → force the Openship App install flow (even if gh CLI
-   *     is already authenticated). Used by the "Connect Openship App"
+   *   - "oauth" → force the Kovalio App install flow (even if gh CLI
+   *     is already authenticated). Used by the "Connect Kovalio App"
    *     button so it never short-circuits on a pre-existing cli token.
    *   - "cli"   → only consider the gh CLI source.
    *   - omit    → server picks based on installation auth mode.
    */
-  connect: (source?: "oauth" | "cli") =>
-    api.post<any>(endpoints.github.connect, source ? { source } : undefined),
+  connect: (source?: "oauth" | "cli", state?: string) =>
+    api.post<any>(endpoints.github.connect, source || state ? { source, state } : undefined, { timeout: 60_000 }),
 
   /**
    * Connect this instance with a pasted GitHub token. Validated server-side
@@ -139,14 +222,56 @@ export const githubApi = {
     ),
 
   /** Poll device flow status */
-  pollConnect: () => api.get<any>(endpoints.github.connectPoll),
+  pollConnect: (state?: string) => api.get<any>(endpoints.github.connectPoll, state ? { params: { state }, dedupe: false } : undefined),
+
+  /** Finalize a workspace-bound GitHub App installation callback. */
+  claimInstallation: (input: { state: string; installationId: string; setupAction?: string }) =>
+    api.post<{
+      ok: boolean;
+      pendingApproval?: boolean;
+      installation?: { login?: string };
+    }>(endpoints.github.installationClaim, input, { timeout: 60_000 }),
 
   /**
    * Disconnect a GitHub source.
-   *   - "oauth" → remove the Openship App / OAuth account row
+   *   - "oauth" → remove the Kovalio App / OAuth account row
    *   - "cli"   → suppress the gh CLI fallback (host config untouched)
    *   - "all"   → both (default - preserves the old behavior)
    */
   disconnect: (source: "oauth" | "cli" | "all" = "all") =>
     api.post<{ success: boolean; source: string }>(endpoints.github.disconnect, { source }),
+
+  /** Organization-owned GitHub Apps. All endpoints are self-hosted + owner-only. */
+  listSources: () =>
+    api.get<{ data: GitHubSource[]; configuration: GitHubSourceConfiguration }>(
+      endpoints.github.sources,
+    ),
+
+  beginSourceManifest: (name: string) =>
+    api.post<{ url: string; manifest: Record<string, unknown> }>(endpoints.github.sourceManifest, {
+      name,
+    }),
+
+  convertSourceManifest: (state: string, code: string) =>
+    api.post<{ data: GitHubSource; installUrl: string }>(endpoints.github.sourceManifestConvert, {
+      state,
+      code,
+    }),
+
+  createSourceManual: (input: ManualGitHubSourceInput) =>
+    api.post<{ data: GitHubSource; installUrl: string }>(endpoints.github.sourceManual, input),
+
+  updateSource: (id: string, input: UpdateGitHubSourceInput) =>
+    api.patch<{ data: GitHubSource }>(endpoints.github.source(id), input),
+
+  removeSource: (id: string) => api.delete<{ success: boolean }>(endpoints.github.source(id)),
+
+  verifySource: (id: string) =>
+    api.post<{ data: GitHubSource }>(endpoints.github.sourceVerify(id), {}),
+
+  setDefaultSource: (id: string) =>
+    api.post<{ data: GitHubSource }>(endpoints.github.sourceDefault(id), {}),
+
+  createSourceInstallUrl: (id: string) =>
+    api.post<{ url: string; state: string }>(endpoints.github.sourceInstall(id), {}),
 };

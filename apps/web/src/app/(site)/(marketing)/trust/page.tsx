@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Trust & Security – Openship",
+  title: "Trust & Security – Kovalio",
   description:
-    "How Openship handles your data, permissions, and the boundary between self-hosted instances and Openship Cloud.",
+    "How Kovalio handles your data, permissions, and the boundary between self-hosted instances and Kovalio Cloud.",
 };
 
 type Pillar = {
@@ -27,7 +27,7 @@ type Pillar = {
 const PILLARS: Pillar[] = [
   {
     title: "Data ownership",
-    desc: "Local and server projects live only in your instance's database. Cloud projects are canonical on Openship Cloud. A resource is either fully local or fully cloud — never split.",
+    desc: "Local and server projects live only in your instance's database. Cloud projects are canonical on Kovalio Cloud. A resource is either fully local or fully cloud — never split.",
     icon: Database,
     href: "/docs/architecture/data-ownership",
   },
@@ -45,21 +45,21 @@ const PILLARS: Pillar[] = [
   },
   {
     title: "Credential custody",
-    desc: "The GitHub App key lives only on Openship Cloud; self-hosted instances mint tokens through it. Cloud sessions and secrets are encrypted at rest and never exposed to the browser.",
+    desc: "The GitHub App key lives only on Kovalio Cloud; self-hosted instances mint tokens through it. Cloud sessions and secrets are encrypted at rest and never exposed to the browser.",
     icon: KeyRound,
     href: "/docs/security/auth",
   },
   {
     title: "Self-host or cloud",
-    desc: "Run Openship entirely on your own infrastructure with no data leaving your network, or connect Openship Cloud when you want managed compute. Your choice, per project.",
+    desc: "Run Kovalio entirely on your own infrastructure with no data leaving your network, or connect Kovalio Cloud when you want managed compute. Your choice, per project.",
     icon: Server,
     href: "/docs/architecture/overview",
   },
   {
     title: "Open source & auditable",
-    desc: "Openship is open source under the Apache 2.0 license. The security boundary, permission plane, and gateway are all in the open for you to review.",
+    desc: "Kovalio is open source under the Apache 2.0 license. The security boundary, permission plane, and gateway are all in the open for you to review.",
     icon: Github,
-    href: "https://github.com/oblien/openship",
+    href: "https://github.com/Nextrium/kovalio",
   },
 ];
 
@@ -87,7 +87,7 @@ export default function TrustPage() {
               Built to be trusted with production
             </h1>
             <p className="th-text-body mt-5 max-w-xl text-lg leading-relaxed">
-              Openship is explicit about where your data lives, who can touch it,
+              Kovalio is explicit about where your data lives, who can touch it,
               and how self-hosted instances talk to the cloud. Here&apos;s the
               short version — the docs go deeper.
             </p>
@@ -147,7 +147,7 @@ export default function TrustPage() {
               Compliance & responsible disclosure
             </h2>
             <p className="th-text-body mt-3 text-[15px] leading-relaxed">
-              Openship is open source, so the security model is auditable by
+              Kovalio is open source, so the security model is auditable by
               anyone. For the strictest requirements, self-hosting keeps all
               project data and network traffic inside your own infrastructure.
               We&apos;re actively working toward formal certifications; this page

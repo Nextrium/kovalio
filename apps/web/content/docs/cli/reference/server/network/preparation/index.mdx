@@ -1,0 +1,128 @@
+---
+title: server network preparation
+description: Commands, arguments, and options for kovalio server network preparation.
+cliGroup: kovalio server network preparation
+---
+
+See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio server network preparation
+
+Prepare managed networking and recover interrupted preparation
+
+```text
+kovalio server network preparation [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list`](/docs/cli/reference/server/network/preparation#kovalio-server-network-preparation-list) | List in-progress and recoverable preparations |
+| [`get <id>`](/docs/cli/reference/server/network/preparation#kovalio-server-network-preparation-get) | Read preparation steps, access policy and sequence |
+| [`create [options] [file]`](/docs/cli/reference/server/network/preparation#kovalio-server-network-preparation-create) | Start an idempotent managed-network preparation |
+| [`access [options] [file]`](/docs/cli/reference/server/network/preparation#kovalio-server-network-preparation-access) | Revise a preparation's reviewed access policy |
+| [`remove-member [options] [file]`](/docs/cli/reference/server/network/preparation#kovalio-server-network-preparation-remove-member) | Remove a host from a preparation using its exact sequence |
+| [`discard [options] [file]`](/docs/cli/reference/server/network/preparation#kovalio-server-network-preparation-discard) | Discard the selected preparation at its current sequence |
+| [`events [options] <id>`](/docs/cli/reference/server/network/preparation#kovalio-server-network-preparation-events) | Stream preparation progress |
+
+## kovalio server network preparation access
+
+Revise a preparation's reviewed access policy
+
+```text
+kovalio server network preparation access [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |
+
+## kovalio server network preparation create
+
+Start an idempotent managed-network preparation
+
+```text
+kovalio server network preparation create [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio server network preparation discard
+
+Discard the selected preparation at its current sequence
+
+```text
+kovalio server network preparation discard [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |
+
+## kovalio server network preparation events
+
+Stream preparation progress
+
+```text
+kovalio server network preparation events [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Preparation ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--timeout <ms>` | Stop after this deadline |
+
+## kovalio server network preparation get
+
+Read preparation steps, access policy and sequence
+
+```text
+kovalio server network preparation get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Preparation ID |
+
+## kovalio server network preparation list
+
+List in-progress and recoverable preparations
+
+```text
+kovalio server network preparation list [options]
+```
+
+## kovalio server network preparation remove-member
+
+Remove a host from a preparation using its exact sequence
+
+```text
+kovalio server network preparation remove-member [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |

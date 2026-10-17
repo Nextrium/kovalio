@@ -16,6 +16,7 @@
  * or trusted here. Interpolated args are single-quoted with `sq`.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { compareSemver } from "@repo/core";
 import type { CommandExecutor } from "../../types";
 import type { EnvironmentProfile } from "../environment";
@@ -80,7 +81,8 @@ async function onBoxFileMatches(
   try {
     const out = await executor.exec(`sha256sum ${sq(path)} 2>/dev/null | awk '{print $1}'`);
     return out.trim().toLowerCase() === sha256.toLowerCase();
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/system/modules/reconcile");
     return false; // missing file / no sha256sum → treat as mismatch (will write)
   }
 }
@@ -112,7 +114,7 @@ async function applyStep(
   // exec: write the verified script to a temp path, run with the author's own
   // `set -eu`, propagate the exit code, always clean up.
   const safeId = step.id.replace(/[^A-Za-z0-9._-]/g, "_");
-  const tmp = `/tmp/openship-mig-${opts.module}-${safeId}.sh`;
+  const tmp = `/tmp/kovalio-mig-${opts.module}-${safeId}.sh`;
   const argStr = (step.args ?? []).map(sq).join(" ");
   log(opts, `${opts.dryRun ? "[dry-run] " : ""}exec ${step.asset}${argStr ? ` ${argStr}` : ""}`);
   if (opts.dryRun) return { applied: true, skipped: false };
@@ -156,6 +158,7 @@ export async function reconcileServerModule(
   try {
     manifest = await readManifestOrSeed(executor, opts.module, opts.seed);
   } catch (err) {
+    observeCaughtError(err, "adapters/system/modules/reconcile");
     return {
       module: opts.module,
       fromVersion: "unknown",
@@ -247,7 +250,7 @@ export async function reconcileServerModule(
               ok: false,
               error:
                 `step ${step.id} is gated to ${step.distroFamily.join("/")}, but this host's ` +
-                `distro family is not one Openship recognizes ` +
+                `distro family is not one Kovalio recognizes ` +
                 `(${JSON.stringify(String(hostFamily))}, os-release ID ` +
                 `${JSON.stringify(opts.profile.distroId ?? "")}) — refusing to guess`,
             };
@@ -297,12 +300,14 @@ export async function reconcileServerModule(
       try {
         await opts.postApply(executor);
       } catch (err) {
+        observeCaughtError(err, "adapters/system/modules/reconcile");
         log(opts, `postApply failed (non-fatal): ${(err as Error).message}`);
       }
     }
 
     return { ...result({}, manifest), fromVersion };
   } catch (err) {
+    observeCaughtError(err, "adapters/system/modules/reconcile");
     // Never throw: return the partial progress already persisted.
     return {
       ...result({}, manifest),

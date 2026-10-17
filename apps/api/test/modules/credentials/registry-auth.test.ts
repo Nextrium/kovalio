@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * #581: a private-image pull went out anonymous because dockerode reads no
- * `~/.docker/config.json`. It now asks Openship's own credential store — and the two
+ * `~/.docker/config.json`. It now asks Kovalio's own credential store — and the two
  * properties that matter are that the lookup keys off the SAME registry derivation the
  * credential was saved under, and that a failure degrades to an anonymous pull instead of
  * failing the deploy.
@@ -16,14 +16,14 @@ vi.mock("@repo/db", () => ({
 
 // The service reads the encrypted envelope; keep the real crypto out of a unit test by
 // mocking only the two functions it uses.
-vi.mock("../../../src/lib/credential-encryption", () => ({
+vi.mock("@repo/platform/engine/lib/credential-encryption", () => ({
   encryptSecretField: (s: string) => `enc1:${s}`,
   decryptSecretField: (s: string | null | undefined) =>
     s && s.startsWith("enc1:") ? s.slice(5) : (s ?? undefined),
   isEncryptedSecret: (s: string) => s?.startsWith("enc1:"),
 }));
 
-import { resolveRegistryAuthFor, registryAuthResolver } from "../../../src/modules/credentials/registry-auth";
+import { resolveRegistryAuthFor, registryAuthResolver } from "@repo/platform/engine/modules/credentials/registry-auth";
 
 const ORG = "org_1";
 

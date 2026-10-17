@@ -2,8 +2,8 @@
  * `kind: 'local'` destinations were rejected on EVERY default install.
  *
  * The validator checked a deny list of system trees against the endpoint before
- * checking containment. `/var/lib/openship` is on that list and the default
- * BACKUP_LOCAL_ROOT is `/var/lib/openship/backups`, so every path inside the
+ * checking containment. `/var/lib/kovalio` is on that list and the default
+ * BACKUP_LOCAL_ROOT is `/var/lib/kovalio/backups`, so every path inside the
  * configured root matched a denied prefix and threw — and the containment check
  * that followed was unreachable code.
  *
@@ -21,10 +21,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   assertLocalEndpointInRoot,
   resolveLocalBackupRoot,
-} from "../../../src/modules/backup-destinations/local-path";
+} from "@repo/platform/engine/modules/backup-destinations/local-path";
 
 /** The shipped default (config/env.ts). The regression this file pins. */
-const DEFAULT_ROOT = "/var/lib/openship/backups";
+const DEFAULT_ROOT = "/var/lib/kovalio/backups";
 
 // macOS resolves /var → /private/var, so assert on the tail rather than an
 // absolute string. The paths don't exist on a dev box either; the validator
@@ -33,19 +33,19 @@ describe("local destination paths", () => {
   describe("the default root", () => {
     it("accepts the root itself", async () => {
       await expect(assertLocalEndpointInRoot(DEFAULT_ROOT, DEFAULT_ROOT)).resolves.toMatch(
-        /\/lib\/openship\/backups$/,
+        /\/lib\/kovalio\/backups$/,
       );
     });
 
     it("accepts a subpath of it", async () => {
       await expect(
         assertLocalEndpointInRoot(`${DEFAULT_ROOT}/acme/prod`, DEFAULT_ROOT),
-      ).resolves.toMatch(/\/lib\/openship\/backups\/acme\/prod$/);
+      ).resolves.toMatch(/\/lib\/kovalio\/backups\/acme\/prod$/);
     });
 
-    it("is itself a valid root, despite living under /var/lib/openship", async () => {
+    it("is itself a valid root, despite living under /var/lib/kovalio", async () => {
       await expect(resolveLocalBackupRoot(DEFAULT_ROOT)).resolves.toMatch(
-        /\/lib\/openship\/backups$/,
+        /\/lib\/kovalio\/backups$/,
       );
     });
   });
@@ -53,7 +53,7 @@ describe("local destination paths", () => {
   describe("escaping the root", () => {
     it("rejects a sibling directory", async () => {
       await expect(
-        assertLocalEndpointInRoot("/var/lib/openship/db", DEFAULT_ROOT),
+        assertLocalEndpointInRoot("/var/lib/kovalio/db", DEFAULT_ROOT),
       ).rejects.toThrow(/inside BACKUP_LOCAL_ROOT/);
     });
 
@@ -64,7 +64,7 @@ describe("local destination paths", () => {
     });
 
     it("rejects a prefix-sharing sibling that is not a child", async () => {
-      // "/var/lib/openship/backups-evil" starts with the root STRING but is not
+      // "/var/lib/kovalio/backups-evil" starts with the root STRING but is not
       // inside it. The separator in the comparison is what catches this.
       await expect(
         assertLocalEndpointInRoot(`${DEFAULT_ROOT}-evil`, DEFAULT_ROOT),
@@ -79,7 +79,7 @@ describe("local destination paths", () => {
   });
 
   describe("a dangerous root", () => {
-    it.each(["/etc", "/etc/openship", "/var/lib/docker/volumes", "/proc", "/boot"])(
+    it.each(["/etc", "/etc/kovalio", "/var/lib/docker/volumes", "/proc", "/boot"])(
       "rejects %s",
       async (root) => {
         await expect(resolveLocalBackupRoot(root)).rejects.toThrow(
@@ -88,7 +88,7 @@ describe("local destination paths", () => {
       },
     );
 
-    it.each(["/", "/var", "/var/lib", "/var/lib/openship"])(
+    it.each(["/", "/var", "/var/lib", "/var/lib/kovalio"])(
       "rejects %s as too broad or reserved",
       async (root) => {
         await expect(resolveLocalBackupRoot(root)).rejects.toThrow(
@@ -114,7 +114,7 @@ describe("local destination paths", () => {
     let realRoot: string;
 
     beforeAll(async () => {
-      tmpRoot = await mkdtemp(path.join(tmpdir(), "openship-bkp-"));
+      tmpRoot = await mkdtemp(path.join(tmpdir(), "kovalio-bkp-"));
       realRoot = path.join(tmpRoot, "root");
       await mkdir(path.join(realRoot, "inside"), { recursive: true });
       await mkdir(path.join(tmpRoot, "outside"), { recursive: true });

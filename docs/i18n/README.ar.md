@@ -1,11 +1,11 @@
-<h1 align="center">Openship</h1>
+<h1 align="center">Kovalio</h1>
 
 <p align="center" dir="rtl">منصة <strong><bdi dir="ltr">Open Source</bdi></strong> للنشر والاستضافة الذاتية مع <strong><bdi dir="ltr">CI/CD</bdi></strong> مدمج.<br>ادفع الـ <bdi dir="ltr">Code</bdi>، ابنِ الحاويات، وأدر بنيتك التحتية من تطبيق سطح المكتب أو لوحة التحكم عبر <bdi dir="ltr">Web</bdi> أو <strong><bdi dir="ltr">CLI</bdi></strong>.</p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/openship"><img src="https://img.shields.io/npm/v/openship?color=0b7285&label=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/kovalio"><img src="https://img.shields.io/npm/v/kovalio?color=0b7285&label=npm" alt="npm version" /></a>
   <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License" /></a>
-  <a href="https://openship.io"><img src="https://img.shields.io/badge/website-openship.io-0b7285" alt="Website" /></a>
+  <a href="https://nextrium.org"><img src="https://img.shields.io/badge/website-nextrium.org-0b7285" alt="Website" /></a>
 </p>
 
 <p align="center">
@@ -19,10 +19,11 @@
   <a href="README.de.md"><img src="https://img.shields.io/badge/lang-Deutsch-555" alt="Deutsch" /></a>
   <a href="README.tr.md"><img src="https://img.shields.io/badge/lang-Türkçe-555" alt="Türkçe" /></a>
   <a href="README.ko.md"><img src="https://img.shields.io/badge/lang-한국어-555" alt="한국어" /></a>
+  <a href="README.ru.md"><img src="https://img.shields.io/badge/lang-Русский-555" alt="Русский" /></a>
 </p>
 
 <p align="center">
-  <img src="../screenshots/screen.png" alt="Openship dashboard" width="800" />
+  <img src="../screenshots/screen.png" alt="Kovalio dashboard" width="800" />
 </p>
 
 ---
@@ -32,8 +33,8 @@
 ## البدء السريع
 
 ```bash
-npm i -g openship
-openship init
+npm i -g kovalio
+kovalio init
 ```
 
 وهذا كل ما تحتاجه للبدء.
@@ -41,22 +42,22 @@ openship init
 أو، إذا كنت تفضل استخدام <strong><bdi dir="ltr">Docker</bdi></strong>:
 
 ```bash
-git clone https://github.com/oblien/openship.git && cd openship
+git clone https://github.com/Nextrium/kovalio.git && cd kovalio
 cp .env.example .env
 docker compose up -d
 ```
 
-كما يمكنك تنزيل تطبيق سطح المكتب من <a href="https://openship.io"><bdi dir="ltr">openship.io</bdi></a>.
+كما يمكنك تنزيل تطبيق سطح المكتب من <a href="https://nextrium.org"><bdi dir="ltr">nextrium.org</bdi></a>.
 
 ---
 
-## ما الذي يقدمه <bdi dir="ltr">Openship</bdi>؟
+## ما الذي يقدمه <bdi dir="ltr">Kovalio</bdi>؟
 
-وجّه <bdi dir="ltr">Openship</bdi> إلى مستودعك، وسيكتشف التقنية المستخدمة، ويبني المشروع، ويهيئه للنشر تلقائيًا — دون الحاجة إلى ملفات إعداد، أو <strong><bdi dir="ltr">CI/CD pipelines</bdi></strong>، أو ملفات <strong><bdi dir="ltr">YAML</bdi></strong>.
+وجّه <bdi dir="ltr">Kovalio</bdi> إلى مستودعك، وسيكتشف التقنية المستخدمة، ويبني المشروع، ويهيئه للنشر تلقائيًا — دون الحاجة إلى ملفات إعداد، أو <strong><bdi dir="ltr">CI/CD pipelines</bdi></strong>، أو ملفات <strong><bdi dir="ltr">YAML</bdi></strong>.
 
 كما يتيح لك إدارة قواعد البيانات، و<strong><bdi dir="ltr">Domains</bdi></strong>، وشهادات <strong><bdi dir="ltr">SSL</bdi></strong>، و<strong><bdi dir="ltr">CDN</bdi></strong>، والبريد الإلكتروني، والنسخ الاحتياطية من مكان واحد.
 
-يعمل <bdi dir="ltr">Openship</bdi> مع <strong><bdi dir="ltr">Openship Cloud</bdi></strong> (خدمة مُدارة) أو على أي خادم <strong><bdi dir="ltr">Linux</bdi></strong> تملكه. سواء كنت مطورًا فرديًا تنشر مشاريعك، أو فريقًا يدير تطبيقات في بيئة الإنتاج، فستستخدم الأداة نفسها.
+يعمل <bdi dir="ltr">Kovalio</bdi> مع <strong><bdi dir="ltr">Kovalio Cloud</bdi></strong> (خدمة مُدارة) أو على أي خادم <strong><bdi dir="ltr">Linux</bdi></strong> تملكه. سواء كنت مطورًا فرديًا تنشر مشاريعك، أو فريقًا يدير تطبيقات في بيئة الإنتاج، فستستخدم الأداة نفسها.
 
 ---
 
@@ -72,7 +73,7 @@ docker compose up -d
 | **خادم بريد**        | <bdi dir="ltr">SMTP</bdi> مدمج مع <bdi dir="ltr">DKIM وSPF وDMARC</bdi>، دون الحاجة إلى <bdi dir="ltr">Mailgun</bdi> أو <bdi dir="ltr">Amazon SES</bdi> |
 | **النسخ الاحتياطية** | نسخ مجدولة تشمل قواعد البيانات ووحدات التخزين، مع استعادة بنقرة واحدة وإمكانية التصدير في أي وقت    |
 | **المراقبة**         | سجلات البناء، ومقاييس الحاويات، واستهلاك الموارد تُعرض مباشرة                                       |
-| **التوسع**           | <strong><bdi dir="ltr">Auto Scaling</bdi></strong> على <bdi dir="ltr">Openship Cloud</bdi>، مع جاهزية لدعم <strong><bdi dir="ltr">Multi-node</bdi></strong> في الاستضافة الذاتية |
+| **التوسع**           | <strong><bdi dir="ltr">Auto Scaling</bdi></strong> على <bdi dir="ltr">Kovalio Cloud</bdi>، مع جاهزية لدعم <strong><bdi dir="ltr">Multi-node</bdi></strong> في الاستضافة الذاتية |
 | **قابلية النقل**     | يعتمد على حاويات <bdi dir="ltr">Docker</bdi> القياسية، مما يسهّل الانتقال بين مزودي الاستضافة |
 | <strong><bdi dir="ltr">Docker Compose</bdi></strong> | انشر ملفات <bdi dir="ltr">Docker Compose</bdi> الحالية كما هي |
 
@@ -80,7 +81,7 @@ docker compose up -d
 
 ## انشر في أي مكان
 
-* <strong><bdi dir="ltr">Openship Cloud</bdi></strong> — خدمة مُدارة بالكامل مع <strong><bdi dir="ltr">Auto Scaling</bdi></strong> ودون أي إعدادات معقدة.
+* <strong><bdi dir="ltr">Kovalio Cloud</bdi></strong> — خدمة مُدارة بالكامل مع <strong><bdi dir="ltr">Auto Scaling</bdi></strong> ودون أي إعدادات معقدة.
 * <strong>أي <bdi dir="ltr">VPS</bdi></strong> — مثل <bdi dir="ltr">Hetzner وDigitalOcean وLinode وOVH</bdi> وغيرها.
 * **الخوادم المخصصة** — <bdi dir="ltr">Bare Metal</bdi> أو <bdi dir="ltr">Colocation</bdi> أو حتى <bdi dir="ltr">Homelab</bdi>.
 * **عدة خوادم** — وزّع أحمال العمل بين أكثر من خادم بسهولة.
@@ -95,9 +96,9 @@ docker compose up -d
 * <strong>لوحة التحكم عبر <bdi dir="ltr">Web</bdi></strong> — نفس التجربة من المتصفح، ومصممة للعمل الجماعي.
 * <strong><bdi dir="ltr">CLI</bdi></strong> — مناسب للأتمتة وبيئات <bdi dir="ltr">CI</bdi>.
 
-كما يوفر <bdi dir="ltr">Openship</bdi> واجهتي <strong><bdi dir="ltr">REST API</bdi></strong> و<strong><bdi dir="ltr">MCP (Model Context Protocol)</bdi></strong> لدعم الأتمتة والتكامل مع الأدوات الأخرى.
+كما يوفر <bdi dir="ltr">Kovalio</bdi> واجهتي <strong><bdi dir="ltr">REST API</bdi></strong> و<strong><bdi dir="ltr">MCP (Model Context Protocol)</bdi></strong> لدعم الأتمتة والتكامل مع الأدوات الأخرى.
 
-للاطلاع على جميع الأوامر ومرجع <bdi dir="ltr">API</bdi>، راجع <a href="https://openship.io/docs"><bdi dir="ltr">openship.io/docs</bdi></a>.
+للاطلاع على جميع الأوامر ومرجع <bdi dir="ltr">API</bdi>، راجع <a href="https://nextrium.org/docs"><bdi dir="ltr">nextrium.org/docs</bdi></a>.
 
 > **ملاحظة:** لا تزال الوثائق قيد التطوير. إذا وجدت أي جزء غير مكتمل أو غير واضح، فإن [مساهماتك](../../CONTRIBUTING.md) مرحب بها وستساعد في تحسين المشروع.
 
@@ -119,7 +120,7 @@ docker compose up -d
 
 ## الترخيص
 
-<bdi dir="ltr">Openship</bdi> مشروع **مفتوح المصدر** مرخص بموجب <a href="../../LICENSE"><bdi dir="ltr">Apache License 2.0</bdi></a>.
+<bdi dir="ltr">Kovalio</bdi> مشروع **مفتوح المصدر** مرخص بموجب <a href="../../LICENSE"><bdi dir="ltr">Apache License 2.0</bdi></a>.
 
 يمكنك استخدامه، وتشغيله، وتعديله، واستضافته، وإعادة توزيعه، بما في ذلك ضمن مشاريع تجارية أو مغلقة المصدر، وفقًا لشروط <strong><bdi dir="ltr">Apache License 2.0</bdi></strong>. راجع <a href="../../LICENSE"><bdi dir="ltr">LICENSE</bdi></a> للاطلاع على النص الكامل.
 

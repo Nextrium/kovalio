@@ -1,0 +1,126 @@
+---
+title: monitoring
+description: Commands, arguments, and options for kovalio monitoring.
+cliGroup: kovalio monitoring
+---
+
+See the [workflow guide](/docs/cli/operations) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio monitoring
+
+Inspect issues and workload health using the platform's monitoring operations
+
+```text
+kovalio monitoring [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`issues [options]`](/docs/cli/reference/monitoring#kovalio-monitoring-issues) | List issues with counts and available recovery actions |
+| [`summary`](/docs/cli/reference/monitoring#kovalio-monitoring-summary) | Show open issue counts |
+| [`clear-history [options]`](/docs/cli/reference/monitoring#kovalio-monitoring-clear-history) | Clear resolved incidents in the selected organization; preserves active issues (self-hosted owner/admin) |
+| [`health`](/docs/cli/reference/monitoring#kovalio-monitoring-health) | Show workload health, scan freshness and watcher capabilities |
+| [`scan`](/docs/cli/reference/monitoring#kovalio-monitoring-scan) | Run an authorized current workload health scan |
+| [`rescan [options]`](/docs/cli/reference/monitoring#kovalio-monitoring-rescan) | Run the shared instance rescan (self-hosted administrator) |
+| [`watch`](/docs/cli/reference/monitoring#kovalio-monitoring-watch) | Configure the existing engine health watcher |
+
+## kovalio monitoring clear-history
+
+Clear resolved incidents in the selected organization; preserves active issues (self-hosted owner/admin)
+
+```text
+kovalio monitoring clear-history [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm permanent removal of resolved incident history |
+
+## kovalio monitoring health
+
+Show workload health, scan freshness and watcher capabilities
+
+```text
+kovalio monitoring health [options]
+```
+
+## kovalio monitoring issues
+
+List issues with counts and available recovery actions
+
+```text
+kovalio monitoring issues [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--status <status>` | Issue status (choices: "open", "resolved", default: "open") |
+
+## kovalio monitoring rescan
+
+Run the shared instance rescan (self-hosted administrator)
+
+```text
+kovalio monitoring rescan [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`status`](/docs/cli/reference/monitoring#kovalio-monitoring-rescan-status) | Inspect the current instance rescan |
+
+| Option | Meaning |
+| --- | --- |
+| `--health-only` | Check health without running infrastructure or update jobs |
+
+## kovalio monitoring rescan status
+
+Inspect the current instance rescan
+
+```text
+kovalio monitoring rescan status [options]
+```
+
+## kovalio monitoring scan
+
+Run an authorized current workload health scan
+
+```text
+kovalio monitoring scan [options]
+```
+
+## kovalio monitoring summary
+
+Show open issue counts
+
+```text
+kovalio monitoring summary [options]
+```
+
+## kovalio monitoring watch
+
+Configure the existing engine health watcher
+
+```text
+kovalio monitoring watch [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`enable`](/docs/cli/reference/monitoring#kovalio-monitoring-watch-enable) | Enable continuous container monitoring when permitted by this instance |
+| [`disable`](/docs/cli/reference/monitoring#kovalio-monitoring-watch-disable) | Disable continuous container monitoring when permitted by this instance |
+
+## kovalio monitoring watch disable
+
+Disable continuous container monitoring when permitted by this instance
+
+```text
+kovalio monitoring watch disable [options]
+```
+
+## kovalio monitoring watch enable
+
+Enable continuous container monitoring when permitted by this instance
+
+```text
+kovalio monitoring watch enable [options]
+```

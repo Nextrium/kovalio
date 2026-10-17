@@ -1,0 +1,176 @@
+---
+title: app
+description: Commands, arguments, and options for kovalio app.
+cliGroup: kovalio app
+---
+
+See the [workflow guide](/docs/cli/projects) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio app
+
+Browse, install, and configure catalog apps
+
+```text
+kovalio app [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list\|ls`](/docs/cli/reference/app#kovalio-app-list) | List available catalog apps |
+| [`get <id>`](/docs/cli/reference/app#kovalio-app-get) | Show an app template and an accessible installation draft |
+| [`host-fit [options] <id>`](/docs/cli/reference/app#kovalio-app-host-fit) | Check an app's requirements against a deployment destination |
+| [`install [options] <id>`](/docs/cli/reference/app#kovalio-app-install) | Create or update an app installation draft; deploy its returned project ID with kovalio deploy |
+| [`custom`](/docs/cli/reference/app#kovalio-app-custom) | Manage this organization's custom app definitions |
+| [`settings`](/docs/cli/reference/app#kovalio-app-settings) | Read and update an installed app's curated settings |
+| [`connection <project>`](/docs/cli/reference/app#kovalio-app-connection) | Show resolved app connection details, including credentials; requires project write access |
+
+## kovalio app connection
+
+Show resolved app connection details, including credentials; requires project write access
+
+```text
+kovalio app connection [options] <project>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | Installed app project ID |
+
+## kovalio app custom
+
+Manage this organization's custom app definitions
+
+```text
+kovalio app custom [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list\|ls`](/docs/cli/reference/app#kovalio-app-custom-list) |  |
+| [`add <file>`](/docs/cli/reference/app#kovalio-app-custom-add) | Validate and save a custom app definition |
+| [`remove\|rm <id>`](/docs/cli/reference/app#kovalio-app-custom-remove) | Remove a custom catalog definition |
+
+## kovalio app custom add
+
+Validate and save a custom app definition
+
+```text
+kovalio app custom add [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | AppTemplate JSON file |
+
+## kovalio app custom list
+
+Use this command with the arguments below.
+
+```text
+kovalio app custom list|ls [options]
+```
+
+## kovalio app custom remove
+
+Remove a custom catalog definition
+
+```text
+kovalio app custom remove|rm [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Custom app ID |
+
+## kovalio app get
+
+Show an app template and an accessible installation draft
+
+```text
+kovalio app get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Catalog app ID |
+
+## kovalio app host-fit
+
+Check an app's requirements against a deployment destination
+
+```text
+kovalio app host-fit [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Catalog app ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--server <id>` | Registered server ID |
+| `--target <target>` | Deployment target, such as cloud |
+
+## kovalio app install
+
+Create or update an app installation draft; deploy its returned project ID with kovalio deploy
+
+```text
+kovalio app install [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Catalog app ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--name <name>` | Project name |
+| `--config <file>` | JSON object of app configuration values |
+| `--routes <file>` | JSON array of endpoint routing choices |
+
+## kovalio app list
+
+List available catalog apps
+
+```text
+kovalio app list|ls [options]
+```
+
+## kovalio app settings
+
+Read and update an installed app's curated settings
+
+```text
+kovalio app settings [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`get <project>`](/docs/cli/reference/app#kovalio-app-settings-get) |  |
+| [`update <project> <file>`](/docs/cli/reference/app#kovalio-app-settings-update) |  |
+
+## kovalio app settings get
+
+Use this command with the arguments below.
+
+```text
+kovalio app settings get [options] <project>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | Installed app project ID |
+
+## kovalio app settings update
+
+Use this command with the arguments below.
+
+```text
+kovalio app settings update [options] <project> <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | Installed app project ID |
+| `file` | JSON object containing a changes array of &#123;service, key, value&#125; |

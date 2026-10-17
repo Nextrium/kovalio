@@ -1,3 +1,4 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import {
   buildSshSettings,
   buildSetupPayload,
@@ -55,7 +56,7 @@ async function runDesktopCloudAuth(
 
   setStatus({
     title: labels.completingSignIn,
-    message: labels.returningToOpenship,
+    message: labels.returningToKovalio,
   });
   return { ok: true };
 }
@@ -94,7 +95,8 @@ async function runSelfHostedFlow(
 
   try {
     await api.post("system/onboarding", payload);
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/app/(onboarding)/onboarding/_lib/loading-flow");
     return {
       ok: false,
       status: {

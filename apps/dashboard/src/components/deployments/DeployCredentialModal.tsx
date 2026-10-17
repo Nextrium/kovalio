@@ -1,17 +1,20 @@
 "use client";
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import { Icon as UiIcon } from "@repo/ui/icons";
+
 /**
  * Unified clone-credential modal.
  *
  * Shown whenever a deploy needs the user to pick HOW the repo gets cloned
  * onto the build worker — same decision for self-hosted server and
- * Openship Cloud, so one modal handles both. Replaces the previous split
+ * Kovalio Cloud, so one modal handles both. Replaces the previous split
  * between `CloneStrategyModalContent` (preemptive gate) and
  * `CloneCredentialMissingModal` (post-failure recovery).
  *
  * Up to four options are surfaced, conditionally:
  *
- *   1. Install Openship App on {owner}             — recommended, short-lived
+ *   1. Install Kovalio App on {owner}             — recommended, short-lived
  *                                                    repo-scoped tokens. Works
  *                                                    for buildStrategy=local
  *                                                    AND remote. Shown when
@@ -64,7 +67,6 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Github, HardDrive, Key, Loader2, ExternalLink, Server } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 import { openAuthWindow } from "@/utils/authWindow";
 import { settingsApi, type CloneStrategyPreference } from "@/lib/api";
@@ -88,7 +90,7 @@ export interface DeployCredentialModalProps {
 
   /** Repo owner. Used in copy + as the App install target. */
   owner: string;
-  /** URL to install the Openship App on this owner. Null if unavailable
+  /** URL to install the Kovalio App on this owner. Null if unavailable
    *  (e.g. no cloud connection yet on self-hosted). */
   installUrl: string | null;
   /** Project id — required for the "add a project clone token" option. */
@@ -98,7 +100,7 @@ export interface DeployCredentialModalProps {
    *  server's Security tab where the per-server credential is configured. */
   serverId?: string | null;
   /** Where is the deploy headed? Affects copy. */
-  deployTarget: "local" | "server" | "cloud" | null | undefined;
+  deployTarget: "local" | "server" | "cloud" | "cluster" | null | undefined;
   /** Current build strategy. We hide "Build locally" when it's already
    *  local (would be a no-op). */
   buildStrategy: "local" | "server" | null | undefined;
@@ -153,7 +155,8 @@ export function DeployCredentialModal({
       if (trigger !== "preflight-gate") return;
       try {
         await settingsApi.updateCloneStrategyPreference(pref);
-      } catch {
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "dashboard/components/deployments/DeployCredentialModal");
         // Silent — non-fatal, the deploy can still proceed without it.
       }
     },
@@ -163,7 +166,7 @@ export function DeployCredentialModal({
   const handleInstallApp = useCallback(() => {
     if (!installUrl) {
       showToast(
-        "Install URL is not available — connect Openship Cloud first.",
+        "Install URL is not available — connect Kovalio Cloud first.",
         "error",
         "GitHub App",
       );
@@ -224,11 +227,9 @@ export function DeployCredentialModal({
   // when the App/cloud round-trip isn't wanted.
   const showConnectServer = deployTarget === "server" && !!serverId;
   const showAddToken = !!projectId;
-  // "Build locally" makes no sense for a local target (clone is already
-  // local) or when buildStrategy is already local. Otherwise show it for
-  // both server AND cloud targets — the cloud runtime supports local-build
-  // + artifact upload via CloudRuntime.build.
-  const showBuildLocal = targetIsRemote && buildStrategy !== "local";
+  // Only an operator-owned API can build locally and transfer the artifact.
+  // Cloud tenants must execute on their selected managed server.
+  const showBuildLocal = selfHosted && targetIsRemote && buildStrategy !== "local";
   // Used in the build-local sub-copy to acknowledge the gh CLI session
   // explicitly when it's logged in — clarifies that picking "build
   // locally" will use the user's existing gh session as one of the
@@ -237,7 +238,7 @@ export function DeployCredentialModal({
 
   // ── Copy ───────────────────────────────────────────────────────────
   const targetLabel =
-    deployTarget === "cloud" ? "Openship Cloud" : "your server";
+    deployTarget === "cloud" ? "Kovalio Cloud" : "your server";
   const headline =
     trigger === "preflight-gate"
       ? `How should we clone ${owner} on the build worker?`
@@ -272,15 +273,15 @@ export function DeployCredentialModal({
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 {busy === "install-app" ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <UiIcon name="spinner" className="size-4 animate-spin" />
                 ) : (
-                  <Github className="size-4" />
+                  <UiIcon name="github" className="size-4" />
                 )}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold text-foreground">
-                    Install the Openship GitHub App on {owner}
+                    Install the Kovalio GitHub App on {owner}
                   </p>
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
                     Recommended
@@ -291,7 +292,7 @@ export function DeployCredentialModal({
                   long-lived PATs to manage, safe to ship to remote workers.
                 </p>
               </div>
-              <ExternalLink className="size-4 text-muted-foreground shrink-0" />
+              <UiIcon name="external-link" className="size-4 text-muted-foreground shrink-0" />
             </div>
           </button>
         )}
@@ -306,9 +307,9 @@ export function DeployCredentialModal({
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-500">
                 {busy === "connect-server-github" ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <UiIcon name="spinner" className="size-4 animate-spin" />
                 ) : (
-                  <Server className="size-4" />
+                  <UiIcon name="server" className="size-4" />
                 )}
               </div>
               <div className="min-w-0 flex-1">
@@ -321,7 +322,7 @@ export function DeployCredentialModal({
                   round-trip. Best when you deploy here often.
                 </p>
               </div>
-              <ExternalLink className="size-4 text-muted-foreground shrink-0" />
+              <UiIcon name="external-link" className="size-4 text-muted-foreground shrink-0" />
             </div>
           </button>
         )}
@@ -336,9 +337,9 @@ export function DeployCredentialModal({
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
                 {busy === "add-token" ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <UiIcon name="spinner" className="size-4 animate-spin" />
                 ) : (
-                  <Key className="size-4" />
+                  <UiIcon name="key" className="size-4" />
                 )}
               </div>
               <div className="min-w-0 flex-1">
@@ -350,7 +351,7 @@ export function DeployCredentialModal({
                 <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
                   {hasGlobalToken
                     ? "Use the global PAT you've already saved — scoped narrower than your GitHub session."
-                    : "Paste a fine-grained PAT scoped to this repo. You control the scope and expiry — Openship just uses it for clones."}
+                    : "Paste a fine-grained PAT scoped to this repo. You control the scope and expiry — Kovalio just uses it for clones."}
                 </p>
               </div>
             </div>
@@ -367,9 +368,9 @@ export function DeployCredentialModal({
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
                 {busy === "build-local" ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <UiIcon name="spinner" className="size-4 animate-spin" />
                 ) : (
-                  <HardDrive className="size-4" />
+                  <UiIcon name="hard-drive" className="size-4" />
                 )}
               </div>
               <div className="min-w-0 flex-1">

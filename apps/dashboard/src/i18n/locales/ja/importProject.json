@@ -61,7 +61,7 @@
       "title": "ヘルスチェック",
       "subtitle": "オフ — アプリが起動した時点でデプロイは完了します",
       "subtitleOn": "オン — 公開前にアプリの応答を待ちます",
-      "description": "Openship は起動後のアプリを待たないため、起動が遅くてもデプロイが遅れたり失敗したりすることはありません。公開後にポートは別途確認され、何もブロックせずに報告されます。デプロイ自体を失敗させたい場合にのみ有効にしてください。",
+      "description": "Kovalio は起動後のアプリを待たないため、起動が遅くてもデプロイが遅れたり失敗したりすることはありません。公開後にポートは別途確認され、何もブロックせずに報告されます。デプロイ自体を失敗させたい場合にのみ有効にしてください。",
       "probeLabel": "アプリの応答を待つ",
       "probeDesc": "コンテナの起動後にアプリのポートへ接続し、接続が受け付けられるまで待ちます。",
       "pathLabel": "HTTP パス",
@@ -75,6 +75,9 @@
       "onFailureWarn": "デプロイは公開したまま、確認用にフラグを立てる",
       "onFailureFail": "デプロイを失敗させ、前のバージョンの配信を続ける"
     },
+    "runtimeVersionLabel": "ランタイムバージョン",
+    "runtimeVersionDefault": "デフォルト",
+    "runtimeVersionDesc": "選択したバージョンに対応するビルドと実行イメージを使用します。Kovalio が生成する Docker ビルドが必要です。",
     "buildImageLabel": "ビルドイメージ",
     "buildImageDesc": "クラウドまたはサーバービルド用のビルダーコンテナイメージ。検出されたベースイメージが正しくない場合は上書きしてください。",
     "productionPathsLabel": "本番パス",
@@ -105,7 +108,15 @@
     "modeWorker": "ワーカー",
     "modeStatic": "静的",
     "workerModeDesc": "ポートや公開URLを持たず継続的に実行 — キューコンシューマー、cron、ボットなど。",
-    "buildSettingsTitle": "ビルド設定"
+    "buildSettingsTitle": "ビルド設定",
+    "releaseTitle": "有効化前",
+    "releaseDescription": "ビルド後に実行する任意のコマンドです。失敗するとデプロイを停止します。Docker・Bareアプリのみ対応。",
+    "releaseCommand": "コマンド {number}",
+    "addReleaseCommand": "コマンドを追加",
+    "removeReleaseCommand": "コマンド {number} を削除",
+    "runtimeImageLabel": "実行イメージ",
+    "runtimeImageDesc": "Docker ビルド用の任意の本番ベースイメージです。ランタイムと生成レシピに対応する必要があります。空欄で既定値を使用します。",
+    "staticPathHint": "エッジから静的ファイルとして配信されます。プロセスとしては何も実行されません。"
   },
   "projectSettings": {
     "framework": "フレームワーク",
@@ -123,6 +134,7 @@
     "noneSet": "未設定",
     "pasteEnv": ".env を貼り付け",
     "uploadEnv": ".env をアップロード",
+    "downloadEnv": ".env をダウンロード",
     "edit": "編集",
     "cancel": "キャンセル",
     "saving": "保存中...",
@@ -144,6 +156,7 @@
       "interpolated": "補間済み"
     },
     "toast": {
+      "downloadFailed": "環境変数をダウンロードできませんでした。",
       "title": "環境変数",
       "added": "{count} 件追加",
       "updated": "{count} 件更新",
@@ -173,7 +186,9 @@
       "domainLabel": "ドメイン",
       "free": "無料",
       "custom": "カスタム",
-      "routingTrafficPrefix": "トラフィックのルーティング先ポート"
+      "routingTrafficPrefix": "トラフィックのルーティング先ポート",
+      "duplicateTitle": "重複したドメイン",
+      "duplicateDescription": "2 つのルートが同じドメインを指しています。各ルートが独自のドメインを持つように 1 つを変更してください:"
     },
     "shared": {
       "title": "共有環境",
@@ -205,9 +220,9 @@
       "volumes": "ボリューム",
       "statefulWarnPart1": "クラウド上のステートフルサービス: データはワークスペースの永続ディスクに保存され（再起動後も保持されます）が、",
       "statefulWarnBold": "リビルド間では引き継がれません",
-      "statefulWarnPart2": "（バックアップが有効な場合を除く）。Docker のボリュームマウントは適用されません。",
+      "statefulWarnPart2": "。ワークスペースを置き換える前に、データのバックアップと復元を明示的に行ってください。",
       "volumeHint": "名前付きボリュームまたはホストパス → コンテナパス。",
-      "volumeCloudNote": "クラウドではこれらのマウントは適用されません — データはワークスペースのディスクに保持されます（バックアップなしではリビルド間で保持されません）。",
+      "volumeCloudNote": "Kovalio Cloud は永続ボリュームのマウントに対応していません。ボリュームが必要なワークロードにはサーバーを選択してください。",
       "sourcePlaceholder": "ソース",
       "containerPathPlaceholder": "コンテナパス",
       "readOnlyMount": "読み取り専用マウント",
@@ -288,7 +303,7 @@
     "deploymentModeDesc": "{mode} · アプリごとのランタイムと単一アプリの処理を切り替えます。"
   },
   "deploymentProcessing": {
-    "targetOpenshipCloud": "Openship Cloud",
+    "targetKovalioCloud": "Kovalio Cloud",
     "targetServerNamed": "サーバー · {name}",
     "targetServer": "サーバー",
     "targetLocal": "ローカルマシン",
@@ -300,9 +315,9 @@
       "port": "ポート",
       "process": "プロセス",
       "unitDescription": "ユニットの説明",
-      "openshipDeployment": "Openship デプロイ",
+      "kovalioDeployment": "Kovalio デプロイ",
       "sites": {
-        "lead": "既存のプロキシは現在 {count} 件のサイトを配信しています。移行すると、ポート 80/443 を引き継ぐ前にそれらを Openship にインポートします：",
+        "lead": "既存のプロキシは現在 {count} 件のサイトを配信しています。移行すると、ポート 80/443 を引き継ぐ前にそれらを Kovalio にインポートします：",
         "tlsBadge": "TLS",
         "staticLabel": "静的:",
         "warningsTitle": "自動的に移行できませんでした — 手動で再追加してください："
@@ -315,7 +330,7 @@
       "successful": "デプロイに成功しました",
       "deploying": "デプロイ中..."
     },
-    "visitSite": "サイトを開く",
+    "openSite": "サイトを開く",
     "warningTitle": "デプロイは完了しましたが、一部のサービスに対応が必要です。",
     "productionLogs": "本番ログ",
     "buildTerminal": "ビルドターミナル",
@@ -325,7 +340,7 @@
     "stopDeployment": "デプロイを停止",
     "redeploy": "再デプロイ",
     "goToProject": "プロジェクトへ移動",
-    "openDashboard": "ダッシュボードを開く",
+    "openProject": "プロジェクトを開く",
     "edit": "編集",
     "status": {
       "cancelled": "キャンセル済み",
@@ -342,7 +357,38 @@
     "detailFramework": "フレームワーク",
     "detailBranch": "ブランチ",
     "detailDomains": "ドメイン",
-    "detailDomain": "ドメイン"
+    "detailDomain": "ドメイン",
+    "portAdvisory": {
+      "loopbackTitle": "アプリがルーティングされたトラフィックを受信できません",
+      "loopbackNote": "デプロイは稼働中ですが、ルーティング先のポートを確認する必要があります。",
+      "loopbackBody": "ポート {port} はコンテナ内部からの接続のみを受け付けています。",
+      "loopbackBodyService": "サービス「{service}」はポート {port} でコンテナ内部からの接続のみを受け付けています。",
+      "loopbackHelp": "ルーティング先のアプリは 0.0.0.0 で接続を受け付けるよう設定して再デプロイするか、想定されたプロキシへルーティングしてください。",
+      "openSettings": "設定を開く",
+      "skipError": "この警告を非表示にできませんでした。もう一度お試しください。",
+      "title": "ポート不一致に関する通知",
+      "bannerTitle": "コンテナポートの不一致が検出されました",
+      "review": "ポートを確認",
+      "note": "エッジルーターはポート {port} を指していますが、アプリケーションはそこで応答しませんでした。",
+      "body": "ポート {port} で応答がありませんでした。アプリケーションが別のポートでリッスンしている場合は、以下で更新してください。",
+      "bodyService": "サービス「{service}」: ポート {port} で応答がありませんでした。別のポートでリッスンしている場合は、ここで正しいポートを設定してください。",
+      "newPortLabel": "正しいポート",
+      "changePort": "ポートを変更",
+      "skip": "スキップ",
+      "applied": "ポート {port} へのルーティングを更新しました。",
+      "changeError": "ポートを更新できませんでした。もう一度お試しください。"
+    }
+  },
+  "deploymentHealth": {
+    "recheck": "状態を再確認",
+    "checking": "確認中…",
+    "healthy": "サービスは正常です",
+    "atDeployment": "デプロイ時の警告",
+    "currentHealth": "現在のサービス状態",
+    "startupHint": "起動中なら、少し待ってから再確認してください。再起動やエラーが続く場合はログで原因を確認してください。",
+    "viewLogs": "ログを見る",
+    "unavailable": "状態を確認できませんでした。サーバーの接続が回復したら再確認してください。",
+    "historical": "このデプロイは現在稼働していません。プロジェクトを開いて現在のサービスを確認してください。"
   },
   "composeDeployment": {
     "title": {
@@ -416,12 +462,12 @@
     "rowType": "タイプ"
   },
   "configDiagnostics": {
-    "title": "このリポジトリの openship.json の一部が適用されませんでした",
-    "description": "以下に挙げた項目はスキップされ、ファイルの残りは適用されました。デプロイはそのまま続行します。",
-    "titleWholeFile": "このリポジトリの openship.json は無視されました",
-    "descriptionWholeFile": "内容は一切適用されていません。デプロイは Openship が検出した設定で続行します。",
+    "title": "リポジトリの一部のデプロイ設定が適用されませんでした",
+    "description": "デプロイ前に、以下のスキップされた設定を確認してください。",
+    "titleWholeFile": "このリポジトリの kovalio.json は無視されました",
+    "descriptionWholeFile": "内容は一切適用されていません。デプロイは Kovalio が検出した設定で続行します。",
     "refused": "拒否",
     "unrecognized": "未認識",
-    "hint": "次のデプロイの前に、リポジトリで `openship config validate` を実行してファイルを確認してください。"
+    "hint": "次のデプロイ前に、指定された設定ファイルを確認し、未対応の設定を更新してください。"
   }
 }

@@ -5,10 +5,10 @@ import { buildMailBackupPayload } from "../../../src/modules/mail/admin/backup-p
 /**
  * A `keys: true` backup must not be able to succeed without the keys.
  *
- * Every secret this archive exists to carry lives on a root-owned path — `/root/.openship`
+ * Every secret this archive exists to carry lives on a root-owned path — `/root/.kovalio`
  * is mode 0700, `/var/lib/dkim` holds private keys, and `/var/vmail` is vmail:vmail 0700 —
  * while `produceCommand` runs through the BARE ssh executor, unelevated. The reads were
- * written as `[ -f … ] && cp … || true`, which on a host Openship logs into as a sudoer
+ * written as `[ -f … ] && cp … || true`, which on a host Kovalio logs into as a sudoer
  * rather than as root cannot even stat the path: the test fails for lack of privilege,
  * `|| true` absorbs it, and the run exits 0 recording `keys: true` on an archive with no
  * keys in it. mail-state.json is the only copy of the DKIM state and the encrypted
@@ -20,7 +20,7 @@ import { buildMailBackupPayload } from "../../../src/modules/mail/admin/backup-p
 
 const SECRET_READS = [
   { what: "DKIM private keys", path: "/var/lib/dkim" },
-  { what: "mail-state.json (DKIM state + encrypted credentials)", path: "/root/.openship/mail-state.json" },
+  { what: "mail-state.json (DKIM state + encrypted credentials)", path: "/root/.kovalio/mail-state.json" },
 ];
 
 describe("mail backup cannot silently omit the secrets it was asked for", () => {
@@ -52,7 +52,7 @@ describe("mail backup cannot silently omit the secrets it was asked for", () => 
     // Absence must still skip — a box with no amavis config is a gap in the archive, not a
     // failed backup. The `test` is what expresses that, so it has to be there AND be
     // privileged; a `[ -f ]` under the login user answers "absent" for both cases.
-    expect(script).toContain("sudo -n test -f /root/.openship/mail-state.json");
+    expect(script).toContain("sudo -n test -f /root/.kovalio/mail-state.json");
     expect(script).toContain("sudo -n test -d /var/lib/dkim");
     expect(script).not.toMatch(/^\s*\[ -[fd] \/(root|var\/lib\/dkim)/m);
   });
@@ -84,8 +84,8 @@ describe("mail backup cannot silently omit the secrets it was asked for", () => 
     // backup module still carrying it.
     const script = buildMailBackupPayload("example.com", { messageData: true, keys: true })
       .payloadConfig.produceCommand;
-    expect(script).toContain("openship: tar (staging the mail archive) failed with status");
-    expect(script).toContain("openship: the compressor 'zstd' failed with status");
+    expect(script).toContain("kovalio: tar (staging the mail archive) failed with status");
+    expect(script).toContain("kovalio: the compressor 'zstd' failed with status");
     // And the raw masking shape is gone.
     expect(script).not.toMatch(/tar -c[^\n]*\| zstd -c -3\s*$/m);
   });

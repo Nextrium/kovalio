@@ -9,7 +9,7 @@
 -- ONE TABLE, ON PURPOSE. The obvious second table — a record of each armed collector —
 -- would only cache state the mail engine already holds authoritatively: the token is
 -- literally inside `recipient_bcc_domain.bcc_address`
--- (`openship-hook+<token>@<domain>`), the maildir is in `vmail.mailbox`, and "a foreign
+-- (`kovalio-hook+<token>@<domain>`), the maildir is in `vmail.mailbox`, and "a foreign
 -- BCC took the slot" is derivable by comparing that address against our own prefix. A
 -- cache of the engine's own state is a thing that goes stale; the collector is READ from
 -- vmail instead.

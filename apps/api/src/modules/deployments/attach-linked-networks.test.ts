@@ -8,13 +8,14 @@ vi.mock("@repo/db", () => ({
   repos: {
     projectConnection: { listByTarget: (...a: unknown[]) => listByTarget(...a) },
     project: { findById: (...a: unknown[]) => findById(...a) },
+    deployment: { findById: async () => ({ id: "dep-1", projectId: "target", organizationId: "org1" }) },
     // The consumer's OWN container ids, passed explicitly because an adopted container
-    // keeps its original labels and the `openship.project` filter cannot see it.
+    // keeps its original labels and the `kovalio.project` filter cannot see it.
     service: { listByDeployment: (...a: unknown[]) => listByDeployment(...a) },
   },
 }));
 
-import { attachLinkedNetworks, linkedNetworkName } from "./attach-linked-networks";
+import { attachLinkedNetworks, linkedNetworkName } from "@repo/platform/engine/modules/deployments/attach-linked-networks";
 
 describe("attachLinkedNetworks", () => {
   beforeEach(() => {
@@ -23,7 +24,7 @@ describe("attachLinkedNetworks", () => {
     listByDeployment.mockReset().mockResolvedValue([]);
   });
 
-  it("attaches the consumer to each INTERNAL-linked source's openship-<slug> network (public links ignored)", async () => {
+  it("attaches the consumer to each INTERNAL-linked source's kovalio-<slug> network (public links ignored)", async () => {
     listByTarget.mockResolvedValue([
       { mode: "internal", sourceProjectId: "s1" },
       { mode: "public", sourceProjectId: "s2" }, // must be skipped
@@ -37,12 +38,12 @@ describe("attachLinkedNetworks", () => {
     await attachLinkedNetworks("target", { attachToExternalNetworks: attach });
 
     expect(attach).toHaveBeenCalledTimes(1);
-    expect(attach).toHaveBeenCalledWith("target", ["openship-supabase", "openship-mongo"], []);
+    expect(attach).toHaveBeenCalledWith("target", ["kovalio-supabase", "kovalio-mongo"], []);
   });
 
   /**
-   * An ADOPTED (in-place migrated) container keeps its ORIGINAL `openship.*` labels —
-   * labels are immutable — so `attachToExternalNetworks`'s `openship.project=<id>` filter
+   * An ADOPTED (in-place migrated) container keeps its ORIGINAL `kovalio.*` labels —
+   * labels are immutable — so `attachToExternalNetworks`'s `kovalio.project=<id>` filter
    * is structurally blind to it. Connecting an app to a migrated project in internal mode
    * therefore wrote the alias (`db:5432`) into the consumer's env and never joined the
    * container to the source's network: the connection failed to resolve at runtime while
@@ -52,7 +53,7 @@ describe("attachLinkedNetworks", () => {
   it("names the consumer's stored container ids, so an adopted container is joined too", async () => {
     listByTarget.mockResolvedValue([{ mode: "internal", sourceProjectId: "s1" }]);
     findById.mockImplementation(async (id: string) =>
-      id === "s1" ? { slug: "supabase" } : { activeDeploymentId: "dep-1" },
+      id === "s1" ? { slug: "supabase" } : { id: "target", organizationId: "org1", activeDeploymentId: "dep-1" },
     );
     listByDeployment.mockResolvedValue([
       { containerId: "adopted-web-1" },
@@ -63,7 +64,7 @@ describe("attachLinkedNetworks", () => {
 
     await attachLinkedNetworks("target", { attachToExternalNetworks: attach });
 
-    expect(attach).toHaveBeenCalledWith("target", ["openship-supabase"], [
+    expect(attach).toHaveBeenCalledWith("target", ["kovalio-supabase"], [
       "adopted-web-1",
       "adopted-db-1",
     ]);
@@ -76,8 +77,31 @@ describe("attachLinkedNetworks", () => {
     );
     const attach = vi.fn().mockResolvedValue(undefined);
     await attachLinkedNetworks("target", { attachToExternalNetworks: attach });
-    expect(attach).toHaveBeenCalledWith("target", ["openship-supabase"], []);
+    expect(attach).toHaveBeenCalledWith("target", ["kovalio-supabase"], []);
     expect(listByDeployment).not.toHaveBeenCalled();
+  });
+
+  it("scopes release preparation to the candidate and skips the live container inventory", async () => {
+    listByTarget.mockResolvedValue([{ mode: "internal", sourceProjectId: "database" }]);
+    findById.mockImplementation(async (id: string) =>
+      id === "database" ? { slug: "database" } : { slug: "app", activeDeploymentId: "live-deploy" },
+    );
+    const attachToExternalNetworks = vi.fn();
+    await attachLinkedNetworks("target", {
+      attachToExternalNetworks, joinServiceGroupContainers: vi.fn(),
+    }, undefined, "candidate-deploy", ["release-container"]);
+    expect(attachToExternalNetworks).toHaveBeenCalledWith(
+      "target", ["kovalio-database"], [], expect.objectContaining({
+        onlyContainerIds: ["release-container"], strict: true,
+      }),
+    );
+    expect(listByDeployment).not.toHaveBeenCalled();
+  });
+
+  it("fails release preparation when its links cannot be read", async () => {
+    listByTarget.mockRejectedValueOnce(new Error("db down"));
+    await expect(attachLinkedNetworks("target", { attachToExternalNetworks: vi.fn() },
+      undefined, "candidate-deploy", ["release-container"])).rejects.toThrow("db down");
   });
 
   it("no-ops (never reads links) when the runtime can't join external networks — e.g. cloud", async () => {
@@ -100,7 +124,7 @@ describe("attachLinkedNetworks", () => {
     ).resolves.toBeUndefined();
   });
 
-  it("linkedNetworkName builds openship-<slug>", () => {
-    expect(linkedNetworkName("foo")).toBe("openship-foo");
+  it("linkedNetworkName builds kovalio-<slug>", () => {
+    expect(linkedNetworkName("foo")).toBe("kovalio-foo");
   });
 });

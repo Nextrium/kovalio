@@ -1,3 +1,5 @@
+import { observedAllSettled, reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
+import { refreshMailCertificate } from "@repo/platform/engine/modules/mail/mail-certificate.service";
 /**
  * Mail setup controller - HTTP endpoints for the iRedMail setup wizard.
  *
@@ -14,14 +16,14 @@
  *
  * State model:
  *   - Durable state ("what HAS been installed") lives on the target VPS at
- *     /root/.openship/mail-state.json. Purge the VPS, state goes with it.
+ *     /root/.kovalio/mail-state.json. Purge the VPS, state goes with it.
  *   - Ephemeral state ("is an install running RIGHT NOW") lives as one
  *     `activeSession` variable in this process. Lost on API restart, which
- *     is fine - if openship restarts mid-install, the on-server state file
+ *     is fine - if kovalio restarts mid-install, the on-server state file
  *     still has the completed steps, the SSE caller can retry from where
  *     it left off via the regular Resume button.
  *
- * No openship DB tables involved.
+ * No kovalio DB tables involved.
  */
 
 import type { Context } from "hono";
@@ -31,24 +33,24 @@ import { lookup as dnsLookup } from "node:dns/promises";
 import { buildMailBackupPayload } from "./admin/backup-plan";
 // The mail server is one more backup SOURCE in the general system, so its policy
 // goes through the same cron validation + schedule registration as a project's.
-import { syncPolicySchedule, validateCronExpression } from "../backups/triggers/cron";
+import { syncPolicySchedule, validateCronExpression } from "@repo/platform/engine/modules/backups/triggers/cron";
 import { streamSSE } from "../../lib/sse";
 import { requestTag } from "../../middleware/error-handler";
-import { invalidatePlatformTransport } from "../../lib/mail";
-import { env } from "../../config";
+import { invalidatePlatformTransport } from "@repo/platform/engine/lib/mail";
+import { env } from "@repo/platform/engine/config/index";
 import { safeErrorMessage, DEFAULT_RETAIN_COUNT, mailHostname } from "@repo/core";
-import { sshManager } from "../../lib/ssh-manager";
+import { sshManager } from "@repo/platform/engine/lib/ssh-manager";
 import { repos } from "@repo/db";
 import { getRequestContext, type RequestContext } from "../../lib/request-context";
 import { permission } from "../../lib/permission";
 // Shared org-scope guard (single implementation in controller-helpers) —
 // the mail stack gives SSH-level reach into the box, so a cross-org
 // serverId here is the same severity as the terminal hole.
-import { isServerInOrg } from "../../lib/controller-helpers";
-import type { CommandExecutor } from "@repo/adapters";
-import { pinnedEdgeImage } from "../../lib/edge-image";
-import { pinnedMailImage } from "../../lib/mail-image";
-import { deliverManagedImage } from "../../lib/deliver-managed-image";
+import { isServerInOrg } from "@repo/platform/engine/lib/resource-access";
+import { detectMailEngine, type CommandExecutor } from "@repo/adapters";
+import { pinnedEdgeImage } from "@repo/platform/engine/lib/edge-image";
+import { pinnedMailImage } from "@repo/platform/engine/lib/mail-image";
+import { deliverManagedImage } from "@repo/platform/engine/lib/deliver-managed-image";
 import {
   MAIL_SETUP_STEPS,
   TOTAL_STEPS,
@@ -61,21 +63,23 @@ import {
   type InstallerStepFn,
   type SslStepFn,
   type IRedMailConfig,
-} from "./mail.service";
+} from "@repo/platform/engine/modules/mail/mail.service";
 import { checkMailDelivery } from "./mail-delivery.service";
-import { checkMailHealth, mailIsServing, MAIL_COMPONENTS } from "./mail-health.service";
-import { resolveMailEngine, resolveMailFlavor } from "./mail-engine";
+import { checkMailHealth, mailIsServing, MAIL_COMPONENTS } from "@repo/platform/engine/modules/mail/mail-health.service";
+import { checkMailPortReachability } from "@repo/platform/engine/modules/mail/mail-port-reachability.service";
+import { resolveMailFlavor } from "@repo/platform/engine/modules/mail/mail-engine";
 import { updatePostmasterPassword } from "./mail-credentials.service";
 import { reserveMailSetup } from "./mail-setup-lease";
 import { preflightMailSetup } from "./mail-setup-preflight";
-import { applyRelayToState } from "./admin/outbound-relay.service";
+import { applyRelayToState } from "@repo/platform/engine/modules/mail/admin/outbound-relay.service";
 // The webmail is an ordinary project: its status is resolved from the DB, not
 // from this server's state file.
 import {
   resolveLinkedWebmailProject,
+  listWebmailRecoveryCandidates,
   resolveWebmailSummary,
   type WebmailSummary,
-} from "./webmail/webmail-install.service";
+} from "@repo/platform/engine/modules/mail/webmail/webmail-install.service";
 import {
   readState,
   writeState,
@@ -87,7 +91,7 @@ import {
   appendLog,
   type MailServerState,
   type MailSessionLogLine,
-} from "./mail-state";
+} from "@repo/platform/engine/modules/mail/mail-state";
 
 // ─── In-memory pointer to the currently-running install ──────────────────────
 
@@ -103,6 +107,22 @@ interface ActiveSession {
 }
 
 let active: ActiveSession | null = null;
+
+/**
+ * `finishedAt` is the durable terminal-success marker written by the setup
+ * version that performed the install. New validation steps must not demote an
+ * already-finished legacy server to "Incomplete" merely because that old state
+ * file cannot contain their step ids. Starting setup again clears `finishedAt`,
+ * so the current run still has to execute every current step before completion.
+ */
+function setupStateIsComplete(state: MailServerState): boolean {
+  return Boolean(state.finishedAt) || (
+    MAIL_SETUP_STEPS.length > 0 &&
+    MAIL_SETUP_STEPS.every(
+      (step) => state.completedSteps[String(step.id)]?.success === true,
+    )
+  );
+}
 
 // ─── Status rendering ────────────────────────────────────────────────────────
 
@@ -132,8 +152,9 @@ function statusFromState(
 
   const stepStatuses = MAIL_SETUP_STEPS.map((step) => {
     const result = state.completedSteps[String(step.id)];
+    const completedByEarlierVersion = !result && Boolean(state.finishedAt);
     let status: "pending" | "running" | "completed" | "failed" | "skipped" = "pending";
-    if (result?.success) status = "completed";
+    if (result?.success || completedByEarlierVersion) status = "completed";
     else if (result && !result.success) status = "failed";
     else if (runningStep === step.id) status = "running";
 
@@ -141,7 +162,11 @@ function statusFromState(
       ...step,
       status,
       message: result?.message,
-      warning: result?.warning,
+      warning:
+        result?.warning ??
+        (completedByEarlierVersion && step.key === "verify_reachability"
+          ? "This server was installed before public-port verification was recorded. The Health tab checks it live."
+          : undefined),
       data: result?.data,
     };
   });
@@ -218,6 +243,7 @@ function buildPtrPayload(
 
 /** Step ID we'd resume from on retry - first step missing or failed. */
 function deriveCurrentStep(state: MailServerState): number {
+  if (state.finishedAt) return TOTAL_STEPS;
   for (const step of MAIL_SETUP_STEPS) {
     const r = state.completedSteps[String(step.id)];
     if (!r || !r.success) return step.id;
@@ -241,8 +267,8 @@ export async function getSteps(c: Context) {
  * GET /mail/status?serverId=… - render the on-server state file as a status.
  *
  * If `serverId` is missing, returns the "no install" shell so the welcome
- * form still works. If the server is unreachable or the state file is
- * missing, returns "no install" - same shell.
+ * form still works. A confirmed missing state file returns the same shell;
+ * an unavailable read returns 503 because the installation is unknown.
  */
 export async function getStatus(c: Context) {
   if (env.CLOUD_MODE) return c.json({ error: "Not available" }, 404);
@@ -268,26 +294,38 @@ export async function getStatus(c: Context) {
   // resolved BEFORE the SSH probe and independent of it. An unreachable mail
   // server must not make a deployed webmail vanish from the page, and a
   // mid-build one still has to link to its logs.
-  const mailRecord = await repos.mailServer.get(serverId).catch(() => undefined);
+  const mailRecord = await repos.mailServer.get(serverId).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller"); return undefined; });
   const webmail = mailRecord?.domain
     ? await resolveWebmailSummary(ctx.organizationId, {
         serverId,
         domain: mailRecord.domain,
         webmailProjectId: mailRecord.webmailProjectId ?? null,
-      }).catch(() => undefined)
+      }).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller"); return undefined; })
     : undefined;
 
   try {
     // One connection answers both questions: what HAS been installed (the state
-    // file) and what is actually there RIGHT NOW (the engine topology). The probe
-    // is memoized per executor and only runs on a box that has a state file, so
-    // this is two execs on a connection we were opening anyway — and it's what
+    // file) and what is actually there RIGHT NOW (the engine topology). Live
+    // status uses the shared detector directly: a cached topology's running bit
+    // cannot establish current health. It only runs for an existing state file.
+    // Both reads share the connection we were opening anyway — and it's what
     // lets the admin panel say "the engine is stopped, here's the fix" instead of
     // letting every tab discover it as a 409 of its own.
+    if (mailRecord?.webmailProjectId && !webmail) {
+      throw new Error("Could not resolve the mail server's linked webmail project.");
+    }
+    const webmailRecoveryCandidates = !webmail && mailRecord?.domain
+      ? await listWebmailRecoveryCandidates(ctx, mailRecord)
+      : undefined;
     const probed = await sshManager.withExecutor(serverId, async (executor) => {
-      const found = await readState(executor);
-      const engine = found ? await resolveMailEngine(executor).catch(() => null) : null;
-      return { state: found, engine };
+      const found = await readState(executor, { strict: true });
+      let observationError: string | undefined;
+      const engine = found ? await detectMailEngine(executor).catch((diagnosticFailure) => {
+        observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller");
+        observationError = "Kovalio could not check the mail engine. Its current health is unknown.";
+        return null;
+      }) : null;
+      return { state: found, engine, observationError };
     });
     let state = probed.state;
     // Older state files (pre-IP-detection) don't carry A/AAAA records.
@@ -298,26 +336,30 @@ export async function getStatus(c: Context) {
     }
     return c.json({
       ...statusFromState(state, serverId, webmail),
+      ...(webmailRecoveryCandidates ? { webmailRecoveryCandidates } : {}),
       // OMITTED, never nulled, when the probe couldn't conclude: absence means
       // "we didn't look", and the dashboard banner must never claim an engine is
       // missing off a failed read.
       ...(probed.engine
         ? { engine: { flavor: probed.engine.flavor, running: probed.engine.running } }
         : {}),
+      ...(probed.observationError ? { observationError: probed.observationError } : {}),
     });
-  } catch {
-    // SSH unreachable - treat as no-state. The dashboard handles this
-    // gracefully and shows the empty form.
-    return c.json(statusFromState(null, serverId, webmail));
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller");
+    return c.json({
+      code: "MAIL_STATUS_UNAVAILABLE",
+      message: "Kovalio could not read this mail server's status. Its health is unknown. Check the connection and retry.",
+    }, 503);
   }
 }
 
 /**
- * GET /mail/servers - list every server openship has provisioned (or is
+ * GET /mail/servers - list every server kovalio has provisioned (or is
  * provisioning) the mail stack on.
  *
  * Reads from the `mail_servers` table - the single source of truth in
- * openship's DB. Fast (one query, no SSH), survives unreachable hosts,
+ * kovalio's DB. Fast (one query, no SSH), survives unreachable hosts,
  * and stays consistent with the install lifecycle (rows inserted on
  * install start, stamped on completion, removed on reset).
  *
@@ -352,13 +394,10 @@ export async function listMailServers(c: Context) {
         try {
           const state = await sshManager.withExecutor(s.id, (exec) => readState(exec));
           if (!state?.domain) return null;
-          const completed =
-            MAIL_SETUP_STEPS.length > 0 &&
-            MAIL_SETUP_STEPS.every(
-              (step) => state.completedSteps[String(step.id)]?.success === true,
-            );
+          const completed = setupStateIsComplete(state);
           return { serverId: s.id, domain: state.domain, completed };
-        } catch {
+        } catch (diagnosticFailure) {
+          observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller");
           return null;
         }
       }),
@@ -372,9 +411,9 @@ export async function listMailServers(c: Context) {
           installedAt: found.completed ? new Date() : null,
         });
       } catch (err) {
-        console.warn(
+        errorDiagnostics.warn("api/modules/mail/mail.controller",
           "[mail] backfill upsert failed:",
-          safeErrorMessage(err),
+          safeErrorMessage(err), err,
         );
       }
     }
@@ -446,22 +485,17 @@ export async function scanMailInstall(c: Context) {
         state: await readState(exec),
       }),
     );
-    const installComplete =
-      !!state &&
-      MAIL_SETUP_STEPS.length > 0 &&
-      MAIL_SETUP_STEPS.every(
-        (step) => state.completedSteps[String(step.id)]?.success === true,
-      );
-    // Informational: does openship already manage a webmail for this server?
+    const installComplete = !!state && setupStateIsComplete(state);
+    // Informational: does kovalio already manage a webmail for this server?
     // Read from the DB, since the webmail is a project — a re-adopted box whose
-    // openship DB was rebuilt correctly reads "not deployed": the container may
+    // kovalio DB was rebuilt correctly reads "not deployed": the container may
     // still be running, but nothing here manages or can redeploy it.
-    const mailRecord = await repos.mailServer.get(serverId).catch(() => undefined);
+    const mailRecord = await repos.mailServer.get(serverId).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller"); return undefined; });
     const webmailProject = await resolveLinkedWebmailProject(
       ctx.organizationId,
       serverId,
       mailRecord?.webmailProjectId ?? null,
-    ).catch(() => null);
+    ).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller"); return null; });
     return c.json({
       serverId,
       iredmailInstalled,
@@ -473,6 +507,7 @@ export async function scanMailInstall(c: Context) {
       adoptable: iredmailInstalled || !!state?.domain,
     });
   } catch (err) {
+    observeCaughtError(err, "api/modules/mail/mail.controller");
     return c.json({ error: `Scan failed: ${safeErrorMessage(err)}` }, 502);
   }
 }
@@ -513,20 +548,16 @@ export async function adoptMailServer(c: Context) {
       return c.json(
         {
           error: iredmailInstalled
-            ? "A mail stack is running but no Openship state file was found — re-run setup to manage it."
+            ? "A mail stack is running but no Kovalio state file was found — re-run setup to manage it."
             : "No mail server found on this server.",
         },
         404,
       );
     }
-    const installComplete =
-      MAIL_SETUP_STEPS.length > 0 &&
-      MAIL_SETUP_STEPS.every(
-        (step) => state.completedSteps[String(step.id)]?.success === true,
-      );
+    const installComplete = setupStateIsComplete(state);
     // Mark it installed when the stack is actually LIVE, not only when every
     // current step id is recorded success. An adopted server set up by an
-    // older openship (or with step-id drift) has a running iRedMail stack but
+    // older kovalio (or with step-id drift) has a running iRedMail stack but
     // may not satisfy the exact per-step check — treating it as installed keeps
     // the dashboard on the admin panel instead of bouncing to the setup wizard.
     const completed = iredmailInstalled || installComplete;
@@ -537,13 +568,14 @@ export async function adoptMailServer(c: Context) {
     });
     return c.json({ success: true, serverId, domain, completed });
   } catch (err) {
+    observeCaughtError(err, "api/modules/mail/mail.controller");
     return c.json({ error: `Adopt failed: ${safeErrorMessage(err)}` }, 502);
   }
 }
 
 /**
  * If the state file's `dnsRecords` is missing the `a` (and optionally
- * `aaaa`) entries, derive them from openship's stored sshHost - either
+ * `aaaa`) entries, derive them from kovalio's stored sshHost - either
  * it's already an IP literal, or it's a hostname we resolve via DNS.
  *
  * This is a read-time augmentation only: we DON'T write back to the
@@ -562,7 +594,8 @@ async function augmentStateWithHostRecords(
   let server;
   try {
     server = await repos.server.get(serverId);
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller");
     return state;
   }
   if (!server?.sshHost) return state;
@@ -611,10 +644,10 @@ async function resolveHostIPs(
 
   // Hostname - resolve both families independently. allSettled so a
   // missing AAAA doesn't kill the whole lookup.
-  const [v4, v6] = await Promise.allSettled([
+  const [v4, v6] = await observedAllSettled([
     dnsLookup(host, { family: 4 }),
     dnsLookup(host, { family: 6 }),
-  ]);
+  ], "api/modules/mail/mail.controller");
   return {
     ipv4: v4.status === "fulfilled" ? v4.value.address : null,
     ipv6: v6.status === "fulfilled" ? v6.value.address : null,
@@ -678,7 +711,7 @@ function validateSetupConfig(config: IRedMailConfig | undefined): string | null 
 export async function startSetup(c: Context) {
   if (env.CLOUD_MODE) return c.json({ error: "Not available" }, 404);
 
-  const body = await c.req.json().catch(() => ({}));
+  const body = await c.req.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller"); return ({}); });
   const serverId = body.serverId as string | undefined;
   const domain = body.domain as string | undefined;
   const startStep = Math.max(1, Math.min(TOTAL_STEPS, Number(body.startStep) || 1));
@@ -736,9 +769,9 @@ export async function startSetup(c: Context) {
     reservation = await reserveMailSetup(serverId, domain);
   } catch (err) {
     if (active === session) active = null;
-    console.error(
+    errorDiagnostics.error("api/modules/mail/mail.controller",
       "[mail] failed to reserve mail-server setup:",
-      safeErrorMessage(err),
+      safeErrorMessage(err), err,
     );
     return c.json(
       { error: "Could not reserve mail setup. Please try again." },
@@ -787,6 +820,7 @@ export async function startSetup(c: Context) {
         state = makeFreshState(serverId, domain);
       }
     } catch (err) {
+      observeCaughtError(err, "api/modules/mail/mail.controller");
       await fail(
         `Could not read state from server: ${err instanceof Error ? err.message : "ssh error"}`,
       );
@@ -811,7 +845,9 @@ export async function startSetup(c: Context) {
       }
       stream
         .writeSSE({ event: "log", data: JSON.stringify({ stepId, level, message }) })
-        .catch(() => {});
+        .catch((diagnosticFailure) => {
+          observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller");
+        });
     };
 
     /**
@@ -836,7 +872,7 @@ export async function startSetup(c: Context) {
       await repos.mailServer
         .setResumeStep(serverId, state.resumeStep ?? null)
         .catch((err) =>
-          console.warn("[mail] setResumeStep failed:", safeErrorMessage(err)),
+          errorDiagnostics.warn("api/modules/mail/mail.controller", "[mail] setResumeStep failed:", safeErrorMessage(err), err),
         );
     };
 
@@ -968,6 +1004,7 @@ export async function startSetup(c: Context) {
             ),
           ]);
         } catch (err) {
+          observeCaughtError(err, "api/modules/mail/mail.controller");
           const message = err instanceof Error ? err.message : "Step execution failed";
           result = { stepId, success: false, message };
           log(stepId, "error", message);
@@ -1056,9 +1093,9 @@ export async function startSetup(c: Context) {
       try {
         await repos.mailServer.markInstalled(serverId, domain);
       } catch (err) {
-        console.warn(
+        errorDiagnostics.warn("api/modules/mail/mail.controller",
           "[mail] failed to stamp installedAt on mail-server record:",
-          safeErrorMessage(err),
+          safeErrorMessage(err), err,
         );
       }
 
@@ -1066,20 +1103,20 @@ export async function startSetup(c: Context) {
       // transactional mail (welcome emails, alerts, future user-invite sends).
       // Same try/catch shape as markInstalled — a hiccup here must not poison
       // the wizard's terminal success state; the operator (or the first
-      // sendTestEmail call) will trigger ensureOpenshipPlatformMailbox again
+      // sendTestEmail call) will trigger ensureKovalioPlatformMailbox again
       // later via its on-demand backfill path.
       //
       // Dynamic import mirrors the pattern domains.service.ts uses to dodge a
       // load-time cycle (mail-state ↔ mail.controller ↔ admin services).
       try {
-        const { ensureOpenshipPlatformMailbox } = await import(
-          "./admin/platform-mailbox.service"
+        const { ensureKovalioPlatformMailbox } = await import(
+          "@repo/platform/engine/modules/mail/admin/platform-mailbox.service"
         );
         // Clear any cached "platform mailbox unavailable" marker from BEFORE the
         // install finished — otherwise the send path keeps skipping this server
         // for the rest of the failure window right after a successful install.
         invalidatePlatformTransport(serverId);
-        const creds = await ensureOpenshipPlatformMailbox(serverId);
+        const creds = await ensureKovalioPlatformMailbox(serverId);
         await stream.writeSSE({
           event: "log",
           data: JSON.stringify({
@@ -1088,8 +1125,8 @@ export async function startSetup(c: Context) {
           }),
         });
       } catch (err) {
-        console.warn(
-          `[mail.install] ensureOpenshipPlatformMailbox failed for ${serverId}:`,
+        errorDiagnostics.warn("api/modules/mail/mail.controller",
+          `[mail.install] ensureKovalioPlatformMailbox failed for ${serverId}:`,
           err,
         );
         await stream.writeSSE({
@@ -1113,11 +1150,13 @@ export async function startSetup(c: Context) {
         }),
       });
     } catch (err) {
+      observeCaughtError(err, "api/modules/mail/mail.controller");
       const message = err instanceof Error ? err.message : "Setup failed";
       await fail(message);
       try {
         await halt({ errorMessage: message });
-      } catch {
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller");
         active = null;
       }
     }
@@ -1180,7 +1219,7 @@ export async function cancelSetup(c: Context) {
 export async function acknowledgeDns(c: Context) {
   if (env.CLOUD_MODE) return c.json({ error: "Not available" }, 404);
 
-  const body = await c.req.json().catch(() => ({}));
+  const body = await c.req.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller"); return ({}); });
   const serverId = body.serverId as string | undefined;
   if (!serverId) return c.json({ error: "serverId is required" }, 400);
 
@@ -1203,6 +1242,7 @@ export async function acknowledgeDns(c: Context) {
       }
     });
   } catch (err) {
+    observeCaughtError(err, "api/modules/mail/mail.controller");
     return c.json(
       { error: err instanceof Error ? err.message : "DNS acknowledge failed" },
       400,
@@ -1220,7 +1260,7 @@ export async function acknowledgeDns(c: Context) {
  * then the dashboard re-POSTs to /mail/setup with the resume step to
  * continue past the PTR gate.
  *
- * We deliberately don't verify the PTR with `dig -x` from openship's host:
+ * We deliberately don't verify the PTR with `dig -x` from kovalio's host:
  * many VPS providers (Hostinger included) take 5-15 minutes to propagate
  * rDNS changes, and blocking on that would frustrate users. If they lie
  * about having set it, mail-to-Gmail just goes to spam - recoverable.
@@ -1228,7 +1268,7 @@ export async function acknowledgeDns(c: Context) {
 export async function acknowledgePtr(c: Context) {
   if (env.CLOUD_MODE) return c.json({ error: "Not available" }, 404);
 
-  const body = await c.req.json().catch(() => ({}));
+  const body = await c.req.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller"); return ({}); });
   const serverId = body.serverId as string | undefined;
   if (!serverId) return c.json({ error: "serverId is required" }, 400);
 
@@ -1251,6 +1291,7 @@ export async function acknowledgePtr(c: Context) {
       }
     });
   } catch (err) {
+    observeCaughtError(err, "api/modules/mail/mail.controller");
     return c.json(
       { error: err instanceof Error ? err.message : "PTR acknowledge failed" },
       400,
@@ -1266,12 +1307,12 @@ export async function acknowledgePtr(c: Context) {
  *
  * Useful after the operator has purged or reimaged the VPS - clears any
  * stale state without manually SSHing to delete the JSON. Does NOT touch
- * iRedMail or any installed daemons; just removes openship's record.
+ * iRedMail or any installed daemons; just removes kovalio's record.
  */
 export async function resetSetup(c: Context) {
   if (env.CLOUD_MODE) return c.json({ error: "Not available" }, 404);
 
-  const body = await c.req.json().catch(() => ({}));
+  const body = await c.req.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller"); return ({}); });
   const serverId = body.serverId as string | undefined;
   if (!serverId) return c.json({ error: "serverId is required" }, 400);
 
@@ -1293,21 +1334,22 @@ export async function resetSetup(c: Context) {
   try {
     await sshManager.withExecutor(serverId, (executor) => clearState(executor));
   } catch (err) {
+    observeCaughtError(err, "api/modules/mail/mail.controller");
     return c.json(
       { error: err instanceof Error ? err.message : "Reset failed" },
       500,
     );
   }
-  // Drop openship's record of "this server is a mail server" the moment the
+  // Drop kovalio's record of "this server is a mail server" the moment the
   // on-host state file goes. Best-effort - losing the row is recoverable on
   // the next install start, but losing them out of sync would let /emails
   // claim a stale mail server.
   try {
     await repos.mailServer.remove(serverId);
   } catch (err) {
-    console.warn(
+    errorDiagnostics.warn("api/modules/mail/mail.controller",
       "[mail] failed to drop mail-server record after reset:",
-      safeErrorMessage(err),
+      safeErrorMessage(err), err,
     );
   }
   return c.json({ ok: true });
@@ -1396,7 +1438,7 @@ export async function saveMailBackupPolicy(c: Context) {
     return c.json({ error: "Mail server is not registered / has no domain" }, 404);
   }
 
-  const body = (await c.req.json().catch(() => ({}))) as {
+  const body = (await c.req.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller"); return ({}); })) as {
     destinationId?: string;
     messageData?: boolean;
     keys?: boolean;
@@ -1529,7 +1571,7 @@ export async function listMailBackupRuns(c: Context) {
 export async function setPostmasterPassword(c: Context) {
   if (env.CLOUD_MODE) return c.json({ error: "Not available" }, 404);
 
-  const body = await c.req.json().catch(() => ({}));
+  const body = await c.req.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller"); return ({}); });
   const serverId = body.serverId as string | undefined;
   const password = body.password as string | undefined;
 
@@ -1571,6 +1613,7 @@ export async function setPostmasterPassword(c: Context) {
       await updatePostmasterPassword(executor, state.domain, password);
     });
   } catch (err) {
+    observeCaughtError(err, "api/modules/mail/mail.controller");
     return c.json(
       { error: err instanceof Error ? err.message : "Password change failed" },
       500,
@@ -1596,6 +1639,9 @@ export async function getHealth(c: Context) {
 
   const serverId = c.req.param("serverId");
   if (!serverId) return c.json({ error: "serverId is required" }, 400);
+  const refreshReachability = ["1", "true"].includes(
+    c.req.query("refreshReachability") ?? "",
+  );
 
   // Primary gate: live daemon status is a read.
   await permission.assert(getRequestContext(c), {
@@ -1609,23 +1655,34 @@ export async function getHealth(c: Context) {
   }
 
   try {
-    const { components, delivery } = await sshManager.withExecutor(serverId, async (executor) => {
+    const { components, delivery, reachability, certificate } = await sshManager.withExecutor(serverId, async (executor) => {
       // Both sweeps share the engine probe (memoized per executor), so running them
       // together costs one extra exec, not a second topology detection.
-      const [components, delivery] = await Promise.all([
+      const [components, delivery, state, certificate] = await Promise.all([
         checkMailHealth(executor),
         // `delivery` reports its own failures as `status: "unknown"` rather than
         // throwing, so a box whose queue we can't read still renders its daemons.
         checkMailDelivery(executor),
+        readState(executor),
+        refreshMailCertificate(serverId, { executor }),
       ]);
-      return { components, delivery };
+      const reachability = state?.domain
+        ? await checkMailPortReachability(executor, mailHostname(state.domain), {
+            // The dashboard polls every 10s, but public reachability changes far
+            // less often. One cached/coalesced sweep per minute avoids turning the
+            // Health tab into a port watcher while keeping remediation responsive.
+            cacheKey: `mail-health:${serverId}`,
+            force: refreshReachability,
+          })
+        : null;
+      return { components, delivery, reachability, certificate };
     });
-    return c.json({ serverId, components, definitions: MAIL_COMPONENTS, delivery });
+    return c.json({ serverId, components, definitions: MAIL_COMPONENTS, delivery, reachability, certificate });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Health check failed";
     // Same reason as the mail-admin funnel: this 500 is answered here, so `app.onError`
     // never logs it and every Health-tab failure was invisible in the API log.
-    console.error(`[MAIL HEALTH ERROR] ${requestTag(c)}`, err);
+    errorDiagnostics.error("api/modules/mail/mail.controller", `[MAIL HEALTH ERROR] ${requestTag(c)}`, err);
     return c.json({ error: message }, 500);
   }
 }

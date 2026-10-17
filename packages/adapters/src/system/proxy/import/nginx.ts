@@ -6,10 +6,13 @@
  * can't interpret is returned as a warning, never silently dropped.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import {
   PROXY_DIRECTIVES,
+  isLoopbackHost,
   parseProxyValue,
   sanitizeProxySettings,
+  shellQuote,
   type ProxySettings,
 } from "@repo/core";
 
@@ -17,8 +20,15 @@ import type { CommandExecutor } from "../../../types";
 import type { ImportedSite, ProxyScanResult } from "../../types";
 import { EDGE_HOST_PATHS, OPENRESTY_DEFAULT_PATHS } from "../../../infra/openresty-lua";
 import { containerCommand } from "../../edge-container-executor";
-import { resolveOurEdgeContainer } from "../detect";
-import { collapseByHost, extractBlocks, stripComments, tryExec } from "./parse-utils";
+import { detectEdgeContainer, resolveOurEdgeContainer } from "../detect";
+import {
+  collapseByHost,
+  extractBlocks,
+  firstDirective,
+  locationBlocks,
+  stripComments,
+  tryExec,
+} from "./parse-utils";
 
 /**
  * The fully-resolved config dump from the first of `bins` that yields one. `-T`
@@ -78,43 +88,65 @@ async function loadNginxConfig(executor: CommandExecutor): Promise<string> {
   return cat ?? "";
 }
 
-function firstDirective(body: string, name: string): string | undefined {
-  const m = body.match(new RegExp(`(?:^|[;{\\s])${name}\\s+([^;]+);`));
-  return m?.[1]?.trim();
-}
-
-/** Parse `upstream <name> { server <host:port>; ... }` → name → first host:port. */
-function parseUpstreams(config: string): Map<string, string> {
-  const map = new Map<string, string>();
+/** Parse `upstream <name> { server <host:port>; ... }` → every declared target. */
+function parseUpstreams(config: string): Map<string, string[]> {
+  const map = new Map<string, string[]>();
   const re = /(?:^|[\s;}])upstream\s+(\S+)\s*\{([^}]*)\}/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(config)) !== null) {
     const name = m[1];
-    const server = m[2].match(/(?:^|[\s;{])server\s+([^;\s]+)/);
-    if (name && server?.[1]) map.set(name, server[1].trim());
+    const body = m[2] ?? "";
+    const targets = [...body.matchAll(/(?:^|[\s;{])server\s+([^;\s]+)/g)]
+      .map((server) => server[1]?.trim())
+      .filter((target): target is string => Boolean(target));
+    if (name && targets.length > 0) map.set(name, targets);
   }
   return map;
 }
 
+const HTTP_PROXY_TARGET_RE = /^(https?:\/\/)([^/?#]+)([/?#].*)?$/i;
+
 /**
- * Turn a raw proxy_pass value into a concrete Openship route target, or reject
+ * Turn a raw proxy_pass value into a concrete Kovalio route target, or reject
  * it (so the caller warns and skips) when it can't be resolved to a real
- * host:port — an unknown/undeclared upstream, an nginx variable, or a unix
- * socket would otherwise produce a vhost that fails `openresty -t`.
+ * host:port — an unknown/undeclared upstream or an nginx variable would
+ * otherwise produce a vhost that fails `openresty -t`, and a unix socket one
+ * that passes it but points at a path the edge can't reach.
  */
 function resolveProxyTarget(
   proxyPass: string,
-  upstreams: Map<string, string>,
-): { url: string } | { reason: string } {
+  upstreams: Map<string, string[]>,
+  opts: { allowVariablesAfterAuthority?: boolean } = {},
+): { url: string } | { reason: string; unixSocket?: true } {
   const raw = proxyPass.replace(/;$/, "").trim();
-  if (raw.includes("$")) return { reason: `proxy_pass "${raw}" uses an nginx variable` };
-  if (/\/\/unix:/i.test(raw)) return { reason: `proxy_pass "${raw}" targets a unix socket` };
-  const m = raw.match(/^(https?:\/\/)([^/]+)(\/.*)?$/i);
+  const parsed = raw.match(HTTP_PROXY_TARGET_RE);
+  if (raw.includes("$")) {
+    // Variables in the authority can select an arbitrary upstream, so strict port
+    // inventory must fail closed. Variables after it only rewrite the request URI:
+    // nginx still dials the concrete host:port, which is all inventory needs.
+    const authority = parsed?.[2];
+    if (!opts.allowVariablesAfterAuthority || !authority || authority.includes("$")) {
+      return { reason: `proxy_pass "${raw}" uses an nginx variable` };
+    }
+  }
+  if (/\/\/unix:/i.test(raw)) {
+    return { reason: `proxy_pass "${raw}" targets a unix socket`, unixSocket: true };
+  }
+  const m = parsed;
   if (!m) return { reason: `unrecognized proxy_pass "${raw}"` };
   const scheme = m[1];
   const authority = m[2];
   const host = authority.replace(/:\d+$/, "");
-  if (upstreams.has(host)) return { url: `${scheme}${upstreams.get(host)}` };
+  const declaredUpstream = upstreams.get(authority);
+  if (declaredUpstream?.[0]) {
+    if (/^unix:/i.test(declaredUpstream[0])) {
+      return {
+        reason: `proxy_pass "${raw}" resolves to upstream "${authority}", a unix socket`,
+        unixSocket: true,
+      };
+    }
+    return { url: `${scheme}${declaredUpstream[0]}` };
+  }
   const isIp = /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
   // `localhost` is NOT safe to carry over verbatim: nginx resolves it to ::1
   // first, and most app servers bind IPv4 only — so an adopted
@@ -124,33 +156,77 @@ function resolveProxyTarget(
   if (host === "localhost" || host === "ip6-localhost") {
     return { url: raw.replace(/^(https?:\/\/)[^/:]+/i, "$1127.0.0.1") };
   }
-  if (isIp || host.includes(".")) return { url: raw };
+  if (isIp || host.includes(".") || (host.startsWith("[") && host.endsWith("]"))) {
+    return { url: raw };
+  }
   return { reason: `proxy_pass host "${host}" is an undeclared upstream — not migratable` };
 }
 
 /**
- * Every `location <path> { … }` in a server block with its body, in source order.
- * Balanced-brace matched so a nested `if {}` / `types {}` inside a location doesn't
- * truncate it.
+ * Inventory every concrete loopback TCP upstream in raw nginx config, regardless
+ * of whether its server_name is public/migratable. Allocation cannot reuse the
+ * migration parser's filtered `ImportedSite[]`: default (`_`), localhost, regex,
+ * or otherwise unsupported vhosts can still dial a host port and capture a new
+ * workload. An unresolved proxy_pass rejects the whole inventory; "could not
+ * prove where this route dials" is never equivalent to "it dials no loopback
+ * port" in a security-sensitive allocation decision.
  */
-function locationBlocks(serverBody: string): { path: string; body: string }[] {
-  const out: { path: string; body: string }[] = [];
-  const re = /(?:^|[\s;}])location\s+([^{]+?)\s*\{/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(serverBody)) !== null) {
-    const path = m[1].trim();
-    const openIdx = m.index + m[0].length - 1; // the `{`
-    let depth = 1;
-    let i = openIdx + 1;
-    for (; i < serverBody.length && depth > 0; i++) {
-      if (serverBody[i] === "{") depth++;
-      else if (serverBody[i] === "}") depth--;
+function strictLoopbackUpstreamPorts(config: string): Set<number> {
+  const normalized = stripComments(config);
+  const upstreams = parseUpstreams(normalized);
+  const ports = new Set<number>();
+
+  for (const match of normalized.matchAll(/(?:^|[;{}\s])proxy_pass\s+([^;]+);/g)) {
+    const raw = match[1]?.trim();
+    if (!raw) continue;
+    const resolved = resolveProxyTarget(raw, upstreams, { allowVariablesAfterAuthority: true });
+    if ("reason" in resolved && !resolved.unixSocket) {
+      throw new Error(`Cannot inventory Kovalio edge routes: ${resolved.reason}`);
     }
-    if (depth !== 0) break; // unbalanced — stop
-    out.push({ path, body: serverBody.slice(openIdx + 1, i - 1) });
-    re.lastIndex = i;
+
+    // The migration parser intentionally selects the first member of a named
+    // upstream because one Kovalio route has one target. Collision inventory
+    // has a stricter job: every member can receive traffic from the stale vhost,
+    // so every concrete loopback member must protect its port.
+    const parsed = raw.match(HTTP_PROXY_TARGET_RE);
+    const authority = parsed?.[2];
+    const scheme = parsed?.[1];
+    const targets =
+      authority && scheme && upstreams.has(authority)
+        ? upstreams.get(authority)!.map((target) => `${scheme}${target}`)
+        : "url" in resolved ? [resolved.url] : [];
+
+    for (const target of targets) {
+      // Sockets cannot consume a TCP port. A named group can mix sockets and
+      // TCP backends, so keep inspecting its other members even when migration
+      // refused the group's first (socket) target.
+      if (/^https?:\/\/unix:/i.test(target)) continue;
+      let url: URL;
+      try {
+        url = new URL(target);
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "adapters/system/proxy/import/nginx");
+        throw new Error(`Cannot inventory Kovalio edge routes: invalid proxy_pass "${raw}"`);
+      }
+      if (!isLoopbackHost(url.hostname)) continue;
+      const port = url.port ? Number(url.port) : url.protocol === "https:" ? 443 : 80;
+      if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) {
+        throw new Error(`Cannot inventory Kovalio edge routes: invalid loopback port in "${raw}"`);
+      }
+      ports.add(port);
+    }
   }
-  return out;
+
+  return ports;
+}
+
+function parseStrictEdgeConfig(raw: string): ProxyScanResult & {
+  loopbackUpstreamPorts: Set<number>;
+} {
+  return {
+    ...parseNginxConfig(raw),
+    loopbackUpstreamPorts: strictLoopbackUpstreamPorts(raw),
+  };
 }
 
 /**
@@ -158,13 +234,41 @@ function locationBlocks(serverBody: string): { path: string; body: string }[] {
  * order. `proxy_pass` is only valid inside a location (or `if`) in nginx, so
  * this — not a server-level scan — is where real routes live.
  */
-function extractLocationProxies(serverBody: string): { path: string; proxyPass: string }[] {
-  const out: { path: string; proxyPass: string }[] = [];
+function extractLocationProxies(serverBody: string): {
+  routes: { path: string; proxyPass: string; exact?: boolean }[];
+  unsupported: string[];
+  sawProxyLocation: boolean;
+} {
+  const routes: { path: string; proxyPass: string; exact?: boolean }[] = [];
+  const unsupported: string[] = [];
+  let sawProxyLocation = false;
   for (const loc of locationBlocks(serverBody)) {
     const pp = firstDirective(loc.body, "proxy_pass");
-    if (pp) out.push({ path: loc.path, proxyPass: pp });
+    if (!pp) continue;
+    sawProxyLocation = true;
+
+    // Keep nginx's match mode separate from the path. Feeding the raw selector
+    // (`= /mcp`) to the route writer makes its injection guard correctly reject
+    // the whitespace, while stripping `=` without remembering it silently widens
+    // an exact route into a prefix. Regex and named locations have no equivalent
+    // in the imported route model, so drop only that location, not the whole vhost.
+    const exact = loc.path.match(/^=\s+(.+)$/);
+    if (exact) {
+      routes.push({ path: exact[1].trim(), proxyPass: pp, exact: true });
+      continue;
+    }
+    const strongPrefix = loc.path.match(/^\^~\s+(.+)$/);
+    if (strongPrefix) {
+      routes.push({ path: strongPrefix[1].trim(), proxyPass: pp });
+      continue;
+    }
+    if (/^~\*?(?:\s|$)/.test(loc.path) || loc.path.startsWith("@")) {
+      unsupported.push(loc.path);
+      continue;
+    }
+    routes.push({ path: loc.path, proxyPass: pp });
   }
-  return out;
+  return { routes, unsupported, sawProxyLocation };
 }
 
 /** Blank out quoted tokens so a directive-shaped word inside a VALUE can't be read
@@ -192,7 +296,7 @@ function servesNothing(locationBody: string): boolean {
  *
  * certbot writes exactly one of these per host beside the real :443 vhost, so a
  * 5-site nginx yields 5 blocks with no proxy_pass and no root. They carry NO
- * route to migrate (the TLS vhost beside them has it) and Openship's edge issues
+ * route to migrate (the TLS vhost beside them has it) and Kovalio's edge issues
  * that redirect itself, so they're skipped SILENTLY — warning about them reads as
  * "5 of your sites won't migrate" when every one of them did.
  *
@@ -229,7 +333,7 @@ function isHttpsUpgradeForSelf(body: string, names: string[]): boolean {
  * (`try_files` → `/index.html` → redirect cycle). Our edge answers ACME itself,
  * so these carry nothing to migrate.
  *
- * The same reasoning covers Openship's own edge-target challenge vhost
+ * The same reasoning covers Kovalio's own edge-target challenge vhost
  * (`_oblien-challenge-<slug>.conf`): a block whose only location answers
  * `/.well-known/oblien-proxy-challenge/` is scaffolding proving we control a
  * routing target, not a site. Recognising it HERE rather than in each consumer is
@@ -324,10 +428,7 @@ const LOOPBACK_SERVER_NAMES = new Set([
  * accurate sentence about a config that is perfectly valid nginx, at the one moment
  * (post-cutover) when the operator can least afford a misleading error.
  */
-function resolveStaticRoot(
-  root: string,
-  prefix?: string,
-): { root: string } | { reason: string } {
+function resolveStaticRoot(root: string, prefix?: string): { root: string } | { reason: string } {
   if (root.startsWith("/")) return { root };
   if (!prefix) {
     return {
@@ -336,20 +437,22 @@ function resolveStaticRoot(
         `which this host didn't report`,
     };
   }
-  return { root: `${prefix.replace(/\/+$/, "")}/${root}` };
+  return { root: `${prefix.replace(/(?<!\/)\/+$/, "")}/${root}` };
 }
 
 function parseServer(
   body: string,
   source: string,
-  upstreams: Map<string, string>,
+  upstreams: Map<string, string[]>,
   prefix?: string,
 ): { site?: ImportedSite; warnings: string[] } {
   const warnings: string[] = [];
-  const names = firstDirective(body, "server_name")
-    ?.split(/\s+/)
-    .filter((n) => n && n !== "_" && !n.startsWith("~") && !LOOPBACK_SERVER_NAMES.has(n.toLowerCase()))
-    ?? [];
+  const names =
+    firstDirective(body, "server_name")
+      ?.split(/\s+/)
+      .filter(
+        (n) => n && n !== "_" && !n.startsWith("~") && !LOOPBACK_SERVER_NAMES.has(n.toLowerCase()),
+      ) ?? [];
 
   // ssl if any `listen ... ssl` or `listen 443` (443 as a whole token — not 8443)
   const listens = [...body.matchAll(/(?:^|[;{\s])listen\s+([^;]+);/g)].map((m) => m[1]);
@@ -367,26 +470,34 @@ function parseServer(
 
   // All routes for this vhost. Locations are the real source; fall back to a
   // (technically-invalid but seen-in-the-wild) server-level proxy_pass.
-  const rawTargets = extractLocationProxies(body);
-  if (rawTargets.length === 0) {
+  const extracted = extractLocationProxies(body);
+  const rawTargets = extracted.routes;
+  for (const selector of extracted.unsupported) {
+    warnings.push(
+      `nginx: ${names[0]} location "${selector}" uses an unsupported regex or named selector (skipped)`,
+    );
+  }
+  if (rawTargets.length === 0 && !extracted.sawProxyLocation) {
     const serverLevel = firstDirective(body, "proxy_pass");
     if (serverLevel) rawTargets.push({ path: "/", proxyPass: serverLevel });
   }
 
-  const resolved: { path: string; url: string }[] = [];
+  const resolved: { path: string; url: string; exact?: boolean }[] = [];
   for (const t of rawTargets) {
     const r = resolveProxyTarget(t.proxyPass, upstreams);
     if ("reason" in r) warnings.push(`nginx: ${names[0]} ${t.path} — ${r.reason} (skipped)`);
-    else resolved.push({ path: t.path, url: r.url });
+    else resolved.push({ path: t.path, url: r.url, ...(t.exact ? { exact: true } : {}) });
   }
 
   let target: ImportedSite["target"];
-  let routes: { path: string; url: string }[] | undefined;
+  let routes: ImportedSite["routes"];
   if (resolved.length > 0) {
-    // Primary = the root location ("/") if present, else the first resolved.
+    // Primary = the inclusive root location ("/") if present, else the first
+    // resolved route. An exact `location = /` is an extra match, not the prefix
+    // fallback that serves every other path.
     // `routes` carries the FULL per-path set so a path-fan-out vhost (e.g.
     // `/ → :1010`, `/v3 → :1020`) is preserved — the edge can path-route it.
-    const primary = resolved.find((r) => r.path === "/") ?? resolved[0];
+    const primary = resolved.find((r) => r.path === "/" && !r.exact) ?? resolved[0];
     target = { kind: "proxy", url: primary.url };
     routes = resolved;
   } else if (isHttpsUpgradeForSelf(body, names)) {
@@ -424,7 +535,7 @@ function parseServer(
 }
 
 /** Parse a raw nginx config string into normalized sites. Shared by `scanNginx`
- *  (foreign `/etc/nginx`) and `scanOpenshipEdge` (our OpenResty sites tree).
+ *  (foreign `/etc/nginx`) and `scanKovalioEdge` (our OpenResty sites tree).
  *
  *  `prefix` absolutizes a prefix-relative `root`; our own edge always writes
  *  absolute roots, so the "ours" callers pass none. */
@@ -433,7 +544,7 @@ function parseNginxConfig(raw: string, prefix?: string): ProxyScanResult {
   const sites: ImportedSite[] = [];
 
   if (!raw.trim()) {
-    return { proxy: "nginx", sites, warnings: ["nginx: no readable configuration found"] };
+    return { proxy: "nginx", sites, readable: false, warnings: ["nginx: no readable configuration found"] };
   }
 
   // `nginx -T` prefixes each file with `# configuration file <path>:` — track it
@@ -493,38 +604,43 @@ const OUR_EDGE_SITE_GLOBS = [
  * Scan OUR OWN OpenResty edge's per-domain `server{}` blocks. NginxProvider
  * writes them to the OpenResty sites-enabled tree (NOT `/etc/nginx`, and the
  * binary is `openresty` so `nginx -T` doesn't apply), so this is how migrate
- * surfaces routes Openship itself already serves (edge classification "ours").
+ * surfaces routes Kovalio itself already serves (edge classification "ours").
  * The blocks are plain nginx (`server_name` + `proxy_pass http://host:<port>` +
  * `ssl_certificate`), so the same parser applies. Read-only; empty if unreadable.
  */
 /**
  * Scan a FOREIGN host OpenResty holding — or having held — the edge ports: a legacy
- * bare Openship edge, or a hand-rolled one.
+ * bare Kovalio edge, or a hand-rolled one.
  *
- * Unlike {@link scanOpenshipEdge} (which reads OUR edge's KNOWN site trees), this
+ * Unlike {@link scanKovalioEdge} (which reads OUR edge's KNOWN site trees), this
  * can't assume where the vhosts live, so it dumps the fully-resolved config
  * (`openresty -T`) — the one read that follows every `include` regardless of layout,
  * and that works even after a takeover has stopped the proxy. That gap is exactly
  * what hid a legacy bare edge's sites from the migrate offer: the fixed-glob read
  * missed vhosts `include`d from a non-default path, so the scan returned zero and the
  * consent gate collapsed to takeover-only — silently dropping every site the box was
- * serving. Falls back to the known openship site trees when no `openresty` binary is
+ * serving. Falls back to the known kovalio site trees when no `openresty` binary is
  * on PATH to dump.
  *
- * NOT folded into `scanOpenshipEdge`: a bare `openresty` binary left behind after a
+ * NOT folded into `scanKovalioEdge`: a bare `openresty` binary left behind after a
  * bare→container conversion would make `-T` dump the ORPHANED bare config over the
  * container's own sites on the "ours" read path.
  */
-export async function scanForeignOpenResty(
-  executor: CommandExecutor,
-): Promise<ProxyScanResult> {
+export async function scanForeignOpenResty(executor: CommandExecutor): Promise<ProxyScanResult> {
   const dump = await dumpResolvedConfig(executor, ["openresty"]);
   if (dump) return parseNginxConfig(dump);
-  return scanOpenshipEdge(executor);
+  return scanKovalioEdge(executor);
 }
 
-export async function scanOpenshipEdge(executor: CommandExecutor): Promise<ProxyScanResult> {
-  const cat = `cat ${OUR_EDGE_SITE_GLOBS.join(" ")} 2>/dev/null`;
+export async function scanKovalioEdge(executor: CommandExecutor): Promise<ProxyScanResult> {
+  // Only one layout normally exists (Compose mounts just the container path).
+  // A single cat over all globs exits nonzero for the missing layouts, losing
+  // valid stdout through tryExec. Skip unmatched globs, but still fail the whole
+  // read if an existing file cannot be read; partial inventory is not all-clear.
+  const cat = `sh -c ${shellQuote(
+    `for kovalio_site in ${OUR_EDGE_SITE_GLOBS.join(" ")}; do ` +
+    `if [ -f "$kovalio_site" ]; then cat "$kovalio_site" || exit 1; printf '\\n'; fi; done`,
+  )}`;
   const raw = await tryExec(executor, cat);
   if (raw?.trim()) return parseNginxConfig(raw);
 
@@ -537,4 +653,62 @@ export async function scanOpenshipEdge(executor: CommandExecutor): Promise<Proxy
   if (!container) return parseNginxConfig("");
   const fromContainer = await tryExec(executor, containerCommand(container, cat));
   return parseNginxConfig(fromContainer ?? "");
+}
+
+/**
+ * Security-sensitive variant of {@link scanKovalioEdge}.
+ *
+ * The ordinary migration/read surface is intentionally fail-soft. Port
+ * allocation cannot use that contract: treating an SSH, permission, or Docker
+ * read failure as an empty edge would allow allocation of a port an existing
+ * vhost still dials. This variant therefore proves that the sites trees are
+ * readable and rejects when the running Kovalio edge cannot be inspected.
+ */
+export async function scanKovalioEdgeStrict(
+  executor: CommandExecutor,
+  knownContainer?: string | null,
+): Promise<ProxyScanResult & { loopbackUpstreamPorts: Set<number> }> {
+  // First prove which managed edge container exists. Readable bind-mount files
+  // are insufficient: they can outlive a stopped/removed edge while a foreign
+  // proxy serves a different route set on :80/:443.
+  const detected = await detectEdgeContainer(executor);
+  if (!detected) {
+    // A bare OpenResty host may have no usable Docker daemon at all. Its
+    // resolved config is still authoritative and follows every include, so use
+    // it before declaring the read inconclusive. A missing/failed dump is not
+    // treated as empty: it can also mean permissions or transport failed.
+    const bareConfig = await dumpResolvedConfig(executor, ["openresty"]);
+    if (bareConfig) return parseStrictEdgeConfig(bareConfig);
+    throw new Error(
+      "Cannot read Kovalio edge routes: neither Docker nor bare OpenResty inventory is available",
+    );
+  }
+  if (!detected.exists) {
+    // "No Kovalio container" is not proof that the edge has no routes. A
+    // foreign nginx/caddy/traefik may still own :80/:443 and retain a stale
+    // loopback upstream that a new workload could capture. Allocation callers
+    // run this only after routing preflight, so a genuinely fresh Docker host
+    // should have an Kovalio edge by now. The one supported container-less
+    // topology is bare OpenResty; its resolved config is authoritative.
+    const bareConfig = await dumpResolvedConfig(executor, ["openresty"]);
+    if (bareConfig) return parseStrictEdgeConfig(bareConfig);
+    throw new Error(
+      "Cannot read Kovalio edge routes: no running Kovalio edge or bare OpenResty inventory is available",
+    );
+  }
+  if (!detected.running) {
+    throw new Error("Cannot read Kovalio edge routes: the edge container is not running");
+  }
+  const container = knownContainer ?? detected.name;
+  if (!container) throw new Error("Cannot read Kovalio edge routes: container identity missing");
+  // Dump the FULL resolved config from the active process namespace. Reading
+  // only sites-enabled misses loopback upstreams in the baked/base config (ACME,
+  // webhook/control routes) and misses includes outside the known site globs.
+  const fromContainer = await executor.exec(
+    containerCommand(container, "openresty -T 2>/dev/null"),
+  );
+  if (!fromContainer.trim() || !/server\s*\{/.test(fromContainer)) {
+    throw new Error("Cannot read Kovalio edge routes: active OpenResty config dump was empty");
+  }
+  return parseStrictEdgeConfig(fromContainer);
 }

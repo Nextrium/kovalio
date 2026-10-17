@@ -3,9 +3,10 @@ import {
   canonicalServiceContainerName,
   describeLiveState,
   liveContainerStatus,
+  liveMatchTiersForDeployment,
   resolveLiveServiceState,
   type LiveContainerLike,
-} from "./live-state";
+} from "@repo/platform/engine/modules/services/live-state";
 
 const container = (over: Partial<LiveContainerLike> & { id: string }): LiveContainerLike => ({
   names: [],
@@ -17,6 +18,18 @@ const container = (over: Partial<LiveContainerLike> & { id: string }): LiveConta
 });
 
 describe("liveContainerStatus", () => {
+  it.each([
+    ["Up 2 days (healthy)", "running", "healthy"],
+    ["Up 2 days (unhealthy)", "failed", "unhealthy"],
+    ["Up 5 seconds (health: starting)", "starting", "starting"],
+    ["Up 2 days", "running", null],
+  ])("preserves healthcheck evidence independently of runtime status: %s", (status, state, health) => {
+    const matches = resolveLiveServiceState({
+      services: [{ id: "svc", name: "app" }], projectId: "project", slug: "test",
+      live: [container({ id: "live", names: ["kovalio-test-app"], status })],
+    });
+    expect(matches.get("svc")).toMatchObject({ containerId: "live", status: state, health });
+  });
   it("reports a crash-looping container as restarting, NOT running", () => {
     // The regression that made a crash-looping api render a green "Running":
     // docker's `restarting` state was mapped to running.
@@ -46,10 +59,47 @@ describe("liveContainerStatus", () => {
 
 describe("canonicalServiceContainerName", () => {
   it("mirrors the name createServiceContainer mints", () => {
-    expect(canonicalServiceContainerName("openship", "web")).toBe("openship-openship-web");
+    expect(canonicalServiceContainerName("kovalio", "web")).toBe("kovalio-kovalio-web");
   });
   it("is null without a slug (never matches a bare name)", () => {
     expect(canonicalServiceContainerName("", "web")).toBeNull();
+  });
+});
+
+describe("compose-label fallback scope", () => {
+  it("does not attribute a same-slug Compose stack to a normal deployment", () => {
+    const live = [
+      container({
+        id: "c_managed",
+        names: ["kovalio-kovalio-api"],
+        labels: { "kovalio.project": "proj_user", "kovalio.service": "api" },
+      }),
+      container({
+        id: "c_control_plane",
+        names: ["kovalio-api-1"],
+        labels: {
+          "com.docker.compose.project": "kovalio",
+          "com.docker.compose.service": "api",
+        },
+      }),
+    ];
+    const matches = resolveLiveServiceState({
+      services: [{ id: "svc_api", name: "api" }],
+      live,
+      projectId: "proj_user",
+      slug: "kovalio",
+      tiers: liveMatchTiersForDeployment({ deployTarget: "server" }),
+    });
+
+    expect(matches.get("svc_api")).toMatchObject({
+      containerId: "c_managed",
+      matchedBy: "label",
+      duplicates: [],
+    });
+  });
+
+  it("keeps compose-label recovery for explicitly adopted stacks", () => {
+    expect(liveMatchTiersForDeployment({ adopt: true })).toBeUndefined();
   });
 });
 
@@ -59,25 +109,25 @@ describe("resolveLiveServiceState", () => {
     { id: "svc_api", name: "api" },
   ];
 
-  it("matches a natively deployed container by openship.project + openship.service", () => {
+  it("matches a natively deployed container by kovalio.project + kovalio.service", () => {
     const live = [
       container({
         id: "c_api",
-        names: ["openship-openship-api"],
-        labels: { "openship.project": "proj_1", "openship.service": "api", "openship.deployment": "dep_2" },
+        names: ["kovalio-kovalio-api"],
+        labels: { "kovalio.project": "proj_1", "kovalio.service": "api", "kovalio.deployment": "dep_2" },
         ip: "172.18.0.5",
         ports: [{ privatePort: 4000, publicPort: 4000 }],
-        image: "openship/openship-api:bld_x",
+        image: "kovalio/kovalio-api:bld_x",
       }),
     ];
-    const m = resolveLiveServiceState({ services, live, projectId: "proj_1", slug: "openship" });
+    const m = resolveLiveServiceState({ services, live, projectId: "proj_1", slug: "kovalio" });
     expect(m.get("svc_api")).toMatchObject({
       containerId: "c_api",
       status: "running",
       matchedBy: "label",
       ip: "172.18.0.5",
       hostPort: 4000,
-      image: "openship/openship-api:bld_x",
+      image: "kovalio/kovalio-api:bld_x",
     });
   });
 
@@ -89,11 +139,11 @@ describe("resolveLiveServiceState", () => {
     const live = [
       container({
         id: "c_web_old",
-        names: ["openship-openship-web"],
+        names: ["kovalio-kovalio-web"],
         labels: {
-          "openship.project": "proj_OLD",
-          "openship.service": "web",
-          "openship.deployment": "dep_OLD",
+          "kovalio.project": "proj_OLD",
+          "kovalio.service": "web",
+          "kovalio.deployment": "dep_OLD",
         },
       }),
     ];
@@ -101,7 +151,7 @@ describe("resolveLiveServiceState", () => {
       services,
       live,
       projectId: "proj_NEW",
-      slug: "openship",
+      slug: "kovalio",
       trackedIds: { svc_web: "c_web_old" },
     });
     expect(m.get("svc_web")).toMatchObject({
@@ -125,7 +175,7 @@ describe("resolveLiveServiceState", () => {
       services: [{ id: "svc_pg", name: "postgres" }],
       live,
       projectId: "proj_NEW",
-      slug: "openship",
+      slug: "kovalio",
       trackedIds: { svc_pg: "abcdef0123456789" },
     });
     expect(m.get("svc_pg")).toMatchObject({
@@ -141,7 +191,7 @@ describe("resolveLiveServiceState", () => {
       services: [{ id: "svc_pg", name: "postgres" }],
       live,
       projectId: "p",
-      slug: "openship",
+      slug: "kovalio",
       trackedIds: { svc_pg: "abcdef" },
     });
     expect(m.get("svc_pg")?.containerId).toBeNull();
@@ -166,18 +216,18 @@ describe("resolveLiveServiceState", () => {
 
   it("prefers a live label match over a stale tracked id", () => {
     const live = [
-      container({ id: "c_stale", names: ["openship-openship-web-old"], state: "exited", status: "Exited (0)" }),
+      container({ id: "c_stale", names: ["kovalio-kovalio-web-old"], state: "exited", status: "Exited (0)" }),
       container({
         id: "c_fresh",
-        names: ["openship-openship-web"],
-        labels: { "openship.project": "proj_1", "openship.service": "web" },
+        names: ["kovalio-kovalio-web"],
+        labels: { "kovalio.project": "proj_1", "kovalio.service": "web" },
       }),
     ];
     const m = resolveLiveServiceState({
       services: [{ id: "svc_web", name: "web" }],
       live,
       projectId: "proj_1",
-      slug: "openship",
+      slug: "kovalio",
       trackedIds: { svc_web: "c_stale_0000000000" },
     });
     expect(m.get("svc_web")).toMatchObject({ containerId: "c_fresh", matchedBy: "label" });
@@ -188,21 +238,21 @@ describe("resolveLiveServiceState", () => {
       container({
         id: "c_dead",
         names: ["a"],
-        labels: { "openship.project": "proj_1", "openship.service": "web" },
+        labels: { "kovalio.project": "proj_1", "kovalio.service": "web" },
         state: "exited",
         status: "Exited (1) 2 minutes ago",
       }),
       container({
         id: "c_up",
         names: ["b"],
-        labels: { "openship.project": "proj_1", "openship.service": "web" },
+        labels: { "kovalio.project": "proj_1", "kovalio.service": "web" },
       }),
     ];
     const m = resolveLiveServiceState({
       services: [{ id: "svc_web", name: "web" }],
       live,
       projectId: "proj_1",
-      slug: "openship",
+      slug: "kovalio",
     });
     expect(m.get("svc_web")?.containerId).toBe("c_up");
     expect(m.get("svc_web")?.duplicates).toEqual(["a"]);
@@ -215,15 +265,15 @@ describe("resolveLiveServiceState", () => {
       container({ id: "abcdef0123456789", names: ["legacy_web_1"] }),
       container({
         id: "c_new",
-        names: ["openship-openship-web"],
-        labels: { "openship.project": "proj_1", "openship.service": "web" },
+        names: ["kovalio-kovalio-web"],
+        labels: { "kovalio.project": "proj_1", "kovalio.service": "web" },
       }),
     ];
     const m = resolveLiveServiceState({
       services: [{ id: "svc_web", name: "web" }],
       live,
       projectId: "proj_1",
-      slug: "openship",
+      slug: "kovalio",
       trackedIds: { svc_web: "abcdef0123456789" },
     });
     expect(m.get("svc_web")?.containerId).toBe("c_new");
@@ -234,8 +284,8 @@ describe("resolveLiveServiceState", () => {
     const live = [
       container({
         id: "c_only",
-        names: ["openship-openship-web"],
-        labels: { "openship.project": "proj_1", "openship.service": "web" },
+        names: ["kovalio-kovalio-web"],
+        labels: { "kovalio.project": "proj_1", "kovalio.service": "web" },
       }),
     ];
     const m = resolveLiveServiceState({
@@ -247,7 +297,7 @@ describe("resolveLiveServiceState", () => {
       ],
       live,
       projectId: "proj_1",
-      slug: "openship",
+      slug: "kovalio",
       trackedIds: { svc_web2: "c_only_0000000000" },
     });
     expect(m.get("svc_web")?.containerId).toBe("c_only");
@@ -259,7 +309,7 @@ describe("resolveLiveServiceState", () => {
       services: [{ id: "svc_web", name: "web" }],
       live: [container({ id: "c_other", names: ["unrelated"] })],
       projectId: "proj_1",
-      slug: "openship",
+      slug: "kovalio",
     });
     expect(m.get("svc_web")).toMatchObject({ containerId: null, status: "stopped", matchedBy: null });
   });
@@ -267,9 +317,9 @@ describe("resolveLiveServiceState", () => {
   it("does not match another project's container by name when slugs differ", () => {
     const m = resolveLiveServiceState({
       services: [{ id: "svc_web", name: "web" }],
-      live: [container({ id: "c_other", names: ["openship-otherproject-web"] })],
+      live: [container({ id: "c_other", names: ["kovalio-otherproject-web"] })],
       projectId: "proj_1",
-      slug: "openship",
+      slug: "kovalio",
     });
     expect(m.get("svc_web")?.containerId).toBeNull();
   });
@@ -280,19 +330,19 @@ describe("resolveLiveServiceState", () => {
 // deploy for its ports). That makes these two properties load-bearing for a
 // DESTRUCTIVE path, so they get their own guarantees.
 describe("resolveLiveServiceState — teardown safety", () => {
-  it("reclaims an adopted container whose openship.project names ANOTHER project", () => {
+  it("reclaims an adopted container whose kovalio.project names ANOTHER project", () => {
     const live = [
       container({
         id: "c_adopted",
-        names: ["openship-openship-postgres"],
-        labels: { "openship.project": "proj_PREVIOUS", "openship.service": "postgres" },
+        names: ["kovalio-kovalio-postgres"],
+        labels: { "kovalio.project": "proj_PREVIOUS", "kovalio.service": "postgres" },
       }),
     ];
     const m = resolveLiveServiceState({
       services: [{ id: "svc_pg", name: "postgres" }],
       live,
       projectId: "proj_CURRENT",
-      slug: "openship",
+      slug: "kovalio",
     });
     expect(m.get("svc_pg")?.containerId).toBe("c_adopted");
   });
@@ -303,10 +353,10 @@ describe("resolveLiveServiceState — teardown safety", () => {
       // project label, different compose project. Nothing may match.
       container({
         id: "c_theirs",
-        names: ["openship-otherapp-postgres"],
+        names: ["kovalio-otherapp-postgres"],
         labels: {
-          "openship.project": "proj_THEIRS",
-          "openship.service": "postgres",
+          "kovalio.project": "proj_THEIRS",
+          "kovalio.service": "postgres",
           "com.docker.compose.project": "otherapp",
           "com.docker.compose.service": "postgres",
         },
@@ -316,7 +366,7 @@ describe("resolveLiveServiceState — teardown safety", () => {
       services: [{ id: "svc_pg", name: "postgres" }],
       live,
       projectId: "proj_CURRENT",
-      slug: "openship",
+      slug: "kovalio",
     });
     expect(m.get("svc_pg")?.containerId).toBeNull();
   });
@@ -328,10 +378,10 @@ describe("describeLiveState", () => {
       { id: "svc_web", name: "web" },
       { id: "svc_api", name: "api" },
     ];
-    const live = [container({ id: "c_web", names: ["openship-openship-web"] })];
-    const matches = resolveLiveServiceState({ services, live, projectId: "p", slug: "openship" });
+    const live = [container({ id: "c_web", names: ["kovalio-kovalio-web"] })];
+    const matches = resolveLiveServiceState({ services, live, projectId: "p", slug: "kovalio" });
     expect(describeLiveState(services, live, matches)).toEqual([
-      "web → openship-openship-web (running, by name)",
+      "web → kovalio-kovalio-web (running, by name)",
       "api → NO container on the host",
     ]);
   });
@@ -375,8 +425,8 @@ describe("resolveLiveServiceState — restricted tiers (destructive callers)", (
     const live = [
       container({
         id: "c_ours",
-        names: ["openship-supabase-db"],
-        labels: { "openship.project": "proj_1", "openship.service": "db" },
+        names: ["kovalio-supabase-db"],
+        labels: { "kovalio.project": "proj_1", "kovalio.service": "db" },
       }),
       ...composeOnly,
     ];

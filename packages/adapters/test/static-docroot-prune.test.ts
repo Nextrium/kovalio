@@ -15,7 +15,7 @@ import type { BuildConfig } from "../src/types";
  * resolves to `/workspace` — the very directory `COPY . /workspace` filled. The
  * build context is pruned by `.dockerignore` and THEN the generated recipe is
  * written into it, so the extracted tree carried `.dockerignore` and
- * `Dockerfile.openship…` (and a tracked `.git`) at their own public URLs.
+ * `Dockerfile.kovalio…` (and a tracked `.git`) at their own public URLs.
  *
  * Worse than the leak: those files COUNT as content. A repo with an allowlist
  * `.dockerignore` (`*` + `!src`) extracted to a tree holding only the two build
@@ -66,9 +66,9 @@ describe("isExcludedDocRootEntry", () => {
     expect(isExcludedDocRootEntry(".dockerignore")).toBe(true);
     expect(isExcludedDocRootEntry("Dockerfile")).toBe(true);
     // The single-app generated name and the compose batch builder's per-service one
-    // (`Dockerfile.openship.<sessionId>`) must BOTH be caught.
-    expect(isExcludedDocRootEntry("Dockerfile.openship")).toBe(true);
-    expect(isExcludedDocRootEntry("Dockerfile.openship.bld_1")).toBe(true);
+    // (`Dockerfile.kovalio.<sessionId>`) must BOTH be caught.
+    expect(isExcludedDocRootEntry("Dockerfile.kovalio")).toBe(true);
+    expect(isExcludedDocRootEntry("Dockerfile.kovalio.bld_1")).toBe(true);
     expect(isExcludedDocRootEntry("Dockerfile.prod")).toBe(true);
   });
 

@@ -6,7 +6,7 @@ import { EDGE_CONTAINER_MOUNTS, EDGE_SAME_PATH_MOUNTS } from "./infra/openresty-
 import { STATIC_RELEASE_BASE } from "./runtime/bare";
 
 /**
- * `/opt/openship/static` and `/etc/letsencrypt` are 1:1 host bind mounts in the api
+ * `/opt/kovalio/static` and `/etc/letsencrypt` are 1:1 host bind mounts in the api
  * container (see EDGE_CONTAINER_MOUNTS), so on the local box the api process, the edge
  * and the host all read the same files at the same path. Routing them over the
  * container→host SSH channel made static deploys, static rollback and cert adoption the

@@ -2,7 +2,8 @@ import Link from "next/link";
 
 const footerLinks = {
   Product: [
-    { label: "Features", href: "/#features" },
+    { label: "Features", href: "/features" },
+    { label: "Apps", href: "/apps" },
     { label: "Install", href: "/download" },
     { label: "Pricing", href: "/pricing" },
     { label: "Docs", href: "/docs" },
@@ -15,15 +16,16 @@ const footerLinks = {
     { label: "Security", href: "/docs/security/permissions" },
   ],
   Company: [
-    { label: "Resources", href: "/resources" },
+    { label: "Blog", href: "/blog" },
     { label: "Trust & Security", href: "/trust" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
+    { label: "Support", href: "/support" },
   ],
   Legal: [
     { label: "Privacy", href: "/privacy" },
     { label: "Terms", href: "/terms" },
-    { label: "License (Apache 2.0)", href: "https://github.com/oblien/openship/blob/main/LICENSE" },
+    { label: "License (Apache 2.0)", href: "https://github.com/Nextrium/kovalio/blob/main/LICENSE" },
   ],
 };
 
@@ -40,11 +42,12 @@ export function Footer() {
                 aria-hidden="true"
               />
               <span className="th-text-heading text-base font-semibold tracking-tight">
-                Openship
+                Kovalio
               </span>
             </Link>
             <p className="th-text-muted mt-4 max-w-xs text-sm leading-relaxed">
-              Open-source deployment platform. CLI, web dashboard, or desktop app. Install, connect, deploy.
+              Open-source deployment platform. CLI, web dashboard, or desktop app. Install, connect,
+              deploy.
             </p>
           </div>
 
@@ -104,7 +107,7 @@ export function Footer() {
           <div className="flex items-center gap-5">
             {/* GitHub */}
             <a
-              href="https://github.com/oblien/openship"
+              href="https://github.com/Nextrium/kovalio"
               target="_blank"
               rel="noopener noreferrer"
               className="th-text-muted transition-colors hover:text-[var(--th-text-strong)]"
@@ -116,7 +119,7 @@ export function Footer() {
             </a>
             {/* X / Twitter */}
             <a
-              href="https://x.com/openshipio"
+              href="https://x.com/kovalioio"
               target="_blank"
               rel="noopener noreferrer"
               className="th-text-muted transition-colors hover:text-[var(--th-text-strong)]"

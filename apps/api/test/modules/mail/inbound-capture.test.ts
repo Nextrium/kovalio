@@ -5,7 +5,7 @@ import {
   collectorMailbox,
   generateToken,
   tokenFromBcc,
-} from "../../../src/modules/mail/inbound/capture";
+} from "@repo/platform/engine/modules/mail/inbound/capture";
 
 /**
  * The pure half of arming. Two of these are load-bearing beyond tidiness:
@@ -21,12 +21,12 @@ import {
 describe("token round trip", () => {
   it("builds the collector address and reads the token back out", () => {
     const addr = collectorAddress("Acme.COM", "abc123");
-    expect(addr).toBe("openship-hook+abc123@acme.com");
+    expect(addr).toBe("kovalio-hook+abc123@acme.com");
     expect(tokenFromBcc(addr)).toBe("abc123");
   });
 
   it("names one collector mailbox per domain, lowercased", () => {
-    expect(collectorMailbox("Acme.COM")).toBe("openship-hook@acme.com");
+    expect(collectorMailbox("Acme.COM")).toBe("kovalio-hook@acme.com");
   });
 
   it("generates lowercase [a-z0-9] tokens with real entropy", () => {
@@ -46,21 +46,21 @@ describe("tokenFromBcc — foreign values are never ours", () => {
     // The case that must never be overwritten: archiving, compliance, iRedAdmin-Pro.
     expect(tokenFromBcc("archive@acme.com")).toBeNull();
     expect(tokenFromBcc("compliance+legal@acme.com")).toBeNull();
-    expect(tokenFromBcc("openship@acme.com")).toBeNull();
+    expect(tokenFromBcc("kovalio@acme.com")).toBeNull();
   });
 
   it("rejects a near-miss that only looks like ours", () => {
     // A prefix match without the delimiter is a DIFFERENT mailbox.
-    expect(tokenFromBcc("openship-hooks+abc@acme.com")).toBeNull();
-    expect(tokenFromBcc("openship-hook@acme.com")).toBeNull();
+    expect(tokenFromBcc("kovalio-hooks+abc@acme.com")).toBeNull();
+    expect(tokenFromBcc("kovalio-hook@acme.com")).toBeNull();
     // Empty extension carries no folder, so it is not a usable token.
-    expect(tokenFromBcc("openship-hook+@acme.com")).toBeNull();
+    expect(tokenFromBcc("kovalio-hook+@acme.com")).toBeNull();
   });
 
   it("rejects a token with characters the LDA would not fold", () => {
-    expect(tokenFromBcc("openship-hook+ABC123@acme.com")).toBeNull();
-    expect(tokenFromBcc("openship-hook+abc.123@acme.com")).toBeNull();
-    expect(tokenFromBcc("openship-hook+abc-123@acme.com")).toBeNull();
+    expect(tokenFromBcc("kovalio-hook+ABC123@acme.com")).toBeNull();
+    expect(tokenFromBcc("kovalio-hook+abc.123@acme.com")).toBeNull();
+    expect(tokenFromBcc("kovalio-hook+abc-123@acme.com")).toBeNull();
   });
 
   it("handles absent values", () => {
@@ -74,8 +74,8 @@ describe("collectorFolderPath — Maildir++ layout", () => {
   it("puts the token folder dot-prefixed under Maildir/", () => {
     // mail_location = maildir:%Lh/Maildir/, home from the userdb query, and Maildir++
     // stores a top-level folder as a dot-prefixed directory beside cur/new/tmp.
-    expect(collectorFolderPath("/var/vmail/vmail1/acme.com/o/op/openship-hook-20260101000000/", "tok")).toBe(
-      "/var/vmail/vmail1/acme.com/o/op/openship-hook-20260101000000/Maildir/.tok",
+    expect(collectorFolderPath("/var/vmail/vmail1/acme.com/o/op/kovalio-hook-20260101000000/", "tok")).toBe(
+      "/var/vmail/vmail1/acme.com/o/op/kovalio-hook-20260101000000/Maildir/.tok",
     );
   });
 

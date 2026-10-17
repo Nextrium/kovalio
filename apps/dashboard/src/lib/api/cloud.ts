@@ -3,7 +3,7 @@ import { endpoints } from "./endpoints";
 
 export interface CloudStatus {
   connected: boolean;
-  user?: { name: string; email: string; image?: string | null };
+  user?: { id?: string; organizationId?: string; name: string; email: string; image?: string | null };
 }
 
 export interface CloudConnectFinalizeBody {
@@ -34,7 +34,7 @@ export interface CloudConnectAuthorizeResponse {
 }
 
 export const cloudApi = {
-  /** Disconnect from Openship Cloud */
+  /** Disconnect from Kovalio Cloud */
   disconnect: () => api.post<CloudStatus>(endpoints.cloud.disconnect),
 
   /** Check current cloud connection status */

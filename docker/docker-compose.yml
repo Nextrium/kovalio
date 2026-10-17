@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────────────
-# Openship — Docker Compose (SELF-HOSTED, pull-based)
+# Kovalio — Docker Compose (SELF-HOSTED, pull-based)
 #
 # Run from the REPO ROOT (paths below are relative to docker/):
 #   cp .env.example .env          # then edit
@@ -8,7 +8,7 @@
 # Upgrade:  docker compose -f docker/docker-compose.yml --env-file .env pull && \
 #           docker compose -f docker/docker-compose.yml --env-file .env up -d
 #
-# Names every container/volume/network `openship-*` instead of letting compose
+# Names every container/volume/network `kovalio-*` instead of letting compose
 # derive the prefix from this directory (which produced `docker-api-1`).
 #
 # UPGRADING AN EXISTING STACK: the project name is also the VOLUME prefix, so
@@ -17,13 +17,13 @@
 # mounted. Either keep the old name (`docker compose -p docker …`) or copy the
 # volumes over first.
 #
-# NOTE: `openship up` (the CLI) does NOT use this file — it generates its own
-# equivalent stack at ~/.openship/compose/. This file is the reference for
+# NOTE: `kovalio up` (the CLI) does NOT use this file — it generates its own
+# equivalent stack at ~/.kovalio/compose/. This file is the reference for
 # advanced git-clone self-hosters. Keep the two in sync (apps/cli/src/lib/compose.ts).
 #
 # PULL-BASED by default: `api` + `dashboard` + `edge` come from published images
-#   on GHCR (ghcr.io/oblien/*; OPENSHIP_IMAGE_REGISTRY overrides for a mirror).
-#   Pin OPENSHIP_VERSION in .env for reproducible upgrades. To BUILD from source
+#   on GHCR (ghcr.io/nextrium/*; KOVALIO_IMAGE_REGISTRY overrides for a mirror).
+#   Pin KOVALIO_VERSION in .env for reproducible upgrades. To BUILD from source
 #   instead, layer the override:
 #     docker compose -f docker/docker-compose.yml -f docker/docker-compose.build.yml \
 #       --env-file .env up -d --build
@@ -46,43 +46,50 @@
 # reverse proxy maps public domains to the api/dashboard ports.
 #
 # REMOTE ACCESS: reaching this from another machine (LAN IP or a reverse proxy)
-# requires OPENSHIP_PUBLIC_URL in .env — else the dashboard loads but login is
+# requires KOVALIO_PUBLIC_URL in .env — else the dashboard loads but login is
 # rejected (403 ORIGIN_REJECTED). Behind a proxy also set TRUST_PROXY=true.
 #
 # BIND INTERFACE: the api/dashboard ports publish on 127.0.0.1 (loopback) by
 # default — the bundled `edge` (host-networked OpenResty) fronts your public
 # domains and reaches them over loopback, so nothing needs to sit on a public
-# interface. Set OPENSHIP_BIND_ADDR only if you deliberately want direct off-box
-# access without a domain (e.g. OPENSHIP_BIND_ADDR=0.0.0.0 or a LAN IP). See
+# interface. Set KOVALIO_BIND_ADDR only if you deliberately want direct off-box
+# access without a domain (e.g. KOVALIO_BIND_ADDR=0.0.0.0 or a LAN IP). See
 # .env.example → "Remote access".
 # ──────────────────────────────────────────────────────────
 
-name: openship
+name: kovalio
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "20m"
+    max-file: "3"
 
 services:
   # ─── Database (storage, private) ──────────────────────
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    logging: *default-logging
     environment:
       # Fresh installs keep the data dir in a SUBDIR of the volume so initdb never
       # runs against a bare mount root (fails on quirky host filesystems with
       # "Operation not permitted" — #350). UPGRADING an install that already had
       # its DB at the mount root? Set PGDATA=/var/lib/postgresql/data in your .env
       # first — otherwise Postgres inits a fresh empty DB (your data stays in the
-      # volume, just unused, until you point PGDATA back). The `openship up` CLI
+      # volume, just unused, until you point PGDATA back). The `kovalio up` CLI
       # handles this automatically; this note is for raw `docker compose` users.
       PGDATA: ${PGDATA:-/var/lib/postgresql/data/pgdata}
-      POSTGRES_USER: ${POSTGRES_USER:-openship}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — re-run `openship up` to regenerate .env}
-      POSTGRES_DB: ${POSTGRES_DB:-openship}
+      POSTGRES_USER: ${POSTGRES_USER:-kovalio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — re-run `kovalio up` to regenerate .env}
+      POSTGRES_DB: ${POSTGRES_DB:-kovalio}
     # PRIVATE: not published to the host. api reaches it at postgres:5432.
     expose:
       - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-openship} -d ${POSTGRES_DB:-openship}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kovalio} -d ${POSTGRES_DB:-kovalio}"]
       interval: 5s
       timeout: 3s
       retries: 12
@@ -91,6 +98,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    logging: *default-logging
     command: ["redis-server", "--appendonly", "yes"]
     # PRIVATE: not published to the host. api reaches it at redis:6379.
     expose:
@@ -105,13 +113,14 @@ services:
 
   # ─── API (control plane) ──────────────────────────────
   api:
-    image: ${OPENSHIP_IMAGE_REGISTRY:-ghcr.io/oblien}/openship-api:${OPENSHIP_VERSION:-latest}
+    image: ${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-api:${KOVALIO_VERSION:-latest}
     restart: unless-stopped
+    logging: *default-logging
     ports:
       # Loopback by default — the host-net edge reaches it over loopback.
-      # OPENSHIP_BIND_ADDR opts into a public/LAN interface (see header note).
+      # KOVALIO_BIND_ADDR opts into a public/LAN interface (see header note).
       # API_PORT overrides the port (host + container move together).
-      - "${OPENSHIP_BIND_ADDR:-127.0.0.1}:${API_PORT:-4000}:${API_PORT:-4000}"
+      - "${KOVALIO_BIND_ADDR:-127.0.0.1}:${API_PORT:-4000}:${API_PORT:-4000}"
     # Host Docker socket → the API (dockerode) builds + runs deployed apps on the
     # host daemon. dockerode's local transport targets the CONTAINER path, which is
     # why only the host side is a variable: a rootless daemon runs as the invoking
@@ -132,35 +141,35 @@ services:
     # translation and a bare→container conversion inherits existing certs.
     # `:z` relabels for SELinux-enforcing hosts; a no-op elsewhere.
     volumes:
-      - ${OPENSHIP_DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
-      - /var/lib/openship/edge/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled:z
+      - ${KOVALIO_DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
+      - /var/lib/kovalio/edge/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled:z
       - /etc/letsencrypt:/etc/letsencrypt:z
-      - /var/lib/openship/edge/acme:/var/www/acme:z
-      - /opt/openship/static:/opt/openship/static:z
+      - /var/lib/kovalio/edge/acme:/var/www/acme:z
+      - /opt/kovalio/static:/opt/kovalio/static:z
       # Host-op SSH key (createHostExecutor → host.docker.internal), at the path
-      # OPENSHIP_HOST_SSH_KEY names. /dev/null when the host channel isn't
+      # KOVALIO_HOST_SSH_KEY names. /dev/null when the host channel isn't
       # provisioned, which is what lets this stack come up on a box with no key:
-      # OPENSHIP_HOST_SSH_HOST stays unset, host operations REFUSE (they'd
+      # KOVALIO_HOST_SSH_HOST stays unset, host operations REFUSE (they'd
       # otherwise run against this container's filesystem, #509) and ordinary
-      # deploys keep working over the socket above. Set OPENSHIP_HOST_KEY_PATH to
+      # deploys keep working over the socket above. Set KOVALIO_HOST_KEY_PATH to
       # an ABSOLUTE host path to activate it — a relative one resolves against
       # docker/, not the directory you run compose from. See .env.example → "Host
       # operations from the container".
-      - ${OPENSHIP_HOST_KEY_PATH:-/dev/null}:/run/secrets/openship_host_key:ro
+      - ${KOVALIO_HOST_KEY_PATH:-/dev/null}:/run/secrets/kovalio_host_key:ro
     # Reach the HOST over the internal docker bridge (host.docker.internal →
-    # host-gateway) for host-OS ops when configured (OPENSHIP_HOST_SSH_*, set up
-    # by `openship up`; by hand on this file — see .env.example). Harmless when
+    # host-gateway) for host-OS ops when configured (KOVALIO_HOST_SSH_*, set up
+    # by `kovalio up`; by hand on this file — see .env.example). Harmless when
     # unset: host ops refuse rather than target the container. Linux needs the
     # explicit mapping.
     #
     # `host-gateway` is resolved by the daemon and is right on a stock rootful
     # install. It is NOT universally right: under rootless Docker it lands in
     # RootlessKit's namespace rather than the host's, so the host's sshd isn't there
-    # (#482). OPENSHIP_HOST_GATEWAY re-points the alias — e.g. at the box's own LAN
+    # (#482). KOVALIO_HOST_GATEWAY re-points the alias — e.g. at the box's own LAN
     # address — which is the seam the CLI-generated stack uses too.
     extra_hosts:
-      - "host.docker.internal:${OPENSHIP_HOST_GATEWAY:-host-gateway}"
-    # Mode + secrets (CLOUD_MODE, DEPLOY_MODE, OPENSHIP_TARGET, Oblien, GitHub
+      - "host.docker.internal:${KOVALIO_HOST_GATEWAY:-host-gateway}"
+    # Mode + secrets (CLOUD_MODE, DEPLOY_MODE, KOVALIO_TARGET, Oblien, GitHub
     # App, auth secrets, …) all come from .env. The values below OVERRIDE it
     # with the fixed internal port + in-cluster service DNS (compose
     # `environment` wins over `env_file`).
@@ -169,12 +178,12 @@ services:
     environment:
       NODE_ENV: production
       PORT: "${API_PORT:-4000}"
-      DATABASE_URL: postgresql://${POSTGRES_USER:-openship}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — re-run `openship up` to regenerate .env}@postgres:5432/${POSTGRES_DB:-openship}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kovalio}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — re-run `kovalio up` to regenerate .env}@postgres:5432/${POSTGRES_DB:-kovalio}
       REDIS_URL: redis://redis:6379
       # Route via the containerized edge (below) instead of host OpenResty: the
       # API writes vhosts to the shared volume + reloads/certbots via `docker exec`.
-      OPENSHIP_EDGE_MODE: docker
-      OPENSHIP_EDGE_CONTAINER: openship-edge
+      KOVALIO_EDGE_MODE: docker
+      KOVALIO_EDGE_CONTAINER: kovalio-edge
     depends_on:
       postgres:
         condition: service_healthy
@@ -189,10 +198,11 @@ services:
 
   # ─── Dashboard (app UI) ───────────────────────────────
   dashboard:
-    image: ${OPENSHIP_IMAGE_REGISTRY:-ghcr.io/oblien}/openship-dashboard:${OPENSHIP_VERSION:-latest}
+    image: ${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-dashboard:${KOVALIO_VERSION:-latest}
     restart: unless-stopped
+    logging: *default-logging
     ports:
-      - "${OPENSHIP_BIND_ADDR:-127.0.0.1}:${DASHBOARD_PORT:-3001}:${DASHBOARD_PORT:-3001}"
+      - "${KOVALIO_BIND_ADDR:-127.0.0.1}:${DASHBOARD_PORT:-3001}:${DASHBOARD_PORT:-3001}"
     env_file:
       - ../.env
     environment:
@@ -210,21 +220,22 @@ services:
   # vhost config is unchanged. The API drives it via `docker exec` + the shared
   # volumes above. LINUX ONLY (host networking); on mac/win use the bare CLI.
   edge:
-    image: ${OPENSHIP_IMAGE_REGISTRY:-ghcr.io/oblien}/openship-edge:${OPENSHIP_VERSION:-latest}
+    image: ${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-edge:${KOVALIO_VERSION:-latest}
     # PINNED, and it must stay pinned: the api reaches the edge by NAME through
-    # DockerEdgeExecutor (OPENSHIP_EDGE_CONTAINER above), and "ours" edge
-    # detection greps `docker ps --filter name=openship-edge`. Without this,
+    # DockerEdgeExecutor (KOVALIO_EDGE_CONTAINER above), and "ours" edge
+    # detection greps `docker ps --filter name=kovalio-edge`. Without this,
     # compose derives `<project>-edge-1` from the directory and every
-    # `docker exec` into the edge fails with "No such container: openship-edge".
+    # `docker exec` into the edge fails with "No such container: kovalio-edge".
     # Safe here: the edge is a singleton (host networking, one per box).
-    container_name: openship-edge
+    container_name: kovalio-edge
     restart: unless-stopped
+    logging: *default-logging
     network_mode: host
     volumes:
-      - /var/lib/openship/edge/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled:z
+      - /var/lib/kovalio/edge/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled:z
       - /etc/letsencrypt:/etc/letsencrypt:z
-      - /var/lib/openship/edge/acme:/var/www/acme:z
-      - /opt/openship/static:/opt/openship/static:z
+      - /var/lib/kovalio/edge/acme:/var/www/acme:z
+      - /opt/kovalio/static:/opt/kovalio/static:z
 
 volumes:
   postgres_data:

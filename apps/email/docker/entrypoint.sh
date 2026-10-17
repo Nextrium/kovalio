@@ -1,42 +1,48 @@
 #!/usr/bin/env bash
-# First-boot / every-boot entrypoint for the openship-mail engine.
+# First-boot / every-boot entrypoint for the kovalio-mail engine.
 #
 # Idempotent by construction — this is what makes `docker pull` + recreate safe:
 #   1. seed-if-absent: copy baked config into empty bind mounts, never overwrite
 #      operator edits (config dirs are host bind mounts; the queue/maildir/DKIM
 #      data dirs start empty and are left alone — except ClamAV's signature
-#      database, which is data clamd cannot start without: see 6).
-#   2. reconcile: rewrite the baked placeholders in every daemon config to the
+#      database, which is data clamd cannot start without: see 7).
+#   2. reconcile the persistent Postfix chroot's DNS/NSS files from the running
+#      container. The spool bind mount hides the copy made during image build;
+#      without this, chrooted smtpd rejects inbound mail when DNS checks run.
+#   3. reconcile: rewrite the baked placeholders in every daemon config to the
 #      real per-install values from the --env-file — the `build-placeholder` DB
 #      password (shared role) and the `build.invalid` domain (-> $FIRST_DOMAIN),
 #      the latter also writing /etc/mailname + an /etc/hosts FQDN entry.
-#   3. bootstrap the mail databases (roles + schema + first domain) if the vmail
+#   4. bootstrap the mail databases (roles + schema + first domain) if the vmail
 #      schema isn't there yet — see db-bootstrap.sh, which owns the wait for the
 #      sidecar and never re-inits an existing DB. FATAL on failure: an engine
 #      without its schema cannot serve, and pretending otherwise is GH-562.
-#   4. pre-create the log files fail2ban tails (rsyslog fills them once daemons
+#   5. pre-create the log files fail2ban tails (rsyslog fills them once daemons
 #      log; a jail whose logpath is missing at start would crash-loop).
-#   5. reuse-or-generate the DKIM key on its bind mount (never regenerate — a new
+#   6. reuse-or-generate the DKIM key on its bind mount (never regenerate — a new
 #      selector breaks DMARC until DNS repropagates).
-#   6. ClamAV: seed the signature database onto its bind mount from the baked copy
+#   7. ClamAV: seed the signature database onto its bind mount from the baked copy
 #      (no network), hand the mount to the `clamav` user, and create clamd's socket
 #      directory. Without a database clamd exits 1, and amavis — whose only scanner
 #      it is — then defers every inbound message (issue #565).
-#   7. hand off to supervisord (the CMD).
+#   8. Amavis: drop leftover pid/lock/socket. `docker recreate` empties /run;
+#      `docker restart` keeps the writable layer, so Net::Server can abort-loop
+#      against a recycled PID (often now dovecot) and Postfix defers originating
+#      mail on 127.0.0.1:10026.
+#   9. hand off to supervisord (the CMD).
 #
 # Env (from ensure-container-mail.ts --env-file): FIRST_DOMAIN,
-# OPENSHIP_MAIL_DB_{HOST,PORT,NAME,USER}, plus iRedMail secrets
+# KOVALIO_MAIL_DB_{HOST,PORT,NAME,USER}, plus iRedMail secrets
 # (VMAIL_DB_ADMIN_PASSWD, VMAIL_DB_BIND_PASSWD, AMAVISD_DB_PASSWD,
 # IREDAPD_DB_PASSWD, FAIL2BAN_DB_PASSWD, PGSQL_ROOT_PASSWD, DOMAIN_ADMIN_PASSWD_PLAIN).
 set -euo pipefail
 
-log() { echo "[openship-mail] $*"; }
+log() { echo "[kovalio-mail] $*"; }
 
-# No DB_HOST/DB_PORT here on purpose: db-bootstrap.sh reads the same two env vars and
-# owns every conversation with the sidecar, so duplicating them invites the two files
-# to disagree about where the database is.
+# db-bootstrap.sh reads KOVALIO_MAIL_DB_HOST and KOVALIO_MAIL_DB_PORT to wait for
+# and bootstrap the schema; step 3d reconciles that same port into daemon configs.
 FIRST_DOMAIN="${FIRST_DOMAIN:-}"
-SEED_DIR="/opt/openship-mail/seed"
+SEED_DIR="/opt/kovalio-mail/seed"
 
 # 1. seed-if-absent for bind-mounted config dirs.
 seed() { # <seed-subdir> <target>
@@ -49,16 +55,29 @@ seed() { # <seed-subdir> <target>
 seed postfix /etc/postfix
 seed dovecot /etc/dovecot
 seed amavis-confd /etc/amavis/conf.d
-mkdir -p /var/vmail /var/spool/postfix /var/lib/dkim /var/lib/clamav
 
-# 2. reconcile baked placeholder secrets -> the real shared role password.
+# An older bind-mounted master.cf hides corrected image defaults (#392).
+bash /opt/kovalio-mail/postfix-filter-tls.sh
+mkdir -p /var/vmail /var/spool/postfix /var/lib/dkim /var/lib/clamav
+if getent passwd vmail >/dev/null 2>&1; then
+  chown -R vmail:vmail /var/vmail 2>/dev/null || true
+  chmod 750 /var/vmail 2>/dev/null || true
+fi
+
+# 2. Recreate the resolver view inside Postfix's persistent chroot on EVERY boot.
+# The iRedMail installer does this at image-build time, but /var/spool/postfix is
+# replaced by the queue bind mount at runtime. Refreshing rather than seed-once
+# also follows Docker DNS changes after a container recreate (GH-686).
+bash /opt/kovalio-mail/postfix-chroot-etc.sh /etc /var/spool/postfix/etc
+
+# 3. reconcile baked placeholder secrets -> the real shared role password.
 #    The image is built with `build-placeholder` in every daemon's DB config; all
 #    five mail roles share one password (loopback-only sidecar; privsep via
 #    GRANTs — see db-bootstrap.sh), so one global replace wires postfix/dovecot/
 #    amavis/iredapd/fail2ban to the sidecar. Idempotent: once replaced there is no
 #    placeholder left to match, so every later boot is a no-op.
 if [ -n "${VMAIL_DB_BIND_PASSWD:-}" ]; then
-  export _OPENSHIP_MAIL_PW="$VMAIL_DB_BIND_PASSWD"
+  export _KOVALIO_MAIL_PW="$VMAIL_DB_BIND_PASSWD"
   # Pipe grep straight into xargs, newline-delimited. A NUL-delimited list (grep
   # -Z / xargs -0) cannot round-trip through a shell variable — bash silently
   # drops NUL bytes, mashing every path into one bogus filename that rewrites
@@ -68,16 +87,16 @@ if [ -n "${VMAIL_DB_BIND_PASSWD:-}" ]; then
   # so its mtime is now newer). Deleting the stale .pyc below makes that certain.
   if grep -rl --exclude='*.pyc' 'build-placeholder' \
        /etc/postfix /etc/dovecot /etc/amavis /opt/iredapd /etc/fail2ban 2>/dev/null \
-       | xargs -r perl -pi -e 's/\Qbuild-placeholder\E/$ENV{_OPENSHIP_MAIL_PW}/g'; then
+       | xargs -r perl -pi -e 's/\Qbuild-placeholder\E/$ENV{_KOVALIO_MAIL_PW}/g'; then
     log "reconciled DB passwords in daemon configs"
   else
     log "no placeholder passwords to reconcile"
   fi
   rm -f /opt/iredapd/__pycache__/*.pyc 2>/dev/null || true
-  unset _OPENSHIP_MAIL_PW
+  unset _KOVALIO_MAIL_PW
 fi
 
-# 2b. reconcile the baked placeholder DOMAIN -> the real FIRST_DOMAIN.
+# 3b. reconcile the baked placeholder DOMAIN -> the real FIRST_DOMAIN.
 #     The image is built with FIRST_DOMAIN=build.invalid (docker/build-config), so
 #     every config iRedMail laid down at build carries `build.invalid` /
 #     `mail.build.invalid` — most importantly amavis's
@@ -100,18 +119,18 @@ if [ -n "$FIRST_DOMAIN" ]; then
     *[!A-Za-z0-9.-]*|"")
       log "WARN: FIRST_DOMAIN '$FIRST_DOMAIN' outside [A-Za-z0-9.-] — skipping domain reconcile" ;;
     *)
-      export _OPENSHIP_MAIL_DOMAIN="$FIRST_DOMAIN"
+      export _KOVALIO_MAIL_DOMAIN="$FIRST_DOMAIN"
       # \Q…\E so the dot in build.invalid is literal, not a wildcard. Same file set +
       # *.pyc handling as the password reconcile above.
       if grep -rl --exclude='*.pyc' 'build\.invalid' \
            /etc/postfix /etc/dovecot /etc/amavis /opt/iredapd /etc/fail2ban 2>/dev/null \
-           | xargs -r perl -pi -e 's/\Qbuild.invalid\E/$ENV{_OPENSHIP_MAIL_DOMAIN}/g'; then
+           | xargs -r perl -pi -e 's/\Qbuild.invalid\E/$ENV{_KOVALIO_MAIL_DOMAIN}/g'; then
         log "reconciled build.invalid -> ${FIRST_DOMAIN} in daemon configs"
       else
         log "no build.invalid placeholder to reconcile"
       fi
       rm -f /opt/iredapd/__pycache__/*.pyc 2>/dev/null || true
-      unset _OPENSHIP_MAIL_DOMAIN
+      unset _KOVALIO_MAIL_DOMAIN
 
       # /etc/mailname — Debian's "system mail name" (postfix myorigin source). Not on
       # a bind mount and never written under the stubbed-init build, so it is missing
@@ -134,7 +153,16 @@ if [ -n "$FIRST_DOMAIN" ]; then
   esac
 fi
 
-# 3. bootstrap the mail databases (idempotent; skips if the vmail schema exists).
+# 3c. /etc/ssl is in the container layer. Restore the daemon certificate links
+#     on every boot so recreating the container retains the mounted TLS identity.
+bash /opt/kovalio-mail/reconcile-ssl.sh "$FIRST_DOMAIN"
+
+# 3d. Keep daemon SQL connections on the sidecar's selected host port. Only
+#     database connection fields are rewritten; mail listener ports stay intact.
+python3 /opt/kovalio-mail/reconcile-db-port.py "${KOVALIO_MAIL_DB_PORT:-5432}"
+
+
+# 4. bootstrap the mail databases (idempotent; skips if the vmail schema exists).
 #
 # The wait for the sidecar lives INSIDE db-bootstrap.sh, which polls `SELECT 1` until
 # the database actually answers. This used to be an `nc -z` loop here, and that was
@@ -150,15 +178,16 @@ fi
 # crash-looping while the boot log claimed success. Dying here instead means the log
 # names the cause once, and `verifyMailEngine`'s port probe correctly reports the
 # engine as down instead of reporting a healthy install.
-if ! bash /opt/openship-mail/db-bootstrap.sh; then
+if ! bash /opt/kovalio-mail/db-bootstrap.sh; then
   log "FATAL: mail database bootstrap failed — see the [db-bootstrap] lines above."
   log "  The engine will not start without its schema. After fixing the cause, recreate"
-  log "  the container, or re-run:  docker exec openship-mail bash /opt/openship-mail/db-bootstrap.sh"
+  log "  the container, or re-run:  docker exec kovalio-mail bash /opt/kovalio-mail/db-bootstrap.sh"
   exit 1
 fi
 
-# 4. pre-create the log files the fail2ban jails tail, so a jail never starts
-#    against a missing path (rsyslog populates them as the daemons log).
+# 5. fail2ban setup:
+#    a) pre-create the log files the fail2ban jails tail, so a jail never starts
+#       against a missing path (rsyslog populates them as the daemons log).
 mkdir -p /var/log/dovecot /var/log/iredapd /var/log/supervisor
 touch /var/log/mail.log \
       /var/log/dovecot/dovecot.log /var/log/dovecot/imap.log \
@@ -166,7 +195,17 @@ touch /var/log/mail.log \
       /var/log/iredapd/iredapd.log
 chown -R iredapd:iredapd /var/log/iredapd 2>/dev/null || true
 
-# 5. DKIM: reuse the key on the mount, else generate one (per domain).
+#    b) fix leading commas in jail port lists (e.g. `,,25,587,...` -> `25,587,...`)
+#       because HTTP/HTTPS ports are absent in the container image and cause
+#       nftables syntax errors when generating banning rules.
+sed -i -E 's/port=",,/port="/g' /etc/fail2ban/jail.d/*.local 2>/dev/null || true
+
+#    c) configure the helper's TCP endpoint AND credentials. A .pgpass entry
+#       alone cannot select a host/port. The dedicated files are also used by
+#       cron/manual invocations that do not inherit the container environment.
+python3 /opt/kovalio-mail/configure-fail2ban-db.py
+
+# 6. DKIM: reuse the key on the mount, else generate one (per domain).
 if [ -n "$FIRST_DOMAIN" ] && [ ! -s "/var/lib/dkim/${FIRST_DOMAIN}.pem" ]; then
   log "generating DKIM key for ${FIRST_DOMAIN}"
   # Debian ships the daemon as `amavisd` (no `amavisd-new` executable); try it
@@ -177,7 +216,7 @@ if [ -n "$FIRST_DOMAIN" ] && [ ! -s "/var/lib/dkim/${FIRST_DOMAIN}.pem" ]; then
 fi
 chown -R amavis:amavis /var/lib/dkim 2>/dev/null || true
 
-# 6. ClamAV: signatures onto the mount, and clamd's runtime directory.
+# 7. ClamAV: signatures onto the mount, and clamd's runtime directory.
 #
 #    The seed is NOT allowed to be fatal, unlike the config seeds above: this one copies
 #    a few hundred MB onto a host bind mount, so a full or read-only disk would take
@@ -202,6 +241,22 @@ if getent passwd clamav >/dev/null 2>&1; then
 else
   log "WARN: no clamav user in this image — ClamAV will not start"
 fi
+
+# 8. Amavis runtime files.
+#
+#    Amavis's Net::Server refuses to start if amavisd.pid exists and that PID is
+#    still alive — even when the process is something else. `/run` is empty on
+#    `docker recreate`, but `docker restart` keeps the writable layer, so a pid
+#    from the previous life can now belong to dovecot (PIDs recycle from 1).
+#    Supervisord then reports amavis STARTING/RUNNING while it abort-loops on
+#    "Pid_file already exists", and originating mail sits deferred with
+#    `connect to 127.0.0.1[127.0.0.1]:10026: Connection refused`.
+#
+#    This entrypoint is the first process in a fresh pid namespace, so those
+#    files cannot refer to a living amavis. Drop them unconditionally, then
+#    recreate the directory the way Debian's tmpfiles.d rule would under
+#    systemd (supervisord has no equivalent).
+bash /opt/kovalio-mail/prepare-amavis-runtime.sh
 
 log "starting supervisord"
 exec "$@"

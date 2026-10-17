@@ -3,14 +3,16 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildEdgeRunCommand,
   ensureContainerEdge,
+  resolveEdgeContainerMounts,
   resolveEdgeImage,
 } from "./ensure-container-edge";
+import { EDGE_CONTAINER_MOUNTS } from "../../infra/openresty-lua";
 import { setManagedImagesFromSource } from "../managed-image";
 import { JOURNAL_PATH } from "./takeover-journal";
 import type { CommandExecutor } from "../../types";
 import type { InstallerConfig } from "../types";
 
-const IMAGE = "ghcr.io/oblien/openship-edge:1.2.3";
+const IMAGE = "ghcr.io/nextrium/kovalio-edge:1.2.3";
 
 /**
  * A pre-accepted takeover — the non-interactive equivalent of the operator
@@ -51,6 +53,10 @@ interface BoxOpts {
    * Flips the pull gate: present ⇒ no pull, absent (prod) ⇒ pull.
    */
   imagePresent?: boolean;
+  /** Physical path returned by the batched mount-resolve exec, keyed by logical host path. */
+  canonicalMounts?: Record<string, string>;
+  /** Bind sources reported by Docker for an existing edge, keyed by container path. */
+  mountedSources?: Record<string, string>;
 }
 
 /** procfs socket table rows: state 0A = LISTEN, hex 0050 = 80, 01BB = 443. */
@@ -95,7 +101,7 @@ function box(opts: BoxOpts = {}) {
   const answer = async (cmd: string): Promise<string> => {
     commands.push(cmd);
 
-    if (cmd.startsWith("docker ps --filter name=openship-edge")) return opts.edgeContainer ?? "";
+    if (cmd.startsWith("docker ps --filter name=kovalio-edge")) return opts.edgeContainer ?? "";
     if (cmd.startsWith("docker ps")) return "";
     if (cmd.startsWith("docker version")) return opts.dockerMissing ? "" : "27.0.0";
     if (cmd.includes("{{.State.Status}}")) return edgeState;
@@ -108,7 +114,21 @@ function box(opts: BoxOpts = {}) {
     // `imageExistsLocally` — `docker image inspect -f '{{.Id}}' <ref>`. Non-empty
     // means the ref is on the box. Must precede the generic inspect catch.
     if (cmd.includes("{{.Id}}")) return localImageId;
+    if (cmd.includes("range .HostConfig.Binds")) {
+      return EDGE_CONTAINER_MOUNTS.map((mount) => {
+        const source = opts.mountedSources?.[mount.container] ??
+          opts.canonicalMounts?.[mount.host] ??
+          mount.host;
+        return `${source}:${mount.container}:z`;
+      }).join("\n");
+    }
     if (cmd.startsWith("docker inspect")) return "";
+    // The batched mount resolve — one exec answers all four `pwd -P`s (#774).
+    if (cmd.includes("pwd -P")) {
+      return EDGE_CONTAINER_MOUNTS.map(
+        (mount) => `__KOVALIO_MOUNT__\n${opts.canonicalMounts?.[mount.host] ?? mount.host}\n`,
+      ).join("");
+    }
     if (cmd.startsWith("docker logs")) return opts.crashLog ?? "";
     if (cmd.startsWith("docker rm -f") || cmd.startsWith("docker stop")) {
       edgeState = "";
@@ -212,37 +232,159 @@ describe("resolveEdgeImage", () => {
 
   it("falls back to registry + version", () => {
     const prev = { ...process.env };
-    process.env.OPENSHIP_IMAGE_REGISTRY = "docker.io/oblien";
-    process.env.OPENSHIP_VERSION = "9.9.9";
-    delete process.env.OPENSHIP_EDGE_IMAGE;
-    expect(resolveEdgeImage()).toBe("docker.io/oblien/openship-edge:9.9.9");
+    process.env.KOVALIO_IMAGE_REGISTRY = "docker.io/oblien";
+    process.env.KOVALIO_VERSION = "9.9.9";
+    delete process.env.KOVALIO_EDGE_IMAGE;
+    expect(resolveEdgeImage()).toBe("docker.io/oblien/kovalio-edge:9.9.9");
     process.env = prev;
   });
 });
 
 describe("buildEdgeRunCommand", () => {
   it("runs host-networked with the four state mounts", () => {
-    const cmd = buildEdgeRunCommand("openship-edge", IMAGE);
+    const cmd = buildEdgeRunCommand("kovalio-edge", IMAGE);
     // Host networking is what lets it own :80/:443 and reach apps on loopback.
     expect(cmd).toContain("--network host");
     expect(cmd).toContain("--restart unless-stopped");
-    expect(cmd).toContain("'/var/lib/openship/edge/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled:z'");
+    expect(cmd).toContain("--log-driver json-file");
+    expect(cmd).toContain("--log-opt max-size=20m");
+    expect(cmd).toContain("--log-opt max-file=3");
+    expect(cmd).toContain("'/var/lib/kovalio/edge/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled:z'");
     expect(cmd).toContain("'/etc/letsencrypt:/etc/letsencrypt:z'");
-    expect(cmd).toContain("'/var/lib/openship/edge/acme:/var/www/acme:z'");
-    expect(cmd).toContain("'/opt/openship/static:/opt/openship/static:z'");
+    expect(cmd).toContain("'/var/lib/kovalio/edge/acme:/var/www/acme:z'");
+    expect(cmd).toContain("'/opt/kovalio/static:/opt/kovalio/static:z'");
+  });
+
+  it("uses target-resolved sources without changing container paths (#692)", () => {
+    const cmd = buildEdgeRunCommand("kovalio-edge", IMAGE, [
+      {
+        host: "/private/var/lib/kovalio/edge/sites-enabled",
+        container: "/usr/local/openresty/nginx/conf/sites-enabled",
+      },
+      { host: "/private/etc/letsencrypt", container: "/etc/letsencrypt" },
+    ]);
+
+    expect(cmd).toContain(
+      "'/private/var/lib/kovalio/edge/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled:z'",
+    );
+    expect(cmd).toContain("'/private/etc/letsencrypt:/etc/letsencrypt:z'");
+  });
+});
+
+describe("resolveEdgeContainerMounts", () => {
+  /** Output of the batched resolve script: one marker line, then that mount's segment. */
+  const batchOutput = (segments: string[]) =>
+    segments.map((s) => `__KOVALIO_MOUNT__\n${s}\n`).join("");
+
+  const canonical = [
+    "/private/var/lib/kovalio/edge/sites-enabled",
+    "/private/etc/letsencrypt",
+    "/private/var/lib/kovalio/edge/acme",
+    "/opt/kovalio/static",
+  ];
+
+  it("canonicalizes on the executor's host, not in the API process (#692)", async () => {
+    const exec = vi.fn(async (command: string) => {
+      if (!command.includes("pwd -P")) throw new Error(`unexpected command: ${command}`);
+      return batchOutput(canonical);
+    });
+
+    await expect(resolveEdgeContainerMounts({ exec })).resolves.toEqual([
+      {
+        host: "/private/var/lib/kovalio/edge/sites-enabled",
+        container: "/usr/local/openresty/nginx/conf/sites-enabled",
+      },
+      { host: "/private/etc/letsencrypt", container: "/etc/letsencrypt" },
+      { host: "/private/var/lib/kovalio/edge/acme", container: "/var/www/acme" },
+      { host: "/opt/kovalio/static", container: "/opt/kovalio/static" },
+    ]);
+  });
+
+  // 4 concurrent execs are 4 concurrent channels on ONE multiplexed SSH
+  // connection, and sshd hardened to `MaxSessions 3` rejects the fourth —
+  // failing edge recovery on any CIS-baseline host.
+  it("resolves every mount through a single exec (#774)", async () => {
+    const exec = vi.fn(async (_command: string) => batchOutput(canonical));
+
+    await resolveEdgeContainerMounts({ exec });
+
+    expect(exec).toHaveBeenCalledTimes(1);
+    const command = exec.mock.calls[0][0];
+    for (const mount of EDGE_CONTAINER_MOUNTS) {
+      expect(command).toContain(`(cd '${mount.host}' && pwd -P) 2>&1`);
+    }
+  });
+
+  it("names the failing mount and carries the shell's own words", async () => {
+    const exec = vi.fn(async () =>
+      batchOutput([
+        canonical[0],
+        canonical[1],
+        "sh: 1: cd: can't cd to /var/lib/kovalio/edge/acme",
+        canonical[3],
+      ]),
+    );
+
+    await expect(resolveEdgeContainerMounts({ exec })).rejects.toThrow(
+      /source \/var\/lib\/kovalio\/edge\/acme .*can't cd/,
+    );
+  });
+
+  it("reports a transport failure without inventing a per-mount cause", async () => {
+    const exec = vi.fn(async () => {
+      throw new Error("(SSH) Channel open failure: open failed");
+    });
+
+    await expect(resolveEdgeContainerMounts({ exec })).rejects.toThrow(
+      /bind-mount sources on the target host: .*Channel open failure/,
+    );
+  });
+
+  it("rejects a garbled batch instead of mismapping paths to mounts", async () => {
+    const exec = vi.fn(async () => batchOutput(canonical.slice(0, 2)));
+
+    await expect(resolveEdgeContainerMounts({ exec })).rejects.toThrow(/expected 4 paths/);
   });
 });
 
 describe("ensureContainerEdge", () => {
   it("is a no-op when our edge is already running the pinned image", async () => {
     const { executor, commands, onLog } = box({
-      edgeContainer: "openship-edge",
+      edgeContainer: "kovalio-edge",
       edgeContainerImage: IMAGE,
     });
     const result = await ensureContainerEdge(executor, { onLog, image: IMAGE });
 
-    expect(result).toEqual({ container: "openship-edge", image: IMAGE, converted: false });
+    expect(result).toEqual({ container: "kovalio-edge", image: IMAGE, converted: false });
     expect(commands.some((c) => c.startsWith("docker pull"))).toBe(false);
+  });
+
+  it("recreates a healthy-looking edge whose macOS bind sources are stale (#692)", async () => {
+    const canonicalMounts = {
+      "/var/lib/kovalio/edge/sites-enabled": "/private/var/lib/kovalio/edge/sites-enabled",
+      "/etc/letsencrypt": "/private/etc/letsencrypt",
+      "/var/lib/kovalio/edge/acme": "/private/var/lib/kovalio/edge/acme",
+      "/opt/kovalio/static": "/opt/kovalio/static",
+    };
+    const mountedSources = Object.fromEntries(
+      EDGE_CONTAINER_MOUNTS.map((mount) => [mount.container, mount.host]),
+    );
+    const { executor, commands, onLog } = box({
+      edgeContainer: "kovalio-edge",
+      edgeContainerImage: IMAGE,
+      canonicalMounts,
+      mountedSources,
+      imagePresent: true,
+    });
+
+    const result = await ensureContainerEdge(executor, { onLog, image: IMAGE });
+
+    expect(result.container).toBe("kovalio-edge");
+    const run = commands.find((command) => command.startsWith("docker run -d"));
+    expect(run).toContain(
+      "'/private/var/lib/kovalio/edge/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled:z'",
+    );
+    expect(run).toContain("'/private/etc/letsencrypt:/etc/letsencrypt:z'");
   });
 
   // Docker calls a crash loop "running": `.State.Running == true`, and it shows up in
@@ -253,7 +395,7 @@ describe("ensureContainerEdge", () => {
   // press logged `edge installed successfully` and left "Edge down" on screen.
   it("REGRESSION: recreates a CRASH-LOOPING edge instead of reporting it installed", async () => {
     const { executor, commands, onLog } = box({
-      edgeContainer: "openship-edge",
+      edgeContainer: "kovalio-edge",
       edgeContainerImage: IMAGE,
       edgeStatus: "restarting",
       crashLog:
@@ -281,15 +423,15 @@ describe("ensureContainerEdge", () => {
     // The edge's Lua + nginx.conf are baked in, so an edge stuck on an old tag serves
     // rules a newer API believes it rewrote. Upgrading the API upgrades the edge.
     const { executor, commands, onLog } = box({
-      edgeContainer: "openship-edge",
-      edgeContainerImage: "ghcr.io/oblien/openship-edge:1.0.0",
+      edgeContainer: "kovalio-edge",
+      edgeContainerImage: "ghcr.io/nextrium/kovalio-edge:1.0.0",
     });
     const result = await ensureContainerEdge(executor, { onLog, image: IMAGE, verifyTimeoutMs: 50 });
 
     expect(result.updated).toBe(true);
     // Pull before the old one is removed, same rule as the migration path.
     expect(idx(commands, "docker pull")).toBeLessThan(idx(commands, "docker rm -f"));
-    expect(commands.some((c) => c.includes(`docker run -d --name 'openship-edge'`))).toBe(true);
+    expect(commands.some((c) => c.includes(`docker run -d --name 'kovalio-edge'`))).toBe(true);
   });
 
   // The mounted vhost dir is HOST state that outlives every container. Our own
@@ -308,7 +450,7 @@ describe("ensureContainerEdge", () => {
   it("sanitizes the dir it inherited from the old proxy, and says what it changed", async () => {
     const { executor, commands, onLog } = box({
       hostOpenResty: true,
-      sanitizeOutput: "dropped-catchall /var/lib/openship/edge/sites-enabled/default.conf",
+      sanitizeOutput: "dropped-catchall /var/lib/kovalio/edge/sites-enabled/default.conf",
     });
 
     await ensureContainerEdge(executor, {
@@ -327,8 +469,8 @@ describe("ensureContainerEdge", () => {
 
   it("leaves the running edge alone when the new image can't be pulled", async () => {
     const { executor, commands, onLog } = box({
-      edgeContainer: "openship-edge",
-      edgeContainerImage: "ghcr.io/oblien/openship-edge:1.0.0",
+      edgeContainer: "kovalio-edge",
+      edgeContainerImage: "ghcr.io/nextrium/kovalio-edge:1.0.0",
       pullFails: true,
     });
     const result = await ensureContainerEdge(executor, { onLog, image: IMAGE });
@@ -339,15 +481,15 @@ describe("ensureContainerEdge", () => {
 
   it("puts the OLD image back when the new one won't come up", async () => {
     const { executor, commands, onLog } = box({
-      edgeContainer: "openship-edge",
-      edgeContainerImage: "ghcr.io/oblien/openship-edge:1.0.0",
+      edgeContainer: "kovalio-edge",
+      edgeContainerImage: "ghcr.io/nextrium/kovalio-edge:1.0.0",
       runFails: true,
     });
     const result = await ensureContainerEdge(executor, { onLog, image: IMAGE, verifyTimeoutMs: 50 });
 
     expect(result.updated).toBe(false);
     const runs = commands.filter((c) => c.startsWith("docker run -d"));
-    expect(runs.at(-1)).toContain("openship-edge:1.0.0");
+    expect(runs.at(-1)).toContain("kovalio-edge:1.0.0");
     // Neither image came up, so the box has NO edge — and that has to be reported,
     // not just logged, or the worst outcome this function has is invisible.
     expect(result.edgeDown).toBe(true);
@@ -365,7 +507,7 @@ describe("ensureContainerEdge", () => {
     expect(commands.some((c) => c.startsWith("writeFile"))).toBe(false);
   });
 
-  // A bare host OpenResty is DEPRECATED — including one an older Openship
+  // A bare host OpenResty is DEPRECATED — including one an older Kovalio
   // apt-installed. It goes through the ordinary foreign-proxy gate (prompt, site
   // import, journaled stop) like a distro nginx, and there is deliberately no second
   // "decommission the legacy edge" path: a second path is exactly how the first one
@@ -553,14 +695,14 @@ describe("ensureContainerEdge — image acquisition gate", () => {
     // The delivered dev tag differs from the running container's tag (the source hash
     // moved), so it's stale — but it's already on the box, so the swap runs no pull.
     const { executor, commands, onLog } = box({
-      edgeContainer: "openship-edge",
-      edgeContainerImage: "ghcr.io/oblien/openship-edge:1.0.0",
+      edgeContainer: "kovalio-edge",
+      edgeContainerImage: "ghcr.io/nextrium/kovalio-edge:1.0.0",
       imagePresent: true,
     });
     const result = await ensureContainerEdge(executor, { onLog, image: IMAGE, verifyTimeoutMs: 50 });
 
     expect(result.updated).toBe(true);
     expect(commands.some((c) => c.startsWith("docker pull"))).toBe(false);
-    expect(commands.some((c) => c.includes(`docker run -d --name 'openship-edge'`))).toBe(true);
+    expect(commands.some((c) => c.includes(`docker run -d --name 'kovalio-edge'`))).toBe(true);
   });
 });

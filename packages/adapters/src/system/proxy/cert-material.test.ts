@@ -153,13 +153,13 @@ describe("readDeclaredPair", () => {
     expect(await readDeclaredPair(e, "/c.pem", "/k.pem")).toBeNull();
   });
 
-  it("refuses Openship's OWN placeholder cert, without reading it", async () => {
+  it("refuses Kovalio's OWN placeholder cert, without reading it", async () => {
     // A bootstrap cert is real-looking material: right hostname, unexpired, so it
     // passes validateCertFor — but its issuer is self-signed, so it'd be classified
     // renewable:false and adopted as a bring-your-own cert certbot never reissues.
     // A migrated or taken-over domain would then serve self-signed TLS forever.
-    const cert = `/etc/letsencrypt/openship-bootstrap/app.example.com/fullchain.pem`;
-    const key = `/etc/letsencrypt/openship-bootstrap/app.example.com/privkey.pem`;
+    const cert = `/etc/letsencrypt/kovalio-bootstrap/app.example.com/fullchain.pem`;
+    const key = `/etc/letsencrypt/kovalio-bootstrap/app.example.com/privkey.pem`;
     const e = exec({ [cert]: "CERT", [key]: "KEY" });
     expect(await readDeclaredPair(e, cert, key)).toBeNull();
     expect(e.readFile).not.toHaveBeenCalled();
@@ -167,9 +167,9 @@ describe("readDeclaredPair", () => {
 
   it("does not mistake a legitimate path that merely CONTAINS the marker", async () => {
     // Segment match, not substring: a real cert for a host named after the marker
-    // (or a dir like /etc/ssl/openship-bootstrapped) is still adoptable.
-    const cert = "/etc/ssl/openship-bootstrapped/fullchain.pem";
-    const key = "/etc/ssl/openship-bootstrapped/privkey.pem";
+    // (or a dir like /etc/ssl/kovalio-bootstrapped) is still adoptable.
+    const cert = "/etc/ssl/kovalio-bootstrapped/fullchain.pem";
+    const key = "/etc/ssl/kovalio-bootstrapped/privkey.pem";
     const e = exec({ [cert]: "CERT", [key]: "KEY" });
     expect(await readDeclaredPair(e, cert, key)).toEqual({ certPem: "CERT", keyPem: "KEY" });
   });

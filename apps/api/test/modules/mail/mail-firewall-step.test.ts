@@ -40,7 +40,7 @@ vi.mock("@repo/adapters", async (importOriginal) => {
 });
 
 import { MAIL_PORTS } from "@repo/adapters";
-import { stepOpenMailFirewall } from "../../../src/modules/mail/mail.service";
+import { stepOpenMailFirewall } from "@repo/platform/engine/modules/mail/mail.service";
 
 function fakeExecutor(fail?: (cmd: string) => string | undefined) {
   const commands: string[] = [];
@@ -151,7 +151,7 @@ describe("stepOpenMailFirewall", () => {
   });
 
   test("raw iptables → refuses to add a rule that dies at reboot, and prints it", async () => {
-    // The asymmetry this closes: `openship up` already refused an unpersisted rule while
+    // The asymmetry this closes: `kovalio up` already refused an unpersisted rule while
     // this step applied one, so the same box got two answers about the same ruleset.
     h.host = { firewall: "iptables" };
     const { executor, commands } = fakeExecutor();
@@ -165,7 +165,7 @@ describe("stepOpenMailFirewall", () => {
   });
 
   test("unsupported host → no commands, and the refusal names the distro", async () => {
-    // ufw is present and drivable; the host is not one Openship provisions. `firewallAllow`
+    // ufw is present and drivable; the host is not one Kovalio provisions. `firewallAllow`
     // is gated on that, so the reason has to reach the operator instead of eight silent
     // no-ops that read as success.
     h.host = {

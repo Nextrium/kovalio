@@ -1,5 +1,7 @@
 "use client";
 
+import { Icon as UiIcon } from "@repo/ui/icons";
+
 /**
  * Top Paths, switched off.
  *
@@ -10,10 +12,9 @@
  *
  * The copy says WHY it is off, which matters here in a way it doesn't for an ordinary empty
  * state: this is the only analytics dimension that is opt-in, and without the reason an
- * operator reasonably reads it as something Openship forgot to turn on.
+ * operator reasonably reads it as something Kovalio forgot to turn on.
  */
 
-import { TrendingUp, Zap } from "lucide-react";
 import { useI18n, interpolate } from "@/components/i18n-provider";
 
 interface Props {
@@ -32,7 +33,7 @@ export function TopPathsEmptyState({ onEnable, isBusy = false }: Props) {
           weight. Two different headers made enabling look like the card was replaced by a
           different one rather than filled in. */}
       <div className="mb-5 flex items-center gap-2">
-        <TrendingUp className="size-5 text-primary" />
+        <UiIcon name="trending-up" className="size-5 text-primary" />
         <h3 className="text-base font-semibold text-foreground">
           {t.projectDetail.general.topPaths.title}
         </h3>
@@ -94,7 +95,7 @@ export function TopPathsEmptyState({ onEnable, isBusy = false }: Props) {
           disabled={isBusy}
           className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
         >
-          <Zap className="size-4" />
+          <UiIcon name="bolt" className="size-4" />
           {isBusy ? e.enabling : e.cta}
         </button>
       </div>

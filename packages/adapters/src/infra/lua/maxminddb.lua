@@ -1,8 +1,8 @@
 -- maxminddb.lua — VENDORED THIRD-PARTY. Do not edit; re-vendor instead.
 --
 -- Upstream: anjia0532/lua-resty-maxminddb v1.3.2 (opm). Loaded as
--- `openship.maxminddb` (see geo_country.lua). Verbatim except this header and ONE
--- marked change to the `ffi.load` call — search "OPENSHIP LOCAL MODIFICATION".
+-- `kovalio.maxminddb` (see geo_country.lua). Verbatim except this header and ONE
+-- marked change to the `ffi.load` call — search "KOVALIO LOCAL MODIFICATION".
 --
 -- Why vendored rather than `opm get` at image build: `opm` needs perl, which the
 -- openresty alpine base does not ship, and a build-time fetch would make the
@@ -183,7 +183,7 @@ local MMDB_DATA_TYPE_FLOAT                          =   15
 -- copy from https://github.com/lilien1010/lua-resty-maxminddb/blob/f96633e2428f8f7bcc1e2a7a28b747b33233a8db/resty/maxminddb.lua#L136-L138
 -- you should install the libmaxminddb to your system
 --
--- ── OPENSHIP LOCAL MODIFICATION (the only deviation from upstream) ───────────
+-- ── KOVALIO LOCAL MODIFICATION (the only deviation from upstream) ───────────
 -- Upstream is `ffi.load('libmaxminddb')`, which resolves the LINKER name
 -- `libmaxminddb.so` — and that unversioned symlink ships in the -dev package, not
 -- the runtime one. Alpine's `libmaxminddb` and Debian's `libmaxminddb0` both give

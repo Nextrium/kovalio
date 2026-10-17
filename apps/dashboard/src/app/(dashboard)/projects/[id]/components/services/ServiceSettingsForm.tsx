@@ -1,7 +1,9 @@
 "use client";
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import { Icon as UiIcon, type IconName } from "@repo/ui/icons";
+
 import React, { useEffect, useState } from "react";
-import { Box, HeartPulse, Loader2, Network, Package, Save, Terminal, type LucideIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { TagListInput, ChipMultiSelect } from "@/components/ui/TagListInput";
 import { useI18n } from "@/components/i18n-provider";
@@ -12,7 +14,7 @@ import {
   type Service,
   type ServiceInput,
   type ComposeAdvancedPatch,
-  type OpenshipReadiness,
+  type KovalioReadiness,
 } from "@/lib/api/services";
 
 /**
@@ -35,6 +37,10 @@ interface ServiceSettingsFormProps {
   /** Names of the OTHER services in this project, for the depends-on picker. */
   siblingServiceNames?: string[];
   onSubmit: (data: Partial<ServiceInput>) => Promise<void>;
+  /** The same form can stage a topology edit before the deployment review. */
+  submitLabel?: string;
+  /** Service detail owns mounts in its Volumes tab; topology editors keep them here. */
+  includeVolumes?: boolean;
 }
 
 /** Backend per-item caps (service.schema.ts ComposeFieldsBlock) surfaced here so
@@ -56,7 +62,7 @@ const splitList = (value: string) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
-export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmit }: ServiceSettingsFormProps) {
+export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmit, submitLabel, includeVolumes = true }: ServiceSettingsFormProps) {
   const { t } = useI18n();
   const f = t.projectDetail.services.settingsForm;
   const isMonorepo = serviceKind(service) === "monorepo";
@@ -82,9 +88,10 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
   const [hcTimeout, setHcTimeout] = useState("");
   const [hcRetries, setHcRetries] = useState("");
   const [hcStartPeriod, setHcStartPeriod] = useState("");
+  const [monitoringEnabled, setMonitoringEnabled] = useState(true);
   /** Per-service readiness gate. undefined = inherit the project's (which is
    *  itself off by default). */
-  const [readiness, setReadiness] = useState<OpenshipReadiness | undefined>(undefined);
+  const [readiness, setReadiness] = useState<KovalioReadiness | undefined>(undefined);
   const [enabled, setEnabled] = useState(true);
   const [rootDirectory, setRootDirectory] = useState("");
   const [framework, setFramework] = useState("");
@@ -118,6 +125,7 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
     setHcTimeout(hc?.timeout ?? "");
     setHcRetries(hc?.retries != null ? String(hc.retries) : "");
     setHcStartPeriod(hc?.startPeriod ?? "");
+    setMonitoringEnabled(service.advanced?.monitoringEnabled !== false);
     setReadiness(service.advanced?.readiness);
     setEnabled(service.enabled ?? true);
     setRootDirectory(service.rootDirectory ?? "");
@@ -190,7 +198,12 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
       );
       // Empty → null so a cleared alias removes the stored key (mergeAdvanced
       // treats null as "delete"). Server normalizes + collision-checks it.
-      return { healthcheck, readiness: readiness ?? null, alias: alias.trim() || null };
+      return {
+        healthcheck,
+        readiness: readiness ?? null,
+        alias: alias.trim() || null,
+        monitoringEnabled,
+      };
     };
 
     // Show-both source resolution: a build context or Dockerfile means "build
@@ -209,7 +222,7 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
           dockerfile: "",
           ports: portList,
           dependsOn,
-          volumes: volumeList,
+          ...(includeVolumes ? { volumes: volumeList } : {}),
           command: "",
           restart,
           enabled,
@@ -234,7 +247,7 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
           dockerfile: useBuild ? dockerfile.trim() : "",
           ports: portList,
           dependsOn,
-          volumes: volumeList,
+          ...(includeVolumes ? { volumes: volumeList } : {}),
           command: command.trim(),
           restart,
           advanced: buildAdvanced(),
@@ -244,6 +257,7 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
     try {
       await onSubmit(payload);
     } catch (err) {
+      observeCaughtError(err, "dashboard/app/(dashboard)/projects/[id]/components/services/ServiceSettingsForm");
       setError(err instanceof Error ? err.message : f.errors.saveFailed);
     } finally {
       setSaving(false);
@@ -258,7 +272,7 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
         </div>
       )}
 
-      <SectionCard icon={Box} title={f.sections.general} description={f.sections.generalHint}>
+      <SectionCard icon={"settings"} title={f.sections.general} description={f.sections.generalHint}>
         <Field label={f.name}>
           <input
             value={name}
@@ -281,7 +295,7 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
       </SectionCard>
 
       <SectionCard
-        icon={Package}
+        icon={"file-code"}
         title={f.sections.source}
         description={isMonorepo ? f.sections.sourceMonorepoHint : f.sections.sourceHint}
       >
@@ -368,7 +382,7 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
 
             <div className="flex items-center gap-3" aria-hidden="true">
               <span className="h-px flex-1 bg-border/50" />
-              <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {f.orBuildFromSource}
               </span>
               <span className="h-px flex-1 bg-border/50" />
@@ -396,7 +410,7 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
         )}
       </SectionCard>
 
-      <SectionCard icon={Network} title={f.sections.networking} description={f.sections.networkingHint}>
+      <SectionCard icon={"network"} title={f.sections.networking} description={f.sections.networkingHint}>
         <FieldBlock label={f.ports}>
           <TagListInput
             tags={portsTags}
@@ -437,7 +451,7 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
         </FieldBlock>
       </SectionCard>
 
-      <SectionCard icon={Terminal} title={f.sections.runtime} description={f.sections.runtimeHint}>
+      <SectionCard icon={"terminal"} title={f.sections.runtime} description={f.sections.runtimeHint}>
         <div className={`grid gap-3 ${isMonorepo ? "sm:grid-cols-1" : "sm:grid-cols-2"}`}>
           {!isMonorepo && (
             <Field label={f.command}>
@@ -463,7 +477,7 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
           </Field>
         </div>
 
-        <FieldBlock label={f.volumes}>
+        {includeVolumes && <FieldBlock label={f.volumes}>
           <TagListInput
             tags={volumesTags}
             draft={volumesDraft}
@@ -476,10 +490,17 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
             removeLabel={f.removeTag}
           />
           <p className="mt-1 text-xs text-muted-foreground">{f.volumesHint}</p>
-        </FieldBlock>
+        </FieldBlock>}
       </SectionCard>
 
-      <SectionCard icon={HeartPulse} title={f.sections.health} description={f.sections.healthHint}>
+      <SectionCard icon={"activity"} title={f.sections.health} description={f.sections.healthHint}>
+        <label className="mb-4 flex items-start gap-3 rounded-xl border border-border/50 bg-muted/20 p-3">
+          <Checkbox checked={monitoringEnabled} onCheckedChange={(value) => setMonitoringEnabled(value === true)} />
+          <span>
+            <span className="block text-sm font-medium text-foreground">{f.monitoring}</span>
+            <span className="block text-xs leading-relaxed text-muted-foreground">{f.monitoringHint}</span>
+          </span>
+        </label>
         {!isMonorepo && (
           <Field label={f.healthcheck}>
             <input
@@ -536,8 +557,8 @@ export function ServiceSettingsForm({ service, siblingServiceNames = [], onSubmi
           disabled={saving}
           className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
         >
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          {f.saveChanges}
+          {saving ? <UiIcon name="spinner" className="size-4 animate-spin" /> : <UiIcon name="save" className="size-4" />}
+          {submitLabel ?? f.saveChanges}
         </button>
       </div>
     </form>
@@ -554,7 +575,7 @@ function SectionCard({
   description,
   children,
 }: {
-  icon: LucideIcon;
+  icon: IconName;
   title: string;
   description?: string;
   children: React.ReactNode;
@@ -563,11 +584,11 @@ function SectionCard({
     <div className="overflow-hidden rounded-2xl border border-border/50 bg-card">
       <div className="flex items-start gap-3 border-b border-border/40 px-5 py-4">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-          <Icon className="size-4 text-primary" />
+          <UiIcon name={Icon} className="size-4 text-primary" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-[14px] font-semibold text-foreground">{title}</h3>
-          {description ? <p className="mt-0.5 text-[12px] text-muted-foreground">{description}</p> : null}
+          {description ? <p className="mt-0.5 text-xs text-muted-foreground">{description}</p> : null}
         </div>
       </div>
       <div className="space-y-4 px-5 py-4">{children}</div>
@@ -578,7 +599,7 @@ function SectionCard({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-[12px] font-medium text-foreground">{label}</span>
+      <span className="text-xs font-medium text-foreground">{label}</span>
       {children}
     </label>
   );
@@ -589,7 +610,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function FieldBlock({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <span className="block text-[12px] font-medium text-foreground">{label}</span>
+      <span className="block text-xs font-medium text-foreground">{label}</span>
       {children}
     </div>
   );

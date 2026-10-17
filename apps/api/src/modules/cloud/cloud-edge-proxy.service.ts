@@ -7,8 +7,8 @@
  */
 
 import { SYSTEM } from "@repo/core";
-import { canonicalEdgeTarget, isCloudEdgeHost, isNonPublicHost } from "../../lib/edge-target";
-import { getNamespaceClient } from "../../lib/openship-cloud";
+import { canonicalEdgeTarget, isCloudEdgeHost, isNonPublicHost } from "@repo/platform/engine/lib/edge-target";
+import { getNamespaceClient } from "@repo/platform/engine/lib/kovalio-cloud";
 
 /** Canonicalize a slug the same way for sync and delete so both look up the
  *  SAME Oblien proxy (a mismatch here would orphan the route on teardown). */
@@ -42,7 +42,7 @@ export async function syncCloudEdgeProxy(
       ok: false,
       status: 400,
       error:
-        `"${input.target}" is an Openship Cloud edge address, so routing ${hostname} there ` +
+        `"${input.target}" is an Kovalio Cloud edge address, so routing ${hostname} there ` +
         `would loop back to the edge. Send the server's own public IP or hostname.`,
     };
   }
@@ -52,7 +52,7 @@ export async function syncCloudEdgeProxy(
   // normalized string — so these two must not be able to spell it differently.
   const target = canonicalEdgeTarget(input.target);
 
-  const { client, namespace } = await getNamespaceClient(organizationId);
+  const { client, namespace } = await getNamespaceClient(organizationId, null);
 
   // Namespace isolation: Oblien scopes edgeProxy.list/update/enable to
   // the namespace token's owner, so the look-up-by-slug + mutate path
@@ -110,7 +110,7 @@ function assertVerifiableTarget(
       ok: false,
       status: 400,
       error:
-        `"${target}" is an Openship Cloud edge address. Verifying it would prove control ` +
+        `"${target}" is an Kovalio Cloud edge address. Verifying it would prove control ` +
         `of the edge rather than of a server. Send the server's own public IP or hostname.`,
     };
   }
@@ -119,7 +119,7 @@ function assertVerifiableTarget(
       ok: false,
       status: 400,
       error:
-        `"${target}" is not publicly reachable, so Openship Cloud cannot fetch a challenge ` +
+        `"${target}" is not publicly reachable, so Kovalio Cloud cannot fetch a challenge ` +
         `from it. Verification needs an address reachable from the internet on port 80.`,
     };
   }
@@ -144,7 +144,7 @@ export async function requestCloudEdgeVerification(
   if (refusal) return refusal;
 
   const target = canonicalEdgeTarget(input.target);
-  const { client } = await getNamespaceClient(organizationId);
+  const { client } = await getNamespaceClient(organizationId, null);
   const { verification } = await client.edgeProxy.requestVerification(target);
   return {
     ok: true,
@@ -186,7 +186,7 @@ export async function checkCloudEdgeVerification(
     return { ok: false, status: 400, error: "verificationId must be a positive integer" };
   }
 
-  const { client } = await getNamespaceClient(organizationId);
+  const { client } = await getNamespaceClient(organizationId, null);
   const { verification } = await client.edgeProxy.checkVerification(input.verificationId);
   return {
     ok: true,
@@ -219,7 +219,7 @@ export async function deleteCloudEdgeProxy(
     return { ok: false, status: 400, error: "Invalid slug" };
   }
 
-  const { client } = await getNamespaceClient(organizationId);
+  const { client } = await getNamespaceClient(organizationId, null);
   const { proxies } = await client.edgeProxy.list();
   const existing = proxies.find((p) => p.slug === slug);
   if (!existing) {

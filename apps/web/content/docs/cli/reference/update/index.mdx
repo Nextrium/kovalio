@@ -1,0 +1,21 @@
+---
+title: update
+description: Commands, arguments, and options for kovalio update.
+cliGroup: kovalio update
+---
+
+See the [CLI overview](/docs/cli) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio update
+
+Update the Kovalio CLI + bundled server to the latest release
+
+```text
+kovalio update [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--check` | Only report the current + latest version; don't install |
+| `--via <manager>` | Package manager to update with: bun \| npm |
+| `--rebuild` | From-source installs: rebuild even if already at the remote tip |

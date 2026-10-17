@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * #641: an `openship.json` with a typo used to apply nothing — or only some of
+ * #641: an `kovalio.json` with a typo used to apply nothing — or only some of
  * itself — and say nothing anywhere. The deploy fell back to heuristic detection
  * and succeeded, so the wizard looked exactly as if the file weren't there. The
  * leniency is right (a bad config must not refuse a repo); the silence wasn't.
@@ -15,7 +15,6 @@
  * list items themselves come from the parser in @repo/core and are untranslated.
  */
 import React from "react";
-import { FileWarning } from "lucide-react";
 import WarningCallout from "@/components/shared/WarningCallout";
 import { useOptionalDeployment } from "@/context/DeploymentContext";
 import { useI18n } from "@/components/i18n-provider";
@@ -34,7 +33,7 @@ export const ConfigDiagnostics: React.FC = () => {
 
   return (
     <WarningCallout
-      icon={FileWarning}
+      icon={"file-warning"}
       title={wholeFile ? cd.titleWholeFile : cd.title}
       description={wholeFile ? cd.descriptionWholeFile : cd.description}
     >

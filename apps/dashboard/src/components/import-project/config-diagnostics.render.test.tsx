@@ -37,11 +37,11 @@ describe("ConfigDiagnostics (#641)", () => {
     expect(render({ errors: [], warnings: [] })).toBe("");
   });
 
-  it("lists a refused field and says the rest still applied", () => {
+  it("lists a refused field and asks users to review skipped settings", () => {
     const html = render({ errors: ["framework: must be one of: nextjs, vite"], warnings: [] });
     expect(text(html)).toContain("framework: must be one of");
     expect(text(html)).toContain("Refused");
-    expect(text(html)).toContain("the rest of the file was applied");
+    expect(text(html)).toContain("Review the skipped settings");
     expect(text(html)).not.toContain("None of it was applied");
   });
 
@@ -56,7 +56,7 @@ describe("ConfigDiagnostics (#641)", () => {
     // The severity that used to be wrong: with bad JSON the overlay applies
     // nothing, so copy promising "the rest was applied" would be a lie.
     const html = render({
-      errors: ["openship.json is not valid JSON — run `openship config validate`"],
+      errors: ["kovalio.json is not valid JSON — run `kovalio config validate`"],
       warnings: [],
       wholeFile: true,
     });

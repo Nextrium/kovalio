@@ -1,7 +1,7 @@
 /**
  * A yes-with-a-value or a no-with-a-reason — and deliberately nothing else.
  *
- * Every "can Openship do X on this host" answer in the provisioning path used to have a
+ * Every "can Kovalio do X on this host" answer in the provisioning path used to have a
  * third shape: `undefined`, an empty array, a miss on a `Record<string, T>` lookup. That
  * third shape is what a call site reads as "nothing to do here", which is how a host
  * outside a hardcoded allowlist came to finish provisioning with no dockerd and no error
@@ -28,7 +28,7 @@ export function refused(reason: string): Answer<never> {
  * none: `releaseArch` is the case it was meant for, and its consumer
  * (`toolchain/catalog.ts`) propagates the refusal as its own return value instead, which
  * keeps the reason attributable to the tool being installed. The other candidate,
- * `openship-server-store.ts`, throws `grant.reason` bare on purpose — `privilegedExecutor`
+ * `kovalio-server-store.ts`, throws `grant.reason` bare on purpose — `privilegedExecutor`
  * already renders the caller's `purpose` into that reason, so prefixing a context would
  * print it twice.
  *

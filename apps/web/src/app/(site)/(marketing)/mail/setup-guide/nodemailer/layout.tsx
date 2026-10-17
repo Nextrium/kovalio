@@ -11,14 +11,14 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   alternates: { canonical: PATH },
   openGraph: {
-    title: `${TITLE} - Openship`,
+    title: `${TITLE} - Kovalio`,
     description: DESCRIPTION,
     url: PATH,
     type: "article",
-    siteName: "Openship",
+    siteName: "Kovalio",
     locale: "en_US",
   },
-  twitter: { card: "summary_large_image", title: `${TITLE} - Openship`, description: DESCRIPTION },
+  twitter: { card: "summary_large_image", title: `${TITLE} - Kovalio`, description: DESCRIPTION },
 };
 
 export default function Layout({ children }: { children: ReactNode }) {

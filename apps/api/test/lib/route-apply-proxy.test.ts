@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@repo/db", () => ({ repos: {} }));
+vi.mock("@repo/db", () => ({ repos: {
+  domain: {listByProject:vi.fn(async()=>[])},
+  deployment: { findById: vi.fn(async () => ({
+    id: "dep-1", projectId: "proj-1", organizationId: "org-1", meta: { deployTarget: "local" },
+  })) },
+} }));
 
-import { reconcileProjectRoutes } from "../../src/lib/route-apply.service";
+import { repos } from "@repo/db";
+import { reconcileProjectRoutes } from "@repo/platform/engine/lib/route-apply.service";
 
 /**
  * The LIVE path: editing a project's request limits has to take effect on save, the
@@ -18,13 +24,22 @@ import { reconcileProjectRoutes } from "../../src/lib/route-apply.service";
 const project = (proxy?: unknown) => ({
   id: "proj-1",
   organizationId: "org-1",
-  cloudWorkspaceId: null,
+  workspaceId: null,
   activeDeploymentId: "dep-1",
   webhookDomain: null,
   routingConfig: proxy ? ({ proxy } as never) : null,
 });
 
-const REGISTER = [{ hostname: "app.example.com", targetUrl: "http://127.0.0.1:3000", isCustomDomain: false }];
+// Request-limit behavior is independent of host-port ownership. Use a bridge
+// upstream so this focused test does not bypass the loopback route guard with
+// invented ownership metadata.
+const REGISTER = [
+  {
+    hostname: "app.example.com",
+    targetUrl: "http://172.18.0.2:3000",
+    isCustomDomain: false,
+  },
+];
 
 function fakeRouting() {
   const registerRoute = vi.fn(async () => {});
@@ -32,6 +47,26 @@ function fakeRouting() {
 }
 
 describe("reconcileProjectRoutes — project request limits", () => {
+  it("reports a failed vhost write while applying healthy siblings (#879)", async () => {
+    const { routing, registerRoute } = fakeRouting();
+    registerRoute.mockRejectedValueOnce(new Error("edge rejected the route"));
+    const onWarning = vi.fn();
+    await reconcileProjectRoutes(project(), {
+      routing,
+      onWarning,
+      registers: [...REGISTER, { ...REGISTER[0], hostname: "healthy.example.com" }],
+    });
+    expect(registerRoute).toHaveBeenCalledTimes(2);
+    expect(onWarning).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining(
+        "registerRoute app.example.com failed (non-fatal): edge rejected the route",
+      ),
+    );
+    expect(registerRoute).toHaveBeenLastCalledWith(
+      expect.objectContaining({ domain: "healthy.example.com" }),
+    );
+  });
+
   it("passes the project's proxy settings into the live vhost", async () => {
     const { routing, registerRoute } = fakeRouting();
 
@@ -84,12 +119,37 @@ describe("reconcileProjectRoutes — project request limits", () => {
 
     await reconcileProjectRoutes(project({ clientMaxBodySize: "50m" }), {
       routing,
-      registers: [{ hostname: "site.example.com", staticRoot: "/opt/openship/static/site", isCustomDomain: false }],
+      registers: [
+        {
+          hostname: "site.example.com",
+          staticRoot: "/opt/kovalio/static/site",
+          isCustomDomain: false,
+        },
+      ],
     });
 
     expect(registerRoute.mock.calls[0][0]).toMatchObject({
-      staticRoot: "/opt/openship/static/site",
+      staticRoot: "/opt/kovalio/static/site",
       proxy: { clientMaxBodySize: "50m" },
     });
   });
+});
+
+it("serves externally terminated domains over HTTP without an origin HTTPS redirect",async()=>{
+ vi.mocked(repos.domain.listByProject).mockResolvedValueOnce([{hostname:"app.example.com",externalIngress:true}] as never);
+ const {routing,registerRoute}=fakeRouting();
+ await reconcileProjectRoutes(project(),{routing,registers:[{...REGISTER[0],isCustomDomain:true}]});
+ expect(registerRoute).toHaveBeenCalledWith(expect.objectContaining({domain:"app.example.com",tls:false,terminatesTlsLocally:false}));
+});
+
+it("checks stored ingress mode before removing any live route",async()=>{
+  vi.mocked(repos.domain.listByProject).mockRejectedValueOnce(new Error("domain inventory unavailable"));
+  const removeRoute=vi.fn(),registerRoute=vi.fn();
+  await expect(reconcileProjectRoutes(project(),{
+    routing:{removeRoute,registerRoute} as never,
+    registers:REGISTER,
+    removes:[{hostname:"old.example.com"}],
+  })).rejects.toThrow("domain inventory unavailable");
+  expect(removeRoute).not.toHaveBeenCalled();
+  expect(registerRoute).not.toHaveBeenCalled();
 });

@@ -1,0 +1,162 @@
+---
+title: notification
+description: Commands, arguments, and options for kovalio notification.
+cliGroup: kovalio notification
+---
+
+See the [workflow guide](/docs/cli/operations) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio notification
+
+Manage notification channels, subscriptions and deliveries
+
+```text
+kovalio notification|notifications [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`categories`](/docs/cli/reference/notification#kovalio-notification-categories) | List notification categories and groups |
+| [`channel`](/docs/cli/reference/notification/channel#kovalio-notification-channel) | Configure notification delivery channels |
+| [`subscription`](/docs/cli/reference/notification#kovalio-notification-subscription) | Choose which events use each channel |
+| [`defaults`](/docs/cli/reference/notification#kovalio-notification-defaults) | Manage organization notification defaults |
+| [`deliveries`](/docs/cli/reference/notification#kovalio-notification-deliveries) | Inspect notification delivery attempts |
+
+## kovalio notification categories
+
+List notification categories and groups
+
+```text
+kovalio notification categories [options]
+```
+
+## kovalio notification defaults
+
+Manage organization notification defaults
+
+```text
+kovalio notification defaults [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`get`](/docs/cli/reference/notification#kovalio-notification-defaults-get) | Show organization defaults |
+| [`set <file>`](/docs/cli/reference/notification#kovalio-notification-defaults-set) | Set organization defaults (requires admin access) |
+
+## kovalio notification defaults get
+
+Show organization defaults
+
+```text
+kovalio notification defaults get [options]
+```
+
+## kovalio notification defaults set
+
+Set organization defaults (requires admin access)
+
+```text
+kovalio notification defaults set [options] <file>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON default containing category, defaultEnabled and defaultChannelKinds |
+
+## kovalio notification deliveries
+
+Inspect notification delivery attempts
+
+```text
+kovalio notification deliveries [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list [options]`](/docs/cli/reference/notification#kovalio-notification-deliveries-list) | List deliveries and their status |
+| [`unseen-count`](/docs/cli/reference/notification#kovalio-notification-deliveries-unseen-count) | Count unseen deliveries |
+| [`seen <id>`](/docs/cli/reference/notification#kovalio-notification-deliveries-seen) | Mark a delivery as seen |
+
+## kovalio notification deliveries list
+
+List deliveries and their status
+
+```text
+kovalio notification deliveries list [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--unseen` | Only unseen deliveries |
+| `--limit <n>` | Maximum deliveries (default: "50") |
+
+## kovalio notification deliveries seen
+
+Mark a delivery as seen
+
+```text
+kovalio notification deliveries seen [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Delivery ID |
+
+## kovalio notification deliveries unseen-count
+
+Count unseen deliveries
+
+```text
+kovalio notification deliveries unseen-count [options]
+```
+
+## kovalio notification subscription
+
+Choose which events use each channel
+
+```text
+kovalio notification subscription [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list`](/docs/cli/reference/notification#kovalio-notification-subscription-list) | List your notification subscriptions |
+| [`set [options] <category>`](/docs/cli/reference/notification#kovalio-notification-subscription-set) | Enable or disable delivery for one category and channel |
+| [`remove\|rm <id>`](/docs/cli/reference/notification#kovalio-notification-subscription-remove) | Remove a notification subscription |
+
+## kovalio notification subscription list
+
+List your notification subscriptions
+
+```text
+kovalio notification subscription list [options]
+```
+
+## kovalio notification subscription remove
+
+Remove a notification subscription
+
+```text
+kovalio notification subscription remove|rm [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Subscription ID |
+
+## kovalio notification subscription set
+
+Enable or disable delivery for one category and channel
+
+```text
+kovalio notification subscription set [options] <category>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `category` | Notification category ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--channel <id>` | Channel ID |
+| `--disabled` | Disable this category/channel subscription |

@@ -1,5 +1,5 @@
 /**
- * Lean entrypoint for the host-side edge preflight in `openship up` (the CLI).
+ * Lean entrypoint for the host-side edge preflight in `kovalio up` (the CLI).
  *
  * The CLI bundles workspace packages inline (see apps/cli/tsup.config.ts
  * `noExternal: [/^@repo\//]`), so it must NOT import the `@repo/adapters` barrel —

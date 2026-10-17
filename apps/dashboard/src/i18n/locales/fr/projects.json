@@ -13,7 +13,9 @@
     "queued": "En file d'attente",
     "building": "Compilation",
     "deploying": "Déploiement",
+    "reconciling": "Vérification",
     "migrating": "Migration",
+    "deploy_failed": "Échec du dernier déploiement",
     "failed": "Échec",
     "cancelled": "Annulé",
     "deleting": "Suppression",
@@ -21,17 +23,18 @@
   },
   "serverCta": {
     "title": "Déployez sur votre propre serveur",
-    "description": "Connectez un serveur via SSH pour exécuter des projets sur votre propre infrastructure, aux côtés d'Openship Cloud.",
+    "description": "Connectez un serveur via SSH pour exécuter des projets sur votre propre infrastructure, aux côtés d'Kovalio Cloud.",
     "button": "Connecter un serveur"
   },
   "filters": {
     "title": "Filtrer par cible",
     "subtitle": "Où les projets sont déployés",
     "allProjects": "Tous les projets",
-    "cloud": "Openship Cloud",
+    "cloud": "Kovalio Cloud",
     "local": "Local"
   },
   "card": {
+    "more": "Plus",
     "liveVersion": "Version en ligne v{version}",
     "sourceLocal": "Local",
     "services": "Services",
@@ -101,12 +104,14 @@
     "deletionInProgress": "Une autre suppression est déjà en cours pour ce projet",
     "deletionInProgressTitle": "Suppression en cours",
     "confirmForceOrphan": "Certaines ressources n'ont pas pu être supprimées du serveur. Supprimer quand même le projet et les nettoyer automatiquement plus tard ?",
-    "teardownFailedAt": "Le démantèlement a échoué à : {reasons}. Réessayez ou forcez la suppression pour les rendre orphelines.",
+    "teardownFailedAt": "Le nettoyage n’a pas pu se terminer : {reasons}. Le projet est toujours enregistré. Réessayez la suppression après avoir résolu le problème.",
     "teardownFailed": "Échec du démantèlement",
     "cleanupFailedTitle": "Échec du nettoyage",
+    "retryCleanup": "Réessayer la suppression",
+    "cleanupPending": "La suppression a commencé. Le projet reste indisponible jusqu’à la fin du nettoyage.",
     "alreadyDeleted": "Projet déjà supprimé",
     "forceModalTitle": "Suppression impossible à la source",
-    "forceModalBody": "Le runtime était injoignable (ou a continué d'échouer), donc ce projet n'a pas été démonté. Vous pouvez tout de même le supprimer d'Openship — l'enregistrement part maintenant et les ressources restantes sont récupérées automatiquement dès que le serveur est joignable.",
+    "forceModalBody": "Le runtime était injoignable (ou a continué d'échouer), donc ce projet n'a pas été démonté. Vous pouvez tout de même le supprimer d'Kovalio — l'enregistrement part maintenant et les ressources restantes sont récupérées automatiquement dès que le serveur est joignable.",
     "forceModalConfirm": "Supprimer du stockage",
     "forceModalCancel": "Annuler",
     "unlinked": "Dissocié de {projects} — redéployez-les pour appliquer.",
@@ -124,6 +129,7 @@
     "noDomain": "Aucun domaine",
     "addDomain": "Ajouter un domaine",
     "tabs": {
+      "topology": "Topologie",
       "appSettings": "Paramètres",
       "overview": "Vue d'ensemble",
       "services": "Services",
@@ -131,9 +137,12 @@
       "deployments": "Déploiements",
       "health": "Santé",
       "monitoring": "Surveillance",
+      "monitoringAndLogs": "Surveillance et journaux",
       "source": "Source",
+      "sourceAndTriggers": "Source et déclencheurs",
       "webhooks": "Webhooks",
       "runtime": "Configuration",
+      "settings": "Paramètres",
       "logs": "Journaux",
       "backup": "Sauvegarde",
       "advanced": "Avancé"
@@ -189,10 +198,11 @@
     "services": "Services",
     "created": "Créé",
     "managedImages": "Images de conteneur gérées",
-    "managedImagesText": "Cette application s'exécute à partir d'images préconstruites — il n'y a pas de dépôt à connecter. Déployez simplement."
+    "managedImagesText": "Cette application s'exécute à partir d'images préconstruites — il n'y a pas de dépôt à connecter. Déployez simplement.",
+    "subtextNoSource": "Connectez une source pour configurer votre premier déploiement."
   },
   "overview": {
-    "platformCloud": "Openship Cloud",
+    "platformCloud": "Kovalio Cloud",
     "platformServer": "Auto-hébergé (Serveur)",
     "platformLocal": "Auto-hébergé (Local)",
     "modeStatic": "Site statique",
@@ -236,6 +246,12 @@
     "waitingRequests": "En attente de requêtes",
     "noTransfer": "Aucun transfert pour le moment"
   },
+  "analytics": {
+    "loadFailed": "Impossible de charger les analyses de trafic",
+    "loadFailedDescription": "Réessayez pour charger les dernières données.",
+    "sectionsUnavailable": "Indisponible : {sections}.",
+    "staleData": "Les dernières données disponibles sont affichées."
+  },
   "monitoring": {
     "noDataTitle": "Aucune donnée de surveillance pour le moment",
     "noDataDescription": "Les analyses apparaîtront ici une fois que l'application déployée commencera à recevoir du trafic.",
@@ -262,6 +278,7 @@
     "geoUnavailableBody": "Le proxy edge ne peut pas résoudre les pays des visiteurs, la carte reste donc vide. Les totaux de trafic ne sont pas affectés.",
     "noCountries": "Aucune donnée de pays pour cette période.",
     "statusesTitle": "Réponses",
+    "statusesOthers": "Autres",
     "share": "{pct} %",
     "visitorDays": "Visiteurs-jours",
     "peakDayTooltip": "Journée la plus active : {peak}. Un visiteur qui revient compte une fois par jour, le total est donc une borne supérieure.",
@@ -285,6 +302,8 @@
     "liveHitsWaiting": "En attente de requêtes…",
     "statusesUnclassified": "{count} sans classe de statut",
     "trafficTitle": "Aperçu du trafic",
+    "dailyWindow": "7 jours, aujourd’hui inclus (UTC)",
+    "currentHour": "Heure en cours · comptage en cours",
     "trafficSummary": "{count} requêtes",
     "servicesMore": "+{count} de plus",
     "servicesLess": "Afficher moins",
@@ -296,7 +315,11 @@
       "disable": "Désactiver les chemins principaux"
     },
     "liveFeed": "Requêtes récentes",
-    "liveFeedHint": "Afficher la liste des requêtes récentes sur la carte (tout le détail est dans Journaux)"
+    "liveFeedHint": "Afficher la liste des requêtes récentes sur la carte (tout le détail est dans Journaux)",
+    "dataUnavailable": "Certaines données de surveillance sont indisponibles",
+    "connecting": "Connexion…",
+    "liveUnavailable": "Requêtes en direct indisponibles",
+    "liveUnavailableDescription": "Le trafic historique reste affiché. Reconnectez-vous pour voir les requêtes en direct."
   },
   "services": {
     "failedLoad": "Échec du chargement des services",
@@ -327,16 +350,20 @@
     "toastKeptEdits": "{name} : vos modifications ont été conservées",
     "failedResolveDrift": "Échec de la résolution de l'écart",
     "failedCreateService": "Échec de la création du service",
-    "requestFailed": "Échec de la requête"
+    "requestFailed": "Échec de la requête",
+    "application": "Application",
+    "applicationHint": "Gérée via les déploiements de ce projet.",
+    "companionsTitle": "Ajouter une autre application ou un service"
   },
   "serviceStatus": {
+    "checking": "Vérification…",
     "running": "En cours d'exécution",
     "stopped": "Arrêté",
     "disabled": "Désactivé",
     "failed": "Échec",
     "starting": "Démarrage",
     "restarting": "Redémarrage",
-    "unknown": "Inconnu"
+    "unknown": "État indisponible"
   },
   "routingRetry": {
     "title": "Le routage du domaine demande votre attention",
@@ -378,17 +405,20 @@
     "noPublicDomainTitle": "Aucun domaine public n'est connecté",
     "noPublicDomainDescOne": "Ce projet a {count} service avec des ports exposés, mais aucun n'est configuré avec un domaine accessible. Si vous déployez maintenant, la stack peut fonctionner en interne, mais les utilisateurs ne pourront pas y accéder depuis une URL publique.",
     "noPublicDomainDescOther": "Ce projet a {count} services avec des ports exposés, mais aucun n'est configuré avec un domaine accessible. Si vous déployez maintenant, la stack peut fonctionner en interne, mais les utilisateurs ne pourront pas y accéder depuis une URL publique.",
+    "openDomains": "Ouvrir les domaines",
     "openServices": "Ouvrir les services",
     "deployAnyway": "Déployer quand même",
     "suggestedFix": "Correction suggérée",
-    "fixStep1": "Ouvrez l'onglet Services.",
-    "fixStep2": "Sélectionnez le service qui doit être public.",
-    "fixStep3": "Activez l'exposition du domaine et choisissez le port public."
+    "fixStep1": "Ouvrez l'onglet Domaines.",
+    "fixStep2": "Ajoutez une route ou un domaine personnalisé pour le port du service.",
+    "fixStep3": "Vérifiez le domaine et déployez."
   },
   "connections": {
+    "nativeClusterHint": "Choisissez un projet sur le cluster de cette base de données. Seuls les projets liés disposent d’un accès privé.",
+    "nativeNoTargets": "Aucun autre projet n’utilise encore ce cluster.",
     "useInProject": "Utiliser dans un projet",
     "title": "Utiliser dans un projet",
-    "subtitle": "Reliez cette base de données à un autre projet comme une connexion prête à l'emploi.",
+    "subtitle": "Partagez ce service avec un autre projet via une connexion.",
     "targetLabel": "Projet",
     "targetPlaceholder": "Sélectionnez un projet…",
     "valueLabel": "Valeur à injecter",
@@ -423,15 +453,24 @@
     "forwardShort": "Rediriger",
     "usedByTitle": "Utilisé par",
     "usedByOpen": "Ouvrir le projet",
-    "usedByHint": "{count} projet(s) dépendent de la connexion de cette app. Dissociez-la depuis le projet consommateur.",
-    "linkedCountOne": "{count} app liée",
-    "linkedCountOther": "{count} apps liées",
-    "linkedHint": "Utilisées par ce projet, mais pas exécutées par lui.",
-    "linkedBadge": "Liée",
+    "usedByHint": "{count} projet(s) utilisent cette connexion. Déconnectez-la depuis le projet consommateur.",
+    "linkedCountOne": "{count} service connecté",
+    "linkedCountOther": "{count} services connectés",
+    "linkedHint": "Ces services sont gérés dans leurs projets sources.",
+    "linkedBadge": "Partagé",
     "unlink": "Dissocier",
-    "openApp": "Ouvrir l'app",
+    "openApp": "Ouvrir la source",
     "internalTitle": "Adresse interne",
-    "internalDescription": "Accédez à ce projet en privé depuis un autre service sur le même serveur — sans port public."
+    "internalDescription": "Accédez à ce projet en privé depuis un autre service sur le même serveur — sans port public.",
+    "createNew": "Créer un service",
+    "connectExisting": "Connecter un service existant",
+    "existingHint": "Utilisez un service ou une application d’un autre projet. Ses données et sa gestion restent dans ce projet.",
+    "sourceLabel": "Projet ou application source",
+    "sourcePlaceholder": "Choisir un projet ou une application…",
+    "loadingServices": "Chargement des services…",
+    "noConnections": "Aucune valeur de connexion disponible. Vérifiez le port et les identifiants du service dans le projet source.",
+    "noSources": "Créez un service dans un autre projet pour le connecter ici.",
+    "sharedFrom": "Partagé depuis {project}"
   },
   "incomingWebhooks": {
     "title": "Webhooks entrants",
@@ -459,7 +498,8 @@
       "none": "Ouvert"
     },
     "summaryDeploy": "Redéploie ce projet",
-    "summaryDeployService": "Redéploie le service {service}",
+    "summaryDeployOne": "Redéploie 1 service sélectionné",
+    "summaryDeployServices": "Redéploie {count} services ensemble",
     "summaryJob": "Exécute le job {job}",
     "createTitle": "Nouveau webhook entrant",
     "createSubtitle": "Choisissez ce qu'il fait et comment les appelants s'authentifient.",
@@ -467,10 +507,10 @@
     "namePlaceholder": "ex. hook de déploiement CI",
     "actionLabel": "Action",
     "actionDeploy": "Déployer",
-    "actionDeployDesc": "Redéploie ce projet (ou un service) lors de l'appel.",
+    "actionDeployDesc": "Redéploie ce projet ou les services sélectionnés lors de l'appel.",
     "actionJob": "Exécuter un job",
     "actionJobDesc": "Exécute l'un de vos jobs lors de l'appel.",
-    "serviceLabel": "Service (facultatif)",
+    "serviceLabel": "Services (facultatifs)",
     "serviceAll": "Tout le projet",
     "jobLabel": "Job",
     "jobPlaceholder": "Sélectionnez un job…",
@@ -495,7 +535,7 @@
     "watchOffTitle": "La surveillance de santé des conteneurs est désactivée",
     "watchOffBody": "Aucun incident n'est enregistré et aucune alerte n'est envoyée : une liste vide ici ne signifie donc pas que tout va bien.",
     "watchOffCta": "L'activer dans Tâches",
-    "serverDownTitle": "Openship ne parvient pas à joindre le serveur de ce projet",
+    "serverDownTitle": "Kovalio ne parvient pas à joindre le serveur de ce projet",
     "serverDownBody": "Rien n'a été observé sur cette machine depuis {duration}, les incidents ci-dessous peuvent donc être obsolètes.",
     "loadFailed": "Impossible de charger les incidents.",
     "ongoing": "en cours depuis {duration}",
@@ -514,5 +554,5 @@
       "server_unreachable": "Serveur inaccessible"
     }
   },
-  "migrationAwaitingHint": "La migration vous attend — terminez le basculement ou annulez-le dans l'onglet Avancé du projet"
+  "migrationAwaitingHint": "La migration vous attend — terminez le basculement ou annulez-le dans Paramètres → Avancé du projet"
 }

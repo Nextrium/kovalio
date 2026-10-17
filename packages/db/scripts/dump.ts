@@ -1,5 +1,5 @@
 /**
- * Dump the current Openship DB to a JSON file.
+ * Dump the current Kovalio DB to a JSON file.
  *
  *   bun --cwd packages/db db:dump > backup.json
  *   bun --cwd packages/db db:dump --out path/to/dump.json
@@ -8,16 +8,16 @@
  *   bun --cwd packages/db db:dump --scope project --project <projectId>
  *
  * The output is a `DatabaseDump` envelope — drop it into another
- * Openship install (same migration version) via `db:restore`. Written
+ * Kovalio install (same migration version) via `db:restore`. Written
  * to stdout when --out is omitted so it can be piped to ssh / pv / etc.
  *
  * Used by the team-mode migration wizards (path A: copy to operator's
- * VPS; path B: upload to Openship Cloud) but works standalone for
+ * VPS; path B: upload to Kovalio Cloud) but works standalone for
  * ad-hoc snapshots too.
  */
 
 import { writeFileSync } from "node:fs";
-import { dumpSubgraph, type SubgraphScope } from "../src/dump";
+import type { SubgraphScope } from "../src/dump";
 
 function parseScope(args: string[]): SubgraphScope {
   const scopeIdx = args.indexOf("--scope");
@@ -58,6 +58,9 @@ async function main() {
   const stripEncrypted = args.includes("--strip-encrypted");
   const scope = parseScope(args);
 
+  // Source-only command: use this installed PGlite package's own assets.
+  delete process.env.KOVALIO_PGLITE_ASSETS_DIR;
+  const { dumpSubgraph } = await import("../src/dump");
   const dump = await dumpSubgraph(scope, { stripEncrypted });
   const payload = JSON.stringify(dump, null, 2);
 

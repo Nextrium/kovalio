@@ -1,0 +1,95 @@
+---
+title: billing change
+description: Commands, arguments, and options for kovalio billing change.
+cliGroup: kovalio billing change
+---
+
+See the [workflow guide](/docs/cli/cloud) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio billing change
+
+Preview and confirm a subscription change with its exact quote
+
+```text
+kovalio billing change [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`preview [options] <plan>`](/docs/cli/reference/billing/change#kovalio-billing-change-preview) | Create a quote showing the price and affected-project restarts |
+| [`apply [options] <quote>`](/docs/cli/reference/billing/change#kovalio-billing-change-apply) | Confirm a reviewed quote and its listed server restarts |
+| [`get [options] <id>`](/docs/cli/reference/billing/change#kovalio-billing-change-get) | Read a queued, applied or failed change |
+| [`cancel [options] <id>`](/docs/cli/reference/billing/change#kovalio-billing-change-cancel) | Cancel a change if its current state permits it |
+
+## kovalio billing change apply
+
+Confirm a reviewed quote and its listed server restarts
+
+```text
+kovalio billing change apply [options] <quote>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `quote` | Exact quote ID returned by change preview |
+
+| Option | Meaning |
+| --- | --- |
+| `--server <id>` | Use this managed server's billing workspace |
+| `--workspace <id>` | Billing workspace ID, including retained subscriptions |
+| `--confirm-restart` | Acknowledge the restarts listed in this quote |
+| `-y, --yes` | Confirm this subscription change |
+
+## kovalio billing change cancel
+
+Cancel a change if its current state permits it
+
+```text
+kovalio billing change cancel [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Change ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--server <id>` | Use this managed server's billing workspace |
+| `--workspace <id>` | Billing workspace ID, including retained subscriptions |
+| `-y, --yes` | Confirm cancellation |
+
+## kovalio billing change get
+
+Read a queued, applied or failed change
+
+```text
+kovalio billing change get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Change ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--server <id>` | Use this managed server's billing workspace |
+| `--workspace <id>` | Billing workspace ID, including retained subscriptions |
+
+## kovalio billing change preview
+
+Create a quote showing the price and affected-project restarts
+
+```text
+kovalio billing change preview [options] <plan>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `plan` | Next plan ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--server <id>` | Use this managed server's billing workspace |
+| `--workspace <id>` | Billing workspace ID, including retained subscriptions |
+| `--idempotency-key <key>` | Stable key for this change request |
+| `--custom <file>` | JSON custom resources and quoteReference |

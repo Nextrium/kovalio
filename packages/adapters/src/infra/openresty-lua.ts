@@ -30,6 +30,7 @@
  *   GET /health                        - 200 ok
  */
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import { answered, refused, safeErrorMessage } from "@repo/core";
 import { createHash, randomBytes } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
@@ -42,11 +43,12 @@ import type { CommandExecutor } from "../types";
 import { EDGE_REAL_IP_CONF_NAME, edgeRealIpConf } from "./edge-real-ip";
 import { EDGE_NOT_FOUND_LOCATION } from "./edge-not-found";
 import { sq } from "../system/local-shell";
+import { reloadBareOpenResty } from "./openresty-reload";
 
 // ── Paths & constants ────────────────────────────────────────────────────────
 
 /** Directory on the managed server where Lua scripts are deployed. */
-export const OPENRESTY_LUA_DIR = "/usr/local/openresty/site/lualib/openship";
+export const OPENRESTY_LUA_DIR = "/usr/local/openresty/site/lualib/kovalio";
 
 /** Absolute path to the site_logger script (referenced by nginx server blocks). */
 export const LUA_LOGGER_PATH = `${OPENRESTY_LUA_DIR}/site_logger.lua`;
@@ -58,12 +60,12 @@ export const RULES_GUARD_PATH = `${OPENRESTY_LUA_DIR}/rules_guard.lua`;
 export const OPENRESTY_MGMT_PORT = 9145;
 
 /**
- * Directory `require "openship.<mod>"` resolves from — the PARENT of the module
+ * Directory `require "kovalio.<mod>"` resolves from — the PARENT of the module
  * dir, which is what makes the dotted module names in our Lua resolvable at all.
  */
 const OPENRESTY_SITE_LUALIB = OPENRESTY_LUA_DIR.replace(/\/[^/]+$/, "");
 
-/** OpenResty's own default lualib (`;;`) plus the openship modules. */
+/** OpenResty's own default lualib (`;;`) plus the kovalio modules. */
 export const EDGE_LUA_PACKAGE_PATH = `${OPENRESTY_SITE_LUALIB}/?.lua;;`;
 
 /**
@@ -81,13 +83,13 @@ export const EDGE_SERVER_NAMES_HASH_BUCKET_SIZE = 128;
  *
  * nginx's built-in default is 1 MB, and it is not a soft limit — a larger request is
  * refused with 413 before it reaches the app, so a form upload, an avatar or a CSV import
- * fails with no application log to explain it. Openship exposed
+ * fails with no application log to explain it. Kovalio exposed
  * `client_max_body_size` as a per-project tunable (PROXY_DIRECTIVES) but shipped no
  * DEFAULT, which meant every project that had never opened that panel was still on 1 MB.
  *
  * Set at HTTP level on purpose rather than written into each vhost: nginx resolves
  * `server` over `http`, so one line here raises the floor for every site — including the
- * ones Openship generates for mail, webmail and the default server — while a project's own
+ * ones Kovalio generates for mail, webmail and the default server — while a project's own
  * value continues to win. Writing it per-vhost would also mean regenerating every vhost on
  * every box to change the floor.
  *
@@ -98,7 +100,7 @@ export const EDGE_SERVER_NAMES_HASH_BUCKET_SIZE = 128;
 export const EDGE_CLIENT_MAX_BODY_SIZE = "50m";
 
 /**
- * Shared-memory zones the openship Lua depends on, and the ONE definition of
+ * Shared-memory zones the kovalio Lua depends on, and the ONE definition of
  * their sizes.
  *
  * Two consumers used to carry their own copy: the `grep || sed` patches that add
@@ -157,6 +159,10 @@ export const EDGE_SHARED_DICTS: ReadonlyArray<{ name: string; size: string }> = 
 export interface OpenRestyPaths {
   /** Path to the openresty binary (e.g. /usr/local/openresty/bin/openresty) */
   bin: string;
+  /** The binary's compiled `--conf-path`, retained even when `confPath` falls
+   *  back to another existing tree. A master started without `-c` reloads this
+   *  path, so bare-host signaling is safe only when it resolves to `confPath`. */
+  compiledConfPath: string;
   /** Path to nginx.conf (e.g. /etc/openresty/nginx.conf) */
   confPath: string;
   /** Directory containing nginx.conf (e.g. /etc/openresty) */
@@ -190,6 +196,7 @@ export function parseNginxVersion(raw: string): readonly [number, number, number
 /** Fallback paths when `openresty -V` is unavailable (e.g. not yet installed). */
 export const OPENRESTY_DEFAULT_PATHS: OpenRestyPaths = {
   bin: "/usr/local/openresty/bin/openresty",
+  compiledConfPath: "/usr/local/openresty/nginx/conf/nginx.conf",
   confPath: "/usr/local/openresty/nginx/conf/nginx.conf",
   confDir: "/usr/local/openresty/nginx/conf",
   sitesDir: "/usr/local/openresty/nginx/conf/sites-enabled",
@@ -210,7 +217,7 @@ export const OPENRESTY_DEFAULT_PATHS: OpenRestyPaths = {
  * The conf dir is not a mount, so in the container this resolves to the copy baked
  * into the image and nothing on the host can mask or delete it.
  */
-export const EDGE_DEFAULT_CERT_DIRNAME = "openship-default-cert";
+export const EDGE_DEFAULT_CERT_DIRNAME = "kovalio-default-cert";
 
 /** The placeholder cert/key pair for a given OpenResty conf dir. */
 export function edgeDefaultCertPaths(confDir: string): {
@@ -227,12 +234,12 @@ export function edgeDefaultCertPaths(confDir: string): {
  * only for names we do not serve, and giving it one would make it look, to anyone
  * reading a scan or a browser warning, like a cert we meant to use for that name.
  */
-export const EDGE_DEFAULT_CERT_CN = "openship-edge-default";
+export const EDGE_DEFAULT_CERT_CN = "kovalio-edge-default";
 
 // ── Containerized edge ───────────────────────────────────────────────────────
 
 /** Root for edge state that isn't already at a well-known host location. */
-export const EDGE_HOST_STATE_DIR = "/var/lib/openship/edge";
+export const EDGE_HOST_STATE_DIR = "/var/lib/kovalio/edge";
 
 /**
  * Where the edge container's state lives ON THE HOST, and where it's mounted
@@ -250,12 +257,12 @@ export const EDGE_CONTAINER_MOUNTS: ReadonlyArray<{ host: string; container: str
   { host: `${EDGE_HOST_STATE_DIR}/sites-enabled`, container: OPENRESTY_DEFAULT_PATHS.sitesDir },
   { host: "/etc/letsencrypt", container: "/etc/letsencrypt" },
   { host: `${EDGE_HOST_STATE_DIR}/acme`, container: "/var/www/acme" },
-  { host: "/opt/openship/static", container: "/opt/openship/static" },
+  { host: "/opt/kovalio/static", container: "/opt/kovalio/static" },
 ];
 
 /**
  * The subset of {@link EDGE_CONTAINER_MOUNTS} whose host and container names are the
- * SAME string — today `/etc/letsencrypt` and `/opt/openship/static`.
+ * SAME string — today `/etc/letsencrypt` and `/opt/kovalio/static`.
  *
  * Two unrelated rules need exactly this set, which is why it lives next to the table
  * rather than being re-filtered at each: a container edge runs commands INSIDE the
@@ -267,7 +274,7 @@ export const EDGE_CONTAINER_MOUNTS: ReadonlyArray<{ host: string; container: str
  */
 export const EDGE_SAME_PATH_MOUNTS: readonly string[] = EDGE_CONTAINER_MOUNTS.filter(
   (m) => m.host === m.container,
-).map((m) => m.host.replace(/\/+$/, ""));
+).map((m) => m.host.replace(/(?<!\/)\/+$/, ""));
 
 /**
  * Paths for driving a containerized edge from OUTSIDE the container — i.e. over
@@ -281,6 +288,7 @@ export const EDGE_SAME_PATH_MOUNTS: readonly string[] = EDGE_CONTAINER_MOUNTS.fi
  */
 export const EDGE_HOST_PATHS: OpenRestyPaths = {
   bin: OPENRESTY_DEFAULT_PATHS.bin,
+  compiledConfPath: OPENRESTY_DEFAULT_PATHS.compiledConfPath,
   confPath: OPENRESTY_DEFAULT_PATHS.confPath,
   confDir: OPENRESTY_DEFAULT_PATHS.confDir,
   sitesDir: `${EDGE_HOST_STATE_DIR}/sites-enabled`,
@@ -301,9 +309,7 @@ const KNOWN_CONF_PATHS = [
  * If not, probes known alternative locations. This handles scenarios
  * where OpenResty was reinstalled and the config directory changed.
  */
-export async function detectOpenRestyPaths(
-  executor: CommandExecutor,
-): Promise<OpenRestyPaths> {
+export async function detectOpenRestyPaths(executor: CommandExecutor): Promise<OpenRestyPaths> {
   const raw = await executor.exec("openresty -V 2>&1 || true");
 
   const parseFlag = (flag: string): string | null => {
@@ -312,7 +318,8 @@ export async function detectOpenRestyPaths(
   };
 
   const bin = parseFlag("sbin-path") ?? OPENRESTY_DEFAULT_PATHS.bin;
-  let confPath = parseFlag("conf-path") ?? OPENRESTY_DEFAULT_PATHS.confPath;
+  const compiledConfPath = parseFlag("conf-path") ?? OPENRESTY_DEFAULT_PATHS.compiledConfPath;
+  let confPath = compiledConfPath;
   const pidPath = parseFlag("pid-path") ?? OPENRESTY_DEFAULT_PATHS.pidPath;
 
   // Verify the detected confPath actually exists on disk.
@@ -320,7 +327,7 @@ export async function detectOpenRestyPaths(
   if (!(await executor.exists(confPath))) {
     let found = false;
     for (const candidate of KNOWN_CONF_PATHS) {
-      if (candidate !== confPath && await executor.exists(candidate)) {
+      if (candidate !== confPath && (await executor.exists(candidate))) {
         confPath = candidate;
         found = true;
         break;
@@ -337,6 +344,7 @@ export async function detectOpenRestyPaths(
 
   return {
     bin,
+    compiledConfPath,
     confPath,
     confDir,
     sitesDir: `${confDir}/sites-enabled`,
@@ -350,55 +358,19 @@ export async function detectOpenRestyPaths(
 /**
  * Build the OpenResty reload command from detected paths.
  *
- * Primary (both modes): `openresty -t` then `-s reload` — graceful, zero-downtime.
+ * Container-confined reload only: validate the complete config, then ask that
+ * container's nginx CLI to signal its own master. It must never start or kill a
+ * daemon. Starting in the old fallback caused #700 by launching a second master.
  *
- * What happens when reload FAILS is where this gets dangerous, because the wrong
- * recovery takes every site on the box down. Three layers, in order:
- *
- *   1. `opts.containerEdge` — set by the two container-edge providers, so for the
- *      paths we control the command CONTAINS no kill at all. Nothing to reason
- *      about at runtime.
- *   2. `/proc/1/comm` — a runtime backstop for any path that reaches the bare
- *      command while actually running inside the edge container (a caller that
- *      forgot the flag, `ensureLuaScripts` on a containerized box). The master IS
- *      pid 1 there, so `pkill` kills the container's init: the `docker exec`
- *      returns non-zero, registerRoute's self-rollback restores the PREVIOUS
- *      vhost, and the deploy reports "Routing failed" while every site blips.
- *      Restarting a dead master is the supervisor's job in that mode — fail
- *      loudly, surfacing the reload's real stderr.
- *   3. BARE host — a failed reload usually does mean "not running", so starting it
- *      is right. But recover WITHOUT a pattern kill: `pkill -f openresty` also
- *      matches a host-networked edge CONTAINER's master (see edge-check.test.ts),
- *      so the blind kill could take down the very edge it was recovering. Only
- *      start when no live master holds the pid file; otherwise report it rather
- *      than killing a process we can't identify.
+ * Bare hosts MUST use `reloadBareOpenResty` instead. `nginx -s reload` trusts a
+ * mutable PID file, so a stale file can HUP an unrelated PID before any fallback
+ * gets a chance to verify it.
  */
-export function buildReloadCommand(
-  paths: OpenRestyPaths,
-  opts: { containerEdge?: boolean } = {},
-): string {
-  if (opts.containerEdge) {
-    return `${paths.bin} -t 2>&1 || exit 1
-${paths.bin} -s reload 2>&1 || exit 1`;
-  }
-
-  return `${paths.bin} -t 2>&1 || exit 1
-
-reload_err=$(${paths.bin} -s reload 2>&1) && exit 0
-
-if [ "$(cat /proc/1/comm 2>/dev/null)" = "openresty" ] || [ "$(cat /proc/1/comm 2>/dev/null)" = "nginx" ]; then
-  echo "openresty reload failed and openresty is PID 1 (containerized edge) — not killing it; the container supervisor owns restarts." >&2
-  echo "$reload_err" >&2
-  exit 1
-fi
-
-if [ -f ${paths.pidPath} ] && kill -0 "$(cat ${paths.pidPath} 2>/dev/null)" 2>/dev/null; then
-  echo "openresty (pid $(cat ${paths.pidPath})) is running but refused -s reload" >&2
-  exit 1
-fi
-
-rm -f ${paths.pidPath}
-${paths.bin}`;
+export function buildReloadCommand(paths: OpenRestyPaths): string {
+  const bin = sq(paths?.bin || "openresty");
+  const config = sq(paths?.confPath || "/etc/openresty/nginx.conf");
+  return `${bin} -t -c ${config} 2>&1 || exit 1
+${bin} -s reload -c ${config} 2>&1 || exit 1`;
 }
 
 /**
@@ -438,7 +410,8 @@ async function ensureEdgeDefaultCert(
     if ((await executor.exists(certPath)) && (await executor.exists(keyPath))) {
       return { certPath, keyPath };
     }
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/infra/openresty-lua");
     return null;
   }
 
@@ -470,14 +443,14 @@ async function ensureEdgeDefaultCert(
     if (!(await executor.exists(certPath)) || !(await executor.exists(keyPath))) return null;
     return { certPath, keyPath };
   } catch (err) {
-    console.warn(
+    errorDiagnostics.warn("adapters/infra/openresty-lua",
       `[openresty] could not create the edge's default certificate — an unrouted HTTPS host ` +
         `will get a TLS error instead of the "service not found" page ` +
-        `(is openssl installed?): ${safeErrorMessage(err)}`,
+        `(is openssl installed?): ${safeErrorMessage(err)}`, err,
     );
     return null;
   } finally {
-    await executor.rm(staging).catch(() => undefined);
+    await executor.rm(staging).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/infra/openresty-lua"); return undefined; });
   }
 }
 
@@ -516,10 +489,7 @@ export async function ensureOpenRestyConfig(
   // removed the old config), write a minimal working config.
   if (!(await executor.exists(paths.confPath))) {
     await executor.mkdir(paths.confDir);
-    await executor.writeFile(
-      paths.confPath,
-      MINIMAL_NGINX_CONF(paths.confDir, paths.sitesDir),
-    );
+    await executor.writeFile(paths.confPath, MINIMAL_NGINX_CONF(paths.confDir, paths.sitesDir));
     return; // Fresh config already has the include - no sed needed.
   }
 
@@ -527,14 +497,14 @@ export async function ensureOpenRestyConfig(
   const hasCorrectInclude = await executor
     .exec(`grep -qF 'include ${paths.sitesDir}/' ${paths.confPath}`)
     .then(() => true)
-    .catch(() => false);
+    .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/infra/openresty-lua"); return false; });
 
   if (!hasCorrectInclude) {
     // Check if a WRONG sites-enabled include exists (different directory)
     const hasWrongInclude = await executor
       .exec(`grep -q 'include.*sites-enabled' ${paths.confPath}`)
       .then(() => true)
-      .catch(() => false);
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/infra/openresty-lua"); return false; });
 
     if (hasWrongInclude) {
       // Replace the wrong include path with the correct one
@@ -562,7 +532,7 @@ export async function ensureOpenRestyConfig(
   const hasBodySize = await executor
     .exec(`grep -qE '^[[:space:]]*client_max_body_size' ${paths.confPath}`)
     .then(() => true)
-    .catch(() => false);
+    .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/infra/openresty-lua"); return false; });
   if (!hasBodySize) {
     await executor.exec(
       `sed -i '/http *{/a \\    client_max_body_size ${EDGE_CLIENT_MAX_BODY_SIZE};' ${paths.confPath}`,
@@ -572,7 +542,7 @@ export async function ensureOpenRestyConfig(
 
 /** Minimal nginx.conf that OpenResty can boot with. */
 function MINIMAL_NGINX_CONF(confDir: string, sitesDir: string): string {
-  return `# Auto-generated by Openship - safe to extend
+  return `# Auto-generated by Kovalio - safe to extend
 worker_processes auto;
 events {
     worker_connections 1024;
@@ -606,22 +576,22 @@ export const GEOIP_DB_PATH = `${GEOIP_DIR}/GeoLite2-Country.mmdb`;
  * upstream reference belongs in a maintainer-time script (`bun run update:geoip`).
  */
 const GEOIP_DB_URL =
-  process.env.OPENSHIP_GEOIP_URL?.trim() ||
-  "https://raw.githubusercontent.com/oblien/openship/main/apps/api/assets/geoip/GeoLite2-Country.mmdb";
+  process.env.KOVALIO_GEOIP_URL?.trim() ||
+  "https://raw.githubusercontent.com/Nextrium/kovalio/main/apps/api/assets/geoip/GeoLite2-Country.mmdb";
 
 // ── Local Lua source directory ───────────────────────────────────────────────
 
 // Optional on-disk source of the .lua scripts, for dev / Docker / CLI bundle
 // where the files sit next to this module (edit + reload works). This is only a
 // convenience — the base64 EMBEDDED_LUA copy is the atomic guarantee that ships
-// inside the JS. OPENSHIP_LUA_DIR lets an operator point at hand-edited scripts.
+// inside the JS. KOVALIO_LUA_DIR lets an operator point at hand-edited scripts.
 const LUA_SRC_DIR =
-  process.env.OPENSHIP_LUA_DIR?.trim() || join(dirname(fileURLToPath(import.meta.url)), "lua");
+  process.env.KOVALIO_LUA_DIR?.trim() || join(dirname(fileURLToPath(import.meta.url)), "lua");
 
 /** The scripts a generated nginx server block hard-depends on — if these aren't
  *  installable, the vhost MUST omit its `*_by_lua_file` directives (else every
  *  request 500s on a missing file). `rules_guard.lua` (access phase) does a
- *  non-pcall `require "openship.rules_lib"`, so rules_lib is a hard dep too;
+ *  non-pcall `require "kovalio.rules_lib"`, so rules_lib is a hard dep too;
  *  `site_logger.lua` (log phase) only soft-pcalls geo/pipe, so it stands alone.
  *  See `luaSourceAvailable`. */
 const VHOST_REFERENCED_LUA = ["rules_guard.lua", "rules_lib.lua", "site_logger.lua"] as const;
@@ -687,7 +657,7 @@ server {
 }`;
 
 const MANAGEMENT_BLOCK = `\
-# Openship internal management - analytics & live-log streaming
+# Kovalio internal management - analytics & live-log streaming
 # Auto-generated - do not edit manually
 ${EDGE_MGMT_SERVER_BLOCK}
 `;
@@ -721,7 +691,7 @@ export const ACME_CHALLENGE_LOCATION = `\
     }`;
 
 /**
- * URL prefix Openship Cloud's shared edge fetches to prove this box controls a
+ * URL prefix Kovalio Cloud's shared edge fetches to prove this box controls a
  * routing target. Oblien issues `<prefix><token>` and expects the token back as
  * the body with a 200.
  */
@@ -744,7 +714,10 @@ export const EDGE_CHALLENGE_URL_PREFIX = "/.well-known/oblien-proxy-challenge/";
  * recreate with the old list and lose the tokens.
  */
 export const EDGE_CHALLENGE_ROOT = "/var/www/acme/oblien";
-export const EDGE_CHALLENGE_DIR = `${EDGE_CHALLENGE_ROOT}${EDGE_CHALLENGE_URL_PREFIX}`.replace(/\/$/, "");
+export const EDGE_CHALLENGE_DIR = `${EDGE_CHALLENGE_ROOT}${EDGE_CHALLENGE_URL_PREFIX}`.replace(
+  /\/$/,
+  "",
+);
 
 /**
  * The same directory as seen from the HOST, for the one provider whose file ops
@@ -752,13 +725,11 @@ export const EDGE_CHALLENGE_DIR = `${EDGE_CHALLENGE_ROOT}${EDGE_CHALLENGE_URL_PR
  *
  * This mount is the exception to the rule: every other edge mount keeps the same
  * path on both sides on purpose, and `acme` does not
- * (`/var/lib/openship/edge/acme` → `/var/www/acme`). Forgetting that is a mistake
+ * (`/var/lib/kovalio/edge/acme` → `/var/www/acme`). Forgetting that is a mistake
  * with history here — see the mail-SSL webroot note.
  */
-export const EDGE_CHALLENGE_HOST_DIR = `${EDGE_HOST_STATE_DIR}/acme/oblien${EDGE_CHALLENGE_URL_PREFIX}`.replace(
-  /\/$/,
-  "",
-);
+export const EDGE_CHALLENGE_HOST_DIR =
+  `${EDGE_HOST_STATE_DIR}/acme/oblien${EDGE_CHALLENGE_URL_PREFIX}`.replace(/\/$/, "");
 
 /**
  * The location that serves those tokens. SHARED by the per-vhost templates in
@@ -816,9 +787,9 @@ export const EDGE_CHALLENGE_LOCATION = `\
  * box's own IP as a routing target, so this vhost claims it).
  */
 export function edgeChallengeVhostConf(host: string): string {
-  return `# Auto-generated by Openship - do not edit manually
-# openship-oblien-challenge: answers ${EDGE_CHALLENGE_URL_PREFIX}<token> for
-# Host: ${host}, so Openship Cloud's shared edge can prove this box controls that
+  return `# Auto-generated by Kovalio - do not edit manually
+# kovalio-oblien-challenge: answers ${EDGE_CHALLENGE_URL_PREFIX}<token> for
+# Host: ${host}, so Kovalio Cloud's shared edge can prove this box controls that
 # routing target. Everything else gets the shared not-found page - this is
 # scaffolding, not a site.
 server {
@@ -900,9 +871,7 @@ server {
  * hostname that once had a real cert hard-fails on the placeholder with no
  * click-through. (Which is why this block must never send HSTS itself.)
  */
-export function edgeHttpsDefaultBlock(
-  cert?: { certPath: string; keyPath: string } | null,
-): string {
+export function edgeHttpsDefaultBlock(cert?: { certPath: string; keyPath: string } | null): string {
   if (!cert) return EDGE_HTTPS_REJECT_BLOCK;
   return `\
 # HTTPS catch-all. WITHOUT a 443 default_server, nginx serves the first-loaded
@@ -953,7 +922,7 @@ export function edgeDefaultCatchAllConf(
   cert?: { certPath: string; keyPath: string } | null,
 ): string {
   return `\
-# Openship default catch-all - prevents the stock OpenResty welcome page AND
+# Kovalio default catch-all - prevents the stock OpenResty welcome page AND
 # stops an unmatched Host/SNI from being served the first real vhost by default.
 # Auto-generated - do not edit manually
 server {
@@ -976,7 +945,7 @@ const LUA_SCRIPTS = [
   "pipe_stream.lua",
   "mgmt_api.lua",
   "geo_country.lua",
-  // Vendored FFI binding geo_country requires as `openship.maxminddb`. Ships with
+  // Vendored FFI binding geo_country requires as `kovalio.maxminddb`. Ships with
   // the rest so a bare box needs no `opm get` (which needs perl) — see the file
   // header. Flat, like every other script: ensureLuaScripts writes this list into
   // one directory and its presence scan is a plain `ls -1`.
@@ -988,7 +957,7 @@ const LUA_SCRIPTS = [
 /** Version stamp so the self-heal detects a STALE box (an upgrade shipped new
  *  Lua) as well as a missing one. Dotfile → excluded from `require` + from the
  *  plain `ls -1` presence scan below. */
-const LUA_VERSION_MARKER = `${OPENRESTY_LUA_DIR}/.openship-lua-version`;
+const LUA_VERSION_MARKER = `${OPENRESTY_LUA_DIR}/.kovalio-lua-version`;
 
 /** sha256 over the exact bytes we'd install, so any script edit changes it. */
 function luaBundleHash(): string {
@@ -1026,7 +995,7 @@ export async function ensureLuaScripts(
     if (!luaSourceAvailable()) {
       // Only reachable if the embedded module was gutted. Do NOT throw — the
       // vhost builder omits the *_by_lua_file directives so sites stay up.
-      console.error(
+      errorDiagnostics.error("adapters/infra/openresty-lua",
         "[openresty] Lua unavailable in this build (not on disk or embedded) — edge " +
           "rules/logging disabled. Run `bun run embed:lua` in packages/adapters.",
       );
@@ -1040,11 +1009,16 @@ export async function ensureLuaScripts(
     // metachar-free constant; single-quote it anyway per the remote-exec rule.
     const listing = await executor
       .exec(`ls -1 '${OPENRESTY_LUA_DIR}' 2>/dev/null || true`)
-      .catch(() => "");
-    const present = new Set(listing.split("\n").map((s) => s.trim()).filter(Boolean));
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/infra/openresty-lua"); return ""; });
+    const present = new Set(
+      listing
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    );
     const missing = LUA_SCRIPTS.filter((name) => !present.has(name));
     // Read the marker directly (it's a dotfile, so `ls -1` won't list it).
-    const onBoxVersion = (await executor.readFile(LUA_VERSION_MARKER).catch(() => "")).trim();
+    const onBoxVersion = (await executor.readFile(LUA_VERSION_MARKER).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/infra/openresty-lua"); return ""; })).trim();
 
     if (missing.length === 0 && onBoxVersion === expected) {
       return { repaired: [], available: true }; // happy path: present + current
@@ -1059,17 +1033,19 @@ export async function ensureLuaScripts(
     await executor.writeFile(LUA_VERSION_MARKER, expected);
 
     const reason = missing.length ? `missing: ${missing.join(", ")}` : "version changed";
-    console.warn(`[openresty] (re)installed Lua (${reason}) — reloading edge.`);
+    errorDiagnostics.warn("adapters/infra/openresty-lua", `[openresty] (re)installed Lua (${reason}) — reloading edge.`);
     // Reload so OpenResty picks up the scripts (a vhost that had been 500ing on
     // a missing file recovers; fresh workers get a fresh Lua VM). Best-effort.
-    await executor.exec(buildReloadCommand(paths)).catch((err) => {
-      console.error(`[openresty] reload after Lua (re)install failed: ${safeErrorMessage(err)}`);
+    await reloadBareOpenResty(executor, paths).catch((err) => {
+      errorDiagnostics.error("adapters/infra/openresty-lua", `[openresty] reload after Lua (re)install failed: ${safeErrorMessage(err)}`, err);
     });
 
     return { repaired: missing.length ? missing : [...LUA_SCRIPTS], available: true };
   } catch (err) {
     // Contract: never throw. A repair failure must not abort the deploy.
-    console.error(`[openresty] ensureLuaScripts failed (deploy continues): ${safeErrorMessage(err)}`);
+    errorDiagnostics.error("adapters/infra/openresty-lua",
+      `[openresty] ensureLuaScripts failed (deploy continues): ${safeErrorMessage(err)}`, err,
+    );
     return { repaired: [], available: false };
   }
 }
@@ -1093,7 +1069,7 @@ async function installGeoDeps(executor: CommandExecutor): Promise<void> {
   // then yum, then apk) that simply RAN OUT on anything else: nothing installed,
   // nothing logged, and geo_country then returned nil for every lookup with no trace
   // of why. The host answers which package it wants; a host that can't answer says so.
-  const profile = await resolveEnvironment(executor).catch((err) => safeErrorMessage(err));
+  const profile = await resolveEnvironment(executor).catch((err) => { observeCaughtError(err, "adapters/infra/openresty-lua"); return safeErrorMessage(err); });
   const install =
     typeof profile === "string"
       ? refused(`the host profile could not be read: ${profile}`)
@@ -1102,17 +1078,19 @@ async function installGeoDeps(executor: CommandExecutor): Promise<void> {
           dnf: answered(["libmaxminddb", "libmaxminddb-devel"]),
           yum: answered(["libmaxminddb", "libmaxminddb-devel"]),
           apk: answered(["libmaxminddb"]),
-          brew: refused("the bare edge is Linux-only, so Openship has no macOS package for it."),
+          brew: refused("the bare edge is Linux-only, so Kovalio has no macOS package for it."),
         });
 
   if (install.supported) {
     await executor.exec(opScript(install.value)).catch((err) => {
-      console.warn(
-        `[openresty] libmaxminddb install failed — geo lookups return nil: ${safeErrorMessage(err)}`,
+      errorDiagnostics.warn("adapters/infra/openresty-lua",
+        `[openresty] libmaxminddb install failed — geo lookups return nil: ${safeErrorMessage(err)}`, err,
       );
     });
   } else {
-    console.warn(`[openresty] libmaxminddb not installed — geo lookups return nil: ${install.reason}`);
+    errorDiagnostics.warn("adapters/infra/openresty-lua",
+      `[openresty] libmaxminddb not installed — geo lookups return nil: ${install.reason}`,
+    );
   }
 
   // ── 2. GeoLite2-Country database ──────────────────────────────────────
@@ -1120,11 +1098,10 @@ async function installGeoDeps(executor: CommandExecutor): Promise<void> {
     const exists = await executor.exists(GEOIP_DB_PATH);
     if (!exists) {
       await executor.mkdir(GEOIP_DIR);
-      await executor.exec(
-        `curl -fsSL -o ${GEOIP_DB_PATH} "${GEOIP_DB_URL}"`,
-      );
+      await executor.exec(`curl -fsSL -o ${GEOIP_DB_PATH} "${GEOIP_DB_URL}"`);
     }
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/infra/openresty-lua");
     // Non-fatal
   }
 }
@@ -1160,10 +1137,7 @@ export async function deployLuaScripts(
   await executor.mkdir(OPENRESTY_LUA_DIR);
 
   for (const name of LUA_SCRIPTS) {
-    await executor.writeFile(
-      `${OPENRESTY_LUA_DIR}/${name}`,
-      readLua(name),
-    );
+    await executor.writeFile(`${OPENRESTY_LUA_DIR}/${name}`, readLua(name));
   }
 
   // ── Ensure nginx.conf + sites-enabled directory ───────────────────────
@@ -1182,7 +1156,7 @@ export async function deployLuaScripts(
     );
   }
 
-  // Lua module search path (OpenResty default + openship modules)
+  // Lua module search path (OpenResty default + kovalio modules)
   await executor.exec(
     `grep -q 'lua_package_path' ${paths.confPath} || ` +
       `sed -i '/http *{/a \\    lua_package_path "${EDGE_LUA_PACKAGE_PATH}";' ${paths.confPath}`,
@@ -1193,7 +1167,7 @@ export async function deployLuaScripts(
   // An INCLUDE file plus one include line, unlike the dicts above, because the
   // `grep || sed` idiom is append-only: it cannot update what it already wrote. The
   // trusted-proxy list changes (Cloudflare adds ranges; an operator sets
-  // OPENSHIP_EDGE_TRUSTED_PROXIES), so its content has to be rewritable — the file is
+  // KOVALIO_EDGE_TRUSTED_PROXIES), so its content has to be rewritable — the file is
   // overwritten wholesale every deploy and the include line is appended exactly once.
   //
   // Written BEFORE the include is added: nginx -t fails on a missing include, and a
@@ -1209,5 +1183,5 @@ export async function deployLuaScripts(
   // ensureOpenRestyConfig above - single writer, so they self-heal every deploy.
 
   // ── Validate + reload ────────────────────────────────────────────────
-  await executor.exec(buildReloadCommand(paths));
+  await reloadBareOpenResty(executor, paths);
 }

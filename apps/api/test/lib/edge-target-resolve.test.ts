@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * `resolveEdgeTargetHost` decides what address Openship Cloud's shared edge dials
+ * `resolveEdgeTargetHost` decides what address Kovalio Cloud's shared edge dials
  * for a free `<slug>.opsh.io` route. These tests pin the ORDERING, which is the
  * whole behaviour: DECLARED beats GUESSED, and an IP breaks the tie among declared.
  *
@@ -21,7 +21,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const { mockEnv, getInOrganization, findLocal, getInstanceReachability, resolveLocalServerHost, resolveInstancePublicIp } =
   vi.hoisted(() => ({
     mockEnv: {
-      OPENSHIP_PUBLIC_URL: undefined as string | undefined,
+      KOVALIO_PUBLIC_URL: undefined as string | undefined,
       SERVER_IP: undefined as string | undefined,
       HOST_DOMAIN: undefined as string | undefined,
     },
@@ -32,16 +32,16 @@ const { mockEnv, getInOrganization, findLocal, getInstanceReachability, resolveL
     resolveInstancePublicIp: vi.fn(),
   }));
 
-vi.mock("../../src/config/env", () => ({ env: mockEnv }));
+vi.mock("@repo/platform/engine/config/env", () => ({ env: mockEnv }));
 vi.mock("@repo/db", () => ({ repos: { server: { getInOrganization, findLocal } } }));
-vi.mock("../../src/lib/public-url", () => ({ getInstanceReachability }));
-vi.mock("../../src/lib/server-target", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../src/lib/server-target")>()),
+vi.mock("@repo/platform/engine/lib/public-url", () => ({ getInstanceReachability }));
+vi.mock("@repo/platform/engine/lib/server-target", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@repo/platform/engine/lib/server-target")>()),
   resolveLocalServerHost,
   resolveInstancePublicIp,
 }));
 
-import { resolveEdgeTargetHost } from "../../src/lib/edge-target";
+import { resolveEdgeTargetHost } from "@repo/platform/engine/lib/edge-target";
 
 const ORG = "org_1";
 
@@ -58,7 +58,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   clock += 10 * 60_000;
   vi.setSystemTime(clock);
-  mockEnv.OPENSHIP_PUBLIC_URL = undefined;
+  mockEnv.KOVALIO_PUBLIC_URL = undefined;
   mockEnv.SERVER_IP = undefined;
   mockEnv.HOST_DOMAIN = undefined;
   getInOrganization.mockResolvedValue(null);
@@ -74,7 +74,7 @@ afterEach(() => {
 
 describe("resolveEdgeTargetHost — a declared IP wins", () => {
   it("prefers an explicit SERVER_IP over a declared hostname", async () => {
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://hekai.org";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://hekai.org";
     mockEnv.SERVER_IP = "198.51.100.7";
 
     const result = await resolveEdgeTargetHost(ORG);
@@ -83,8 +83,8 @@ describe("resolveEdgeTargetHost — a declared IP wins", () => {
     expect(result.warning).toBeUndefined();
   });
 
-  it("takes an IP literal out of OPENSHIP_PUBLIC_URL, and never probes", async () => {
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://203.0.113.10:8443/x";
+  it("takes an IP literal out of KOVALIO_PUBLIC_URL, and never probes", async () => {
+    mockEnv.KOVALIO_PUBLIC_URL = "https://203.0.113.10:8443/x";
 
     expect((await resolveEdgeTargetHost(ORG)).host).toBe("203.0.113.10");
     expect(resolveLocalServerHost).not.toHaveBeenCalled();
@@ -92,7 +92,7 @@ describe("resolveEdgeTargetHost — a declared IP wins", () => {
   });
 
   it("prefers a caller-supplied IP (setup's --public-url) over env", async () => {
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://hekai.org";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://hekai.org";
 
     const result = await resolveEdgeTargetHost(ORG, { preferHost: "198.51.100.7" });
 
@@ -106,7 +106,7 @@ describe("resolveEdgeTargetHost — a declared name beats a PROBED ip", () => {
     // correctly. Swapping it for the probe's answer — the box's EGRESS address,
     // which on a NAT'd/load-balanced host is not the inbound one — would break a
     // working setup to satisfy a preference.
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://hekai.org";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://hekai.org";
     resolveLocalServerHost.mockResolvedValue("203.0.113.10");
 
     const result = await resolveEdgeTargetHost(ORG);
@@ -116,7 +116,7 @@ describe("resolveEdgeTargetHost — a declared name beats a PROBED ip", () => {
   });
 
   it("does not spend a probe when a name was declared", async () => {
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://hekai.org";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://hekai.org";
 
     await resolveEdgeTargetHost(ORG);
 
@@ -131,7 +131,7 @@ describe("resolveEdgeTargetHost — a declared name beats a PROBED ip", () => {
   });
 
   it("reads a hostname target as serving, not as a defect", async () => {
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://hekai.org";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://hekai.org";
 
     const result = await resolveEdgeTargetHost(ORG);
 
@@ -169,14 +169,14 @@ describe("resolveEdgeTargetHost — a probed IP is the last resort", () => {
   });
 
   it("never returns a `.opsh.io` host as the target, even as the last resort", async () => {
-    // A free-domain install sets OPENSHIP_PUBLIC_URL to the free URL itself; using
+    // A free-domain install sets KOVALIO_PUBLIC_URL to the free URL itself; using
     // it would make the edge forward into itself.
-    mockEnv.OPENSHIP_PUBLIC_URL = "https://sadsa.opsh.io";
+    mockEnv.KOVALIO_PUBLIC_URL = "https://sadsa.opsh.io";
 
     const result = await resolveEdgeTargetHost(ORG);
 
     expect(result.host).toBeNull();
-    expect(result.reason).toContain("Openship Cloud edge");
+    expect(result.reason).toContain("Kovalio Cloud edge");
   });
 
   it("reports no public address when there is genuinely nothing", async () => {

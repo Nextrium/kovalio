@@ -64,7 +64,7 @@ function healthyBox() {
   return box([
     ["docker --version", "Docker version 29.7.1, build abc1234"],
     ["docker info", "29.7.1"],
-    ["docker ps --filter name=openship-edge", "openship-edge"],
+    ["docker ps --filter name=kovalio-edge", "kovalio-edge"],
     ["docker inspect", "running"],
     // A kernel socket table with :80 (0x50) in LISTEN (0A) — what "serving" reads as.
     [
@@ -197,6 +197,22 @@ describe("SystemManager.checkFeature — cached fast path", () => {
     expect(executor.exec).toHaveBeenCalled();
     // A one-feature check must not write the global state (see the trap below).
     expect(store.writes).toHaveLength(0);
+  });
+});
+
+describe("SystemManager component dependencies", () => {
+  it("requires Docker for bare-mode setup because Edge is a container", () => {
+    const manager = new SystemManager("bare", { executor: box() });
+    expect(manager.getRequired()).toEqual(["docker", "git", "edge"]);
+  });
+
+  it("reports Docker as a routing prerequisite instead of checking Edge alone", async () => {
+    const manager = new SystemManager("bare", { executor: box() });
+
+    const readiness = await manager.checkFeature("routing");
+
+    expect(readiness.ready).toBe(false);
+    expect(readiness.missing.map((component) => component.name)).toEqual(["docker", "edge"]);
   });
 });
 

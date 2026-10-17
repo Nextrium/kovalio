@@ -1,6 +1,6 @@
 /**
  * Removing a DIRECTORY that a runtime produced — the one place an `rm -rf` of an
- * Openship-managed path is authorized, bounded and verified.
+ * Kovalio-managed path is authorized, bounded and verified.
  *
  * Both runtimes' `destroy()` accept an absolute-path ref (a static doc-root, a
  * bare release dir, a build dir) because the columns they read from — a
@@ -20,7 +20,7 @@ import { sq } from "../system/local-shell";
 import type { CommandExecutor } from "../types";
 
 /**
- * Every directory tree an Openship runtime may create and therefore may remove:
+ * Every directory tree an Kovalio runtime may create and therefore may remove:
  * `BareRuntime`'s default workDir, `STATIC_RELEASE_BASE` under it, and the
  * `.builds`/`releases` subdirs of both.
  *
@@ -29,7 +29,7 @@ import type { CommandExecutor } from "../types";
  * and the two answer different questions (what we may SERVE vs what we may
  * REMOVE) even though today they name the same tree.
  */
-export const MANAGED_ARTIFACT_BASE = "/opt/openship";
+export const MANAGED_ARTIFACT_BASE = "/opt/kovalio";
 
 /** Paths that are containers for artifacts, never artifacts themselves. Removing
  *  one would take out every project's output plus the bind mount the edge reads
@@ -47,35 +47,38 @@ const PROTECTED_ROOTS = new Set([
   `${MANAGED_ARTIFACT_BASE}/static/.builds`,
 ]);
 
-/** Trailing slashes off, so `/opt/openship/static/` and `/opt/openship/static`
+/** Trailing slashes off, so `/opt/kovalio/static/` and `/opt/kovalio/static`
  *  are the same protected root and a boundary test can't be fooled by one. */
 function canonical(ref: string): string {
   const trimmed = ref.trim();
-  return trimmed.length > 1 ? trimmed.replace(/\/+$/, "") : trimmed;
+  return trimmed.length > 1 ? trimmed.replace(/(?<!\/)\/+$/, "") : trimmed;
 }
 
 /**
  * Throw unless `ref` names a directory this codebase created under
  * {@link MANAGED_ARTIFACT_BASE}.
  *
- * The prefix test is on a path BOUNDARY: `/opt/openshipmore` is not inside
- * `/opt/openship`. Same rule as the proxy importer's root matching.
+ * The prefix test is on a path BOUNDARY: `/opt/kovaliomore` is not inside
+ * `/opt/kovalio`. Same rule as the proxy importer's root matching.
  */
-export function assertManagedArtifactPath(ref: string): void {
+export function assertManagedArtifactPath(ref: string, ownedBase = MANAGED_ARTIFACT_BASE): void {
   const target = canonical(ref);
+  const base = canonical(ownedBase);
+  if (!base.startsWith("/") || base === "/" || base.includes("..")) throw new Error("An artifact owner must have an explicit absolute base directory");
   if (!target.startsWith("/") || target.includes("..")) {
     throw new Error(
       `Refusing to remove "${ref}": an artifact path must be absolute and free of "..".`,
     );
   }
-  if (PROTECTED_ROOTS.has(target)) {
+  const protectedRoots = base === MANAGED_ARTIFACT_BASE ? PROTECTED_ROOTS : new Set([base, `${base}/releases`, `${base}/.builds`, `${base}/static`, `${base}/static/releases`, `${base}/static/.builds`]);
+  if (protectedRoots.has(target)) {
     throw new Error(
       `Refusing to remove "${ref}": that is a shared parent directory, not one deployment's output.`,
     );
   }
-  if (target !== MANAGED_ARTIFACT_BASE && !target.startsWith(`${MANAGED_ARTIFACT_BASE}/`)) {
+  if (target !== base && !target.startsWith(`${base}/`)) {
     throw new Error(
-      `Refusing to remove "${ref}": outside ${MANAGED_ARTIFACT_BASE}. Openship removes only ` +
+      `Refusing to remove "${ref}": outside ${base}. Kovalio removes only ` +
         `directories it created (release dirs, static doc-roots, build dirs).`,
     );
   }
@@ -95,8 +98,9 @@ export function assertManagedArtifactPath(ref: string): void {
 export async function removeManagedArtifact(
   executor: CommandExecutor | null,
   ref: string,
+  ownedBase = MANAGED_ARTIFACT_BASE,
 ): Promise<void> {
-  assertManagedArtifactPath(ref);
+  assertManagedArtifactPath(ref, ownedBase);
   const target = canonical(ref);
 
   if (executor) {
@@ -111,7 +115,7 @@ export async function removeManagedArtifact(
   await rm(target, { recursive: true, force: true });
   const stillThere = await access(target).then(
     () => true,
-    () => false,
+    () => { /* diagnostics-ignore: An access probe returning false after removal is the expected absence check. */ return false; },
   );
   if (stillThere) throw new Error(`Failed to remove ${target}: still present after rm.`);
 }

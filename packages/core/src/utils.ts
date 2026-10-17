@@ -7,15 +7,42 @@
  * rather than `node:crypto`, so bundling it into the browser doesn't break.
  */
 
+/** Sort JSON object keys recursively while preserving array order. Code-unit
+ * sorting keeps configuration comparisons and checksums stable across locales. */
+export function sortJsonKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortJsonKeys);
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.keys(record)
+        .sort()
+        .map((key) => [key, sortJsonKeys(record[key])]),
+    );
+  }
+  return value;
+}
+
 /** URL-safe base64 of raw bytes, no `node:crypto`/Buffer dependency. */
 function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = "";
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
   const b64 =
-    typeof btoa === "function"
-      ? btoa(binary)
-      : Buffer.from(binary, "binary").toString("base64");
+    typeof btoa === "function" ? btoa(binary) : Buffer.from(binary, "binary").toString("base64");
   return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+/** Normalize repository-relative roots for discovery and config override matching. */
+export function normalizeProjectRootDirectory(value?: string): string {
+  const normalized = value
+    ?.trim()
+    .replace(/^\.\//, "")
+    .replace(/^\/+|(?<!\/)\/+$/g, "");
+
+  if (!normalized || normalized === ".") {
+    return "";
+  }
+
+  return normalized.split(/[\\/]/).filter(Boolean).join("/");
 }
 
 /** Generate a URL-safe slug from a string */
@@ -61,7 +88,7 @@ export function normalizeCustomHostname(raw: string): string {
     .trim()
     .toLowerCase()
     .replace(/^https?:\/\//, "")
-    .replace(/\/+$/, "");
+    .replace(/(?<!\/)\/+$/, "");
 }
 
 /**
@@ -100,7 +127,7 @@ export function normalizeServedHostname(raw: string): string {
  */
 export function wwwSiblingHostname(hostname: string): string | null {
   const host = normalizeCustomHostname(hostname);
-  if (!host || host.startsWith("www.")) return null;
+  if (!host || host.startsWith("www.") || host.startsWith("*.")) return null;
   return `www.${host}`;
 }
 
@@ -139,11 +166,19 @@ export function isValidCustomHostname(host: string): boolean {
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return false; // IPv4 literal
   if (/[\s/:@\\?#]/.test(host)) return false; // path / port / scheme / userinfo
   if (host.startsWith(".") || host.endsWith(".") || host.includes("..")) return false;
-  const labels = host.split(".");
+  const isWildcard = host.startsWith("*.");
+  const checkHost = isWildcard ? host.slice(2) : host;
+  if (checkHost.includes("*")) return false;
+  const labels = checkHost.split(".");
   if (labels.length < 2) return false; // must be multi-label (has a dot)
   return labels.every(
     (label) => label.length <= 63 && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/i.test(label),
   );
+}
+
+/** True when `host` is a wildcard hostname (e.g. `*.example.com`). */
+export function isWildcardHostname(host: string): boolean {
+  return typeof host === "string" && host.trim().toLowerCase().startsWith("*.");
 }
 
 /**
@@ -153,13 +188,39 @@ export function isValidCustomHostname(host: string): boolean {
  * `example.co.uk` as a subdomain would be visibly wrong. Extend as usage demands.
  */
 const MULTI_PART_TLDS = new Set([
-  "co.uk", "org.uk", "gov.uk", "ac.uk", "me.uk", "net.uk", "ltd.uk", "plc.uk", "sch.uk",
-  "com.au", "net.au", "org.au", "edu.au", "gov.au", "id.au",
-  "co.nz", "net.nz", "org.nz",
-  "co.jp", "or.jp", "ne.jp",
-  "co.in", "net.in", "org.in", "firm.in",
-  "com.br", "net.br", "org.br",
-  "com.mx", "com.sg", "com.tr", "co.za", "com.cn",
+  "co.uk",
+  "org.uk",
+  "gov.uk",
+  "ac.uk",
+  "me.uk",
+  "net.uk",
+  "ltd.uk",
+  "plc.uk",
+  "sch.uk",
+  "com.au",
+  "net.au",
+  "org.au",
+  "edu.au",
+  "gov.au",
+  "id.au",
+  "co.nz",
+  "net.nz",
+  "org.nz",
+  "co.jp",
+  "or.jp",
+  "ne.jp",
+  "co.in",
+  "net.in",
+  "org.in",
+  "firm.in",
+  "com.br",
+  "net.br",
+  "org.br",
+  "com.mx",
+  "com.sg",
+  "com.tr",
+  "co.za",
+  "com.cn",
 ]);
 
 /**
@@ -174,6 +235,7 @@ const MULTI_PART_TLDS = new Set([
  */
 export function isApexDomain(host: string): boolean {
   const h = normalizeServedHostname(host);
+  if (isWildcardHostname(h)) return false;
   if (!isValidCustomHostname(h)) return false;
   const labels = h.split(".");
   const lastTwo = labels.slice(-2).join(".");
@@ -217,7 +279,11 @@ export function sleep(ms: number): Promise<void> {
  * the timer on settle so it never leaks. One shared impl — callers pass their
  * own message so prior error contracts are preserved.
  */
-export function withTimeout<T>(promise: Promise<T>, ms: number | undefined, message: string): Promise<T> {
+export function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number | undefined,
+  message: string,
+): Promise<T> {
   if (!ms) return promise;
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(message)), ms);
@@ -249,11 +315,19 @@ export function isValidEnvKey(key: string): boolean {
  * Existing newlines are honoured as hard breaks, so a block that already has
  * deliberate line structure — a copy-paste command on its own line, say — keeps it
  * instead of being reflowed into the paragraph above.
+ *
+ * A `backtick-quoted` span is kept whole, so a quoted multi-word command never
+ * breaks across lines whatever the surrounding copy's length.
  */
 export function wrapText(text: string, width = 88): string[] {
   const out: string[] = [];
   for (const paragraph of text.split("\n")) {
-    const words = paragraph.split(/\s+/).filter(Boolean);
+    const words: string[] = [];
+    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+      const open = words.length > 0 && (words[words.length - 1].match(/`/g)?.length ?? 0) % 2 === 1;
+      if (open) words[words.length - 1] += ` ${word}`;
+      else words.push(word);
+    }
     if (words.length === 0) {
       out.push("");
       continue;

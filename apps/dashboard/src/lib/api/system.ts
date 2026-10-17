@@ -1,12 +1,26 @@
-import { api, getApiBaseUrl, getActiveOrganizationId } from "./client";
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import { api, ApiError, getApiBaseUrl, getActiveOrganizationId } from "./client";
+import {
+  isResourceOutput,
+  ServerCollectionSchemas,
+  ServerResourceSchemas,
+  type ResourceOperationSchema,
+  type ServerOperations,
+  type ServerDetail,
+} from "@repo/contracts";
 import { endpoints } from "./endpoints";
 // Removal types + the timeout rule live with the pure helpers so the modal and this
 // client share one definition (and so the rule is testable without React).
-import {
-  serverRemovalTimeoutMs,
-  type ServerDeletionPreview,
-  type ServerRemovalResult,
-} from "../server-removal";
+import { serverRemovalTimeoutMs } from "../server-removal";
+
+/** Reject malformed responses before they can poison rendered server state. */
+async function checkedResponse<S extends ResourceOperationSchema>(schema: S, request: Promise<unknown>) {
+  const result = await request;
+  if (!isResourceOutput(schema, result)) {
+    throw new ApiError(502, "Invalid server response", { error: "The server returned an invalid response." });
+  }
+  return result;
+}
 
 /**
  * Client budget for an ad-hoc SSH probe.
@@ -38,6 +52,7 @@ export interface SshProbeInput {
   sshPrivateKey?: string;
   sshKeyPassphrase?: string;
   sshJumpHost?: string;
+  sshTransport?: "direct" | "cloudflare";
   sshArgs?: string;
 }
 
@@ -59,7 +74,7 @@ export interface BrowseResult {
 }
 
 /**
- * A vhost the edge serves with no Openship record behind it.
+ * A vhost the edge serves with no Kovalio record behind it.
  *
  * `static` is the case that matters: it keeps returning 200 with a removed
  * project's built files. A dead `proxy` vhost 502s and announces itself.
@@ -95,8 +110,8 @@ export interface InstanceSettings {
   productMode?: "platform" | "mail" | null;
   /** What the instance actually resolves to right now (override ?? env). */
   productModeEffective?: "platform" | "mail";
-  /** Stored host-control override — may OpenShip deploy to the machine it runs
-   *  on ("This Server")? null = unset (the OPENSHIP_HOST_CONTROL env decides). */
+  /** Stored host-control override — may Kovalio deploy to the machine it runs
+   *  on ("This Server")? null = unset (the KOVALIO_HOST_CONTROL env decides). */
   hostControl?: boolean | null;
   /** What host control actually resolves to right now (override ?? env), already
    *  false off a non-selfhosted target so the UI agrees with the backend. */
@@ -131,7 +146,7 @@ export type ServerReachabilityCode =
  * Mirrors HostChannelCode in @repo/adapters (src/system/executor.ts) — the
  * dashboard can't import the adapters (ssh/docker, server-only). It refines the
  * reachability code rather than replacing it, because the REMEDY differs: a
- * `not_configured` channel is provisioned with `openship up`, while an
+ * `not_configured` channel is provisioned with `kovalio up`, while an
  * `unreachable` one is usually a host firewall dropping bridge→host traffic, and
  * offering the wrong one of those sends an operator to edit a firewall that was
  * never involved (#509).
@@ -168,44 +183,17 @@ export interface ServerReachability {
    * The address the channel WILL use once provisioned — intent, never a machine that
    * failed to answer. Optional because nothing produces it today: the API can only
    * report what its own env says, and in this state the env says nothing, so filling
-   * this in would mean guessing at what `openship up` would have written. Consumed
+   * this in would mean guessing at what `kovalio up` would have written. Consumed
    * already (rendered as intent, in its own sentence) so that whichever surface can
    * honestly supply it needs no client change.
    */
   intendedTarget?: string | null;
 }
 
-export interface ServerInfo {
-  id: string;
-  name: string | null;
-  /** The auto-registered host row (VPS / server-host mode) — "This Server".
-   *  Deploys to it run on the local host, and its SSH fields are placeholders. */
-  isLocal?: boolean;
-  sshHost: string;
-  sshPort: number;
-  sshUser: string;
-  sshAuthMethod: string | null;
-  sshKeyPath: string | null;
-  /** True when a pasted/uploaded private key is stored (encrypted) for this
-   *  server. The material itself is never returned — this is the only signal the
-   *  edit form gets, so it can offer "a key is stored; paste to replace". */
-  hasStoredKeyMaterial?: boolean;
-  sshJumpHost: string | null;
-  sshArgs: string | null;
-  createdAt: string;
-  /** ISO-3166-1 alpha-2 country for the host IP, or null (hostname/private/unknown). */
-  country?: string | null;
-  /** Projects currently deployed to this server (active deployment → this host). */
-  projectCount?: number;
-  /**
-   * The local row's container→host SSH channel (#509) — null for a remote row, and
-   * null when the diagnosis couldn't run. An annotation, not a gate: `ok: false`
-   * means the host-only operations are unavailable, while ordinary container deploys
-   * to this row still work over the Docker socket. `hint` is the same string
-   * `GET /servers/:id/reachability` returns for the row.
-   */
-  hostChannel?: { ok: boolean; channel: HostChannelCode; hint: string | null } | null;
-}
+/** Shared API fields, with optional annotations for lightweight server entries. */
+type ServerAnnotation = "isLocal" | "hasStoredKeyMaterial" | "country" | "projectCount" | "hostChannel";
+export type ServerInfo = Omit<ServerDetail, ServerAnnotation> &
+  Partial<Pick<ServerDetail, ServerAnnotation>>;
 
 /** A native module's cached drift status on a server (server_module_status). */
 export interface ServerModuleStatus {
@@ -458,7 +446,7 @@ export interface EdgeOccupant {
   isDocker?: boolean;
   containerName?: string;
   proxy?: EdgeProxyKind;
-  managedByOpenship: boolean;
+  managedByKovalio: boolean;
 }
 
 export interface EdgeStatus {
@@ -603,7 +591,7 @@ export interface TunnelInfo {
 
 export const systemApi = {
   /**
-   * Vhosts the local edge serves that Openship no longer tracks.
+   * Vhosts the local edge serves that Kovalio no longer tracks.
    *
    * `scanned: false` is NOT "all clear" — it means we couldn't compare (no edge,
    * or a foreign proxy). Render the reason, never an empty success state.
@@ -736,6 +724,37 @@ export const systemApi = {
 
   // ── Servers CRUD ─────────────────────────────────────────────────────────
 
+  listServerDestinations: () => checkedResponse(ServerCollectionSchemas.destinations, api.get(`${endpoints.system.servers}/destinations`)),
+  managedInfo: (id: string) => checkedResponse(ServerResourceSchemas.managedInfo, api.get(`${endpoints.system.server(id)}/managed/info`)),
+  managedBootLogs: (id: string, input: Parameters<ServerOperations["managedBootLogs"]>[1]) => checkedResponse(ServerResourceSchemas.managedBootLogs, api.post(`${endpoints.system.server(id)}/managed/boot-logs`, input)),
+  managedSshStatus: (id: string) => checkedResponse(ServerResourceSchemas.managedSshStatus, api.get(`${endpoints.system.server(id)}/managed/ssh`)),
+  setManagedSsh: (id: string, input: Parameters<ServerOperations["setManagedSsh"]>[1]) => checkedResponse(ServerResourceSchemas.setManagedSsh, api.patch(`${endpoints.system.server(id)}/managed/ssh`, input)),
+  setManagedSshKey: (id: string, input: Parameters<ServerOperations["setManagedSshKey"]>[1]) => checkedResponse(ServerResourceSchemas.setManagedSshKey, api.put(`${endpoints.system.server(id)}/managed/ssh/key`, input)),
+  setManagedSshPassword: (id: string, input: Parameters<ServerOperations["setManagedSshPassword"]>[1]) => checkedResponse(ServerResourceSchemas.setManagedSshPassword, api.put(`${endpoints.system.server(id)}/managed/ssh/password`, input)),
+  managedSshConnection: (id: string, input: Parameters<ServerOperations["managedSshConnection"]>[1]) => checkedResponse(ServerResourceSchemas.managedSshConnection, api.post(`${endpoints.system.server(id)}/managed/ssh/connection`, input)),
+  managedRuntimeStatus: (id: string) => checkedResponse(ServerResourceSchemas.managedRuntimeStatus, api.get(`${endpoints.system.server(id)}/managed/runtime-api`)),
+  enableManagedRuntime: (id: string, input: Parameters<ServerOperations["enableManagedRuntime"]>[1]) => checkedResponse(ServerResourceSchemas.enableManagedRuntime, api.post(`${endpoints.system.server(id)}/managed/runtime-api/enable`, input)),
+  managedRuntimeCredential: (id: string, input: Parameters<ServerOperations["managedRuntimeCredential"]>[1]) => checkedResponse(ServerResourceSchemas.managedRuntimeCredential, api.post(`${endpoints.system.server(id)}/managed/runtime-api/credential`, input)),
+  rotateManagedRuntimeCredential: (id: string, input: Parameters<ServerOperations["rotateManagedRuntimeCredential"]>[1]) => checkedResponse(ServerResourceSchemas.rotateManagedRuntimeCredential, api.post(`${endpoints.system.server(id)}/managed/runtime-api/rotate`, input)),
+  managedWorkloads: (id: string) => checkedResponse(ServerResourceSchemas.managedWorkloads, api.get(`${endpoints.system.server(id)}/managed/workloads`)),
+  managedWorkloadLogs: (id: string, input: Parameters<ServerOperations["managedWorkloadLogs"]>[1]) => checkedResponse(ServerResourceSchemas.managedWorkloadLogs, api.post(`${endpoints.system.server(id)}/managed/workloads/logs`, input)),
+  createManagedWorkload: (id: string, input: Parameters<ServerOperations["createManagedWorkload"]>[1]) => checkedResponse(ServerResourceSchemas.createManagedWorkload, api.post(`${endpoints.system.server(id)}/managed/workloads`, input)),
+  controlManagedWorkload: (id: string, input: Parameters<ServerOperations["controlManagedWorkload"]>[1]) => checkedResponse(ServerResourceSchemas.controlManagedWorkload, api.post(`${endpoints.system.server(id)}/managed/workloads/control`, input)),
+  getServerNetworkSettings: (id: string) => checkedResponse(ServerResourceSchemas.getNetworkSettings, api.get(`${endpoints.system.server(id)}/network-settings?details=true`)),
+  managedOutbound: (id: string) => checkedResponse(ServerResourceSchemas.managedOutbound, api.get(`${endpoints.system.server(id)}/managed/outbound`)),
+  managedOutboundOptions: (id: string) => checkedResponse(ServerResourceSchemas.managedOutboundOptions, api.get(`${endpoints.system.server(id)}/managed/outbound/options`)),
+  setManagedOutbound: (id: string, input: Parameters<ServerOperations["setManagedOutbound"]>[1]) => checkedResponse(ServerResourceSchemas.setManagedOutbound, api.patch(`${endpoints.system.server(id)}/managed/outbound`, input)),
+  updateServerNetworkSettings: (id: string, input: Parameters<ServerOperations["updateNetworkSettings"]>[1]) => checkedResponse(ServerResourceSchemas.updateNetworkSettings, api.patch(`${endpoints.system.server(id)}/network-settings`, input)),
+  createManagedServer: (input: Parameters<ServerOperations["createManaged"]>[0]) => checkedResponse(ServerCollectionSchemas.createManaged, api.post(`${endpoints.system.servers}/managed`, input)),
+  availableManagedServers: () => checkedResponse(ServerCollectionSchemas.availableManaged, api.get(`${endpoints.system.servers}/managed/available`)),
+  connectManagedServer: (input: Parameters<ServerOperations["connectManaged"]>[0]) => checkedResponse(ServerCollectionSchemas.connectManaged, api.post(`${endpoints.system.servers}/managed/connect`, input)),
+  serverUsage: (id: string) => checkedResponse(ServerResourceSchemas.usage, api.get(`${endpoints.system.server(id)}/usage`, { timeout: 45_000 })),
+  ensureServer: (id: string) => checkedResponse(ServerResourceSchemas.ensure, api.post(`${endpoints.system.server(id)}/ensure`)),
+  previewServerResize: (id: string) => checkedResponse(ServerResourceSchemas.previewResize, api.get(`${endpoints.system.server(id)}/resize`)),
+  resizeServer: (id: string, input: Parameters<ServerOperations["resize"]>[1]) => checkedResponse(ServerResourceSchemas.resize, api.post(`${endpoints.system.server(id)}/resize`, input)),
+  retryServerOperation: (id: string) => checkedResponse(ServerResourceSchemas.retry, api.post(`${endpoints.system.server(id)}/retry`)),
+  removeManagedServer: (id: string, input: Parameters<ServerOperations["removeManaged"]>[1]) => checkedResponse(ServerResourceSchemas.removeManaged, api.delete(`${endpoints.system.server(id)}/managed`, { body: input })),
+
   /** List all configured servers */
   listServers: () =>
     api.get<ServerInfo[]>(endpoints.system.servers),
@@ -743,6 +762,9 @@ export const systemApi = {
   /** Get a single server by ID */
   getServerById: (id: string) =>
     api.get<ServerInfo>(endpoints.system.server(id)),
+
+  getServerInfrastructure: (id: string) =>
+    checkedResponse(ServerResourceSchemas.infrastructure, api.get(`${endpoints.system.server(id)}/infrastructure`)),
 
   /**
    * Lightweight liveness probe for the list view (TCP reachability).
@@ -765,15 +787,13 @@ export const systemApi = {
   /** What "Remove server" is about to take with it — every project/app bound to the
    *  box plus the server-scoped records that cascade. Read-only; safe on modal open. */
   serverDeletionPreview: (id: string) =>
-    api.get<{ ok: boolean; preview: ServerDeletionPreview }>(
-      endpoints.system.serverDeletionPreview(id),
-    ),
+    checkedResponse(ServerResourceSchemas.deletionPreview, api.get(endpoints.system.serverDeletionPreview(id))),
 
   /**
    * Remove a server, resolving the fate of every workload bound to it.
    *
    * `destroyOnSource` is the operator's explicit opt-in to stop and delete the
-   * containers on the machine; without it the workloads are removed from Openship
+   * containers on the machine; without it the workloads are removed from Kovalio
    * only and keep running. Flags travel as query params (same idiom as
    * `projectsApi.delete`), and the timeout scales with the workload count because
    * each teardown is its own SSH round-trip — a short client timeout would abort a
@@ -784,9 +804,9 @@ export const systemApi = {
     opts: { destroyOnSource?: boolean; workloadCount?: number } = {},
   ) => {
     const qs = opts.destroyOnSource ? "?destroyOnSource=true" : "";
-    return api.delete<ServerRemovalResult>(`${endpoints.system.server(id)}${qs}`, {
+    return checkedResponse(ServerResourceSchemas.remove, api.delete(`${endpoints.system.server(id)}${qs}`, {
       timeout: serverRemovalTimeoutMs(opts),
-    });
+    }));
   },
 
   // ── Native-module updates (per-server) ─────────────────────────────────────
@@ -847,7 +867,7 @@ export const systemApi = {
       signal,
     });
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
+      const text = await res.text().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/lib/api/system"); return ""; });
       throw new Error(text || `Update failed: ${res.status}`);
     }
 
@@ -934,11 +954,12 @@ export const systemApi = {
 
   /** Every org server with its cached edge/mail rows — the global infra view. */
   listAllContainers: () =>
-    api.get<ServerContainerGroup[]>(endpoints.system.allContainers()),
+    checkedResponse(ServerCollectionSchemas.listAllContainers, api.get(endpoints.system.allContainers())),
 
   /** Detect-only refresh across every org server, then return the grouped view. */
   scanAllContainers: () =>
-    api.post<ServerContainerGroup[]>(endpoints.system.allContainersScan(), {}, { timeout: 120_000 }),
+    checkedResponse(ServerCollectionSchemas.scanAllContainers,
+      api.post(endpoints.system.allContainersScan(), {}, { timeout: 120_000 })),
 
   /**
    * Update every behind container and/or restart every stopped one across the org.
@@ -953,9 +974,10 @@ export const systemApi = {
    * a failure for work that's already running.
    */
   applyAllContainers: (intents?: ContainerApplyIntent[]) =>
-    api.post<BulkApplyResult>(endpoints.system.allContainersApply(), intents ? { intents } : {}, {
+    checkedResponse(ServerCollectionSchemas.applyAllContainers,
+      api.post(endpoints.system.allContainersApply(), intents ? { intents } : {}, {
       timeout: 120_000,
-    }),
+    })),
 
   /**
    * Live progress for every apply the org has in flight, plus the ones that settled
@@ -963,22 +985,17 @@ export const systemApi = {
    * while something is running.
    */
   applyingContainers: () =>
-    api.get<ContainerApplyProgress>(endpoints.system.allContainersApplying()),
+    checkedResponse(ServerCollectionSchemas.applyingContainers, api.get(endpoints.system.allContainersApplying())),
 
   // ── Rate Limiting (per-server) ─────────────────────────────────────────────
 
   /** Get rate limit config for a server */
   getRateLimit: (serverId: string) =>
-    api.get<{ config: ServerRateLimitConfig }>(
-      endpoints.system.serverRateLimit(serverId),
-    ),
+    checkedResponse(ServerResourceSchemas.getRateLimit, api.get(endpoints.system.serverRateLimit(serverId))),
 
   /** Update rate limit config for a server */
   updateRateLimit: (serverId: string, data: { rps?: number; burst?: number; whitelist?: string[] }) =>
-    api.patch<{ success: true; config: ServerRateLimitConfig } | { success: false; error?: string }>(
-      endpoints.system.serverRateLimit(serverId),
-      data,
-    ),
+    checkedResponse(ServerResourceSchemas.updateRateLimit, api.patch(endpoints.system.serverRateLimit(serverId), data)),
 
   // ── Port exposure scan (per-server) ────────────────────────────────────────
 

@@ -1,0 +1,103 @@
+---
+title: project routing
+description: Commands, arguments, and options for kovalio project routing.
+cliGroup: kovalio project routing
+---
+
+See the [workflow guide](/docs/cli/projects) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio project routing
+
+Manage project routing rules and retry route synchronization
+
+```text
+kovalio project routing [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`list <id>`](/docs/cli/reference/project/routing#kovalio-project-routing-list) | Read saved routing rules |
+| [`create [options] <id> [file]`](/docs/cli/reference/project/routing#kovalio-project-routing-create) | Create a project or domain routing rule |
+| [`update [options] <id> [file]`](/docs/cli/reference/project/routing#kovalio-project-routing-update) | Update a named routing rule through the shared edge sanitizer |
+| [`remove [options] <id> <rule>`](/docs/cli/reference/project/routing#kovalio-project-routing-remove) | Remove one routing rule |
+| [`retry [options] <id>`](/docs/cli/reference/project/routing#kovalio-project-routing-retry) | Retry the existing project routing workflow |
+
+## kovalio project routing create
+
+Create a project or domain routing rule
+
+```text
+kovalio project routing create [options] <id> [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Resource ID |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio project routing list
+
+Read saved routing rules
+
+```text
+kovalio project routing list [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Project ID |
+
+## kovalio project routing remove
+
+Remove one routing rule
+
+```text
+kovalio project routing remove [options] <id> <rule>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Project ID |
+| `rule` | Rule ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm rule removal |
+
+## kovalio project routing retry
+
+Retry the existing project routing workflow
+
+```text
+kovalio project routing retry [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Project ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--follow` | Stream route and certificate progress |
+| `--timeout <ms>` | Stop following after this deadline |
+
+## kovalio project routing update
+
+Update a named routing rule through the shared edge sanitizer
+
+```text
+kovalio project routing update [options] <id> [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Resource ID |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |

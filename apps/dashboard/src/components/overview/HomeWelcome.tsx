@@ -1,14 +1,15 @@
 "use client";
 
+import { Icon as UiIcon } from "@repo/ui/icons";
+
 import React from "react";
 import Link from "next/link";
-import { Plus, Github } from "lucide-react";
 import { useI18n } from "@/components/i18n-provider";
 
 /**
  * First-run welcome shown on the home page when the user has no projects.
  *
- * The motif is what Openship IS: the brand mark at the centre, wired to the four
+ * The motif is what Kovalio IS: the brand mark at the centre, wired to the four
  * things it handles — repo in, build/deploy, data, public domain.
  *
  * TOKENS: only steps that EXIST in styles/theme.css. The --th-on-* scale is
@@ -77,7 +78,7 @@ const HomeWelcome: React.FC = () => {
   return (
     <div className="px-6 pt-5 pb-7 sm:pt-7 sm:pb-8">
       {/* Illustration — the graph: hub ↔ repo / services / data / domain */}
-      <div className="relative mx-auto mb-3 h-36 w-72">
+      <div className="relative mx-auto mb-3 h-36 w-72 max-w-full">
         <svg className="absolute inset-0 h-full w-full" viewBox="0 0 288 132" fill="none" aria-hidden="true">
           {/* Links, behind everything. Dashed = wiring; --th-on-20 is a real step. */}
           <g stroke="var(--th-on-20)" strokeWidth="1.5" strokeDasharray="4 4" fill="none">
@@ -127,7 +128,7 @@ const HomeWelcome: React.FC = () => {
           </Node>
           <NodeLabel x={236} y={124}>Data</NodeLabel>
 
-          {/* Hub = the Openship mark: the ring (components/logo.tsx,
+          {/* Hub = the Kovalio mark: the ring (components/logo.tsx,
               public/apple-touch-icon.png). Soft halo for presence, no plate —
               a ring inside a filled circle reads as a target. */}
           <circle cx="144" cy="66" r="27" fill="var(--th-on-04)" />
@@ -153,14 +154,14 @@ const HomeWelcome: React.FC = () => {
             href="/library"
             className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25"
           >
-            <Plus className="size-4" />
+            <UiIcon name="plus" className="size-4" />
             {t.overview.welcome.createProject}
           </Link>
           <Link
             href="/library"
             className="inline-flex items-center gap-2 rounded-xl bg-muted/50 px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
-            <Github className="size-4" />
+            <UiIcon name="github" className="size-4" />
             {t.overview.welcome.importGithub}
           </Link>
         </div>

@@ -50,7 +50,7 @@ function numericSetting(program: string, key: string): number {
   return Number(found[1]);
 }
 
-describe("openship-mail seed wiring", () => {
+describe("kovalio-mail seed wiring", () => {
   it("seeds every mount marked seed:true, and marks every mount it seeds", () => {
     const declared = MAIL_CONTAINER_MOUNTS.filter((m) => m.seed)
       .map((m) => m.container)
@@ -62,13 +62,13 @@ describe("openship-mail seed wiring", () => {
     // A seed call reading from a directory no build step creates is a silent no-op:
     // seed() skips when the source is absent.
     for (const { dir } of seedCalls) {
-      expect(DOCKERFILE).toContain(`/opt/openship-mail/seed/${dir}`);
+      expect(DOCKERFILE).toContain(`/opt/kovalio-mail/seed/${dir}`);
     }
   });
 
   it("seeds the ClamAV signature database and gates the build on it being there", () => {
     expect(seedCalls.some((c) => c.path === "/var/lib/clamav")).toBe(true);
-    expect(DOCKERFILE).toContain("freshclam --datadir=/opt/openship-mail/seed/clamav");
+    expect(DOCKERFILE).toContain("freshclam --datadir=/opt/kovalio-mail/seed/clamav");
     // The gate is what turns "shipped with no loadable database" into a build failure.
     expect(DOCKERFILE).toMatch(/FATAL: no ClamAV signature database/);
     // And the installer must not fetch a second copy into the mounted path.

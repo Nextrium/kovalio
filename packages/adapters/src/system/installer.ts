@@ -6,6 +6,7 @@
  * through CommandExecutor (SSH or local).
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import type { CommandExecutor, LogEntry } from "../types";
 import type { InstallerConfig, InstallResult, SystemLogCallback, SystemLog } from "./types";
 import { MIN_DOCKER_VERSION, systemCatalog } from "./catalog";
@@ -35,7 +36,9 @@ function log(message: string, level: SystemLog["level"] = "info"): SystemLog {
 async function execSafe(executor: CommandExecutor, cmd: string): Promise<void> {
   try {
     await executor.exec(cmd);
-  } catch {}
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/system/installer");
+  }
 }
 
 type ExecutorPrep =
@@ -83,7 +86,7 @@ function describeInstallFailure(label: string, code: number, output: string): st
   // The #491 host: the operator had held Docker's packages precisely so nothing
   // would upgrade them. A hold is a decision, not an obstacle — name it.
   const held = /held packages?|--allow-change-held-packages/i.test(output)
-    ? " Packages are held on this host (`apt-mark hold`) and Openship does not override a hold — unhold them first if you do want this install."
+    ? " Packages are held on this host (`apt-mark hold`) and Kovalio does not override a hold — unhold them first if you do want this install."
     : "";
   return `${label} install failed (exit ${code})${detail ? `: ${detail}` : ""}.${held}`;
 }
@@ -134,7 +137,7 @@ function dockerAlreadyThere(
  *
  * #491: this used to run `get.docker.com` unconditionally, for every caller (the
  * mail wizard's "Ensure System Components" among them). On a host that already runs
- * Docker — including the host running Openship itself — that is not a no-op: the
+ * Docker — including the host running Kovalio itself — that is not a no-op: the
  * installer pulls the CURRENT engine, which is a major upgrade (28.x → 29.x) plus
  * containerd, and restarting the daemon restarts every container on the box. An
  * operator who asked for a mail server got their whole stack bounced. An operator
@@ -190,7 +193,7 @@ export async function installDocker(
     onLog(log(`${present.message} — starting the Docker service`, "warn"));
     await executor
       .streamExec(service.value, onLog as (log: LogEntry) => void)
-      .catch(() => undefined);
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/installer"); return undefined; });
     present = await probeDocker(executor);
     if (present.verdict === "ok") {
       onLog(log(`Docker ${present.version} is running`));
@@ -207,15 +210,15 @@ export async function installDocker(
     // couldn't.
     const cannotStart =
       present.verdict === "stopped" && service && !service.supported
-        ? ` Openship could not start it for you: ${service.reason}`
+        ? ` Kovalio could not start it for you: ${service.reason}`
         : "";
     const error =
       (present.verdict === "outdated"
-        ? `Docker ${present.version} is installed but Openship needs ${MIN_DOCKER_VERSION} or newer. ` +
+        ? `Docker ${present.version} is installed but Kovalio needs ${MIN_DOCKER_VERSION} or newer. ` +
           "Upgrading Docker restarts the daemon and every container on this server, so it is never done " +
           "as part of another step — upgrade it on the host, or use Reinstall on the Docker component to " +
           "run the official installer."
-        : `${present.message}. Start Docker on this server and retry. Openship will not reinstall Docker ` +
+        : `${present.message}. Start Docker on this server and retry. Kovalio will not reinstall Docker ` +
           "over a daemon that is merely unreachable: the installer would also upgrade the engine and restart " +
           "every container on this host. Use Reinstall on the Docker component if that is what you want.") +
       cannotStart;
@@ -253,7 +256,7 @@ export async function installDocker(
     } else if (service) {
       // How Alpine used to install Docker and never start it: the start table knew
       // only systemd, so "no command" and "no way to say so" were the same value.
-      onLog(log(`Docker is installed but Openship cannot start it here: ${service.reason}`, "warn"));
+      onLog(log(`Docker is installed but Kovalio cannot start it here: ${service.reason}`, "warn"));
     }
 
     const version = await executor.exec(plan.value.verifyCommand);
@@ -261,6 +264,7 @@ export async function installDocker(
     onLog(log(`Docker ${parsed} installed`));
     return { component: "docker", success: true, version: parsed };
   } catch (err) {
+    observeCaughtError(err, "adapters/system/installer");
     const msg = safeErrorMessage(err);
     onLog(log(`Docker installation failed: ${msg}`, "error"));
     return { component: "docker", success: false, error: msg };
@@ -315,6 +319,7 @@ async function installPackaged(
     onLog(log(`${label} ${parsed} installed${inside}`));
     return { component, success: true, version: parsed };
   } catch (err) {
+    observeCaughtError(err, "adapters/system/installer");
     const msg = safeErrorMessage(err);
     onLog(log(`${label} installation failed: ${msg}`, "error"));
     return { component, success: false, error: msg };
@@ -339,7 +344,7 @@ export function installRsync(
 /**
  * Install the edge — the `edge` component. It is a CONTAINER, always.
  *
- * The edge is the openship-edge image and its serving path is host-side (host
+ * The edge is the kovalio-edge image and its serving path is host-side (host
  * networking, host bind mounts for vhosts/certs/ACME). There is deliberately NO
  * host-package fallback: a Docker-less box gets an explicit, actionable failure
  * instead of a second, divergent edge implementation that then has to be migrated.
@@ -382,7 +387,7 @@ export async function installContainerEdge(
     }
     const version = await executor
       .exec(containerCommand(result.container, "openresty -v 2>&1"))
-      .catch(() => "");
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/installer"); return ""; });
     return {
       component: "edge",
       success: true,
@@ -420,6 +425,7 @@ export async function uninstallRsync(
     onLog(log("rsync removed"));
     return { component: "rsync", success: true };
   } catch (err) {
+    observeCaughtError(err, "adapters/system/installer");
     const msg = safeErrorMessage(err);
     return { component: "rsync", success: false, error: msg };
   }
@@ -435,7 +441,7 @@ export async function uninstallEdge(
 
   // `fresh`: we are about to REMOVE it, so a stale positive would `docker rm` a
   // name that no longer exists and report success over an untouched box.
-  const container = await resolveOurEdgeContainer(executor, { fresh: true }).catch(() => null);
+  const container = await resolveOurEdgeContainer(executor, { fresh: true }).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/installer"); return null; });
   if (!container) {
     onLog(log("No edge container on this server — nothing to remove."));
     return { component: "edge", success: true };

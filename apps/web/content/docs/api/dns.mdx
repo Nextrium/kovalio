@@ -1,40 +1,45 @@
 ---
-title: DNS API
-description: Connect a DNS provider token so Openship writes your domains' records itself, instead of printing them for you to paste.
+title: DNS providers
+description: Connect DNS providers and check zones.
 ---
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-Adding a custom domain normally ends with Openship telling you which records to create and waiting for you
-to go and create them. Connect a DNS provider here and it writes them itself: the domain verifies on its own
-and gets its certificate without you leaving the page. In the dashboard this is **Settings → DNS**.
+Adding a custom domain normally ends with Kovalio telling you which records to create and waiting for you
+to create them. Connect a DNS provider and Kovalio can preview and apply those records for you without
+leaving the page. Applying DNS is always an explicit action: creating a project domain or saving a service
+route never changes the provider's zone silently. In the dashboard, credentials live under
+**Settings → DNS** and each pending domain's records panel contains the apply action.
 
 Cloudflare is the only provider today. The provider list is served by the API rather than hard-coded in the
 dashboard, so `GET /api/dns/providers` is the authoritative answer to "what can I connect?".
 
-<Callout title="Base path & auth">
-All paths are relative to your instance, under **`/api`** — e.g. `https://your-host/api/dns/credentials`.
-Send a personal access token as a bearer header (`Authorization: Bearer <token>`), created with
-[`openship token create`](/docs/cli/access). The dashboard uses your session cookie instead. See the
-[API overview](/docs/api) for the full auth model.
-</Callout>
-
-## Endpoints
-
-| Method & path | Permission | What it does |
-|---|---|---|
-| `GET /api/dns/providers` | `settings:read` | List supported providers and the token scopes each needs. |
-| `GET /api/dns/credentials` | `settings:read` | List connected credentials for the organization. |
-| `GET /api/dns/credentials/:id` | `settings:read` | Read one connected credential. |
-| `POST /api/dns/credentials` | `settings:admin` | Connect a credential. The token is verified before it is stored. |
-| `DELETE /api/dns/credentials/:id` | `settings:admin` | Disconnect a credential. Records already written are left alone. |
-| `POST /api/dns/verify-zone` | `settings:read` | Check whether a connected provider manages a hostname's zone. Creates and changes nothing. |
-
 ## Connect a provider
 
+<Tabs items={['SDK', 'REST API']} groupId="api-transport" persist>
+<Tab value="SDK">
+
+```ts
+const result = await ship.dns.addCredential({
+  provider: "cloudflare",
+  name: "Cloudflare production",
+  apiToken: "cf-...",
+});
+console.log(result);
 ```
-POST /api/dns/credentials
+
+</Tab>
+<Tab value="REST API">
+
+```bash
+curl -X POST "$KOVALIO_URL/api/dns/credentials" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"provider":"cloudflare","name":"Cloudflare production","apiToken":"cf-..."}'
 ```
+
+</Tab>
+</Tabs>
 
 <TypeTable
   type={{
@@ -44,16 +49,9 @@ POST /api/dns/credentials
   }}
 />
 
-```bash
-curl -X POST https://your-host/api/dns/credentials \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"provider":"cloudflare","name":"Cloudflare production","apiToken":"cf-..."}'
-```
-
 For Cloudflare, create a token at
 [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens) scoped to
-**Zone:Zone:Read** and **Zone:DNS:Edit**, limited to the zones you want Openship to manage.
+**Zone:Zone:Read** and **Zone:DNS:Edit**, limited to the zones you want Kovalio to manage.
 
 <Callout title="The token is write-only from here on" type="warn">
 It is encrypted at rest (AES-256-GCM, key derived from `BETTER_AUTH_SECRET`) and no endpoint returns it —
@@ -61,14 +59,33 @@ not in full and not as a prefix. `tokenMasked` is a fixed `•••••••
 token, disconnect the credential and connect a new one.
 
 Rotating `BETTER_AUTH_SECRET` makes stored tokens undecryptable. The credential then reports
-`status: "invalid"` the next time Openship tries to use it, and you re-connect it.
+`status: "invalid"` the next time Kovalio tries to use it, and you re-connect it.
 </Callout>
 
 ## Check a zone
 
+<Tabs items={['SDK', 'REST API']} groupId="api-transport" persist>
+<Tab value="SDK">
+
+```ts
+const result = await ship.dns.verifyZone({
+  hostname: "app.example.com",
+});
+console.log(result);
 ```
-POST /api/dns/verify-zone
+
+</Tab>
+<Tab value="REST API">
+
+```bash
+curl -X POST "$KOVALIO_URL/api/dns/verify-zone" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"hostname":"app.example.com"}'
 ```
+
+</Tab>
+</Tabs>
 
 <TypeTable
   type={{
@@ -80,57 +97,98 @@ The response separates four outcomes, because they call for different actions:
 
 | `status` | `matched` | Meaning |
 |---|---|---|
-| `matched` | `true` | A connected provider hosts this zone; records for this domain will be written automatically. |
+| `matched` | `true` | A connected provider hosts this zone; the domain's records can be previewed and applied from Kovalio. |
 | `none` | `false` | We asked, and no connected provider hosts it. You add the records yourself. |
 | `unauthorized` | `false` | A stored token was rejected. Re-connect it — `credentialId` says which. |
 | `unavailable` | `false` | The provider could not be reached (rate limit, outage). Unknown, **not** a sign of misconfiguration. |
 
-```bash
-curl -X POST https://your-host/api/dns/verify-zone \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"hostname":"app.example.com"}'
+## Add, preview, and apply a domain
+
+`POST /api/domains` persists a pending domain and returns the records it needs. It does not call the DNS
+provider. Service-level custom routes follow the same contract: saving the route creates its pending domain
+row, and that row supplies the `:id` used by the shared plan and apply endpoints.
+
+Preview the exact provider changes before writing anything:
+
+<Tabs items={['SDK', 'REST API']} groupId="api-transport" persist>
+<Tab value="SDK">
+
+```ts
+const result = await ship.domains.dnsPlan("dom_123");
+console.log(result);
 ```
 
-## What happens when you add a domain
+</Tab>
+<Tab value="REST API">
 
-With a provider connected, `POST /api/domains` writes the records it would otherwise have only shown you,
-and the response carries an extra `autoDns` object reporting what happened per record:
+```bash
+curl "$KOVALIO_URL/api/domains/dom_123/dns/plan" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
+```
+
+</Tab>
+</Tabs>
 
 ```json
 {
-  "data": { "id": "dom_123", "hostname": "app.example.com" },
-  "records": { "mode": "selfhosted", "records": [{ "type": "A", "name": "app.example.com", "value": "203.0.113.10" }] },
-  "autoDns": {
-    "provisioned": true,
-    "records": [{ "name": "app.example.com", "type": "A", "outcome": "applied" }]
+  "data": {
+    "status": "matched",
+    "provider": "cloudflare",
+    "zoneName": "example.com",
+    "records": [
+      { "name": "app.example.com", "type": "A", "action": "create", "desired": "203.0.113.10" }
+    ]
   }
 }
 ```
 
-`autoDns` is absent when no connected provider manages the zone — that absence is the signal to show the
-records for the operator to add by hand. When it is present, `provisioned` is `true` only if every record
-landed; a partial write reports `provisioned: false` with a `reason` and the per-record `outcome`, so
-"we wrote them" and "we wrote some of them" are never the same answer.
+The plan classifies every record as `create`, `update`, `adopt`, `in-sync`, or `conflict`. A conflict is
+reported rather than overwritten. `status: "none"` means no connected credential manages the zone, so use
+the records returned by `POST /api/domains` (or `GET /api/domains/:id/records`) and add them manually.
 
-No verification is triggered at that moment. The records are seconds old, a resolver may still be holding a
+Apply the previewed records explicitly:
+
+<Tabs items={['SDK', 'REST API']} groupId="api-transport" persist>
+<Tab value="SDK">
+
+```ts
+const result = await ship.domains.dnsApply("dom_123");
+console.log(result);
+```
+
+</Tab>
+<Tab value="REST API">
+
+```bash
+curl -X POST "$KOVALIO_URL/api/domains/dom_123/dns/apply" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
+```
+
+</Tab>
+</Tabs>
+
+The response reports `applied`, `skipped`, or `failed` for every record. `provisioned` is `true` only when
+the matching provider has every actionable record in place; a partial write returns `provisioned: false`
+with a reason and the per-record failures.
+
+No verification is triggered by apply. The records are seconds old, a resolver may still be holding a
 negative answer for the name, and a failed check burns one of Let's Encrypt's per-hostname validation
 failures. The domain stays pending and the `domains:verify-pending` sweep picks it up after its
 ten-minute grace window.
 
 ## Removing records
 
-Disconnecting a credential does not touch DNS. Removing a *domain* does — but only records Openship created,
-identified by the `Managed by Openship` comment it writes on every record.
+Disconnecting a credential does not touch DNS. Removing a *domain* does — but only records Kovalio created,
+identified by the `Managed by Kovalio` comment it writes on every record.
 
 <Callout title="Why ownership is tracked, not inferred" type="info">
 For an apex domain the record name *is* the zone apex, where your `MX`, SPF `TXT` and `CAA` records also
-live. Deleting "every record at this name" would take your mail with it, so Openship deletes only what it
+live. Deleting "every record at this name" would take your mail with it, so Kovalio deletes only what it
 can prove it wrote.
 
 Connecting a domain does repoint an existing record at that name — that is what connecting it means — but
-repointing is not adoption: Openship leaves such a record's comment untouched, so it never carries the
-`Managed by Openship` marker and removing the domain later will not delete it.
+repointing is not adoption: Kovalio leaves such a record's comment untouched, so it never carries the
+`Managed by Kovalio` marker and removing the domain later will not delete it.
 </Callout>
 
 ## Errors
@@ -139,5 +197,35 @@ repointing is not adoption: Openship leaves such a record's comment untouched, s
 |---|---|---|
 | `DNS_UNKNOWN_PROVIDER` | 400 | `provider` is not a name from `GET /api/dns/providers`. |
 | `DNS_PROVIDER_NOT_READY` | 400 | The provider rejected the token during the pre-store check. |
-| `DNS_RECORD_CONFLICT` | 409 | Several records already answer for that name and type and none are Openship's — a round-robin or multi-host set it will not rewrite. |
+| `DNS_RECORD_CONFLICT` | 409 | Several records already answer for that name and type and none are Kovalio's — a round-robin or multi-host set it will not rewrite. |
 | `DNS_API_ERROR` | 502 | The provider's API failed. The upstream status is in the message. |
+
+## Operations
+
+{/* api-operations:start */}
+
+### Resource methods
+
+| Operation | SDK | REST API |
+| --- | --- | --- |
+| List supported DNS providers and their credential fields. | `dns.listProviders()` | `GET /api/dns/providers`<br />`settings:read` |
+| List the organization’s DNS credentials. | `dns.listCredentials()` | `GET /api/dns/credentials`<br />`settings:read` |
+| Read a DNS credential with secrets masked. | `dns.getCredential(input)` | `GET /api/dns/credentials/:id`<br />`settings:read` |
+| Store a DNS provider credential. | `dns.addCredential(input)` | `POST /api/dns/credentials`<br />`settings:admin` |
+| Remove a DNS credential. | `dns.removeCredential(input)` | `DELETE /api/dns/credentials/:id`<br />`settings:admin` |
+| Check access to the requested DNS zone. | `dns.verifyZone(input)` | `POST /api/dns/verify-zone`<br />`settings:read` |
+
+### Cloudflare Tunnel ingress
+
+| Operation | SDK | REST API |
+| --- | --- | --- |
+| Read persisted tunnel connections, optionally filtered by deployment server. | `dns.listIngressConnections(input)` | `GET /api/dns/ingress`<br />`settings:read` |
+| Discover accounts, named tunnels and optional reusable Access policies using a saved Cloudflare credential. Requires an organization administrator. | `dns.discoverIngress(input)` | `POST /api/dns/ingress/discover`<br />`settings:admin` |
+| Connect or create a named Cloudflare Tunnel on a self-hosted deployment server. Setup continues asynchronously. | `dns.connectIngress(input)` | `POST /api/dns/ingress`<br />`settings:admin` |
+| Set automatic enrollment and Access policy defaults for future custom domains. Existing hostnames keep their settings. | `dns.updateIngress(input)` | `PUT /api/dns/ingress/:id`<br />`settings:admin` |
+| Retry persisted tunnel setup or cleanup without creating another connection. | `dns.retryIngress(input)` | `POST /api/dns/ingress/:id/retry`<br />`settings:admin` |
+| Disconnect a server tunnel and queue ownership-checked cleanup. Existing tunnels and reusable policies are retained. | `dns.removeIngress(input)` | `DELETE /api/dns/ingress/:id`<br />`settings:admin` |
+| Read persisted tunnel, DNS and Access status for a project domain. | `dns.getDomainIngress(input)` | `GET /api/dns/ingress/domains/:id`<br />`settings:read` |
+| Connect a custom domain to its deployment server tunnel, change its Access policy or request disconnection. | `dns.setDomainIngress(input)` | `PUT /api/dns/ingress/domains/:id`<br />`settings:admin` |
+
+{/* api-operations:end */}

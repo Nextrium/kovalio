@@ -29,9 +29,9 @@ import { getBuildImage } from "@repo/core";
 import { repos, type Deployment, type Project } from "@repo/db";
 import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 import { seedOrg, seedProject, seedDeployment, setActive } from "../helpers/seed";
-import { pinnedAppImage, snapshotNeedsGitSource } from "../../src/modules/deployments/pinned-artifacts";
-import { buildConfigSnapshot } from "../../src/modules/deployments/build.service";
-import { createBuildConfig } from "../../src/modules/deployments/build-config";
+import { pinnedAppImage, snapshotNeedsGitSource } from "@repo/platform/engine/modules/deployments/pinned-artifacts";
+import { buildConfigSnapshot } from "@repo/platform/engine/modules/deployments/build.service";
+import { createBuildConfig } from "@repo/platform/engine/modules/deployments/build-config";
 
 const FIXTURE = join(import.meta.dirname, "../../../../fixtures/deploy/node");
 const APP_PORT = 3000;
@@ -72,7 +72,7 @@ describeDockerE2E("build → redeploy → restore without rebuilding", () => {
     await requireDocker();
     runtime = await DockerRuntime.create({ transport: "socket" });
     const org = await seedOrg();
-    sourceDir = await mkdtemp(join(tmpdir(), "openship-build-e2e-"));
+    sourceDir = await mkdtemp(join(tmpdir(), "kovalio-build-e2e-"));
     await cp(FIXTURE, sourceDir, { recursive: true });
     // Seeded the way `prepare`/`ensureProject` leaves a detected node app, because
     // `buildConfigSnapshot` is a pure pass-through: every field the build needs has
@@ -86,6 +86,9 @@ describeDockerE2E("build → redeploy → restore without rebuilding", () => {
       // this from the same table detection uses keeps the fixture in step with
       // the stack definitions instead of pinning a tag by hand.
       buildImage: getBuildImage("node", "npm"),
+      // Match importLocal(): without this the schema's historical "github"
+      // default classifies the fixture as clone-backed and discards localPath.
+      gitProvider: "local",
       localPath: sourceDir,
       installCommand: "",
       buildCommand: "",
@@ -117,7 +120,7 @@ describeDockerE2E("build → redeploy → restore without rebuilding", () => {
    * This was a hand-written literal cast `as never`, and it omitted `runtimeImage`.
    * `docker-build-plan.ts` interpolates that field straight into `FROM`, so the
    * recipe read `FROM undefined` and the build could only ever fail: the sole test
-   * proving an Openship-BUILT image is restorable was unrunnable, and the cast is
+   * proving an Kovalio-BUILT image is restorable was unrunnable, and the cast is
    * what hid it. Going through `buildConfigSnapshot` (the real `resolveRuntimeImage`)
    * and `createBuildConfig` means the fixture is the production shape by
    * construction, and a field added to `BuildConfig` can no longer go missing here

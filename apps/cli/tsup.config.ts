@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
 import { defineConfig } from "tsup";
 
 // Inline the package version at build time so the CLI reports the released
@@ -6,6 +6,10 @@ import { defineConfig } from "tsup";
 const { version } = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf8"),
 ) as { version: string };
+
+// tsup runs config entries concurrently. Clean once before any bundle starts,
+// otherwise the main bundle can erase an already-emitted executable wrapper.
+rmSync(new URL("./dist", import.meta.url), { recursive: true, force: true });
 
 // Both bundles need the CJS-compat shim so esbuild's __require helper works
 // under Node ESM. The bundle is ESM, but @repo/adapters transitively pulls CJS
@@ -22,13 +26,11 @@ const CJS_SHIM = [
 ].join("\n");
 
 // Two bundles because each needs its OWN shebang and tsup's `banner` is
-// per-config, not per-entry. Configs run in array order, so Bundle 1's
-// `clean: true` wipes dist/ before Bundle 2 (which must NOT clean) writes
-// dist/node-entry.js beside it.
+// per-config, not per-entry. The output directory is cleaned once above.
 export default defineConfig([
   // ── Bundle 1: dist/index.js — the polyglot sh/JS launcher ──────────────
   // The first two banner lines are a sh/JS POLYGLOT launcher, not a plain
-  // shebang. `npm i -g openship` gives Node, the curl installer gives Node too
+  // shebang. `npm i -g kovalio` gives Node, the curl installer gives Node too
   // now, but a box may have only Bun — a single `#!/usr/bin/env node` or `bun`
   // shebang breaks one of those paths (#261). Under `sh` the second line execs
   // the CLI with whichever runtime exists; under Node/Bun that line is a
@@ -42,10 +44,10 @@ export default defineConfig([
     entry: { index: "src/index.ts" },
     format: ["esm"],
     dts: true,
-    clean: true,
+    clean: false,
     define: { __CLI_VERSION__: JSON.stringify(version) },
     // Bundle the workspace packages (@repo/core, @repo/onboarding) INTO the
-    // output. They're never published to npm, so an npx-installed `openship`
+    // output. They're never published to npm, so an npx-installed `kovalio`
     // must carry them inline — otherwise it fails with ERR_MODULE_NOT_FOUND.
     // Runtime deps (commander, chalk, ora, open) stay external and come from
     // the published package's own dependencies.
@@ -60,10 +62,10 @@ export default defineConfig([
   },
 
   // ── Bundle 2: dist/node-entry.js — plain `node` shebang for npm ─────────
-  // npm reads the shebang of `bin.openship` to generate Windows launchers.
+  // npm reads the shebang of `bin.kovalio` to generate Windows launchers.
   // If that were dist/index.js (polyglot `#!/usr/bin/env sh`), npm emits
-  // `sh.exe` calls in openship.ps1/.cmd — which don't exist on a standard
-  // Windows box, so every `npm i -g openship` breaks with "sh.exe not
+  // `sh.exe` calls in kovalio.ps1/.cmd — which don't exist on a standard
+  // Windows box, so every `npm i -g kovalio` breaks with "sh.exe not
   // recognized" (#460). This wrapper carries `#!/usr/bin/env node`, so npm
   // generates correct node.exe launchers; it just imports dist/index.js.
   {
@@ -102,7 +104,7 @@ export default defineConfig([
   // ── Bundle 3: dist/node-bootstrap.js — old-Node recovery ────────────────
   // Imported (never executed) by node-entry.js when the runtime is below the
   // floor: reuse a vendored Node, or offer to fetch one via the same
-  // ensureNodeRuntime() `openship update` calls. Its own bundle so the gate can
+  // ensureNodeRuntime() `kovalio update` calls. Its own bundle so the gate can
   // load it with `await import()` in a try/catch — see the note above.
   //
   // Must stay dependency-free: the whole point is that it parses and runs on the

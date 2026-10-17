@@ -13,7 +13,9 @@
     "queued": "Sıraya Alındı",
     "building": "Derleniyor",
     "deploying": "Dağıtılıyor",
+    "reconciling": "Doğrulanıyor",
     "migrating": "Taşınıyor",
+    "deploy_failed": "Son dağıtım başarısız",
     "failed": "Başarısız",
     "cancelled": "İptal Edildi",
     "deleting": "Siliniyor",
@@ -21,17 +23,18 @@
   },
   "serverCta": {
     "title": "Kendi sunucunuza dağıtın",
-    "description": "Openship Bulut'un yanında kendi altyapınızda da projeler çalıştırmak için SSH üzerinden bir sunucu bağlayın.",
+    "description": "Kovalio Bulut'un yanında kendi altyapınızda da projeler çalıştırmak için SSH üzerinden bir sunucu bağlayın.",
     "button": "Bir sunucu bağla"
   },
   "filters": {
     "title": "Hedefe göre filtrele",
     "subtitle": "Projelerin dağıtıldığı yer",
     "allProjects": "Tüm projeler",
-    "cloud": "Openship Bulut",
+    "cloud": "Kovalio Bulut",
     "local": "Yerel"
   },
   "card": {
+    "more": "Diğer",
     "liveVersion": "Canlı sürüm v{version}",
     "appBadge": "Uygulama",
     "sourceLocal": "Yerel",
@@ -101,13 +104,15 @@
     "deletionInProgress": "Bu proje için başka bir silme işlemi zaten çalışıyor",
     "deletionInProgressTitle": "Silme işlemi devam ediyor",
     "confirmForceOrphan": "Bazı kaynaklar sunucudan kaldırılamadı. Proje yine de silinsin ve kalan kaynaklar daha sonra otomatik olarak temizlensin mi?",
-    "teardownFailedAt": "Kaldırma işlemi şurada başarısız oldu: {reasons}. Tekrar deneyin veya yetim bırakmak için zorla silin.",
+    "teardownFailedAt": "Temizleme tamamlanamadı: {reasons}. Proje hâlâ kayıtlı. Sorunu çözdükten sonra silmeyi yeniden deneyin.",
     "teardownFailed": "Kaldırma başarısız oldu",
     "cleanupFailedTitle": "Temizlik başarısız oldu",
+    "retryCleanup": "Silmeyi yeniden dene",
+    "cleanupPending": "Silme işlemi başladı. Temizleme tamamlanana kadar proje kullanılamaz.",
     "alreadyDeleted": "Proje zaten silinmiş",
     "forceModalTitle": "Kaynaktan kaldırılamadı",
-    "forceModalBody": "Çalışma zamanına ulaşılamadı (veya hata vermeye devam etti), bu nedenle bu proje kaldırılamadı. Yine de Openship'ten silebilirsiniz — kayıt şimdi kaldırılır ve sunucu erişilebilir olduğunda kalan kaynaklar otomatik olarak temizlenir.",
-    "forceModalConfirm": "Openship kayıtlarından sil",
+    "forceModalBody": "Çalışma zamanına ulaşılamadı (veya hata vermeye devam etti), bu nedenle bu proje kaldırılamadı. Yine de Kovalio'ten silebilirsiniz — kayıt şimdi kaldırılır ve sunucu erişilebilir olduğunda kalan kaynaklar otomatik olarak temizlenir.",
+    "forceModalConfirm": "Kovalio kayıtlarından sil",
     "forceModalCancel": "İptal",
     "unlinked": "{projects} bağlantısı kaldırıldı — uygulamak için yeniden dağıtın.",
     "unlinkedTitle": "Bağlı projeler güncellendi"
@@ -122,6 +127,7 @@
     "production": "Canlı ortam",
     "lastDeploy": "Son Dağıtım",
     "tabs": {
+      "topology": "Topoloji",
       "appSettings": "Ayarlar",
       "overview": "Genel Bakış",
       "services": "Uygulamalar ve Servisler",
@@ -129,9 +135,12 @@
       "deployments": "Dağıtımlar",
       "health": "Sağlık",
       "monitoring": "İzleme",
+      "monitoringAndLogs": "İzleme ve günlükler",
       "source": "Kaynak",
+      "sourceAndTriggers": "Kaynak ve Tetikleyiciler",
       "webhooks": "Webhook'lar",
       "runtime": "Yapılandırma",
+      "settings": "Ayarlar",
       "logs": "Günlükler",
       "backup": "Yedekleme",
       "advanced": "Gelişmiş"
@@ -189,10 +198,11 @@
     "deleteConfirmPrefix": "Kalıcı olarak silinsin mi: ",
     "deleteConfirmSuffix": "?",
     "cancel": "İptal",
-    "delete": "Sil"
+    "delete": "Sil",
+    "subtextNoSource": "İlk dağıtımını yapılandırmak için bir kaynak bağla."
   },
   "overview": {
-    "platformCloud": "Openship Bulut",
+    "platformCloud": "Kovalio Bulut",
     "platformServer": "Self-hosted (Sunucu)",
     "platformLocal": "Self-hosted (Yerel)",
     "modeStatic": "Statik Site",
@@ -236,6 +246,12 @@
     "waitingRequests": "İstekler bekleniyor",
     "noTransfer": "Henüz veri transferi yok"
   },
+  "analytics": {
+    "loadFailed": "Trafik analitiği yüklenemedi",
+    "loadFailedDescription": "En güncel verileri yüklemek için tekrar deneyin.",
+    "sectionsUnavailable": "Kullanılamıyor: {sections}.",
+    "staleData": "Son kullanılabilir veriler gösteriliyor."
+  },
   "monitoring": {
     "noDataTitle": "Henüz izleme verisi yok",
     "noDataDescription": "Analiz verileri, dağıtılan uygulama trafik almaya başladıktan sonra burada görünecektir.",
@@ -262,6 +278,7 @@
     "geoUnavailableBody": "Edge proxy ziyaretçi ülkelerini çözümleyemiyor, bu yüzden harita boş kalıyor. Trafik toplamları etkilenmez.",
     "noCountries": "Bu dönem için henüz ülke verisi yok.",
     "statusesTitle": "Yanıtlar",
+    "statusesOthers": "Diğerleri",
     "share": "%{pct}",
     "visitorDays": "Ziyaretçi-gün",
     "peakDayTooltip": "En yoğun gün: {peak}. Geri dönen ziyaretçi günde bir sayılır, bu nedenle toplam bir üst sınırdır.",
@@ -285,6 +302,8 @@
     "liveHitsWaiting": "İstekler bekleniyor…",
     "statusesUnclassified": "{count} durum sınıfı olmayan",
     "trafficTitle": "Trafik özeti",
+    "dailyWindow": "Bugün dahil 7 gün (UTC)",
+    "currentHour": "Geçerli saat · sayım sürüyor",
     "trafficSummary": "{count} istek",
     "servicesMore": "+{count} daha",
     "servicesLess": "Daha az göster",
@@ -296,7 +315,11 @@
       "disable": "En çok kullanılan yolları kapat"
     },
     "liveFeed": "Son istekler",
-    "liveFeedHint": "Son istek listesini haritada göster (tüm ayrıntı Günlükler sekmesinde)"
+    "liveFeedHint": "Son istek listesini haritada göster (tüm ayrıntı Günlükler sekmesinde)",
+    "dataUnavailable": "Bazı izleme verileri kullanılamıyor",
+    "connecting": "Bağlanıyor…",
+    "liveUnavailable": "Canlı istekler kullanılamıyor",
+    "liveUnavailableDescription": "Geçmiş trafik gösterilmeye devam ediyor. Canlı istekler için yeniden bağlanın."
   },
   "services": {
     "failedLoad": "Servisler yüklenemedi",
@@ -327,16 +350,20 @@
     "toastKeptEdits": "{name}: düzenlemeleriniz korundu",
     "failedResolveDrift": "Yapılandırma çakışması giderilemedi",
     "failedCreateService": "Servis oluşturulamadı",
-    "requestFailed": "İstek başarısız oldu"
+    "requestFailed": "İstek başarısız oldu",
+    "application": "Uygulama",
+    "applicationHint": "Bu projenin dağıtımları üzerinden yönetilir.",
+    "companionsTitle": "Başka bir uygulama veya servis ekle"
   },
   "serviceStatus": {
+    "checking": "Kontrol ediliyor…",
     "running": "Çalışıyor",
     "stopped": "Durduruldu",
     "disabled": "Pasif",
     "failed": "Başarısız",
     "starting": "Başlatılıyor",
     "restarting": "Yeniden başlatılıyor",
-    "unknown": "Bilinmiyor"
+    "unknown": "Durum alınamıyor"
   },
   "routingRetry": {
     "title": "Alan adı yönlendirmesi ilgi bekliyor",
@@ -378,12 +405,13 @@
     "noPublicDomainTitle": "Bağlı herkese açık alan adı yok",
     "noPublicDomainDescOne": "Bu projenin dışa açık portları olan {count} servisi var ancak hiçbiri erişilebilir bir alan adı ile yapılandırılmamış. Şimdi dağıtırsanız yığın dahili olarak çalışabilir ancak kullanıcılar buna herkese açık bir URL'den erişemez.",
     "noPublicDomainDescOther": "Bu projenin dışa açık portları olan {count} servisi var ancak hiçbiri erişilebilir bir alan adı ile yapılandırılmamış. Şimdi dağıtırsanız yığın dahili olarak çalışabilir ancak kullanıcılar buna herkese açık bir URL'den erişemez.",
+    "openDomains": "Alan Adlarını Aç",
     "openServices": "Servisleri Aç",
     "deployAnyway": "Yine de dağıt",
     "suggestedFix": "Önerilen çözüm",
-    "fixStep1": "Servisler sekmesini açın.",
-    "fixStep2": "Herkese açık hâle getirilecek servisi seçin.",
-    "fixStep3": "Alan adı dışa açmayı etkinleştirin ve herkese açılacak portu seçin."
+    "fixStep1": "Alan Adları sekmesini açın.",
+    "fixStep2": "Servis portu için bir rota veya özel alan adı ekleyin.",
+    "fixStep3": "Alan adını doğrulayın ve dağıtın."
   },
   "incomingWebhooks": {
     "title": "Gelen webhook'lar",
@@ -411,7 +439,8 @@
       "none": "Açık"
     },
     "summaryDeploy": "Bu projeyi yeniden dağıtır",
-    "summaryDeployService": "{service} hizmetini yeniden dağıtır",
+    "summaryDeployOne": "Seçilen 1 hizmeti yeniden dağıtır",
+    "summaryDeployServices": "{count} hizmeti birlikte yeniden dağıtır",
     "summaryJob": "{job} işini çalıştırır",
     "createTitle": "Yeni gelen webhook",
     "createSubtitle": "Ne yapacağını ve çağıranların nasıl kimlik doğrulayacağını seçin.",
@@ -419,10 +448,10 @@
     "namePlaceholder": "örn. CI dağıtım kancası",
     "actionLabel": "Eylem",
     "actionDeploy": "Dağıt",
-    "actionDeployDesc": "Çağrıldığında bu projeyi (veya bir hizmeti) yeniden dağıtır.",
+    "actionDeployDesc": "Çağrıldığında bu projeyi veya seçilen hizmetleri yeniden dağıtır.",
     "actionJob": "Bir iş çalıştır",
     "actionJobDesc": "Çağrıldığında işlerinizden birini çalıştırır.",
-    "serviceLabel": "Hizmet (isteğe bağlı)",
+    "serviceLabel": "Hizmetler (isteğe bağlı)",
     "serviceAll": "Tüm proje",
     "jobLabel": "İş",
     "jobPlaceholder": "Bir iş seçin…",
@@ -436,9 +465,11 @@
     "cancel": "İptal"
   },
   "connections": {
+    "nativeClusterHint": "Bu veritabanının kümesindeki bir projeyi seçin. Yalnızca bağlı projeler özel erişim alır.",
+    "nativeNoTargets": "Henüz başka bir proje bu kümeyi kullanmıyor.",
     "useInProject": "Bir projede kullan",
     "title": "Bir projede kullan",
-    "subtitle": "Bu veritabanını başka bir projeye hazır bir bağlantı olarak bağlayın.",
+    "subtitle": "Bu hizmeti bir bağlantıyla başka bir projeyle paylaşın.",
     "targetLabel": "Proje",
     "targetPlaceholder": "Bir proje seç…",
     "valueLabel": "Aktarılacak değer",
@@ -473,15 +504,24 @@
     "forwardShort": "Yönlendir",
     "usedByTitle": "Kullanan",
     "usedByOpen": "Projeyi aç",
-    "usedByHint": "{count} proje bu uygulamanın bağlantısına bağımlı. Bağlantıyı kullanan projeden kaldırın.",
-    "linkedCountOne": "{count} bağlı uygulama",
-    "linkedCountOther": "{count} bağlı uygulama",
-    "linkedHint": "Bu projenin kullandığı, ama çalıştırmadığı uygulamalar.",
-    "linkedBadge": "Bağlı",
+    "usedByHint": "{count} proje bu bağlantıyı kullanıyor. Bağlantıyı kullanan projeden kaldırın.",
+    "linkedCountOne": "{count} bağlı hizmet",
+    "linkedCountOther": "{count} bağlı hizmet",
+    "linkedHint": "Bu hizmetler kaynak projelerinde yönetilir.",
+    "linkedBadge": "Paylaşılan",
     "unlink": "Bağlantıyı kaldır",
-    "openApp": "Uygulamayı aç",
+    "openApp": "Kaynağı aç",
     "internalTitle": "Dahili adres",
-    "internalDescription": "Bu projeye aynı sunucudaki başka bir servisten özel olarak, genel bağlantı noktası olmadan erişin."
+    "internalDescription": "Bu projeye aynı sunucudaki başka bir servisten özel olarak, genel bağlantı noktası olmadan erişin.",
+    "createNew": "Yeni oluştur",
+    "connectExisting": "Mevcut olanı bağla",
+    "existingHint": "Başka bir projedeki hizmeti veya uygulamayı kullanın. Verileri ve yönetimi o projede kalır.",
+    "sourceLabel": "Kaynak proje veya uygulama",
+    "sourcePlaceholder": "Proje veya uygulama seçin…",
+    "loadingServices": "Hizmetler yükleniyor…",
+    "noConnections": "Bağlantı değerleri hazır değil. Kaynak projedeki hizmetin bağlantı noktasını ve kimlik bilgilerini kontrol edin.",
+    "noSources": "Buraya bağlamak için başka bir projede hizmet oluşturun.",
+    "sharedFrom": "{project} projesinden paylaşılıyor"
   },
   "health": {
     "title": "Sağlık",
@@ -495,7 +535,7 @@
     "watchOffTitle": "Konteyner sağlık izlemesi kapalı",
     "watchOffBody": "Hiçbir olay kaydedilmiyor ve uyarı gönderilmiyor; bu yüzden buradaki boş liste her şeyin yolunda olduğu anlamına gelmez.",
     "watchOffCta": "Görevler bölümünden aç",
-    "serverDownTitle": "Openship bu projenin sunucusuna erişemiyor",
+    "serverDownTitle": "Kovalio bu projenin sunucusuna erişemiyor",
     "serverDownBody": "Bu makinede {duration} boyunca hiçbir şey gözlemlenemedi, bu nedenle aşağıdaki olaylar güncel olmayabilir.",
     "loadFailed": "Olaylar yüklenemedi.",
     "ongoing": "{duration} sürüyor",
@@ -514,5 +554,5 @@
       "server_unreachable": "Sunucuya erişilemiyor"
     }
   },
-  "migrationAwaitingHint": "Taşıma sizi bekliyor — projenin Gelişmiş sekmesinden geçişi tamamlayın ya da geri alın"
+  "migrationAwaitingHint": "Taşıma sizi bekliyor — projenin Ayarlar → Gelişmiş bölümünden geçişi tamamlayın ya da geri alın"
 }

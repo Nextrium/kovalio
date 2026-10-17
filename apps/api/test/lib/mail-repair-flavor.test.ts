@@ -24,8 +24,8 @@ vi.mock("@repo/adapters", () => ({
   startHostMail: vi.fn().mockResolvedValue({ started: true }),
 }));
 
-vi.mock("../../src/lib/mail-image", () => ({
-  pinnedMailImage: vi.fn(() => "ghcr.io/oblien/openship-mail:0.5.0"),
+vi.mock("@repo/platform/engine/lib/mail-image", () => ({
+  pinnedMailImage: vi.fn(() => "ghcr.io/nextrium/kovalio-mail:0.5.0"),
   mailBuildSpec: vi.fn(() => undefined),
 }));
 
@@ -36,7 +36,7 @@ import {
   startContainerMail,
   startHostMail,
 } from "@repo/adapters";
-import { repairServerMail } from "../../src/lib/mail-reconcile";
+import { repairServerMail } from "@repo/platform/engine/lib/mail-reconcile";
 
 const mocked = {
   docker: vi.mocked(dockerAvailable),
@@ -80,7 +80,7 @@ describe("repairServerMail", () => {
       flavor: "container",
       running: false,
       exists: true,
-      image: "ghcr.io/oblien/openship-mail:0.5.0",
+      image: "ghcr.io/nextrium/kovalio-mail:0.5.0",
     } as never);
 
     const r = await repairServerMail(executor, { onLog });

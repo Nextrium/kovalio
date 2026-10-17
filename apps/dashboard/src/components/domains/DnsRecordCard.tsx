@@ -1,7 +1,8 @@
 "use client";
 
+import { Icon as UiIcon } from "@repo/ui/icons";
+
 import React, { useState } from "react";
-import { Check, Copy } from "lucide-react";
 import { useI18n, interpolate } from "@/components/i18n-provider";
 
 export interface DnsRecordCardRecord {
@@ -54,8 +55,8 @@ export default function DnsRecordCard({
   const isAliasCname =
     record.type === "CNAME" && !!record.value && hostname.endsWith(`.${record.value}`);
 
-  // A challenge TXT lives at `_openship-challenge.<domain>`, so its purpose line
-  // must name the DOMAIN being verified — "you own _openship-challenge.x.com"
+  // A challenge TXT lives at `_kovalio-challenge.<domain>`, so its purpose line
+  // must name the DOMAIN being verified — "you own _kovalio-challenge.x.com"
   // reads as nonsense.
   const verifiedHostname = hostname.replace(/^_[^.]+\./, "");
 
@@ -98,9 +99,9 @@ export default function DnsRecordCard({
                 >
                   {fqdn}
                   {copied === "fqdn" ? (
-                    <Check className="size-3 text-success" />
+                    <UiIcon name="check" className="size-3 text-success" />
                   ) : (
-                    <Copy className="size-3" />
+                    <UiIcon name="copy" className="size-3" />
                   )}
                 </button>
               </span>
@@ -176,7 +177,7 @@ function FieldRow({
               className="-me-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
               title={t.deploy.dns.record.copy}
             >
-              {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
+              {copied ? <UiIcon name="check" className="size-3.5 text-success" /> : <UiIcon name="copy" className="size-3.5" />}
             </button>
           ) : null}
         </div>

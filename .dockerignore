@@ -17,7 +17,7 @@ apps/desktop/.vite
 # `build` — apps/cli/build, apps/desktop/build, and the dashboard's own
 # src/app/(dashboard)/(deployment)/build/[id] route — and because an excluded
 # directory takes its contents with it, the glob dropped all three from the context
-# of every image. v0.6.6's openship-dashboard was built from a tree with no
+# of every image. v0.6.6's kovalio-dashboard was built from a tree with no
 # /build/[id] page and shipped 52 routes instead of 53: every deployment-detail
 # link 404'd, while `main` and any local `next build` looked fine (GH-622).
 # Guarded by apps/api/test/lib/dockerignore-source-coverage.test.ts.
@@ -27,7 +27,7 @@ apps/email/client/build
 # and all previously IN the context of every image: `.next-saas` is a dashboard dev
 # build carrying NEXT_PUBLIC_* values inlined from .env.local-saas (the GH-567 class
 # of leak, one layer deeper), `.dev-secrets.json` is generated secrets, and
-# .openship/data/*.pglite is the operator's own local database.
+# .kovalio/data/*.pglite is the operator's own local database.
 #
 # `apps/desktop/resources` is anchored deliberately: `**/resources` matches 10 tracked
 # source paths (apps/web/content/resources, apps/web/src/components/resources,
@@ -36,7 +36,7 @@ apps/email/client/build
 # under apps/email/client, so they are deliberately NOT excluded here.
 **/.next-saas
 **/.source
-**/.openship
+**/.kovalio
 **/*.pglite
 apps/desktop/resources
 apps/cli/.cli-payload
@@ -61,7 +61,7 @@ data
 #
 #   • `docker build -f apps/api/Dockerfile .` from a working checkout shipped
 #     the operator's own apps/api/.env — DB URL, auth secret, provider keys —
-#     into openship-api, because Dockerfile:10 is `COPY apps/ ./apps/` and the
+#     into kovalio-api, because Dockerfile:10 is `COPY apps/ ./apps/` and the
 #     runtime stage copies apps/api forward. Same exposure via
 #     apps/dashboard/Dockerfile. CI escaped it only because a clean checkout
 #     has no untracked .env.
@@ -80,6 +80,7 @@ data
 # Caches + logs
 **/.turbo
 **/.cache
+packages/actions-runner/.generated
 **/coverage
 **/*.log
 **/.DS_Store

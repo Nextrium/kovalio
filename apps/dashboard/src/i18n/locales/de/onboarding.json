@@ -7,13 +7,15 @@
   },
   "topBar": {
     "website": "Website",
-    "github": "GitHub"
+    "github": "GitHub",
+    "theme": "Design",
+    "language": "Sprache"
   },
   "choose": {
-    "title": "Willkommen bei Openship",
-    "subtitle": "Wählen Sie, wie Sie Openship betreiben möchten. Beide Optionen bieten Ihnen alle Funktionen – und Sie können jederzeit wechseln.",
+    "title": "Willkommen bei Kovalio",
+    "subtitle": "Wählen Sie, wie Sie Kovalio betreiben möchten. Beide Optionen bieten Ihnen alle Funktionen – und Sie können jederzeit wechseln.",
     "cloud": {
-      "name": "Openship Cloud",
+      "name": "Kovalio Cloud",
       "desc": "Wir kümmern uns um Infrastruktur, Updates und Backups. Melden Sie sich einfach an und legen Sie mit dem Deployment los.",
       "perk1": "Kein Server erforderlich",
       "perk2": "Kostenloses Kontingent inklusive",
@@ -23,22 +25,25 @@
     "or": "oder",
     "selfhost": {
       "name": "Selbst gehostet",
-      "desc": "Betreiben Sie Openship auf Ihrer eigenen Hardware. Verbinden Sie einen Remote-Server oder nutzen Sie diesen Rechner.",
+      "desc": "Betreiben Sie Kovalio auf Ihrer eigenen Hardware. Verbinden Sie einen Remote-Server oder nutzen Sie diesen Rechner.",
       "perk1": "Vollständige Datenhoheit",
       "perk2": "Remote-Server oder dieser Mac",
       "perk3": "Um den Rest kümmern wir uns",
       "cta": "Meinen Server einrichten"
     },
-    "migrateNote": "Wechseln Sie jederzeit mit einem Klick zwischen Cloud und Selbst-Hosting – keine Bindung, niemals."
+    "migrateNote": "Wechseln Sie jederzeit mit einem Klick zwischen Cloud und Selbst-Hosting – keine Bindung, niemals.",
+    "skip": "Vorläufig überspringen"
   },
   "selfhost": {
-    "title": "Wo soll Openship laufen?",
-    "subtitleLine1": "Wählen Sie, wo die Openship-Plattform installiert werden soll.",
+    "title": "Wo soll Kovalio laufen?",
+    "subtitleLine1": "Wählen Sie, wo die Kovalio-Plattform installiert werden soll.",
     "subtitleLine2": "Beide Optionen bieten Ihnen volle Kontrolle und Datenhoheit.",
     "local": {
       "title": "Dieser Rechner",
       "badge": "Beta",
-      "desc": "Installieren Sie Openship direkt hier – kein SSH, keine Remote-Einrichtung nötig"
+      "desc": "Installieren Sie Kovalio direkt hier – kein SSH, keine Remote-Einrichtung nötig",
+      "comingSoon": "Lokale Installation folgt in Kürze.",
+      "comingSoonDesc": "Aktuell ist Self-Hosting auf jedem Linux-Server mit installiertem Docker möglich."
     },
     "remote": {
       "title": "Anderer Server",
@@ -56,7 +61,7 @@
     "methodPassword": "Passwort",
     "methodKey": "SSH-Schlüssel",
     "methodAgent": "Agent",
-    "agentHint": "Verbindet über den SSH-Agent dieses Rechners – wie bei VSCode, ohne Passwort oder Schlüssel. Der Host, auf dem Openship läuft, muss bereits Zugriff auf diesen Server haben (ein im ssh-agent geladener Schlüssel).",
+    "agentHint": "Verbindet über den SSH-Agent dieses Rechners – wie bei VSCode, ohne Passwort oder Schlüssel. Der Host, auf dem Kovalio läuft, muss bereits Zugriff auf diesen Server haben (ein im ssh-agent geladener Schlüssel).",
     "passwordLabel": "Passwort",
     "passwordPlaceholder": "Server-Passwort",
     "keyPathLabel": "Schlüsselpfad",
@@ -68,14 +73,19 @@
     "jumpHostLabel": "Jump-Host",
     "extraArgsLabel": "Zusätzliche SSH-Argumente",
     "submit": "Speichern & Fortfahren",
-    "tutorial": "Schritt-für-Schritt-Einrichtungsanleitung"
+    "tutorial": "Schritt-für-Schritt-Einrichtungsanleitung",
+    "testConnection": "Verbindung testen",
+    "testing": "Wird getestet...",
+    "connected": "Verbunden!",
+    "testFailed": "Verbindung fehlgeschlagen",
+    "testHint": "Stellen Sie sicher, dass der Host erreichbar ist, Port 22 offen ist und die Anmeldedaten gültig sind."
   },
   "tunnel": {
     "title": "Internetzugang",
     "subtitle": "Ihr Server benötigt eine Möglichkeit, aus dem Internet erreichbar zu sein – für Webhooks, SSL und öffentlichen Zugriff.",
     "providers": {
       "edge": {
-        "title": "Openship Edge",
+        "title": "Kovalio Edge",
         "desc": "Keine Konfiguration. Automatisches SSL, hohe Verfügbarkeit und DDoS-Schutz – alles integriert.",
         "badge": "Empfohlen"
       },
@@ -92,7 +102,7 @@
     "ngrokTokenLabel": "ngrok-Auth-Token",
     "cloudflarePlaceholder": "Fügen Sie Ihren Tunnel-Token ein",
     "ngrokPlaceholder": "Fügen Sie Ihren ngrok-Auth-Token ein",
-    "edgeHint": "Openship Edge erfordert ein Openship-Konto. Sie melden sich an, um fortzufahren.",
+    "edgeHint": "Kovalio Edge erfordert ein Kovalio-Konto. Sie melden sich an, um fortzufahren.",
     "signInContinue": "Anmelden & Fortfahren"
   },
   "preferences": {
@@ -119,15 +129,15 @@
     "connecting": "Verbinden…",
     "verifying": "Ihr Server wird überprüft",
     "retry": "Erneut versuchen",
-    "openingCloud": "Openship Cloud wird geöffnet…",
+    "openingCloud": "Kovalio Cloud wird geöffnet…",
     "waitingAuth": "Warten auf Abschluss der Authentifizierung",
     "couldNotStartAuthTitle": "Cloud-Authentifizierung konnte nicht gestartet werden",
     "authFailedTitle": "Cloud-Authentifizierung fehlgeschlagen",
     "couldNotStartAuthMsg": "Der Desktop-Authentifizierungsablauf konnte nicht gestartet werden.",
     "authFailedMsg": "Bitte versuchen Sie es erneut und schließen Sie die Anmeldung in Ihrem Browser ab.",
     "completingSignIn": "Anmeldung wird abgeschlossen…",
-    "returningToOpenship": "Zurück zu Openship",
-    "redirectingCloud": "Weiterleitung zu Openship Cloud…",
+    "returningToKovalio": "Zurück zu Kovalio",
+    "redirectingCloud": "Weiterleitung zu Kovalio Cloud…",
     "newTabSignIn": "Sie schließen die Anmeldung in einem neuen Tab ab",
     "couldNotSaveTitle": "Konfiguration konnte nicht gespeichert werden",
     "couldNotSaveMsg": "Die API hat nicht geantwortet. Stellen Sie sicher, dass die Dienste laufen.",

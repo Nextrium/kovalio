@@ -8,8 +8,8 @@
 --   POST /_hooks/ack           - acknowledge consumed events
 --
 -- Behavior on POST /_hooks/push:
---   1. Try to proxy to a local Openship API (configurable via X-Openship-Url header)
---   2. If Openship is not reachable, store the event in shared dict for later polling
+--   1. Try to proxy to a local Kovalio API (configurable via X-Kovalio-Url header)
+--   2. If Kovalio is not reachable, store the event in shared dict for later polling
 
 local cjson = require "cjson.safe"
 
@@ -27,7 +27,7 @@ end
 -- ── POST /_hooks/push ────────────────────────────────────────────────────────
 -- Receives forwarded webhook payload from SaaS.
 -- Headers:
---   X-Openship-Url: http://127.0.0.1:3456 (if Openship runs on this server)
+--   X-Kovalio-Url: http://127.0.0.1:3456 (if Kovalio runs on this server)
 --   X-Hook-Id: the subscription hookId (for correlation)
 
 if uri == "/_hooks/push" and method == "POST" then
@@ -37,15 +37,15 @@ if uri == "/_hooks/push" and method == "POST" then
         return json_response({ error = "empty body" }, 400)
     end
 
-    local openship_url = ngx.req.get_headers()["x-openship-url"]
+    local kovalio_url = ngx.req.get_headers()["x-kovalio-url"]
 
-    -- If Openship runs on this server, proxy directly
-    if openship_url and openship_url ~= "" then
+    -- If Kovalio runs on this server, proxy directly
+    if kovalio_url and kovalio_url ~= "" then
         local http = require "resty.http"
         local httpc = http.new()
         httpc:set_timeout(5000)
 
-        local target = openship_url .. "/api/webhooks/push"
+        local target = kovalio_url .. "/api/webhooks/push"
         local res, err = httpc:request_uri(target, {
             method  = "POST",
             body    = body,
@@ -56,11 +56,11 @@ if uri == "/_hooks/push" and method == "POST" then
         })
 
         if res and res.status < 500 then
-            -- Openship handled it (2xx or 4xx)
+            -- Kovalio handled it (2xx or 4xx)
             return json_response({ ok = true, proxied = true, status = res.status })
         end
 
-        -- Openship unreachable or errored - fall through to store
+        -- Kovalio unreachable or errored - fall through to store
     end
 
     -- Store for later polling by local/desktop app

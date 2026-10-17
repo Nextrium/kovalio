@@ -1,11 +1,11 @@
 ---
 title: Teams & members
-description: Invite other people into your Openship workspace, give them the right role, and understand the difference between your personal space and a shared team.
+description: Invite other people into your Kovalio workspace, give them the right role, and understand the difference between your personal space and a shared team.
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-Openship starts out as a space for one person: you. But most real work happens with other people —
+Kovalio starts out as a space for one person: you. But most real work happens with other people —
 a teammate who deploys the app, a designer who just needs to look, a co-founder who owns the whole
 thing with you. This guide shows how to bring people in and decide what each of them can do.
 
@@ -13,12 +13,23 @@ Think of your workspace like a shared office. You can hand someone a key (invite
 opens different doors (their **role**). Some keys open everything; some only open one room.
 
 <Callout title="What you need first">
-- An Openship account with a workspace you can see in the dashboard.
+- An Kovalio account with a workspace you can see in the dashboard.
 - The **email address** of the person you want to invite.
 - You must be the **owner** or an **admin** of the workspace to invite people. (More on roles below.)
 </Callout>
 
 ## Invite someone
+
+If you use Desktop locally, open **Settings → Instance → Move to a server** first.
+Choose **Use through Desktop** for an API-only installation, or **Desktop + browser**
+to publish the dashboard too. Desktop stays connected to the same remote data,
+and invitations and webhooks use that server while your computer is offline.
+See [Move your control plane](/docs/guides/migrate-control-plane).
+
+For an API-only instance, the invitation page explains how to open Desktop and
+paste the invitation link into **Settings → Instance → More instance options → Connect to an instance**.
+The recipient signs in with their own account, accepts the invitation, and joins
+the team with their assigned role. The team appears in the organization switcher.
 
 <Steps>
 
@@ -29,15 +40,13 @@ opens different doors (their **role**). Some keys open everything; some only ope
 In the dashboard, go to **Settings** and choose the **Team** tab from the sidebar. This page lists
 everyone who currently has access, plus any invitations that haven't been accepted yet.
 
-<Callout title="Screenshot">Settings → Team tab, showing the "Active members" list and the **Invite member** button in the top-right. *(screenshot pending)*</Callout>
-
 </Step>
 
 <Step>
 
 ### Press "Invite member"
 
-Click **Invite member** in the top-right. A small window opens titled **Invite a member**.
+Click **Invite member** in the top-right. An inline **Invite a member** panel expands on the page.
 
 <Callout title="Don't see the button?" type="info">
 Only owners and admins can invite people. If you're a plain member, the button is hidden — ask an
@@ -60,31 +69,33 @@ build and deploy.
 
 ### Send the invite
 
-Press **Send invite**. Openship emails that address a link to join this organization. The new person
-shows up under **Pending invitations** until they accept.
+Choose **Email** to send through the instance's configured mail service, or **Copy link**
+to share the invitation yourself. Both options invite the same email address with
+the selected role. When email is unavailable, **Copy link** is selected for you.
 
-<Callout title="Screenshot">The "Invite a member" window: the email field, the Member / Admin / Restricted role cards, and the **Send invite** button. *(screenshot pending)*</Callout>
+Press **Send invite** or **Create invite link**. The panel shows the shareable link,
+and the invitation stays under **Pending invitations** until it is accepted or revoked.
 
 </Step>
 
 </Steps>
 
-<Callout title="Self-hosting Openship?" type="info">
-On a self-hosted install you'll also see a **Send via** choice in the invite window: **Your mail
-server** (the mail server you run yourself) or **Openship Cloud**. Pick "Your mail server" only if
-you've set one up; otherwise "Openship Cloud" sends the invite for you. On Openship Cloud this choice
-doesn't appear — invites always go out for you.
+<Callout title="Self-hosting Kovalio?" type="info">
+In **Email** mode, the delivery menu shows which mail service will send the invite.
+Use your configured mail service or, when connected, Kovalio Cloud. The panel links
+to setup if the selected service is unavailable. Copyable links use the instance's
+published address, including when you manage it from Desktop.
 </Callout>
 
 ## What each role can do
 
-A role is just a bundle of permissions. Openship has four, from most powerful to least:
+A role is just a bundle of permissions. Kovalio has four, from most powerful to least:
 
 - **Owner** — the person who created the workspace. Can do everything, including changing other
   people's roles and removing members. You can't invite someone straight in as owner — but an owner
   can promote an existing member to owner later, from the role dropdown on the Team tab.
 - **Admin** — everything a member can do, **plus** manage members (send and cancel invites, remove
-  people). On Openship Cloud, admins can also manage billing.
+  people). On Kovalio Cloud, admins can also manage billing.
 - **Member** — full read and write access to everything in the workspace: create projects, deploy,
   edit environment variables, and so on. A member **cannot** manage other people.
 - **Restricted** — starts with **no** access. When you invite a restricted member you pick exactly
@@ -111,7 +122,7 @@ org can never see or touch another's projects, servers, or secrets (see [Isolati
 <Callout title="Changing a role later" type="info">
 Only the **owner** can change someone's role. On the Team tab, each member (except you) has a role
 dropdown next to their name — pick a new role and it applies right away. Owners and admins can also
-**remove** a member with the trash icon; Openship asks you to confirm first. You can't change or
+**remove** a member with the trash icon; Kovalio asks you to confirm first. You can't change or
 remove yourself.
 </Callout>
 
@@ -119,7 +130,7 @@ remove yourself.
 Giving a member access to a **server** (when inviting, or by editing their access on the Team tab) is a
 bigger deal than a role change: on that server they can reach every deployment and its **data**, the apps
 running on it, injected **secrets/env vars**, a live **terminal**, and any **GitHub tokens** used for its
-deploys. Because of that, Openship shows a **confirmation** that spells out exactly what the new access
+deploys. Because of that, Kovalio shows a **confirmation** that spells out exactly what the new access
 exposes before it takes effect. Grant server access only to people you trust with everything on that box.
 </Callout>
 
@@ -134,10 +145,10 @@ This is what the *invited* person does after you send it.
 
 <Step>
 
-### Open the link in the email
+### Open the invitation link
 
-The invite email contains a link. Clicking it opens a page that says **You're invited** (or **Join
-[workspace name]** once you're signed in).
+Open the link from the email or the person who invited you. It opens a page that says
+**You're invited** (or **Join [workspace name]** once you're signed in).
 
 </Step>
 
@@ -146,9 +157,11 @@ The invite email contains a link. Clicking it opens a page that says **You're in
 ### Sign in or create an account
 
 If you're not logged in yet, the page offers **Sign in** and **Create account**. Use the **same email
-address the invite was sent to** — Openship checks that they match.
+address the invite was sent to** — Kovalio checks that they match.
 
-<Callout title="Screenshot">The accept-invite page showing "You're invited", the workspace name, and the **Sign in** / **Create account** buttons. *(screenshot pending)*</Callout>
+On self-hosted Kovalio, the instance administrator can create a brand-new user through this
+invitation page. Workspace admins can invite users who already have an account, but they cannot mint
+new instance accounts; ask the instance administrator to send the first invitation in that case.
 
 </Step>
 
@@ -157,7 +170,7 @@ address the invite was sent to** — Openship checks that they match.
 ### Press Accept
 
 Once signed in with the right email, the page shows the workspace name and the role you're joining as,
-with **Decline** and **Accept** buttons. Press **Accept**. You'll see **You're in**, and Openship
+with **Decline** and **Accept** buttons. Press **Accept**. You'll see **You're in**, and Kovalio
 sends you to the dashboard for that workspace.
 
 </Step>
@@ -166,7 +179,7 @@ sends you to the dashboard for that workspace.
 
 ## Personal vs team workspaces
 
-Every Openship workspace is called an **organization**. When you first sign up, Openship creates a
+Every Kovalio workspace is called an **organization**. When you first sign up, Kovalio creates a
 **personal workspace** just for you — your own projects, servers, and domains, with no one else in it.
 
 You have two ways to work with other people:
@@ -175,7 +188,7 @@ You have two ways to work with other people:
   projects and servers. Use the **Invite member** button described above.
 - **Create a separate team organization.** A clean, shared space that stays isolated from your
   personal projects. On the Team tab (while viewing your personal workspace) you'll see a **Create a
-  team organization** card — press **Create team**, give it a name, and Openship switches you into the
+  team organization** card — press **Create team**, give it a name, and Kovalio switches you into the
   new shared workspace. Its projects and members are completely separate from your personal ones.
 
 You can belong to more than one organization and switch between them. A team organization has its own
@@ -187,18 +200,19 @@ you want a shared space that isn't tangled up with your own experiments — or y
 grow — create a team organization.
 </Callout>
 
-## If something goes wrong
+## Troubleshooting
 
 <Callout title="“This invite is for … You're logged in as …”" type="warn">
 The invite was sent to one email but you're signed in with a different one. Sign out, then sign back
 in (or create an account) using the exact address the invitation was sent to. If you've lost the link,
-ask an owner or admin to cancel the old invite and send a fresh one to the right address.
+ask an owner or admin to copy it from **Pending invitations** or send a fresh one.
 </Callout>
 
 <Callout title="The invite email never arrived" type="warn">
-Check the spam folder first. If you're self-hosting and chose **Your mail server** as the send method
-but haven't set one up, switch the invite to **Openship Cloud** and send again. The invitee can also
-be handed the link directly — it's the same link that's in the email.
+Check the spam folder first, then check the instance's selected mail service.
+You can copy the existing link from **Pending invitations** and send it directly;
+there is no need to create another invitation. For new invitations, choose **Copy link**
+if email delivery is unavailable.
 </Callout>
 
 <Callout title="“Failed to send invite”" type="error">
@@ -207,10 +221,10 @@ already a member. Confirm your own role on the Team tab, and check the **Active 
 **Pending invitations** lists to see if they're already there.
 </Callout>
 
-## What next?
+## Related guides
 
 <Cards>
-  <Card title="Permissions & roles" href="/docs/security/permissions" description="The full picture of how Openship decides who can do what, including per-resource grants." />
+  <Card title="Permissions & roles" href="/docs/security/permissions" description="The full picture of how Kovalio decides who can do what, including per-resource grants." />
   <Card title="Core concepts" href="/docs/getting-started/core-concepts" description="What an organization, project, server, and deployment actually are." />
   <Card title="Deploy from GitHub" href="/docs/guides/deploy-from-github" description="Now that your team is set up, put an app online." />
 </Cards>

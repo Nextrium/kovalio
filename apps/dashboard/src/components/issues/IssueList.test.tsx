@@ -22,13 +22,13 @@ import { IssueList } from "./IssueList";
 const render = (issues = ISSUE_FIXTURES.mixed!) =>
   renderToStaticMarkup(
     <I18nProvider>
-      <IssueList issues={issues} busyId={null} onResolve={() => {}} onInfraFix={() => {}} />
+      <IssueList issues={issues} busyIds={new Set()} onResolve={() => {}} onInfraFix={() => {}} />
     </I18nProvider>,
   );
 
 /** Panel headers in document order — the grouping, independent of row content. */
 const groupOrder = (html: string) =>
-  [...html.matchAll(/text-\[14px\] font-semibold [^"]*">([^<]+)</g)].map((m) => m[1]);
+  [...html.matchAll(/<h3\b[^>]*>([^<]+)<\/h3>/g)].map((m) => m[1]);
 
 /**
  * Each panel header's title → its tone class (`text-danger` / `text-warning` /
@@ -37,22 +37,29 @@ const groupOrder = (html: string) =>
  */
 const panelTones = (html: string) =>
   Object.fromEntries(
-    [...html.matchAll(/text-\[14px\] font-semibold (text-[^"]*)">([^<]+)</g)].map((m) => [
-      m[2],
-      m[1],
-    ]),
+    [
+      ...html.matchAll(
+        /<h3 class="[^"]*\b(text-danger|text-warning|text-foreground)\b[^"]*">([^<]+)<\/h3>/g,
+      ),
+    ].map((m) => [m[2], m[1]]),
   );
 
 describe("grouping", () => {
-  it("renders one panel per scope present, outward by blast radius", () => {
-    expect(groupOrder(render())).toEqual(["Openship", "Servers", "Projects", "Domains"]);
+  it("puts scopes needing attention before scopes with only advisories", () => {
+    expect(groupOrder(render())).toEqual(["Servers", "Projects", "Domains", "Kovalio"]);
+  });
+
+  it("puts a project problem before platform and server updates", () => {
+    const updates = ISSUE_FIXTURES.advisory!.filter((issue) => issue.scope !== "project");
+    const project = ISSUE_FIXTURES.action!.find((issue) => issue.kind === "workload_unhealthy")!;
+    expect(groupOrder(render([...updates, project]))).toEqual(["Projects", "Kovalio", "Servers"]);
   });
 
   it("omits a scope with nothing in it rather than showing an empty panel", () => {
     // The advisory bucket has no domain rows, so there must be no Domains panel —
     // an empty group reads as "checked and fine", which this surface never claims.
     const html = render(ISSUE_FIXTURES.advisory!);
-    expect(groupOrder(html)).toEqual(["Openship", "Servers", "Projects"]);
+    expect(groupOrder(html)).toEqual(["Kovalio", "Servers", "Projects"]);
     expect(html).not.toContain("Custom hostnames and certificates");
   });
 
@@ -66,7 +73,7 @@ describe("grouping", () => {
     const counts = [...html.matchAll(/tabular-nums text-muted-foreground">(\d+)</g)].map(
       (m) => m[1],
     );
-    expect(counts).toEqual(["1", "2", "4", "2"]);
+    expect(counts).toEqual(["2", "4", "2", "1"]);
   });
 
   it("keeps the server's ordering inside a panel — the worst row leads", () => {
@@ -105,11 +112,11 @@ describe("tone comes from the worst row in the panel", () => {
   });
 
   it("drops advisories back to the muted surface the moment something louder shares the page", () => {
-    // In the mixed feed an outage is present, so the advisory-only Openship panel must
+    // In the mixed feed an outage is present, so the advisory-only Kovalio panel must
     // NOT read amber — "a new version exists" can't look like "down" when both show at
     // once. The louder panels keep their own tone.
     const tones = panelTones(render(ISSUE_FIXTURES.mixed!));
-    expect(tones.Openship).toBe("text-foreground"); // advisory, muted beneath louder
+    expect(tones.Kovalio).toBe("text-foreground"); // advisory, muted beneath louder
     expect(tones.Servers).toBe("text-danger"); // outage
     expect(tones.Domains).toBe("text-warning"); // action_required
   });
@@ -117,7 +124,11 @@ describe("tone comes from the worst row in the panel", () => {
   it("draws the same neutral edge whatever the tone", () => {
     // Severity belongs to the header tile and title. Tinting the border makes the
     // card itself the status object, so a page of panels reads as colored boxes.
-    for (const fixture of [ISSUE_FIXTURES.outage!, ISSUE_FIXTURES.action!, ISSUE_FIXTURES.advisory!]) {
+    for (const fixture of [
+      ISSUE_FIXTURES.outage!,
+      ISSUE_FIXTURES.action!,
+      ISSUE_FIXTURES.advisory!,
+    ]) {
       const html = render(fixture);
       expect(html).toContain("border-border/50");
       expect(html).not.toContain("border-danger-border");
@@ -164,7 +175,7 @@ describe("each row offers the fix the server attached, and only that", () => {
 
   it("offers the CLI command for the control plane's own update", () => {
     const html = render(ISSUE_FIXTURES.advisory!);
-    expect(html).toContain("openship update");
+    expect(html).toContain("kovalio update");
     expect(html).toContain("updates itself from the command line");
   });
 
@@ -180,7 +191,7 @@ describe("each row offers the fix the server attached, and only that", () => {
       <I18nProvider>
         <IssueList
           issues={ISSUE_FIXTURES.mixed!}
-          busyId={busy.id}
+          busyIds={new Set([busy.id])}
           onResolve={() => {}}
           onInfraFix={() => {}}
         />
@@ -242,7 +253,7 @@ describe("what a row says about itself", () => {
 describe("a fleet-sized feed", () => {
   it("renders every row it is given, grouped, with no cap", () => {
     const html = render(ISSUE_FIXTURES.fleet!);
-    const rows = html.match(/<li class="py-2\.5/g) ?? [];
+    const rows = html.match(/<li\b/g) ?? [];
     expect(rows).toHaveLength(ISSUE_FIXTURES.fleet!.length);
     expect(groupOrder(html)).toEqual(["Servers", "Projects", "Domains"]);
   });

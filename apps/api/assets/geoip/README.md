@@ -13,7 +13,7 @@ result. That script is the only place an upstream mirror is referenced, and it
 runs at maintainer/CI time, not on a customer's server. Point it elsewhere with
 `GEOIP_UPSTREAM_URL` (e.g. MaxMind directly with a license key).
 
-**Runtime overrides:** `OPENSHIP_GEOIP_DB` (explicit path) and
-`OPENSHIP_GEOIP_URL` (download fallback, defaults to our repo).
+**Runtime overrides:** `KOVALIO_GEOIP_DB` (explicit path) and
+`KOVALIO_GEOIP_URL` (download fallback, defaults to our repo).
 
 Data © MaxMind, GeoLite2 — see https://www.maxmind.com. Attribution required.

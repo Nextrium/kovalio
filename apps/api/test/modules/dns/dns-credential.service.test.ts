@@ -3,7 +3,7 @@ import { ENV_MASK } from "@repo/core";
 
 /**
  * DNS credentials now live in the generic `credential` table — `dns_credential` was one of
- * three places Openship kept a third-party secret. These cases still describe DNS
+ * three places Kovalio kept a third-party secret. These cases still describe DNS
  * behaviour (zone matching, auth-failure handling, "re-connect" on an undecryptable token);
  * only the store underneath them changed, so the mock moved with it.
  */
@@ -23,7 +23,7 @@ const credentialRepo = vi.hoisted(() => ({
 vi.mock("@repo/db", () => ({ repos: { credential: credentialRepo } }));
 
 const decrypt = vi.hoisted(() => vi.fn());
-vi.mock("../../../src/lib/credential-encryption", () => ({
+vi.mock("@repo/platform/engine/lib/credential-encryption", () => ({
   encryptSecretField: (v: string | null | undefined) => (v ? `enc1:${v}` : null),
   decryptSecretField: decrypt,
 }));
@@ -41,9 +41,10 @@ const provider = vi.hoisted(() => ({
   listRecords: vi.fn(),
   upsertRecord: vi.fn(),
   deleteRecord: vi.fn(),
+  formatContent: vi.fn((_type: string, content: string) => content),
 }));
 
-vi.mock("../../../src/modules/dns/registry", () => ({
+vi.mock("@repo/platform/engine/modules/dns/registry", () => ({
   resolveDnsProvider: () => provider,
   listDnsProviders: () => ["cloudflare"],
   describeDnsProviders: () => [provider.descriptor],
@@ -56,8 +57,8 @@ const {
   planRecords,
   provisionRecords,
   releaseRecords,
-} = await import("../../../src/modules/dns/dns-credential.service");
-const { DnsApiError, OPENSHIP_RECORD_COMMENT } = await import("../../../src/modules/dns/types");
+} = await import("@repo/platform/engine/modules/dns/dns-credential.service");
+const { DnsApiError, KOVALIO_RECORD_COMMENT } = await import("@repo/platform/engine/modules/dns/types");
 
 const row = (over: Record<string, unknown> = {}) => ({
   id: "dns_1",
@@ -84,12 +85,13 @@ const rec = (over: Record<string, unknown> = {}) => ({
   content: "192.0.2.1",
   ttl: 1,
   proxied: false,
-  comment: OPENSHIP_RECORD_COMMENT,
+  comment: KOVALIO_RECORD_COMMENT,
   ...over,
 });
 
 beforeEach(() => {
   vi.clearAllMocks();
+  provider.formatContent.mockImplementation((_type: string, content: string) => content);
   decrypt.mockImplementation((v: string) => String(v).replace(/^enc1:/, ""));
   provider.findZone.mockResolvedValue({ id: "zone_1", name: "example.com", status: "active" });
 });
@@ -181,6 +183,19 @@ describe("resolveDnsManager", () => {
 
 describe("planRecords", () => {
   beforeEach(() => credentialRepo.listActiveByProvider.mockResolvedValue([row()]));
+
+  it.each([["token", "update"], ['"token"', "in-sync"]])(
+    "plans Cloudflare's TXT formatting consistently for %s", async (content, action) => {
+      provider.formatContent.mockImplementation((type, value) => type === "TXT" ? `"${value}"` : value);
+      provider.listRecords.mockResolvedValue([rec({
+        type: "TXT", name: "_kovalio-challenge.app.example.com", content,
+      })]);
+      const plan = await planRecords("org_1", "app.example.com", [{
+        type: "TXT", name: "_kovalio-challenge.app.example.com", content: "token",
+      }]);
+      expect(plan.records[0]?.action).toBe(action);
+    },
+  );
 
   const plan1 = (over: Record<string, unknown> = {}) =>
     planRecords("org_1", "app.example.com", [
@@ -293,7 +308,7 @@ describe("provisionRecords", () => {
 
     const out = await provisionRecords("org_1", "app.example.com", [
       { type: "A", name: "app.example.com", content: "192.0.2.1" },
-      { type: "TXT", name: "_openship-challenge.app.example.com", content: "tok" },
+      { type: "TXT", name: "_kovalio-challenge.app.example.com", content: "tok" },
     ]);
 
     expect(provider.upsertRecord).toHaveBeenCalledTimes(2);
@@ -306,7 +321,7 @@ describe("provisionRecords", () => {
 
     const out = await provisionRecords("org_1", "app.example.com", [
       { type: "CNAME", name: "app.example.com", content: "" },
-      { type: "TXT", name: "_openship-challenge.app.example.com", content: "tok" },
+      { type: "TXT", name: "_kovalio-challenge.app.example.com", content: "tok" },
     ]);
 
     expect(provider.upsertRecord).toHaveBeenCalledTimes(1);
@@ -322,7 +337,7 @@ describe("provisionRecords", () => {
 
     const out = await provisionRecords("org_1", "app.example.com", [
       { type: "A", name: "app.example.com", content: "not-an-ip" },
-      { type: "TXT", name: "_openship-challenge.app.example.com", content: "tok" },
+      { type: "TXT", name: "_kovalio-challenge.app.example.com", content: "tok" },
     ]);
 
     expect(provider.upsertRecord).toHaveBeenCalledTimes(2);
@@ -377,7 +392,7 @@ describe("releaseRecords", () => {
     // The apex of a custom domain IS the zone apex. Name-matching alone would
     // take the operator's MX and SPF with it.
     provider.listRecords.mockResolvedValue([
-      rec({ id: "rec_ours", type: "A", comment: OPENSHIP_RECORD_COMMENT }),
+      rec({ id: "rec_ours", type: "A", comment: KOVALIO_RECORD_COMMENT }),
       rec({ id: "rec_mx", type: "MX", comment: undefined, content: "mail.example.com" }),
       rec({ id: "rec_spf", type: "TXT", comment: "operator's SPF", content: "v=spf1 -all" }),
     ]);
@@ -406,7 +421,7 @@ describe("releaseRecords", () => {
   });
 
   it("reports a reason instead of throwing when the provider is unreachable", async () => {
-    // A domain must stay removable from Openship when Cloudflare is down.
+    // A domain must stay removable from Kovalio when Cloudflare is down.
     provider.listRecords.mockRejectedValue(new DnsApiError("cloudflare", 503, "unavailable"));
 
     const out = await releaseRecords("org_1", "example.com", ["example.com"]);

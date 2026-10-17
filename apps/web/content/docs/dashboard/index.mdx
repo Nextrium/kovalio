@@ -1,6 +1,6 @@
 ---
 title: The dashboard
-description: A tour of the Openship dashboard — the sidebar that navigates everything, the home overview, and a map to each area.
+description: A tour of the Kovalio dashboard — the sidebar that navigates everything, the home overview, and a map to each area.
 ---
 
 The dashboard is your home base. It's a single screen split in two: a **sidebar** down the left that
@@ -15,18 +15,15 @@ and where to click next.
 The sidebar is the rounded panel pinned to the left edge. It stays put as you move around, and the item for
 the page you're on is highlighted so you always know where you are.
 
-At the very top you get the **Openship** logo and name, plus two small buttons:
+At the very top you get the **Kovalio** logo and name, plus two small buttons:
 
 - A **theme toggle** (sun / moon) that flips the whole dashboard between light and dark.
 - A **collapse** button ("Collapse sidebar") that shrinks the panel to just icons to give the main area more
   room. Press it again ("Expand sidebar") to bring the labels back.
 
-<Callout title="Screenshot">The full sidebar expanded: logo + name and the theme / collapse buttons at top, the three nav sections, the New Project button, and the workspace switcher at the bottom. *(screenshot pending)*</Callout>
-
 ### Navigation links
 
-The links are grouped into labelled sections — **Main**, **Settings**, and (on self-hosted instances)
-**Infrastructure**.
+The links are grouped into labelled sections — **Main**, **Settings**, and **Infrastructure**.
 
 | Section | Item | Route | What's there |
 |---|---|---|---|
@@ -35,14 +32,14 @@ The links are grouped into labelled sections — **Main**, **Settings**, and (on
 | Main | **Deployments** | `/deployments` | A feed of every build across your projects. See [Rollback & redeploy](/docs/guides/rollback-redeploy). |
 | Main | **Backups** | `/backups` | Register the storage targets your backups write to. See [Backups](/docs/dashboard/backups). |
 | Settings | **Settings** | `/settings` | Account, team, GitHub connection, tokens, and MCP. See [Settings](/docs/dashboard/settings). |
-| Settings | **Billing** | `/billing` | Plan and usage — shown on Openship Cloud (or a cloud-connected instance). See [Billing](/docs/dashboard/billing). |
-| Infrastructure | **Servers** | `/servers` | Your own connected machines to deploy onto. See [Servers](/docs/dashboard/servers). |
+| Settings | **Billing** | `/billing` | Plan and usage — shown on Kovalio Cloud (or a cloud-connected instance). See [Billing](/docs/dashboard/billing). |
+| Infrastructure | **Servers** | `/servers` | Managed Cloud servers or your own connected machines. See [Servers](/docs/dashboard/servers). |
 | Infrastructure | **Emails** | `/emails` | The self-hosted mail stack and Zero webmail. See [Emails](/docs/dashboard/emails). |
 
 <Callout title="Some links only appear in certain setups" type="info">
-The sidebar adapts to your instance. **Billing** shows only on Openship Cloud or a self-hosted instance
-that's connected to Cloud. **Servers** and **Emails** show only on a self-hosted instance. So a plain cloud
-account and a self-hosted box won't see exactly the same list — that's expected.
+The sidebar adapts to your instance. **Billing** shows only on Kovalio Cloud or a self-hosted instance
+that's connected to Cloud. **Servers** is available in both, with controls suited to each server.
+**Emails** appears only on a self-hosted instance.
 </Callout>
 
 ### New Project
@@ -66,15 +63,11 @@ scoped to it. The current org is marked **Current** with your role beside it.
 That same popover holds your signed-in identity and the **Log out** button. (On the desktop app the button
 reads **Back to setup** instead, which returns you to the local setup screen.)
 
-<Callout title="Screenshot">The workspace switcher popover open: the org list with a **Current** badge and role, the signed-in-as row, and the Log out action. *(screenshot pending)*</Callout>
-
 ## The home page
 
 Clicking **Home** (or the logo) lands you on the overview at `/`. It opens with a greeting — "Good morning /
 afternoon / evening" with your first name — and the subtitle "Here's what's happening across your projects".
 The body is a two-column layout.
-
-<Callout title="Screenshot">The home overview: greeting header, the **Your Projects** panel and shortcut cards on the left, and the sticky **Activity** / **Recent** column on the right. *(screenshot pending)*</Callout>
 
 ### Your Projects
 
@@ -119,8 +112,8 @@ Each area has its own page or guide with the details. Here's where to go next:
   <Card title="Library" href="/docs/dashboard/library" description="Start a deployment from a repo, a local folder, a URL, or a template." />
   <Card title="Deployments & rollback" href="/docs/guides/rollback-redeploy" description="Redeploy, roll back, and read what happened on the build screen." />
   <Card title="Backups" href="/docs/dashboard/backups" description="Register S3, SFTP, an existing server, or local disk as backup destinations." />
-  <Card title="Servers" href="/docs/dashboard/servers" description="Connect your own machines to deploy onto (self-hosted only)." />
+  <Card title="Servers" href="/docs/dashboard/servers" description="Inspect managed Cloud servers or connect your own machines." />
   <Card title="Email & webmail" href="/docs/dashboard/emails" description="The self-hosted mail stack and Zero webmail (self-hosted only)." />
   <Card title="Settings" href="/docs/dashboard/settings" description="Account, team, GitHub connection, tokens, and MCP." />
-  <Card title="Billing" href="/docs/dashboard/billing" description="Plan and usage on Openship Cloud." />
+  <Card title="Billing" href="/docs/dashboard/billing" description="Plan and usage on Kovalio Cloud." />
 </Cards>

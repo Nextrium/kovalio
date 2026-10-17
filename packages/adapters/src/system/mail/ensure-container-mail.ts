@@ -1,9 +1,9 @@
 /**
- * Bring up the mail ENGINE as a container on a box, beside `openship-edge`.
+ * Bring up the mail ENGINE as a container on a box, beside `kovalio-edge`.
  *
  * Mirrors `ensureContainerEdge` (host-networked container, raw `docker run` over
  * the target executor, all mutable state on host bind mounts) but for the mail
- * stack: an `openship-mail` engine image (Postfix/Dovecot/Amavis/…/supervisord)
+ * stack: an `kovalio-mail` engine image (Postfix/Dovecot/Amavis/…/supervisord)
  * plus a pinned `postgres:16-alpine` SIDECAR holding the vmail DB.
  *
  * Boundary that will NOT change: SMTP/IMAP are L4 protocols the HTTP edge cannot
@@ -16,7 +16,9 @@
  * update must never leave the box without a mail engine.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { buildMailImageRef, safeErrorMessage, mailHostname } from "@repo/core";
+import { DEFAULT_CONTAINER_LOG_ARGS } from "../../container-logging";
 import type { CommandExecutor, LogEntry } from "../../types";
 import type { SystemLog, SystemLogCallback } from "../types";
 import { sq } from "../local-shell";
@@ -31,7 +33,7 @@ import {
 } from "../managed-image";
 import { dirOf, elevatedExecutor } from "../elevated-executor";
 import { resolveEnvironment } from "../environment";
-import { waitForPortListening } from "../port-listen";
+import { waitForPortListening, probePortListeningOnce } from "../port-listen";
 import { rootOrDegrade } from "../privilege";
 import {
   MAIL_CONTAINER,
@@ -44,7 +46,10 @@ import {
   MAIL_DB_NAME,
   MAIL_DB_USER,
   MAIL_DB_HOST_BIND,
-  MAIL_DB_PORT,
+  MAIL_DB_FALLBACK_PORT,
+  MAIL_DB_PORT_RANGE_MAX,
+  MAIL_DB_INTERNAL_PORT,
+  resolveMailDbPort,
   type MailMount,
 } from "../../infra/mail-container";
 
@@ -69,7 +74,7 @@ export function resolveMailImage(explicit?: string): string {
 }
 
 /** Postgres sidecar image; overridable but pinned by default so pg-major is stable. */
-export const MAIL_DB_IMAGE = process.env.OPENSHIP_MAIL_DB_IMAGE?.trim() || "postgres:16-alpine";
+export const MAIL_DB_IMAGE = process.env.KOVALIO_MAIL_DB_IMAGE?.trim() || "postgres:16-alpine";
 
 export interface ContainerMailResult {
   container: string;
@@ -99,15 +104,17 @@ export interface ContainerMailOptions {
   image?: string;
   container?: string;
   dbContainer?: string;
+  /**
+   * Host port for the PostgreSQL sidecar. Defaults to `KOVALIO_MAIL_DB_PORT`
+   * if set in the environment, otherwise 5432.
+   */
+  dbPort?: number;
   /** How long to wait for the mail ports before calling the start a failure. */
   verifyTimeoutMs?: number;
 }
 
 /** Is a container present (running or stopped)? */
-async function containerExists(
-  executor: CommandExecutor,
-  container: string,
-): Promise<boolean> {
+async function containerExists(executor: CommandExecutor, container: string): Promise<boolean> {
   return (await containerState(executor, container)) !== null;
 }
 
@@ -130,20 +137,28 @@ function pullFailureMessage(image: string, output: string): string {
       .filter(Boolean)
       .pop() ?? "";
 
-  if (/manifest unknown|manifest for .* not found|not found: manifest|repository .* not found/.test(text)) {
+  if (
+    /manifest unknown|manifest for .* not found|not found: manifest|repository .* not found/.test(
+      text,
+    )
+  ) {
     return (
       `The mail engine image ${image} isn't in the registry. ` +
       "The engine image isn't published yet, so a server can only run it from a local " +
-      "build — build it on this box (or point OPENSHIP_MAIL_IMAGE at your own registry) and retry."
+      "build — build it on this box (or point KOVALIO_MAIL_IMAGE at your own registry) and retry."
     );
   }
   if (/unauthorized|denied|authentication required|forbidden/.test(text)) {
     return (
       `The registry refused the mail engine image ${image} (${lastLine || "access denied"}). ` +
-      "Log this server's Docker into that registry, or set OPENSHIP_MAIL_IMAGE to one it can read."
+      "Log this server's Docker into that registry, or set KOVALIO_MAIL_IMAGE to one it can read."
     );
   }
-  if (/timeout|timed out|no such host|temporary failure|network is unreachable|connection refused|i\/o timeout|tls|certificate/.test(text)) {
+  if (
+    /timeout|timed out|no such host|temporary failure|network is unreachable|connection refused|i\/o timeout|tls|certificate/.test(
+      text,
+    )
+  ) {
     return (
       `This server couldn't reach the registry to pull ${image} (${lastLine || "network error"}). ` +
       "Check its outbound network/DNS and proxy settings, then retry."
@@ -173,7 +188,7 @@ function mountArg(m: MailMount): string {
  *     rejects an empty key or whitespace IN the key, so `%%` sails through.
  *   - shadowing a legitimate key: duplicates are last-wins, and `...opts.secrets`
  *     is spread last, so an injected record overrides FIRST_DOMAIN /
- *     OPENSHIP_MAIL_DB_* (repoint the first-boot DB client, or reach the
+ *     KOVALIO_MAIL_DB_* (repoint the first-boot DB client, or reach the
  *     superuser SQL load that templates FIRST_DOMAIN in).
  *
  * So: validate the record shape and FAIL CLOSED. Rejecting beats sanitizing —
@@ -209,8 +224,9 @@ async function writeEnvFile(
       // whole rest of the line verbatim as the value.
       .map(([k, v]) => `${k}=${v}`)
       .join("\n") + "\n";
-  await executor.writeFile(path, body);
-  await executor.exec(`chmod 600 ${sq(path)}`).catch(() => {});
+  // Born private, not tightened after publication. The privileged executor's
+  // private staging path carries this mode through its root-owned rename.
+  await executor.writeFile(path, body, { mode: 0o600 });
 }
 
 const ENGINE_ENV_FILE = `${MAIL_HOST_STATE_DIR}/engine.env`;
@@ -223,9 +239,9 @@ const DB_ENV_FILE = `${MAIL_HOST_STATE_DIR}/db.env`;
  * process, before it ever reaches the daemon socket — so it has to be readable by whoever
  * invokes docker, and being in the `docker` group grants the socket, not the file. The
  * elevated write publishes these root:root (`writeFile` chowns 0:0 so the `mv` cannot leave
- * the file writable by the login user) and `writeEnvFile` chmods 600, which on a non-root
+ * the file writable by the login user) and `writeEnvFile` creates it as 0600, which on a non-root
  * login is exactly unreadable. Setting up mail died with `docker: --env-file: open
- * /var/lib/openship/mail/db.env: permission denied`, surfaced as the unrelated-sounding
+ * /var/lib/kovalio/mail/db.env: permission denied`, surfaced as the unrelated-sounding
  * "the mail database container failed to become ready".
  *
  * Moving the FILE rather than elevating the LAUNCH is the load-bearing choice. The docker
@@ -263,8 +279,8 @@ const DB_ENV_FILE = `${MAIL_HOST_STATE_DIR}/db.env`;
  * Confidentiality is unchanged, and provably so from two directions: the account gaining
  * ownership already held the plaintext, because `elevatedExecutor.writeFile` stages the
  * content unelevated as that same login before publishing it; and it provably has arbitrary
- * root, because the chown only lands if `sudo -n sh -c` does. It is the account Openship
- * drives THIS SERVER as — a remote box's SSH login, not necessarily the one Openship itself
+ * root, because the chown only lands if `sudo -n sh -c` does. It is the account Kovalio
+ * drives THIS SERVER as — a remote box's SSH login, not necessarily the one Kovalio itself
  * runs under.
  *
  * `canSudo` is the exact condition, and it is a property of the writer rather than a guess: a
@@ -280,7 +296,7 @@ async function handOverEnvFile(
   path: string,
   onLog: SystemLogCallback,
 ): Promise<void> {
-  const profile = await resolveEnvironment(executor).catch(() => null);
+  const profile = await resolveEnvironment(executor).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/mail/ensure-container-mail"); return null; });
   if (!profile || profile.isRoot || !profile.canSudo) return;
 
   // `$SUDO_USER` only as a last resort, so an owner we could not name fails loudly rather
@@ -299,6 +315,7 @@ async function handOverEnvFile(
         `chmod a+x ${sq(stateDir)} ${sq(dirOf(stateDir))}`,
     )
     .catch((err: unknown) => {
+      observeCaughtError(err, "adapters/system/mail/ensure-container-mail");
       onLog(
         log(
           `Could not give ${profile.loginUser || "the login user"} access to ${path}: ` +
@@ -316,7 +333,7 @@ async function readEnvFileValue(
   path: string,
   key: string,
 ): Promise<string | null> {
-  const body = await executor.readFile(path).catch(() => "");
+  const body = await executor.readFile(path).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/mail/ensure-container-mail"); return ""; });
   for (const line of body.split("\n")) {
     const eq = line.indexOf("=");
     if (eq > 0 && line.slice(0, eq).trim() === key) return line.slice(eq + 1);
@@ -346,7 +363,7 @@ async function retainedDbPassword(
   const initialised = await executor
     .exec(`test -s ${sq(`${MAIL_DB_HOST_DATA_DIR}/pgdata/PG_VERSION`)} && echo yes || true`)
     .then((out) => out.trim() === "yes")
-    .catch(() => false);
+    .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/mail/ensure-container-mail"); return false; });
   if (!initialised) return null;
 
   const retained = await readEnvFileValue(executor, DB_ENV_FILE, "POSTGRES_PASSWORD");
@@ -373,15 +390,122 @@ async function retainedDbPassword(
   );
 }
 
+/**
+ * For an existing initialised cluster, read the retained database port from ENGINE_ENV_FILE.
+ * Preserving the previously assigned port prevents repairs/restarts from drifting ports.
+ */
+export async function retainedDbPort(
+  executor: CommandExecutor,
+  onLog?: SystemLogCallback,
+): Promise<number | null> {
+  const initialised = await executor
+    .exec(`test -s ${sq(`${MAIL_DB_HOST_DATA_DIR}/pgdata/PG_VERSION`)} && echo yes || true`)
+    .then((out) => out.trim() === "yes")
+    .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/mail/ensure-container-mail"); return false; });
+  if (!initialised) return null;
+
+  const retained = await readEnvFileValue(executor, ENGINE_ENV_FILE, "KOVALIO_MAIL_DB_PORT");
+  if (!retained) return null;
+  const n = resolveMailDbPort(retained);
+
+  onLog?.(
+    log(
+      `Reusing existing mail database port ${n} — ${MAIL_DB_HOST_DATA_DIR} already holds ` +
+        `an initialised cluster.`,
+    ),
+  );
+  return n;
+}
+
+/**
+ * Resolve an available host loopback port for the mail database sidecar.
+ * If the preferred port is free, returns it. If the default 5432 is occupied and
+ * the port was not explicitly specified, scans up to MAIL_DB_PORT_RANGE_MAX (5460)
+ * for the first available port.
+ */
+export async function findAvailableMailDbPort(
+  executor: CommandExecutor,
+  preferredPort: number,
+  isExplicit: boolean,
+  onLog: SystemLogCallback,
+): Promise<number> {
+  resolveMailDbPort(preferredPort);
+  const probe = await probePortListeningOnce(executor, preferredPort);
+  if (probe !== true) {
+    if (probe === null)
+      onLog(
+        log(
+          `Could not probe mail database port ${preferredPort}; Docker will validate the binding.`,
+          "warn",
+        ),
+      );
+    return preferredPort;
+  }
+
+  // If the user explicitly configured this port, do not auto-switch ports
+  if (isExplicit) {
+    throw new Error(
+      `Configured mail database port ${preferredPort} is already in use. Choose a free KOVALIO_MAIL_DB_PORT.`,
+    );
+  }
+
+  // Auto-discovery: default port is occupied; scan candidate range 5433..5460
+  for (let port = MAIL_DB_FALLBACK_PORT; port <= MAIL_DB_PORT_RANGE_MAX; port++) {
+    const candidate = await probePortListeningOnce(executor, port);
+    if (candidate === false) {
+      onLog(
+        log(
+          `Default PostgreSQL port ${preferredPort} is in use on this host. ` +
+            `Automatically selected available port ${port} for the mail database ` +
+            `(can be overridden via KOVALIO_MAIL_DB_PORT).`,
+          "warn",
+        ),
+      );
+      return port;
+    }
+  }
+
+  throw new Error(
+    `No free mail database port was found in ${preferredPort}, ${MAIL_DB_FALLBACK_PORT}-${MAIL_DB_PORT_RANGE_MAX}. Set KOVALIO_MAIL_DB_PORT to a free port.`,
+  );
+}
+
+/** Inspect the existing sidecar without changing it or reading root-only files. */
+async function containerDbPort(
+  executor: CommandExecutor,
+  container: string,
+): Promise<number | null> {
+  const raw = await executor
+    .exec(`docker inspect -f '{{json .HostConfig.PortBindings}}' ${sq(container)} 2>/dev/null`)
+    .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/mail/ensure-container-mail"); return ""; });
+  if (!raw.trim()) return null;
+  let bindings: Record<string, Array<{ HostIp?: string; HostPort?: string }>>;
+  try {
+    bindings = JSON.parse(raw);
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/system/mail/ensure-container-mail");
+    throw new Error("Could not read the mail database container's port bindings.");
+  }
+  const binding = bindings?.[`${MAIL_DB_INTERNAL_PORT}/tcp`];
+  if (binding?.length !== 1 || binding[0].HostIp !== MAIL_DB_HOST_BIND || !binding[0].HostPort) {
+    throw new Error(
+      "The mail database container must publish one PostgreSQL port on host loopback.",
+    );
+  }
+  return resolveMailDbPort(binding[0].HostPort);
+}
+
 /** `docker run` argv for the Postgres sidecar (loopback-published, bind-mounted data). */
-function buildDbRunCommand(container: string): string {
+export function buildDbRunCommand(container: string, dbPort: number = resolveMailDbPort()): string {
+  resolveMailDbPort(dbPort);
   return [
     "docker run -d",
     `--name ${sq(container)}`,
     "--restart unless-stopped",
+    ...DEFAULT_CONTAINER_LOG_ARGS,
     `--env-file ${sq(DB_ENV_FILE)}`,
     `-e ${sq(`PGDATA=${MAIL_DB_PGDATA}`)}`,
-    `-p ${sq(`${MAIL_DB_HOST_BIND}:${MAIL_DB_PORT}:${MAIL_DB_PORT}`)}`,
+    `-p ${sq(`${MAIL_DB_HOST_BIND}:${dbPort}:${MAIL_DB_INTERNAL_PORT}`)}`,
     `-v ${sq(`${MAIL_DB_HOST_DATA_DIR}:${MAIL_DB_CONTAINER_DATA_DIR}:z`)}`,
     sq(MAIL_DB_IMAGE),
   ].join(" ");
@@ -401,6 +525,7 @@ export function buildMailRunCommand(container: string, image: string, hostname?:
     "--network host",
     hostname ? `--hostname ${sq(hostname)}` : "",
     "--restart unless-stopped",
+    ...DEFAULT_CONTAINER_LOG_ARGS,
     "--cap-add NET_ADMIN",
     `--env-file ${sq(ENGINE_ENV_FILE)}`,
     mounts,
@@ -415,11 +540,17 @@ async function startDb(
   executor: CommandExecutor,
   container: string,
   onLog: SystemLogCallback,
+  dbPort: number = resolveMailDbPort(),
 ): Promise<boolean> {
-  await executor.exec(`docker rm -f ${sq(container)} 2>/dev/null || true`).catch(() => {});
-  const run = await executor.streamExec(buildDbRunCommand(container), onLog as (l: LogEntry) => void);
+  await executor.exec(`docker rm -f ${sq(container)} 2>/dev/null || true`).catch((diagnosticFailure) => {
+    observeCaughtError(diagnosticFailure, "adapters/system/mail/ensure-container-mail");
+  });
+  const run = await executor.streamExec(
+    buildDbRunCommand(container, dbPort),
+    onLog as (l: LogEntry) => void,
+  );
   if (run.code !== 0) return false;
-  const listening = await waitForPortListening(executor, MAIL_DB_PORT, { timeoutMs: 60_000 });
+  const listening = await waitForPortListening(executor, dbPort, { timeoutMs: 60_000 });
   // checked:false = inconclusive probe; don't fail the DB on a missing /proc read.
   return !(listening.checked && !listening.listening);
 }
@@ -432,7 +563,9 @@ async function startEngine(
   hostname: string,
   onLog: SystemLogCallback,
 ): Promise<boolean> {
-  await executor.exec(`docker rm -f ${sq(container)} 2>/dev/null || true`).catch(() => {});
+  await executor.exec(`docker rm -f ${sq(container)} 2>/dev/null || true`).catch((diagnosticFailure) => {
+    observeCaughtError(diagnosticFailure, "adapters/system/mail/ensure-container-mail");
+  });
   const run = await executor.streamExec(
     buildMailRunCommand(container, image, hostname),
     onLog as (l: LogEntry) => void,
@@ -569,7 +702,7 @@ export async function ensureContainerMail(
 
   // 2. Host state dirs (engine mounts + DB data dir). Through the privilege gate, and
   //    reported rather than swallowed: these are root-owned paths under
-  //    /var/lib/openship/mail, so on a box we log into as a non-root sudo user the
+  //    /var/lib/kovalio/mail, so on a box we log into as a non-root sudo user the
   //    unelevated `mkdir` fails. The comment here already named the consequence — "a
   //    missing host dir silently becomes an empty bind and loses data" — and then
   //    `.catch(() => {})` made it silent, so the one outcome worth an operator's
@@ -582,6 +715,7 @@ export async function ensureContainerMail(
   });
   for (const mount of MAIL_CONTAINER_MOUNTS) {
     await hostState.exec(`mkdir -p ${sq(mount.host)}`).catch((err: unknown) => {
+      observeCaughtError(err, "adapters/system/mail/ensure-container-mail");
       onLog(
         log(
           `Could not create the mail state directory ${mount.host}: ${safeErrorMessage(err)}. ` +
@@ -592,6 +726,7 @@ export async function ensureContainerMail(
     });
   }
   await hostState.exec(`mkdir -p ${sq(MAIL_DB_HOST_DATA_DIR)}`).catch((err: unknown) => {
+    observeCaughtError(err, "adapters/system/mail/ensure-container-mail");
     onLog(
       log(
         `Could not create the mail database directory ${MAIL_DB_HOST_DATA_DIR}: ` +
@@ -613,7 +748,13 @@ export async function ensureContainerMail(
   const retainedRoot = await retainedDbPassword(hostState, onLog);
   const dbRootPassword =
     retainedRoot ?? opts.secrets.PGSQL_ROOT_PASSWD ?? opts.secrets.VMAIL_DB_ADMIN_PASSWD ?? "";
-
+  const isExplicitPort =
+    opts.dbPort !== undefined || Boolean(process.env.KOVALIO_MAIL_DB_PORT?.trim());
+  const preferredPort = resolveMailDbPort(opts.dbPort);
+  const retainedPort =
+    (await retainedDbPort(hostState, onLog)) ?? (await containerDbPort(executor, dbContainer));
+  const dbPort =
+    retainedPort ?? (await findAvailableMailDbPort(executor, preferredPort, isExplicitPort, onLog));
   await writeEnvFile(hostState, DB_ENV_FILE, {
     POSTGRES_USER: "postgres",
     POSTGRES_DB: MAIL_DB_NAME,
@@ -621,12 +762,12 @@ export async function ensureContainerMail(
   });
   await handOverEnvFile(executor, DB_ENV_FILE, onLog);
   await writeEnvFile(hostState, ENGINE_ENV_FILE, {
-    FIRST_DOMAIN: opts.domain,
-    OPENSHIP_MAIL_DB_HOST: MAIL_DB_HOST_BIND,
-    OPENSHIP_MAIL_DB_PORT: String(MAIL_DB_PORT),
-    OPENSHIP_MAIL_DB_NAME: MAIL_DB_NAME,
-    OPENSHIP_MAIL_DB_USER: MAIL_DB_USER,
     ...opts.secrets,
+    FIRST_DOMAIN: opts.domain,
+    KOVALIO_MAIL_DB_HOST: MAIL_DB_HOST_BIND,
+    KOVALIO_MAIL_DB_PORT: String(dbPort),
+    KOVALIO_MAIL_DB_NAME: MAIL_DB_NAME,
+    KOVALIO_MAIL_DB_USER: MAIL_DB_USER,
     // Spread LAST so the retained value wins: the engine's first-boot bootstrap connects
     // as the superuser, and it has to use the password the cluster actually has, not the
     // one this deploy generated.
@@ -637,7 +778,7 @@ export async function ensureContainerMail(
   try {
     // 4. DB sidecar first — the engine's entrypoint blocks on it.
     onLog(log("Starting the mail database (postgres sidecar)..."));
-    if (!(await startDb(executor, dbContainer, onLog))) {
+    if (!(await startDb(executor, dbContainer, onLog, dbPort))) {
       throw new Error("the mail database container failed to become ready");
     }
 
@@ -654,11 +795,12 @@ export async function ensureContainerMail(
     onLog(log("Mail engine container running"));
     return { container, dbContainer, image };
   } catch (err) {
+    observeCaughtError(err, "adapters/system/mail/ensure-container-mail");
     const msg = safeErrorMessage(err);
     onLog(log(`Mail engine setup failed: ${msg}`, "error"));
     const logs = await executor
       .exec(`docker logs --tail 60 ${sq(container)} 2>&1 || true`)
-      .catch(() => "");
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/mail/ensure-container-mail"); return ""; });
     if (logs.trim()) onLog(log(`Mail engine logs:\n${logs}`, "error"));
     throw new Error(`Mail engine setup failed: ${msg}`);
   }
@@ -710,6 +852,10 @@ export async function startContainerMail(
     };
   }
 
+  const dbPort = await containerDbPort(executor, dbContainer);
+  if (dbPort === null)
+    return { started: false, reason: "Could not determine the existing mail database port." };
+
   // DB sidecar first: the engine's entrypoint blocks on it.
   onLog(log("Starting the mail database (postgres sidecar)..."));
   const db = await executor.streamExec(
@@ -719,10 +865,10 @@ export async function startContainerMail(
   if (db.code !== 0) {
     return { started: false, reason: "the mail database container did not start" };
   }
-  const dbListening = await waitForPortListening(executor, MAIL_DB_PORT, { timeoutMs: 60_000 });
+  const dbListening = await waitForPortListening(executor, dbPort, { timeoutMs: 60_000 });
   // checked:false = inconclusive probe; don't fail on a missing /proc read.
   if (dbListening.checked && !dbListening.listening) {
-    return { started: false, reason: `the mail database is not listening on :${MAIL_DB_PORT}` };
+    return { started: false, reason: `the mail database is not listening on :${dbPort}` };
   }
 
   onLog(log("Starting the mail engine container..."));
@@ -738,7 +884,7 @@ export async function startContainerMail(
     onLog(log(`Could not start the mail engine: ${reason}`, "error"));
     const logs = await executor
       .exec(`docker logs --tail 60 ${sq(container)} 2>&1 || true`)
-      .catch(() => "");
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/mail/ensure-container-mail"); return ""; });
     if (logs.trim()) onLog(log(`Mail engine logs:\n${logs}`, "error"));
     return { started: false, reason };
   }
@@ -759,7 +905,7 @@ export async function detectMailContainer(
   executor: CommandExecutor,
   container = MAIL_CONTAINER,
 ): Promise<{ running: boolean; image: string | null; exists: boolean }> {
-  const state = await containerState(executor, container);
+  const state = await containerState(executor, container, { strict: true });
   if (!state) return { running: false, image: null, exists: false };
   return { running: state.running, image: state.image, exists: true };
 }

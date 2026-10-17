@@ -1,6 +1,8 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import "server-only";
 import { cache } from "react";
 import { serverApi, ServerApiError } from "./api";
+import type { AdvertisedAuthProvider } from "@/lib/auth-providers";
 
 /**
  * Session and user types returned by Better Auth's `/api/auth/get-session`.
@@ -54,14 +56,15 @@ export async function needsOrgSelection(
       "auth/organization/list",
       { cache: "no-store" },
     );
-    const orgs = !res ? [] : Array.isArray(res) ? res : res.data ?? [];
+    const orgs = !res ? [] : Array.isArray(res) ? res : (res.data ?? []);
     // Trust the active org only if it's an ACTUAL membership. A stale/foreign
     // active org (e.g. the zero-auth Local User's workspace carried over after
     // cloud-connect) must NOT count as resolved — otherwise the two layouts
     // disagree and loop, and the UI scopes to an org the user isn't in.
     if (activeOrganizationId && orgs.some((o) => o.id === activeOrganizationId)) return false;
     return orgs.length >= 2;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/lib/server/session");
     return false;
   }
 }
@@ -85,6 +88,7 @@ export const getSession = cache(async (): Promise<SessionData | null> => {
       });
       return data;
     } catch (err) {
+      observeCaughtError(err, "dashboard/lib/server/session");
       // 401 = genuinely unauthenticated - no point retrying
       if (err instanceof ServerApiError && err.status === 401) {
         return null;
@@ -106,9 +110,11 @@ export const getSession = cache(async (): Promise<SessionData | null> => {
 /* ------------------------------------------------------------------ */
 
 export type DeploymentInfo = {
+  /** Advertised only by the production SaaS API; contains no PostHog key. */
+  cloudAnalytics?: { dashboardOrigin: string };
   selfHosted: boolean;
   deployMode: string;
-  /** True when OpenShip runs ON a server (self-hosted, non-desktop) — the host
+  /** True when Kovalio runs ON a server (self-hosted, non-desktop) — the host
    *  is itself a deployable target, auto-registered as an isLocal server. */
   isServerHost?: boolean;
   /** Whether the box is currently a deploy target for itself (host control on).
@@ -117,14 +123,24 @@ export type DeploymentInfo = {
    *  it, and consumers treat a missing value as "unknown / fall back to server". */
   hostControlEnabled?: boolean;
   authMode: "cloud" | "local" | "none";
+  /** Running server release. Optional because older APIs omit it. */
+  version?: string;
   /**
    * Which product this instance presents itself as — "platform" (the full deploy
-   * platform) or "mail" (Openship Mail). Resolved by the API's single
+   * platform) or "mail" (Kovalio Mail). Resolved by the API's single
    * product-mode resolver, so it already accounts for CLOUD_MODE and the
    * operator's instance_settings toggle. Optional because an older API won't
    * send it; `resolveProductView` treats a missing value as "platform".
    */
   productMode?: "platform" | "mail";
+  /**
+   * Social-login providers the API actually has credentials for, advertised by
+   * GET /health/env. The auth pages render exactly these (see
+   * lib/auth-providers.ts) instead of assuming "cloud ⇒ github+google". Absent
+   * on an older server — treat that as "none advertised", which reproduces the
+   * old self-hosted behaviour.
+   */
+  authProviders?: AdvertisedAuthProvider[];
   cloudAuthUrl: string;
   cloudApiUrl: string;
   machineName?: string;
@@ -213,6 +229,7 @@ export async function getDeploymentInfo(
     _deploymentInfo = await fetchDeploymentInfoWithRetry();
     _deploymentInfoFetchedAt = Date.now();
   } catch (err) {
+    observeCaughtError(err, "dashboard/lib/server/session");
     // Last-known-good beats a transient refetch failure.
     if (_deploymentInfo) {
       return _deploymentInfo;

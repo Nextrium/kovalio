@@ -52,19 +52,20 @@ vi.mock("@repo/db", () => ({
   },
 }));
 
-vi.mock("../../../src/modules/deployments/session-manager", () => ({ getSession }));
+vi.mock("@repo/platform/engine/modules/deployments/session-manager", () => ({ getSession }));
 
 import {
   getDeploymentPendingActions,
   getOrgPendingActions,
   getProjectPendingActions,
-} from "../../../src/modules/projects/pending-actions.service";
+} from "@repo/platform/engine/modules/projects/pending-actions.service";
 
 const ORG = "org-1";
 const PROJECT = "proj-1";
 
 const dep = (over: Record<string, unknown> = {}) => ({
   id: "dep-1",
+  projectId: PROJECT,
   organizationId: ORG,
   status: "ready",
   meta: null,
@@ -195,7 +196,7 @@ describe("deploy_blocked — the case nothing could see before", () => {
     expect(action.message).toContain("node server.js");
   });
 
-  it("says Openship will stop it when the holder is our OWN stale deployment", async () => {
+  it("says Kovalio will stop it when the holder is our OWN stale deployment", async () => {
     findLatestByProject.mockResolvedValue(
       blockedByPort({
         errorDetails: {
@@ -209,11 +210,11 @@ describe("deploy_blocked — the case nothing could see before", () => {
 
     const [action] = await getProjectPendingActions(PROJECT, ORG);
 
-    expect(action.message).toContain("previous Openship deployment");
+    expect(action.message).toContain("previous Kovalio deployment");
     // Describes the offer without quoting the button's words: the deploy prompt now
     // labels it by what it stops ("Stop Container", "Stop Service"), so a literal
     // pinned here was a copy in two places that could disagree.
-    expect(action.message).toMatch(/Openship will (free the port|stop that (container|service)) first/);
+    expect(action.message).toMatch(/Kovalio will (free the port|stop that (container|service)) first/);
   });
 
   it("promises no Free Port button when the deploy refused to offer one", async () => {
@@ -222,7 +223,7 @@ describe("deploy_blocked — the case nothing could see before", () => {
     // choose Free Port" sends the operator to a button that will not be there.
     findLatestByProject.mockResolvedValue(
       blockedByPort({
-        errorMessage: "Port 3000 is published by a Docker container Openship couldn't identify",
+        errorMessage: "Port 3000 is published by a Docker container Kovalio couldn't identify",
         errorDetails: {
           port: 3000,
           pid: 42,
@@ -246,8 +247,8 @@ describe("deploy_blocked — the case nothing could see before", () => {
         errorDetails: {
           port: 3000,
           pid: 42,
-          command: "docker container openship-api-web (openship/api:latest)",
-          containerName: "openship-api-web",
+          command: "docker container kovalio-api-web (kovalio/api:latest)",
+          containerName: "kovalio-api-web",
           isManagedDeployment: true,
           dockerPublished: true,
           stopTarget: "container",
@@ -257,14 +258,14 @@ describe("deploy_blocked — the case nothing could see before", () => {
 
     const [action] = await getProjectPendingActions(PROJECT, ORG);
 
-    expect(action.message).toContain("openship-api-web");
+    expect(action.message).toContain("kovalio-api-web");
     expect(action.message).toContain("stop that container");
   });
 
   it("says it could not tell when ownership was never probed", async () => {
     // A listener with no systemd unit and no container carries no `isManagedDeployment`
     // at all. Treating absent as false would tell the operator a process is not
-    // Openship's when we simply couldn't establish it, and that is the difference
+    // Kovalio's when we simply couldn't establish it, and that is the difference
     // between "safe to free" and "might kill something else".
     findLatestByProject.mockResolvedValue(
       blockedByPort({
@@ -515,6 +516,56 @@ describe("advisories stay advisories", () => {
 
     expect(action.kind).toBe("port_advisory");
     expect(action.severity).toBe("advisory");
+  });
+
+  it.each([
+    { framework: undefined, target: 8080 },
+    { framework: "docker-compose", target: "svc-1" },
+  ])(
+    "reuses the port review action for a confirmed loopback bind ($framework)",
+    async ({ framework, target }) => {
+      const meta = {
+        portCheck: [
+          {
+            port: 8080,
+            serviceId: "svc-1",
+            serviceName: "api",
+            checked: true,
+            listening: true,
+            loopbackOnly: true,
+          },
+        ],
+      };
+      withPortCheck(meta, framework);
+
+      const actions = await getProjectPendingActions(PROJECT, ORG);
+
+      expect(actions).toHaveLength(1);
+      expect(actions[0]).toMatchObject({
+        id: `port_advisory:dep-live:${target}`,
+        kind: "port_advisory",
+        severity: "action_required",
+        details: { port: 8080, serviceId: "svc-1", loopbackOnly: true },
+        resolveWith: [
+          { method: "POST", path: "/api/deployments/dep-live/skip-port-check", body: { target } },
+        ],
+      });
+      expect(actions[0].message).toContain("0.0.0.0");
+      expect(actions[0].message).not.toContain("different port");
+
+      withPortCheck({ ...meta, portCheckSkipped: [target] }, framework);
+      expect(await getProjectPendingActions(PROJECT, ORG)).toEqual([]);
+    },
+  );
+
+  it("does not turn an unconfirmed bind or a reachable listener into an action", async () => {
+    withPortCheck({
+      portCheck: [
+        { port: 8080, checked: false, listening: true, loopbackOnly: true },
+        { port: 8081, checked: true, listening: true },
+      ],
+    });
+    expect(await getProjectPendingActions(PROJECT, ORG)).toEqual([]);
   });
 
   /**

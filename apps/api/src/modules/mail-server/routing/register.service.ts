@@ -1,6 +1,6 @@
 /**
  * Mail-server route registration - wires the route plan (built in @repo/core)
- * into openship's existing routing provider (NginxProvider / OpenResty /
+ * into kovalio's existing routing provider (NginxProvider / OpenResty /
  * Cloud, whichever is active on the deploy target).
  *
  * This is the I/O half of the routing module - the pure half lives in
@@ -24,6 +24,7 @@
  *     if some fail - to avoid leaving half-routed state behind.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import {
   buildMailServerRoutes,
   type MailRoute,
@@ -31,7 +32,7 @@ import {
   type MailServerRoutePlan,
   safeErrorMessage,
 } from "@repo/core";
-import { platform } from "../../../lib/controller-helpers";
+import { platform } from "@repo/platform/engine/lib/platform-config";
 
 export interface RouteRegistrationResult {
   routeId: MailRoute["id"];
@@ -46,7 +47,7 @@ export interface MailServerRouteRegistration {
 }
 
 /**
- * Build the plan from `input` and register each HTTP route with openship's
+ * Build the plan from `input` and register each HTTP route with kovalio's
  * active routing provider. Returns the plan (for the caller to surface DNS
  * records to the UI) + a per-route registration result.
  */
@@ -70,6 +71,7 @@ export async function registerMailServerRoutes(
       });
       results.push({ routeId: route.id, hostname: route.hostname, ok: true });
     } catch (err) {
+      observeCaughtError(err, "api/modules/mail-server/routing/register.service");
       results.push({
         routeId: route.id,
         hostname: route.hostname,
@@ -99,6 +101,7 @@ export async function removeMailServerRoutes(
       await routing.removeRoute(route.hostname);
       results.push({ routeId: route.id, hostname: route.hostname, ok: true });
     } catch (err) {
+      observeCaughtError(err, "api/modules/mail-server/routing/register.service");
       results.push({
         routeId: route.id,
         hostname: route.hostname,

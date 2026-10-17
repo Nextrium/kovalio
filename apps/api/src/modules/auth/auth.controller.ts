@@ -11,7 +11,7 @@
  *
  *   2. **Cloud auth** (/cloud-callback)
  *      User chose "Continue with Cloud" → authenticates on
- *      app.openship.io, exchanges a one-time code for a local session.
+ *      kovalio.nextrium.org, exchanges a one-time code for a local session.
  *      Desktop flow uses PKCE + nonce for end-to-end binding.
  *
  * The rest of the app treats both flows identically (one session
@@ -24,17 +24,23 @@
  * load before drizzle migrations have run.
  */
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import type { Context } from "hono";
-import { auth } from "../../lib/auth";
+import { auth, isSaasDeployment } from "@repo/platform/engine/lib/auth";
+import { repos } from "@repo/db";
+import {
+  invitationAccountCreationMode,
+  resolveInvitationClaim,
+} from "@repo/platform/engine/lib/invitation-claim";
 import { setSessionCookie } from "../../lib/session-cookie";
-import { localDashboardUrl } from "../../config/env";
+import { localDashboardUrl } from "@repo/platform/engine/config/env";
 import { alignLoopbackOrigin } from "@repo/core";
 
 // ─── HTML result page ────────────────────────────────────────────────────────
 
 /** Minimal status page shown in the system browser after cloud auth. */
 function desktopResultPage(title: string, message: string, success = false): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Openship</title></head>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Kovalio</title></head>
 <body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#fafafa">
 <div style="text-align:center;max-width:420px">
   <div style="font-size:48px;margin-bottom:16px">${success ? "✓" : "⚠"}</div>
@@ -46,6 +52,46 @@ function desktopResultPage(title: string, message: string, success = false): str
 }
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/auth/invitation-preview/:id
+ *
+ * Invitation claim pages must load before an invitee has a session. Better
+ * Auth's own get-invitation endpoint is session-bound, so expose only the
+ * token-bound, non-secret projection the page needs. Every invalid lifecycle
+ * state is the same 404 to avoid turning this into an invitation oracle.
+ */
+export async function invitationPreview(c: Context) {
+  c.header("Cache-Control", "no-store");
+  c.header("Referrer-Policy", "no-referrer");
+
+  const invitationId = (c.req.param("id") ?? "").trim();
+  const claim = await resolveInvitationClaim(invitationId);
+  if (!claim) {
+    return c.json({ error: "This invitation is invalid or has expired." }, 404);
+  }
+
+  const existingUser = await repos.user.findByEmail(claim.email);
+  const accountCreation = invitationAccountCreationMode({
+    accountExists: !!existingUser,
+    isSaas: isSaasDeployment,
+    inviterIsInstanceAdmin: claim.inviterIsInstanceAdmin,
+  });
+
+  return c.json({
+    data: {
+      invitation: {
+        id: claim.id,
+        email: claim.email,
+        role: claim.role,
+        expiresAt: claim.expiresAt.toISOString(),
+      },
+      organization: claim.organization,
+      inviter: { name: claim.inviterName },
+      accountCreation,
+    },
+  });
+}
 
 /**
  * GET /api/auth/get-session
@@ -68,7 +114,8 @@ export async function getSession(c: Context) {
       // backfill needed; the migration handled any legacy rows.
       return c.json(realSession);
     }
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "api/modules/auth/auth.controller");
     // session lookup failed — fall through to zero-auth bootstrap below
   }
 
@@ -171,7 +218,7 @@ export async function desktopLogin(c: Context) {
 export async function cloudCallback(c: Context) {
   const code = c.req.query("code");
   if (!code) {
-    return c.html(desktopResultPage("Missing authentication code", "Please return to Openship and try again."));
+    return c.html(desktopResultPage("Missing authentication code", "Please return to Kovalio and try again."));
   }
 
   const state = c.req.query("state");
@@ -190,7 +237,7 @@ export async function cloudCallback(c: Context) {
     if (!state) {
       const data = await exchangeCodeWithCloud(code);
       if (!data) {
-        return c.html(desktopResultPage("Authentication failed", "Could not verify with Openship Cloud. Please return to Openship and try again."));
+        return c.html(desktopResultPage("Authentication failed", "Could not verify with Kovalio Cloud. Please return to Kovalio and try again."));
       }
 
       const mirroredUserId = await mirrorCloudUser(data.user);
@@ -209,13 +256,13 @@ export async function cloudCallback(c: Context) {
 
     const validated = validateDesktopState(state);
     if (!validated) {
-      return c.html(desktopResultPage("Invalid or expired session", "The authorization request has expired. Please return to Openship and try again."));
+      return c.html(desktopResultPage("Invalid or expired session", "The authorization request has expired. Please return to Kovalio and try again."));
     }
 
     const data = await exchangeCodeWithCloud(code, validated.codeVerifier);
     if (!data) {
       failDesktopAuth(validated.nonce);
-      return c.html(desktopResultPage("Authentication failed", "Could not verify with Openship Cloud. Please return to Openship and try again."));
+      return c.html(desktopResultPage("Authentication failed", "Could not verify with Kovalio Cloud. Please return to Kovalio and try again."));
     }
 
     // Always mirror the cloud user for record-keeping
@@ -237,18 +284,19 @@ export async function cloudCallback(c: Context) {
     // up the session via /desktop-auth-poll.
     resolveDesktopAuth(validated.nonce, session.token, session.expiresAt);
 
-    return c.html(desktopResultPage("Signed in to Openship", "You can return to the Openship app now.", true));
+    return c.html(desktopResultPage("Signed in to Kovalio", "You can return to the Kovalio app now.", true));
   } catch (err) {
     // Signal failure to the polling loop so Electron doesn't hang
     try {
       const { failDesktopAuth, getActiveNonce } = await import("../../lib/cloud-auth-proxy");
       const nonce = getActiveNonce();
       if (nonce) failDesktopAuth(nonce);
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "api/modules/auth/auth.controller");
       // best-effort
     }
-    console.error("[cloud-callback] error:", err);
-    return c.html(desktopResultPage("Authentication failed", "Something went wrong. Please return to Openship and try again."));
+    errorDiagnostics.error("api/modules/auth/auth.controller", "[cloud-callback] error:", err);
+    return c.html(desktopResultPage("Authentication failed", "Something went wrong. Please return to Kovalio and try again."));
   }
 }
 
@@ -282,7 +330,8 @@ export async function desktopAuthStart(c: Context) {
   try {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     connectUserId = session?.user?.id;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "api/modules/auth/auth.controller");
     // No session — onboarding flow; mirror cloud user instead.
   }
 

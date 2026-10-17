@@ -31,7 +31,7 @@ function parseArgs(argv: string[]): Args {
     const i = argv.indexOf(flag);
     return i >= 0 ? argv[i + 1] : undefined;
   };
-  const base = get("--base")?.replace(/\/+$/, "");
+  const base = get("--base")?.replace(/(?<!\/)\/+$/, "");
   const email = get("--email");
   const password = get("--password");
   if (!base || !email || !password) {

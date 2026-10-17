@@ -8,7 +8,7 @@
  *
  * Stripe is the source of truth: a code, how many times it has been redeemed and
  * when it expires all live on the Stripe coupon + promotion code, so there is no
- * Openship table to keep in sync and nothing to reconcile. Redemption needs no
+ * Kovalio table to keep in sync and nothing to reconcile. Redemption needs no
  * new code either — checkout already sends `allow_promotion_codes: true`, so the
  * "Add promotion code" box is on the Stripe Checkout page.
  *
@@ -20,11 +20,11 @@
 
 import type Stripe from "stripe";
 import { PLAN_IDS, PRICING, resolveStripePriceId, type PlanTierId } from "@repo/core";
-import { stripe } from "../src/lib/stripe-client";
+import { stripe } from "@repo/platform/engine/lib/stripe-client";
 
 const INVOCATION = "bun --cwd apps/api scripts/promo-code.ts";
 /** Stamped on everything this CLI creates, so hand-made codes stay tellable. */
-const CREATED_BY = "openship-promo-cli";
+const CREATED_BY = "kovalio-promo-cli";
 
 const out = (msg = "") => console.log(msg ? `[promo-code] ${msg}` : "");
 const warn = (msg: string) => console.error(`[promo-code] ${msg}`);
@@ -510,7 +510,7 @@ async function cmdRevoke({ positionals, flags }: Args): Promise<void> {
 
 function printHelp(): void {
   const restrictable = RESTRICTABLE_TIERS.map((tier) => `\n                           ${tier} → ${priceEnvFor(tier)}`).join("");
-  console.log(`Openship promo codes — Stripe coupons + promotion codes, managed from the API container.
+  console.log(`Kovalio promo codes — Stripe coupons + promotion codes, managed from the API container.
 
 Usage
   ${INVOCATION} <command> [flags]

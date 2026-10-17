@@ -31,7 +31,7 @@ describe("edge not-found page", () => {
     expect(EDGE_NOT_FOUND_HTML).not.toContain("\n");
   });
 
-  test("contains no # — Openship's OWN config reader cuts lines at one", () => {
+  test("contains no # — Kovalio's OWN config reader cuts lines at one", () => {
     // nginx doesn't care; `stripComments` in the proxy importer did. A CSS `#fff` here
     // truncated the line mid-page, taking ~40 closing braces with it, and since
     // `_default.conf` sorts first in the edge scan's single `cat` the brace balance

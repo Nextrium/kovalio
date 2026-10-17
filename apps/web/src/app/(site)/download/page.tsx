@@ -1,4 +1,6 @@
 "use client";
+import { reportCaughtError } from "@repo/core/diagnostics";
+
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -39,27 +41,27 @@ type DownloadEntry = {
 };
 
 const DOWNLOADS: DownloadEntry[] = [
-  { platform: "mac-arm",   title: "macOS",   subtitle: "Apple Silicon (M1–M4)", icon: AppleIcon,   fileName: "Openship-arm64.dmg",   size: "84 MB" },
-  { platform: "mac-intel", title: "macOS",   subtitle: "Intel x86_64",          icon: AppleIcon,   fileName: "Openship-x64.dmg",     size: "92 MB" },
-  { platform: "windows",   title: "Windows", subtitle: "Windows 10/11 · 64-bit", icon: WindowsIcon, fileName: "Openship-win32-x64.zip", size: "76 MB" },
-  { platform: "linux",     title: "Linux",   subtitle: "AppImage · x86_64",     icon: LinuxIcon,   fileName: "Openship.AppImage",    size: "98 MB" },
+  { platform: "mac-arm",   title: "macOS",   subtitle: "Apple Silicon (M1–M4)", icon: AppleIcon,   fileName: "Kovalio-arm64.dmg",   size: "84 MB" },
+  { platform: "mac-intel", title: "macOS",   subtitle: "Intel x86_64",          icon: AppleIcon,   fileName: "Kovalio-x64.dmg",     size: "92 MB" },
+  { platform: "windows",   title: "Windows", subtitle: "Windows 10/11 · 64-bit", icon: WindowsIcon, fileName: "Kovalio-win32-x64.zip", size: "76 MB" },
+  { platform: "linux",     title: "Linux",   subtitle: "AppImage · x86_64",     icon: LinuxIcon,   fileName: "Kovalio.AppImage",    size: "98 MB" },
 ];
 
-const DOWNLOAD_BASE = "https://github.com/oblien/openship/releases/latest/download";
+const DOWNLOAD_BASE = "https://github.com/Nextrium/kovalio/releases/latest/download";
 
 const CLI_OPTIONS = [
-  { manager: "macOS / Linux", cmd: "curl -fsSL https://get.openship.io | sh" },
-  { manager: "Windows",       cmd: "irm https://git.openship.io/windows | iex" },
-  { manager: "npm",  cmd: "npm i -g openship" },
-  { manager: "pnpm", cmd: "pnpm add -g openship" },
-  { manager: "yarn", cmd: "yarn global add openship" },
-  { manager: "bun",  cmd: "bun add -g openship" },
+  { manager: "macOS / Linux", cmd: "curl -fsSL https://get.kovalio.nextrium.org | sh" },
+  { manager: "Windows",       cmd: "irm https://git.nextrium.org/windows | iex" },
+  { manager: "npm",  cmd: "npm i -g kovalio" },
+  { manager: "pnpm", cmd: "pnpm add -g kovalio" },
+  { manager: "yarn", cmd: "yarn global add kovalio" },
+  { manager: "bun",  cmd: "bun add -g kovalio" },
 ];
 
 const STEPS = [
   { num: "01", title: "Install", desc: "One command in any package manager. Runs on Node, no daemons or agents." },
-  { num: "02", title: "Run",     desc: "openship up starts Openship locally (API + dashboard), or openship install for the desktop app." },
-  { num: "03", title: "Ship",    desc: "openship init links your project, then openship deploy. TLS, DNS, databases, edge - done." },
+  { num: "02", title: "Run",     desc: "kovalio up starts Kovalio locally (API + dashboard), or kovalio install for the desktop app." },
+  { num: "03", title: "Ship",    desc: "kovalio init links your project, then kovalio deploy. TLS, DNS, databases, edge - done." },
 ];
 
 const MODES = [
@@ -107,7 +109,7 @@ export default function DownloadPage() {
 
   useEffect(() => {
     let alive = true;
-    fetch("https://api.github.com/repos/oblien/openship/releases/latest", {
+    fetch("https://api.github.com/repos/Nextrium/kovalio/releases/latest", {
       headers: { Accept: "application/vnd.github+json" },
     })
       .then((r) => (r.ok ? r.json() : null))
@@ -117,9 +119,9 @@ export default function DownloadPage() {
         for (const a of data.assets ?? []) sizes[a.name] = a.size;
         setRelease({ version: data.tag_name ?? "", sizes });
       })
-      .catch(() => {
+      .catch(error => { reportCaughtError(error, "web/app/(site)/download/page");
         /* rate-limited or offline → keep the static fallback labels */
-      });
+       });
     return () => {
       alive = false;
     };
@@ -201,7 +203,7 @@ export default function DownloadPage() {
           {/* Two-line headline */}
           <h1 className="animate-fade-in-up animate-delay-100">
             <span className="block text-[clamp(2.5rem,5.5vw,4.25rem)] font-medium leading-[1.08] tracking-[-0.02em] th-text-heading">
-              Install Openship.
+              Install Kovalio.
             </span>
             <span className="hero-headline-second block text-[clamp(2.5rem,5.5vw,4.25rem)] font-light italic leading-[1.08] tracking-[-0.015em]">
               Deploy in seconds.
@@ -230,7 +232,7 @@ export default function DownloadPage() {
                 </svg>
               </button>
               <a
-                href="https://github.com/oblien/openship"
+                href="https://github.com/Nextrium/kovalio"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="th-btn-ghost group rounded-full px-7 py-3 text-[15px] font-medium"
@@ -261,7 +263,7 @@ export default function DownloadPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/screen.png"
-              alt="The Openship desktop app - deployments, logs, and services in one native window"
+              alt="The Kovalio desktop app - deployments, logs, and services in one native window"
               width={2880}
               height={1800}
               loading="lazy"
@@ -397,7 +399,7 @@ export default function DownloadPage() {
                   color: "var(--th-text-muted)",
                 }}
               >
-                + openship@1.0.0 installed in 4.2s &nbsp;·&nbsp; <span style={{ color: "var(--th-clr-sea)" }}>ready</span>
+                + kovalio@1.0.0 installed in 4.2s &nbsp;·&nbsp; <span style={{ color: "var(--th-clr-sea)" }}>ready</span>
               </div>
             </div>
           </div>
@@ -423,7 +425,7 @@ export default function DownloadPage() {
               </span>
             </h2>
             <p className="mx-auto mt-5 max-w-md text-[16px] leading-[1.6]" style={{ color: "var(--th-text-body)" }}>
-              Same Openship in a polished desktop window. Auto-updates across every
+              Same Kovalio in a polished desktop window. Auto-updates across every
               platform, ready out of the box.
             </p>
           </div>
@@ -594,7 +596,7 @@ export default function DownloadPage() {
           <p className="mt-8 text-center text-[13px]" style={{ color: "var(--th-text-muted)" }}>
             requires macOS 12+, Windows 10+, or Ubuntu 20.04+ ·{" "}
             <a
-              href="https://github.com/oblien/openship/releases"
+              href="https://github.com/Nextrium/kovalio/releases"
               target="_blank"
               rel="noopener noreferrer"
               className="underline underline-offset-4"
@@ -721,13 +723,13 @@ export default function DownloadPage() {
             </p>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3.5">
               <button
-                onClick={() => handleCopy("npm i -g openship")}
+                onClick={() => handleCopy("npm i -g kovalio")}
                 className="th-btn group rounded-full px-7 py-3 text-[15px] font-medium"
               >
                 <span className="font-mono opacity-60">$</span>
-                npm i -g openship
+                npm i -g kovalio
                 <span className="ml-1.5 text-[11px] uppercase tracking-[0.08em] opacity-50">
-                  {copied === "npm i -g openship" ? "copied" : "copy"}
+                  {copied === "npm i -g kovalio" ? "copied" : "copy"}
                 </span>
               </button>
               <Link href="/docs" className="th-btn-ghost group rounded-full px-7 py-3 text-[15px] font-medium">

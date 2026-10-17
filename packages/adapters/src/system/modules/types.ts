@@ -3,7 +3,7 @@
  *
  * A signed, per-module catalog describes ordered, run-once migrations for infra
  * installed on servers (OpenResty first). The catalog is authored/signed by
- * Openship (ed25519), pulled from a pinned GitHub ref (or the embedded fallback),
+ * Kovalio (ed25519), pulled from a pinned GitHub ref (or the embedded fallback),
  * and VERIFIED before anything is written or executed on a target host. See
  * ./verify.ts for the trust gate and ./reconcile.ts for the runner.
  *
@@ -11,6 +11,7 @@
  * at the apply layer, stamp-last so a crash resumes rather than lands "current".
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { FAMILY_BY_DISTRO, type DistroFamily } from "@repo/core";
 
 /** Apply tier. `auto` converges with no operator click (additive/safe changes);
@@ -152,7 +153,8 @@ function shown(value: unknown): string {
   if (value === undefined) return "undefined";
   try {
     return JSON.stringify(value) ?? String(value);
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/system/modules/types");
     return String(value);
   }
 }

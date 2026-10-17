@@ -20,7 +20,7 @@ function dockerConfigDir(
   contexts: Record<string, string> = {},
   currentContext?: string,
 ): string {
-  const dir = mkdtempSync(join(tmpdir(), "openship-docker-cfg-"));
+  const dir = mkdtempSync(join(tmpdir(), "kovalio-docker-cfg-"));
   if (currentContext !== undefined) {
     writeFileSync(join(dir, "config.json"), JSON.stringify({ currentContext }));
   }
@@ -92,7 +92,7 @@ describe("resolveLocalDockerSocketPath", () => {
 describe("resolveLocalDockerSocketPath: docker CLI context", () => {
   it("reads the active context when DOCKER_HOST is unset", () => {
     // `colima start` selects a context and exports nothing. Before this tier,
-    // `docker ps` worked in the operator's shell while Openship saw no daemon.
+    // `docker ps` worked in the operator's shell while Kovalio saw no daemon.
     const DOCKER_CONFIG = dockerConfigDir(
       { colima: "unix:///Users/me/.colima/default/docker.sock" },
       "colima",
@@ -132,7 +132,7 @@ describe("resolveLocalDockerSocketPath: docker CLI context", () => {
 
   it("survives a missing config, a missing context and unreadable JSON", () => {
     expect(
-      resolveLocalDockerSocketPath(undefined, { DOCKER_CONFIG: join(tmpdir(), "openship-no-such-dir") }),
+      resolveLocalDockerSocketPath(undefined, { DOCKER_CONFIG: join(tmpdir(), "kovalio-no-such-dir") }),
     ).toBe(DEFAULT_DOCKER_SOCKET_PATH);
     // currentContext names a context with no meta.json on disk.
     expect(resolveLocalDockerSocketPath(undefined, { DOCKER_CONFIG: dockerConfigDir({}, "ghost") })).toBe(

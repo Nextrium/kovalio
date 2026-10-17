@@ -4,7 +4,7 @@ import { DockerRuntime } from "../src/runtime/docker";
 describe("DockerRuntime container status normalization", () => {
   it("correctly identifies running status when State.Running is true regardless of State.Status casing", async () => {
     const runtime = await DockerRuntime.create();
-    
+
     // Mock container inspect response
     const mockInspectInfo: any = {
       Id: "container-12345",
@@ -49,6 +49,44 @@ describe("DockerRuntime container status normalization", () => {
     expect(info.status).toBe("running");
   });
 
+  it("retains every TCP host-port mapping for a stopped container", async () => {
+    const runtime = await DockerRuntime.create();
+    const mockInspectInfo: any = {
+      Id: "container-stopped",
+      State: {
+        Status: "exited",
+        Running: false,
+        Paused: false,
+        StartedAt: "",
+      },
+      // Docker reports these as null/empty once the container stops.
+      NetworkSettings: {
+        Networks: {},
+        Ports: { "3000/tcp": null, "3001/tcp": null, "5353/udp": null },
+      },
+      // The configured bindings remain authoritative while stopped.
+      HostConfig: {
+        PortBindings: {
+          // Docker does not promise an order. Preserve Kovalio's loopback route
+          // binding, not the earlier public binding for the same container port.
+          "3000/tcp": [
+            { HostIp: "0.0.0.0", HostPort: "13000" },
+            { HostIp: "127.0.0.1", HostPort: "23000" },
+          ],
+          "3001/tcp": [{ HostIp: "127.0.0.1", HostPort: "23001" }],
+          "5353/udp": [{ HostIp: "127.0.0.1", HostPort: "25353" }],
+        },
+      },
+    };
+
+    runtime.docker.getContainer = (() => ({ inspect: async () => mockInspectInfo })) as any;
+
+    const info = await runtime.getContainerInfo("container-stopped");
+    expect(info.status).toBe("stopped");
+    expect(info.hostPort).toBe(23000);
+    expect(info.hostPortByContainerPort).toEqual({ 3000: 23000, 3001: 23001 });
+  });
+
   it("normalizes listDeploymentContainers state string in case-insensitive manner", async () => {
     const runtime = await DockerRuntime.create();
 
@@ -56,17 +94,17 @@ describe("DockerRuntime container status normalization", () => {
       {
         Id: "c1",
         State: "Running",
-        Labels: { "openship.deployment": "dep1", "openship.service": "web" },
+        Labels: { "kovalio.deployment": "dep1", "kovalio.service": "web" },
       },
       {
         Id: "c2",
         State: "HEALTHY",
-        Labels: { "openship.deployment": "dep1", "openship.service": "db" },
+        Labels: { "kovalio.deployment": "dep1", "kovalio.service": "db" },
       },
       {
         Id: "c3",
         State: "Exited",
-        Labels: { "openship.deployment": "dep1", "openship.service": "cache" },
+        Labels: { "kovalio.deployment": "dep1", "kovalio.service": "cache" },
       },
     ]) as any;
 
@@ -86,22 +124,22 @@ describe("DockerRuntime container status normalization", () => {
     runtime.docker.listContainers = (async () => [
       {
         Id: "c_api",
-        Names: ["/openship-openship-api"],
-        Image: "openship/openship-api:bld_x",
+        Names: ["/kovalio-kovalio-api"],
+        Image: "kovalio/kovalio-api:bld_x",
         ImageID: "sha256:1",
         State: "Restarting",
         Status: "Restarting (1) 44 seconds ago",
-        Labels: { "openship.project": "proj_1", "openship.service": "api" },
+        Labels: { "kovalio.project": "proj_1", "kovalio.service": "api" },
         Ports: [{ PrivatePort: 4000, PublicPort: 4000, Type: "tcp" }],
         Mounts: [],
-        NetworkSettings: { Networks: { "openship-openship": { IPAddress: "172.18.0.7" } } },
+        NetworkSettings: { Networks: { "kovalio-kovalio": { IPAddress: "172.18.0.7" } } },
       },
     ]) as any;
 
     const [c] = await runtime.listAllContainers();
     expect(c).toMatchObject({
       id: "c_api",
-      names: ["openship-openship-api"],
+      names: ["kovalio-kovalio-api"],
       state: "restarting",
       status: "Restarting (1) 44 seconds ago",
       ip: "172.18.0.7",
@@ -114,7 +152,7 @@ describe("DockerRuntime container status normalization", () => {
     runtime.docker.listContainers = (async () => [
       {
         Id: "c_stopped",
-        Names: ["/openship-openship-web"],
+        Names: ["/kovalio-kovalio-web"],
         Image: "img",
         ImageID: "sha256:2",
         State: "exited",

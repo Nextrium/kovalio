@@ -1,15 +1,16 @@
 /**
  * On-box module manifest — the per-server, per-module record of what has been
- * migrated. Lives at /etc/openship/modules/<module>.json (sibling to the
+ * migrated. Lives at /etc/kovalio/modules/<module>.json (sibling to the
  * FileStateStore's setup-state.json) and is read/written over the CommandExecutor
  * exactly like state.ts's FileStateStore, so it works on both local and SSH hosts.
  *
- * This generalizes the single `.openship-lua-version` content-hash marker
+ * This generalizes the single `.kovalio-lua-version` content-hash marker
  * (openresty-lua.ts) into a real version + run-once ledger: `migrationVersion`
  * (last fully-applied catalog version), `appliedSteps` (ids already run — the
  * run-once key), and `catalogSerial` (anti-rollback high-water mark).
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import type { CommandExecutor } from "../../types";
 
 export interface OnBoxManifest {
@@ -29,7 +30,7 @@ export interface OnBoxManifest {
 }
 
 /** Directory holding one manifest per module. */
-export const MODULES_STATE_DIR = "/etc/openship/modules";
+export const MODULES_STATE_DIR = "/etc/kovalio/modules";
 
 export function manifestPath(module: string): string {
   return `${MODULES_STATE_DIR}/${module}.json`;
@@ -63,7 +64,7 @@ export async function readManifest(
   executor: CommandExecutor,
   module: string,
 ): Promise<OnBoxManifest | null> {
-  const raw = await executor.readFile(manifestPath(module)).catch(() => "");
+  const raw = await executor.readFile(manifestPath(module)).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/modules/on-box-manifest"); return ""; });
   if (!raw.trim()) return null;
   try {
     return normalize(module, JSON.parse(raw));
@@ -75,7 +76,7 @@ export async function readManifest(
 /**
  * Read the manifest, seeding a baseline when the box predates this framework: if
  * there's no manifest yet but `legacyMarkerPath` exists on the box (e.g. the old
- * `.openship-lua-version` from openresty-lua.ts), assume the box is already at
+ * `.kovalio-lua-version` from openresty-lua.ts), assume the box is already at
  * `baselineVersion` so we don't replay the baseline install against a live box.
  * The baseline's steps are content-addressed anyway, but seeding avoids needless
  * churn and any non-idempotent baseline exec.
@@ -87,7 +88,7 @@ export async function readManifestOrSeed(
 ): Promise<OnBoxManifest> {
   const existing = await readManifest(executor, module);
   if (existing) return existing;
-  if (seed && (await executor.exists(seed.legacyMarkerPath).catch(() => false))) {
+  if (seed && (await executor.exists(seed.legacyMarkerPath).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/modules/on-box-manifest"); return false; }))) {
     return { module, migrationVersion: seed.baselineVersion, appliedSteps: [] };
   }
   return emptyManifest(module);

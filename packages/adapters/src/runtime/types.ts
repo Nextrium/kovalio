@@ -7,16 +7,18 @@
  * Three implementations:
  *   - DockerRuntime → Docker Engine via dockerode
  *   - BareRuntime   → Direct processes via child_process
- *   - CloudRuntime  → Oblien cloud API
+ *   - Managed Cloud → the same Docker/bare engines through Oblien transport
  */
 
 import type {
   BuildConfig,
+  ImageArtifactConfig,
   DeployConfig,
   BuildResult,
   DeploymentResult,
   LogEntry,
   LogCallback,
+  RuntimeLogStreamOptions,
   ContainerInfo,
   ContainerStatus,
   ResourceUsage,
@@ -24,7 +26,7 @@ import type {
   ShellOptions,
   ShellSession,
 } from "../types";
-import type { ComposeAdvanced } from "@repo/core";
+import type { ComposeAdvanced, StackRole } from "@repo/core";
 import type { BuildLogger } from "./build-pipeline";
 import type { PortProbeExecutor } from "../system/port-listen";
 import type { ContainerStabilitySample } from "./stability";
@@ -39,7 +41,11 @@ import type { ContainerStabilitySample } from "./stability";
  * it actually implements - callers never hit a silent stub.
  */
 export type RuntimeCapability =
+  /** Real Docker container semantics, including a Docker daemon in a cloud workspace. */
+  | "dockerHost"
   | "build"
+  /** Acquire and deploy an already-built application container image verbatim. */
+  | "prebuiltImage"
   | "deploy"
   | "multiServiceDeploy"
   | "stop"
@@ -81,13 +87,13 @@ export type RuntimeCapability =
    * by label, independent of DB tracking. Powers the project-deletion
    * orphan sweep: a container started by a deploy that later failed (or
    * whose row was lost) has no DB record, but it still carries the
-   * `openship.project=<id>` label — so teardown can reclaim it. Docker
+   * `kovalio.project=<id>` label — so teardown can reclaim it. Docker
    * implements this; Bare/Cloud don't (no label-queryable container set).
    */
   | "projectContainerSweep"
   /**
    * Runtime can enumerate the containers for a specific DEPLOYMENT by its
-   * `openship.deployment=<id>` label and report their live state. Powers
+   * `kovalio.deployment=<id>` label and report their live state. Powers
    * reconciliation: after a connection-loss deploy, we read back what's
    * actually running to resolve `reconciling` → ready/failed and detect
    * drift. Docker implements this; Bare/Cloud don't (no label-queryable set)
@@ -97,7 +103,7 @@ export type RuntimeCapability =
   /**
    * Runtime can enumerate EVERY container on its host, label-agnostic, with
    * live state — `docker ps -a`. Unlike `deploymentContainerQuery` this is not
-   * scoped by an `openship.*` label, which is exactly why the live service-state
+   * scoped by an `kovalio.*` label, which is exactly why the live service-state
    * read needs it: a migration-attached container keeps its ORIGINAL labels
    * (immutable in place), so a label-filtered query can never see it. Docker
    * implements this; Cloud/Bare don't (no host container set).
@@ -126,6 +132,21 @@ export type RuntimeCapability =
    * "inContainerExec". Omitted ⇒ not confined, so a new runtime fails closed.
    */
   | "isolatedExec"
+  /**
+   * Runtime can run a one-off RELEASE COMMAND against a freshly-built artifact,
+   * between the build and the cutover — `runReleaseCommand`. Docker runs it in a
+   * throwaway container off the new image; Bare runs it in the staged release
+   * directory. A runtime without this capability must refuse a deployment that
+   * requires release commands.
+   */
+  | "releaseCommand"
+  /**
+   * Runtime can run a deployment's ROLE processes (a worker, a scheduler) as
+   * separate containers off the same image as the web app: `deployRole`. Docker
+   * implements it; Cloud and Bare do not yet, so a deployment that declares
+   * roles must be refused there.
+   */
+  | "roles"
   /**
    * Runtime can report a container's RESTART HISTORY and health, not just a
    * point-in-time status — the readings the post-deploy stabilization watch
@@ -173,6 +194,13 @@ export interface ContainerLifecycleEvent {
 
 // ─── Interface ───────────────────────────────────────────────────────────────
 
+export interface ReleaseCommandOptions {
+  timeoutMs?: number;
+  signal?: AbortSignal;
+  /** Attach the candidate's service networks before its command can execute. */
+  beforeStart?: (containerId: string) => Promise<void>;
+}
+
 export interface RuntimeAdapter {
   /** Human-readable name of the runtime */
   readonly name: string;
@@ -185,6 +213,8 @@ export interface RuntimeAdapter {
 
   /** Clean up any resources held by the runtime (connections, temp files) */
   dispose?(): Promise<void>;
+  /** Cancel this deployment's API/build work without disposing the cleanup transport. */
+  setOperationSignal?(signal: AbortSignal): void;
 
   // ── Build lifecycle ──────────────────────────────────────────────────
 
@@ -196,6 +226,15 @@ export interface RuntimeAdapter {
    */
   build(config: BuildConfig, logger?: BuildLogger): Promise<BuildResult>;
 
+  /**
+   * Turn a registry image into this runtime's native deploy artifact.
+   *
+   * Docker pulls it onto the target daemon and returns an immutable digest when
+   * available. Cloud provisions a temporary workspace from it. Runtimes that
+   * cannot run container images (Bare) omit the method and capability.
+   */
+  prepareImage?(config: ImageArtifactConfig, logger?: BuildLogger): Promise<BuildResult>;
+
   /** Cancel an in-progress build */
   cancelBuild(sessionId: string): Promise<void>;
 
@@ -206,6 +245,42 @@ export interface RuntimeAdapter {
 
   /** Start a container/process from a completed build */
   deploy(config: DeployConfig, onLog?: LogCallback): Promise<DeploymentResult>;
+
+  /**
+   * Run ONE release command against the freshly-built artifact named by
+   * `config.imageRef`, before anything is activated. Streams the command's
+   * output through `onLog` and REJECTS on a non-zero exit (or on the timeout)
+   * with that output in the message, which is what fails the deploy.
+   *
+   * Must not touch the running deployment: this is a throwaway execution
+   * context (a one-off container / the not-yet-promoted release directory), so
+   * a failure leaves the previous version untouched and still serving.
+   * Only present when `supports("releaseCommand")`.
+   */
+  runReleaseCommand?(
+    config: DeployConfig,
+    command: string,
+    onLog: LogCallback,
+    opts?: ReleaseCommandOptions,
+  ): Promise<void>;
+
+  /**
+   * Start ONE replica of a runtime role (a worker or scheduler process) from
+   * the deployment's built image (`config.imageRef`), next to its web process.
+   * `replica` is 1-based and part of the container identity. The role gets the
+   * app's env, mounts and project network, but no port and no network alias.
+   * `opts.beforeStart` runs with the created container's id before its process
+   * starts (e.g. to join connected databases' networks); if it rejects, the
+   * container is removed and the error propagates.
+   * Callers must gate on `supports("roles")`.
+   */
+  deployRole?(
+    config: DeployConfig,
+    role: Pick<StackRole, "name" | "command" | "stopSignal" | "stopGracePeriod">,
+    replica: number,
+    onLog?: LogCallback,
+    opts?: { beforeStart?: (containerId: string) => Promise<void> },
+  ): Promise<{ containerId: string }>;
 
   /** Stop a running container/process (preserves state) */
   stop(containerId: string): Promise<void>;
@@ -221,15 +296,17 @@ export interface RuntimeAdapter {
 
   /**
    * List the IDs of every container this runtime owns for `projectId`,
-   * matched by the `openship.project` label (includes stopped ones).
+   * matched by the `kovalio.project` label (includes stopped ones).
    * Used by project teardown to reclaim orphans with no DB row. Only
    * present when `supports("projectContainerSweep")`.
    */
   listProjectContainerIds?(projectId: string): Promise<string[]>;
+  /** Remove an empty owned project scope after full project teardown (not one release). */
+  cleanupProject?(projectId: string, options?: { wipeVolumes?: boolean }): Promise<void>;
 
   /**
    * List the containers this runtime owns for `deploymentId`, matched by the
-   * `openship.deployment` label, with their live status + service name. Used
+   * `kovalio.deployment` label, with their live status + service name. Used
    * by reconciliation to read back the true state of a connection-loss deploy.
    * Only present when `supports("deploymentContainerQuery")`.
    */
@@ -241,7 +318,7 @@ export interface RuntimeAdapter {
    * Every container on this runtime's host (running or not), label-agnostic —
    * the raw `docker ps -a` view. The live service-state read matches these
    * against the project's service rows by identity (labels, container name,
-   * tracked id), so a container Openship adopted in place — carrying another
+   * tracked id), so a container Kovalio adopted in place — carrying another
    * project's labels — still reports its true state. Only present when
    * `supports("hostContainerQuery")`.
    */
@@ -293,7 +370,7 @@ export interface RuntimeAdapter {
   streamRuntimeLogs(
     containerId: string,
     onLog: LogCallback,
-    opts?: { tail?: number },
+    opts?: RuntimeLogStreamOptions,
   ): Promise<() => void>;
 
   /** Get current resource usage metrics */
@@ -320,28 +397,33 @@ export interface RuntimeAdapter {
   /**
    * Attach this project's containers to additional networks (by name) — for
    * cross-project service links, so a consumer joins a linked database app's
-   * `openship-<slug>` network and resolves its service alias with no public
+   * `kovalio-<slug>` network and resolves its service alias with no public
    * port. Best-effort + idempotent. Optional (docker only; cloud/bare skip —
    * cloud uses public host:port, its private-link mesh is group-scoped).
    */
   attachToExternalNetworks?(
     projectId: string,
     networkNames: string[],
-    /** Containers to include BEYOND the `openship.project` label match — an adopted
+    /** Containers to include BEYOND the `kovalio.project` label match — an adopted
      *  container keeps its original labels, so the filter cannot see it. */
     extraContainerIds?: string[],
+    options?: { prunePrefix?: string; retain?: string[]; strict?: boolean; onlyContainerIds?: string[] },
   ): Promise<void>;
 
   /**
    * Join already-running containers (migration attach-live reuse) to a project's
-   * `openship-<slug>` network with a DNS alias each, so a natively-deployed
+   * `kovalio-<slug>` network with a DNS alias each, so a natively-deployed
    * service in the SAME project resolves them by name (reused `postgres` reachable
    * from a freshly-built `web`). Additive network-connect — no restart, no volume
    * touch. Best-effort + idempotent. Optional (docker only). */
   joinServiceGroupContainers?(
     slug: string,
     members: Array<{ containerId: string; aliases: string[] }>,
+    options?: { strict?: boolean },
   ): Promise<void>;
+
+  /** Disconnect exact containers from a shared-service network; remove it when empty. */
+  leaveServiceGroupContainers?(slug: string, containerIds: string[]): Promise<void>;
 
   // ── Rollback primitives ──────────────────────────────────────────────
   //
@@ -428,10 +510,7 @@ export interface RuntimeAdapter {
    * Open an interactive shell inside a deployed service. Optional —
    * runtimes without `serviceShell` capability throw if called.
    */
-  openServiceShell?(
-    containerId: string,
-    opts?: ShellOptions,
-  ): Promise<ShellSession>;
+  openServiceShell?(containerId: string, opts?: ShellOptions): Promise<ShellSession>;
 }
 
 // ─── Rollback primitive types ───────────────────────────────────────────────
@@ -489,7 +568,7 @@ export interface MultiServiceDeployConfig {
   ports: string[];
   environment: Record<string, string>;
   volumes: string[];
-  /** When true, NAMED volumes are project-scoped (openship-<slug>-<name>) at
+  /** When true, NAMED volumes are project-scoped (kovalio-<slug>-<name>) at
    *  create time. False for grandfathered pre-migration services (bare names). */
   namespaceVolumes: boolean;
   command?: string;
@@ -503,11 +582,15 @@ export interface MultiServiceDeployConfig {
   restart?: string;
   /**
    * Force a fresh `docker pull` of the image tag even when a local copy exists.
-   * Set only for the "update" trigger — a normal deploy/redeploy stays
-   * pull-if-missing so it never surprise-bumps a `:latest` app or defeats the
-   * unchanged-image carry-forward.
+   * Set for explicit update operations and incoming deploy hooks. A normal
+   * manual redeploy stays pull-if-missing so it never surprise-bumps a
+   * `:latest` app or defeats unchanged-image carry-forward.
    */
   forcePull?: boolean;
+  /** The exact image reference was produced/pinned by the orchestrator or was
+   * already pulled during cohort preparation. Docker must not infer this from
+   * the tag text: a registry image can legitimately use Kovalio's tag shape. */
+  imageAlreadyPrepared?: boolean;
   /** Extended compose fields (healthcheck, …). Docker honors them; runtimes
    *  that can't (cloud) warn-and-drop. See ComposeAdvanced in @repo/core. */
   advanced?: ComposeAdvanced;
@@ -521,11 +604,10 @@ export interface MultiServiceDeployConfig {
   publicSlug?: string;
   customDomain?: string;
   expose?: boolean;
-  /** Cloud only: the workspace id this service used in the PREVIOUS deployment.
-   *  Reused so its permanent-workspace disk — the only persistence Oblien
-   *  offers (no volume primitive) — survives a redeploy. A fresh workspace each
-   *  deploy = silent data loss for stateful services (Postgres, Redis, …). */
-  previousWorkspaceId?: string;
+  /** All approved Cloud hostnames for this service, including secondary ports. */
+  cloudEndpoints?: Array<{ hostname: string; port: number; custom: boolean }>;
+  /** Ports needed by project/composite edge routes, without a service hostname. */
+  cloudProxyPorts?: number[];
   /** Service names this service depends on (compose `depends_on`). Used for
    *  readiness ordering on runtimes with no native healthcheck. */
   dependsOn?: string[];
@@ -551,6 +633,8 @@ export interface MultiServiceDeployConfig {
 export interface MultiServiceDeployResult {
   containerId: string;
   status: string;
+  /** The container is running, but one or more edge routes need a retry. */
+  routeWarnings?: string[];
   ip?: string;
   /** The FIRST binding the daemon reports — arbitrary for a multi-port container.
    *  Anything picking a proxy target for a SPECIFIC container port must read
@@ -630,10 +714,7 @@ export interface MultiServiceRuntimeAdapter extends RuntimeAdapter {
    * reachable by name. Absent on runtimes with live DNS (Docker) — their real
    * network needs no post-pass.
    */
-  finalizeServiceGroup?(
-    group: MultiServiceGroupHandle,
-    onLog?: LogCallback,
-  ): Promise<void>;
+  finalizeServiceGroup?(group: MultiServiceGroupHandle, onLog?: LogCallback): Promise<void>;
 
   /**
    * Optional: seed an ALREADY-RUNNING service into the group's in-memory mesh
@@ -672,10 +753,10 @@ export function isMultiServiceRuntime(
 
 // ─── Docker discovery (label-agnostic inspection) ─────────────────────────────
 //
-// DTOs for MIGRATING an existing Docker deployment into Openship. The
-// label-scoped queries elsewhere in DockerRuntime only see `openship.*`
+// DTOs for MIGRATING an existing Docker deployment into Kovalio. The
+// label-scoped queries elsewhere in DockerRuntime only see `kovalio.*`
 // containers; these enumerate the WHOLE daemon so we can adopt containers
-// Openship never created (a hand-run `docker run`, or a `docker compose` stack).
+// Kovalio never created (a hand-run `docker run`, or a `docker compose` stack).
 // All fields are plain/serializable — they cross the API→dashboard boundary.
 
 export interface DockerMount {
@@ -739,6 +820,8 @@ export interface DockerContainerDetail {
   restart?: { name: string; maximumRetryCount?: number };
   /** Names of the networks the container is attached to. */
   networks: string[];
+  /** Live addresses on every attached network, for matching proxy upstreams. */
+  networkAddresses?: string[];
   mounts: DockerMount[];
   ports: DockerPortBinding[];
   /** Healthcheck as declared on the container config (durations in ns). */
@@ -753,6 +836,12 @@ export interface DockerContainerDetail {
    *  limits it was actually running with — including one set by hand with
    *  `docker update --memory`. Omitted fields mean the container had no cap. */
   resources?: { cpuCores?: number; memoryMb?: number };
+  /** Live GPU configuration, including an empty object when no GPU was requested. */
+  gpu?: import("@repo/core").ComposeGpuConfig;
+  /** Inspection still succeeds; adoption refuses a GPU configuration it cannot replay. */
+  gpuImportError?: string;
+  /** Live private /dev/shm size, retained when adopting an existing container. */
+  shmSize?: number;
   composeProject?: string;
   composeService?: string;
   /** com.docker.compose.project.config_files — absolute compose paths on the host. */

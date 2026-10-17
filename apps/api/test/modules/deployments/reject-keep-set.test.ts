@@ -18,9 +18,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // Only the runtime resolution is faked — the keep set has to run against real
 // rows or it isn't testing the query it exists for. `instanceof DockerRuntime`
 // gates the image half of the manifest, so the stand-in must satisfy it.
-vi.mock("../../../src/lib/deployment-runtime", async (importOriginal) => {
+vi.mock("@repo/platform/engine/lib/deployment-runtime", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("../../../src/lib/deployment-runtime")>();
+    await importOriginal<typeof import("@repo/platform/engine/lib/deployment-runtime")>();
   const { DockerRuntime } = await import("@repo/adapters");
   return {
     ...actual,
@@ -31,10 +31,10 @@ vi.mock("../../../src/lib/deployment-runtime", async (importOriginal) => {
 });
 
 const { collectDeploymentManifest } = await import(
-  "../../../src/modules/projects/project-cleanup.service"
+  "@repo/platform/engine/modules/projects/project-cleanup.service"
 );
 const { computeCleanupKeepSet } = await import(
-  "../../../src/modules/projects/cleanup-keep-set"
+  "@repo/platform/engine/modules/projects/cleanup-keep-set"
 );
 
 const {
@@ -47,9 +47,9 @@ const {
 } = await import("../../helpers/seed");
 
 const CARRIED_CONTAINER = "carried-db-container";
-const CARRIED_IMAGE = "openship/app-db:bld_old";
+const CARRIED_IMAGE = "kovalio/app-db:bld_old";
 const OWN_CONTAINER = "rejected-web-container";
-const OWN_IMAGE = "openship/app-web:bld_rejected";
+const OWN_IMAGE = "kovalio/app-web:bld_rejected";
 
 describe("a rejected deploy's cleanup manifest", () => {
   let project: Awaited<ReturnType<typeof seedProject>>;
@@ -75,7 +75,7 @@ describe("a rejected deploy's cleanup manifest", () => {
     });
     await seedServiceDeployment(restored.id, web, {
       containerId: "restored-web-container",
-      imageRef: "openship/app-web:bld_restored",
+      imageRef: "kovalio/app-web:bld_restored",
     });
 
     rejected = await seedDeployment(project, {
@@ -162,12 +162,12 @@ describe("computeCleanupKeepSet", () => {
     const restored = await seedDeployment(project, { containerId: "restored-container" });
     await seedServiceDeployment(restored.id, svc, {
       containerId: "restored-container",
-      imageRef: "openship/app:bld_restored",
+      imageRef: "kovalio/app:bld_restored",
     });
     const rejected = await seedDeployment(project, { containerId: "rejected-container" });
     await seedServiceDeployment(rejected.id, svc, {
       containerId: "rejected-container",
-      imageRef: "openship/app:bld_rejected",
+      imageRef: "kovalio/app:bld_rejected",
     });
     await setActive(project.id, rejected.id);
     const live = (await repos.project.findById(project.id))!;
@@ -178,11 +178,11 @@ describe("computeCleanupKeepSet", () => {
     });
 
     expect(keep.containers.has("restored-container")).toBe(true);
-    expect(keep.images.has("openship/app:bld_restored")).toBe(true);
+    expect(keep.images.has("kovalio/app:bld_restored")).toBe(true);
     // The excluded release must not keep itself alive, or a reject leaks every
     // image it built.
     expect(keep.containers.has("rejected-container")).toBe(false);
-    expect(keep.images.has("openship/app:bld_rejected")).toBe(false);
+    expect(keep.images.has("kovalio/app:bld_rejected")).toBe(false);
   });
 
   it("protects a release that never reached ready", async () => {
@@ -196,11 +196,11 @@ describe("computeCleanupKeepSet", () => {
     const predecessor = await seedDeployment(project, {
       status: "partial_failure",
       containerId: "partial-container",
-      imageRef: "openship/app:bld_partial",
+      imageRef: "kovalio/app:bld_partial",
     });
     await seedServiceDeployment(predecessor.id, svc, {
       containerId: "partial-container",
-      imageRef: "openship/app:bld_partial",
+      imageRef: "kovalio/app:bld_partial",
     });
     const rejected = await seedDeployment(project);
     await setActive(project.id, rejected.id);
@@ -211,6 +211,6 @@ describe("computeCleanupKeepSet", () => {
       alsoProtectDeploymentId: predecessor.id,
     });
     expect(keep.containers.has("partial-container")).toBe(true);
-    expect(keep.images.has("openship/app:bld_partial")).toBe(true);
+    expect(keep.images.has("kovalio/app:bld_partial")).toBe(true);
   });
 });

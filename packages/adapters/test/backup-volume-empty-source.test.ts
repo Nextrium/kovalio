@@ -4,12 +4,12 @@
  * `VolumeCopyProducer.produce` used to `return` when `listSources()` came back
  * empty, with a comment saying the orchestrator would record it as "a successful
  * zero-artifact run" — which it did. That is
- * [#611](https://github.com/oblien/openship/issues/611): a policy on the control
+ * [#611](https://github.com/Nextrium/kovalio/issues/611): a policy on the control
  * plane's own postgres finishing green in two seconds having uploaded nothing.
  *
  * The message is asserted, not just the throw, because it is the only thing the
  * operator sees and the two causes need different actions from them: a live
- * container that genuinely has no mounts, versus a service row Openship adopted and
+ * container that genuinely has no mounts, versus a service row Kovalio adopted and
  * therefore never recorded volumes for.
  */
 
@@ -26,7 +26,7 @@ function service(over: Partial<ServiceHandle> = {}): ServiceHandle {
     env: {},
     volumes: [],
     containerId: null,
-    projectSlug: "openship",
+    projectSlug: "kovalio",
     namespaceVolumes: false,
     ...over,
   };
@@ -79,14 +79,14 @@ describe("a service with no backupable source fails the run", () => {
         executorWith([{ id: "pgdata", source: "pgdata", target: "/var/lib", type: "volume" }]),
         { sourceIds: ["typo-data"] },
       ),
-    ).rejects.toThrow(/selects typo-data, none of which is a source.*pgdata \(volume\)/s);
+    ).rejects.toThrow(/Selected backup source "typo-data" is missing.*No partial snapshot/s);
   });
 
   it("still produces normally when there IS a volume", async () => {
     // The guard must not be so eager that it fails an honest volume backup.
     const exec = {
       listSources: async () => [
-        { id: "pgdata", source: "openship-pgdata", target: "/var/lib", type: "volume" as const },
+        { id: "pgdata", source: "kovalio-pgdata", target: "/var/lib", type: "volume" as const },
       ],
       streamPath: async () => ({
         stdout: (await import("node:stream")).Readable.from([Buffer.from("tar")]),
@@ -96,7 +96,7 @@ describe("a service with no backupable source fails the run", () => {
 
     const artifacts = await produce(service({ containerId: "c1" }), exec);
     expect(artifacts).toHaveLength(1);
-    expect(artifacts[0]!.name).toBe("volume-pgdata.tar.zst");
+    expect(artifacts[0]!.name).toMatch(/^volume-kovalio-pgdata-[a-f0-9]{16}\.tar\.zst$/);
   });
 
   it("forwards quiesce to the executor and records what the archive IS", async () => {
@@ -107,7 +107,7 @@ describe("a service with no backupable source fails the run", () => {
     const seen: Array<{ quiesce?: boolean }> = [];
     const exec = {
       listSources: async () => [
-        { id: "pgdata", source: "openship-pgdata", target: "/var/lib", type: "volume" as const },
+        { id: "pgdata", source: "kovalio-pgdata", target: "/var/lib", type: "volume" as const },
       ],
       streamPath: async (_s: unknown, _id: string, o: { quiesce?: boolean }) => {
         seen.push({ quiesce: o.quiesce });

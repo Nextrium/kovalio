@@ -1,0 +1,25 @@
+---
+title: api
+description: Commands, arguments, and options for kovalio api.
+cliGroup: kovalio api
+---
+
+See the [workflow guide](/docs/cli/access) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio api
+
+Make an authenticated request to any Kovalio API route (like `gh api`)
+
+```text
+kovalio api [options] <path>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `path` | Path under /api, e.g. /projects or /deployments/&lt;id&gt; |
+
+| Option | Meaning |
+| --- | --- |
+| `-X, --method <method>` | HTTP method (defaults to GET, or POST when --data is given) |
+| `-d, --data <json>` | Request body as a JSON string |
+| `-q, --query <kv...>` | Query parameter key=value (repeatable) |

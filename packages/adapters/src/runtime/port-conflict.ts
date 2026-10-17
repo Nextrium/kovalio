@@ -1,3 +1,4 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { DeployError, shellQuote } from "@repo/core";
 import type { CommandExecutor } from "../types";
 import type { BuildLogger } from "./build-pipeline";
@@ -9,8 +10,8 @@ import {
   describeContainerById,
   isBuildHelperContainer,
   isContainerPortForwarder,
-  isOpenshipContainer,
-  isOpenshipPlatformContainer,
+  isKovalioContainer,
+  isKovalioPlatformContainer,
   isOurEdgeContainer,
   managedDeploymentIdFromUnit,
   mayStopUnitForAppPort,
@@ -36,6 +37,13 @@ export interface PortOccupant {
   pid: number | null;
   command: string;
   rawCommand?: string;
+  /** Whether `/proc/<pid>/cgroup` produced a non-empty snapshot. `false` is
+   *  deliberately distinct from "no container id": callers that may signal a
+   *  process must not treat an unreadable cgroup as proof it is host-owned. */
+  cgroupVerified?: boolean;
+  /** The verified snapshot used to bind a safety decision to this process. Kept
+   *  internal to runtime code (it is intentionally omitted from error details). */
+  processCgroup?: string;
   systemdUnit?: string;
   systemdDescription?: string;
   deploymentId?: string;
@@ -45,13 +53,13 @@ export interface PortOccupant {
   containerId?: string;
   containerName?: string;
   containerImage?: string;
-  /** `openship.project` / `openship.service` off that container's labels. */
+  /** `kovalio.project` / `kovalio.service` off that container's labels. */
   ownerProjectId?: string;
   serviceName?: string;
   /** The port is published by a container runtime, so the listener is a forwarder and
    *  any unit resolved from its cgroup is the DAEMON's, not the workload's. */
   dockerPublished?: boolean;
-  /** The container is part of Openship ITSELF (the compose control plane, the mail
+  /** The container is part of Kovalio ITSELF (the compose control plane, the mail
    *  engine, the edge) — never a stop target for an application port. */
   platformContainer?: boolean;
   /** More than one container publishes this port (same port, different host IPs), so
@@ -62,22 +70,38 @@ export interface PortOccupant {
 async function resolveListenerOwner(
   executor: CommandExecutor,
   pid: number,
-): Promise<Pick<PortOccupant, "systemdUnit" | "systemdDescription" | "deploymentId" | "isManagedDeployment" | "containerId">> {
-  const cgroup = await tryExec(executor, `cat /proc/${pid}/cgroup 2>/dev/null || true`);
+): Promise<
+  Pick<
+    PortOccupant,
+    | "systemdUnit"
+    | "systemdDescription"
+    | "deploymentId"
+    | "isManagedDeployment"
+    | "containerId"
+    | "cgroupVerified"
+    | "processCgroup"
+  >
+> {
+  // Do not append `|| true`: a permission/read failure must remain different from
+  // a readable host cgroup with no container id. `/proc/<pid>/cgroup` is non-empty
+  // for every live Linux process, including the root cgroup (`0::/`).
+  const cgroup = (await tryExec(executor, `cat /proc/${pid}/cgroup 2>/dev/null`))?.trim();
+  if (!cgroup) return { cgroupVerified: false };
+  const evidence = { cgroupVerified: true as const, processCgroup: cgroup };
 
   // A process INSIDE a container: the cgroup names the container, and any `*.service`
   // leaf above it belongs to the daemon that started it. Return the container and
   // NOTHING else — attributing that unit to the workload is the whole of #628, and it
   // is also how a host-networked edge's OpenResty ended up a bare `kill -9` target.
   const containerId = containerIdFromCgroup(cgroup);
-  if (containerId) return { containerId };
+  if (containerId) return { ...evidence, containerId };
 
   // Reject anything that isn't a plain systemd unit name — the value is parsed from
   // /proc text and later interpolated into `systemctl` commands. Quoted at the call
   // site as well; this keeps a crafted cgroup leaf from being carried around at all.
   const systemdUnit = cgroup?.match(/(?:^|\/)([^/\n]+\.service)(?:$|\n|\/)/m)?.[1]?.trim();
   if (!systemdUnit || !/^[A-Za-z0-9@._:-]+\.service$/.test(systemdUnit)) {
-    return {};
+    return evidence;
   }
 
   const description = await tryExec(
@@ -87,9 +111,12 @@ async function resolveListenerOwner(
   const deploymentId = managedDeploymentIdFromUnit(systemdUnit);
 
   return {
+    ...evidence,
     systemdUnit,
     systemdDescription: description?.trim() || undefined,
-    ...(deploymentId ? { deploymentId, isManagedDeployment: true } : { isManagedDeployment: false }),
+    ...(deploymentId
+      ? { deploymentId, isManagedDeployment: true }
+      : { isManagedDeployment: false }),
   };
 }
 
@@ -117,7 +144,7 @@ export type PortVerdict =
  *
  * The refusal REASON is returned from here rather than re-derived by the copy, because
  * a second chain over the same fields drifted immediately: it had no `platform` arm, so
- * refusing to stop Openship's own API container fell through to the docker-blind copy
+ * refusing to stop Kovalio's own API container fell through to the docker-blind copy
  * and told the operator to go `docker stop` it by hand — #628 restated as prose. A
  * total switch on {@link PortRefusal} makes a new refusal a compile error instead.
  */
@@ -127,13 +154,13 @@ export function portStopVerdict(occupant: PortOccupant): PortVerdict {
 
   if (occupant.containerId) {
     // The edge is checked BEFORE the general platform test so it keeps its own, more
-    // specific copy — `isOpenshipPlatformContainer` is true for the edge as well. It
+    // specific copy — `isKovalioPlatformContainer` is true for the edge as well. It
     // also works from name/image alone, so it still holds for an occupant built by the
     // cheap probe, which never asks who the platform containers are.
     if (isOurEdgeContainer(occupant.containerName, occupant.containerImage)) {
       return { target: "none", why: "our-edge" };
     }
-    // Openship's own control plane or mail engine.
+    // Kovalio's own control plane or mail engine.
     if (occupant.platformContainer) return { target: "none", why: "platform" };
     // An id off a cgroup with no name or image behind it: docker could not describe it,
     // so the checks above could not run. Stopping a container we cannot identify is
@@ -213,48 +240,195 @@ async function freePortOccupant(
   // either way. Say so: the re-probe that follows reads an unreadable host as "free",
   // and a deploy that then fails to bind should not be the first hint of that.
   if (!checked) {
-    logger.log(`Couldn't confirm port ${port} was released (socket table unreadable) — continuing.\n`, "warn");
+    logger.log(
+      `Couldn't confirm port ${port} was released (socket table unreadable) — continuing.\n`,
+      "warn",
+    );
   }
 }
 
 /**
  * Find who (if anyone) is LISTENing on `port`, via a tiered fallback so the
  * probe behaves consistently regardless of which tools a host ships:
- *   1. `ss -l`             — Linux (iproute2, ~always present); yields the PID.
- *   2. `lsof -sTCP:LISTEN` — macOS + any Linux with lsof; yields the PID.
+ *   1. `ss -l` / `lsof`    — ordinary unprivileged ownership probe.
+ *   2. `sudo -n ss`/`lsof` — targeted read-only retry only when tier 1 saw a
+ *                            listener but Linux hid its PID.
  *   3. `/proc/net/tcp{,6}` — tool-free kernel socket table; presence only.
  *
  * Every tier is LISTEN-state filtered, so an outbound/ESTABLISHED socket on the
  * port (e.g. a daemon dialing a remote :443) is never mistaken for an occupant —
- * that filtering is the whole point of keeping this in ONE place. Tiers 1–2 are
- * a single exec; tier 3 (reused from `port-listen`) runs only when no PID
- * surfaced, and is what prevents a false "port free" on a host missing both `ss`
- * and `lsof`, or when non-root `ss` prints the listener but hides its PID.
+ * that filtering is the whole point of keeping this in ONE place. Tier 3 (reused
+ * from `port-listen`) runs only when no PID surfaced. Positive tier-1 evidence is
+ * retained even if every later probe is unreadable, so losing ownership detail can
+ * never turn an occupied port into a free one.
  */
 async function resolveListener(
   executor: CommandExecutor,
   port: number,
-): Promise<{ pid: number | null; occupied: boolean }> {
+): Promise<{ pid: number | null; occupied: boolean; checked: boolean }> {
   const out = await tryExec(
     executor,
     `ss -tlnp sport = :${port} 2>/dev/null | grep LISTEN || lsof -ti tcp:${port} -sTCP:LISTEN 2>/dev/null || true`,
   );
-  if (out) {
-    const ssMatch = out.match(/pid=(\d+)/);
+  const listenerPid = (output: string | null): number | null => {
+    if (!output) return null;
+    const ssMatch = output.match(/pid=(\d+)/);
     // lsof -ti prints one bare PID per line; take the first. An ss LISTEN line
     // is never a bare number, so this can't mis-parse the ss branch.
-    const lsofMatch = !ssMatch ? out.match(/^\s*(\d+)\s*$/m) : null;
-    const pid = ssMatch
-      ? parseInt(ssMatch[1], 10)
-      : lsofMatch
-        ? parseInt(lsofMatch[1], 10)
-        : null;
-    if (pid) return { pid, occupied: true };
+    const lsofMatch = !ssMatch ? output.match(/^\s*(\d+)\s*$/m) : null;
+    const parsed = ssMatch?.[1] ?? lsofMatch?.[1];
+    if (!parsed) return null;
+    const pid = Number.parseInt(parsed, 10);
+    return Number.isSafeInteger(pid) && pid > 0 ? pid : null;
+  };
+
+  const pid = listenerPid(out);
+  if (pid) return { pid, occupied: true, checked: true };
+
+  const observedListener = Boolean(out?.trim());
+  if (observedListener) {
+    // A non-root `ss` still prints the LISTEN socket but commonly hides
+    // `users:((...,pid=...))`. Ask for just this socket table entry through
+    // passwordless sudo; `-n` guarantees this read-only probe can never block on
+    // a password prompt. Hosts without that permission simply fall through to
+    // the presence-only result below.
+    const privilegedOut = await tryExec(
+      executor,
+      `sudo -n ss -tlnp sport = :${port} 2>/dev/null | grep LISTEN || sudo -n lsof -ti tcp:${port} -sTCP:LISTEN 2>/dev/null || true`,
+      { timeout: 5_000 },
+    );
+    const privilegedPid = listenerPid(privilegedOut);
+    if (privilegedPid) return { pid: privilegedPid, occupied: true, checked: true };
   }
-  // Tier 3: authoritative presence check with no tool dependency. `true` = a
-  // LISTEN socket exists; `false`/`null` (no signal) → treat as free.
+
+  // Tier 3: presence check with no tool dependency. A listener already observed
+  // by ss remains occupied even if procfs is unreadable or races to an empty
+  // result; losing its PID must never turn positive evidence into "port free".
   const listening = await probePortListeningOnce(executor, port);
-  return { pid: null, occupied: listening === true };
+  return {
+    pid: null,
+    occupied: observedListener || listening === true,
+    checked: observedListener || listening !== null,
+  };
+}
+
+export interface ListeningPortProbe {
+  /** Null only when no listener was found or the probe was inconclusive. */
+  occupant: PortOccupant | null;
+  /** False means every authoritative ownership/presence probe failed. */
+  checked: boolean;
+}
+
+export interface ListeningPortOwnersProbe {
+  occupants: PortOccupant[];
+  /** False when every socket-table probe failed. */
+  checked: boolean;
+  /** False when a listener was visible but every distinct PID was not proven. */
+  ownershipComplete: boolean;
+}
+
+function parseListenerPids(output: string | null): {
+  observed: boolean;
+  complete: boolean;
+  pids: number[];
+} {
+  const lines = (output ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return { observed: false, complete: true, pids: [] };
+
+  const pids = new Set<number>();
+  let complete = true;
+  for (const line of lines) {
+    const matches = [...line.matchAll(/pid=(\d+)/g)].map((match) => match[1]);
+    const bare = matches.length === 0 ? line.match(/^(\d+)$/)?.[1] : undefined;
+    const values = bare ? [bare] : matches;
+    if (values.length === 0) complete = false;
+    for (const value of values) {
+      const pid = Number.parseInt(value!, 10);
+      if (Number.isSafeInteger(pid) && pid > 0) pids.add(pid);
+      else complete = false;
+    }
+  }
+  return { observed: true, complete, pids: [...pids] };
+}
+
+/**
+ * Enumerate every visible owner of one listening port.
+ *
+ * The ordinary UI probe intentionally returns one representative occupant.
+ * Reload safety is stricter: SO_REUSEPORT/address-specific binds can put a
+ * managed and a foreign master on the same port, so signalling based on the
+ * first PID would miss the foreign owner.
+ */
+export async function probeListeningPortOwners(
+  executor: CommandExecutor,
+  port: number,
+): Promise<ListeningPortOwnersProbe> {
+  const command =
+    `ss -tlnp sport = :${port} 2>/dev/null | grep LISTEN || ` +
+    `lsof -ti tcp:${port} -sTCP:LISTEN 2>/dev/null || true`;
+  const ordinary = parseListenerPids(await tryExec(executor, command));
+  let evidence = ordinary;
+
+  if (ordinary.observed && !ordinary.complete) {
+    const privileged = parseListenerPids(
+      await tryExec(
+        executor,
+        `sudo -n ss -tlnp sport = :${port} 2>/dev/null | grep LISTEN || ` +
+          `sudo -n lsof -ti tcp:${port} -sTCP:LISTEN 2>/dev/null`,
+        { timeout: 5_000 },
+      ),
+    );
+    if (privileged.observed && privileged.complete) evidence = privileged;
+    else {
+      evidence = {
+        observed: true,
+        complete: false,
+        pids: [...new Set([...ordinary.pids, ...privileged.pids])],
+      };
+    }
+  }
+
+  if (!evidence.observed) {
+    const listening = await probePortListeningOnce(executor, port);
+    if (listening === null) return { occupants: [], checked: false, ownershipComplete: false };
+    if (!listening) return { occupants: [], checked: true, ownershipComplete: true };
+    return { occupants: [], checked: true, ownershipComplete: false };
+  }
+
+  const described = await Promise.all(
+    evidence.pids.map((pid) => describeProcess(executor, pid).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/runtime/port-conflict"); return null; })),
+  );
+  const occupants = described.filter((row): row is PortOccupant => row !== null);
+  return {
+    occupants,
+    checked: true,
+    ownershipComplete: evidence.complete && occupants.length === evidence.pids.length,
+  };
+}
+
+/**
+ * Strict counterpart to {@link probeListeningPort}. It preserves whether a null
+ * result was a real "not listening" reading or merely an unreadable socket table,
+ * for callers that must not treat probe failure as proof a daemon is stopped.
+ */
+export async function probeListeningPortState(
+  executor: CommandExecutor,
+  port: number,
+): Promise<ListeningPortProbe> {
+  try {
+    const { pid, occupied, checked } = await resolveListener(executor, port);
+    if (!checked || !occupied) return { occupant: null, checked };
+    if (pid === null) {
+      return { occupant: { pid: null, command: "unknown listener" }, checked: true };
+    }
+    return { occupant: await describeProcess(executor, pid), checked: true };
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/runtime/port-conflict");
+    return { occupant: null, checked: false };
+  }
 }
 
 /**
@@ -273,14 +447,7 @@ export async function probeListeningPort(
   executor: CommandExecutor,
   port: number,
 ): Promise<PortOccupant | null> {
-  try {
-    const { pid, occupied } = await resolveListener(executor, port);
-    if (!occupied) return null;
-    if (pid === null) return { pid: null, command: "unknown listener" };
-    return await describeProcess(executor, pid);
-  } catch {
-    return null;
-  }
+  return (await probeListeningPortState(executor, port)).occupant;
 }
 
 /**
@@ -326,7 +493,7 @@ async function withContainer(
   occupant: PortOccupant,
   container: PortContainer,
 ): Promise<PortOccupant> {
-  const platform = await isOpenshipPlatformContainer(executor, container);
+  const platform = await isKovalioPlatformContainer(executor, container);
   return {
     ...occupant,
     dockerPublished: true,
@@ -338,10 +505,10 @@ async function withContainer(
     ...(container.deploymentId ? { deploymentId: container.deploymentId } : {}),
     ...(container.serviceName ? { serviceName: container.serviceName } : {}),
     // Ownership now rests on the container's labels, not on a unit name. Left
-    // UNDEFINED when the container carries no `openship.project`: a container adopted
-    // in place by the docker migration is tracked by Openship while wearing no labels
+    // UNDEFINED when the container carries no `kovalio.project`: a container adopted
+    // in place by the docker migration is tracked by Kovalio while wearing no labels
     // at all, so "no label" means "could not tell", never "not ours".
-    ...(isOpenshipContainer(container) ? { isManagedDeployment: true } : {}),
+    ...(isKovalioContainer(container) ? { isManagedDeployment: true } : {}),
     // Naming a build helper as such matters: it is ours and safe to stop, but an
     // operator told only "container X holds the port" has no way to know that.
     command:
@@ -387,9 +554,16 @@ export async function resolvePortOwner(
     // container published on `127.0.0.1:<port>`; overwriting apache2 with that
     // container would name the wrong owner AND offer to stop it.
     const listenerIsProxyForOwner =
-      !listener || listener.dockerPublished || Boolean(listener.containerId) || listener.pid === null;
+      !listener ||
+      listener.dockerPublished ||
+      Boolean(listener.containerId) ||
+      listener.pid === null;
     if (listenerIsProxyForOwner) {
-      return await withContainer(executor, listener ?? { pid: null, command: "unknown listener" }, onPort.container);
+      return await withContainer(
+        executor,
+        listener ?? { pid: null, command: "unknown listener" },
+        onPort.container,
+      );
     }
     return listener;
   }
@@ -409,6 +583,34 @@ export async function resolvePortOwner(
 
   return listener;
 }
+
+/**
+ * A suggested Docker publish must be free in both the socket table and Docker.
+ * DNAT-only publishes have no listener; a failed probe is not proof of a free port.
+ */
+export async function isDockerHostPortAvailable(
+  executor: CommandExecutor,
+  port: number,
+): Promise<boolean | null> {
+  const [listening, published] = await Promise.all([
+    probePortListeningOnce(executor, port),
+    resolveContainerPublishingPort(executor, port),
+  ]);
+  if (listening === true || published.kind === "one" || published.kind === "ambiguous") {
+    return false;
+  }
+  return listening === false && published.kind === "none" ? true : null;
+}
+
+export interface AlternativeHostPort {
+  port: number;
+  /** Recheck and reserve this exact port, then update the caller's deploy config. */
+  apply: () => Promise<boolean>;
+}
+
+export type SuggestAlternativeHostPort = (
+  excluded: ReadonlySet<number>,
+) => Promise<AlternativeHostPort | null>;
 
 /**
  * The `DeployError.details` bag for a PORT_IN_USE, in ONE place.
@@ -457,11 +659,11 @@ function freeActionLabel(occupant: PortOccupant): string {
   switch (portStopTarget(occupant)) {
     case "container":
       return occupant.isManagedDeployment
-        ? "Stop Openship Container & Continue"
+        ? "Stop Kovalio Container & Continue"
         : "Stop Container & Continue";
     case "unit":
       return occupant.isManagedDeployment
-        ? "Stop Openship Deployment & Continue"
+        ? "Stop Kovalio Deployment & Continue"
         : "Stop Service & Continue";
     default:
       return "Free Port & Continue";
@@ -478,37 +680,37 @@ function refusalReason(port: number, occupant: PortOccupant, why: PortRefusal): 
     case "ambiguous":
       return (
         `Port ${port} is published by ${occupant.ambiguousOwners} containers at once (${occupant.command}), ` +
-        `so Openship can't tell which one owns it. Stop the right container yourself, or deploy on a different port.`
+        `so Kovalio can't tell which one owns it. Stop the right container yourself, or deploy on a different port.`
       );
     case "our-edge":
       return (
-        `Port ${port} belongs to the Openship edge proxy (container ${named}), which routes every domain on this ` +
+        `Port ${port} belongs to the Kovalio edge proxy (container ${named}), which routes every domain on this ` +
         `server. Deploy on a different host port and route it through the edge instead.`
       );
     case "platform":
       return (
-        `Port ${port} is held by Openship itself — container ${named} is part of the control plane running this ` +
-        `deploy. Stopping it would take Openship down, so deploy on a different host port.`
+        `Port ${port} is held by Kovalio itself — container ${named} is part of the control plane running this ` +
+        `deploy. Stopping it would take Kovalio down, so deploy on a different host port.`
       );
     case "unidentified-container":
       return (
         `Port ${port} is held by container ${occupant.containerId}, which this Docker daemon won't describe — so ` +
-        `Openship can't tell whether it is one of its own (the edge publishes nothing and is only visible this ` +
+        `Kovalio can't tell whether it is one of its own (the edge publishes nothing and is only visible this ` +
         `way). Run \`docker inspect ${occupant.containerId}\` on the server, stop it if it is safe to, then redeploy.`
       );
     case "docker-blind":
       return (
-        `Port ${port} is published by a Docker container Openship couldn't identify — the process holding it is ` +
-        `Docker's port forwarder, not the app, so there is nothing here Openship can safely stop. ` +
+        `Port ${port} is published by a Docker container Kovalio couldn't identify — the process holding it is ` +
+        `Docker's port forwarder, not the app, so there is nothing here Kovalio can safely stop. ` +
         `Run \`docker ps --filter publish=${port}\` on the server, stop that container, then redeploy.`
       );
     case "protected-unit":
       return (
-        `Port ${port} is held by ${occupant.systemdUnit}, a service Openship will not stop — doing so would take ` +
+        `Port ${port} is held by ${occupant.systemdUnit}, a service Kovalio will not stop — doing so would take ` +
         `down more than this deploy. Free the port on the server, or deploy on a different port.`
       );
     case "no-owner":
-      return `Port ${port} is occupied by ${occupant.command}, which Openship can't free automatically.`;
+      return `Port ${port} is occupied by ${occupant.command}, which Kovalio can't free automatically.`;
   }
 }
 
@@ -518,42 +720,123 @@ function refusalReason(port: number, occupant: PortOccupant, why: PortRefusal): 
  * The only MUTATING consumer of the port probe, and therefore the one that pays for
  * {@link resolvePortOwner}: what gets offered here turns straight into a command on
  * the operator's server. When the owner can be named but not safely stopped, no free
- * action is offered at all — an honest dead end beats a button that does more damage
- * than the conflict it clears.
+ * action is offered at all. Callers which can safely change their host publish may
+ * offer a verified alternative; only the user's exact selection can apply it.
+ *
+ * `outgoingDeploymentId` names the deployment this deploy replaces. When that is what
+ * holds the port, the caller stops it before the new release binds, so there is nothing
+ * to ask; any other owner, another Kovalio deployment included, is still prompted for.
  */
 export async function ensurePortAvailable(
   executor: CommandExecutor,
   port: number,
   logger: BuildLogger,
   promptUser: PromptUserFn,
+  options: {
+    suggestAlternative?: SuggestAlternativeHostPort;
+    outgoingDeploymentId?: string;
+  } = {},
 ): Promise<void> {
   const occupant = await resolvePortOwner(executor, port);
   if (!occupant) return;
 
+  if (
+    options.outgoingDeploymentId !== undefined &&
+    occupant.deploymentId === options.outgoingDeploymentId
+  ) {
+    logger.log(
+      `Port ${port} is held by the outgoing deployment ${occupant.deploymentId}, which is stopped before the new release starts.\n`,
+    );
+    return;
+  }
+
   const verdict = portStopVerdict(occupant);
   const stopTarget = verdict.target;
+  const reason = verdict.target === "none" ? refusalReason(port, occupant, verdict.why) : undefined;
+  const message =
+    reason ??
+    (occupant.isManagedDeployment
+      ? `Port ${port} is occupied by ${occupant.command}, which Kovalio deployed.`
+      : `Port ${port} is occupied by ${occupant.command}. This may not be a previous deployment.`);
+  logger.log(`${message} Waiting for user decision...\n`, "warn");
 
-  if (verdict.target === "none") {
-    const reason = refusalReason(port, occupant, verdict.why);
-    logger.log(`${reason} Waiting for user decision...\n`, "warn");
+  const excluded = new Set([port]);
+  let attempt = 0;
+  let retryMessage = "";
+  while (true) {
+    let alternative: AlternativeHostPort | null = null;
+    try {
+      alternative = (await options.suggestAlternative?.(excluded)) ?? null;
+    } catch (error) {
+      observeCaughtError(error, "adapters/runtime/port-conflict");
+      logger.log(
+        "Could not check an alternative host port. The current port still needs your decision.\n",
+        "warn",
+      );
+    }
+    if (
+      alternative &&
+      (!Number.isInteger(alternative.port) ||
+        alternative.port < 1 ||
+        alternative.port > 65535 ||
+        excluded.has(alternative.port))
+    )
+      alternative = null;
 
-    // Offer no stop — but still HOLD. The prompt is the operator's window to free the
-    // port by hand and carry on: at HEAD that window existed only as a mislabelled
-    // "Free Port & Continue" which freed nothing and then re-probed, and removing it
-    // outright would throw away a built artifact for a conflict they could clear in a
-    // shell in ten seconds. `re_check` says what it does instead of implying we will.
+    // New prompt/action identities prevent a delayed answer from authorizing a
+    // later attempt. The initial existing actions retain their public ids.
+    const suffix = attempt === 0 ? "" : `:${attempt}`;
+    const usePortAction = alternative ? `use_port:${alternative.port}${suffix}` : undefined;
     const action = await promptUser({
-      promptId: `port_in_use:${port}`,
+      promptId: `port_in_use:${port}${suffix}`,
       title: "Port In Use",
-      message: reason,
+      message: [
+        retryMessage,
+        message,
+        alternative
+          ? `Port ${alternative.port} is available. Using it keeps the existing service running and saves the new host port for future deployments.`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
       actions: [
-        { id: "re_check", label: "I Freed It — Re-check", variant: "primary" },
-        { id: "abort", label: "Cancel Deploy", variant: "secondary" },
+        ...(alternative
+          ? [{ id: usePortAction!, label: `Use port ${alternative.port}`, variant: "primary" }]
+          : []),
+        ...(verdict.target === "none"
+          ? [
+              {
+                id: `re_check${suffix}`,
+                label: "I Freed It — Re-check",
+                variant: alternative ? "secondary" : "primary",
+              },
+            ]
+          : [{ id: `free_port${suffix}`, label: freeActionLabel(occupant), variant: "danger" }]),
+        { id: `abort${suffix}`, label: "Cancel Deploy", variant: "secondary" },
       ],
-      details: portOccupantDetails(port, occupant, stopTarget),
+      details: {
+        ...portOccupantDetails(port, occupant, stopTarget),
+        ...(alternative ? { alternativePort: alternative.port } : {}),
+      },
     });
 
-    if (action === "re_check") {
+    if (alternative && action === usePortAction) {
+      if (await alternative.apply()) {
+        logger.log(
+          `User selected host port ${alternative.port} instead of ${port}. The existing service was left running.\n`,
+        );
+        return;
+      }
+      // Another process/controller may have taken the suggestion while the
+      // dialog was open. Ask again, never substitute a different port silently.
+      excluded.add(alternative.port);
+      retryMessage = `Could not confirm port ${alternative.port} is still available. Choose an option to continue.`;
+      logger.log(`${retryMessage}\n`, "warn");
+      attempt += 1;
+      continue;
+    }
+
+    if (verdict.target === "none" && action === `re_check${suffix}`) {
       const remaining = await resolvePortOwner(executor, port);
       if (!remaining) return;
       logger.log(`Port ${port} is still held by ${remaining.command}.\n`, "error");
@@ -567,43 +850,22 @@ export async function ensurePortAvailable(
       );
     }
 
-    throw new DeployError(reason, "PORT_IN_USE", portOccupantDetails(port, occupant, stopTarget));
-  }
-
-  logger.log(`Port ${port} is occupied by ${occupant.command}. Waiting for user decision...\n`, "warn");
-
-  const action = await promptUser({
-    promptId: `port_in_use:${port}`,
-    title: "Port In Use",
-    message: occupant.isManagedDeployment
-      ? `Port ${port} is occupied by ${occupant.command}, which Openship deployed.`
-      : `Port ${port} is occupied by ${occupant.command}. This may not be a previous deployment.`,
-    actions: [
-      { id: "free_port", label: freeActionLabel(occupant), variant: "danger" },
-      { id: "abort", label: "Cancel Deploy", variant: "secondary" },
-    ],
-    details: portOccupantDetails(port, occupant, stopTarget),
-  });
-
-  if (action === "free_port") {
-    logger.log(`User chose to free port ${port} from ${occupant.command}...\n`);
-    await freePortOccupant(executor, port, occupant, logger);
-
-    const remaining = await resolvePortOwner(executor, port);
-    if (!remaining) {
-      return;
+    if (verdict.target !== "none" && action === `free_port${suffix}`) {
+      logger.log(`User chose to free port ${port} from ${occupant.command}...\n`);
+      await freePortOccupant(executor, port, occupant, logger);
+      const remaining = await resolvePortOwner(executor, port);
+      if (!remaining) return;
+      throw new DeployError(
+        `Port ${port} is still in use by ${remaining.command}. Stop the existing process before deploying.`,
+        "PORT_IN_USE",
+        portOccupantDetails(port, remaining, portStopTarget(remaining)),
+      );
     }
 
     throw new DeployError(
-      `Port ${port} is still in use by ${remaining.command}. Stop the existing process before deploying.`,
+      reason ?? `Deploy aborted: port ${port} is in use by ${occupant.command}`,
       "PORT_IN_USE",
-      portOccupantDetails(port, remaining, portStopTarget(remaining)),
+      portOccupantDetails(port, occupant, stopTarget),
     );
   }
-
-  throw new DeployError(
-    `Deploy aborted: port ${port} is in use by ${occupant.command}`,
-    "PORT_IN_USE",
-    portOccupantDetails(port, occupant, stopTarget),
-  );
 }

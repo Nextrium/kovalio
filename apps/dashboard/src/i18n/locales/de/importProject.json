@@ -61,7 +61,7 @@
       "title": "Health-Checks",
       "subtitle": "Aus — das Deployment ist fertig, sobald die App läuft",
       "subtitleOn": "Ein — das Deployment wartet erst auf die App",
-      "description": "Openship wartet nach dem Start nicht auf deine App, ein langsamer Start verzögert oder bricht also nie ein Deployment ab. Sobald es live ist, wird der Port trotzdem geprüft und gemeldet, ohne etwas zu blockieren. Aktiviere das nur, wenn das Deployment selbst fehlschlagen soll.",
+      "description": "Kovalio wartet nach dem Start nicht auf deine App, ein langsamer Start verzögert oder bricht also nie ein Deployment ab. Sobald es live ist, wird der Port trotzdem geprüft und gemeldet, ohne etwas zu blockieren. Aktiviere das nur, wenn das Deployment selbst fehlschlagen soll.",
       "probeLabel": "Auf Antwort der App warten",
       "probeDesc": "Nach dem Start des Containers den Port der App ansprechen und auf eine Verbindung warten.",
       "pathLabel": "HTTP-Pfad",
@@ -75,6 +75,9 @@
       "onFailureWarn": "Deployment live lassen und zur Prüfung markieren",
       "onFailureFail": "Deployment abbrechen und die vorherige Version weiter ausliefern"
     },
+    "runtimeVersionLabel": "Runtime-Version",
+    "runtimeVersionDefault": "Standard",
+    "runtimeVersionDesc": "Verwendet passende Build- und Runtime-Images für die gewählte Version. Erfordert einen von Kovalio generierten Docker-Build.",
     "buildImageLabel": "Build-Image",
     "buildImageDesc": "Builder-Container-Image für Cloud- oder Server-Builds. Überschreibe es, wenn das erkannte Basis-Image falsch ist.",
     "productionPathsLabel": "Produktionspfade",
@@ -105,7 +108,15 @@
     "modeWorker": "Worker",
     "modeStatic": "Statisch",
     "workerModeDesc": "Läuft kontinuierlich ohne Port oder öffentliche URL – ein Queue-Consumer, Cronjob oder Bot.",
-    "buildSettingsTitle": "Build-Einstellungen"
+    "buildSettingsTitle": "Build-Einstellungen",
+    "releaseTitle": "Vor der Aktivierung",
+    "releaseDescription": "Optionale Befehle nach dem Build. Ein Fehler stoppt das Deployment. Nur für Docker- und Bare-Apps.",
+    "releaseCommand": "Befehl {number}",
+    "addReleaseCommand": "Befehl hinzufügen",
+    "removeReleaseCommand": "Befehl {number} entfernen",
+    "runtimeImageLabel": "Runtime-Image",
+    "runtimeImageDesc": "Optionales Produktions-Basisimage für Docker-Builds. Muss zur Runtime und zum generierten Rezept passen; leer lassen für den verwalteten Standard.",
+    "staticPathHint": "Wird als statische Dateien vom Edge bereitgestellt — es läuft kein Hintergrundprozess."
   },
   "projectSettings": {
     "framework": "Framework",
@@ -123,6 +134,7 @@
     "noneSet": "Keine festgelegt",
     "pasteEnv": ".env einfügen",
     "uploadEnv": ".env hochladen",
+    "downloadEnv": ".env herunterladen",
     "edit": "Bearbeiten",
     "cancel": "Abbrechen",
     "saving": "Wird gespeichert...",
@@ -144,6 +156,7 @@
       "interpolated": "Interpoliert"
     },
     "toast": {
+      "downloadFailed": "Umgebungsvariablen konnten nicht heruntergeladen werden.",
       "title": "Umgebungsvariablen",
       "added": "{count} hinzugefügt",
       "updated": "{count} aktualisiert",
@@ -173,7 +186,9 @@
       "domainLabel": "Domain",
       "free": "Kostenlos",
       "custom": "Benutzerdefiniert",
-      "routingTrafficPrefix": "Verkehr wird geleitet an Port"
+      "routingTrafficPrefix": "Verkehr wird geleitet an Port",
+      "duplicateTitle": "Doppelte Domain",
+      "duplicateDescription": "Zwei Routen verweisen auf dieselbe Domain — ändern Sie eine, damit jede Route eine eigene Domain hat:"
     },
     "shared": {
       "title": "Gemeinsame Umgebung",
@@ -205,9 +220,9 @@
       "volumes": "Volumes",
       "statefulWarnPart1": "Zustandsbehafteter Service in der Cloud: Daten liegen auf der persistenten Festplatte des Workspace (überstehen Neustarts), werden aber ",
       "statefulWarnBold": "nicht über Rebuilds hinweg übernommen",
-      "statefulWarnPart2": ", sofern keine Backups aktiviert sind. Docker-Volume-Mounts gelten nicht.",
+      "statefulWarnPart2": ". Sichere und stelle die Daten ausdrücklich wieder her, bevor du den Workspace ersetzt.",
       "volumeHint": "Benanntes Volume oder Host-Pfad → Container-Pfad.",
-      "volumeCloudNote": "In der Cloud gelten diese Mounts nicht – Daten bleiben auf der Festplatte des Workspace erhalten (ohne Backups nicht über Rebuilds hinweg).",
+      "volumeCloudNote": "Persistente Volume-Mounts werden in Kovalio Cloud nicht unterstützt. Wähle einen Server für Workloads, die Volumes benötigen.",
       "sourcePlaceholder": "Quelle",
       "containerPathPlaceholder": "Container-Pfad",
       "readOnlyMount": "Schreibgeschützter Mount",
@@ -288,7 +303,7 @@
     "deploymentModeDesc": "{mode} · Zwischen Laufzeiten pro App und Einzel-App-Verarbeitung wechseln."
   },
   "deploymentProcessing": {
-    "targetOpenshipCloud": "Openship Cloud",
+    "targetKovalioCloud": "Kovalio Cloud",
     "targetServerNamed": "Server · {name}",
     "targetServer": "Server",
     "targetLocal": "Lokaler Rechner",
@@ -300,9 +315,9 @@
       "port": "Port",
       "process": "Prozess",
       "unitDescription": "Unit-Beschreibung",
-      "openshipDeployment": "Openship-Bereitstellung",
+      "kovalioDeployment": "Kovalio-Bereitstellung",
       "sites": {
-        "lead": "Der vorhandene Proxy bedient derzeit {count} Site(s). Beim Migrieren werden sie in Openship importiert, bevor es die Ports 80/443 übernimmt:",
+        "lead": "Der vorhandene Proxy bedient derzeit {count} Site(s). Beim Migrieren werden sie in Kovalio importiert, bevor es die Ports 80/443 übernimmt:",
         "tlsBadge": "TLS",
         "staticLabel": "statisch:",
         "warningsTitle": "Konnten nicht automatisch migriert werden — bitte manuell erneut hinzufügen:"
@@ -315,7 +330,7 @@
       "successful": "Bereitstellung erfolgreich",
       "deploying": "Wird bereitgestellt..."
     },
-    "visitSite": "Website besuchen",
+    "openSite": "Website öffnen",
     "warningTitle": "Bereitstellung abgeschlossen, aber einige Services benötigen noch Aufmerksamkeit.",
     "productionLogs": "Produktionsprotokolle",
     "buildTerminal": "Build-Terminal",
@@ -325,7 +340,7 @@
     "stopDeployment": "Bereitstellung stoppen",
     "redeploy": "Erneut bereitstellen",
     "goToProject": "Zum Projekt",
-    "openDashboard": "Dashboard öffnen",
+    "openProject": "Projekt öffnen",
     "edit": "Bearbeiten",
     "status": {
       "cancelled": "Abgebrochen",
@@ -342,7 +357,38 @@
     "detailFramework": "Framework",
     "detailBranch": "Branch",
     "detailDomains": "Domains",
-    "detailDomain": "Domain"
+    "detailDomain": "Domain",
+    "portAdvisory": {
+      "loopbackTitle": "Die App kann keinen weitergeleiteten Datenverkehr empfangen",
+      "loopbackNote": "Die Bereitstellung läuft, aber ein weitergeleiteter Port erfordert Aufmerksamkeit.",
+      "loopbackBody": "Port {port} lauscht nur innerhalb des Containers.",
+      "loopbackBodyService": "Dienst \"{service}\" lauscht nur innerhalb des Containers auf Port {port}.",
+      "loopbackHelp": "Für eine App mit weitergeleitetem Datenverkehr: auf 0.0.0.0 lauschen und erneut bereitstellen oder den vorgesehenen Proxy als Ziel verwenden.",
+      "openSettings": "Einstellungen öffnen",
+      "skipError": "Dieser Hinweis konnte nicht ausgeblendet werden. Bitte erneut versuchen.",
+      "title": "Hinweis auf abweichenden Port",
+      "bannerTitle": "Abweichender Container-Port erkannt",
+      "review": "Port überprüfen",
+      "note": "Der Edge-Router leitet den Datenverkehr an Port {port} weiter, aber Ihre Anwendung hat dort nicht geantwortet.",
+      "body": "Auf Port {port} hat nichts geantwortet. Wenn Ihre Anwendung auf einem anderen Port lauscht, aktualisieren Sie ihn unten.",
+      "bodyService": "Dienst „{service}“: Auf Port {port} hat nichts geantwortet. Wenn er auf einem anderen Port lauscht, geben Sie hier den richtigen an.",
+      "newPortLabel": "Korrekter Port",
+      "changePort": "Port ändern",
+      "skip": "Überspringen",
+      "applied": "Routing auf Port {port} aktualisiert.",
+      "changeError": "Der Port konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut."
+    }
+  },
+  "deploymentHealth": {
+    "recheck": "Zustand erneut prüfen",
+    "checking": "Wird geprüft…",
+    "healthy": "Die Dienste sind gesund",
+    "atDeployment": "Warnung beim Deployment",
+    "currentHealth": "Aktueller Dienststatus",
+    "startupHint": "Wenn die App noch startet, warten Sie und prüfen Sie erneut. Bei Neustarts oder Fehlern öffnen Sie die Logs, um die Ursache zu finden.",
+    "viewLogs": "Logs anzeigen",
+    "unavailable": "Der Zustand konnte nicht geprüft werden. Versuchen Sie es erneut, wenn der Server erreichbar ist.",
+    "historical": "Dieses Deployment ist nicht mehr aktiv. Öffnen Sie das Projekt für die aktuellen Dienste."
   },
   "composeDeployment": {
     "title": {
@@ -416,12 +462,12 @@
     "rowType": "Typ"
   },
   "configDiagnostics": {
-    "title": "Teile der openship.json dieses Repos wurden nicht angewendet",
-    "description": "Die unten aufgeführten Felder wurden übersprungen; der Rest der Datei wurde angewendet. Das Deployment läuft weiter.",
-    "titleWholeFile": "Die openship.json dieses Repos wurde ignoriert",
-    "descriptionWholeFile": "Nichts davon wurde angewendet. Das Deployment läuft weiter, mit den von Openship erkannten Einstellungen.",
+    "title": "Einige Deployment-Einstellungen wurden nicht angewendet",
+    "description": "Prüfe die unten aufgeführten übersprungenen Einstellungen vor dem Deployment.",
+    "titleWholeFile": "Die kovalio.json dieses Repos wurde ignoriert",
+    "descriptionWholeFile": "Nichts davon wurde angewendet. Das Deployment läuft weiter, mit den von Kovalio erkannten Einstellungen.",
     "refused": "Abgelehnt",
     "unrecognized": "Nicht erkannt",
-    "hint": "Führe `openship config validate` im Repo aus, um die Datei vor dem nächsten Deployment zu prüfen."
+    "hint": "Prüfe die genannten Konfigurationsdateien und aktualisiere nicht unterstützte Einstellungen vor dem nächsten Deployment."
   }
 }

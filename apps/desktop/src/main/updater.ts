@@ -9,82 +9,122 @@
  * requires signing). A detached script does the swap because a running app can't
  * overwrite its own bundle.
  *
- * Trust: the release feed and asset host are pinned, and the download must match
- * the release's sha256 sidecar or it is refused. That's integrity only — the
- * sidecar shares the asset's trust domain, so an attacker who can replace the
- * release asset can replace it too. Real code-signature verification is the
- * remaining gap.
+ * Trust: the release feed and every download redirect are pinned. The installer
+ * must match its checksum AND an Ed25519 signature binding its version, name and
+ * digest to the publisher key embedded in this app. Missing proofs fail closed.
  */
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import { app, net, shell } from "electron";
-import { resolveDesktopUpdate, type GithubReleasePayload } from "@repo/core";
+import {
+  changelogMarkdownUrl,
+  extractChangelogSection,
+  resolveDesktopUpdate,
+  RELEASES_LATEST_API,
+  type DesktopUpdateAsset,
+  type DesktopUpdateCheck,
+  type DesktopUpdateSnapshot,
+  type GithubReleasePayload,
+} from "@repo/core";
 import { createHash } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
 import {
   chmodSync,
-  createWriteStream,
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readdirSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
+import { open } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { advisoryManifestUrl, parseManifest, type Advisory, type AdvisoryManifest } from "@repo/core";
+import { advisoryManifestUrl, parseManifest, type AdvisoryManifest } from "@repo/core";
 import { isAllowedUpdateAssetUrl } from "./security";
+import { verifyUpdateSignature } from "./update-signature";
+import { fetchUpdateAsset } from "./update-download";
 
-const RELEASES_API = "https://api.github.com/repos/oblien/openship/releases/latest";
+export type UpdateAsset = DesktopUpdateAsset;
+export type UpdateInfo = Extract<DesktopUpdateCheck, { available: true }>;
+export type UpdateCheck = DesktopUpdateSnapshot;
 
-export interface UpdateAsset {
-  name: string;
-  url: string;
-  size: number;
+let cachedCheck: UpdateCheck | null = null;
+let inFlightCheck: Promise<UpdateCheck> | null = null;
+
+/** Startup, renderer navigation and manual checks share one request in flight. */
+export function checkForUpdate(options: { force?: boolean } = {}): Promise<UpdateCheck> {
+  if (inFlightCheck) return inFlightCheck;
+  if (!options.force && cachedCheck) return Promise.resolve(cachedCheck);
+  inFlightCheck = checkForUpdateUncached()
+    .then((result) => {
+      // Offline is not a successful session cache: allow the next caller to retry.
+      cachedCheck = result.latest ? result : null;
+      return result;
+    })
+    .finally(() => {
+      inFlightCheck = null;
+    });
+  return inFlightCheck;
 }
-export interface UpdateInfo {
-  available: true;
-  version: string;
-  notes: string;
-  asset: UpdateAsset;
-  /**
-   * The RELEASE ADVISORY that authorizes interrupting the user at launch, or
-   * null for a routine release: installable from Settings → Updates, but no
-   * modal, no notification. Comes straight from the advisory manifest via
-   * `resolveDesktopUpdate` — this process never decides it for itself.
-   */
-  announcement: Advisory | null;
-}
-export type UpdateCheck = UpdateInfo | { available: false };
 
 /**
- * Ask GitHub for the latest release + the advisory manifest pinned to its tag,
- * and hand both to `resolveDesktopUpdate`. Never throws — a failed check
- * (offline, rate-limited) resolves to "no update".
+ * Ask GitHub for the latest release, then read the changelog and advisory
+ * manifest pinned to its tag before handing the result to
+ * `resolveDesktopUpdate`. Never throws — a failed release check (offline,
+ * rate-limited) resolves to "no update".
  *
  * This function is I/O only. The whole decision — which asset this platform
  * pulls, whether the release is newer, and whether an advisory authorizes
  * interrupting the user — lives in @repo/core, unit-tested against synthetic
  * payloads. Nothing here re-checks or re-derives any of it.
  */
-export async function checkForUpdate(): Promise<UpdateCheck> {
+async function checkForUpdateUncached(): Promise<UpdateCheck> {
   try {
-    const res = await net.fetch(RELEASES_API, {
+    const res = await net.fetch(RELEASES_LATEST_API, {
       headers: {
         Accept: "application/vnd.github+json",
-        "User-Agent": "Openship-Desktop",
+        "User-Agent": "Kovalio-Desktop",
       },
       signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) return { available: false };
+    if (!res.ok) return { available: false, latest: null, manifest: null };
     const data = (await res.json()) as GithubReleasePayload;
-    return resolveDesktopUpdate({
-      releasePayload: data,
-      platform: process.platform,
-      arch: process.arch,
-      currentVersion: app.getVersion(),
-      manifest: await fetchManifest((data?.tag_name ?? "").trim()),
+    const tag = (data?.tag_name ?? "").trim();
+    if (!tag) return { available: false, latest: null, manifest: null };
+    // These are independent, fail-soft reads. A missing changelog must never
+    // suppress a critical advisory (or the reverse).
+    const [manifest, changelogNotes] = await Promise.all([fetchManifest(tag), fetchChangelog(tag)]);
+    return {
+      ...resolveDesktopUpdate({
+        releasePayload: data,
+        platform: process.platform,
+        arch: process.arch,
+        currentVersion: app.getVersion(),
+        manifest,
+        changelogNotes,
+      }),
+      latest: { version: tag.replace(/^v/, ""), tag, notes: changelogNotes ?? "" },
+      manifest,
+    };
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "desktop/main/updater");
+    return { available: false, latest: null, manifest: null };
+  }
+}
+
+/** Exact release section from the immutable changelog at this release tag. */
+async function fetchChangelog(tag: string): Promise<string | null> {
+  if (!tag) return null;
+  try {
+    const res = await net.fetch(changelogMarkdownUrl(tag), {
+      headers: { Accept: "text/markdown", "User-Agent": "Kovalio-Desktop" },
+      signal: AbortSignal.timeout(10_000),
     });
-  } catch {
-    return { available: false };
+    if (!res.ok) return null;
+    return extractChangelogSection(await res.text(), tag);
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "desktop/main/updater");
+    return null;
   }
 }
 
@@ -100,12 +140,13 @@ async function fetchManifest(tag: string): Promise<AdvisoryManifest | null> {
   if (!tag) return null;
   try {
     const res = await net.fetch(advisoryManifestUrl(tag), {
-      headers: { Accept: "application/json", "User-Agent": "Openship-Desktop" },
+      headers: { Accept: "application/json", "User-Agent": "Kovalio-Desktop" },
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return null;
     return parseManifest(await res.json());
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "desktop/main/updater");
     return null;
   }
 }
@@ -113,28 +154,37 @@ async function fetchManifest(tag: string): Promise<AdvisoryManifest | null> {
 /** Download the asset to a temp file, reporting 0..1 progress. Returns the path. */
 export async function downloadUpdate(
   asset: UpdateAsset,
+  version: string,
   onProgress: (fraction: number) => void,
 ): Promise<string> {
   // The release feed comes from the pinned repo, but the asset URL inside it was
   // previously followed wherever it pointed — so a tampered feed could source the
   // installer from any host. Pin it to GitHub's own release hosts.
-  if (!isAllowedUpdateAssetUrl(asset.url)) {
+  const expectedUrl = `https://github.com/Nextrium/kovalio/releases/download/v${encodeURIComponent(version)}/${encodeURIComponent(asset.name)}`;
+  if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(asset.name) || asset.url !== expectedUrl || !isAllowedUpdateAssetUrl(asset.url)) {
     throw new Error(`Refusing to download update from untrusted URL: ${asset.url}`);
   }
 
-  const dir = join(app.getPath("temp"), "openship-update");
-  mkdirSync(dir, { recursive: true });
+  const dir = mkdtempSync(join(app.getPath("temp"), "kovalio-update-"));
   const dest = join(dir, asset.name);
+  try {
+    await downloadVerifiedInstaller(asset, version, onProgress, dest);
+    return dest;
+  } catch (error) {
+    rmSync(dir, { recursive: true, force: true });
+    throw error;
+  }
+}
 
-  const res = await net.fetch(asset.url, {
-    headers: { "User-Agent": "Openship-Desktop" },
-  });
+async function downloadVerifiedInstaller(asset: UpdateAsset, version: string, onProgress: (fraction: number) => void, dest: string): Promise<void> {
+  const res = await fetchUpdateAsset(asset.url, AbortSignal.timeout(10 * 60_000));
   if (!res.ok || !res.body) {
+    await res.body?.cancel();
     throw new Error(`Download failed: HTTP ${res.status}`);
   }
 
   const total = Number(res.headers.get("content-length")) || asset.size || 0;
-  const file = createWriteStream(dest);
+  const file = await open(dest, "wx", 0o600);
   const reader = res.body.getReader();
   const hash = createHash("sha256");
   let received = 0;
@@ -144,19 +194,14 @@ export async function downloadUpdate(
       const { done, value } = await reader.read();
       if (done) break;
       hash.update(value);
-      if (!file.write(Buffer.from(value))) {
-        await new Promise<void>((r) => file.once("drain", r));
-      }
+      await file.writeFile(value);
       received += value.length;
       if (total > 0) onProgress(Math.min(1, received / total));
     }
   } finally {
-    file.end();
+    await file.close();
+    await reader.cancel();
   }
-  await new Promise<void>((r, j) => {
-    file.on("finish", () => r());
-    file.on("error", j);
-  });
 
   // Integrity gate: verify the sha256 sidecar the release publishes, and FAIL
   // CLOSED. A mismatch and a missing sidecar are both refusals — treating absence
@@ -165,23 +210,23 @@ export async function downloadUpdate(
   // for every desktop artifact, and the sidecar is always read from the release
   // we're installing, so failing closed can't strand a real release.
   //
-  // This is integrity, NOT authenticity: the sidecar shares the asset's trust
-  // domain. Genuine signature verification is still missing.
+  // The independent publisher signature below supplies authenticity as well.
   const digest = hash.digest("hex");
   let expected: string | null = null;
   let sidecarError = "unreachable";
   try {
-    const shaRes = await net.fetch(`${asset.url}.sha256`, {
-      headers: { "User-Agent": "Openship-Desktop" },
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!shaRes.ok) sidecarError = `HTTP ${shaRes.status}`;
+    const shaRes = await fetchUpdateAsset(`${asset.url}.sha256`, AbortSignal.timeout(10_000));
+    if (!shaRes.ok) {
+      sidecarError = `HTTP ${shaRes.status}`;
+      await shaRes.body?.cancel();
+    }
     else {
-      const tok = (await shaRes.text()).trim().split(/\s+/)[0]?.toLowerCase();
+      const tok = (await readUpdateProof(shaRes)).trim().split(/\s+/)[0]?.toLowerCase();
       if (tok && /^[0-9a-f]{64}$/.test(tok)) expected = tok;
       else sidecarError = "malformed";
     }
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "desktop/main/updater");
     sidecarError = "unreachable";
   }
   if (!expected) {
@@ -196,7 +241,34 @@ export async function downloadUpdate(
       `Update checksum mismatch — refusing to install ${asset.name} (expected ${expected}, got ${digest}).`,
     );
   }
-  return dest;
+  try {
+    const signature = await fetchUpdateAsset(`${asset.url}.sig`, AbortSignal.timeout(10_000));
+    if (!signature.ok) {
+      await signature.body?.cancel();
+      throw new Error("No publisher signature");
+    }
+    verifyUpdateSignature(JSON.parse(await readUpdateProof(signature)), { version, name: asset.name, sha256: digest });
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "desktop/main/updater");
+    rmSync(dest, { force: true });
+    throw new Error("Update signature is missing or invalid. Refusing to install this update.");
+  }
+}
+
+async function readUpdateProof(response: Response): Promise<string> {
+  if (!response.body) throw new Error("Missing update proof.");
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return Buffer.concat(chunks).toString("utf8");
+      size += value.length;
+      if (size > 4096) throw new Error("Invalid update proof size.");
+      chunks.push(value);
+    }
+  } finally { await reader.cancel(); }
 }
 
 /**
@@ -209,7 +281,7 @@ export function installUpdate(file: string): void {
     if (process.platform === "win32") return installWindows(file);
     return installLinux(file);
   } catch (err) {
-    console.error("[updater] seamless install failed, opening installer:", err);
+    errorDiagnostics.error("desktop/main/updater", "[updater] seamless install failed, opening installer:", err);
     fallbackOpen(file);
   }
 }
@@ -222,7 +294,7 @@ function fallbackOpen(file: string): void {
 
 /** Spawn a detached script that waits for us to exit, then runs `body`. */
 function runDetachedAfterExit(scriptBody: string, ext: "sh" | "cmd"): void {
-  const dir = join(app.getPath("temp"), "openship-update");
+  const dir = join(app.getPath("temp"), "kovalio-update");
   mkdirSync(dir, { recursive: true });
   const scriptPath = join(dir, `apply-update.${ext}`);
   writeFileSync(scriptPath, scriptBody, { mode: 0o755 });
@@ -236,26 +308,24 @@ function runDetachedAfterExit(scriptBody: string, ext: "sh" | "cmd"): void {
 }
 
 function installMac(dmg: string): void {
-  // The running app bundle: <exe>/../../.. → …/Openship.app
+  // The running app bundle: <exe>/../../.. → …/Kovalio.app
   const installedApp = resolve(app.getPath("exe"), "..", "..", "..");
   if (!installedApp.endsWith(".app")) {
     return fallbackOpen(dmg);
   }
 
-  const staged = join(app.getPath("temp"), "openship-update", "Openship.app");
+  const staged = join(app.getPath("temp"), "kovalio-update", "Kovalio.app");
 
   // Mount, copy the new .app out, unmount — all before we quit.
-  const attach = spawnSync(
-    "hdiutil",
-    ["attach", "-nobrowse", "-readonly", "-noverify", dmg],
-    { encoding: "utf8" },
-  );
+  const attach = spawnSync("hdiutil", ["attach", "-nobrowse", "-readonly", "-noverify", dmg], {
+    encoding: "utf8",
+  });
   if (attach.status !== 0) return fallbackOpen(dmg);
   const mount = (attach.stdout.match(/\/Volumes\/[^\n]*/g) ?? []).pop()?.trim();
   if (!mount) return fallbackOpen(dmg);
 
   try {
-    const appInDmg = join(mount, "Openship.app");
+    const appInDmg = join(mount, "Kovalio.app");
     if (!existsSync(appInDmg)) return fallbackOpen(dmg);
     spawnSync("rm", ["-rf", staged]);
     const copy = spawnSync("ditto", [appInDmg, staged], { encoding: "utf8" });
@@ -308,8 +378,8 @@ function installWindows(zip: string): void {
   // we self-replace exactly like mac/linux: extract now, then a detached script
   // waits for us to exit (file locks), mirrors the new build over the install
   // dir, and relaunches.
-  const installDir = dirname(app.getPath("exe")); // …\Openship-win32-x64\
-  const staging = join(app.getPath("temp"), "openship-update", "win-extract");
+  const installDir = dirname(app.getPath("exe")); // …\Kovalio-win32-x64\
+  const staging = join(app.getPath("temp"), "kovalio-update", "win-extract");
   rmSync(staging, { recursive: true, force: true });
   mkdirSync(staging, { recursive: true });
 
@@ -327,7 +397,7 @@ function installWindows(zip: string): void {
   );
   if (unzip.status !== 0) return fallbackOpen(zip);
 
-  const appRoot = findDirContaining(staging, "openship.exe");
+  const appRoot = findDirContaining(staging, "kovalio.exe");
   if (!appRoot) return fallbackOpen(zip);
 
   // `robocopy /MIR` requires the target not be locked, so it runs only after we
@@ -339,7 +409,7 @@ function installWindows(zip: string): void {
       ":wait",
       `tasklist /FI "PID eq ${process.pid}" | find "${process.pid}" >nul && (timeout /t 1 /nobreak >nul & goto wait)`,
       `robocopy "${appRoot}" "${installDir}" /MIR /NJH /NJS /NP /NFL /NDL >nul`,
-      `start "" "${join(installDir, "openship.exe")}"`,
+      `start "" "${join(installDir, "kovalio.exe")}"`,
       `rmdir /s /q "${staging}"`,
       "",
     ].join("\r\n"),

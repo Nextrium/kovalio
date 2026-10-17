@@ -35,6 +35,7 @@ import { getSession } from './lib/session';
 import { getBranding, assetsDir } from './lib/branding';
 import { renderIndexHtml } from './lib/index-html';
 import { brandingAdminRoute } from './routes/branding-admin';
+import type { Server } from 'bun';
 
 const app = new Hono();
 
@@ -84,7 +85,7 @@ app.get('/health', (c) => c.json({ ok: true, version: '0.2.0' }));
 
 // Plain JSON branding config - no tRPC envelope, no auth. Reads
 // from ${BRANDING_PATH}/config.json via the filesystem-backed store.
-// Consumers (Zero client, openship dashboard) can fetch this without
+// Consumers (Zero client, kovalio dashboard) can fetch this without
 // going through tRPC; useful for static HTML/SSR and curl.
 app.get('/branding.json', (c) => c.json(getBranding()));
 
@@ -100,13 +101,13 @@ app.use(
 
 app.route('/auth', authRoutes);
 app.route('/mail', idleRoute);
-// Token-gated write API for branding. Openship's dashboard PATCHes
+// Token-gated write API for branding. Kovalio's dashboard PATCHes
 // here using the shared BRANDING_ADMIN_TOKEN. Reads (`/branding.json`)
 // stay unauthenticated for the login page.
 app.route('/admin', brandingAdminRoute);
 
 // The upstream Zero client posts to /api/trpc; we keep /trpc as a
-// convenience for curl + the openship dashboard. `endpoint` MUST match
+// convenience for curl + the kovalio dashboard. `endpoint` MUST match
 // the mount point - the hono adapter uses it to strip the prefix
 // before resolving the procedure name.
 const createTrpcContext = async (_opts: unknown, c: any) => {
@@ -168,13 +169,25 @@ app.get('/index.html', sendIndexHtml);
 // Static files: assets, fonts, manifest, etc. serveStatic falls through to
 // the next handler when a path doesn't resolve to a file on disk, which is
 // what lets the SPA fallback below handle client-side routes.
-app.use('/*', serveStatic({ root: clientBuildDir }));
+app.use('/*', serveStatic({
+  root: clientBuildDir,
+  precompressed: true,
+  onFound: (_path, c) => {
+    if (/^\/assets\/[^/]+-[\w-]{8}\.[^/]+$/.test(c.req.path)) {
+      c.header('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+    // Hono adds Vary for compressed files; identity responses vary too.
+    if (!c.res.headers.has('Content-Encoding')) {
+      c.header('Vary', 'Accept-Encoding', { append: true });
+    }
+  },
+}));
 
 // SPA fallback - any unmatched GET serves index.html so React Router can
 // take over routing on the client. Registered last so it never shadows API
 // routes (those returned a response above and never fell through). Deep links
 // are documents too, so they get the same branded shell - a link preview of
-// https://mail.example.com/mail/inbox must not say "OpenShip Mail" either.
+// https://mail.example.com/mail/inbox must not say "Kovalio Mail" either.
 app.get('*', sendIndexHtml);
 
 const port = env.PORT;
@@ -182,5 +195,13 @@ console.log(`[zero] listening on http://localhost:${port}`);
 
 export default {
   port,
-  fetch: app.fetch,
+  async fetch(request: Request, server: Server<unknown>) {
+    const response = await app.fetch(request);
+    // Quiet SSE responses outlive Bun's default ten-second idle timeout.
+    // Keep ordinary request timeouts intact.
+    if (response.headers.get('Content-Type')?.startsWith('text/event-stream')) {
+      server.timeout(request, 0);
+    }
+    return response;
+  },
 };

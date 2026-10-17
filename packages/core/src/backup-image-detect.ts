@@ -10,7 +10,7 @@
  * "display-only mirror … drift here is cosmetic".
  *
  * It is not cosmetic. That hint is the operator's only preview of what "Auto" will
- * do, and in [#611](https://github.com/oblien/openship/issues/611) it is exactly
+ * do, and in [#611](https://github.com/Nextrium/kovalio/issues/611) it is exactly
  * what the reporter trusted: the dialog said *"Detected PostgreSQL — Auto backs it
  * up with pg_dump"*, the run silently used the volume fallback instead, and the
  * backup captured nothing. A dialog that promises one thing while the server does

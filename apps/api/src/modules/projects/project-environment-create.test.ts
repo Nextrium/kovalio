@@ -31,9 +31,24 @@ const h = vi.hoisted(() => ({
     environmentSlug: "production",
     environmentType: "production",
     gitProvider: "github",
+    framework: "node",
     gitOwner: "acme",
     gitRepo: "site",
     gitBranch: "main",
+    gitUrl: "https://github.com/acme/site.git",
+    installationId: 42 as number | null,
+    localPath: null as string | null,
+    releaseSource: null as Record<string, unknown> | null,
+    sourceKind: null as string | null,
+    buildKind: null as string | null,
+    workloadType: "web",
+    runtimeMode: null as string | null,
+    hasBuild: true,
+    hasServer: true,
+    startCommand: "npm start" as string | null,
+    webhookId: 17 as number | null,
+    webhookDomain: "hooks.example.com" as string | null,
+    autoDeploy: true,
     isApp: false,
     activeDeploymentId: null as string | null,
     serverId: null as string | null,
@@ -43,6 +58,7 @@ const h = vi.hoisted(() => ({
   siblings: [] as Array<Record<string, unknown>>,
   branches: [{ name: "main" }, { name: "staging" }] as Array<{ name: string }>,
   creates: [] as Array<Record<string, unknown>>,
+  groupCreates: [] as Array<Record<string, unknown>>,
   freeGateCalls: 0,
   persistedRoutes: [] as Array<unknown>,
 }));
@@ -62,6 +78,12 @@ vi.mock("@repo/db", () => ({
     projectGroup: {
       findById: async () => ({ id: "grp_1", name: "Site", slug: "site" }),
       findBySlugInOrg: async () => null,
+      listByOrganization: async () => ({ rows: [], total: 0 }),
+      create: async (input: Record<string, unknown>) => {
+        h.groupCreates.push(input);
+        return { ...input, id: "grp_new" };
+      },
+      softDelete: async () => {},
     },
     deployment: { findById: async () => null, listByProject: async () => ({ rows: [] }) },
     service: { listByProject: async () => [] },
@@ -72,7 +94,7 @@ vi.mock("@repo/db", () => ({
 }));
 
 // The seams that prove property 2: the create path must not reach any of them.
-vi.mock("../domains/project-route.service", () => ({
+vi.mock("@repo/platform/engine/modules/domains/project-route.service", () => ({
   syncProjectRouteState: async () => ({ projectDomains: [], publicEndpoints: [] }),
   reapplyProjectLiveRoutes: async () => {},
   resolveProjectRouteState: async () => ({ projectDomains: [], publicEndpoints: [] }),
@@ -83,49 +105,70 @@ vi.mock("../domains/project-route.service", () => ({
   deriveNextProjectRouteState: () => ({ projectDomains: [], publicEndpoints: [] }),
   deriveEnvironmentPublicEndpoints: () => [{ domain: "site-staging.opsh.io", domainType: "free" }],
 }));
-vi.mock("../../lib/free-domain-guard", () => ({
+vi.mock("@repo/platform/engine/lib/free-domain-guard", () => ({
   assertFreeEndpointsAllowed: async () => {
     h.freeGateCalls += 1;
   },
 }));
 
-vi.mock("../domains/routing-apply.service", () => ({ applyProjectRouting: async () => {} }));
-vi.mock("./project-runtime.service", () => ({ syncProjectManagedEdge: async () => {} }));
+vi.mock("@repo/platform/engine/modules/domains/routing-apply.service", () => ({ applyProjectRouting: async () => {} }));
+vi.mock("@repo/platform/engine/modules/projects/project-runtime.service", () => ({ syncProjectManagedEdge: async () => {} }));
 vi.mock("../../lib/controller-helpers", () => ({
   assertResourceInOrg: () => {},
   platform: () => ({ runtime: { name: "docker" } }),
 }));
-vi.mock("../github/github.service", () => ({
+vi.mock("@repo/platform/engine/modules/github/github.service", () => ({
   resolveDefaultBranch: async () => "main",
-  listBranches: async () => h.branches,
+  getBranch: async (_ctx: unknown, _owner: string, _repo: string, name: string) =>
+    h.branches.find((branch) => branch.name === name) ?? null,
   getLatestCommit: async () => null,
+  getWebhookStrategy: () => "per-project",
   resolveWebhookStrategy: async () => ({}),
 }));
-vi.mock("../github/github.auth", () => ({
+vi.mock("@repo/platform/engine/modules/github/github.auth", () => ({
   getInstallationIdByOrg: async () => undefined,
-  getInstallUrl: () => "",
+  resolveInstallUrl: async () => ({ url: "", state: "" }),
 }));
-vi.mock("./project-git-webhook", () => ({
+vi.mock("@repo/platform/engine/modules/projects/project-git-webhook", () => ({
   ensureSharedWebhook: async () => null,
   findSharedWebhookId: async () => null,
 }));
-vi.mock("../../lib/release-resolver", () => ({
+vi.mock("@repo/platform/engine/lib/release-resolver", () => ({
   resolveLatestVersion: async () => null,
   resolveLatestReleaseTag: async () => null,
   readApiVersion: () => "0.0.0",
 }));
-vi.mock("../../lib/image-registry", () => ({ resolveLatestImageDigest: async () => null }));
-vi.mock("./folder/session-store", () => ({ getFolderSession: () => null }));
-vi.mock("../../config", () => ({ env: { CLOUD_MODE: false, CLOUD_MAX_PROJECTS_PER_USER: 20 } }));
+vi.mock("@repo/platform/engine/lib/image-registry", () => ({ resolveLatestImageDigest: async () => null }));
+vi.mock("@repo/platform/engine/modules/projects/folder/session-store", () => ({ getFolderSession: () => null }));
+vi.mock("@repo/platform/engine/config/index", () => ({ env: { CLOUD_MODE: false, CLOUD_MAX_PROJECTS_PER_USER: 20 } }));
 
-const load = () => import("./project-crud.service");
+const load = () => import("@repo/platform/engine/modules/projects/project-crud.service");
 const ctx = { userId: "user_1", organizationId: "org_1" } as never;
 
 describe("createProjectEnvironment", () => {
   beforeEach(() => {
+    Object.assign(h.base, {
+      gitProvider: "github",
+      framework: "node",
+      gitOwner: "acme",
+      gitRepo: "site",
+      gitUrl: "https://github.com/acme/site.git",
+      installationId: 42,
+      localPath: null,
+      releaseSource: null,
+      sourceKind: null,
+      buildKind: null,
+      runtimeMode: null,
+      hasBuild: true,
+      startCommand: "npm start",
+      webhookId: 17,
+      webhookDomain: "hooks.example.com",
+      autoDeploy: true,
+    });
     h.siblings = [{ ...h.base }];
     h.branches = [{ name: "main" }, { name: "staging" }];
     h.creates = [];
+    h.groupCreates = [];
     h.freeGateCalls = 0;
     h.persistedRoutes = [];
   });
@@ -186,4 +229,243 @@ describe("createProjectEnvironment", () => {
     expect(h.creates[0]!.groupId).toBe("grp_1");
     expect(env.gitBranch).toBe("staging");
   });
+
+  it("copies a release image's source and runtime class into a new environment", async () => {
+    const releaseSource = {
+      mode: "github",
+      artifactKind: "image",
+      repo: "acme/site",
+      imageTemplate: "ghcr.io/acme/site:{tag}",
+      pinnedVersion: "v2.0.0",
+      trackReleases: true,
+    };
+    Object.assign(h.base, {
+      gitProvider: "release",
+      gitOwner: null,
+      gitRepo: null,
+      gitUrl: null,
+      installationId: null,
+      localPath: null,
+      releaseSource,
+      sourceKind: "image",
+      buildKind: "prebuilt",
+      runtimeMode: "docker",
+      hasBuild: false,
+      startCommand: null,
+    });
+
+    const { createProjectEnvironment } = await load();
+    await createProjectEnvironment("proj_prod", ctx, {
+      environmentName: "Staging",
+      sourceMode: "branch",
+    } as never);
+
+    expect(h.creates).toHaveLength(1);
+    expect(h.creates[0]).toMatchObject({
+      gitProvider: "release",
+      gitOwner: null,
+      gitRepo: null,
+      gitUrl: null,
+      installationId: null,
+      localPath: null,
+      releaseSource,
+      sourceKind: "image",
+      buildKind: "prebuilt",
+      runtimeMode: "docker",
+      hasBuild: false,
+      workloadType: "web",
+      startCommand: null,
+      // A new environment never inherits webhook bookkeeping.
+      webhookId: null,
+      webhookDomain: null,
+    });
+  });
 });
+
+describe("createProject — release image source", () => {
+  beforeEach(() => {
+    Object.assign(h.base, {
+      gitProvider: "github",
+      framework: "node",
+      gitOwner: "acme",
+      gitRepo: "site",
+      gitUrl: "https://github.com/acme/site.git",
+      installationId: 42,
+      localPath: null,
+      releaseSource: null,
+      sourceKind: null,
+      buildKind: null,
+      runtimeMode: null,
+      hasBuild: true,
+      startCommand: "npm start",
+      webhookId: 17,
+      webhookDomain: "hooks.example.com",
+      autoDeploy: true,
+    });
+    h.creates = [];
+    h.groupCreates = [];
+    h.siblings = [];
+  });
+
+  it("persists the complete source and freezes image/prebuilt/docker as one class", async () => {
+    const releaseSource = {
+      mode: "github",
+      artifactKind: "image",
+      repo: "acme/release-app",
+      imageTemplate: "ghcr.io/acme/release-app:{tag}",
+      pinnedVersion: "v3.4.5",
+      trackReleases: true,
+    };
+    const { createProject } = await load();
+
+    await createProject(
+      {
+        name: "Release App",
+        gitProvider: "release",
+        releaseSource,
+        framework: "node",
+        workloadType: "web",
+        port: 8080,
+      } as never,
+      "org_1",
+    );
+
+    expect(h.groupCreates).toHaveLength(1);
+    expect(h.creates).toHaveLength(1);
+    expect(h.creates[0]).toMatchObject({
+      gitProvider: "release",
+      releaseSource,
+      hasBuild: false,
+      sourceKind: "image",
+      buildKind: "prebuilt",
+      runtimeMode: "docker",
+      workloadType: "web",
+      hasServer: true,
+    });
+    expect(h.creates[0]?.gitOwner).toBeUndefined();
+    expect(h.creates[0]?.gitRepo).toBeUndefined();
+    expect(h.creates[0]?.gitUrl).toBeUndefined();
+    expect(h.creates[0]?.localPath).toBeUndefined();
+  });
+
+  it("normalizes only the supported release-source contract", async () => {
+    const { createProject } = await load();
+
+    await createProject(
+      {
+        name: "Normalized Release App",
+        gitProvider: "release",
+        releaseSource: {
+          mode: "github",
+          artifactKind: "image",
+          repo: "  acme/release-app  ",
+          imageTemplate: "  ghcr.io/acme/release-app:{tag}  ",
+          pinnedVersion: "  v3.4.5  ",
+          trackReleases: false,
+          unrecognizedInternalField: "must-not-persist",
+        },
+        framework: "node",
+        workloadType: "web",
+      } as never,
+      "org_1",
+    );
+
+    expect(h.creates[0]?.releaseSource).toEqual({
+      mode: "github",
+      artifactKind: "image",
+      repo: "acme/release-app",
+      imageTemplate: "ghcr.io/acme/release-app:{tag}",
+      pinnedVersion: "v3.4.5",
+      trackReleases: false,
+    });
+  });
+
+  it("rejects an unsafe external version source before writing any rows", async () => {
+    const { createProject } = await load();
+
+    await expect(
+      createProject(
+        {
+          name: "Unsafe Release App",
+          gitProvider: "release",
+          releaseSource: {
+            mode: "url",
+            artifactKind: "image",
+            versionUrl: "http://metadata.internal/latest",
+            imageTemplate: "registry.example.com/acme/app:{tag}",
+          },
+          framework: "node",
+          workloadType: "web",
+          port: 8080,
+        } as never,
+        "org_1",
+      ),
+    ).rejects.toThrow(/must use HTTPS/);
+
+    expect(h.groupCreates).toHaveLength(0);
+    expect(h.creates).toHaveLength(0);
+  });
+
+  it("rejects a pinned tag that cannot produce a valid image reference", async () => {
+    const { createProject } = await load();
+
+    await expect(
+      createProject(
+        {
+          name: "Invalid Release App",
+          gitProvider: "release",
+          releaseSource: {
+            mode: "url",
+            artifactKind: "image",
+            pinnedVersion: "release/1.2.3",
+            imageTemplate: "registry.example.com/acme/app:{tag}",
+          },
+          framework: "node",
+          workloadType: "web",
+          port: 8080,
+        } as never,
+        "org_1",
+      ),
+    ).rejects.toThrow(/invalid/);
+
+    expect(h.groupCreates).toHaveLength(0);
+    expect(h.creates).toHaveLength(0);
+  });
+
+  it("rejects a services-class framework before writing any rows", async () => {
+    const { createProject } = await load();
+
+    await expect(
+      createProject(
+        {
+          name: "Compose Release App",
+          gitProvider: "release",
+          releaseSource: {
+            mode: "github",
+            artifactKind: "image",
+            repo: "acme/release-app",
+            imageTemplate: "ghcr.io/acme/release-app:{tag}",
+          },
+          framework: "docker-compose",
+          workloadType: "web",
+          port: 8080,
+        } as never,
+        "org_1",
+      ),
+    ).rejects.toThrow(/individual services/);
+
+    expect(h.groupCreates).toHaveLength(0);
+    expect(h.creates).toHaveLength(0);
+  });
+});
+
+// The application seams moved with the shared engine.
+vi.mock("@repo/platform/engine/lib/platform-config", () => ({
+  assertResourceInOrg: () => {},
+  platform: () => ({ runtime: { name: "docker" } }),
+}));
+
+vi.mock("@repo/platform/engine/lib/resource-access", () => ({
+  assertResourceInOrg: () => {},
+  platform: () => ({ runtime: { name: "docker" } }),
+}));

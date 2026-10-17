@@ -1,17 +1,33 @@
 import { randomBytes } from "node:crypto";
+import { assertSshDestination, parseSshTuningArgs } from "@repo/core";
 
 import type { SshConfig } from "../types";
+import { buildCloudflareProxyCommand } from "./cloudflare-ssh";
+
+export function supportsSshMultiplexing(platform: NodeJS.Platform = process.platform): boolean {
+  return platform !== "win32";
+}
+
+/** Shared by system SSH and rsync so no transfer can bypass the saved transport. */
+export function buildSshTransportArgs(config: SshConfig, platform: NodeJS.Platform = process.platform): string[] {
+  assertSshDestination(config);
+  const args: string[] = [];
+  if (config.sshJumpHost?.trim()) args.push("-J", config.sshJumpHost.trim());
+  if (config.sshTransport === "cloudflare") args.push("-o", `ProxyCommand=${buildCloudflareProxyCommand(config.host, { platform })}`);
+  args.push(...parseSshTuningArgs(config.sshArgs));
+  return args;
+}
 
 /**
  * Shared "agent case" logic for the system-`ssh` path.
  *
- * When SSH auth is "agent", openship shells out to the OS `ssh` binary instead
+ * When SSH auth is "agent", kovalio shells out to the OS `ssh` binary instead
  * of the in-process `ssh2` client (only the real OpenSSH client reliably
  * resolves the agent / `~/.ssh/config` / default keys / macOS keychain — the
  * same thing that makes `ssh root@host` work in a terminal). Every system-`ssh`
  * invocation — command exec, file ops, port-forward, Docker socket-forward, the
- * interactive shell — shares the argv and env produced here so they all ride
- * one authenticated ControlMaster connection ("reuse the existing ssh tunnel").
+ * interactive shell — shares the argv and env produced here. Unix clients reuse
+ * an authenticated ControlMaster; Windows uses foreground connections.
  */
 
 /** Default connect timeout (seconds) handed to `ssh -o ConnectTimeout`. */
@@ -26,7 +42,7 @@ const CONNECT_TIMEOUT_SECONDS = 15;
  * exists on every macOS/Linux host (the platforms this path supports).
  */
 export function makeControlPath(): string {
-  return `/tmp/openship-ssh-${process.pid}-${randomBytes(6).toString("hex")}.sock`;
+  return `/tmp/kovalio-ssh-${process.pid}-${randomBytes(6).toString("hex")}.sock`;
 }
 
 /**
@@ -34,12 +50,13 @@ export function makeControlPath(): string {
  * invocation that reuses it. Includes the ControlMaster multiplexing options,
  * the port, non-interactive/host-key conventions (mirrors
  * `buildRsyncSshCommand` in remote-transfer.ts), the optional jump host, and
- * any extra raw args configured on the server.
+ * the selected transport and allowlisted connection tuning options.
  *
  * Does NOT include the target (`user@host`) or a remote command — callers
  * append those.
  */
-export function buildBaseSshArgs(config: SshConfig, controlPath: string): string[] {
+export function buildBaseSshArgs(config: SshConfig, controlPath: string, platform: NodeJS.Platform = process.platform): string[] {
+  assertSshDestination(config);
   const args: string[] = [
     "-p", String(config.port ?? 22),
     // BatchMode keeps the OS ssh non-interactive: agent/keys only, never a
@@ -49,31 +66,22 @@ export function buildBaseSshArgs(config: SshConfig, controlPath: string): string
     "-o", `ConnectTimeout=${CONNECT_TIMEOUT_SECONDS}`,
     "-o", "ServerAliveInterval=15",
     "-o", "ServerAliveCountMax=3",
-    // One authenticated master; subsequent ssh calls attach to it.
-    "-o", "ControlMaster=auto",
-    "-o", `ControlPath=${controlPath}`,
-    // Keep the master alive across brief idle gaps (the connection manager
-    // caches the executor for ~5 min); dispose() tears it down explicitly.
-    "-o", "ControlPersist=300",
   ];
 
-  if (config.sshJumpHost?.trim()) {
-    args.push("-J", config.sshJumpHost.trim());
+  if (supportsSshMultiplexing(platform)) {
+    args.push("-o", "ControlMaster=auto", "-o", `ControlPath=${controlPath}`, "-o", "ControlPersist=300");
+  } else {
+    args.push("-o", "ControlMaster=no", "-o", "ControlPath=none");
   }
 
-  // Extra raw args are a freeform string (e.g. `-o IPQoS=throughput`); split on
-  // whitespace. This matches how the field is presented in the UI.
-  if (config.sshArgs?.trim()) {
-    for (const token of config.sshArgs.trim().split(/\s+/)) {
-      if (token) args.push(token);
-    }
-  }
+  args.push(...buildSshTransportArgs(config, platform));
 
   return args;
 }
 
 /** The `user@host` target for the ssh invocation. */
 export function sshTarget(config: SshConfig): string {
+  assertSshDestination(config);
   return `${config.username ?? "root"}@${config.host}`;
 }
 

@@ -27,27 +27,27 @@ const makeExecutor = (over: Record<string, unknown> = {}) =>
 describe("assertManagedArtifactPath", () => {
   it("accepts a static release dir and a build dir", () => {
     expect(() =>
-      assertManagedArtifactPath("/opt/openship/static/releases/dep_1"),
+      assertManagedArtifactPath("/opt/kovalio/static/releases/dep_1"),
     ).not.toThrow();
     expect(() =>
-      assertManagedArtifactPath("/opt/openship/static/.builds/bld_1-svc_1"),
+      assertManagedArtifactPath("/opt/kovalio/static/.builds/bld_1-svc_1"),
     ).not.toThrow();
-    expect(() => assertManagedArtifactPath("/opt/openship/releases/dep_1")).not.toThrow();
+    expect(() => assertManagedArtifactPath("/opt/kovalio/releases/dep_1")).not.toThrow();
   });
 
   it("refuses anything outside the managed base", () => {
     for (const ref of ["/etc", "/", "/var/lib/docker", "/home/deploy/site"]) {
-      expect(() => assertManagedArtifactPath(ref)).toThrow(/outside \/opt\/openship/);
+      expect(() => assertManagedArtifactPath(ref)).toThrow(/outside \/opt\/kovalio/);
     }
   });
 
   it("matches on a path BOUNDARY, not a bare prefix", () => {
-    // `/opt/openshipmore` shares the prefix but is a different tree entirely.
-    expect(() => assertManagedArtifactPath("/opt/openshipmore/x")).toThrow(
-      /outside \/opt\/openship/,
+    // `/opt/kovaliomore` shares the prefix but is a different tree entirely.
+    expect(() => assertManagedArtifactPath("/opt/kovaliomore/x")).toThrow(
+      /outside \/opt\/kovalio/,
     );
-    expect(() => assertManagedArtifactPath("/opt/openship-evil/x")).toThrow(
-      /outside \/opt\/openship/,
+    expect(() => assertManagedArtifactPath("/opt/kovalio-evil/x")).toThrow(
+      /outside \/opt\/kovalio/,
     );
   });
 
@@ -57,25 +57,25 @@ describe("assertManagedArtifactPath", () => {
     // upstream, not a target.
     for (const ref of [
       MANAGED_ARTIFACT_BASE,
-      "/opt/openship/static",
-      "/opt/openship/static/",
-      "/opt/openship/static/releases",
-      "/opt/openship/static/.builds",
-      "/opt/openship/releases",
-      "/opt/openship/.builds",
+      "/opt/kovalio/static",
+      "/opt/kovalio/static/",
+      "/opt/kovalio/static/releases",
+      "/opt/kovalio/static/.builds",
+      "/opt/kovalio/releases",
+      "/opt/kovalio/.builds",
     ]) {
       expect(() => assertManagedArtifactPath(ref)).toThrow(/shared parent directory/);
     }
   });
 
   it("refuses traversal and relative refs", () => {
-    expect(() => assertManagedArtifactPath("/opt/openship/static/../../etc")).toThrow(/"\.\."/);
-    expect(() => assertManagedArtifactPath("opt/openship/static/x")).toThrow(/absolute/);
+    expect(() => assertManagedArtifactPath("/opt/kovalio/static/../../etc")).toThrow(/"\.\."/);
+    expect(() => assertManagedArtifactPath("opt/kovalio/static/x")).toThrow(/absolute/);
   });
 });
 
 describe("removeManagedArtifact", () => {
-  const REF = "/opt/openship/static/releases/dep_1";
+  const REF = "/opt/kovalio/static/releases/dep_1";
 
   it("shell-quotes the path and verifies the removal", async () => {
     const executor = makeExecutor();
@@ -119,10 +119,10 @@ describe("removeManagedArtifact", () => {
 
 describe("isArtifactPathRef", () => {
   it("keys on a LEADING slash, so image tags are never mistaken for paths", () => {
-    expect(isArtifactPathRef("/opt/openship/static/releases/dep_1")).toBe(true);
+    expect(isArtifactPathRef("/opt/kovalio/static/releases/dep_1")).toBe(true);
     // Tags contain slashes but never start with one — the distinction the whole
     // classification rests on.
-    expect(isArtifactPathRef("openship/my-app:bld_1")).toBe(false);
+    expect(isArtifactPathRef("kovalio/my-app:bld_1")).toBe(false);
     expect(isArtifactPathRef("ghcr.io/org/img:tag")).toBe(false);
     expect(isArtifactPathRef("postgres:16-alpine")).toBe(false);
     expect(isArtifactPathRef("compose")).toBe(false);

@@ -1,5 +1,5 @@
 /**
- * `openship edge` — install-and-manage the OpenResty edge (reverse proxy) that
+ * `kovalio edge` — install-and-manage the OpenResty edge (reverse proxy) that
  * fronts this box on :80/:443, and drive its per-route features.
  *
  * This command groups operations that ALREADY exist elsewhere in the CLI/API —
@@ -15,29 +15,35 @@
  *
  *   Control-plane (authenticated — reuses the running API via the active context):
  *     rules   list|add|rm    → /api/projects/:id/route-rules    (route-rule.controller)
- *     domains list|add|rm    → /api/domains (+ /api/projects for --port)  (see `openship domain`)
+ *     domains list|add|rm    → /api/domains (+ /api/projects for --port)  (see `kovalio domain`)
  *     traffic                → /api/analytics/overview           (requests + bandwidth)
  *     analytics              → /api/analytics/geo                (visitors, countries, paths)
  *     logs                   → /api/projects/:id/server-logs/recent
  *
  *   Install (host-side): `up`/`install` ensures the edge is serving and, with
  *     --monitoring, provisions the bundled API on embedded PGlite (the same
- *     `openship up --bare` pipeline) so analytics have a place to land. Detect-first:
- *     an existing Openship install is reused untouched.
+ *     `kovalio up --bare` pipeline) so analytics have a place to land. Detect-first:
+ *     an existing Kovalio install is reused untouched.
  *
- * The edge itself is a CONTAINER the compose stack owns (`openship up` brings it
+ * The edge itself is a CONTAINER the compose stack owns (`kovalio up` brings it
  * up on :80/:443). This command deliberately does NOT reimplement that install —
  * the containerized API is what registers sites into the edge (it holds the docker
  * socket + the shared routing volumes), which is exactly why migrate/takeover here
  * delegate through the API's import endpoint rather than writing vhosts by hand.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { Command } from "commander";
 import chalk from "chalk";
-import ora, { type Ora } from "ora";
 import { intro, outro, select, isCancel, note, text, password, confirm, log } from "@clack/prompts";
 
-import { apiRaw, apiRequest, ApiError, paginate } from "../lib/api-client";
+import { getRemoteClient, ApiError } from "../lib/ship-client";
+import { iteratePages } from "@repo/sdk/client";
+import { CreateDomainInputSchema, parseInput, isRecord, type Domain, type DomainRecords, type RouteRule } from "@repo/contracts";
+import { attachCustomDomainEndpoint } from "../lib/custom-domain-endpoint";
+import { positiveInteger } from "../lib/command-input";
+import { printEvents } from "../lib/event-output";
+import { spin, fail } from "../lib/cmd-helpers";
 import { getApiUrl } from "../lib/config";
 import { printJson, printTable, isJsonMode, ok, err, info } from "../lib/output";
 import { storedApiPort } from "../lib/ports";
@@ -53,33 +59,18 @@ import {
 
 // repairEdgeConflict lives in lib/edge-preflight but is imported lazily inside the
 // actions that need it: it dynamically pulls in ./edge-import (the API import path),
-// so keeping it off the module's static graph keeps `openship edge status` cheap.
+// so keeping it off the module's static graph keeps `kovalio edge status` cheap.
 type RepairMode = "migrate" | "stop";
 type LogLevel = "info" | "warn" | "error";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Suppress the spinner in JSON mode so stdout stays a clean data stream. */
-function spin(text: string): Ora | null {
-  return isJsonMode() ? null : ora(text).start();
-}
-
-/** Print an ApiError (or any error) and exit non-zero. */
-function fail(e: unknown): never {
-  if (e instanceof ApiError) {
-    err(`  ${e.message}${e.status ? chalk.dim(` (${e.status})`) : ""}`);
-  } else {
-    err(`  ${e instanceof Error ? e.message : String(e)}`);
-  }
-  process.exit(1);
-}
 
 const interactive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
 
 /** The containerized edge (and :80/:443 contention) is a Linux-only concept. */
 function requireLinux(): void {
   if (process.platform === "linux") return;
-  err("  The Openship edge runs as a Linux container — this command only works on the host that runs it.");
+  err("  The Kovalio edge runs as a Linux container — this command only works on the host that runs it.");
   process.exit(1);
 }
 
@@ -156,15 +147,6 @@ function reportRepair(res: RepairResult): never {
   process.exit(res.ok ? 0 : 1);
 }
 
-/** Build a `?a=b&c=d` query string, dropping empty/undefined params. */
-function query(params: Record<string, string | number | undefined>): string {
-  const q = Object.entries(params)
-    .filter(([, v]) => v !== undefined && v !== null && String(v) !== "")
-    .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`)
-    .join("&");
-  return q ? `?${q}` : "";
-}
-
 /** Grouped integer, e.g. 12,345. */
 function fmtInt(n?: number | null): string {
   const v = Number(n ?? 0);
@@ -197,6 +179,7 @@ async function runRepair(mode: RepairMode): Promise<never> {
     const res = await repairEdgeConflict(mode, apiPort(), onLog);
     reportRepair(res);
   } catch (e) {
+    observeCaughtError(e, "cli/commands/edge");
     sp?.fail("Edge repair failed");
     fail(e);
   }
@@ -204,7 +187,7 @@ async function runRepair(mode: RepairMode): Promise<never> {
 
 /**
  * `up`/`repair`: ensure the edge is serving. Healthy → say so. Not installed →
- * point at `openship up` (we don't duplicate the stack installer). Otherwise pick
+ * point at `kovalio up` (we don't duplicate the stack installer). Otherwise pick
  * an action (flag, prompt, or sensible default) and run the shared repair path.
  */
 async function runUp(opts: { migrate?: boolean; takeover?: boolean }): Promise<never> {
@@ -221,8 +204,8 @@ async function runUp(opts: { migrate?: boolean; takeover?: boolean }): Promise<n
 
   if (!diag.containerExists) {
     printDiagnosis(diag);
-    err("\n  No Openship edge container on this box.");
-    info("  Install the stack first — `openship up` brings up the edge (OpenResty on :80/:443).");
+    err("\n  No Kovalio edge container on this box.");
+    info("  Install the stack first — `kovalio up` brings up the edge (OpenResty on :80/:443).");
     process.exit(1);
   }
 
@@ -272,9 +255,10 @@ async function scanSites(): Promise<void> {
     if (!isJsonMode()) info(`  Found ${proxy} with ${sites.length} site(s):`);
     printSites(sites);
     if (sites.length > 0 && !isJsonMode()) {
-      info("\n  Import them with `openship edge migrate` (takes over :80/:443, keeps them serving).");
+      info("\n  Import them with `kovalio edge migrate` (takes over :80/:443, keeps them serving).");
     }
   } catch (e) {
+    observeCaughtError(e, "cli/commands/edge");
     sp?.fail("Scan failed");
     fail(e);
   }
@@ -292,9 +276,9 @@ async function runStatus(opts: { fix?: boolean; migrate?: boolean; takeover?: bo
   return runUp({ migrate: opts.migrate, takeover: opts.takeover });
 }
 
-// ─── Interactive panel (bare `openship edge`) ────────────────────────────────
+// ─── Interactive panel (bare `kovalio edge`) ────────────────────────────────
 //
-// A persistent, flat, domain-centric loop (like `openship doctor`): the edge routes
+// A persistent, flat, domain-centric loop (like `kovalio doctor`): the edge routes
 // domains → ports and doesn't care about projects, so the panel's primary axis is a
 // flat list of the domains it serves. `projectId` is resolved and carried under the
 // hood only where an endpoint still needs it (route-rules, domain removal). Every
@@ -307,13 +291,6 @@ const IS_LINUX = process.platform === "linux";
 /** Cached id of the local ("This Server") row — analytics are keyed on it. */
 let localServerId: string | null = null;
 
-/** Server row as the API sends it (the CLI's own ServerRow omits `isLocal`). */
-interface ServerRow {
-  id: string;
-  name: string;
-  isLocal?: boolean;
-}
-
 /** A domain the edge serves, flattened out of its owning project. */
 interface DomainEntry {
   id: string;
@@ -323,25 +300,6 @@ interface DomainEntry {
   verified: boolean;
   sslStatus: string | null;
   status: string | null;
-}
-
-/** One minute-bucket row from GET /analytics/server/:serverId. */
-interface ServerBucket {
-  minute: number;
-  requests: number;
-  uniqueRequests: number;
-  bandwidthIn: number;
-  bandwidthOut: number;
-  responseTime: number;
-  countries?: Record<string, number> | null;
-}
-
-/** The daily geo rollup row from GET /analytics/server/:serverId/geo. */
-interface ServerGeoRow {
-  countries?: Record<string, number> | null;
-  visitors?: number;
-  paths?: Record<string, number> | null;
-  statuses?: Record<string, number> | null;
 }
 
 /** Prompt for a required non-empty string; returns null on cancel/blank. */
@@ -360,7 +318,7 @@ function renderPanelError(e: unknown): void {
     // than dump a raw status — the CLI never needs a PAT on a trusted local box.
     if (e.status === 401 || e.status === 403) {
       log.warn(
-        "This instance requires authentication. Run `openship login` to paste a PAT, " +
+        "This instance requires authentication. Run `kovalio login` to paste a PAT, " +
           "or run the CLI on the box itself where loopback is trusted (zero-auth).",
       );
       return;
@@ -379,9 +337,10 @@ function renderPanelError(e: unknown): void {
  */
 async function apiLivePing(): Promise<boolean> {
   try {
-    const res = await apiRaw("/health", { signal: AbortSignal.timeout(1500) });
+    const res = await getRemoteClient().http.raw("/health", { signal: AbortSignal.timeout(1500) });
     return res.ok;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/commands/edge");
     return false;
   }
 }
@@ -389,8 +348,8 @@ async function apiLivePing(): Promise<boolean> {
 /** Resolve (and cache) the local server id — GET /system/servers → the isLocal row. */
 async function resolveLocalServerId(): Promise<string | null> {
   if (localServerId) return localServerId;
-  const rows = await apiRequest<ServerRow[]>("/system/servers");
-  const local = rows.find((r) => r.isLocal === true) ?? rows.find((r) => r.name === "This Server");
+  const rows = await getRemoteClient().servers.list();
+  const local = rows.find((r) => r.isLocal === true);
   localServerId = local?.id ?? null;
   return localServerId;
 }
@@ -403,13 +362,12 @@ async function resolveLocalServerId(): Promise<string | null> {
  */
 async function loadDomains(): Promise<DomainEntry[]> {
   const entries: DomainEntry[] = [];
-  for await (const p of paginate<Record<string, unknown>>("/projects")) {
-    const projectId = String(p.id);
+  const ship = getRemoteClient();
+  for await (const p of iteratePages(page => ship.projects.list(page))) {
+    const projectId = p.id;
     const projectPort = typeof p.port === "number" ? p.port : null;
-    const res = await apiRequest<{ data: DomainRow[] }>(
-      `/domains?projectId=${encodeURIComponent(projectId)}`,
-    ).catch(() => ({ data: [] as DomainRow[] }));
-    for (const d of res.data ?? []) {
+    const domains = await ship.domains.list(projectId);
+    for (const d of domains) {
       entries.push({
         id: d.id,
         hostname: d.hostname,
@@ -456,7 +414,7 @@ async function panelUp(): Promise<void> {
   }
   printDiagnosis(diag);
   if (!diag.containerExists) {
-    log.warn("No Openship edge container on this box — run `openship up` to install the stack.");
+    log.warn("No Kovalio edge container on this box — run `kovalio up` to install the stack.");
     return;
   }
   let mode: RepairMode;
@@ -504,7 +462,7 @@ async function panelSites(): Promise<void> {
 async function panelMonitoring(): Promise<void> {
   const existing = await detectExistingInstall();
   if (existing.present) {
-    ok("  ✓ Openship is already installed — monitoring is available through the running instance.");
+    ok("  ✓ Kovalio is already installed — monitoring is available through the running instance.");
     await ensureEdgeBestEffort();
     return;
   }
@@ -522,11 +480,8 @@ async function panelTraffic(entry: DomainEntry): Promise<void> {
   }
   const sp = spin(`Loading traffic for ${entry.hostname}…`);
   try {
-    const res = await apiRequest<{ data: ServerBucket[] }>(
-      `/analytics/server/${encodeURIComponent(serverId)}${query({ domain: entry.hostname })}`,
-    );
+    const buckets = await getRemoteClient().analytics.serverBuckets(serverId, { domain: entry.hostname });
     sp?.stop();
-    const buckets = res.data ?? [];
     if (!buckets.length) {
       info(`  No traffic recorded for ${entry.hostname} in the last hour.`);
       return;
@@ -567,11 +522,8 @@ async function panelAnalytics(entry: DomainEntry): Promise<void> {
   }
   const sp = spin(`Loading analytics for ${entry.hostname}…`);
   try {
-    const res = await apiRequest<{ data: ServerGeoRow }>(
-      `/analytics/server/${encodeURIComponent(serverId)}/geo${query({ domain: entry.hostname })}`,
-    );
+    const g = await getRemoteClient().analytics.serverGeo(serverId, { domain: entry.hostname });
     sp?.stop();
-    const g = res.data ?? {};
     info(`  Analytics — ${entry.hostname}  ${chalk.dim("(today)")}`);
     info(`  Visitors:  ${fmtInt(g.visitors)}`);
     const countries = Object.entries(g.countries ?? {}).sort((a, b) => Number(b[1]) - Number(a[1]));
@@ -619,15 +571,15 @@ async function panelTrafficOverview(): Promise<void> {
     let requests = 0;
     let bwOut = 0;
     try {
-      const res = await apiRequest<{ data: ServerBucket[] }>(
-        `/analytics/server/${encodeURIComponent(serverId)}${query({ domain: d.hostname })}`,
-      );
-      for (const b of res.data ?? []) {
+      const buckets = await getRemoteClient().analytics.serverBuckets(serverId, { domain: d.hostname });
+      for (const b of buckets) {
         requests += b.requests || 0;
         bwOut += b.bandwidthOut || 0;
       }
-    } catch {
-      // a single domain's analytics failing shouldn't drop the whole table
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "cli/commands/edge");
+      rows.push({ domain: d.hostname, port: d.port != null ? `:${d.port}` : "—", requests: "Unavailable", out: "Unavailable" });
+      continue;
     }
     rows.push({
       domain: d.hostname,
@@ -681,18 +633,15 @@ async function panelAddRule(entry: DomainEntry): Promise<void> {
 
   const sp = spin("Adding rule…");
   try {
-    const res = await apiRequest<{ rule: RouteRuleRow }>(
-      `/projects/${encodeURIComponent(entry.projectId)}/route-rules`,
-      { method: "POST", body: JSON.stringify({ domainId: entry.id, pathPrefix: null, spec, enabled: true }) },
-    );
-    sp?.succeed(`Added rule ${res.rule.id}`);
+    const rule = await getRemoteClient().projects.createRouteRule(entry.projectId, { domainId: entry.id, pathPrefix: null, spec, enabled: true });
+    sp?.succeed(`Added rule ${rule.id}`);
   } catch (e) {
     sp?.fail("Add failed");
     throw e;
   }
 }
 
-async function panelRemoveRule(entry: DomainEntry, rules: RouteRuleRow[]): Promise<void> {
+async function panelRemoveRule(entry: DomainEntry, rules: RouteRule[]): Promise<void> {
   const options: Array<{ value: string; label: string }> = rules.map((r) => ({
     value: r.id,
     label: `${r.id}  ${Object.keys(r.spec ?? {}).join(",") || "(none)"}`,
@@ -702,10 +651,7 @@ async function panelRemoveRule(entry: DomainEntry, rules: RouteRuleRow[]): Promi
   if (isCancel(pick) || pick === "__cancel") return;
   const sp = spin("Deleting rule…");
   try {
-    await apiRequest(
-      `/projects/${encodeURIComponent(entry.projectId)}/route-rules/${encodeURIComponent(String(pick))}`,
-      { method: "DELETE" },
-    );
+    await getRemoteClient().projects.removeRouteRule(entry.projectId, String(pick));
     sp?.succeed("Deleted.");
   } catch (e) {
     sp?.fail("Delete failed");
@@ -716,12 +662,9 @@ async function panelRemoveRule(entry: DomainEntry, rules: RouteRuleRow[]): Promi
 async function panelRules(entry: DomainEntry): Promise<void> {
   for (;;) {
     const sp = spin("Loading route rules…");
-    let rules: RouteRuleRow[];
+    let rules: RouteRule[];
     try {
-      const res = await apiRequest<{ rules: RouteRuleRow[] }>(
-        `/projects/${encodeURIComponent(entry.projectId)}/route-rules`,
-      );
-      rules = res.rules ?? [];
+      rules = await getRemoteClient().projects.listRouteRules(entry.projectId);
       sp?.stop();
     } catch (e) {
       sp?.fail("Load failed");
@@ -753,6 +696,7 @@ async function panelRules(entry: DomainEntry): Promise<void> {
       if (act === "add") await panelAddRule(entry);
       else if (act === "rm") await panelRemoveRule(entry, relevant);
     } catch (e) {
+      observeCaughtError(e, "cli/commands/edge");
       renderPanelError(e);
     }
   }
@@ -787,7 +731,8 @@ async function panelRegisterDomain(): Promise<void> {
   const sp = spin(`Registering ${hostname}…`);
   try {
     const res = await registerDomainCore(hostname, opts);
-    sp?.succeed(res.verified ? `${hostname} verified & serving` : `Registered ${hostname}`);
+    sp?.succeed(res.verified ? `DNS verified for ${hostname}` : `Registered ${hostname}`);
+    if (!isJsonMode() && res.routed) info(`  ${res.domain.hostname} is configured to be routed on the next deploy.`);
     if (res.verified) {
       if (res.sslStatus) info(`  SSL: ${res.sslStatus}`);
     } else if (res.records) {
@@ -806,7 +751,7 @@ async function panelRemoveDomain(entry: DomainEntry): Promise<boolean> {
   if (isCancel(go) || !go) return false;
   const sp = spin(`Removing ${entry.hostname}…`);
   try {
-    await apiRequest(`/domains/${encodeURIComponent(entry.id)}`, { method: "DELETE" });
+    await getRemoteClient().domains.remove(entry.id);
     sp?.succeed(`Removed ${entry.hostname}`);
     return true;
   } catch (e) {
@@ -835,6 +780,7 @@ async function panelDomainActions(entry: DomainEntry): Promise<void> {
       else if (act === "rules") await panelRules(entry);
       else if (act === "rm" && (await panelRemoveDomain(entry))) return;
     } catch (e) {
+      observeCaughtError(e, "cli/commands/edge");
       renderPanelError(e);
     }
   }
@@ -869,6 +815,7 @@ async function panelDomains(): Promise<void> {
       try {
         await panelRegisterDomain();
       } catch (e) {
+        observeCaughtError(e, "cli/commands/edge");
         renderPanelError(e);
       }
       continue;
@@ -883,15 +830,15 @@ async function panelDomains(): Promise<void> {
 function edgeHeader(diag: EdgeDiagnosis | null, apiLive: boolean, domainsLabel: string): string {
   return [
     `Edge:      ${diag ? describeDiagnosis(diag) : chalk.dim("host ops unavailable (not Linux)")}`,
-    `API:       ${apiLive ? chalk.green(`reachable · ${getApiUrl()}`) : chalk.dim(`unreachable · ${getApiUrl()}`)}`,
+    `API:       ${apiLive ? chalk.green(`reachable · ${getRemoteClient().http.apiUrl}`) : chalk.dim(`unreachable · ${getRemoteClient().http.apiUrl}`)}`,
     `Domains:   ${domainsLabel}`,
   ].join("\n");
 }
 
 async function edgePanel(): Promise<void> {
-  intro(`${chalk.bgCyan(chalk.black(" Openship "))}${chalk.dim(" edge")}`);
+  intro(`${chalk.bgCyan(chalk.black(" Kovalio "))}${chalk.dim(" edge")}`);
   for (;;) {
-    const diag = IS_LINUX ? await diagnoseEdge().catch(() => null) : null;
+    const diag = IS_LINUX ? await diagnoseEdge().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/commands/edge"); return null; }) : null;
     const apiLive = await apiLivePing();
 
     // The edge CLI is a trusted local tool: on a desktop / loopback box the API is
@@ -905,6 +852,7 @@ async function edgePanel(): Promise<void> {
       try {
         domainsLabel = String((await loadDomains()).length);
       } catch (e) {
+        observeCaughtError(e, "cli/commands/edge");
         if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
           needsAuth = true;
           domainsLabel = chalk.yellow("auth required");
@@ -935,14 +883,14 @@ async function edgePanel(): Promise<void> {
     // absent (API down) or restricted (real auth needed).
     if (!apiLive) {
       note(
-        `The Openship API isn't answering at ${getApiUrl()}.\n` +
-          "Domains, traffic & analytics need it — start the stack with `openship up`.",
+        `The Kovalio API isn't answering at ${getRemoteClient().http.apiUrl}.\n` +
+          "Domains, traffic & analytics need it — start the stack with `kovalio up`.",
         "API offline",
       );
     } else if (needsAuth) {
       note(
         "This instance requires authentication (a server with an admin, not a zero-auth\n" +
-          "desktop box). Run `openship login` to paste a PAT, or run the CLI on the box\n" +
+          "desktop box). Run `kovalio login` to paste a PAT, or run the CLI on the box\n" +
           "itself where loopback is trusted.",
         "Auth required",
       );
@@ -964,20 +912,13 @@ async function edgePanel(): Promise<void> {
       else if (action === "sites") await panelSites();
       else if (action === "monitoring") await panelMonitoring();
     } catch (e) {
+      observeCaughtError(e, "cli/commands/edge");
       renderPanelError(e);
     }
   }
 }
 
 // ─── Control-plane: route rules ──────────────────────────────────────────────
-
-interface RouteRuleRow {
-  id: string;
-  domainId?: string | null;
-  pathPrefix?: string | null;
-  enabled?: boolean;
-  spec?: Record<string, unknown>;
-}
 
 /** Commander collector for repeatable/comma-separated list flags. */
 const collect = (v: string, acc: string[] = []): string[] => acc.concat(v.split(",").map((s) => s.trim()).filter(Boolean));
@@ -987,10 +928,7 @@ const rulesList = new Command("list")
   .requiredOption("-p, --project <id>", "Project ID")
   .action(async (opts) => {
     try {
-      const res = await apiRequest<{ rules: RouteRuleRow[] }>(
-        `/projects/${encodeURIComponent(opts.project)}/route-rules`,
-      );
-      const rules = res.rules ?? [];
+      const rules = await getRemoteClient().projects.listRouteRules(opts.project);
       if (isJsonMode()) {
         printJson(rules);
         return;
@@ -1006,6 +944,7 @@ const rulesList = new Command("list")
         ["id", "path", "domain", "enabled", "rules"],
       );
     } catch (e) {
+      observeCaughtError(e, "cli/commands/edge");
       fail(e);
     }
   });
@@ -1015,14 +954,14 @@ const rulesAdd = new Command("add")
   .requiredOption("-p, --project <id>", "Project ID")
   .option("--path <prefix>", "Scope the rule to a path prefix (default: whole project)")
   .option("--domain <id>", "Scope the rule to one domain of the project")
-  .option("--rate-limit <rps>", "Requests/second per client IP before throttling", (v) => parseInt(v, 10))
-  .option("--burst <n>", "Burst allowance for --rate-limit", (v) => parseInt(v, 10))
+  .option("--rate-limit <rps>", "Requests/second per client IP before throttling", positiveInteger)
+  .option("--burst <n>", "Burst allowance for --rate-limit", positiveInteger)
   .option("--ban-country <cc>", "Block ISO-2 country code(s) (repeatable/comma-separated)", collect)
   .option("--ban-ip <ip>", "Block IP address(es) (repeatable/comma-separated)", collect)
   .option("--deny-cidr <cidr>", "Deny CIDR range(s) (repeatable/comma-separated)", collect)
   .option("--allow-cidr <cidr>", "Allow-list CIDR range(s) — everything else is denied", collect)
   .option("--allow-country <cc>", "Allow-list ISO-2 country code(s) — everything else denied", collect)
-  .option("--block-status <code>", "HTTP status returned on block (401/403/404/429/444/451/503)", (v) => parseInt(v, 10))
+  .option("--block-status <code>", "HTTP status returned on block (401/403/404/429/444/451/503)", positiveInteger)
   .option("--disabled", "Create the rule disabled", false)
   .action(async (opts) => {
     const spec: Record<string, unknown> = {};
@@ -1041,27 +980,19 @@ const rulesAdd = new Command("add")
     if (Number.isFinite(opts.blockStatus)) spec.block = { status: opts.blockStatus };
 
     if (Object.keys(spec).length === 0) {
-      err("  Nothing to add — pass at least one rule flag (see `openship edge rules add --help`).");
+      err("  Nothing to add — pass at least one rule flag (see `kovalio edge rules add --help`).");
       process.exit(1);
     }
 
     const sp = spin("Adding route rule…");
     try {
-      const res = await apiRequest<{ rule: RouteRuleRow }>(
-        `/projects/${encodeURIComponent(opts.project)}/route-rules`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            domainId: opts.domain ?? null,
-            pathPrefix: opts.path ?? null,
-            spec,
-            enabled: !opts.disabled,
-          }),
-        },
-      );
-      sp?.succeed(`Added rule ${res.rule.id}`);
-      if (isJsonMode()) printJson(res.rule);
+      const rule = await getRemoteClient().projects.createRouteRule(opts.project, {
+        domainId: opts.domain ?? null, pathPrefix: opts.path ?? null, spec, enabled: !opts.disabled,
+      });
+      sp?.succeed(`Added rule ${rule.id}`);
+      if (isJsonMode()) printJson(rule);
     } catch (e) {
+      observeCaughtError(e, "cli/commands/edge");
       sp?.fail("Add failed");
       fail(e);
     }
@@ -1074,12 +1005,11 @@ const rulesRm = new Command("rm")
   .action(async (ruleId: string, opts) => {
     const sp = spin("Deleting route rule…");
     try {
-      await apiRequest(`/projects/${encodeURIComponent(opts.project)}/route-rules/${encodeURIComponent(ruleId)}`, {
-        method: "DELETE",
-      });
+      await getRemoteClient().projects.removeRouteRule(opts.project, ruleId);
       sp?.succeed(`Deleted rule ${ruleId}`);
       if (isJsonMode()) printJson({ success: true });
     } catch (e) {
+      observeCaughtError(e, "cli/commands/edge");
       sp?.fail("Delete failed");
       fail(e);
     }
@@ -1093,29 +1023,8 @@ const rulesCommand = new Command("rules")
 
 // ─── Control-plane: domains (register a host on a port, verify SSL, remove) ──
 
-interface DomainRow {
-  id: string;
-  hostname: string;
-  domainType?: string;
-  isPrimary?: boolean;
-  verified?: boolean;
-  sslStatus?: string | null;
-  targetPort?: number | null;
-  status?: string | null;
-}
-
-interface DnsRecord {
-  type: string;
-  host: string;
-  value: string;
-}
-interface RecordsResult {
-  mode: "cloud" | "selfhosted";
-  records: DnsRecord[];
-}
-
-/** Render a DNS-records result: mode line + type/host/value table (mirrors `openship domain`). */
-function printRecords(result: RecordsResult): void {
+/** Render a DNS-records result: mode line + type/host/value table (mirrors `kovalio domain`). */
+function printRecords(result: DomainRecords): void {
   if (isJsonMode()) {
     printJson(result);
     return;
@@ -1132,10 +1041,7 @@ const domainsList = new Command("list")
   .requiredOption("-p, --project <id>", "Project ID")
   .action(async (opts) => {
     try {
-      const res = await apiRequest<{ data: DomainRow[] }>(
-        `/domains?projectId=${encodeURIComponent(opts.project)}`,
-      );
-      const rows = res.data ?? [];
+      const rows = await getRemoteClient().domains.list(opts.project);
       if (isJsonMode()) {
         printJson(rows);
         return;
@@ -1152,6 +1058,7 @@ const domainsList = new Command("list")
         ["id", "hostname", "type", "primary", "verified", "ssl"],
       );
     } catch (e) {
+      observeCaughtError(e, "cli/commands/edge");
       fail(e);
     }
   });
@@ -1167,13 +1074,14 @@ interface DomainAddOpts {
  * Register a hostname on the edge. Two ways to say where it points:
  *   --project <id>  → attach to an existing project (its port is the target)
  *   --port <n>      → auto-create a minimal tracked project bound to 127.0.0.1:<n>
- * Exactly one is required. This is the same pipeline as `openship domain add` plus
+ * Exactly one is required. This is the same pipeline as `kovalio domain add` plus
  * an inline project-create for the port case, so the domain is analytics-eligible
  * (per-domain analytics need domain→project→server).
  */
 interface RegisterResult {
-  domain: DomainRow;
-  records?: RecordsResult;
+  routed: boolean;
+  domain: Domain;
+  records?: DomainRecords;
   verified: boolean;
   sslStatus?: string;
   projectId?: string;
@@ -1199,38 +1107,27 @@ async function registerDomainCore(hostname: string, opts: DomainAddOpts): Promis
   }
 
   let projectId = opts.project;
+  // Validate the hostname before creating the optional tracking project.
+  const input = parseInput(CreateDomainInputSchema, { hostname: host, isPrimary: !!opts.primary });
+  const ship = getRemoteClient();
   if (hasPort) {
-    const created = await apiRequest<{ data: { id: string; name: string } }>("/projects", {
-      method: "POST",
-      body: JSON.stringify({ name: host, port: opts.port }),
-    });
-    projectId = created.data.id;
+    const created = await ship.projects.create({ name: host, port: opts.port });
+    projectId = created.id;
   }
 
-  const added = await apiRequest<{ data: DomainRow; records: RecordsResult }>("/domains", {
-    method: "POST",
-    body: JSON.stringify({ projectId, hostname: host, isPrimary: !!opts.primary }),
-  });
-  const domain = added.data;
+  const added = await ship.domains.create(projectId!, input);
+  const domain = added.domain;
+  const routed = await attachCustomDomainEndpoint(ship, projectId!, domain.hostname);
 
   let verified = false;
   let sslStatus: string | undefined;
   if (opts.verify !== false) {
-    const vr = await apiRaw(`/domains/${encodeURIComponent(domain.id)}/verify`, { method: "POST" });
-    const vbody = (await vr.json().catch(() => ({}))) as {
-      verified?: boolean;
-      sslStatus?: string;
-      message?: string;
-      error?: string;
-    };
-    if (!vr.ok && vr.status !== 422) {
-      throw new ApiError(vbody.error || vbody.message || `API error: ${vr.status}`, vr.status, vbody);
-    }
+    const vbody = await ship.domains.verify(domain.id);
     verified = !!vbody.verified;
     sslStatus = vbody.sslStatus;
   }
 
-  return { domain, records: added.records, verified, sslStatus, projectId };
+  return { domain, records: added.records, verified, sslStatus, projectId, routed };
 }
 
 async function runDomainAdd(hostname: string, opts: DomainAddOpts): Promise<void> {
@@ -1238,7 +1135,8 @@ async function runDomainAdd(hostname: string, opts: DomainAddOpts): Promise<void
   const sp = spin(`Registering ${host}…`);
   try {
     const res = await registerDomainCore(hostname, opts);
-    sp?.succeed(res.verified ? `${host} verified & serving` : `Registered ${host}`);
+    sp?.succeed(res.verified ? `DNS verified for ${host}` : `Registered ${host}`);
+    if (!isJsonMode() && res.routed) info(`  ${res.domain.hostname} is configured to be routed on the next deploy.`);
     if (isJsonMode()) {
       printJson({ domain: res.domain, records: res.records, verified: res.verified, sslStatus: res.sslStatus, projectId: res.projectId });
       return;
@@ -1246,10 +1144,11 @@ async function runDomainAdd(hostname: string, opts: DomainAddOpts): Promise<void
     if (res.verified) {
       if (res.sslStatus) info(`  SSL: ${res.sslStatus}`);
     } else {
-      info(`  Add these DNS records at your registrar, then run \`openship domain verify ${res.domain.id}\`:`);
+      info(`  Add these DNS records at your registrar, then run \`kovalio domain verify ${res.domain.id}\`:`);
       if (res.records) printRecords(res.records);
     }
   } catch (e) {
+    observeCaughtError(e, "cli/commands/edge");
     sp?.fail("Register failed");
     fail(e);
   }
@@ -1260,29 +1159,30 @@ async function runDomainRm(hostname: string, opts: { project: string }): Promise
   const host = hostname.trim().toLowerCase();
   const sp = spin(`Removing ${host}…`);
   try {
-    const res = await apiRequest<{ data: DomainRow[] }>(`/domains?projectId=${encodeURIComponent(opts.project)}`);
-    const match = (res.data ?? []).find((d) => d.hostname.toLowerCase() === host);
+    const domains = await getRemoteClient().domains.list(opts.project);
+    const match = domains.find((d) => d.hostname.toLowerCase() === host);
     if (!match) {
       sp?.fail("Not found");
       err(`  No domain ${host} on project ${opts.project}.`);
       process.exit(1);
     }
-    await apiRequest(`/domains/${encodeURIComponent(match.id)}`, { method: "DELETE" });
+    await getRemoteClient().domains.remove(match.id);
     sp?.succeed(`Removed ${host}`);
     if (isJsonMode()) printJson({ success: true, id: match.id, hostname: host });
   } catch (e) {
+    observeCaughtError(e, "cli/commands/edge");
     sp?.fail("Remove failed");
     fail(e);
   }
 }
 
 const domainsAdd = new Command("add")
-  .description("Register a hostname on the edge, bound to a port (auto-verifies SSL)")
+  .description("Register a hostname for routing on the next deploy (auto-verifies SSL)")
   .argument("<hostname>", "Domain hostname (e.g. app.example.com)")
   .option("-p, --project <id>", "Attach to an existing project (uses its target port)")
-  .option("--port <n>", "Bind a new tracked project to 127.0.0.1:<n>", (v) => parseInt(v, 10))
+  .option("--port <n>", "Bind a new tracked project to 127.0.0.1:<n>", positiveInteger)
   .option("--primary", "Mark this domain as the project's primary", false)
-  .option("--no-verify", "Skip DNS verification + SSL issuance (just claim the hostname)")
+  .option("--no-verify", "Skip DNS verification + SSL issuance (still configure routing)")
   .action((hostname: string, opts) => runDomainAdd(hostname, opts));
 
 const domainsRm = new Command("rm")
@@ -1300,32 +1200,15 @@ const domainsCommand = new Command("domains")
 
 // ─── Control-plane: request logs ─────────────────────────────────────────────
 
-interface ServerLogRow {
-  id?: string;
-  ts?: number | string;
-  timestamp?: number | string;
-  host?: string;
-  ip?: string;
-  method?: string;
-  path?: string;
-  status?: number;
-  statusCode?: number;
-}
-
-/** Stable identity for a log row across polls (server ids are deterministic host:seq). */
-function logKey(r: ServerLogRow): string {
-  return r.id ?? `${r.ts ?? r.timestamp ?? ""}|${r.ip ?? ""}|${r.method ?? ""}|${r.path ?? ""}`;
-}
-
-function printLogRows(rows: ServerLogRow[]): void {
+function printLogRows(rows: unknown[]): void {
   printTable(
-    rows.map((r) => ({
+    rows.filter(isRecord).map((r) => ({
       time: String(r.ts ?? r.timestamp ?? ""),
-      host: r.host ?? "",
-      ip: r.ip ?? "",
-      method: r.method ?? "",
-      status: r.status ?? r.statusCode ?? "",
-      path: r.path ?? "",
+      host: String(r.host ?? ""),
+      ip: String(r.ip ?? ""),
+      method: String(r.method ?? ""),
+      status: String(r.status ?? r.statusCode ?? ""),
+      path: String(r.path ?? ""),
     })),
     ["time", "host", "ip", "method", "status", "path"],
   );
@@ -1334,13 +1217,15 @@ function printLogRows(rows: ServerLogRow[]): void {
 const logsCommand = new Command("logs")
   .description("Recent HTTP request logs the edge captured for a project")
   .requiredOption("-p, --project <id>", "Project ID")
-  .option("--limit <n>", "How many recent entries to fetch (max 200)", (v) => parseInt(v, 10), 50)
-  .option("--follow", "Poll for new entries and print them as they arrive", false)
+  .option("--limit <n>", "How many recent entries to fetch (max 200)", positiveInteger, 50)
+  .option("--follow", "Stream new entries through the SDK's authorized Cloud or self-hosted connection", false)
   .action(async (opts) => {
-    const path = `/projects/${encodeURIComponent(opts.project)}/server-logs/recent?limit=${encodeURIComponent(String(opts.limit))}`;
     try {
-      const res = await apiRequest<{ logs: ServerLogRow[] }>(path);
-      const rows = res.logs ?? [];
+      if (opts.follow) {
+        await printEvents(getRemoteClient().projects.streamServerLogs(opts.project));
+        return;
+      }
+      const { logs: rows } = await getRemoteClient().projects.recentServerLogs(opts.project, { limit: opts.limit });
       if (isJsonMode()) {
         printJson(rows);
         return;
@@ -1348,43 +1233,14 @@ const logsCommand = new Command("logs")
       if (rows.length === 0) info("  No request logs yet.");
       else printLogRows(rows);
 
-      if (!opts.follow) return;
-      // Poll: reuse the same /recent endpoint (no SSE-token dance) and print only
-      // rows we haven't seen, keyed on the edge's deterministic id.
-      const seen = new Set(rows.map(logKey));
-      info(chalk.dim("\n  Following — Ctrl-C to stop.\n"));
-      for (;;) {
-        await new Promise((r) => setTimeout(r, 2000));
-        const next = await apiRequest<{ logs: ServerLogRow[] }>(path).catch(() => ({ logs: [] as ServerLogRow[] }));
-        const fresh = (next.logs ?? []).filter((r) => !seen.has(logKey(r)));
-        for (const r of fresh) seen.add(logKey(r));
-        if (fresh.length) printLogRows(fresh);
-      }
     } catch (e) {
+      observeCaughtError(e, "cli/commands/edge");
       fail(e);
     }
   });
 
 // ─── Control-plane: traffic overview (GET /analytics/overview) ───────────────
 
-interface TrafficSummary {
-  totalRequests: number;
-  pageRequests: number;
-  uniqueVisitors: number | null;
-  bandwidthIn: number;
-  bandwidthOut: number;
-  avgResponseTimeMs: number;
-  lastUpdated: string | null;
-}
-interface TrafficPeriod {
-  from: string;
-  to: string;
-  requests: number;
-  uniqueVisitors: number;
-  bandwidthIn: number;
-  bandwidthOut: number;
-  avgResponseTimeMs: number;
-}
 interface TrafficOpts {
   project: string;
   domain?: string;
@@ -1394,14 +1250,12 @@ interface TrafficOpts {
 
 async function runTraffic(opts: TrafficOpts): Promise<void> {
   try {
-    const res = await apiRequest<{ data: { summary: TrafficSummary; periods: TrafficPeriod[] } }>(
-      `/analytics/overview${query({ projectId: opts.project, domain: opts.domain, from: opts.from, to: opts.to })}`,
-    );
+    const result = await getRemoteClient().analytics.overview(opts.project, { domain: opts.domain, from: opts.from, to: opts.to });
     if (isJsonMode()) {
-      printJson(res.data);
+      printJson(result);
       return;
     }
-    const s = res.data.summary;
+    const s = result.summary;
     info(`  Traffic — ${opts.project}${opts.domain ? ` · ${opts.domain}` : ""}`);
     info(`  Requests:        ${fmtInt(s.totalRequests)}  ${chalk.dim(`(page ${fmtInt(s.pageRequests)})`)}`);
     info(
@@ -1410,7 +1264,7 @@ async function runTraffic(opts: TrafficOpts): Promise<void> {
     info(`  Bandwidth:       ↓ ${fmtBytes(s.bandwidthIn)}   ↑ ${fmtBytes(s.bandwidthOut)}`);
     info(`  Avg response:    ${Math.round(s.avgResponseTimeMs || 0)} ms`);
     info(`  Last updated:    ${s.lastUpdated ?? "—"}`);
-    const periods = res.data.periods ?? [];
+    const periods = result.periods;
     if (periods.length) {
       info("");
       printTable(
@@ -1424,6 +1278,7 @@ async function runTraffic(opts: TrafficOpts): Promise<void> {
       );
     }
   } catch (e) {
+    observeCaughtError(e, "cli/commands/edge");
     fail(e);
   }
 }
@@ -1432,33 +1287,12 @@ const trafficCommand = new Command("traffic")
   .description("Traffic overview for a project (requests, bandwidth, hourly periods)")
   .requiredOption("-p, --project <id>", "Project ID")
   .option("--domain <host>", "Scope to a single tracked domain")
-  .option("--from <ts>", "Window start (ISO 8601 or epoch minutes)")
-  .option("--to <ts>", "Window end (ISO 8601 or epoch minutes)")
+  .option("--from <ts>", "Window start (ISO 8601)")
+  .option("--to <ts>", "Window end (ISO 8601)")
   .action((opts) => runTraffic(opts));
 
 // ─── Control-plane: per-domain analytics (GET /analytics/geo) ────────────────
 
-interface GeoCountry {
-  code: string;
-  count: number;
-  pct: number;
-}
-interface PathCount {
-  path: string;
-  count: number;
-}
-interface GeoResult {
-  total: number;
-  countries: GeoCountry[];
-  visitorDays: number;
-  peakDayVisitors: number;
-  topPaths: PathCount[];
-  statuses: Record<string, number>;
-  geoAvailable: boolean;
-  approximate: boolean;
-  pathsEnabled: boolean;
-  source: string;
-}
 interface GeoOpts {
   project: string;
   domain?: string;
@@ -1468,10 +1302,7 @@ interface GeoOpts {
 
 async function runGeo(opts: GeoOpts): Promise<void> {
   try {
-    const res = await apiRequest<{ data: GeoResult }>(
-      `/analytics/geo${query({ projectId: opts.project, domain: opts.domain, from: opts.from, to: opts.to })}`,
-    );
-    const g = res.data;
+    const g = await getRemoteClient().analytics.geo(opts.project, { domain: opts.domain, from: opts.from, to: opts.to });
     if (isJsonMode()) {
       printJson(g);
       return;
@@ -1505,6 +1336,7 @@ async function runGeo(opts: GeoOpts): Promise<void> {
     const statuses = Object.entries(g.statuses ?? {});
     if (statuses.length) info(`\n  Statuses:  ${statuses.map(([k, v]) => `${k}=${fmtInt(v)}`).join("   ")}`);
   } catch (e) {
+    observeCaughtError(e, "cli/commands/edge");
     fail(e);
   }
 }
@@ -1530,7 +1362,7 @@ interface InstallOpts {
 }
 
 /**
- * Is a full Openship already installed on this box? Reuses the same primitives the
+ * Is a full Kovalio already installed on this box? Reuses the same primitives the
  * rest of the CLI trusts — a bare service unit, a recorded compose install, or a
  * live API answering on the configured loopback port. Any one = "already here".
  */
@@ -1548,7 +1380,8 @@ async function detectExistingInstall(): Promise<{
       signal: AbortSignal.timeout(2000),
     });
     apiLive = res.ok;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/commands/edge");
     // not live — leave apiLive false
   }
   return { present: svc.installed || method !== null || apiLive, method, running: svc.running, apiLive };
@@ -1561,11 +1394,12 @@ async function ensureEdgeBestEffort(): Promise<void> {
     const diag = await diagnoseEdge();
     info(`  Edge: ${describeDiagnosis(diag)}`);
     if (!diag.containerExists) {
-      info(chalk.dim("        No edge container yet — `openship up` brings one up on :80/:443."));
+      info(chalk.dim("        No edge container yet — `kovalio up` brings one up on :80/:443."));
     } else if (!diag.healthy) {
-      info(chalk.dim("        Edge isn't serving — `openship edge up` repairs it."));
+      info(chalk.dim("        Edge isn't serving — `kovalio edge up` repairs it."));
     }
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "cli/commands/edge");
     // best-effort only
   }
 }
@@ -1573,24 +1407,24 @@ async function ensureEdgeBestEffort(): Promise<void> {
 function printMonitoringNextSteps(): void {
   info("\n  Monitoring is on — the built-in database now collects edge analytics.");
   info("  Next:");
-  info("    openship login                                  paste a PAT from the dashboard to read analytics");
-  info("    openship edge migrate                           track sites already on the edge");
-  info("    openship edge domain add <host> --port <n>      register a new domain on a port");
-  info("    openship edge traffic   -p <project>            traffic overview");
-  info("    openship edge analytics -p <project>            per-domain analytics");
+  info("    kovalio login                                  paste a PAT from the dashboard to read analytics");
+  info("    kovalio edge migrate                           track sites already on the edge");
+  info("    kovalio edge domain add <host> --port <n>      register a new domain on a port");
+  info("    kovalio edge traffic   -p <project>            traffic overview");
+  info("    kovalio edge analytics -p <project>            per-domain analytics");
 }
 
 /**
- * Stand up monitoring by installing the standard bare Openship service (embedded
- * PGlite) — the exact `openship up --bare` pipeline, no new data layer. Prompts for
+ * Stand up monitoring by installing the standard bare Kovalio service (embedded
+ * PGlite) — the exact `kovalio up --bare` pipeline, no new data layer. Prompts for
  * admin credentials on a TTY; headless requires --admin-email + a password
- * (flag or OPENSHIP_ADMIN_PASSWORD). Exits when done.
+ * (flag or KOVALIO_ADMIN_PASSWORD). Exits when done.
  */
 /**
- * Stand up monitoring by installing the standard bare Openship service (embedded
- * PGlite) — the exact `openship up --bare` pipeline, no new data layer. Prompts for
+ * Stand up monitoring by installing the standard bare Kovalio service (embedded
+ * PGlite) — the exact `kovalio up --bare` pipeline, no new data layer. Prompts for
  * admin credentials on a TTY; headless requires --admin-email + a password (flag or
- * OPENSHIP_ADMIN_PASSWORD). Returns true when installed, false when the operator
+ * KOVALIO_ADMIN_PASSWORD). Returns true when installed, false when the operator
  * cancels at a credential prompt; THROWS on a hard install failure (caller decides
  * exit vs. continue).
  */
@@ -1601,7 +1435,7 @@ async function runMonitoringInstall(opts: InstallOpts): Promise<boolean> {
   let adminEmail = opts.adminEmail;
   let adminPassword = opts.adminPassword;
 
-  const needsCreds = !adminEmail || !(adminPassword || process.env.OPENSHIP_ADMIN_PASSWORD);
+  const needsCreds = !adminEmail || !(adminPassword || process.env.KOVALIO_ADMIN_PASSWORD);
   if (needsCreds && interactive && !isJsonMode()) {
     const nm = await text({ message: "Admin name", placeholder: "Admin", initialValue: adminName });
     if (isCancel(nm)) {
@@ -1630,7 +1464,7 @@ async function runMonitoringInstall(opts: InstallOpts): Promise<boolean> {
     adminPassword = String(pw);
   }
 
-  // Same install as `openship up --bare`: PGlite, no public domain, no managed
+  // Same install as `kovalio up --bare`: PGlite, no public domain, no managed
   // edge (leaving the edge container untouched). UpOpts isn't exported — reach its
   // shape through startService's parameter type.
   const monOpts = {
@@ -1642,7 +1476,7 @@ async function runMonitoringInstall(opts: InstallOpts): Promise<boolean> {
     adminPassword,
   } as unknown as Parameters<typeof up.startService>[0];
 
-  const sp = spin("Installing the built-in Openship service (embedded database)…");
+  const sp = spin("Installing the built-in Kovalio service (embedded database)…");
   let started: { port: string; dashPort: string };
   try {
     started = await up.startService(monOpts, { quiet: true });
@@ -1662,6 +1496,7 @@ async function provisionMonitoring(opts: InstallOpts): Promise<never> {
   try {
     await runMonitoringInstall(opts);
   } catch (e) {
+    observeCaughtError(e, "cli/commands/edge");
     fail(e);
   }
   process.exit(0);
@@ -1670,7 +1505,7 @@ async function provisionMonitoring(opts: InstallOpts): Promise<never> {
 /**
  * `edge up`/`install`: ensure the edge is serving, and — when asked — turn on
  * monitoring by reusing the bare-install pipeline. Detect-first: if a full
- * Openship already exists, monitoring is already available and we change nothing.
+ * Kovalio already exists, monitoring is already available and we change nothing.
  */
 async function runInstall(opts: InstallOpts): Promise<never> {
   requireLinux();
@@ -1685,17 +1520,17 @@ async function runInstall(opts: InstallOpts): Promise<never> {
   if (existing.present) {
     // Interactive but monitoring wasn't requested → this is just an edge repair.
     if (!explicit) return runUp(opts);
-    // Explicit --monitoring on a box that already has Openship: nothing to provision.
-    ok("  ✓ Openship is already installed — monitoring is available through the running instance.");
+    // Explicit --monitoring on a box that already has Kovalio: nothing to provision.
+    ok("  ✓ Kovalio is already installed — monitoring is available through the running instance.");
     info(
       `    Install: ${existing.method ?? "service"}${existing.apiLive ? ", API live" : existing.running ? ", running" : ""}`,
     );
     await ensureEdgeBestEffort();
-    info("\n  Nothing to change. Read analytics with `openship edge traffic -p <project>` (run `openship login` first).");
+    info("\n  Nothing to change. Read analytics with `kovalio edge traffic -p <project>` (run `kovalio login` first).");
     process.exit(0);
   }
 
-  // No Openship yet.
+  // No Kovalio yet.
   if (explicit) {
     await ensureEdgeBestEffort();
     return provisionMonitoring(opts);
@@ -1703,7 +1538,7 @@ async function runInstall(opts: InstallOpts): Promise<never> {
   // Interactive, no flag, no install → offer monitoring.
   const yes = await confirm({
     message:
-      "Enable monitoring (traffic + per-domain analytics)? Installs the built-in Openship service with an embedded database.",
+      "Enable monitoring (traffic + per-domain analytics)? Installs the built-in Kovalio service with an embedded database.",
     initialValue: false,
   });
   if (isCancel(yes) || !yes) return runUp(opts);
@@ -1725,11 +1560,11 @@ const upCmd = new Command("up")
   .option("--takeover", "On a port conflict, stop whatever holds :80/:443 (its sites drop)")
   // Declare --monitoring BEFORE --no-monitoring so the default stays undefined
   // (tri-state): unset = decide, --monitoring = true, --no-monitoring = false.
-  .option("--monitoring", "Also enable monitoring: install the built-in Openship service + embedded DB for analytics")
+  .option("--monitoring", "Also enable monitoring: install the built-in Kovalio service + embedded DB for analytics")
   .option("--no-monitoring", "Edge only — skip the monitoring prompt (the headless default)")
   .option("--admin-name <name>", "Admin display name for a fresh monitoring install")
   .option("--admin-email <email>", "Admin email for a fresh monitoring install (required when headless)")
-  .option("--admin-password <pw>", "Admin password (prefer the OPENSHIP_ADMIN_PASSWORD env var)")
+  .option("--admin-password <pw>", "Admin password (prefer the KOVALIO_ADMIN_PASSWORD env var)")
   .action((opts) => runInstall(opts));
 
 const migrateCmd = new Command("migrate")
@@ -1766,7 +1601,7 @@ export const edgeCommand = new Command("edge")
   .addCommand(trafficCommand)
   .addCommand(analyticsCommand)
   .addCommand(logsCommand)
-  // Bare `openship edge`:
+  // Bare `kovalio edge`:
   //   • Any TTY (incl. macOS/Windows) → the looping interactive panel. Host-side ops
   //     are Linux-gated *inside* the panel; the control-plane half (domains, traffic,
   //     analytics, rules) works anywhere, so the panel is useful off-Linux too.

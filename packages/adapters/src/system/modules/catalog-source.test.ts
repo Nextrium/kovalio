@@ -24,7 +24,7 @@ function manifest(): ModuleCatalog {
 }
 
 afterEach(() => {
-  delete process.env.OPENSHIP_MODULE_CATALOG_INSECURE;
+  delete process.env.KOVALIO_MODULE_CATALOG_INSECURE;
 });
 
 describe("verifyAndBuild", () => {
@@ -65,7 +65,7 @@ describe("verifyAndBuild", () => {
   });
 
   it("insecure hatch (non-prod) bypasses signature + hash", () => {
-    process.env.OPENSHIP_MODULE_CATALOG_INSECURE = "1";
+    process.env.KOVALIO_MODULE_CATALOG_INSECURE = "1";
     const bytes = Buffer.from(JSON.stringify(manifest()));
     // empty keyring + wrong asset — would fail if verification ran
     const res = verifyAndBuild("openresty", bytes, Buffer.alloc(0), new Map(), "ref", []);
@@ -105,7 +105,7 @@ describe("verifyAndBuild shape refusals", () => {
   });
 
   it("refuses a malformed manifest even under the insecure hatch", () => {
-    process.env.OPENSHIP_MODULE_CATALOG_INSECURE = "1";
+    process.env.KOVALIO_MODULE_CATALOG_INSECURE = "1";
     const bytes = Buffer.from(JSON.stringify({ ...manifest(), versions: null }));
     const res = verifyAndBuild("openresty", bytes, Buffer.alloc(0), new Map(), "ref", []);
     expect(res.error).toMatch(/invalid catalog: catalog versions must be an array/);

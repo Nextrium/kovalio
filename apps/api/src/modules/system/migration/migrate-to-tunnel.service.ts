@@ -22,6 +22,7 @@
  * and clears the bookkeeping. No data sync needed (data never moved).
  */
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import type { Context } from "hono";
 import { DEFAULT_PORT } from "@repo/core";
 import {
@@ -81,7 +82,7 @@ export class TunnelMustBeCloudConnectedError extends Error {
   readonly code = "TUNNEL_MUST_BE_CLOUD_CONNECTED" as const;
   constructor() {
     super(
-      "This instance must be connected to Openship Cloud to provision an edge tunnel. Connect your cloud account in Settings first.",
+      "This instance must be connected to Kovalio Cloud to provision an edge tunnel. Connect your cloud account in Settings first.",
     );
     this.name = "TunnelMustBeCloudConnectedError";
   }
@@ -115,7 +116,7 @@ export async function migrateInstanceToTunnel(
       try {
         tunnel = await provisionTunnel({
           provider: "oblien",
-          name: `openship-${ctx.input.organizationId}`,
+          name: `kovalio-${ctx.input.organizationId}`,
           port: DEFAULT_PORT.dashboard,
           slug,
           context: { organizationId: ctx.input.organizationId },
@@ -164,9 +165,9 @@ export async function migrateInstanceToTunnel(
         try {
           await teardownTunnel({ provider: "oblien", externalId: tunnel.externalId });
         } catch (deleteErr) {
-          console.warn(
+          errorDiagnostics.warn("api/modules/system/migration/migrate-to-tunnel.service",
             "[migrate-to-tunnel] orphan tunnel cleanup failed; manual delete required",
-            { externalId: tunnel.externalId, slug: tunnel.slug, error: deleteErr },
+            { externalId: tunnel.externalId, slug: tunnel.slug, error: deleteErr }, deleteErr,
           );
         }
         throw reason;
@@ -188,6 +189,7 @@ export async function migrateInstanceToTunnel(
           port: DEFAULT_PORT.dashboard,
         });
       } catch (err) {
+        observeCaughtError(err, "api/modules/system/migration/migrate-to-tunnel.service");
         await rollbackTunnel(
           new TunnelProvisionFailedError(
             `Tunnel created but agent failed to connect: ${

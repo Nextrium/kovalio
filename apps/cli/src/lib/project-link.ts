@@ -1,6 +1,6 @@
 /**
- * Project-link file written by `openship init` and read by deploy/logs to
- * resolve a projectId without a flag. Lives at `.openship/project.json` in the
+ * Project-link file written by `kovalio init` and read by deploy/logs to
+ * resolve a projectId without a flag. Lives at `.kovalio/project.json` in the
  * project root; commands search upward from cwd so they work from subdirs.
  */
 import { readFileSync, existsSync } from "node:fs";
@@ -9,11 +9,20 @@ import { join, dirname, parse } from "node:path";
 export interface ProjectLink {
   projectId?: string;
   branch?: string;
+  name?: string;
+  slug?: string;
+  context?: string;
+  /** Canonical SDK API URL; also detects retargeting a named context. No credentials. */
+  apiUrl?: string;
+  /** Explicit remote organization scope, when selected at link time. */
+  organizationId?: string;
+  native?: { instanceId: string; organizationId: string };
+  defaults?: { environment: string };
 }
 
-const LINK_REL = join(".openship", "project.json");
+const LINK_REL = join(".kovalio", "project.json");
 
-/** Absolute path of the nearest `.openship/project.json`, or null. */
+/** Absolute path of the nearest `.kovalio/project.json`, or null. */
 export function findProjectLinkPath(from: string = process.cwd()): string | null {
   let dir = from;
   const root = parse(dir).root;

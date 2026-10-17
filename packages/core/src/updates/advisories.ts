@@ -3,9 +3,10 @@
  * both the desktop main process and the dashboard share identical logic.
  */
 
+import { reportCaughtError as observeCaughtError } from "../diagnostics/reporter";
 import type { Advisory, AdvisoryManifest, AdvisoryMode, AdvisorySeverity, LatestRelease, UpdateState } from "./types";
 import { ADVISORY_MODES } from "./types";
-import { changelogUrl } from "./types";
+import { changelogUrl } from "./changelog";
 import { compareSemver, satisfiesRange } from "./semver";
 
 const SEVERITY_RANK: Record<AdvisorySeverity, number> = { critical: 0, recommended: 1, info: 2 };
@@ -107,7 +108,8 @@ export function matchAdvisories(
       if (a.modes && a.modes.length > 0 && (!mode || !a.modes.includes(mode))) return false;
       try {
         return satisfiesRange(currentVersion, a.affects);
-      } catch {
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "core/updates/advisories");
         return false;
       }
     })

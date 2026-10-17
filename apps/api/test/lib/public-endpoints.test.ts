@@ -14,22 +14,69 @@ import {
   mergeServiceRoutingPatch,
   pickCanonicalDomainRow,
   resolveProjectAccess,
+  serviceDomainRowsToPublicEndpoints,
   resolveServicePublicEndpoints,
+  resolveServiceEndpointUrls,
   resolveServiceRouteHostname,
   resolveStoredPublicEndpoints,
   syncStoredPublicEndpoints,
   type ProjectDomainRow,
   type StoredServiceRouting,
-} from "../../src/lib/public-endpoints";
-import { getRoutingBaseDomain } from "../../src/lib/routing-domains";
+} from "@repo/platform/engine/lib/public-endpoints";
+import { getRoutingBaseDomain } from "@repo/platform/engine/lib/routing-domains";
 import { normalizeCustomHostname, resolveServiceHostnameLabel } from "@repo/core";
 
-// Build a domain row with only the fields the access resolver reads; the rest
-// of ProjectDomainRow is irrelevant here, so cast rather than fill every column.
-const row = (r: Partial<ProjectDomainRow>): ProjectDomainRow =>
-  ({ verified: false, isPrimary: false, serviceId: null, domainType: "custom", ...r }) as ProjectDomainRow;
+const row = (
+  r: Partial<ProjectDomainRow> & Pick<ProjectDomainRow, "hostname">,
+): ProjectDomainRow => ({
+  hostname: r.hostname,
+  verified: false,
+  isPrimary: false,
+  serviceId: null,
+  targetPort: null,
+  targetPath: null,
+  domainType: "custom",
+  redirectTo: null,
+  redirectStatus: null,
+  ...r,
+});
 
 describe("public endpoint helpers", () => {
+  it("keeps the first concrete URL per port when another hostname is added", () => {
+    const service = {
+      name: "web",
+      exposed: true,
+      exposedPort: "4000",
+      domainType: "custom",
+      customDomain: "app.example.com",
+      publicEndpoints: [
+        { port: 4000, domainType: "custom", customDomain: "app.example.com" },
+        { port: 4000, domainType: "custom", customDomain: "alias.example.com" },
+        { port: 5000, domainType: "custom", customDomain: "metrics.example.com" },
+      ],
+    } as any;
+    expect(resolveServicePublicEndpoints(service)).toHaveLength(3);
+    expect(resolveServiceEndpointUrls({ slug: "project" } as any, service)).toEqual([
+      { port: 4000, url: "https://app.example.com" },
+      { port: 5000, url: "https://metrics.example.com" },
+    ]);
+  });
+
+  it("skips wildcard aliases before choosing a concrete URL for the same port", () => {
+    const service = {
+      name: "web",
+      exposed: true,
+      publicEndpoints: [
+        { port: 4000, domainType: "custom", customDomain: "*.example.com" },
+        { port: 4000, domainType: "custom", customDomain: "app.example.com" },
+        { port: 4000, domainType: "custom", customDomain: "alias.example.com" },
+      ],
+    } as any;
+    expect(resolveServiceEndpointUrls({ slug: "project" } as any, service)).toEqual([
+      { port: 4000, url: "https://app.example.com" },
+    ]);
+  });
+
   it("uses the primary project custom domain when an explicit route target is provided", () => {
     const endpoints = resolveStoredPublicEndpoints({
       targetPath: "/",
@@ -100,6 +147,65 @@ describe("public endpoint helpers", () => {
     });
 
     expect(endpoints).toEqual([]);
+  });
+
+  it.each([
+    ["explicit non-primary rows", false, "free", "custom"],
+    ["explicit primary rows", true, "free", "custom"],
+    ["legacy non-primary rows", false, null, null],
+    ["legacy primary rows", true, null, null],
+  ] as const)(
+    "sorts custom domains ahead of free subdomains for %s",
+    (_, isPrimary, freeType, customType) => {
+      const endpoints = resolveStoredPublicEndpoints({
+        projectDomains: [
+          row({
+            hostname: `app.${getRoutingBaseDomain()}`,
+            isPrimary,
+            verified: true,
+            targetPort: 3000,
+            domainType: freeType,
+          }),
+          row({
+            hostname: "zz-app.example.com",
+            isPrimary,
+            verified: true,
+            targetPort: 3000,
+            domainType: customType,
+          }),
+        ],
+      });
+
+      expect(endpoints[0]).toMatchObject({
+        customDomain: "zz-app.example.com",
+        domainType: "custom",
+      });
+    },
+  );
+
+  it("uses the same inferred ordering for service-scoped route rows", () => {
+    const endpoints = serviceDomainRowsToPublicEndpoints(
+      [
+        row({
+          hostname: `service.${getRoutingBaseDomain()}`,
+          serviceId: "svc-1",
+          targetPort: 3000,
+          domainType: null,
+        }),
+        row({
+          hostname: "zz-service.example.com",
+          serviceId: "svc-1",
+          targetPort: 3000,
+          domainType: null,
+        }),
+      ],
+      "svc-1",
+    );
+
+    expect(endpoints[0]).toMatchObject({
+      customDomain: "zz-service.example.com",
+      domainType: "custom",
+    });
   });
 
   it("creates a default managed route when a target path is provided", () => {
@@ -364,24 +470,34 @@ describe("pickCanonicalDomainRow", () => {
 });
 
 describe("resolveProjectAccess", () => {
-  it("resolves a project whose only domains are service-scoped (the openship repro)", () => {
+  it("keeps wildcard routes out of canonical access links and service URL substitutions", () => {
+    const wildcard = row({ hostname: "*.example.com", verified: true, isPrimary: true });
+    expect(pickCanonicalDomainRow([wildcard])).toBeNull();
+    expect(resolveProjectAccess({ rows: [wildcard], target: "server", port: 3000 }).url).toBeNull();
+    const concrete = row({ hostname: "app.example.com", verified: true });
+    expect(resolveProjectAccess({ rows: [wildcard, concrete], target: "server", port: 3000 }).urls).toEqual(["https://app.example.com"]);
+    const service = { id: "service", name: "web", kind: "compose", exposed: true, exposedPort: "3000", domainType: "custom", customDomain: "*.example.com" } as any;
+    expect(resolveServicePublicEndpoints(service)).toMatchObject([{ customDomain: "*.example.com" }]);
+    expect(resolveServiceEndpointUrls({ slug: "project" } as any, service)).toEqual([]);
+  });
+  it("resolves a project whose only domains are service-scoped (the kovalio repro)", () => {
     // Multi-service project: both verified custom domains live on service-scoped
     // rows, so project-level publicEndpoints is empty — the exact case that used
     // to fall back to localhost. Access must be the primary service host.
     const access = resolveProjectAccess({
       rows: [
-        row({ hostname: "api.openship.io", serviceId: "svc_api", verified: true, isPrimary: true }),
-        row({ hostname: "app.openship.io", serviceId: "svc_dash", verified: true, isPrimary: false }),
+        row({ hostname: "api.nextrium.org", serviceId: "svc_api", verified: true, isPrimary: true }),
+        row({ hostname: "kovalio.nextrium.org", serviceId: "svc_dash", verified: true, isPrimary: false }),
       ],
       target: "server",
       port: null,
     });
     expect(access).toEqual({
-      url: "https://api.openship.io",
-      host: "api.openship.io",
+      url: "https://api.nextrium.org",
+      host: "api.nextrium.org",
       kind: "custom",
       isLocal: false,
-      urls: ["https://api.openship.io", "https://app.openship.io"],
+      urls: ["https://api.nextrium.org", "https://kovalio.nextrium.org"],
     });
   });
 

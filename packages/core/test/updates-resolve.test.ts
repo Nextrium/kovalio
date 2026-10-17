@@ -8,26 +8,59 @@ import {
   type GithubReleasePayload,
 } from "../src/updates/resolve";
 import { parseManifest } from "../src/updates/advisories";
+import { changelogMarkdownUrl, changelogUrl, extractChangelogSection } from "../src/updates/changelog";
 
 // A realistic `releases/latest` payload — asset names match .github/workflows/release.yml.
 const RELEASE_0_2_0: GithubReleasePayload = {
   tag_name: "v0.2.0",
   body: "notes",
   assets: [
-    { name: "Openship-arm64.dmg", browser_download_url: "https://x/arm64.dmg", size: 10 },
-    { name: "Openship-x64.dmg", browser_download_url: "https://x/x64.dmg", size: 11 },
-    { name: "Openship-win32-x64.zip", browser_download_url: "https://x/win.zip", size: 12 },
-    { name: "Openship.AppImage", browser_download_url: "https://x/app.AppImage", size: 13 },
+    { name: "Kovalio-arm64.dmg", browser_download_url: "https://x/arm64.dmg", size: 10 },
+    { name: "Kovalio-x64.dmg", browser_download_url: "https://x/x64.dmg", size: 11 },
+    { name: "Kovalio-win32-x64.zip", browser_download_url: "https://x/win.zip", size: 12 },
+    { name: "Kovalio.AppImage", browser_download_url: "https://x/app.AppImage", size: 13 },
   ],
 };
 
+describe("changelog release details", () => {
+  const changelog = `# Changelog
+
+## 0.7.0
+
+- newer
+
+## 0.6.9
+
+- **Dashboard** — useful details
+
+## 0.6.8
+
+- older`;
+
+  it("extracts only the exact version section from a tagged changelog", () => {
+    expect(extractChangelogSection(changelog, "0.6.9")).toBe("- **Dashboard** — useful details");
+    expect(extractChangelogSection(changelog, "v0.6.9")).toBe("- **Dashboard** — useful details");
+    expect(extractChangelogSection(changelog, "0.6.7")).toBe("");
+    expect(changelogMarkdownUrl("v0.6.9")).toBe(
+      "https://raw.githubusercontent.com/Nextrium/kovalio/v0.6.9/CHANGELOG.md",
+    );
+  });
+
+  it("links to the website changelog and its version route, never GitHub", () => {
+    expect(changelogUrl()).toBe("https://nextrium.org/changelog");
+    expect(changelogUrl("v0.6.9")).toBe("https://nextrium.org/changelog/v0-6-9");
+    expect(changelogUrl("0.7.0-dev.1")).toBe("https://nextrium.org/changelog");
+    expect(changelogUrl("not-a-version")).toBe("https://nextrium.org/changelog");
+  });
+});
+
 describe("desktopAssetName", () => {
   it("maps each platform/arch to the published asset (Windows = zip, NOT Setup.exe)", () => {
-    expect(desktopAssetName("darwin", "arm64")).toBe("Openship-arm64.dmg");
-    expect(desktopAssetName("darwin", "x64")).toBe("Openship-x64.dmg");
-    expect(desktopAssetName("win32", "x64")).toBe("Openship-win32-x64.zip");
-    expect(desktopAssetName("linux", "x64")).toBe("Openship.AppImage");
-    expect(desktopAssetName("linux", "arm64")).toBe("Openship-arm64.AppImage");
+    expect(desktopAssetName("darwin", "arm64")).toBe("Kovalio-arm64.dmg");
+    expect(desktopAssetName("darwin", "x64")).toBe("Kovalio-x64.dmg");
+    expect(desktopAssetName("win32", "x64")).toBe("Kovalio-win32-x64.zip");
+    expect(desktopAssetName("linux", "x64")).toBe("Kovalio.AppImage");
+    expect(desktopAssetName("linux", "arm64")).toBe("Kovalio-arm64.AppImage");
     expect(desktopAssetName("aix", "x64")).toBeNull();
   });
 });
@@ -43,7 +76,7 @@ describe("resolveDesktopUpdate", () => {
     expect(r.available).toBe(true);
     if (r.available) {
       expect(r.version).toBe("0.2.0");
-      expect(r.asset.name).toBe("Openship-win32-x64.zip");
+      expect(r.asset.name).toBe("Kovalio-win32-x64.zip");
       expect(r.asset.url).toBe("https://x/win.zip");
     }
   });
@@ -51,13 +84,33 @@ describe("resolveDesktopUpdate", () => {
   it("macOS picks the arch-specific dmg", () => {
     const arm = resolveDesktopUpdate({ releasePayload: RELEASE_0_2_0, platform: "darwin", arch: "arm64", currentVersion: "0.1.9" });
     const x64 = resolveDesktopUpdate({ releasePayload: RELEASE_0_2_0, platform: "darwin", arch: "x64", currentVersion: "0.1.9" });
-    expect(arm.available && arm.asset.name).toBe("Openship-arm64.dmg");
-    expect(x64.available && x64.asset.name).toBe("Openship-x64.dmg");
+    expect(arm.available && arm.asset.name).toBe("Kovalio-arm64.dmg");
+    expect(x64.available && x64.asset.name).toBe("Kovalio-x64.dmg");
+  });
+
+  it("uses the tagged changelog instead of the GitHub release body", () => {
+    const r = resolveDesktopUpdate({
+      releasePayload: RELEASE_0_2_0,
+      platform: "darwin",
+      arch: "arm64",
+      currentVersion: "0.1.9",
+      changelogNotes: "real changelog",
+    });
+    expect(r.available && r.notes).toBe("real changelog");
+
+    const unavailable = resolveDesktopUpdate({
+      releasePayload: RELEASE_0_2_0,
+      platform: "darwin",
+      arch: "arm64",
+      currentVersion: "0.1.9",
+      changelogNotes: null,
+    });
+    expect(unavailable.available && unavailable.notes).toBe("");
   });
 
   it("Linux picks the AppImage", () => {
     const r = resolveDesktopUpdate({ releasePayload: RELEASE_0_2_0, platform: "linux", arch: "x64", currentVersion: "0.1.9" });
-    expect(r.available && r.asset.name).toBe("Openship.AppImage");
+    expect(r.available && r.asset.name).toBe("Kovalio.AppImage");
   });
 
   it("no update when current >= latest", () => {
@@ -66,7 +119,7 @@ describe("resolveDesktopUpdate", () => {
   });
 
   it("no update when the platform asset is missing", () => {
-    const onlyMac: GithubReleasePayload = { tag_name: "v0.2.0", assets: [{ name: "Openship-arm64.dmg", browser_download_url: "u", size: 1 }] };
+    const onlyMac: GithubReleasePayload = { tag_name: "v0.2.0", assets: [{ name: "Kovalio-arm64.dmg", browser_download_url: "u", size: 1 }] };
     expect(resolveDesktopUpdate({ releasePayload: onlyMac, platform: "win32", arch: "x64", currentVersion: "0.1.9" }).available).toBe(false);
   });
 
@@ -154,8 +207,8 @@ describe("resolveCliUpdatePlan + cliInstallCommand", () => {
   });
 
   it("builds the right global install command per package manager", () => {
-    expect(cliInstallCommand("bun", "0.2.0")).toBe("bun add -g openship@0.2.0");
-    expect(cliInstallCommand("npm", "0.2.0")).toBe("npm install -g openship@0.2.0");
-    expect(cliInstallCommand("bun", "")).toBe("bun add -g openship@latest");
+    expect(cliInstallCommand("bun", "0.2.0")).toBe("bun add -g kovalio@0.2.0");
+    expect(cliInstallCommand("npm", "0.2.0")).toBe("npm install -g kovalio@0.2.0");
+    expect(cliInstallCommand("bun", "")).toBe("bun add -g kovalio@latest");
   });
 });

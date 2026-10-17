@@ -71,13 +71,13 @@ const BASE_STATE = {
  */
 let state: Record<string, unknown> = BASE_STATE;
 
-vi.mock("../../../src/lib/ssh-manager", () => ({
+vi.mock("@repo/platform/engine/lib/ssh-manager", () => ({
   sshManager: {
     withExecutor: async (_serverId: string, fn: (exec: unknown) => unknown) => fn({}),
   },
 }));
 
-vi.mock("../../../src/modules/mail/mail-state", () => ({
+vi.mock("@repo/platform/engine/modules/mail/mail-state", () => ({
   readState: async () => state,
 }));
 
@@ -301,7 +301,7 @@ describe("DKIM key comparison", () => {
  */
 const DKIM_CNAME = { name: "abc._domainkey.example.com", value: "abc.dkim.amazonses.com" };
 const MAIL_FROM = "bounce.example.com";
-const SES_MX = "feedback-smtp.us-east-1.amazonaws.com";
+const SES_MX = "feedback-smtp.us-east-1.amazonses.com";
 
 /** BASE_STATE with sending moved to a provider — the shape applyRelayToState writes. */
 const RELAY_STATE = {
@@ -622,5 +622,30 @@ describe("synthetic address detection (GH-240)", () => {
     for (const ip of ["1.2.3.4", "203.0.113.10", "192.168.1.1", "10.0.0.1", "127.0.1.1", "2606:4700::1111"]) {
       expect(looksSyntheticAddress(ip), ip).toBe(false);
     }
+  });
+
+  test("reports a synthetic AAAA answer as unknown instead of blaming the zone", async () => {
+    vi.clearAllMocks();
+    state = {
+      ...BASE_STATE,
+      dnsRecords: {
+        ...BASE_STATE.dnsRecords,
+        aaaa: {
+          type: "AAAA",
+          name: "mail.example.com",
+          value: "2606:4700::1111",
+          required: false,
+        },
+      },
+    };
+    dns.resolve6.mockResolvedValue(["fdfe:dcba:9876::11a"]);
+    dns.resolveTxt.mockImplementation(async (name: string) =>
+      name === "_dmarc.example.com" ? [["v=DMARC1; p=reject"]] : [["v=spf1 mx -all"]],
+    );
+
+    const aaaa = (await scanDns("srv_test")).checks.find((check) => check.key === "aaaa");
+
+    expect(aaaa?.status).toBe("unknown");
+    expect(aaaa?.message).toMatch(/synthetic IPv6/i);
   });
 });

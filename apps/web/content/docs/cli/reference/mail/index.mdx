@@ -1,0 +1,533 @@
+---
+title: mail
+description: Commands, arguments, and options for kovalio mail.
+cliGroup: kovalio mail
+---
+
+See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio mail
+
+Self-hosted mail server (iRedMail) setup and admin [self-host]
+
+```text
+kovalio mail [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`steps`](/docs/cli/reference/mail#kovalio-mail-steps) | List the mail setup steps |
+| [`status [serverId]`](/docs/cli/reference/mail#kovalio-mail-status) | Show the setup progress for a mail server |
+| [`servers`](/docs/cli/reference/mail#kovalio-mail-servers) | List every server the mail stack is installed on |
+| [`scan <serverId>`](/docs/cli/reference/mail#kovalio-mail-scan) | Probe a server for an existing mail install (read-only) |
+| [`adopt <serverId>`](/docs/cli/reference/mail#kovalio-mail-adopt) | Re-adopt an existing mail install whose orchestrator state was lost |
+| [`setup [options] <serverId>`](/docs/cli/reference/mail#kovalio-mail-setup) | Start or resume the mail setup wizard (streams over SSE) |
+| [`cancel`](/docs/cli/reference/mail#kovalio-mail-cancel) | Cancel the mail setup currently running |
+| [`dns-ack <serverId>`](/docs/cli/reference/mail#kovalio-mail-dns-ack) | Acknowledge that DNS records are published (releases the DKIM gate) |
+| [`ptr-ack <serverId>`](/docs/cli/reference/mail#kovalio-mail-ptr-ack) | Acknowledge that reverse DNS (PTR) is configured |
+| [`reset [options] <serverId>`](/docs/cli/reference/mail#kovalio-mail-reset) | Wipe the on-server setup state file (does NOT touch installed daemons) |
+| [`forget <serverId>`](/docs/cli/reference/mail#kovalio-mail-forget) | Stop managing a mail server (drops the DB row; leaves the stack + state intact) |
+| [`health [options] <serverId>`](/docs/cli/reference/mail#kovalio-mail-health) | Show live status of every mail daemon, and whether mail is leaving the box |
+| [`logs [options] <serverId> <component>`](/docs/cli/reference/mail#kovalio-mail-logs) | Tail a mail component's journal (snapshot) |
+| [`postmaster`](/docs/cli/reference/mail#kovalio-mail-postmaster) | Manage the postmaster mailbox |
+| [`build [options]`](/docs/cli/reference/mail#kovalio-mail-build) | Build the kovalio-mail engine image locally from a source checkout [dev] |
+| [`domain`](/docs/cli/reference/mail/domain#kovalio-mail-domain) | Manage mail domains, their dependencies and DNS |
+| [`mailbox`](/docs/cli/reference/mail/mailbox#kovalio-mail-mailbox) | Manage mailbox accounts and storage limits |
+| [`alias`](/docs/cli/reference/mail/alias#kovalio-mail-alias) | Manage forwards and catch-all addresses |
+| [`certificate`](/docs/cli/reference/mail#kovalio-mail-certificate) | Inspect and renew mail TLS through Kovalio's shared edge |
+| [`relay`](/docs/cli/reference/mail#kovalio-mail-relay) | Manage outbound SMTP delivery without exposing stored passwords |
+| [`backup`](/docs/cli/reference/mail#kovalio-mail-backup) | Manage mail backup policy; use kovalio backup for runs and restores |
+| [`inbound`](/docs/cli/reference/mail/inbound#kovalio-mail-inbound) | Manage inbound-mail notification rules |
+| [`stats <server>`](/docs/cli/reference/mail#kovalio-mail-stats) | Read domain, account and storage totals |
+| [`dns-scan [options] <server>`](/docs/cli/reference/mail#kovalio-mail-dns-scan) | Inspect mail DNS without changing records |
+| [`test-email [options] <server>`](/docs/cli/reference/mail#kovalio-mail-test-email) | Send one delivery test to the specified recipient |
+| [`rotate-platform-mailbox [options] <server>`](/docs/cli/reference/mail#kovalio-mail-rotate-platform-mailbox) | Rotate Kovalio's private delivery credential; never prints its password |
+| [`component [options] <server> <key> <action>`](/docs/cli/reference/mail#kovalio-mail-component) | Control a managed mail component; inspect health to confirm recovery |
+| [`restart-all [options] <server>`](/docs/cli/reference/mail#kovalio-mail-restart-all) | Restart managed mail components; delivery may be briefly interrupted |
+| [`webmail`](/docs/cli/reference/mail#kovalio-mail-webmail) | Deploy webmail through the normal app deployment workflow |
+
+## kovalio mail adopt
+
+Re-adopt an existing mail install whose orchestrator state was lost
+
+```text
+kovalio mail adopt [options] <serverId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `serverId` | Server ID to adopt |
+
+## kovalio mail backup
+
+Manage mail backup policy; use kovalio backup for runs and restores
+
+```text
+kovalio mail backup [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`get <server>`](/docs/cli/reference/mail#kovalio-mail-backup-get) | Read the current mail backup policy |
+| [`configure [options] <id> [file]`](/docs/cli/reference/mail#kovalio-mail-backup-configure) | Set destination, schedule and included mail data; omitted retention is preserved |
+| [`runs <server>`](/docs/cli/reference/mail#kovalio-mail-backup-runs) | Read the 50 most recent mail backup runs |
+
+## kovalio mail backup configure
+
+Set destination, schedule and included mail data; omitted retention is preserved
+
+```text
+kovalio mail backup configure [options] <id> [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Resource ID |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio mail backup get
+
+Read the current mail backup policy
+
+```text
+kovalio mail backup get [options] <server>
+```
+
+## kovalio mail backup runs
+
+Read the 50 most recent mail backup runs
+
+```text
+kovalio mail backup runs [options] <server>
+```
+
+## kovalio mail build
+
+Build the kovalio-mail engine image locally from a source checkout [dev]
+
+```text
+kovalio mail build [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--context <dir>` | Repo root containing apps/email/Dockerfile (default: checkout or cwd) |
+| `--tag <ref>` | Image ref to tag (default: the pinned kovalio-mail ref) |
+
+## kovalio mail cancel
+
+Cancel the mail setup currently running
+
+```text
+kovalio mail cancel [options]
+```
+
+## kovalio mail certificate
+
+Inspect and renew mail TLS through Kovalio's shared edge
+
+```text
+kovalio mail certificate [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`get <server>`](/docs/cli/reference/mail#kovalio-mail-certificate-get) | get mail certificate status |
+| [`check <server>`](/docs/cli/reference/mail#kovalio-mail-certificate-check) | check mail certificate status |
+| [`renew <server>`](/docs/cli/reference/mail#kovalio-mail-certificate-renew) | Renew a due certificate and reload SMTP/IMAP through the existing edge workflow |
+| [`auto-renew [options] <server>`](/docs/cli/reference/mail#kovalio-mail-certificate-auto-renew) | Enable or disable scheduled renewal; monitoring remains available |
+
+## kovalio mail certificate auto-renew
+
+Enable or disable scheduled renewal; monitoring remains available
+
+```text
+kovalio mail certificate auto-renew [options] <server>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--state <state>` | Automatic renewal (choices: "on", "off") |
+
+## kovalio mail certificate check
+
+check mail certificate status
+
+```text
+kovalio mail certificate check [options] <server>
+```
+
+## kovalio mail certificate get
+
+get mail certificate status
+
+```text
+kovalio mail certificate get [options] <server>
+```
+
+## kovalio mail certificate renew
+
+Renew a due certificate and reload SMTP/IMAP through the existing edge workflow
+
+```text
+kovalio mail certificate renew [options] <server>
+```
+
+## kovalio mail component
+
+Control a managed mail component; inspect health to confirm recovery
+
+```text
+kovalio mail component [options] <server> <key> <action>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `server` |  |
+| `key` |  |
+| `action` | start, stop, or restart |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm component action |
+
+## kovalio mail dns-ack
+
+Acknowledge that DNS records are published (releases the DKIM gate)
+
+```text
+kovalio mail dns-ack [options] <serverId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `serverId` | Mail server ID |
+
+## kovalio mail dns-scan
+
+Inspect mail DNS without changing records
+
+```text
+kovalio mail dns-scan [options] <server>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--domain <domain>` | Domain to inspect |
+
+## kovalio mail forget
+
+Stop managing a mail server (drops the DB row; leaves the stack + state intact)
+
+```text
+kovalio mail forget [options] <serverId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `serverId` | Mail server ID |
+
+## kovalio mail health
+
+Show live status of every mail daemon, and whether mail is leaving the box
+
+```text
+kovalio mail health [options] <serverId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `serverId` | Mail server ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--refresh-reachability` | Bypass the public reachability cache |
+
+## kovalio mail logs
+
+Tail a mail component's journal (snapshot)
+
+```text
+kovalio mail logs [options] <serverId> <component>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `serverId` | Mail server ID |
+| `component` | Component key (postfix\|dovecot\|amavis\|clamav\|iredapd\|postgresql\|…) |
+
+| Option | Meaning |
+| --- | --- |
+| `-n, --lines <n>` | Number of lines (max 1000) (default: 200) |
+
+## kovalio mail postmaster
+
+Manage the postmaster mailbox
+
+```text
+kovalio mail postmaster [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`set-password [options] <serverId>`](/docs/cli/reference/mail#kovalio-mail-postmaster-set-password) | Rotate the postmaster password |
+
+## kovalio mail postmaster set-password
+
+Rotate the postmaster password
+
+```text
+kovalio mail postmaster set-password [options] <serverId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `serverId` | Mail server ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--password <password>` | New password (min 12 chars); prompted if omitted |
+| `--password-file <file>` | Password file, or - for stdin (keeps secrets out of process arguments) |
+
+## kovalio mail ptr-ack
+
+Acknowledge that reverse DNS (PTR) is configured
+
+```text
+kovalio mail ptr-ack [options] <serverId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `serverId` | Mail server ID |
+
+## kovalio mail relay
+
+Manage outbound SMTP delivery without exposing stored passwords
+
+```text
+kovalio mail relay [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`get <server>`](/docs/cli/reference/mail#kovalio-mail-relay-get) | Read masked relay settings |
+| [`configure [options] <id> [file]`](/docs/cli/reference/mail#kovalio-mail-relay-configure) | Configure outbound SMTP; omit password to keep the saved one |
+| [`remove [options] <server>`](/docs/cli/reference/mail#kovalio-mail-relay-remove) | Disable the relay and return to direct SMTP delivery |
+
+## kovalio mail relay configure
+
+Configure outbound SMTP; omit password to keep the saved one
+
+```text
+kovalio mail relay configure [options] <id> [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Resource ID |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |
+
+## kovalio mail relay get
+
+Read masked relay settings
+
+```text
+kovalio mail relay get [options] <server>
+```
+
+## kovalio mail relay remove
+
+Disable the relay and return to direct SMTP delivery
+
+```text
+kovalio mail relay remove [options] <server>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm direct delivery |
+
+## kovalio mail reset
+
+Wipe the on-server setup state file (does NOT touch installed daemons)
+
+```text
+kovalio mail reset [options] <serverId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `serverId` | Mail server ID |
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Skip the confirmation prompt |
+
+## kovalio mail restart-all
+
+Restart managed mail components; delivery may be briefly interrupted
+
+```text
+kovalio mail restart-all [options] <server>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm restart |
+
+## kovalio mail rotate-platform-mailbox
+
+Rotate Kovalio's private delivery credential; never prints its password
+
+```text
+kovalio mail rotate-platform-mailbox [options] <server>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `-y, --yes` | Confirm rotation |
+
+## kovalio mail scan
+
+Probe a server for an existing mail install (read-only)
+
+```text
+kovalio mail scan [options] <serverId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `serverId` | Server ID to scan |
+
+## kovalio mail servers
+
+List every server the mail stack is installed on
+
+```text
+kovalio mail servers [options]
+```
+
+## kovalio mail setup
+
+Start or resume the mail setup wizard (streams over SSE)
+
+```text
+kovalio mail setup [options] <serverId>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `serverId` | Server ID to install the mail stack on |
+
+| Option | Meaning |
+| --- | --- |
+| `-d, --domain <domain>` | Mail domain (e.g. example.com) |
+| `--start-step <n>` | Resume from a step returned by mail status |
+| `--config <json>` | iRedMail config overrides as a JSON object |
+| `--config-file <file>` | Setup config file, or - for stdin (recommended for passwords) |
+
+## kovalio mail stats
+
+Read domain, account and storage totals
+
+```text
+kovalio mail stats [options] <server>
+```
+
+## kovalio mail status
+
+Show the setup progress for a mail server
+
+```text
+kovalio mail status [options] [serverId]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `serverId` | Mail server ID (omit for the empty welcome shell) |
+
+## kovalio mail steps
+
+List the mail setup steps
+
+```text
+kovalio mail steps [options]
+```
+
+## kovalio mail test-email
+
+Send one delivery test to the specified recipient
+
+```text
+kovalio mail test-email [options] <server>
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--to <email>` | Recipient for one real test message |
+| `--from-domain <domain>` | Sender's configured mail domain |
+
+## kovalio mail webmail
+
+Deploy webmail through the normal app deployment workflow
+
+```text
+kovalio mail webmail [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`targets <server>`](/docs/cli/reference/mail#kovalio-mail-webmail-targets) | List permitted targets for this mail server |
+| [`deploy [options] [file]`](/docs/cli/reference/mail#kovalio-mail-webmail-deploy) | Deploy webmail and return IDs for kovalio deployment wait/logs |
+| [`deploy-external [options] [file]`](/docs/cli/reference/mail#kovalio-mail-webmail-deploy-external) | Deploy webmail for an external IMAP/SMTP provider |
+
+## kovalio mail webmail deploy
+
+Deploy webmail and return IDs for kovalio deployment wait/logs
+
+```text
+kovalio mail webmail deploy [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |
+
+## kovalio mail webmail deploy-external
+
+Deploy webmail for an external IMAP/SMTP provider
+
+```text
+kovalio mail webmail deploy-external [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio mail webmail targets
+
+List permitted targets for this mail server
+
+```text
+kovalio mail webmail targets [options] <server>
+```

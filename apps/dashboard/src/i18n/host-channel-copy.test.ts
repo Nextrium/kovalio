@@ -9,7 +9,7 @@ import en from "./locales/en/servers.json";
 /**
  * The one seam a shared constant can't close (#490).
  *
- * The CLI preflight, the API boot banner and `openship doctor` all build their impact
+ * The CLI preflight, the API boot banner and `kovalio doctor` all build their impact
  * copy from HOST_CHANNEL_* in @repo/core. This banner can't: its copy has to be
  * translatable, so English lives in the locale file like every other string. Which
  * means the two can drift — and drift here is expensive in a specific way: every line

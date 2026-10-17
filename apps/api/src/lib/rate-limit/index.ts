@@ -9,12 +9,13 @@
  * SaaS uses Redis (`REDIS_URL` reachable). Self-hosted PGlite installs
  * fall back to in-memory — fine for single-instance setups where the
  * per-process counter IS the global counter. Force a backend with
- * `OPENSHIP_RATE_LIMIT_STORE=memory|redis`.
+ * `KOVALIO_RATE_LIMIT_STORE=memory|redis`.
  */
 
+import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import IORedis from "ioredis";
-import { env, REDIS_REQUIRED } from "../../config/env";
-import { isRedisReachable } from "../../lib/redis";
+import { env, REDIS_REQUIRED } from "@repo/platform/engine/config/env";
+import { isRedisReachable } from "@repo/platform/engine/lib/redis";
 import { MemoryRateLimitStore } from "./memory-store";
 import { RedisRateLimitStore } from "./redis-store";
 import { getPolicy, type PolicyId } from "./policies";
@@ -33,12 +34,12 @@ let store: RateLimitStore | null = null;
 let sharedRedis: IORedis | null = null;
 
 async function pickBackend(): Promise<Backend> {
-  const override = (process.env.OPENSHIP_RATE_LIMIT_STORE ?? "")
+  const override = (process.env.KOVALIO_RATE_LIMIT_STORE ?? "")
     .toLowerCase()
     .trim();
   if (override === "memory") return "memory";
   if (override === "redis") return "redis";
-  // Redis required (CLOUD_MODE / OPENSHIP_REQUIRE_REDIS): force redis, skip the
+  // Redis required (CLOUD_MODE / KOVALIO_REQUIRE_REDIS): force redis, skip the
   // probe — per-replica in-memory counters would under-count the aggregate.
   if (REDIS_REQUIRED) return "redis";
   return (await isRedisReachable()) ? "redis" : "memory";
@@ -52,7 +53,7 @@ function getSharedRedis(): IORedis {
     enableReadyCheck: false,
   });
   sharedRedis.on("error", (err) => {
-    console.warn("[rate-limit:redis] connection error:", err.message);
+    errorDiagnostics.warn("api/lib/rate-limit/index", "[rate-limit:redis] connection error:", err);
   });
   return sharedRedis;
 }
@@ -106,9 +107,15 @@ export async function rateLimit(input: RateLimitInput): Promise<RateLimitResult>
     const s = await resolveStore();
     return await s.checkAndIncrement(key, policy.windowMs, policy.limit);
   } catch (err) {
-    console.warn(
+    if (input.policy === "diagnostics") {
+      // Public log intake can wait when its limiter is unavailable. Never turn
+      // a telemetry destination outage into unbounded anonymous ingestion.
+      errorDiagnostics.warn("api/lib/rate-limit/index", "Diagnostic intake rate limiter unavailable", err);
+      return { allowed: false, remaining: 0, resetMs: 1000 };
+    }
+    errorDiagnostics.warn("api/lib/rate-limit/index",
       `[rate-limit] check failed for ${key}, failing open:`,
-      (err as Error).message,
+      (err as Error).message, err,
     );
     return { allowed: true, remaining: policy.limit, resetMs: policy.windowMs };
   }
@@ -124,7 +131,8 @@ export async function shutdownRateLimit(): Promise<void> {
   if (store) {
     try {
       await store.dispose();
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "api/lib/rate-limit/index");
       /* best-effort */
     }
     store = null;
@@ -132,7 +140,8 @@ export async function shutdownRateLimit(): Promise<void> {
   if (sharedRedis) {
     try {
       sharedRedis.disconnect();
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "api/lib/rate-limit/index");
       /* best-effort */
     }
     sharedRedis = null;

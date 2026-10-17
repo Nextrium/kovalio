@@ -15,9 +15,9 @@
  */
 
 import type { CommandExecutor } from "@repo/adapters";
-import { hashPassword } from "./admin/password";
-import { execute, q } from "./admin/psql-runner";
-import { readState, mutateState } from "./mail-state";
+import { hashPassword } from "@repo/platform/engine/modules/mail/admin/password";
+import { execute, q } from "@repo/platform/engine/modules/mail/admin/psql-runner";
+import { readState, mutateState } from "@repo/platform/engine/modules/mail/mail-state";
 
 /**
  * Update the postmaster password for `<domain>`. Caller is responsible
@@ -55,7 +55,7 @@ export async function updatePostmasterPassword(
   // (and any future SMTP-from-orchestrator use) can authenticate over
   // submission as postmaster@<domain> without scraping it from disk.
   //
-  // The state file lives at `/root/.openship/mail-state.json` with root-
+  // The state file lives at `/root/.kovalio/mail-state.json` with root-
   // only permissions; an attacker with read access there already has
   // /etc/dovecot/dovecot-sql.conf and the bind credentials. Keeping the
   // postmaster plaintext alongside the other generated secrets doesn't

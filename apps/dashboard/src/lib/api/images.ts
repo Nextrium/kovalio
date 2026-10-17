@@ -1,3 +1,4 @@
+import type { ComposeGpu } from "@repo/core";
 import { api } from "./client";
 import { endpoints } from "./endpoints";
 
@@ -11,13 +12,18 @@ export interface ImageCatalogEntry {
   name?: string;
   /** Docker image string, e.g. "postgres:16-alpine" */
   image?: string;
+  /** Exact container argv required by this image's entrypoint. */
+  commandArgv?: string[];
+  supportsCloud?: boolean;
+  /** Optional NVIDIA device request for this exact catalog image. */
+  gpus?: ComposeGpu;
   /** URL to logo / icon */
   logo?: string;
   description?: string;
   category?: string;
   tags?: string[];
   ports?: number[];
-  defaultEnv?: Array<{ key: string; value?: string; description?: string }>;
+  defaultEnv?: Array<{ key: string; value?: string; description?: string; generate?: "secret" }>;
   /** Default named-volume mounts in `volume:container/path` form. Pre-seeded
    *  into the configure step so stateful services don't lose data on restart. */
   defaultVolumes?: string[];
@@ -27,14 +33,14 @@ export interface ImageCatalogEntry {
 export interface ListImagesResponse {
   success: boolean;
   images: ImageCatalogEntry[];
-  /** False when the local instance has no Openship Cloud connection. */
+  /** False when the local instance has no Kovalio Cloud connection. */
   cloudConnected?: boolean;
 }
 
 export const imagesApi = {
   /**
    * Fetch the catalog. Returns an empty `images` array when the local
-   * instance isn't linked to Openship Cloud (the modal falls back to
+   * instance isn't linked to Kovalio Cloud (the modal falls back to
    * the Custom Image tile in that case). Server-side caches for ~5 min.
    */
   list: (params?: { search?: string; category?: string }) => {

@@ -34,35 +34,35 @@ function execCalls(exec: CommandExecutor): string[] {
 
 describe("containerCommand", () => {
   it("wraps the command for docker exec", () => {
-    expect(containerCommand("openship-edge", "openresty -t")).toBe(
-      "docker exec 'openship-edge' sh -c 'openresty -t'",
+    expect(containerCommand("kovalio-edge", "openresty -t")).toBe(
+      "docker exec 'kovalio-edge' sh -c 'openresty -t'",
     );
   });
 
   it("quotes a command that itself contains single quotes", () => {
     // The reload command embeds `pkill -f '[o]penresty'`; naive interpolation would
     // close the outer quote and hand the rest of it to the host shell.
-    const wrapped = containerCommand("openship-edge", `pkill -f '[o]penresty'`);
-    expect(wrapped).toBe(`docker exec 'openship-edge' sh -c 'pkill -f '\\''[o]penresty'\\'''`);
+    const wrapped = containerCommand("kovalio-edge", `pkill -f '[o]penresty'`);
+    expect(wrapped).toBe(`docker exec 'kovalio-edge' sh -c 'pkill -f '\\''[o]penresty'\\'''`);
   });
 });
 
 describe("edgeContainerExecutor", () => {
   it("runs commands in the container but leaves file ops on the host", async () => {
     const inner = fakeExecutor();
-    const edge = edgeContainerExecutor(inner, "openship-edge");
+    const edge = edgeContainerExecutor(inner, "kovalio-edge");
 
     await edge.exec("openresty -s reload");
-    await edge.writeFile("/var/lib/openship/edge/sites-enabled/app.conf", "server {}");
+    await edge.writeFile("/var/lib/kovalio/edge/sites-enabled/app.conf", "server {}");
 
     expect(inner.exec).toHaveBeenCalledWith(
-      "docker exec 'openship-edge' sh -c 'openresty -s reload'",
+      "docker exec 'kovalio-edge' sh -c 'openresty -s reload'",
       undefined,
     );
     // Host path, host write — this is what keeps the migrate scan and cert reuse
     // able to see what the edge serves.
     expect(inner.writeFile).toHaveBeenCalledWith(
-      "/var/lib/openship/edge/sites-enabled/app.conf",
+      "/var/lib/kovalio/edge/sites-enabled/app.conf",
       "server {}",
     );
   });
@@ -70,13 +70,13 @@ describe("edgeContainerExecutor", () => {
   it("streams through the container too (certbot output)", async () => {
     const inner = fakeExecutor();
     const onLog = vi.fn();
-    await edgeContainerExecutor(inner, "openship-edge").streamExec("certbot certonly", onLog);
+    await edgeContainerExecutor(inner, "kovalio-edge").streamExec("certbot certonly", onLog);
 
     // The opts (abort signal) forward through transparently — undefined here since
     // this caller passes none, but the live-log transport relies on it reaching the
     // inner executor so an aborted stream kills the curl inside the container.
     expect(inner.streamExec).toHaveBeenCalledWith(
-      "docker exec 'openship-edge' sh -c 'certbot certonly'",
+      "docker exec 'kovalio-edge' sh -c 'certbot certonly'",
       onLog,
       undefined,
     );
@@ -86,17 +86,17 @@ describe("edgeContainerExecutor", () => {
     // Legacy install: the host read comes back empty because the state is in a
     // named volume, so the answer has to come from inside the container.
     const inner = fakeExecutor({ readFile: vi.fn(async () => ""), exec: vi.fn(async () => "pem") });
-    const edge = edgeContainerExecutor(inner, "openship-edge", { files: "auto" });
+    const edge = edgeContainerExecutor(inner, "kovalio-edge", { files: "auto" });
 
     expect(await edge.readFile("/etc/letsencrypt/live/a/fullchain.pem")).toBe("pem");
     expect(inner.exec).toHaveBeenCalledWith(
-      "docker exec 'openship-edge' sh -c 'cat '\\''/etc/letsencrypt/live/a/fullchain.pem'\\'''",
+      "docker exec 'kovalio-edge' sh -c 'cat '\\''/etc/letsencrypt/live/a/fullchain.pem'\\'''",
     );
   });
 
   it('files:"auto" prefers the host and never touches the container when it answers', async () => {
     const inner = fakeExecutor({ readFile: vi.fn(async () => "host-pem") });
-    const edge = edgeContainerExecutor(inner, "openship-edge", { files: "auto" });
+    const edge = edgeContainerExecutor(inner, "kovalio-edge", { files: "auto" });
 
     expect(await edge.readFile("/etc/letsencrypt/live/a/fullchain.pem")).toBe("host-pem");
     expect(inner.exec).not.toHaveBeenCalled();
@@ -106,7 +106,7 @@ describe("edgeContainerExecutor", () => {
     // The whole point of the mode: the container is already known, so this must not
     // re-probe `docker ps` per file the way the standalone helpers have to.
     const inner = fakeExecutor({ readFile: vi.fn(async () => "") });
-    await edgeContainerExecutor(inner, "openship-edge", { files: "auto" }).readFile("/x");
+    await edgeContainerExecutor(inner, "kovalio-edge", { files: "auto" }).readFile("/x");
     expect(execCalls(inner).some((c) => c.startsWith("docker ps"))).toBe(false);
   });
 
@@ -117,16 +117,16 @@ describe("edgeContainerExecutor", () => {
   it("renames on the HOST, never inside the container", async () => {
     const renamed: Array<[string, string]> = [];
     const inner = fakeExecutor({ rename: vi.fn(async (a: string, b: string) => { renamed.push([a, b]); }) });
-    const wrapped = edgeContainerExecutor(inner, "openship-edge");
+    const wrapped = edgeContainerExecutor(inner, "kovalio-edge");
 
     await wrapped.rename!(
-      "/var/lib/openship/edge/sites-enabled/x.conf.tmp-1",
-      "/var/lib/openship/edge/sites-enabled/x.conf",
+      "/var/lib/kovalio/edge/sites-enabled/x.conf.tmp-1",
+      "/var/lib/kovalio/edge/sites-enabled/x.conf",
     );
 
     expect(renamed).toEqual([[
-      "/var/lib/openship/edge/sites-enabled/x.conf.tmp-1",
-      "/var/lib/openship/edge/sites-enabled/x.conf",
+      "/var/lib/kovalio/edge/sites-enabled/x.conf.tmp-1",
+      "/var/lib/kovalio/edge/sites-enabled/x.conf",
     ]]);
     expect(execCalls(inner)).toEqual([]); // no docker exec at all
   });
@@ -134,7 +134,7 @@ describe("edgeContainerExecutor", () => {
   it("falls back to the inner SHELL when the inner has no rename", async () => {
     const inner = fakeExecutor();
     delete (inner as { rename?: unknown }).rename;
-    const wrapped = edgeContainerExecutor(inner, "openship-edge");
+    const wrapped = edgeContainerExecutor(inner, "kovalio-edge");
 
     await wrapped.rename!("/host/path/a.tmp", "/host/path/a");
 
@@ -144,7 +144,7 @@ describe("edgeContainerExecutor", () => {
 
   it("forwards unknown methods to the inner executor", async () => {
     const inner = fakeExecutor();
-    const edge = edgeContainerExecutor(inner, "openship-edge");
+    const edge = edgeContainerExecutor(inner, "kovalio-edge");
     await edge.dispose?.();
     expect(inner.dispose).toHaveBeenCalled();
   });
@@ -161,7 +161,7 @@ describe("edgeContainerExecutor", () => {
     const elevated = new Proxy(inner, {
       get: (t, p) => (p === EXECUTOR_DELEGATE ? t : Reflect.get(t, p, t)),
     });
-    const edge = edgeContainerExecutor(elevated, "openship-edge");
+    const edge = edgeContainerExecutor(elevated, "kovalio-edge");
 
     const delegate = (e: CommandExecutor) => (e as unknown as Record<symbol, unknown>)[EXECUTOR_DELEGATE];
     expect(delegate(elevated)).toBe(inner);
@@ -203,10 +203,10 @@ describe("edgeContainerExecutor — the edge container is down", () => {
 
   it("rewrites the daemon's bare container id into the name, the state and the cause", async () => {
     const inner = crashLoopingHost();
-    const edge = edgeContainerExecutor(inner, "openship-edge");
+    const edge = edgeContainerExecutor(inner, "kovalio-edge");
 
     await expect(edge.exec("certbot certonly --standalone")).rejects.toThrow(
-      /the edge container is not running \("openship-edge"\) \(restarting\)/,
+      /the edge container is not running \("kovalio-edge"\) \(restarting\)/,
     );
     // The three things the daemon's message lacked, and the operator needs.
     await expect(edge.exec("certbot certonly --standalone")).rejects.toThrow(/crash-looping/);
@@ -222,12 +222,12 @@ describe("edgeContainerExecutor — the edge container is down", () => {
     // be shell commands on that host. A second Docker client or a tunnel here would
     // mean a remote edge could never be diagnosed at all.
     const inner = crashLoopingHost();
-    await edgeContainerExecutor(inner, "openship-edge").exec("openresty -t").catch(() => {});
+    await edgeContainerExecutor(inner, "kovalio-edge").exec("openresty -t").catch(() => {});
 
     expect(execCalls(inner)).toEqual([
-      "docker exec 'openship-edge' sh -c 'openresty -t'",
-      "docker inspect -f '{{.State.Status}}' 'openship-edge' 2>/dev/null",
-      "docker logs --tail 40 'openship-edge' 2>&1",
+      "docker exec 'kovalio-edge' sh -c 'openresty -t'",
+      "docker inspect -f '{{.State.Status}}' 'kovalio-edge' 2>/dev/null",
+      "docker logs --tail 40 'kovalio-edge' 2>&1",
     ]);
   });
 
@@ -240,8 +240,8 @@ describe("edgeContainerExecutor — the edge container is down", () => {
     const inner = fakeExecutor({ exec: vi.fn().mockRejectedValue(boom) });
 
     // The SAME error object, not a copy: nothing about a routine failure is touched.
-    await expect(edgeContainerExecutor(inner, "openship-edge").exec("cat /x")).rejects.toBe(boom);
-    expect(execCalls(inner)).toEqual(["docker exec 'openship-edge' sh -c 'cat /x'"]);
+    await expect(edgeContainerExecutor(inner, "kovalio-edge").exec("cat /x")).rejects.toBe(boom);
+    expect(execCalls(inner)).toEqual(["docker exec 'kovalio-edge' sh -c 'cat /x'"]);
   });
 
   it("still explains itself when the diagnosis probes also fail", async () => {
@@ -255,8 +255,8 @@ describe("edgeContainerExecutor — the edge container is down", () => {
       }),
     });
 
-    await expect(edgeContainerExecutor(inner, "openship-edge").exec("openresty -t")).rejects.toThrow(
-      /the edge container is not running \("openship-edge"\) — .*docker logs --tail 40 openship-edge/,
+    await expect(edgeContainerExecutor(inner, "kovalio-edge").exec("openresty -t")).rejects.toThrow(
+      /the edge container is not running \("kovalio-edge"\) — .*docker logs --tail 40 kovalio-edge/,
     );
   });
 
@@ -277,14 +277,14 @@ describe("edgeContainerExecutor — the edge container is down", () => {
 
     // Exactly how `_execCertbot` builds the error it throws.
     let streamed = "";
-    const result = await edgeContainerExecutor(inner, "openship-edge").streamExec(
+    const result = await edgeContainerExecutor(inner, "kovalio-edge").streamExec(
       "certbot certonly --standalone",
       (log) => {
         streamed += log.message;
       },
     );
 
-    expect(streamed).toMatch(/the edge container is not running \("openship-edge"\)/);
+    expect(streamed).toMatch(/the edge container is not running \("kovalio-edge"\)/);
     expect(streamed).toMatch(/cannot load certificate/);
     expect(result.code).toBe(1);
     expect(result.output).toMatch(/the edge container is not running/);
@@ -301,7 +301,7 @@ describe("edgeContainerExecutor — the edge container is down", () => {
       }),
     });
 
-    const result = await edgeContainerExecutor(inner, "openship-edge").streamExec("certbot", () => {});
+    const result = await edgeContainerExecutor(inner, "kovalio-edge").streamExec("certbot", () => {});
     expect(result).toEqual({ code: 1, output: dns });
     expect(execCalls(inner)).toEqual([]); // no diagnosis round-trips either
   });
@@ -321,7 +321,7 @@ describe("edgeContainerExecutor — the edge container is down", () => {
       }),
     });
 
-    await expect(edgeContainerExecutor(inner, "openship-edge").exec("openresty -s reload")).rejects.toThrow(
+    await expect(edgeContainerExecutor(inner, "kovalio-edge").exec("openresty -s reload")).rejects.toThrow(
       /the edge container is not running.*cannot load certificate/s,
     );
   });
@@ -371,7 +371,7 @@ describe("readEdgeFile", () => {
     const inner = fakeExecutor({
       readFile: vi.fn(async () => ""),
       exec: vi.fn(async (cmd: string) =>
-        cmd.startsWith("docker ps") ? "openship-edge" : "volume-pem",
+        cmd.startsWith("docker ps") ? "kovalio-edge" : "volume-pem",
       ),
     });
     expect(await readEdgeFile(inner, "/etc/letsencrypt/live/a/fullchain.pem")).toBe("volume-pem");
@@ -390,7 +390,7 @@ describe("writeEdgeFile", () => {
   it("writes to the host and stops there when the edge already sees it", async () => {
     const inner = fakeExecutor({
       exec: vi.fn(async (cmd: string) => {
-        if (cmd.startsWith("docker ps")) return "openship-edge";
+        if (cmd.startsWith("docker ps")) return "kovalio-edge";
         if (cmd.includes("test -e")) return "visible";
         return "";
       }),
@@ -405,13 +405,13 @@ describe("writeEdgeFile", () => {
     // A named-volume install: the host write lands somewhere the edge never reads,
     // which is how migrated certs went missing and every kept domain re-issued.
     const inner = fakeExecutor({
-      exec: vi.fn(async (cmd: string) => (cmd.startsWith("docker ps") ? "openship-edge" : "")),
+      exec: vi.fn(async (cmd: string) => (cmd.startsWith("docker ps") ? "kovalio-edge" : "")),
     });
     await writeEdgeFile(inner, "/etc/letsencrypt/live/a/fullchain.pem", "pem");
 
     const cp = execCalls(inner).find((c) => c.startsWith("docker cp"));
     expect(cp).toBe(
-      "docker cp '/etc/letsencrypt/live/a/fullchain.pem' 'openship-edge:/etc/letsencrypt/live/a/fullchain.pem'",
+      "docker cp '/etc/letsencrypt/live/a/fullchain.pem' 'kovalio-edge:/etc/letsencrypt/live/a/fullchain.pem'",
     );
   });
 

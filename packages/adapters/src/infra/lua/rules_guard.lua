@@ -3,7 +3,7 @@
 -- country allow/ban · bad user-agent · hotlink · rate-limit) for the request's
 -- host. Rules are pushed reload-free by mgmt_api `POST /rules`; the DB
 -- `route_rule` table is the source of truth. All parsing/compiling/matching
--- lives in openship.rules_lib (loaded ONCE per worker) — this file is re-run
+-- lives in kovalio.rules_lib (loaded ONCE per worker) — this file is re-run
 -- every request so it stays minimal. See rules_lib.lua for the compiled shape.
 --
 -- Enforcement uses the connecting peer (ngx.var.remote_addr); front a real_ip
@@ -25,7 +25,7 @@ if not host then return end
 local raw = rules:get(host)
 if not raw then return end          -- fast path: nothing configured for this host
 
-local lib = require "openship.rules_lib"
+local lib = require "kovalio.rules_lib"
 local entries = lib.get(host, raw)
 local n = #entries
 if n == 0 then return end
@@ -54,7 +54,7 @@ local ipi = lib.ipv4_to_int(ips)
 local country_cache
 local function country_of()
     if country_cache == nil then
-        local ok, geo = pcall(require, "openship.geo_country")
+        local ok, geo = pcall(require, "kovalio.geo_country")
         country_cache = (ok and geo and geo.get_country_code(ips)) or false
     end
     return country_cache or nil

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // render ("none" → zero-auth, "local" → Better Auth login). The non-desktop
 // branch used to hardcode "local" while still querying instanceSettings for its
 // siblings, so an operator who completed the deliberate zero-auth opt-in
-// (OPENSHIP_ALLOW_ZERO_AUTH + `confirm: "I-understand-no-auth"`, see
+// (KOVALIO_ALLOW_ZERO_AUTH + `confirm: "I-understand-no-auth"`, see
 // modules/system/setup.controller.ts) still got a login screen — even though
 // authMiddleware, via lib/auth-mode.ts, had already resolved "none".
 //
@@ -12,8 +12,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // single canonical resolver — so these now assert that the value the dashboard
 // reads matches what the API actually enforces. Keeping a second copy of the
 // rules here is what let the two drift: the endpoint ignored
-// OPENSHIP_REQUIRE_AUTH / OPENSHIP_PUBLIC_URL and kept reporting a stale desktop
-// "cloud", rendering the Openship Cloud sign-in on an API that wanted no login.
+// KOVALIO_REQUIRE_AUTH / KOVALIO_PUBLIC_URL and kept reporting a stale desktop
+// "cloud", rendering the Kovalio Cloud sign-in on an API that wanted no login.
 //
 // DEPLOY_MODE defaults to "docker" under vitest (see vitest.config.ts), so
 // these exercise the non-desktop path.
@@ -64,11 +64,16 @@ afterEach(async () => {
   // first case's mode leaks into every later case (they all saw "none"). The
   // real app clears it the same way after any settings write — see
   // clearAuthModeCache() callers in modules/system/setup.controller.ts.
-  const { clearAuthModeCache } = await import("../../src/lib/auth-mode");
+  const { clearAuthModeCache } = await import("@repo/platform/engine/lib/auth-mode");
   clearAuthModeCache();
 });
 
 describe("GET /health/env authMode", () => {
+  it("reports the running API release consumed by the dashboard sidebar", async () => {
+    const { APP_VERSION } = await import("@repo/platform/engine/lib/app-version");
+    expect((await getEnv()).body.version).toBe(APP_VERSION);
+  });
+
   it("reports the persisted zero-auth mode instead of hardcoding local", async () => {
     settings.authMode = "none";
 
@@ -94,6 +99,18 @@ describe("GET /health/env authMode", () => {
     // "login required" is the safe default.
     getThrows = true;
     expect((await getEnv()).body.authMode).toBe("local");
+  });
+
+  it("advertises no social providers when no OAuth credentials are configured", async () => {
+    // The suite runs with a bare env (no GITHUB_/GOOGLE_ client creds), which is
+    // the default self-hosted instance: password login only. The field must be
+    // PRESENT and empty rather than absent — the dashboard renders whatever it
+    // is handed, and a missing key would be indistinguishable from an older
+    // server on the client side. The configured case lives in
+    // health-env-auth-providers.test.ts (it has to stuff process.env before
+    // config/env parses).
+    const { body } = await getEnv();
+    expect(body.authProviders).toEqual([]);
   });
 
   it("still reports the other instanceSettings fields", async () => {

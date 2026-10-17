@@ -47,7 +47,7 @@ vi.mock("@repo/adapters", async () => {
   };
 });
 
-vi.mock("../../lib/ssh-manager", () => ({
+vi.mock("@repo/platform/engine/lib/ssh-manager", () => ({
   sshManager: {
     withExecutor: async (_id: string, fn: (e: unknown) => Promise<unknown>) =>
       fn({ exec: h.exec, writeFile: vi.fn(), readFile: vi.fn() }),
@@ -55,7 +55,7 @@ vi.mock("../../lib/ssh-manager", () => ({
 }));
 
 import { HostChannelUnavailableError } from "@repo/adapters";
-import { scanServer } from "./server-modules.service";
+import { scanServer } from "@repo/platform/engine/modules/system/server-modules.service";
 import { HOST_CHANNEL_NOT_PROVISIONED } from "@repo/core";
 
 const server = { id: "srv1", organizationId: "org1" } as never;
@@ -124,7 +124,7 @@ describe("scanServer — a dead host channel names itself", () => {
     );
     // The controller turns this into `scan failed: <message>`; what matters is that the
     // message is the channel's own remedy and not an empty, cause-less module list.
-    await expect(scanServer(server)).rejects.toThrow(/openship up/);
+    await expect(scanServer(server)).rejects.toThrow(/kovalio up/);
     expect(h.upsert).not.toHaveBeenCalled();
   });
 

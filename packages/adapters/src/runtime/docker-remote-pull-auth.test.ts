@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DockerRuntime, type DockerConnectionOptions } from "./docker";
+import { BuildLogger } from "./build-pipeline";
 
 /**
  * A REMOTE pull shells out on the target host, so it reads that host's credentials — which
@@ -13,7 +14,7 @@ import { DockerRuntime, type DockerConnectionOptions } from "./docker";
  *     in `ps` to every user on that box for the life of the command);
  *   - the directory is 0700 and the file 0600;
  *   - the config is removed even when the pull fails or times out;
- *   - a host with no Openship credential keeps its existing behaviour exactly.
+ *   - a host with no Kovalio credential keeps its existing behaviour exactly.
  */
 
 const h = vi.hoisted(() => ({
@@ -29,7 +30,7 @@ const executor = {
     if (h.failPull && command.includes("docker pull")) throw new Error("pull exploded");
     return "";
   }),
-  streamExec: vi.fn(async () => ({ code: 0, output: "" })),
+  streamExec: vi.fn(async (_command: string, _onLog: BuildLogger["callback"], _opts?: { signal?: AbortSignal }) => ({ code: 0, output: "" })),
   writeFile: vi.fn(async (path: string, content: string) => {
     h.writes.push({ path, content });
   }),
@@ -66,7 +67,33 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("remote pull — no Openship credential", () => {
+describe("remote image preparation progress", () => {
+  it("streams pull output using the existing private credential file", async () => {
+    const entries: string[] = [];
+    const logger = new BuildLogger(entry => entries.push(entry.message));
+    executor.streamExec.mockImplementationOnce(async (_command, onLog) => {
+      onLog({ timestamp: new Date().toISOString(), level: "info", message: "layer-a: Downloading 4 MB / 8 MB" });
+      return { code: 0, output: "Pull complete" };
+    });
+    const runtime = await runtimeWith(async () => ({ username: "bob", password: SECRET, serveraddress: "ghcr.io" }));
+    await runtime.pullImage("ghcr.io/o/img:1", { force: true, logger });
+    expect(entries).toContain("layer-a: Downloading 4 MB / 8 MB");
+    const [command] = executor.streamExec.mock.calls[0]!;
+    expect(command).toContain("DOCKER_CONFIG=");
+    expect(command).not.toContain(SECRET);
+    expect(entries.join("\n")).not.toContain(SECRET);
+    expect(h.execs.at(-1)).toMatch(/^rm -rf /);
+  });
+
+  it("fails a streamed pull on a nonzero exit and still cleans its credentials", async () => {
+    executor.streamExec.mockResolvedValueOnce({ code: 1, output: "registry unavailable" });
+    const runtime = await runtimeWith(async () => ({ username: "bob", password: SECRET, serveraddress: "ghcr.io" }));
+    await expect(runtime.pullImage("ghcr.io/o/img:1", { force: true, logger: new BuildLogger() })).rejects.toThrow("registry unavailable");
+    expect(h.execs.at(-1)).toMatch(/^rm -rf /);
+  });
+});
+
+describe("remote pull — no Kovalio credential", () => {
   it("pulls exactly as before, writing no config", async () => {
     await (await (await runtimeWith(undefined))).pullImage("ghcr.io/o/img:1", { force: true });
     expect(h.execs).toEqual(["docker pull 'ghcr.io/o/img:1'"]);
@@ -88,7 +115,7 @@ describe("remote pull — no Openship credential", () => {
   });
 });
 
-describe("remote pull — with an Openship credential", () => {
+describe("remote pull — with an Kovalio credential", () => {
   const auth = async () => ({ username: "bob", password: SECRET, serveraddress: "ghcr.io" });
 
   it("never puts the secret in a command argument", async () => {
@@ -103,7 +130,7 @@ describe("remote pull — with an Openship credential", () => {
 
     expect(h.writes).toHaveLength(1);
     const write = h.writes[0]!;
-    expect(write.path).toMatch(/^\/tmp\/openship-pull-[0-9a-f-]+\/config\.json$/);
+    expect(write.path).toMatch(/^\/tmp\/kovalio-pull-[0-9a-f-]+\/config\.json$/);
     // Keyed by the registry, and carrying only that one — not every credential the org has.
     const parsed = JSON.parse(write.content) as { auths: Record<string, { auth: string }> };
     expect(Object.keys(parsed.auths)).toEqual(["ghcr.io"]);
@@ -112,15 +139,15 @@ describe("remote pull — with an Openship credential", () => {
     // `mkdir -m 700`, not `mkdir -p` + chmod: the mode is set at creation (no
     // world-readable window) and an existing path is an ERROR, so this can never write
     // into a directory something else prepared.
-    expect(allCommands()).toMatch(/^mkdir -m 700 '\/tmp\/openship-pull-[^']+'$/m);
+    expect(allCommands()).toMatch(/^mkdir -m 700 '\/tmp\/kovalio-pull-[^']+'$/m);
     expect(allCommands()).not.toContain("mkdir -p");
-    expect(allCommands()).toMatch(/chmod 600 '\/tmp\/openship-pull-[^']+'\/config\.json/);
+    expect(allCommands()).toMatch(/chmod 600 '\/tmp\/kovalio-pull-[^']+'\/config\.json/);
   });
 
   it("points the pull at that config and cleans up on the command's own exit path", async () => {
     await (await (await runtimeWith(auth))).pullImage("ghcr.io/o/img:1", { force: true });
     const pull = h.execs.find((c) => c.includes("docker pull"))!;
-    expect(pull).toMatch(/^DOCKER_CONFIG='\/tmp\/openship-pull-[^']+' docker pull 'ghcr\.io\/o\/img:1'/);
+    expect(pull).toMatch(/^DOCKER_CONFIG='\/tmp\/kovalio-pull-[^']+' docker pull 'ghcr\.io\/o\/img:1'/);
     // rc is captured BEFORE the cleanup so a failed pull still reports its own status.
     expect(pull).toContain("rc=$?; rm -rf ");
     expect(pull).toContain("exit $rc");
@@ -132,7 +159,7 @@ describe("remote pull — with an Openship credential", () => {
     await expect((await (await runtimeWith(auth))).pullImage("ghcr.io/o/img:1", { force: true })).rejects.toThrow(/pull exploded/);
     const cleanups = h.execs.filter((c) => c.startsWith("rm -rf "));
     expect(cleanups).toHaveLength(1);
-    expect(cleanups[0]).toMatch(/^rm -rf '\/tmp\/openship-pull-[^']+'$/);
+    expect(cleanups[0]).toMatch(/^rm -rf '\/tmp\/kovalio-pull-[^']+'$/);
   });
 
   it("uses a fresh directory per pull", async () => {

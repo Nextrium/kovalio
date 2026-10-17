@@ -3,7 +3,8 @@ import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
 
-import { BuildLogger, DEFAULT_RESOURCE_CONFIG, type BuildConfig } from "@repo/adapters";
+import { BuildLogger, CloudDockerRuntime, DEFAULT_RESOURCE_CONFIG, type BuildConfig } from "@repo/adapters";
+import type { BuildConfigSnapshotLike } from "@repo/platform/engine/modules/deployments/build-config";
 import { describe, expect, it, vi } from "vitest";
 
 // buildComposeImages reads the project's services from the DB and broadcasts SSE
@@ -14,12 +15,12 @@ const { listByProjectMock } = vi.hoisted(() => ({ listByProjectMock: vi.fn() }))
 vi.mock("@repo/db", () => ({
   repos: { service: { listByProject: listByProjectMock } },
 }));
-vi.mock("../session-manager", () => ({
+vi.mock("@repo/platform/engine/modules/deployments/session-manager", () => ({
   broadcastServiceStatus: vi.fn(),
   broadcastInstallPhase: vi.fn(),
 }));
 
-import { buildComposeImages } from "./build.service";
+import { buildComposeImages, resolveComposeBuildArgs, resolveComposeImage } from "@repo/platform/engine/modules/deployments/compose/build.service";
 
 /**
  * These pin the AUTHOR-FACING contract of an inline catalog build (`advanced.build`):
@@ -82,10 +83,12 @@ function repoService(
     kind: string;
     build: string | null;
     dockerfile: string | null;
+    buildArgs: Record<string, string | null> | null;
     rootDirectory: string | null;
     buildCommand: string | null;
     startCommand: string | null;
     framework: string | null;
+    advanced: { buildArgTemplateKeys?: string[] } | null;
   }> = {},
 ) {
   // Spread, not `??` per field: an explicit `build: null` (a monorepo row) has to
@@ -109,7 +112,7 @@ function repoService(
 
 /** Materialized context roots currently sitting in os.tmpdir() (leak detector). */
 function catalogTempRoots(): string[] {
-  return readdirSync(tmpdir()).filter((n) => n.startsWith("openship-catalog-build-"));
+  return readdirSync(tmpdir()).filter((n) => n.startsWith("kovalio-catalog-build-"));
 }
 
 type Captured = { config: BuildConfig; serviceName: string };
@@ -123,12 +126,18 @@ type Captured = { config: BuildConfig; serviceName: string };
 async function run(
   services: unknown[],
   onContext?: (root: string, item: Captured) => void | Promise<void>,
-  snapshotOverrides?: Partial<typeof SNAPSHOT>,
+  snapshotOverrides?: Partial<BuildConfigSnapshotLike>,
+  buildEnvVars: Record<string, string> = {},
+  imageRefFor?: (item: Captured) => string,
+  composeInterpolationEnv: Record<string, string> = buildEnvVars,
+  options: { cloud?: boolean; targetServiceIds?: Set<string>; refreshServiceIds?: Set<string>;
+    buildResources?: BuildConfig["resources"] } = {},
 ) {
   listByProjectMock.mockResolvedValue(services);
   const captured: Captured[] = [];
   const runtime = {
-    name: "docker" as const,
+    name: options.cloud ? "cloud" : "docker",
+    prepareComposeSource: vi.fn(async (_config: BuildConfig) => {}),
     build: vi.fn(),
     buildImages: vi.fn(async (items: Array<Record<string, unknown>>) => {
       for (const item of items) {
@@ -142,11 +151,12 @@ async function run(
         (item.onResult as (r: unknown) => void)({
           sessionId: "s",
           status: "running",
-          imageRef: `img/${entry.serviceName}`,
+          imageRef: imageRefFor?.(entry) ?? `img/${entry.serviceName}`,
         });
       }
     }),
   };
+  if (options.cloud) Object.setPrototypeOf(runtime, CloudDockerRuntime.prototype);
 
   const result = await buildComposeImages({
     // Only the fields the function reads; the rest of the graph is stubbed.
@@ -162,11 +172,172 @@ async function run(
     logger: new BuildLogger(() => {}),
     snapshot: { ...SNAPSHOT, ...snapshotOverrides } as never,
     buildSessionId: "sess",
-    buildEnvVars: {},
-    buildResources: DEFAULT_RESOURCE_CONFIG,
+    composeInterpolationEnv,
+    buildEnvVars,
+    buildResources: options.buildResources ?? DEFAULT_RESOURCE_CONFIG,
+    targetServiceIds: options.targetServiceIds,
+    refreshServiceIds: options.refreshServiceIds,
   });
-  return { result, captured };
+  return { result, captured, prepareSource: runtime.prepareComposeSource };
 }
+
+function runCloud(services: unknown[], snapshot?: Partial<BuildConfigSnapshotLike>, options?: {
+  targetServiceIds?: Set<string>; refreshServiceIds?: Set<string>;
+}) {
+  return run(services, undefined, snapshot, {}, undefined, {}, { ...options, cloud: true });
+}
+
+describe("shared host build budget", () => {
+  it.each([true, false])("forwards the resolved host budget to every sequential build (Cloud: %s)", async cloud => {
+    const buildResources = { cpuCores: 0.5, memoryMb: 768, diskMb: 8192 };
+    const { captured } = await run([
+      repoService({ name: "api", id: "api" }), repoService({ name: "web", id: "web" }),
+    ], undefined, undefined, {}, undefined, {}, { cloud, buildResources });
+    expect(captured.map(item => [item.serviceName, item.config.resources])).toEqual([
+      ["api", buildResources], ["web", buildResources],
+    ]);
+  });
+});
+
+describe("Cloud Docker uses the shared Compose source planner", () => {
+  it("sends inline files into one shared workspace context without an API-host source path", async () => {
+    const before = catalogTempRoots();
+    const { captured, prepareSource } = await runCloud([
+      inlineService("web", { dockerfile: "FROM alpine\nCOPY web/config /config", files: [{ path: "config", content: "configured" }] }),
+      inlineService("worker", { dockerfile: "FROM alpine\nCOPY worker/job.sh /job.sh", files: [{ path: "job.sh", content: "echo job" }] }),
+    ]);
+    expect(captured).toHaveLength(2);
+    expect(catalogTempRoots()).toEqual(before);
+    expect(prepareSource).toHaveBeenCalledOnce();
+    const source = prepareSource.mock.calls[0]![0];
+    expect(source.localPath).toBeUndefined();
+    expect(source.inlineSourceFiles).toEqual([
+      { path: "web/Dockerfile", content: "FROM alpine\nCOPY web/config /config" },
+      { path: "web/config", content: "configured" },
+      { path: "worker/Dockerfile", content: "FROM alpine\nCOPY worker/job.sh /job.sh" },
+      { path: "worker/job.sh", content: "echo job" },
+    ]);
+    for (const { config, serviceName } of captured) {
+      expect(config.localPath).toBeUndefined();
+      expect(config.inlineSourceFiles).toBe(source.inlineSourceFiles);
+      expect(config.dockerfilePath).toBe(`${serviceName}/Dockerfile`);
+    }
+  });
+
+  it("does not stage a repository for image-only deployments or retained-image rollback", async () => {
+    const imageOnly = await runCloud([{ ...repoService({ build: null }), image: "nginx:alpine" }], { repoUrl: "https://github.com/acme/private" });
+    expect(imageOnly.prepareSource).not.toHaveBeenCalled();
+    const retained = await runCloud([repoService()], { handoverImages: { dinohash: "kovalio/app:bld_retained" } });
+    expect(retained.prepareSource).not.toHaveBeenCalled();
+    expect(retained.captured).toEqual([]);
+    expect(retained.result.imageRefs.get("svc-1")).toBe("kovalio/app:bld_retained");
+  });
+
+  it("skips an untouched source-built sibling when only an image service is selected", async () => {
+    const { prepareSource, captured } = await runCloud([
+      repoService(), { ...repoService({ id: "image", name: "cache", build: null }), image: "redis:alpine" },
+    ], { repoUrl: "https://github.com/acme/private" }, { targetServiceIds: new Set(["image"]) });
+    expect(prepareSource).not.toHaveBeenCalled();
+    expect(captured).toEqual([]);
+  });
+
+  it("prepares a relative mount for a retained image without rebuilding it", async () => {
+    const { prepareSource, captured } = await runCloud([
+      { ...repoService(), volumes: ["./config:/config:ro"] },
+    ], { repoUrl: "https://github.com/acme/private", rootDirectory: "deploy", handoverImages: { dinohash: "kovalio/app:bld_retained" } });
+    expect(prepareSource).toHaveBeenCalledOnce();
+    expect(prepareSource.mock.calls[0]![0]).toMatchObject({ rootDirectory: "deploy", repoUrl: "https://github.com/acme/private" });
+    expect(captured).toEqual([]);
+  });
+
+  it("preserves the uploaded source identity and Compose directory for the shared builder", async () => {
+    const { prepareSource, captured } = await runCloud([repoService({ build: "../api" })], {
+      localPath: "/uploads/upload-a", rootDirectory: "deploy",
+    });
+    expect(prepareSource.mock.calls[0]![0]).toMatchObject({ localPath: "/uploads/upload-a", rootDirectory: "deploy" });
+    expect(captured[0]!.config).toMatchObject({ localPath: "/uploads/upload-a", rootDirectory: "api", buildContextDirectory: "api" });
+  });
+
+  it("can restore inline configuration mounts without rebuilding the retained image", async () => {
+    const { prepareSource, captured } = await runCloud([
+      { ...inlineService("web", { dockerfile: "FROM alpine", files: [{ path: "config", content: "v1" }] }), volumes: ["./web/config:/config:ro"] },
+    ], { handoverImages: { web: "kovalio/web:bld_v1" } });
+    expect(captured).toEqual([]);
+    expect(prepareSource.mock.calls[0]![0].inlineSourceFiles).toContainEqual({ path: "web/config", content: "v1" });
+  });
+
+  it("stages an inline sibling's files for a selected image service without rebuilding the sibling", async () => {
+    const { prepareSource, captured } = await runCloud([
+      inlineService("web", { dockerfile: "FROM alpine", files: [{ path: "config", content: "v1" }] }),
+      { ...repoService({ id: "sidecar", name: "sidecar", build: null }), image: "nginx:alpine", volumes: ["./web/config:/config:ro"] },
+    ], { handoverImages: { web: "kovalio/web:bld_v1" } }, { targetServiceIds: new Set(["sidecar"]) });
+    expect(captured).toEqual([]);
+    expect(prepareSource.mock.calls[0]![0].inlineSourceFiles).toContainEqual({ path: "web/config", content: "v1" });
+  });
+
+  it.each(["../escape", "/etc/passwd", "..\\escape"])("rejects inline source escape %s before accessing the workspace", async path => {
+    await expect(runCloud([inlineService("web", { dockerfile: "FROM alpine", files: [{ path, content: "invalid" }] })])).rejects.toThrow("Invalid build file path");
+  });
+});
+
+describe("prebuilt registry images (#878)", () => {
+  it("keeps an image-only GHCR reference without invoking a source build", async () => {
+    const image = "ghcr.io/acme/web:sha-abc123";
+    const { result, captured } = await run([{ ...repoService({ build: null }), image }]);
+    expect(captured).toEqual([]);
+    expect(result.imageRefs.get("svc-1")).toBe(image);
+    expect(result.builtImageRefs.size).toBe(0);
+    expect(result.externalCount).toBe(1);
+  });
+
+  it("honors an explicit source build even when the service also names an image", async () => {
+    const { result, captured } = await run([{ ...repoService(), image: "ghcr.io/acme/web:latest" }]);
+    expect(captured).toHaveLength(1);
+    expect(result.builtImageRefs.size).toBe(1);
+    expect(result.externalCount).toBe(0);
+  });
+});
+
+describe("buildComposeImages — static artifact provenance", () => {
+  it("records an inherited static sub-app's exact host artifact", async () => {
+    const artifact = "/opt/kovalio/static/.builds/sess-svc-static";
+    const { result } = await run(
+      [
+        repoService({
+          id: "svc-static",
+          name: "web",
+          kind: "monorepo",
+          build: null,
+          dockerfile: null,
+          framework: null,
+          buildCommand: null,
+          startCommand: null,
+        }),
+      ],
+      undefined,
+      { framework: "vite", buildCommand: "npm run build", startCommand: "" },
+      {},
+      () => artifact,
+    );
+
+    expect(result.imageRefs.get("svc-static")).toBe(artifact);
+    expect(result.staticArtifactRefs.get("svc-static")).toBe(artifact);
+    expect(result.staticServiceIds.has("svc-static")).toBe(true);
+  });
+
+  it("rejects an absolute configured image before it can become an artifact", async () => {
+    const service = {
+      ...repoService({ id: "svc-image", name: "image", build: null, dockerfile: null }),
+      image: "/etc",
+    };
+    const { result } = await run([service]);
+
+    expect(result.imageRefs.has("svc-image")).toBe(false);
+    expect(result.buildFailures.get("svc-image")).toMatch(/repository path component/i);
+    expect(result.staticArtifactRefs.has("svc-image")).toBe(false);
+    expect(result.staticServiceIds.has("svc-image")).toBe(false);
+  });
+});
 
 describe("buildComposeImages — inline catalog build materialization", () => {
   it("materializes the Dockerfile + files under the sanitized service-name subdir and points the build config at the shared root", async () => {
@@ -198,7 +369,7 @@ describe("buildComposeImages — inline catalog build materialization", () => {
     // Source is the shared orchestrator temp root, not a repo clone.
     expect(cfg.localPath).toBe(rootSeen);
     expect(isAbsolute(cfg.localPath!)).toBe(true);
-    expect(cfg.localPath).toContain("openship-catalog-build-");
+    expect(cfg.localPath).toContain("kovalio-catalog-build-");
     // The context stays the SHARED ROOT; the subdir — the author-facing COPY prefix
     // — rides in the Dockerfile path, so `COPY compute/…` resolves on every runtime.
     expect(cfg.rootDirectory).toBe("");
@@ -314,6 +485,112 @@ describe("buildComposeImages — inline catalog build materialization", () => {
  * These pin the producer side: which rows get a narrowed context, and which must not.
  */
 describe("buildComposeImages — declared build context", () => {
+  it("#795 carries project env into the posted root-Dockerfile setup without duplicate service env", async () => {
+    const projectEnv = {
+      DATABASE_URI: "postgres://db/app",
+      PAYLOAD_SECRET: "payload-secret",
+      SERVER_URL: "https://admin.example.com",
+      R4_SECRET_KEY: "r4-secret",
+    };
+    const { captured } = await run(
+      [
+        repoService({
+          id: "svc-admin",
+          name: "admin",
+          build: ".",
+          dockerfile: "Dockerfile",
+        }),
+      ],
+      undefined,
+      undefined,
+      projectEnv,
+    );
+
+    expect(captured[0]?.config.envVars).toEqual(projectEnv);
+    // The shared adapter resolver turns envVars into Docker --build-arg values;
+    // a duplicate services[].env or services[].buildArgs block is not required.
+    expect(captured[0]?.config.buildArgs).toBeUndefined();
+  });
+
+  it("isolates build args for services sharing one context and Dockerfile (#689)", async () => {
+    const shared = {
+      build: "../../",
+      dockerfile: "services/shared/Dockerfile",
+    };
+    const { captured } = await run(
+      [
+        repoService({
+          id: "svc-api",
+          name: "api",
+          ...shared,
+          buildArgs: {
+            APP_PACKAGE: "@myorg/api",
+            SHARED_VERSION: null,
+            CHANNEL: "${RELEASE_CHANNEL:-stable}",
+            VERSIONED: "pkg-${SHARED_VERSION}",
+          },
+          advanced: { buildArgTemplateKeys: ["CHANNEL", "VERSIONED"] },
+        }),
+        repoService({
+          id: "svc-worker",
+          name: "worker",
+          ...shared,
+          buildArgs: { APP_PACKAGE: "@myorg/worker", UNSET: null },
+        }),
+      ],
+      undefined,
+      { rootDirectory: "deploy/docker-compose" },
+      { SHARED_VERSION: "1.2.3" },
+    );
+
+    expect(captured).toHaveLength(2);
+    expect(captured.map(({ config }) => config.buildContextDirectory)).toEqual(["", ""]);
+    expect(captured.map(({ config }) => config.dockerfilePath)).toEqual([
+      "services/shared/Dockerfile",
+      "services/shared/Dockerfile",
+    ]);
+    expect(captured[0].config.buildArgs).toEqual({
+      APP_PACKAGE: "@myorg/api",
+      SHARED_VERSION: "1.2.3",
+      CHANNEL: "stable",
+      VERSIONED: "pkg-1.2.3",
+    });
+    expect(captured[1].config.buildArgs).toEqual({ APP_PACKAGE: "@myorg/worker" });
+  });
+
+  it("reports missing required build-arg variables without values", () => {
+    expect(() =>
+      resolveComposeBuildArgs({ TOKEN: "${BUILD_TOKEN:?set BUILD_TOKEN}" }, {}, ["TOKEN"]),
+    ).toThrow(/BUILD_TOKEN/);
+  });
+
+  it("resolves only raw-parser templates against the invocation environment", () => {
+    expect(
+      resolveComposeBuildArgs(
+        {
+          A: "one",
+          B: "${A:-two}",
+          C: "${HOST}",
+          SELF: "${SELF:-fallback}",
+          CLI_LITERAL: "$HOME",
+          ESCAPED: "$$HOME",
+        },
+        { HOST: "host", SELF: "env-self", HOME: "/private/home" },
+        ["B", "C", "SELF", "ESCAPED"],
+      ),
+    ).toEqual({
+      A: "one",
+      // Compose uses the invocation environment, not sibling build args.
+      B: "two",
+      C: "host",
+      SELF: "env-self",
+      // CLI-normalized/direct values are literal even when they contain `$`.
+      CLI_LITERAL: "$HOME",
+      // Raw Compose `$$` becomes one literal dollar exactly once.
+      ESCAPED: "$HOME",
+    });
+  });
+
   it("hands the runtime the service's build directory as the docker context", async () => {
     const { captured } = await run([repoService()]);
 
@@ -377,5 +654,95 @@ describe("buildComposeImages — declared build context", () => {
 
     expect(captured[0].config.buildContextDirectory).toBeUndefined();
     expect(captured[0].config.rootDirectory).toBe("apps/web");
+  });
+});
+
+describe("Compose image interpolation lifecycle (#809)", () => {
+  it("resolves an authored image expression from the deployment env", () => {
+    expect(
+      resolveComposeImage(
+        "ghcr.io/acme/app:",
+        {
+          expression: "ghcr.io/acme/app:${MY_VERSION}",
+          unresolvedVariables: ["MY_VERSION"],
+        },
+        { MY_VERSION: "1.2.3" },
+      ),
+    ).toBe("ghcr.io/acme/app:1.2.3");
+  });
+
+  it("uses a fully-resolved scan value when compose .env supplied the variable", () => {
+    expect(
+      resolveComposeImage(
+        "ghcr.io/acme/app:2.4.0",
+        {
+          expression: "ghcr.io/acme/app:${MY_VERSION}",
+          unresolvedVariables: [],
+        },
+        {},
+      ),
+    ).toBe("ghcr.io/acme/app:2.4.0");
+  });
+
+  it("fails closed instead of allowing an unresolved empty tag to become latest", () => {
+    expect(() =>
+      resolveComposeImage(
+        "ghcr.io/acme/app:",
+        {
+          expression: "ghcr.io/acme/app:${MY_VERSION}",
+          unresolvedVariables: ["MY_VERSION"],
+        },
+        {},
+      ),
+    ).toThrow(/missing variable: MY_VERSION/);
+  });
+
+  it("does not accept a syntactically-valid tag produced by deleting a missing variable", () => {
+    expect(() =>
+      resolveComposeImage(
+        "ghcr.io/acme/app:stable",
+        {
+          expression: "ghcr.io/acme/app:${CHANNEL}stable",
+          unresolvedVariables: ["CHANNEL"],
+        },
+        {},
+      ),
+    ).toThrow(/missing variable: CHANNEL/);
+  });
+
+  it("records a missing image variable as a build failure without producing a pull ref", async () => {
+    const service = {
+      ...repoService({ id: "svc-image", name: "api", build: null, dockerfile: null }),
+      image: "",
+      advanced: {
+        imageTemplate: {
+          expression: "ghcr.io/acme/api:${MY_VERSION:?set MY_VERSION}",
+          unresolvedVariables: ["MY_VERSION"],
+        },
+      },
+    };
+
+    const { result } = await run([service]);
+
+    expect(result.imageRefs.has("svc-image")).toBe(false);
+    expect(result.buildFailures.get("svc-image")).toMatch(/missing variable: MY_VERSION/);
+  });
+
+  it("does not resolve images from Kovalio's internal build-only variables", async () => {
+    const service = {
+      ...repoService({ id: "svc-image", name: "api", build: null, dockerfile: null }),
+      image: "ghcr.io/acme/api:",
+      advanced: {
+        imageTemplate: {
+          expression: "ghcr.io/acme/api:${CI}",
+          unresolvedVariables: ["CI"],
+        },
+      },
+    };
+
+    const { result } = await run([service], undefined, undefined, { CI: "true" }, undefined, {});
+
+    expect(result.imageRefs.has("svc-image")).toBe(false);
+    expect(result.buildFailures.get("svc-image")).toMatch(/missing variable: CI/);
   });
 });

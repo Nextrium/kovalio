@@ -1,33 +1,34 @@
 /**
- * `openship update` — update the globally-installed CLI (which bundles the
+ * `kovalio update` — update the globally-installed CLI (which bundles the
  * self-hosted API server) to the latest published release.
  *
- * Talks to GitHub (releases/latest), NOT the Openship API. The version gate +
+ * Talks to GitHub (releases/latest), NOT the Kovalio API. The version gate +
  * install-command are pure functions in @repo/core (`resolveCliUpdatePlan` /
  * `cliInstallCommand`), unit-tested there. The command dispatches on how the CLI
  * was delivered (tarball / from-source / npm-package — see the branches below),
  * fetches the new bundle, then RE-EXECS the freshly-fetched binary to run the
  * service reconcile (`update --apply-only`) so the NEW compose template / service
- * unit is applied in the same command — no manual `openship up` afterwards. Running
+ * unit is applied in the same command — no manual `kovalio up` afterwards. Running
  * the reconcile in this still-running OLD process would apply the OLD template.
  *
- *   openship update            update if a newer release exists
- *   openship update --check    report current/latest only (no install)
- *   openship update --via npm  force the package manager (npm-package installs only)
+ *   kovalio update            update if a newer release exists
+ *   kovalio update --check    report current/latest only (no install)
+ *   kovalio update --via npm  force the package manager (npm-package installs only)
  *
  * TARBALL installs (scripts/install.sh / install.ps1, marked by
- * ~/.openship/cli-install.json) take yet another path: instead of `bun add -g`/
- * `npm i -g`, `openship update` re-downloads the verified payload tarball and
+ * ~/.kovalio/cli-install.json) take yet another path: instead of `bun add -g`/
+ * `npm i -g`, `kovalio update` re-downloads the verified payload tarball and
  * repoints cli/current (lib/cli-payload.ts), refreshing the Node runtime first
  * so a release that raises the Node floor self-heals. This is the default
  * `curl … | sh` distribution — Node is the runtime, never the user's global Bun.
  *
  * FROM-SOURCE installs (scripts/install-source.sh, marked by
- * ~/.openship-dev/source-install.json) take a different path: instead of
- * reinstalling an npm release, `openship update` pulls the tracked git ref and
+ * ~/.kovalio-dev/source-install.json) take a different path: instead of
+ * reinstalling an npm release, `kovalio update` pulls the tracked git ref and
  * rebuilds the CLI + dashboard in place — a quick update with no release in the
  * loop. `--rebuild` forces it even when already at the remote tip.
  */
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { Command, Option } from "commander";
 import { spawnSync } from "node:child_process";
 import { resolveCliUpdatePlan, cliInstallCommand, type CliPackageManager } from "@repo/core";
@@ -64,7 +65,7 @@ interface UpdateOpts {
  * binary (see reexecApply), so the NEW template/unit is what gets applied.
  *
  * Dispatches on the stable install-method marker ONLY (readInstallMethod) — never
- * `openship up`'s planMethod/ensureDocker, so the method can't flip bare→compose
+ * `kovalio up`'s planMethod/ensureDocker, so the method can't flip bare→compose
  * and Docker is never auto-installed. A bare install has no marker (null) → the
  * else branch, which is correct. No prompts: composeUpdate → composeUp skips the
  * edge preflight, and restart doesn't prompt.
@@ -85,7 +86,9 @@ interface UpdateOpts {
 export async function verifyHostChannelAfterUpdate(): Promise<void> {
   if (isJsonMode()) return;
   const { verifyHostChannel } = await import("../lib/host-channel-preflight");
-  await verifyHostChannel().catch(() => {});
+  await verifyHostChannel().catch((diagnosticFailure) => {
+    observeCaughtError(diagnosticFailure, "cli/commands/update");
+  });
 }
 
 async function runReconcile(): Promise<boolean> {
@@ -95,7 +98,7 @@ async function runReconcile(): Promise<boolean> {
     else if (applied) ok("Compose stack regenerated, images pulled, services recreated.");
     // A refusal already printed what's wrong and what to do; "retry" would contradict it.
     else if (!refused)
-      err("Bringing the compose stack up failed. Re-run `openship update`, or `openship up` to retry.");
+      err("Bringing the compose stack up failed. Re-run `kovalio update`, or `kovalio up` to retry.");
     if (applied) await verifyHostChannelAfterUpdate();
     if (!applied) process.exitCode = 1;
     return applied;
@@ -103,7 +106,7 @@ async function runReconcile(): Promise<boolean> {
   const { restarted } = restartService();
   if (isJsonMode()) printJson({ reconciled: restarted, method: "bare" });
   else if (restarted) ok("Restarted the service onto the new version.");
-  else ok("Restart the server to run the new version: openship up");
+  else ok("Restart the server to run the new version: kovalio up");
   return restarted;
 }
 
@@ -115,10 +118,10 @@ async function runReconcile(): Promise<boolean> {
  *
  * Reuses selfInvocation() (service.ts) — tarball → stable launcher, npm/bun &
  * from-source → execPath + entry (overwritten/rebuilt in place). Full process.env
- * is load-bearing: OPENSHIP_HOME drives OS_DIR / install-method / .env / ports, so
- * the child MUST inherit it (a dev install lives under ~/.openship-dev).
+ * is load-bearing: KOVALIO_HOME drives OS_DIR / install-method / .env / ports, so
+ * the child MUST inherit it (a dev install lives under ~/.kovalio-dev).
  *
- * Loop guard: OPENSHIP_UPDATE_REEXEC=1 stops a phase-2 process re-execing a phase-3.
+ * Loop guard: KOVALIO_UPDATE_REEXEC=1 stops a phase-2 process re-execing a phase-3.
  * spawned=false (only on a spawn failure, e.g. ENOENT) tells the caller to fall
  * back to an in-process reconcile so the box is never left un-reconciled.
  */
@@ -149,7 +152,7 @@ async function runSourceUpdate(source: SourceInstall, opts: UpdateOpts): Promise
     } else if (remote == null) {
       info(`On source ${source.ref} @ ${current} — couldn't reach ${source.repo} to compare.`);
     } else if (behind) {
-      info(`Source update available on ${source.ref}: ${current} → ${remote}. Run \`openship update\`.`);
+      info(`Source update available on ${source.ref}: ${current} → ${remote}. Run \`kovalio update\`.`);
     } else {
       ok(`Up to date on source ${source.ref} (${current}).`);
     }
@@ -187,11 +190,11 @@ async function runSourceUpdate(source: SourceInstall, opts: UpdateOpts): Promise
   } else if (restarted) {
     ok(`Restarted the service — you're on ${sha}.`);
   } else {
-    ok(`Restart to run it: openship up`);
+    ok(`Restart to run it: kovalio up`);
   }
 }
 
-const REINSTALL_HINT = "curl -fsSL https://get.openship.io | sh";
+const REINSTALL_HINT = "curl -fsSL https://get.kovalio.nextrium.org | sh";
 
 /**
  * Update a tarball install: re-download the verified payload for the latest tag
@@ -218,7 +221,7 @@ async function runTarballUpdate(install: CliInstall, opts: UpdateOpts): Promise<
     if (isJsonMode()) {
       printJson({ current, latest, updateAvailable: plan.action === "install", method: "tarball" });
     } else if (plan.action === "install") {
-      info(`Update available: v${current} → v${latest}. Run \`openship update\`.`);
+      info(`Update available: v${current} → v${latest}. Run \`kovalio update\`.`);
     } else {
       ok(`Up to date (v${current}).`);
     }
@@ -241,6 +244,7 @@ async function runTarballUpdate(install: CliInstall, opts: UpdateOpts): Promise<
   try {
     runtime = (await ensureNodeRuntime((m) => info(m))).source;
   } catch (e) {
+    observeCaughtError(e, "cli/commands/update");
     info(`Keeping the current Node runtime (couldn't refresh it: ${(e as Error).message}).`);
   }
 
@@ -274,7 +278,7 @@ async function runTarballUpdate(install: CliInstall, opts: UpdateOpts): Promise<
     } else {
       if (refused) err(`Updated the CLI to v${latest}, but the stack was left as it is — see above.`);
       else
-        err(`Updated the CLI to v${latest}, but bringing the compose stack up failed. Re-run \`openship update\`, or \`openship up\` to retry.`);
+        err(`Updated the CLI to v${latest}, but bringing the compose stack up failed. Re-run \`kovalio update\`, or \`kovalio up\` to retry.`);
       process.exitCode = 1;
     }
     if (applied) await verifyHostChannelAfterUpdate();
@@ -287,7 +291,7 @@ async function runTarballUpdate(install: CliInstall, opts: UpdateOpts): Promise<
   } else if (restarted) {
     ok(`Updated to v${latest} and restarted the service — you're on the new version.`);
   } else {
-    ok(`Updated to v${latest}. Restart the server to run the new version: openship up`);
+    ok(`Updated to v${latest}. Restart the server to run the new version: kovalio up`);
   }
 }
 
@@ -299,7 +303,7 @@ function detectPackageManager(override?: string): CliPackageManager {
 }
 
 export const updateCommand = new Command("update")
-  .description("Update the Openship CLI + bundled server to the latest release")
+  .description("Update the Kovalio CLI + bundled server to the latest release")
   .option("--check", "Only report the current + latest version; don't install")
   .option("--via <manager>", "Package manager to update with: bun | npm")
   .option("--rebuild", "From-source installs: rebuild even if already at the remote tip")
@@ -340,7 +344,7 @@ export const updateCommand = new Command("update")
       if (isJsonMode()) {
         printJson({ current, latest, updateAvailable: plan.action === "install" });
       } else if (plan.action === "install") {
-        info(`Update available: v${current} → v${latest}. Run \`openship update\`.`);
+        info(`Update available: v${current} → v${latest}. Run \`kovalio update\`.`);
       } else {
         ok(`Up to date (v${current}).`);
       }
@@ -353,7 +357,7 @@ export const updateCommand = new Command("update")
     }
 
     const pm = detectPackageManager(opts.via);
-    const ref = `openship@${latest}`;
+    const ref = `kovalio@${latest}`;
     const argv = pm === "bun" ? ["add", "-g", ref] : ["install", "-g", ref];
 
     info(`Updating v${current} → v${latest} (${cliInstallCommand(pm, latest)})...`);
@@ -376,7 +380,7 @@ export const updateCommand = new Command("update")
     // Compose install → the FULL reconcile: regenerate the compose file + .env
     // from the new CLI (carrying every operator setting forward), pull the
     // new-version images, and recreate. Nothing needs to be run after this —
-    // `openship up` afterwards used to be the thing that broke installs, because
+    // `kovalio up` afterwards used to be the thing that broke installs, because
     // it re-rendered .env from flags it wasn't given. Bare install → restart the
     // process service so it picks up the new bundle.
     if (readInstallMethod() === "compose") {
@@ -396,7 +400,7 @@ export const updateCommand = new Command("update")
       } else {
         if (refused) err(`Updated the CLI to v${latest}, but the stack was left as it is — see above.`);
         else
-          err(`Updated the CLI to v${latest}, but bringing the compose stack up failed. Re-run \`openship update\`, or \`openship up\` to retry.`);
+          err(`Updated the CLI to v${latest}, but bringing the compose stack up failed. Re-run \`kovalio update\`, or \`kovalio up\` to retry.`);
         process.exitCode = 1;
       }
       if (applied) await verifyHostChannelAfterUpdate();
@@ -404,7 +408,7 @@ export const updateCommand = new Command("update")
     }
 
     // Redeploy: restart the installed service so it picks up the new bundle.
-    // No service installed (e.g. `openship up --foreground`) → tell them to
+    // No service installed (e.g. `kovalio up --foreground`) → tell them to
     // relaunch. The service manager (KeepAlive / Restart=always) handles the
     // brief blip while the new version boots.
     const { restarted } = restartService();
@@ -414,6 +418,6 @@ export const updateCommand = new Command("update")
     } else if (restarted) {
       ok(`Updated to v${latest} and restarted the service — you're on the new version.`);
     } else {
-      ok(`Updated to v${latest}. Restart the server to run the new version: openship up`);
+      ok(`Updated to v${latest}. Restart the server to run the new version: kovalio up`);
     }
   });

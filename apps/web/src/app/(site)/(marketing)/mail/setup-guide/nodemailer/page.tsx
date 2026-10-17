@@ -137,7 +137,7 @@ err := smtp.SendMail(
               network blips are normal.
             </>,
             <>
-              Check the Health tab in your Openship admin if mail stops
+              Check the Health tab in your Kovalio admin if mail stops
               sending - the outbound queue lives there.
             </>,
           ]}

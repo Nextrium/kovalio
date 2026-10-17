@@ -1,10 +1,10 @@
 /**
  * Old-Node recovery for the package-manager install path.
  *
- * `npm i -g openship` is the only install path that runs on the user's own Node
+ * `npm i -g kovalio` is the only install path that runs on the user's own Node
  * (scripts/install.sh resolves its own — system >= 22 or it vendors one). Telling
  * that user "install Node 22+ and re-run" is a worse answer than we can give: the
- * CLI already knows how to fetch a private Node, because `openship update` calls
+ * CLI already knows how to fetch a private Node, because `kovalio update` calls
  * `ensureNodeRuntime()` for exactly this reason. This module points that same
  * function at the npm path, so the answer becomes an offer instead of a dead end.
  *
@@ -41,10 +41,10 @@ import { OS_DIR } from "./lib/paths";
  * download, a repointed symlink, someone's stale runtime/current) would re-exec
  * itself forever instead of reporting a problem.
  */
-export const NODE_REEXEC_ENV = "OPENSHIP_NODE_REEXEC";
+export const NODE_REEXEC_ENV = "KOVALIO_NODE_REEXEC";
 
 /** Opt in (`1`) or out (`0`) of fetching Node without being asked — for CI. */
-const VENDOR_ENV = "OPENSHIP_VENDOR_NODE";
+const VENDOR_ENV = "KOVALIO_VENDOR_NODE";
 
 /** Where a previously-vendored runtime lives (install.sh and `update` share it). */
 const vendoredNode = (): string => join(OS_DIR, "runtime", "current", "bin", "node");
@@ -101,7 +101,7 @@ function ask(question: string): Promise<boolean> {
  * Try to run the CLI on a satisfying Node instead of refusing.
  *
  * Order matters: reuse before download, and never prompt for something already on
- * disk. A box that ran the official installer (or any earlier `openship update`)
+ * disk. A box that ran the official installer (or any earlier `kovalio update`)
  * already has a vendored Node 22 — using it silently is free and needs no consent.
  *
  * `offerDownload` is false for 20/21, which DO run: prompting on every invocation to
@@ -127,11 +127,11 @@ export async function recoverOldNode(opts: {
 
   if (forced !== "1") {
     // Not a terminal (CI, a service, a piped shell) → don't hang waiting on stdin.
-    // The message the caller prints names OPENSHIP_VENDOR_NODE=1 for that case.
+    // The message the caller prints names KOVALIO_VENDOR_NODE=1 for that case.
     if (!process.stdin.isTTY) return { handled: false };
     const yes = await ask(
-      `\nOpenship can download its own Node ${NODE_MAJOR} (~50 MB) into ${OS_DIR}/runtime\n` +
-        `and use it for Openship only — your system Node is left exactly as it is.\n\n` +
+      `\nKovalio can download its own Node ${NODE_MAJOR} (~50 MB) into ${OS_DIR}/runtime\n` +
+        `and use it for Kovalio only — your system Node is left exactly as it is.\n\n` +
         `Download it now? [Y/n] `,
     );
     if (!yes) return { handled: false };

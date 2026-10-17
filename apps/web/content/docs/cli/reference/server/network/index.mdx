@@ -1,0 +1,147 @@
+---
+title: server network
+description: Commands, arguments, and options for kovalio server network.
+cliGroup: kovalio server network
+---
+
+See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
+
+## kovalio server network
+
+Manage private networks and reviewed network operations
+
+```text
+kovalio server network [options] [command]
+```
+
+| Subcommand | Purpose |
+| --- | --- |
+| [`capabilities`](/docs/cli/reference/server/network#kovalio-server-network-capabilities) | Show network providers and available operations |
+| [`list`](/docs/cli/reference/server/network#kovalio-server-network-list) | List private networks |
+| [`get <id>`](/docs/cli/reference/server/network#kovalio-server-network-get) | Read network members, revision and verification |
+| [`inspect-host <server>`](/docs/cli/reference/server/network#kovalio-server-network-inspect-host) | Inspect a server's interfaces and network readiness |
+| [`create [options] [file]`](/docs/cli/reference/server/network#kovalio-server-network-create) | Register a private network and its existing host interfaces |
+| [`update [options] [file]`](/docs/cli/reference/server/network#kovalio-server-network-update) | Update a network using its exact current revision |
+| [`verify [options] [file]`](/docs/cli/reference/server/network#kovalio-server-network-verify) | Verify connectivity and optional throughput at a saved revision |
+| [`remove [options] <id>`](/docs/cli/reference/server/network#kovalio-server-network-remove) | Remove this network if its current state permits it |
+| [`events [options]`](/docs/cli/reference/server/network#kovalio-server-network-events) | Stream changes to private networks |
+| [`preparation`](/docs/cli/reference/server/network/preparation#kovalio-server-network-preparation) | Prepare managed networking and recover interrupted preparation |
+| [`operation`](/docs/cli/reference/server/network/operation#kovalio-server-network-operation) | Review and execute an exact managed-network plan |
+
+## kovalio server network capabilities
+
+Show network providers and available operations
+
+```text
+kovalio server network capabilities [options]
+```
+
+## kovalio server network create
+
+Register a private network and its existing host interfaces
+
+```text
+kovalio server network create [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+
+## kovalio server network events
+
+Stream changes to private networks
+
+```text
+kovalio server network events [options]
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--timeout <ms>` | Stop after this deadline |
+
+## kovalio server network get
+
+Read network members, revision and verification
+
+```text
+kovalio server network get [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Network ID |
+
+## kovalio server network inspect-host
+
+Inspect a server's interfaces and network readiness
+
+```text
+kovalio server network inspect-host [options] <server>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `server` | Server ID |
+
+## kovalio server network list
+
+List private networks
+
+```text
+kovalio server network list [options]
+```
+
+## kovalio server network remove
+
+Remove this network if its current state permits it
+
+```text
+kovalio server network remove [options] <id>
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | Network ID |
+
+| Option | Meaning |
+| --- | --- |
+| `--revision <number>` | Revision from network get |
+| `-y, --yes` | Confirm removal |
+
+## kovalio server network update
+
+Update a network using its exact current revision
+
+```text
+kovalio server network update [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |
+| `-y, --yes` | Confirm this operation |
+
+## kovalio server network verify
+
+Verify connectivity and optional throughput at a saved revision
+
+```text
+kovalio server network verify [options] [file]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `file` | JSON input file, or - for stdin |
+
+| Option | Meaning |
+| --- | --- |
+| `--schema` | Print the accepted JSON schema without making a request |

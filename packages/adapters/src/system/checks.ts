@@ -10,6 +10,7 @@
  * instead of re-running checks (see setup.ts).
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import type { CommandExecutor } from "../types";
 import type { ComponentStatus } from "./types";
 import { containerCommand } from "./edge-container-executor";
@@ -37,6 +38,24 @@ import { probeExec, withReason } from "./probe-exec";
  */
 function isSocketDenied(error: string | null): boolean {
   return error != null && /permission denied|eacces/i.test(error);
+}
+
+/** A cached SSH login keeps its original supplementary groups after usermod. */
+export async function needsDockerGroupRefresh(
+  executor: CommandExecutor,
+  components: ComponentStatus[],
+): Promise<boolean> {
+  const docker = components.find((component) => component.name === "docker");
+  if (!docker || docker.healthy || !isSocketDenied(docker.message)) return false;
+  const probe = await probeExec(executor, 'id -G && id -G "$(id -un)"', "checks");
+  const lines = probe.output?.trim().split(/\r?\n/);
+  // Failed or unexpected output is not evidence that reconnecting would help.
+  if (lines?.length !== 2 || lines.some((line) => !/^\d+(?:\s+\d+)*$/.test(line.trim()))) {
+    return false;
+  }
+  const current = new Set(lines[0]!.trim().split(/\s+/));
+  const account = new Set(lines[1]!.trim().split(/\s+/));
+  return current.size !== account.size || [...account].some((group) => !current.has(group));
 }
 
 function healthy(
@@ -155,7 +174,7 @@ export async function checkRsync(
 }
 
 /**
- * The edge: is our openship-edge container SERVING.
+ * The edge: is our kovalio-edge container SERVING.
  *
  * The edge is a Docker image whose serving path is host-side (host networking, host
  * bind mounts for vhosts/certs/ACME), so there is no host binary, no unit and no Lua
@@ -179,7 +198,7 @@ export async function checkEdge(executor: CommandExecutor): Promise<ComponentSta
     systemDebug("checks", `edge:missing (${formatDuration(startedAt)})`);
     return unhealthy(
       "edge",
-      "No edge on this server. The edge is the openship-edge container — install it (requires Docker).",
+      "No edge on this server. The edge is the kovalio-edge container — install it (requires Docker).",
     );
   }
 
@@ -281,7 +300,8 @@ async function enrichAvailable(
   try {
     const profile = await resolveEnvironment(executor);
     await enrichAvailableVersions(executor, profile, results);
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/system/checks");
     /* leave components without an available version */
   }
 }

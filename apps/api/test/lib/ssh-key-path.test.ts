@@ -7,7 +7,7 @@ import {
   operatorSshKeyRoots,
   resolveSafeSshKeyPath,
   sshKeyPathProblem,
-} from "../../src/lib/ssh-key-path";
+} from "@repo/platform/engine/lib/ssh-key-path";
 
 // This guard exists so an attacker who can write the servers row can't point
 // sshKeyPath at /etc/shadow and have the bytes exfiltrated through the SFTP
@@ -16,18 +16,18 @@ import {
 
 describe("resolveSafeSshKeyPath", () => {
   describe("allowed roots", () => {
-    it("accepts a key under /var/lib/openship/ssh-keys", () => {
-      expect(resolveSafeSshKeyPath("/var/lib/openship/ssh-keys/id_ed25519")).toBe(
-        "/var/lib/openship/ssh-keys/id_ed25519",
+    it("accepts a key under /var/lib/kovalio/ssh-keys", () => {
+      expect(resolveSafeSshKeyPath("/var/lib/kovalio/ssh-keys/id_ed25519")).toBe(
+        "/var/lib/kovalio/ssh-keys/id_ed25519",
       );
     });
 
-    it("accepts a key under /etc/openship/ssh-keys", () => {
+    it("accepts a key under /etc/kovalio/ssh-keys", () => {
       // A documented DEFAULT_ROOT that sits under the broad `/etc` denylist
       // entry. config/env.ts advertises it too ("The default allowlist already
-      // includes /var/lib/openship/ssh-keys and /etc/openship/ssh-keys").
-      expect(resolveSafeSshKeyPath("/etc/openship/ssh-keys/id_ed25519")).toBe(
-        "/etc/openship/ssh-keys/id_ed25519",
+      // includes /var/lib/kovalio/ssh-keys and /etc/kovalio/ssh-keys").
+      expect(resolveSafeSshKeyPath("/etc/kovalio/ssh-keys/id_ed25519")).toBe(
+        "/etc/kovalio/ssh-keys/id_ed25519",
       );
     });
 
@@ -46,7 +46,7 @@ describe("resolveSafeSshKeyPath", () => {
     });
 
     it("rejects a sibling of the allowed root that is still under /etc", () => {
-      expect(() => resolveSafeSshKeyPath("/etc/openship-secrets/key")).toThrow(
+      expect(() => resolveSafeSshKeyPath("/etc/kovalio-secrets/key")).toThrow(
         /protected system directory \(\/etc\)/,
       );
     });
@@ -81,8 +81,8 @@ describe("resolveSafeSshKeyPath", () => {
     // dir, so it's accepted; the same path with a different home stays denied.
     it("accepts <home>/.ssh even when that resolves to the denied /root/.ssh", () => {
       expect(
-        resolveSafeSshKeyPath("/root/.ssh/openship", { extraRoots: ["/root"] }),
-      ).toBe("/root/.ssh/openship");
+        resolveSafeSshKeyPath("/root/.ssh/kovalio", { extraRoots: ["/root"] }),
+      ).toBe("/root/.ssh/kovalio");
     });
 
     it("accepts a non-root operator's ~/.ssh key", () => {
@@ -111,7 +111,7 @@ describe("resolveSafeSshKeyPath", () => {
     });
 
     it("rejects a null byte", () => {
-      expect(() => resolveSafeSshKeyPath("/var/lib/openship/ssh-keys/id\0")).toThrow(/null byte/);
+      expect(() => resolveSafeSshKeyPath("/var/lib/kovalio/ssh-keys/id\0")).toThrow(/null byte/);
     });
 
     it("rejects a relative path", () => {
@@ -119,7 +119,7 @@ describe("resolveSafeSshKeyPath", () => {
     });
 
     it("rejects a traversal segment", () => {
-      expect(() => resolveSafeSshKeyPath("/var/lib/openship/ssh-keys/../../../etc/shadow")).toThrow(
+      expect(() => resolveSafeSshKeyPath("/var/lib/kovalio/ssh-keys/../../../etc/shadow")).toThrow(
         /traversal segment/,
       );
     });
@@ -129,8 +129,8 @@ describe("resolveSafeSshKeyPath", () => {
     });
 
     it("trims surrounding whitespace", () => {
-      expect(resolveSafeSshKeyPath("  /var/lib/openship/ssh-keys/id_ed25519  ")).toBe(
-        "/var/lib/openship/ssh-keys/id_ed25519",
+      expect(resolveSafeSshKeyPath("  /var/lib/kovalio/ssh-keys/id_ed25519  ")).toBe(
+        "/var/lib/kovalio/ssh-keys/id_ed25519",
       );
     });
   });
@@ -146,7 +146,7 @@ describe("resolveSafeSshKeyPath", () => {
 describe("sshKeyPathProblem", () => {
   // operatorSshKeyRoots() is $HOME, so the only place a fixture can live and be
   // accepted is under the home dir of whoever runs the suite.
-  const dir = mkdtempSync(join(operatorSshKeyRoots()[0]!, ".openship-keypath-test-"));
+  const dir = mkdtempSync(join(operatorSshKeyRoots()[0]!, ".kovalio-keypath-test-"));
   const key = join(dir, "id_ed25519");
   writeFileSync(key, "-----BEGIN OPENSSH PRIVATE KEY-----\n");
 
@@ -158,7 +158,7 @@ describe("sshKeyPathProblem", () => {
   });
 
   it("reports a path that does not exist on THIS host", () => {
-    expect(sshKeyPathProblem(join(dir, "nope"))).toMatch(/not readable by Openship/);
+    expect(sshKeyPathProblem(join(dir, "nope"))).toMatch(/not readable by Kovalio/);
   });
 
   it("reports a directory rather than letting readFileSync fail later", () => {

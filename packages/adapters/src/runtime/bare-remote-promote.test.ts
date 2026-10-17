@@ -10,13 +10,13 @@ import type { CommandExecutor } from "../types";
  * Two things went wrong on that box. Both are exercised here through
  * `deployStatic`, the last step of the deploy:
  *
- *   1. nothing under `/opt/openship` was writable by the deploy user, and no
+ *   1. nothing under `/opt/kovalio` was writable by the deploy user, and no
  *      preflight provisioned it, so the promote's `mkdir releases` failed. (The
  *      reporter's box was a first-ever deploy that died earlier still, in the
  *      build's doc-root extract — same missing-provisioning cause, different
  *      call site.)
  *   2. the promote is journaled, and the journal base was hardcoded to
- *      `/root/.openship` — unreadable for this user, so `ensureRemoteJournal`
+ *      `/root/.kovalio` — unreadable for this user, so `ensureRemoteJournal`
  *      died SFTP-writing `bin/opsh-run` and the `mv` was never issued.
  *      `releases/` stayed empty while `.builds/<id>` was reaped by cleanup.
  *
@@ -29,7 +29,7 @@ const HOME = "/home/deploy";
 
 /**
  * A remote box exactly like the reporter's: login user `deploy` (uid 1000) with
- * passwordless sudo, `/root` unreadable, and `/opt/openship/static` root-owned.
+ * passwordless sudo, `/root` unreadable, and `/opt/kovalio/static` root-owned.
  * Anything the user can't write fails until an elevated command chowns it.
  */
 function remoteNonRootServer() {
@@ -65,7 +65,7 @@ function remoteNonRootServer() {
         return "";
       }
       // The journal wrapper: only reachable under a directory we own.
-      if (command.includes("/.openship")) {
+      if (command.includes("/.kovalio")) {
         if (!isOurs(HOME)) throw denied();
         // A box that has never journaled: no wrapper, so `ensureRemoteJournal`
         // takes the deploy branch and SFTP-writes bin/opsh-run — which IS the
@@ -125,13 +125,13 @@ describe("issue #514 — static deploy to a remote SSH server as a non-root user
       ),
     ).toBe(true);
     // …and the promote journaled into the USER's home, never /root.
-    expect(commands.some((c) => c.includes(`${HOME}/.openship`))).toBe(true);
-    expect(commands.some((c) => c.includes("/root/.openship"))).toBe(false);
+    expect(commands.some((c) => c.includes(`${HOME}/.kovalio`))).toBe(true);
+    expect(commands.some((c) => c.includes("/root/.kovalio"))).toBe(false);
     // The wrapper write is the operation that used to throw. Assert it actually
     // happened, so this stays a test about the mechanism and not just the path
     // string: with the base unfixed, this SFTP write is where the deploy died.
     expect(executor.writeFile).toHaveBeenCalledWith(
-      `${HOME}/.openship/bin/opsh-run.tmp`,
+      `${HOME}/.kovalio/bin/opsh-run.tmp`,
       expect.stringContaining("OPSH"),
     );
   });

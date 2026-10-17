@@ -39,12 +39,12 @@ vi.mock("./reachability", async (importOriginal) => ({
 vi.mock("./ssh-client", () => ({ connectSshClient: net.connect }));
 
 const ENV_KEYS = [
-  "OPENSHIP_HOST_CONTROL",
-  "OPENSHIP_HOST_SSH_HOST",
-  "OPENSHIP_HOST_SSH_KEY",
-  "OPENSHIP_HOST_SSH_PORT",
-  "OPENSHIP_HOST_SSH_USER",
-  "OPENSHIP_IN_CONTAINER",
+  "KOVALIO_HOST_CONTROL",
+  "KOVALIO_HOST_SSH_HOST",
+  "KOVALIO_HOST_SSH_KEY",
+  "KOVALIO_HOST_SSH_PORT",
+  "KOVALIO_HOST_SSH_USER",
+  "KOVALIO_IN_CONTAINER",
 ] as const;
 
 function clearEnv() {
@@ -61,15 +61,15 @@ async function load() {
   return import("./executor");
 }
 
-/** A provisioned channel pointed at `keyPath`, exactly as `openship up` writes it. */
+/** A provisioned channel pointed at `keyPath`, exactly as `kovalio up` writes it. */
 function channelWithKey(keyPath: string) {
   clearEnv();
-  process.env.OPENSHIP_IN_CONTAINER = "true";
-  process.env.OPENSHIP_HOST_SSH_HOST = "host.docker.internal";
-  process.env.OPENSHIP_HOST_SSH_KEY = keyPath;
+  process.env.KOVALIO_IN_CONTAINER = "true";
+  process.env.KOVALIO_HOST_SSH_HOST = "host.docker.internal";
+  process.env.KOVALIO_HOST_SSH_KEY = keyPath;
 }
 
-const scratch = () => mkdtempSync(join(tmpdir(), "openship-host-key-"));
+const scratch = () => mkdtempSync(join(tmpdir(), "kovalio-host-key-"));
 
 async function throwFrom(): Promise<unknown> {
   const { createHostExecutor } = await load();
@@ -91,31 +91,31 @@ describe("createHostExecutor", () => {
 
   it("containerized with NO host channel → throws instead of running in the container", async () => {
     clearEnv();
-    process.env.OPENSHIP_IN_CONTAINER = "true";
+    process.env.KOVALIO_IN_CONTAINER = "true";
     const { createHostExecutor } = await load();
     expect(() => createHostExecutor()).toThrow(/no host channel is configured/i);
   });
 
   it("the error names the remedy, not the symptom", async () => {
     clearEnv();
-    process.env.OPENSHIP_IN_CONTAINER = "true";
+    process.env.KOVALIO_IN_CONTAINER = "true";
     const { createHostExecutor } = await load();
     // Whoever hits this is staring at a failed migration; the message has to point
     // at the missing channel, not leave them debugging docker or rsync.
-    expect(() => createHostExecutor()).toThrow(/openship up/);
+    expect(() => createHostExecutor()).toThrow(/kovalio up/);
   });
 
   it("containerized WITH a host channel → takes the SSH path, not the container", async () => {
     clearEnv();
-    process.env.OPENSHIP_IN_CONTAINER = "true";
-    process.env.OPENSHIP_HOST_SSH_HOST = "host.docker.internal";
+    process.env.KOVALIO_IN_CONTAINER = "true";
+    process.env.KOVALIO_HOST_SSH_HOST = "host.docker.internal";
     const { createHostExecutor } = await load();
     const { isHostChannelUnavailableError } = await import("./errors");
     // A host with no key is the credential-skew case, and what it must NOT do is degrade
     // to running in the container. It used to reach SshExecutor's own credential check,
     // which throws a bare Error — untyped, so the demotion that keeps a container deploy
     // alive rethrew it and every deploy to "This Server" died on it. The refusal is now
-    // the same class as the others. (A real install also has OPENSHIP_HOST_SSH_KEY.)
+    // the same class as the others. (A real install also has KOVALIO_HOST_SSH_KEY.)
     let err: unknown;
     try {
       createHostExecutor();
@@ -124,20 +124,20 @@ describe("createHostExecutor", () => {
     }
     expect(isHostChannelUnavailableError(err)).toBe(true);
     expect(String(err ?? "")).not.toMatch(/no host channel is configured/i);
-    expect(String(err ?? "")).toMatch(/OPENSHIP_HOST_SSH_KEY is unset/i);
+    expect(String(err ?? "")).toMatch(/KOVALIO_HOST_SSH_KEY is unset/i);
   });
 
   it("explicitly disabled host control still throws its own error", async () => {
     clearEnv();
-    process.env.OPENSHIP_HOST_CONTROL = "false";
+    process.env.KOVALIO_HOST_CONTROL = "false";
     const { createHostExecutor } = await load();
     expect(() => createHostExecutor()).toThrow(/Host control is disabled/i);
   });
 
   it("disabled beats configured — an operator opt-out is not overridable by env", async () => {
     clearEnv();
-    process.env.OPENSHIP_HOST_CONTROL = "false";
-    process.env.OPENSHIP_HOST_SSH_HOST = "host.docker.internal";
+    process.env.KOVALIO_HOST_CONTROL = "false";
+    process.env.KOVALIO_HOST_SSH_HOST = "host.docker.internal";
     const { createHostExecutor } = await load();
     expect(() => createHostExecutor()).toThrow(/Host control is disabled/i);
   });
@@ -149,7 +149,7 @@ describe("createHostExecutor", () => {
    */
   it("tags a disabled channel so callers can distinguish it from a real fault", async () => {
     clearEnv();
-    process.env.OPENSHIP_HOST_CONTROL = "false";
+    process.env.KOVALIO_HOST_CONTROL = "false";
     const { createHostExecutor } = await load();
     const { isHostChannelUnavailableError } = await import("./errors");
     try {
@@ -163,7 +163,7 @@ describe("createHostExecutor", () => {
 
   it("tags an unprovisioned channel with its own code", async () => {
     clearEnv();
-    process.env.OPENSHIP_IN_CONTAINER = "true";
+    process.env.KOVALIO_IN_CONTAINER = "true";
     const { createHostExecutor } = await load();
     const { isHostChannelUnavailableError } = await import("./errors");
     try {
@@ -193,7 +193,7 @@ describe("createHostExecutor with an unusable host key", () => {
   it("tags a key path that compose turned into a directory (ENOENT bind source)", async () => {
     // What a missing bind SOURCE produces: docker creates a directory at the target, so
     // the read fails with EISDIR rather than ENOENT. Same state, same handling.
-    const dir = join(scratch(), "openship_host_key");
+    const dir = join(scratch(), "kovalio_host_key");
     mkdirSync(dir);
     channelWithKey(dir);
     const err = await throwFrom();
@@ -221,10 +221,10 @@ describe("createHostExecutor with an unusable host key", () => {
     channelWithKey(keyPath);
     const message = (await throwFrom()) as Error;
     expect(message.message).toContain(keyPath);
-    expect(message.message).toMatch(/openship up/);
+    expect(message.message).toMatch(/kovalio up/);
     // The verification half: the repair runs on the host and the fault is observed in a
     // container, so "did it work" is a separate question (@repo/core's #509 copy).
-    expect(message.message).toMatch(/openship doctor/);
+    expect(message.message).toMatch(/kovalio doctor/);
   });
 
   it("still builds the SSH executor when the key reads fine", async () => {
@@ -243,7 +243,7 @@ describe("createHostExecutor with an unusable host key", () => {
     net.probe.mockClear();
     const health = await hostChannelHealth(100);
     // An empty key is not a dial problem: decided before the probe, and reported as the
-    // state the banner and `openship doctor` already have copy for.
+    // state the banner and `kovalio doctor` already have copy for.
     expect(health).toMatchObject({ ok: false, code: "key_unreadable" });
     expect(net.probe).not.toHaveBeenCalled();
     expect(health.hint).toContain(keyPath);
@@ -260,8 +260,8 @@ describe("createHostExecutor with an unusable host key", () => {
 describe("hostChannelHealth diagnosis", () => {
   async function healthFor(probe: TcpProbeResult) {
     clearEnv();
-    process.env.OPENSHIP_IN_CONTAINER = "true";
-    process.env.OPENSHIP_HOST_SSH_HOST = "host.docker.internal";
+    process.env.KOVALIO_IN_CONTAINER = "true";
+    process.env.KOVALIO_HOST_SSH_HOST = "host.docker.internal";
     net.probe.mockResolvedValueOnce(probe);
     const { hostChannelHealth } = await load();
     return hostChannelHealth(100);
@@ -300,7 +300,7 @@ describe("hostChannelHealth diagnosis", () => {
     const h = await healthFor({ ok: false, reason: "no_route", code: "EHOSTUNREACH" });
     expect(h).toMatchObject({ ok: false, cause: "no_route" });
     expect(h.rule).toBeUndefined();
-    expect(h.hint).toMatch(/OPENSHIP_HOST_SSH_HOST/);
+    expect(h.hint).toMatch(/KOVALIO_HOST_SSH_HOST/);
   });
 
   it("an unclassified failure reports what it was told and prescribes nothing", async () => {
@@ -411,8 +411,8 @@ describe("hostChannelHealth — the auth half (#527)", () => {
 
   it("asks nothing when there is no key to try", async () => {
     clearEnv();
-    process.env.OPENSHIP_IN_CONTAINER = "true";
-    process.env.OPENSHIP_HOST_SSH_HOST = "host.docker.internal";
+    process.env.KOVALIO_IN_CONTAINER = "true";
+    process.env.KOVALIO_HOST_SSH_HOST = "host.docker.internal";
     net.probe.mockResolvedValue({ ok: true });
     const { hostChannelHealth } = await load();
 
@@ -429,7 +429,7 @@ describe("unavailableExecutor", () => {
     const exec = unavailableExecutor(REASON);
     // `exists` is the one that matters most: a `false` here reads as "the file isn't
     // there" and quietly produces wrong work (a reclaimed release, a free port).
-    await expect(exec.exists("/opt/openship/static/x")).rejects.toThrow(REASON);
+    await expect(exec.exists("/opt/kovalio/static/x")).rejects.toThrow(REASON);
     await expect(exec.exec("ls")).rejects.toThrow(REASON);
     await expect(exec.readFile("/etc/hosts")).rejects.toThrow(REASON);
     await expect(exec.writeFile("/tmp/x", "y")).rejects.toThrow(REASON);

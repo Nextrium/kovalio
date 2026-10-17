@@ -18,7 +18,7 @@ import { describe, expect, it } from "vitest";
  * inputs in `src/lib/project-service-upstream.test.ts`, including the agreement between
  * the deploy's pure resolver and the live one.
  */
-const SRC = readFileSync(new URL("./deploy.service.ts", import.meta.url), "utf8");
+const SRC = readFileSync(new URL("../../../../../../packages/platform/src/engine/modules/deployments/compose/deploy.service.ts", import.meta.url), "utf8");
 
 /**
  * The project-level block itself, delimited by its own anchors rather than a character
@@ -78,7 +78,7 @@ describe("compose deploy plans project-level domain rows", () => {
 
 describe("compose deploy pairs a free project-level route with its cloud edge route", () => {
   it("syncs the managed edge proxy for a free *.opsh.io project hostname", () => {
-    // A free hostname resolves ONLY through Openship Cloud's edge. The per-service loop
+    // A free hostname resolves ONLY through Kovalio Cloud's edge. The per-service loop
     // already pairs each of its free routes with `ensureManagedEdgeProxy`; a project-level
     // route that skipped it would have a working origin and nothing pointing at it.
     expect(BLOCK).toContain("route.isCloud && route.managedSubdomain");

@@ -1,6 +1,6 @@
 -- rules_lib.lua
 -- Per-worker helpers + parsed-rule cache for rules_guard.lua (access phase).
--- Loaded ONCE per worker via require("openship.rules_lib"). The access file is
+-- Loaded ONCE per worker via require("kovalio.rules_lib"). The access file is
 -- re-executed on every request, so all parsing/compiling/matching lives here to
 -- avoid re-creating closures and re-decoding JSON on the hot path.
 --
@@ -157,8 +157,12 @@ local function parse(raw)
     local out, n = {}, 0
     for _, e in ipairs(entries) do
         if type(e) == "table" then
+            -- cjson.null is truthy userdata. Normalize once so both prefix
+            -- matching and rate-limit keys use nil for a whole-host rule.
+            local prefix = e.pathPrefix
+            if type(prefix) ~= "string" then prefix = nil end
             n = n + 1
-            out[n] = { pathPrefix = e.pathPrefix, spec = compile_spec(e.spec) }
+            out[n] = { pathPrefix = prefix, spec = compile_spec(e.spec) }
         end
     end
     return out

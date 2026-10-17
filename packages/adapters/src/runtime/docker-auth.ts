@@ -28,6 +28,7 @@
  * hard failure on a machine where it worked before.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -114,7 +115,8 @@ function toAuthConfig(
   let decoded: string;
   try {
     decoded = Buffer.from(entry.auth, "base64").toString("utf8");
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/runtime/docker-auth");
     return undefined;
   }
   const separator = decoded.indexOf(":");
@@ -134,8 +136,8 @@ export class DockerCredentialHelperError extends Error {
     // Names neither the helper nor the config path: the helper's name identifies the
     // operator's credential tooling, and this string reaches deploy logs.
     super(
-      `Openship can't read the credentials for ${registry}: they are stored in a Docker ` +
-        `credential helper, which is not available inside the Openship container. ` +
+      `Kovalio can't read the credentials for ${registry}: they are stored in a Docker ` +
+        `credential helper, which is not available inside the Kovalio container. ` +
         `Add the credentials inline to the Docker config (docker logout ${registry}, ` +
         `remove the credential helper for it, then docker login ${registry}), or use a ` +
         `public image.`,
@@ -164,7 +166,8 @@ export async function resolveDockerAuth(
   let config: DockerConfig;
   try {
     config = JSON.parse(await readFile(configPath, "utf8")) as DockerConfig;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "adapters/runtime/docker-auth");
     // Missing, unreadable or malformed: there is nothing to authenticate WITH, which
     // is not the same as being forbidden to pull. A public image must still work, and
     // a private one fails at the daemon with the registry's own 401 — a clearer

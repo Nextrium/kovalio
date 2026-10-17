@@ -2,7 +2,7 @@
  * The container→host SSH channel (#490), explained once.
  *
  * Five surfaces talk about this channel: the CLI preflight at install, the API's
- * boot banner, `openship doctor`, the dashboard's server banner, and whatever
+ * boot banner, `kovalio doctor`, the dashboard's server banner, and whatever
  * deploy log a host operation dies in. They had already drifted, and drift here is
  * expensive in a specific way: every line below is either "your install is fine,
  * this one feature isn't" or "your install is broken", and an operator who reads
@@ -33,7 +33,7 @@ export const HOST_CHANNEL_UNAFFECTED =
 /** Everything that genuinely stops working. Verified against the call sites, not guessed. */
 export const HOST_CHANNEL_BLOCKED: readonly string[] = [
   "the host terminal, host system info and host port scans",
-  "taking over :80/:443 from a proxy Openship didn't start",
+  "taking over :80/:443 from a proxy Kovalio didn't start",
   "installing or updating the mail engine",
   "deploying a catalog app that needs a generated config file on the host (Supabase's kong.yml, say)",
 ];
@@ -52,8 +52,8 @@ export const HOST_CHANNEL_SYMPTOM =
  * prose on five surfaces, and a command an operator can't paste verbatim is worth
  * nothing.
  */
-export const HOST_CHANNEL_PROVISION_COMMAND = "openship up";
-export const HOST_CHANNEL_RECHECK_COMMAND = "openship doctor";
+export const HOST_CHANNEL_PROVISION_COMMAND = "kovalio up";
+export const HOST_CHANNEL_RECHECK_COMMAND = "kovalio doctor";
 
 export const HOST_CHANNEL_RECHECK = `Re-check it any time with \`${HOST_CHANNEL_RECHECK_COMMAND}\`.`;
 
@@ -83,7 +83,7 @@ export const HOST_CHANNEL_NOT_PROVISIONED =
  * the instruction (a status row) or both (a banner, a boot log).
  */
 export const HOST_CHANNEL_UNPROVISIONED =
-  "Openship is running in a container with no host channel — OPENSHIP_HOST_SSH_HOST is " +
+  "Kovalio is running in a container with no host channel — KOVALIO_HOST_SSH_HOST is " +
   "unset, so there is no address to reach the host at and nothing has been dialed.";
 
 /**
@@ -113,9 +113,9 @@ export const HOST_CHANNEL_DEFAULT_ACCOUNT = "root";
  * disk (the CLI, deciding what to write).
  */
 export function hostChannelAccount(env: {
-  OPENSHIP_HOST_SSH_USER?: string | undefined;
+  KOVALIO_HOST_SSH_USER?: string | undefined;
 }): string {
-  return env.OPENSHIP_HOST_SSH_USER?.trim() || HOST_CHANNEL_DEFAULT_ACCOUNT;
+  return env.KOVALIO_HOST_SSH_USER?.trim() || HOST_CHANNEL_DEFAULT_ACCOUNT;
 }
 
 /**
@@ -134,13 +134,13 @@ export function hostChannelAccount(env: {
  * a file that was already correct — the same mistake #490 made with firewalls.
  */
 export const HOST_CHANNEL_AUTH_REJECTED =
-  "The host accepted the connection and then refused Openship's key. Either the key is " +
+  "The host accepted the connection and then refused Kovalio's key. Either the key is " +
   "no longer in the target account's `authorized_keys`, or sshd does not permit that " +
   "account to log in at all (for a root channel, check `sshd -T | grep -i permitrootlogin`).";
 
 /**
  * The same fault in one line, for a surface with a column rather than a paragraph — a
- * `openship doctor` row. Shared rather than re-worded there, because a doctor row that
+ * `kovalio doctor` row. Shared rather than re-worded there, because a doctor row that
  * disagrees with the banner about the same probe is worse than no row.
  */
 export const HOST_CHANNEL_AUTH_REJECTED_SHORT =
@@ -170,7 +170,7 @@ export const HOST_CHANNEL_OPT_OUT =
   // The command sits early in the sentence on purpose: every surface wraps this to a
   // terminal width, and a line break through the middle of a command is a command an
   // operator can't copy.
-  "Not a fix, a choice: `openship up --no-host-control` turns the channel off and takes " +
+  "Not a fix, a choice: `kovalio up --no-host-control` turns the channel off and takes " +
   "its key back, for a box where the api container should never run host commands — the " +
   "items above stay unavailable.";
 
@@ -259,20 +259,20 @@ export function explainHostChannelCause(
       };
     case "unresolved":
       return {
-        headline: `"${ctx.host ?? at}" didn't resolve inside the Openship container${suffix}`,
+        headline: `"${ctx.host ?? at}" didn't resolve inside the Kovalio container${suffix}`,
         body:
           "The host alias needs `extra_hosts: host.docker.internal:host-gateway` and Docker " +
           "20.10+; under rootless Docker the host gateway isn't provided at all. Re-run " +
-          "`openship up` to reprovision the channel.",
+          "`kovalio up` to reprovision the channel.",
         firewallShaped: false,
       };
     case "no_route":
       return {
-        headline: `${at} — no route from the Openship container${suffix}`,
+        headline: `${at} — no route from the Kovalio container${suffix}`,
         body:
           "The address the channel was provisioned with isn't reachable on this box's " +
-          "networks. Re-run `openship up` to reprovision it, or point " +
-          "OPENSHIP_HOST_SSH_HOST at an address the container can reach.",
+          "networks. Re-run `kovalio up` to reprovision it, or point " +
+          "KOVALIO_HOST_SSH_HOST at an address the container can reach.",
         firewallShaped: false,
       };
     case "error":
@@ -317,7 +317,7 @@ export const DOCKER_DEFAULT_POOL_CIDR = "172.16.0.0/12";
  * `iptables-persistent` is a Debian package name, and it was printed to every host —
  * including the RHEL boxes where the package is `iptables-services` and the save step is
  * a separate command. `suse`/`arch`/`unknown` get the generic sentence on purpose: those
- * are hosts Openship either refuses or hasn't identified, and naming a package that may
+ * are hosts Kovalio either refuses or hasn't identified, and naming a package that may
  * not exist there is worse than naming none.
  */
 const PERSIST_IPTABLES: Readonly<Record<DistroFamily, string>> = {

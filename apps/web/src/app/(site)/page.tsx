@@ -6,19 +6,21 @@ import {
   HowItWorks,
   DeploymentModels,
   CompletePlatform,
+  AppsShowcase,
   MailServer,
   Comparison,
   OpenSource,
   FinalCta,
   Footer,
 } from "@/components/landing";
+import { FEATURES } from "@/lib/features";
 
-const SITE_URL = "https://openship.io";
+const SITE_URL = "https://nextrium.org";
 
 const softwareLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "Openship",
+  name: "Kovalio",
   applicationCategory: "DeveloperApplication",
   applicationSubCategory: "Deployment Platform",
   operatingSystem: "macOS, Windows, Linux, Web",
@@ -27,7 +29,7 @@ const softwareLd = {
   softwareVersion: "latest",
   publisher: {
     "@type": "Organization",
-    name: "Openship",
+    name: "Kovalio",
     url: SITE_URL,
   },
   description:
@@ -39,18 +41,7 @@ const softwareLd = {
     priceCurrency: "USD",
     availability: "https://schema.org/InStock",
   },
-  featureList: [
-    "AI-powered builds",
-    "Free SSL certificates",
-    "Unlimited domains",
-    "Instant rollback",
-    "CLI deploys",
-    "MCP server integration",
-    "Self-hostable",
-    "Multi-region edge",
-    "Managed Postgres / Redis / Mail",
-    "Zero-downtime deploys",
-  ],
+  featureList: FEATURES.map((feature) => feature.title),
 };
 
 export default function HomePage() {
@@ -67,6 +58,7 @@ export default function HomePage() {
         <SystemMap />
         <HowItWorks />
         <DeploymentModels />
+        <AppsShowcase />
         <CompletePlatform />
         <MailServer />
         <Comparison />

@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { canonicalEdgeTarget, isCloudEdgeHost, isNonPublicHost } from "./edge-target";
+import { canonicalEdgeTarget, isCloudEdgeHost, isNonPublicHost } from "@repo/platform/engine/lib/edge-target";
 
 /**
  * `isNonPublicHost` is the guard that stops a free `.opsh.io` route from being
- * wired at a host Openship Cloud can't reach (the root cause of the 404: an
+ * wired at a host Kovalio Cloud can't reach (the root cause of the 404: an
  * `isLocal` box's display `sshHost` is `127.0.0.1`, which Oblien would proxy to
  * its OWN loopback). A false negative here re-introduces the dead route, so the
  * ranges are pinned explicitly.
@@ -75,7 +75,7 @@ describe("isNonPublicHost", () => {
  * dead route, so the loopback guard reads it as fine.
  *
  * The reachable path into it: a free-domain install sets the box's
- * OPENSHIP_PUBLIC_URL to `https://<slug>.opsh.io`, and that is the FIRST candidate
+ * KOVALIO_PUBLIC_URL to `https://<slug>.opsh.io`, and that is the FIRST candidate
  * the target resolver reads.
  */
 describe("isCloudEdgeHost", () => {
@@ -93,7 +93,7 @@ describe("isCloudEdgeHost", () => {
 
   it("normalizes URLs and host:port, since callers hold different shapes", () => {
     // The SaaS receiver checks a raw `target` that may carry a scheme; the resolver
-    // checks OPENSHIP_PUBLIC_URL, which always does. A bare suffix check would let
+    // checks KOVALIO_PUBLIC_URL, which always does. A bare suffix check would let
     // both through — `https://x.opsh.io/y` doesn't end with `.opsh.io`.
     for (const h of [
       "https://myapp.opsh.io",
@@ -121,7 +121,7 @@ describe("isCloudEdgeHost", () => {
 });
 
 /**
- * Openship Cloud keys a target's verification row on a NORMALIZED
+ * Kovalio Cloud keys a target's verification row on a NORMALIZED
  * `scheme://host:port` and matches on it exactly, so verifying one string and
  * routing another is a permanent `target_unverified` that reads as a broken
  * feature. This is the single normalizer both sides call for that reason.

@@ -2,7 +2,7 @@
  * Compose `network_mode` / `pid` — the Linux namespaces a service SHARES with a
  * sibling instead of getting its own.
  *
- * This is the single authority on which values openship accepts and what they
+ * This is the single authority on which values kovalio accepts and what they
  * mean, imported by the compose parser (import), the CLI sync mapper, the deploy
  * ordering pass, and the Docker runtime. A second spelling of these rules is how
  * a service ends up stored with a mode the runtime then can't honor — the exact
@@ -12,14 +12,14 @@
  * ----------------------------------
  * `service:<name>` and `container:<id>` are namespace SHARING: the dependent
  * container gets no interface/pid-space of its own and lives inside another
- * container's. That composes with openship's model — the provider is still a
+ * container's. That composes with kovalio's model — the provider is still a
  * normal service on the project network, still behind the edge, still a row we
  * own — so we resolve the reference and apply it.
  *
  * `host` is not sharing, it's an escape. A host-netns container binds host
  * interfaces directly (Docker ignores PortBindings entirely), which voids the
  * loopback-only-behind-the-edge invariant every other workload upholds, and it
- * reaches every 127.0.0.1 service on the box — including openship's own API,
+ * reaches every 127.0.0.1 service on the box — including kovalio's own API,
  * which grants zero-auth to loopback callers. That is a privilege grant arriving
  * through a compose file, on a path with no operator decision in it. Refused at
  * import with the field named, rather than applied or silently dropped.
@@ -75,7 +75,7 @@ export function parseComposeNamespace(
       reason:
         `${field}: host is not supported. A host-namespace container bypasses the ` +
         `edge (its ports bind host interfaces directly) and can reach every ` +
-        `loopback service on the machine, including Openship's own API. Share a ` +
+        `loopback service on the machine, including Kovalio's own API. Share a ` +
         `sibling's namespace instead (${field}: service:<name>), or run this ` +
         `workload outside the stack.`,
     };
@@ -84,7 +84,7 @@ export function parseComposeNamespace(
   if (field === "network_mode") {
     if (value === "none") return { ok: true, ref: { kind: "none" }, value };
     // `bridge` / `default` / a user-defined network name all mean "put me on a
-    // network openship doesn't manage". The project network IS the default here,
+    // network kovalio doesn't manage". The project network IS the default here,
     // so treat the compose default as already satisfied rather than an error.
     if (value === "bridge" || value === "default") return undefined;
   }
@@ -108,7 +108,7 @@ export function parseComposeNamespace(
   return {
     ok: false,
     reason:
-      `${field}: "${value}" is not supported. Openship accepts ` +
+      `${field}: "${value}" is not supported. Kovalio accepts ` +
       (field === "network_mode" ? `"none", ` : "") +
       `"service:<name>" (a service in this stack) and "container:<id>".`,
   };

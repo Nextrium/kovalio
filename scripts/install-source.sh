@@ -1,26 +1,26 @@
 #!/bin/sh
-# Openship FROM-SOURCE installer — https://get.openship.io/dev
+# Kovalio FROM-SOURCE installer — https://get.kovalio.nextrium.org/dev
 #
-#   curl -fsSL https://get.openship.io/dev | sh
+#   curl -fsSL https://get.kovalio.nextrium.org/dev | sh
 #
-# Builds the Openship CLI from a git checkout (the same way `bun dev` does) and
-# installs it as a SEPARATE `openship-dev` command that runs fully isolated from
-# a production `openship`:
+# Builds the Kovalio CLI from a git checkout (the same way `bun dev` does) and
+# installs it as a SEPARATE `kovalio-dev` command that runs fully isolated from
+# a production `kovalio`:
 #
-#   - its own home           $HOME/.openship-dev   (data, tokens, ports, logs)
-#   - its own boot service    io.openship-dev / openship-dev / OpenshipDev
-#   - the production `openship` (npm) is never touched
+#   - its own home           $HOME/.kovalio-dev   (data, tokens, ports, logs)
+#   - its own boot service    io.kovalio-dev / kovalio-dev / KovalioDev
+#   - the production `kovalio` (npm) is never touched
 #
 # This is a DEV / PREVIEW build: unverified (no signed release asset), and
 # compiling the dashboard needs real RAM/CPU (small boxes can OOM). Update later
-# with `openship-dev update` (pulls latest source + rebuilds — no npm release
-# needed). Remove with:  rm -f "$(command -v openship-dev)" && rm -rf ~/.openship-dev
+# with `kovalio-dev update` (pulls latest source + rebuilds — no npm release
+# needed). Remove with:  rm -f "$(command -v kovalio-dev)" && rm -rf ~/.kovalio-dev
 #
 # Env overrides:
-#   OPENSHIP_REPO=<git url>     default: https://github.com/oblien/openship.git
-#   OPENSHIP_REF=<branch|tag>   default: main
-#   OPENSHIP_HOME=<dir>         default: $HOME/.openship-dev
-#   OPENSHIP_SRC_DIR=<dir>      default: $OPENSHIP_HOME/cli-src
+#   KOVALIO_REPO=<git url>     default: https://github.com/Nextrium/kovalio.git
+#   KOVALIO_REF=<branch|tag>   default: main
+#   KOVALIO_HOME=<dir>         default: $HOME/.kovalio-dev
+#   KOVALIO_SRC_DIR=<dir>      default: $KOVALIO_HOME/cli-src
 set -eu
 
 info() { printf '\033[36m==>\033[0m %s\n' "$1"; }
@@ -28,10 +28,10 @@ err()  { printf '\033[31merror:\033[0m %s\n' "$1" >&2; }
 
 command -v curl >/dev/null 2>&1 || { err "curl is required"; exit 1; }
 
-REPO="${OPENSHIP_REPO:-https://github.com/oblien/openship.git}"
-REF="${OPENSHIP_REF:-main}"
-OPENSHIP_HOME="${OPENSHIP_HOME:-$HOME/.openship-dev}"
-SRC_DIR="${OPENSHIP_SRC_DIR:-$OPENSHIP_HOME/cli-src}"
+REPO="${KOVALIO_REPO:-https://github.com/Nextrium/kovalio.git}"
+REF="${KOVALIO_REF:-main}"
+KOVALIO_HOME="${KOVALIO_HOME:-$HOME/.kovalio-dev}"
+SRC_DIR="${KOVALIO_SRC_DIR:-$KOVALIO_HOME/cli-src}"
 
 # 1. Ensure Bun (the runtime + builder). Installs to ~/.bun by default; no Node/npm.
 if ! command -v bun >/dev/null 2>&1; then
@@ -95,32 +95,32 @@ git -C "$SRC_DIR" pull --ff-only origin "$REF" 2>/dev/null || info "(pinned ref 
 # 4. Build the CLI like `bun dev` (tsup + bundled server, then the dashboard).
 info "Installing workspace dependencies (bun install)…"
 ( cd "$SRC_DIR" && bun install )
-info "Building the CLI (tsup + server bundle)…"
-( cd "$SRC_DIR/apps/cli" && bun run build )
+info "Building Kovalio (SDK + CLI + server bundle)…"
+( cd "$SRC_DIR/packages/kovalio" && bun run build )
 info "Building the dashboard (compiles Next — needs RAM/CPU; small boxes can OOM)…"
 ( cd "$SRC_DIR/apps/cli" && bun run build/stage-dashboard.ts )
 
-ENTRY="$SRC_DIR/apps/cli/dist/index.js"
+ENTRY="$SRC_DIR/packages/kovalio/dist/index.js"
 DASH="$SRC_DIR/apps/dashboard/.next/standalone"
 [ -f "$ENTRY" ] || { err "Build produced no CLI at $ENTRY"; exit 1; }
 [ -f "$DASH/apps/dashboard/server.js" ] || { err "Build produced no dashboard at $DASH/apps/dashboard/server.js"; exit 1; }
 
-# 5. Wire the `openship-dev` launcher: run the built CLI under Bun with the dev
+# 5. Wire the `kovalio-dev` launcher: run the built CLI under Bun with the dev
 #    home + locally-built dashboard baked in. A separate name + home means the
-#    production `openship` (and its ~/.openship state) are never touched.
+#    production `kovalio` (and its ~/.kovalio state) are never touched.
 BUN_PATH="$(command -v bun)"
 BIN="${BUN_INSTALL:-$HOME/.bun}/bin"
 [ -d "$BIN" ] || BIN="$HOME/.local/bin"
 mkdir -p "$BIN"
-rm -f "$BIN/openship-dev"
-printf '#!/bin/sh\nexport OPENSHIP_HOME="%s"\nexport OPENSHIP_DASHBOARD_DIR="%s"\nexec "%s" "%s" "$@"\n' \
-  "$OPENSHIP_HOME" "$DASH" "$BUN_PATH" "$ENTRY" > "$BIN/openship-dev"
-chmod +x "$BIN/openship-dev"
+rm -f "$BIN/kovalio-dev"
+printf '#!/bin/sh\nexport KOVALIO_HOME="%s"\nexport KOVALIO_DASHBOARD_DIR="%s"\nexec "%s" "%s" "$@"\n' \
+  "$KOVALIO_HOME" "$DASH" "$BUN_PATH" "$ENTRY" > "$BIN/kovalio-dev"
+chmod +x "$BIN/kovalio-dev"
 
 # 6. Write the source-install marker under the DEV home. Its presence flips
-#    `openship-dev update` to the git-pull + rebuild path (no npm release).
-mkdir -p "$OPENSHIP_HOME"
-cat > "$OPENSHIP_HOME/source-install.json" <<EOF
+#    `kovalio-dev update` to the git-pull + rebuild path (no npm release).
+mkdir -p "$KOVALIO_HOME"
+cat > "$KOVALIO_HOME/source-install.json" <<EOF
 {
   "repo": "$REPO",
   "ref": "$REF",
@@ -131,17 +131,17 @@ EOF
 # 7. Next steps.
 cat <<EOF
 
-$(printf '\033[32m✔\033[0m') Openship installed from source ($REF) as $(printf '\033[1mopenship-dev\033[0m').
+$(printf '\033[32m✔\033[0m') Kovalio installed from source ($REF) as $(printf '\033[1mkovalio-dev\033[0m').
 
-  openship-dev            # set up + run (interactive) — isolated dev instance
-  openship-dev up         # run locally with defaults
-  openship-dev update     # pull latest source + rebuild (no npm release needed)
+  kovalio-dev            # set up + run (interactive) — isolated dev instance
+  kovalio-dev up         # run locally with defaults
+  kovalio-dev update     # pull latest source + rebuild (no npm release needed)
 
-  Home:    $OPENSHIP_HOME   (separate from production ~/.openship)
+  Home:    $KOVALIO_HOME   (separate from production ~/.kovalio)
   Source:  $SRC_DIR
 
-Remove it:  rm -f "$BIN/openship-dev" && rm -rf "$OPENSHIP_HOME"
+Remove it:  rm -f "$BIN/kovalio-dev" && rm -rf "$KOVALIO_HOME"
 
-If 'openship-dev' isn't found, add the bin dir to your PATH:
+If 'kovalio-dev' isn't found, add the bin dir to your PATH:
   export PATH="$BIN:\$PATH"
 EOF

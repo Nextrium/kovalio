@@ -2,12 +2,12 @@
  * Which mail engine a box actually runs — the ONE mail topology probe.
  *
  * Two topologies exist in the field:
- *   - `container` — the supported one: the `openship-mail` engine + its
- *     `openship-mail-db` sidecar (see ensure-container-mail.ts).
+ *   - `container` — the supported one: the `kovalio-mail` engine + its
+ *     `kovalio-mail-db` sidecar (see ensure-container-mail.ts).
  *   - `host` — a LEGACY pre-containerization install: iRedMail straight onto the
  *     box, Postfix/Dovecot as systemd units, vmail in the host PostgreSQL.
  *
- * The legacy shape is not a rounding error: the `openship-mail` image is not
+ * The legacy shape is not a rounding error: the `kovalio-mail` image is not
  * published yet, so every mail box provisioned before containerization is still
  * host-native and cannot be migrated by pulling. Until it can, every mail code
  * path has to answer "which topology am I talking to" — and it has to get the
@@ -23,13 +23,14 @@
  * Pure read. Never mutates the box.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import type { CommandExecutor } from "../../types";
 import { MAIL_CONTAINER } from "../../infra/mail-container";
 import { detectMailContainer, verifyMailEngine } from "./ensure-container-mail";
 import type { SystemLog } from "../types";
 
 /**
- * `container` = the openship-mail engine; `host` = legacy systemd iRedMail;
+ * `container` = the kovalio-mail engine; `host` = legacy systemd iRedMail;
  * `none` = no mail engine on this box at all.
  */
 export type MailEngineFlavor = "container" | "host" | "none";
@@ -56,18 +57,14 @@ export const HOST_MAIL_UNITS = ["postfix", "dovecot"] as const;
  * pointing the admin panel at the host DB would read a stale copy. A stopped
  * container is reported `running: false`, which the caller surfaces as a repair.
  *
- * Neither probe throws: an unreachable Docker daemon or a box with no systemd at
- * all reads as "not that flavor", and both failing reads as `none`.
+ * `none` requires confirmed absence. Transport, daemon and incomplete probe
+ * failures throw, so callers can preserve unknown state without offering repair.
  */
 export async function detectMailEngine(
   executor: CommandExecutor,
   container = MAIL_CONTAINER,
 ): Promise<MailEngineProbe> {
-  const detected = await detectMailContainer(executor, container).catch(() => ({
-    running: false,
-    image: null as string | null,
-    exists: false,
-  }));
+  const detected = await detectMailContainer(executor, container);
   if (detected.exists) {
     return {
       flavor: "container",
@@ -103,7 +100,10 @@ async function probeHostUnits(
   const script = HOST_MAIL_UNITS.map(
     (u) => `echo "## ${u}"; systemctl show ${u} -p LoadState -p ActiveState 2>/dev/null || true`,
   ).join("; ");
-  const raw = await executor.exec(`{ ${script} ; } 2>/dev/null || true`).catch(() => "");
+  const raw = await executor.exec(
+    `if command -v systemctl >/dev/null 2>&1; then { ${script} ; }; else echo __KOVALIO_NO_SYSTEMCTL__; fi`,
+  );
+  if (raw.trim() === "__KOVALIO_NO_SYSTEMCTL__") return { installed: false, active: false };
 
   const states = new Map<string, { load: string; active: string }>();
   let current: string | null = null;
@@ -125,6 +125,10 @@ async function probeHostUnits(
   // is a legacy install someone disabled, not the absence of one.
   const loaded = (u: string) => ["loaded", "masked"].includes(states.get(u)?.load ?? "");
   const active = (u: string) => states.get(u)?.active === "active";
+  if (HOST_MAIL_UNITS.some((unit) => {
+    const state = states.get(unit);
+    return !state || !["loaded", "masked", "not-found"].includes(state.load) || !state.active;
+  })) throw new Error("The mail service probe did not return a complete systemd state");
   return {
     installed: HOST_MAIL_UNITS.some(loaded),
     active: HOST_MAIL_UNITS.every(active),
@@ -151,7 +155,7 @@ export async function startHostMail(
   for (const unit of HOST_MAIL_UNITS) {
     // Best-effort per unit: report the outcome from the port check below, not from
     // systemctl's exit code (a unit already running exits non-zero on some builds).
-    await executor.exec(`systemctl start ${unit} 2>&1 || true`).catch(() => "");
+    await executor.exec(`systemctl start ${unit} 2>&1 || true`).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/mail/detect-engine"); return ""; });
   }
 
   const verified = await verifyMailEngine(executor, opts);
@@ -160,7 +164,7 @@ export async function startHostMail(
     log(`Could not start the host mail engine: ${reason}`, "error");
     const status = await executor
       .exec(`systemctl status ${HOST_MAIL_UNITS.join(" ")} --no-pager -l 2>&1 | tail -40 || true`)
-      .catch(() => "");
+      .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/mail/detect-engine"); return ""; });
     if (status.trim()) log(`Host mail unit status:\n${status}`, "error");
     return { started: false, reason };
   }

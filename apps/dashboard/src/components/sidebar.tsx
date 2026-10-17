@@ -1,23 +1,14 @@
 "use client";
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
+import { Icon as UiIcon } from "@repo/ui/icons";
+
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  LogOut,
-  Loader2,
-  Moon,
-  Sun,
-  SunMoon,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Plus,
-  Building2,
-  ChevronsUpDown,
-  Check,
-} from "lucide-react";
 import { authClient, signOut } from "@/lib/auth-client";
 import { useTheme } from "@/components/theme-provider";
+import { ThemeIcon } from "@/components/theme-icon";
 import { useBrandName, useI18n, interpolate } from "@/components/i18n-provider";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/context/AuthContext";
@@ -28,10 +19,10 @@ import { MailServerSwitcher } from "@/components/mail-server-switcher";
 import { useMailScope } from "@/context/MailScopeContext";
 import { setActiveOrganizationId } from "@/lib/api/client";
 import { projectsApi } from "@/lib/api";
-import {
-  getSidebarNavCountsRevision,
-  subscribeSidebarNavCounts,
-} from "@/lib/sidebar-nav-counts";
+import { useSidebarCollapse } from "@/hooks/useSidebarCollapse";
+import { useSidebarLayout } from "@/context/SidebarLayoutContext";
+import { useIssueCounts } from "@/hooks/useIssueCounts";
+import { countProjectCollections, getSidebarNavCountsRevision, subscribeSidebarNavCounts } from "@/lib/sidebar-nav-counts";
 import {
   getMailNavSections,
   getNavSections,
@@ -63,15 +54,19 @@ interface SidebarMember {
  * useEffect dep creates an infinite render loop. See TeamTab for the
  * full explanation.
  */
-const sidebarOrgClient = (authClient as unknown as {
-  organization: {
-    list: () => Promise<{ data?: SidebarOrg[] }>;
-    setActive: (opts: { organizationId: string }) => Promise<{ error?: { message?: string } }>;
-    getFullOrganization: (opts?: { organizationId: string }) => Promise<{ data?: { id: string; members?: SidebarMember[] } | null }>;
-  };
-}).organization;
+const sidebarOrgClient = (
+  authClient as unknown as {
+    organization: {
+      list: () => Promise<{ data?: SidebarOrg[] }>;
+      setActive: (opts: { organizationId: string }) => Promise<{ error?: { message?: string } }>;
+      getFullOrganization: (opts?: {
+        organizationId: string;
+      }) => Promise<{ data?: { id: string; members?: SidebarMember[] } | null }>;
+    };
+  }
+).organization;
 
-export function Sidebar() {
+export function Sidebar({ mobileOpen = false, onCloseMobile }: { mobileOpen?: boolean; onCloseMobile?: () => void } = {}) {
   const { user } = useAuth();
   const { selfHosted, deployMode, authMode, machineName, productView } = usePlatform();
   const { connected: cloudConnected, cloudUser } = useCloud();
@@ -85,7 +80,7 @@ export function Sidebar() {
   // GitHub App, etc.) - not an identity replacement.
   //
   // The external SaaS profile (cloudUser.name / cloudUser.email) belongs in
-  // Settings -> CloudConnection where it lives as a "Linked to Openship
+  // Settings -> CloudConnection where it lives as a "Linked to Kovalio
   // Cloud as <email>" card. We surface it here only as a small secondary
   // hint line under the local identity when a cloud session is active, so
   // the operator can see WHICH external account is linked without ever
@@ -95,15 +90,15 @@ export function Sidebar() {
   // Better Auth user exists yet, e.g. fresh install before onboarding):
   // fall back to machineName, NEVER to the cloud profile.
   const displayName =
-    user?.name ||
-    user?.email?.split("@")[0] ||
-    (isDesktop ? (machineName || "Local User") : "");
-  const displayEmail =
-    user?.email ||
-    (isDesktop ? "Desktop" : "");
+    user?.name || user?.email?.split("@")[0] || (isDesktop ? machineName || "Local User" : "");
+  const displayEmail = user?.email || (isDesktop ? "Desktop" : "");
   const cloudBadge = cloudConnected ? cloudUser : null;
   const displayInitial = displayName?.[0] ?? displayEmail?.[0] ?? "?";
-  const isSaaS = !selfHosted || cloudConnected;
+  const isSaaS = (!selfHosted && !isDesktop) || cloudConnected;
+  const [navCounts, setNavCounts] = useState<ReturnType<typeof countProjectCollections> | null>(
+    null,
+  );
+  const supportAvailable = isSaaS || !!navCounts?.hasCloudProjects;
   const mailView = productView === "mail";
   const mailScope = useMailScope();
   const navSections = mailView
@@ -113,28 +108,37 @@ export function Sidebar() {
         activeServerId: mailScope.activeServerId,
         activeCompleted: !!mailScope.activeServer?.completed,
         selfHosted,
+        supportAvailable,
       })
-    : getNavSections(isSaaS, selfHosted);
+    : getNavSections(isSaaS, selfHosted, supportAvailable);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { resolvedTheme, toggle } = useTheme();
+  const { toggle } = useTheme();
   const { t } = useI18n();
   const brand = useBrandName();
-  const [collapsed, setCollapsed] = useState(false);
+  const { autoCollapse } = useSidebarLayout();
+  const collapseScope =
+    pathname === "/scale" || pathname.startsWith("/scale/")
+      ? "scale"
+      : pathname === "/billing/plans"
+        ? "plans"
+        : null;
+  const { collapsed: desktopCollapsed, toggleCollapsed } = useSidebarCollapse(
+    collapseScope,
+    collapseScope === "scale" || autoCollapse,
+  );
+  const collapsed = !mobileOpen && desktopCollapsed;
   const [loggingOut, setLoggingOut] = useState(false);
-  const [navCounts, setNavCounts] = useState<{ projects: number; apps: number } | null>(null);
   const [navCountsRevision, setNavCountsRevision] = useState(getSidebarNavCountsRevision);
-  const countFor = (key: string): number | null => {
-    if (!navCounts) return null;
-    if (key === "projects") return navCounts.projects;
-    if (key === "apps") return navCounts.apps;
-    return null;
-  };
 
-  useEffect(() => subscribeSidebarNavCounts(() => {
-    setNavCountsRevision(getSidebarNavCountsRevision());
-  }), []);
+  useEffect(
+    () =>
+      subscribeSidebarNavCounts(() => {
+        setNavCountsRevision(getSidebarNavCountsRevision());
+      }),
+    [],
+  );
 
   // Org switcher state. Lazy-loaded — `list()` and the active org fetch
   // only fire after the first popover open so the sidebar doesn't pay
@@ -147,6 +151,15 @@ export function Sidebar() {
   const [orgRoles, setOrgRoles] = useState<Record<string, string>>({});
   const [orgsLoaded, setOrgsLoaded] = useState(false);
   const [switchingOrgId, setSwitchingOrgId] = useState<string | null>(null);
+  const hasMonitoring = navSections.some(({ items }) => items.some(({ key }) => key === "issues"));
+  const issueCounts = useIssueCounts(orgsLoaded && hasMonitoring ? activeOrgId : undefined);
+  const countFor = (key: string): number | null => {
+    // Match Home's Needs attention card; available updates are advisories.
+    if (key === "issues")
+      return issueCounts ? issueCounts.outage + issueCounts.actionRequired : null;
+    if (key === "projects" || key === "apps") return navCounts?.[key] ?? null;
+    return null;
+  };
 
   // Fetch on mount so the trigger shows the current org name without
   // waiting for the user to click. Cheap (one /list call) and mirrors
@@ -157,7 +170,7 @@ export function Sidebar() {
       try {
         const [listRes, activeRes] = await Promise.all([
           sidebarOrgClient.list(),
-          sidebarOrgClient.getFullOrganization().catch(() => ({ data: null })),
+          sidebarOrgClient.getFullOrganization().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "dashboard/components/sidebar"); return ({ data: null }); }),
         ]);
         if (cancelled) return;
         const list = listRes.data ?? [];
@@ -176,7 +189,8 @@ export function Sidebar() {
                 const full = await sidebarOrgClient.getFullOrganization({ organizationId: o.id });
                 const me = full.data?.members?.find((m) => m.userId === user?.id);
                 return [o.id, me?.role ?? null] as const;
-              } catch {
+              } catch (diagnosticFailure) {
+                observeCaughtError(diagnosticFailure, "dashboard/components/sidebar");
                 return [o.id, null] as const;
               }
             }),
@@ -185,10 +199,12 @@ export function Sidebar() {
           const map = Object.fromEntries(entries.filter(([, r]) => r)) as Record<string, string>;
           setOrgRoles(map);
           if (aid) setActiveOrgRole(map[aid] ?? null);
-        } catch {
+        } catch (diagnosticFailure) {
+          observeCaughtError(diagnosticFailure, "dashboard/components/sidebar");
           /* role chips optional */
         }
-      } catch {
+      } catch (diagnosticFailure) {
+        observeCaughtError(diagnosticFailure, "dashboard/components/sidebar");
         /* org switcher hidden when fetch fails */
       }
     })();
@@ -197,10 +213,8 @@ export function Sidebar() {
     };
   }, [user?.id]);
 
-  // Nav counts — Projects & Apps only, from the same `projects/home` payload
-  // both pages load. Apps are projects with `isApp` (catalog installs); the
-  // Projects nav counts the REST (real projects), exactly mirroring what each
-  // page renders — apps live only under Apps, never double-counted.
+  // Both collections come from the same home payload. Keep their counts separate
+  // and retain app ids so their shared project detail route highlights Apps.
   //
   // Gated on `orgsLoaded`: the count fetch must run under the resolved active
   // org (the org effect above sets `setActiveOrganizationId` a round-trip
@@ -209,25 +223,15 @@ export function Sidebar() {
   useEffect(() => {
     if (!orgsLoaded) return;
     let cancelled = false;
+    setNavCounts(null);
     projectsApi
       .getHome()
       .then((res) => {
         if (cancelled || !res?.success || !Array.isArray(res.projects)) return;
-        // Distinct by id — the payload merges local + cloud, which can list the
-        // same project twice; a dupe must not inflate the tally.
-        const seen = new Set<string>();
-        let projects = 0;
-        let apps = 0;
-        for (const p of res.projects) {
-          const id = p?.id;
-          if (id && seen.has(id)) continue;
-          if (id) seen.add(id);
-          if (p?.isApp) apps += 1;
-          else projects += 1;
-        }
-        setNavCounts({ projects, apps });
+        setNavCounts(countProjectCollections(res.projects));
       })
-      .catch(() => {
+      .catch((diagnosticFailure) => {
+        observeCaughtError(diagnosticFailure, "dashboard/components/sidebar");
         /* counts are optional chrome — silent on failure */
       });
     return () => {
@@ -250,7 +254,8 @@ export function Sidebar() {
       setActiveOrganizationId(orgId);
       // Reload so every list endpoint re-fetches under the new scope.
       window.location.reload();
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "dashboard/components/sidebar");
       setSwitchingOrgId(null);
     }
   }
@@ -265,23 +270,26 @@ export function Sidebar() {
       }
       await signOut();
       router.push("/login");
-    } catch {
+    } catch (diagnosticFailure) {
+      observeCaughtError(diagnosticFailure, "dashboard/components/sidebar");
       setLoggingOut(false);
     }
   }
 
-  const activeOrg =
-    orgs.find((o) => o.id === activeOrgId) ?? orgs[0] ?? null;
+  const activeOrg = orgs.find((o) => o.id === activeOrgId) ?? orgs[0] ?? null;
   const showOrgSwitcher = orgsLoaded && !!activeOrg;
 
   // `?tab=` is only meaningful for the mail rail's entries, which all share the
   // /emails route; every other item still matches by path (see isNavItemActive).
   const currentTab = searchParams.get("tab");
+  const navPathname = pathname.startsWith("/projects/") && navCounts?.appIds.has(pathname.split("/")[2] ?? "")
+    ? "/apps"
+    : pathname;
 
   const label = (key: string, source?: "nav" | "mailTab") =>
     source === "mailTab"
-      ? (t.emailsAdmin.panel.tabs as unknown as Record<string, string>)[key] ?? key
-      : (t.dashboard.nav as unknown as Record<string, string>)[key] ?? key;
+      ? ((t.emailsAdmin.panel.tabs as unknown as Record<string, string>)[key] ?? key)
+      : ((t.dashboard.nav as unknown as Record<string, string>)[key] ?? key);
 
   const sectionLabel = (key: string) =>
     (t.dashboard.nav.sections as unknown as Record<string, string>)[key] ?? key;
@@ -297,11 +305,15 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`my-3 ms-3 flex shrink-0 flex-col rounded-2xl border border-border/50 bg-card transition-[width] duration-200 overflow-hidden ${collapsed ? "w-[72px]" : "w-[260px]"
-        }`}
+      id="dashboard-sidebar"
+      className={`my-3 ms-3 flex shrink-0 flex-col rounded-2xl border border-border/50 bg-card transition-[width] duration-200 overflow-hidden ${
+        collapsed ? "w-[72px]" : "w-[260px]"
+      }`}
     >
       {/* ── Header ───────────────────────────────────────────── */}
-      <div className={`app-sidebar-header flex items-center px-5 py-6 ${collapsed ? "flex-col gap-3 pb-3" : "justify-between"}`}>
+      <div
+        className={`app-sidebar-header flex items-center px-5 py-6 ${collapsed ? "flex-col gap-3 pb-3" : "justify-between"}`}
+      >
         <div className="flex items-center gap-2.5 min-w-0">
           <Logo size={26} className="shrink-0" />
           {!collapsed && (
@@ -320,24 +332,21 @@ export function Sidebar() {
             title={t.auth.toggleTheme}
           >
             {/* Icon shows the CURRENT theme; clicking cycles light → dim → dark. */}
-            {resolvedTheme === "light" ? (
-              <Sun className="size-4" />
-            ) : resolvedTheme === "dim" ? (
-              <SunMoon className="size-4" />
-            ) : (
-              <Moon className="size-4" />
-            )}
+            <ThemeIcon className="size-4" />
           </button>
           <button
             type="button"
-            onClick={() => setCollapsed((v) => !v)}
+            onClick={mobileOpen ? onCloseMobile : toggleCollapsed}
             aria-label={collapsed ? t.dashboard.sidebar.expand : t.dashboard.sidebar.collapse}
+            aria-expanded={!collapsed}
+            aria-controls="dashboard-sidebar"
+            title={collapsed ? t.dashboard.sidebar.expand : t.dashboard.sidebar.collapse}
             className="flex size-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
           >
-            {collapsed ? (
-              <PanelLeftOpen className="size-4 rtl:rotate-180" />
+            {mobileOpen ? <UiIcon name="close" className="size-4" /> : collapsed ? (
+              <UiIcon name="sidebar-open" className="size-4 rtl:rotate-180" />
             ) : (
-              <PanelLeftClose className="size-4 rtl:rotate-180" />
+              <UiIcon name="sidebar-close" className="size-4 rtl:rotate-180" />
             )}
           </button>
         </div>
@@ -362,26 +371,32 @@ export function Sidebar() {
               <div className="space-y-1">
                 {items.map((item) => {
                   const { key, href, icon: Icon, labelSource } = item;
-                  const active = isNavItemActive(item, pathname, currentTab);
+                  const active = isNavItemActive(item, navPathname, currentTab);
                   const count = countFor(key);
+                  const issueLabel =
+                    key === "issues" && count != null && count > 0
+                      ? `${label(key, labelSource)}: ${count === 1 ? t.dashboard.home.oneIssue : interpolate(t.dashboard.home.manyIssues, { n: String(count) })}`
+                      : undefined;
                   return (
                     <Link
                       key={key}
                       href={href}
-                      title={collapsed ? label(key, labelSource) : undefined}
-                      className={`flex items-center rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors ${collapsed ? "justify-center" : "gap-3"
-                        } ${active
-                          ? "bg-foreground/[0.07] text-foreground"
-                          : "text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground"
-                        }`}
+                      title={collapsed ? (issueLabel ?? label(key, labelSource)) : undefined}
+                      aria-label={issueLabel}
+                      aria-current={active ? "page" : undefined}
+                      className={`th-nav-item flex items-center rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors ${
+                        collapsed ? "justify-center" : "gap-3"
+                      }`}
                     >
-                      <Icon className="size-[18px] shrink-0" strokeWidth={1.7} />
-                      {!collapsed && <span className="flex-1 truncate">{label(key, labelSource)}</span>}
-                      {/* Subtle right-aligned tally — Projects & Apps only, hidden
-                          at 0 and when collapsed. Muted + tabular so it reads as
-                          metadata, not a notification badge. */}
+                      <UiIcon name={Icon} className="size-5 shrink-0" />
+                      {!collapsed && (
+                        <span className="flex-1 truncate">{label(key, labelSource)}</span>
+                      )}
+                      {/* Hide zero/loading counts; keep issue counts in the collapsed label. */}
                       {!collapsed && count != null && count > 0 && (
-                        <span className="shrink-0 text-[13px] tabular-nums text-muted-foreground/45">
+                        <span
+                          className={`shrink-0 text-[13px] tabular-nums ${key === "issues" ? (issueCounts?.outage ? "text-danger" : "text-warning") : "text-muted-foreground/45"}`}
+                        >
                           {count}
                         </span>
                       )}
@@ -409,18 +424,16 @@ export function Sidebar() {
 
       {/* ── Primary action ──────────────────────────────────── */}
       {cta && (
-      <div className="px-3 pb-2">
-        <Link
-          href={cta.href}
-          title={collapsed ? label(cta.labelKey) : undefined}
-          className={`relative flex items-center justify-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all overflow-hidden ${"bg-gradient-to-r from-violet-500/90 via-primary/90 to-blue-500/90 text-white shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/30 hover:brightness-110 dark:from-amber-400/90! dark:via-orange-500/90! dark:to-rose-500/90! dark:shadow-orange-500/20 dark:hover:shadow-orange-500/30 dim:from-[hsl(86_84%_74%)]! dim:via-[hsl(82_80%_64%)]! dim:to-[hsl(74_74%_54%)]! dim:text-[#0c1206]! dim:shadow-lime-400/25 dim:hover:shadow-lime-400/40"
-            }`}
-        >
-          <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent_70%)]" />
-          <Plus className="relative size-4" strokeWidth={2.5} />
-          {!collapsed && <span className="relative">{label(cta.labelKey)}</span>}
-        </Link>
-      </div>
+        <div className="px-3 pb-2">
+          <Link
+            href={cta.href}
+            title={collapsed ? label(cta.labelKey) : undefined}
+            className="th-btn-accent flex items-center justify-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all overflow-hidden hover:brightness-110"
+          >
+            <UiIcon name="plus" className="size-4" />
+            {!collapsed && <span>{label(cta.labelKey)}</span>}
+          </Link>
+        </div>
       )}
 
       {/* ── Account / Org switcher ──────────────────────────── */}
@@ -433,24 +446,21 @@ export function Sidebar() {
         )}
 
         {showOrgSwitcher ? (
-          <DismissiblePopover
-            open={orgsOpen}
-            onOpenChange={setOrgsOpen}
-            className="relative"
-          >
+          <DismissiblePopover open={orgsOpen} onOpenChange={setOrgsOpen} className="relative">
             {/* Trigger — current org + chevron, Cloudflare-style */}
             <button
               type="button"
               onClick={() => setOrgsOpen((v) => !v)}
-              className={`group flex w-full items-center rounded-xl px-2 py-2 text-start transition-colors hover:bg-foreground/[0.06] ${collapsed ? "justify-center" : "gap-3"
-                }`}
+              className={`group flex w-full items-center rounded-xl px-2 py-2 text-start transition-colors hover:bg-foreground/[0.06] ${
+                collapsed ? "justify-center" : "gap-3"
+              }`}
               aria-haspopup="dialog"
               aria-expanded={orgsOpen}
               title={collapsed ? activeOrg?.name : undefined}
             >
               {/* Org avatar / initial */}
               <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-foreground/[0.08] text-sm font-semibold uppercase text-foreground">
-                {activeOrg?.name?.[0] ?? <Building2 className="size-4" />}
+                {activeOrg?.name?.[0] ?? <UiIcon name="building" className="size-4" />}
               </div>
 
               {!collapsed && (
@@ -461,11 +471,13 @@ export function Sidebar() {
                     </p>
                     <p className="truncate text-[12px] leading-tight text-muted-foreground">
                       {orgs.length > 1
-                        ? interpolate(t.chrome.sidebar.workspacesCount, { count: String(orgs.length) })
+                        ? interpolate(t.chrome.sidebar.workspacesCount, {
+                            count: String(orgs.length),
+                          })
                         : displayEmail}
                     </p>
                   </div>
-                  <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
+                  <UiIcon name="chevrons-up-down" className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
                 </>
               )}
             </button>
@@ -473,10 +485,9 @@ export function Sidebar() {
             {/* Popover — shown to the side when collapsed, above when expanded */}
             {orgsOpen && (
               <div
-                className={`absolute z-50 overflow-hidden rounded-2xl border border-border/50 bg-popover shadow-xl shadow-black/[0.08] ${collapsed
-                    ? "start-full bottom-0 ms-2 w-72"
-                    : "start-0 end-0 bottom-full mb-2"
-                  }`}
+                className={`absolute z-50 overflow-hidden rounded-2xl border border-border/50 bg-popover shadow-[var(--th-dropdown-shadow)] ${
+                  collapsed ? "start-full bottom-0 ms-2 w-72" : "start-0 end-0 bottom-full mb-2"
+                }`}
               >
                 {/* Heading */}
                 <div className="px-3 pt-3 pb-2">
@@ -496,11 +507,12 @@ export function Sidebar() {
                         type="button"
                         onClick={() => handleOrgSwitch(o.id)}
                         disabled={!!switchingOrgId}
-                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-start transition-colors hover:bg-foreground/[0.05] disabled:opacity-60 ${isCurrent ? "bg-foreground/[0.03]" : ""
-                          }`}
+                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-start transition-colors hover:bg-foreground/[0.05] disabled:opacity-60 ${
+                          isCurrent ? "bg-foreground/[0.03]" : ""
+                        }`}
                       >
                         <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-foreground/[0.08] text-[12px] font-semibold uppercase text-foreground">
-                          {o.name?.[0] ?? <Building2 className="size-3.5" />}
+                          {o.name?.[0] ?? <UiIcon name="building" className="size-3.5" />}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[13px] font-medium leading-tight text-foreground">
@@ -513,18 +525,22 @@ export function Sidebar() {
                               </span>
                             )}
                             {user?.id && o.id === `org_${user.id}` && (
-                              <span className="text-muted-foreground/80">{t.chrome.sidebar.personal}</span>
+                              <span className="text-muted-foreground/80">
+                                {t.chrome.sidebar.personal}
+                              </span>
                             )}
                             {orgRoles[o.id] && (
-                              <span className="capitalize text-muted-foreground/80">{orgRoles[o.id]}</span>
+                              <span className="capitalize text-muted-foreground/80">
+                                {orgRoles[o.id]}
+                              </span>
                             )}
                           </p>
                         </div>
                         {isCurrent && !isSwitching && (
-                          <Check className="size-4 shrink-0 text-primary" />
+                          <UiIcon name="check" className="size-4 shrink-0 text-primary" />
                         )}
                         {isSwitching && (
-                          <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
+                          <UiIcon name="spinner" className="size-4 shrink-0 animate-spin text-muted-foreground" />
                         )}
                       </button>
                     );
@@ -547,7 +563,9 @@ export function Sidebar() {
                       {cloudBadge?.email && (
                         <p
                           className="truncate text-[10px] leading-tight text-muted-foreground/70"
-                          title={interpolate(t.chrome.sidebar.linkedToCloud, { email: cloudBadge.email })}
+                          title={interpolate(t.chrome.sidebar.linkedToCloud, {
+                            email: cloudBadge.email,
+                          })}
                         >
                           {interpolate(t.chrome.sidebar.cloudLabel, { email: cloudBadge.email })}
                         </p>
@@ -561,9 +579,9 @@ export function Sidebar() {
                     className="mt-1 flex w-full items-center gap-2 rounded-xl px-2 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground disabled:opacity-50"
                   >
                     {loggingOut ? (
-                      <Loader2 className="size-4 animate-spin" />
+                      <UiIcon name="spinner" className="size-4 animate-spin" />
                     ) : (
-                      <LogOut className="size-4" />
+                      <UiIcon name="logout" className="size-4" />
                     )}
                     {isDesktop ? t.chrome.sidebar.backToSetup : t.dashboard.user.logout}
                   </button>
@@ -577,8 +595,9 @@ export function Sidebar() {
              the operator can still log out. */
           <>
             <div
-              className={`flex items-center rounded-xl px-2 py-2 ${collapsed ? "justify-center" : "gap-3"
-                }`}
+              className={`flex items-center rounded-xl px-2 py-2 ${
+                collapsed ? "justify-center" : "gap-3"
+              }`}
             >
               <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground/[0.08] text-sm font-semibold uppercase text-foreground">
                 {displayInitial}
@@ -596,7 +615,9 @@ export function Sidebar() {
                     {cloudBadge?.email && (
                       <p
                         className="truncate text-[11px] leading-tight text-muted-foreground/70"
-                        title={interpolate(t.chrome.sidebar.linkedToCloud, { email: cloudBadge.email })}
+                        title={interpolate(t.chrome.sidebar.linkedToCloud, {
+                          email: cloudBadge.email,
+                        })}
                       >
                         {interpolate(t.chrome.sidebar.cloudLabel, { email: cloudBadge.email })}
                       </p>
@@ -610,9 +631,9 @@ export function Sidebar() {
                     title={isDesktop ? t.chrome.sidebar.backToSetup : t.dashboard.user.logout}
                   >
                     {loggingOut ? (
-                      <Loader2 className="size-4 animate-spin" />
+                      <UiIcon name="spinner" className="size-4 animate-spin" />
                     ) : (
-                      <LogOut className="size-4" />
+                      <UiIcon name="logout" className="size-4" />
                     )}
                   </button>
                 </>
@@ -627,9 +648,9 @@ export function Sidebar() {
                 title={isDesktop ? t.chrome.sidebar.backToSetup : t.dashboard.user.logout}
               >
                 {loggingOut ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <UiIcon name="spinner" className="size-4 animate-spin" />
                 ) : (
-                  <LogOut className="size-4" />
+                  <UiIcon name="logout" className="size-4" />
                 )}
               </button>
             )}
@@ -647,9 +668,9 @@ export function Sidebar() {
             title={isDesktop ? t.chrome.sidebar.backToSetup : t.dashboard.user.logout}
           >
             {loggingOut ? (
-              <Loader2 className="size-4 animate-spin" />
+              <UiIcon name="spinner" className="size-4 animate-spin" />
             ) : (
-              <LogOut className="size-4" />
+              <UiIcon name="logout" className="size-4" />
             )}
           </button>
         )}
@@ -657,4 +678,3 @@ export function Sidebar() {
     </aside>
   );
 }
-

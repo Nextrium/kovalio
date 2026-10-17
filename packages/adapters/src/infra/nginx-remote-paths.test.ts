@@ -13,7 +13,7 @@
  *     sslStatus=provisioning / sslExpiresAt=null, which the renewal sweep skips
  *     — the cert quietly expired 90 days later.
  *   - the vhost was written to the SSH session's home directory as a file
- *     literally named `\var\lib\openship\edge\sites-enabled\<site>.conf`, so
+ *     literally named `\var\lib\kovalio\edge\sites-enabled\<site>.conf`, so
  *     nginx never saw it and the site didn't serve.
  */
 
@@ -35,7 +35,7 @@ type CommandExecutor = import("../types").CommandExecutor;
 type RootChecked = import("../system/privilege").RootChecked;
 
 const DOMAIN = "app.example.com";
-const SITES = "/var/lib/openship/edge/sites-enabled";
+const SITES = "/var/lib/kovalio/edge/sites-enabled";
 const LIVE = `/etc/letsencrypt/live/${DOMAIN}`;
 const PATHS = { ...OPENRESTY_DEFAULT_PATHS, sitesDir: SITES };
 
@@ -46,7 +46,7 @@ const PATHS = { ...OPENRESTY_DEFAULT_PATHS, sitesDir: SITES };
  * String concatenation sidesteps the mock entirely.
  */
 function mintCert(): { certPem: string; keyPem: string } {
-  const dir = mkdtempSync(`${tmpdir()}/openship-nginx-remote-paths-`);
+  const dir = mkdtempSync(`${tmpdir()}/kovalio-nginx-remote-paths-`);
   try {
     execFileSync(
       "openssl",
@@ -72,7 +72,9 @@ function mintCert(): { certPem: string; keyPem: string } {
 /**
  * In-memory edge. `exists`/`readFile` answer ONLY for the exact keys written, so a
  * backslash-joined lookup misses the same way it misses on a real Linux box.
- * Detection commands throw so reload() keeps the configured sitesDir.
+ * Detection commands throw so reload() keeps the configured sitesDir. The socket
+ * and procfs responses model the live bare-host master that registerRoute reloads;
+ * an empty fake edge is now correctly rejected rather than treated as reloaded.
  */
 function setup(opts: { certOnDisk?: boolean; certbotOutput?: string } = {}) {
   const files = new Map<string, string>();
@@ -88,6 +90,20 @@ function setup(opts: { certOnDisk?: boolean; certbotOutput?: string } = {}) {
     exec: async (command: string) => {
       if (/\s-V\b|command -v|which\s/.test(command)) throw new Error("no openresty in test");
       if (command.startsWith("certbot ")) return opts.certbotOutput ?? "Successfully received certificate.";
+      if (command.startsWith("ss -tlnp sport = :")) {
+        return 'LISTEN 0 511 0.0.0.0:80 0.0.0.0:* users:(("nginx",pid=321,fd=6))';
+      }
+      if (command === "ps -p 321 -o args= 2>/dev/null || true") {
+        return `nginx: master process ${PATHS.bin} -g daemon on;`;
+      }
+      if (command === "cat /proc/321/cgroup 2>/dev/null") {
+        return "0::/system.slice/kovalio-openresty.service";
+      }
+      if (command.includes("/proc/321/stat")) return "987";
+      if (command.startsWith("readlink -f ")) {
+        if (command.includes("/proc/321/exe") || command.includes(PATHS.bin)) return PATHS.bin;
+        if (command.includes(PATHS.confPath)) return PATHS.confPath;
+      }
       const mv = command.match(/^mv '([^']+)' '([^']+)'$/);
       if (mv) {
         const c = files.get(mv[1]);
@@ -107,7 +123,7 @@ function setup(opts: { certOnDisk?: boolean; certbotOutput?: string } = {}) {
   } as unknown as RootChecked;
 
   return {
-    nginx: new NginxProvider({ paths: PATHS, executor }),
+    nginx: new NginxProvider({ paths: PATHS, executor, containerEdge: true }),
     files,
     writes,
     conf: () => files.get(`${SITES}/app-example-com.conf`),

@@ -3,7 +3,7 @@
 /**
  * Who owns navigation on /emails, and where a section's heading is rendered.
  *
- * In Openship Mail the rail lists the ten sections, so the page renders exactly
+ * In Kovalio Mail the rail lists the ten sections, so the page renders exactly
  * ONE heading and it names the section you're on: the in-page tab bar hides (the
  * rail is the tab bar) and each tab's own <h2> steps aside in favour of the page
  * header. Otherwise every section stacked "Email Server" over "Domains" and the

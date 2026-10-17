@@ -2,7 +2,7 @@
   "available": true,
   "verified": true,
   "id": "mail",
-  "name": "Openship Mail",
+  "name": "Kovalio Mail",
   "description": "Your own mail on your own domain — SMTP/IMAP, mailboxes and webmail on one server. Or keep the mailboxes you already have and just run the webmail.",
   "kind": "flow",
   "logo": "mail",
@@ -17,5 +17,22 @@
   "management": {
     "kind": "custom",
     "href": "/emails"
+  },
+  "marketplace": {
+    "features": [
+      {
+        "title": "Your own domain",
+        "description": "Run SMTP and IMAP mailboxes under your domain."
+      },
+      {
+        "title": "Mailbox management",
+        "description": "Manage domains, accounts, and aliases in Kovalio."
+      },
+      {
+        "title": "Webmail",
+        "description": "Use a browser client alongside your email apps."
+      }
+    ],
+    "articleFile": "articles/mail.md"
   }
 }

@@ -1,5 +1,5 @@
 /**
- * `openship reset-admin-password` — recover the box login WITHOUT signing in.
+ * `kovalio reset-admin-password` — recover the box login WITHOUT signing in.
  *
  * The CLI owns the loopback internal token that the running service loaded at boot, so
  * it can hit the internal-token-gated /api/system/reset-admin-password on localhost —
@@ -11,6 +11,7 @@
  * `.env`), which is why this goes through internalFetch rather than naming a store:
  * naming the bare one made this command fail with "Unauthorized" on every compose box.
  */
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { Command } from "commander";
 import chalk from "chalk";
 import { intro, outro, password as passwordPrompt, isCancel, cancel, log } from "@clack/prompts";
@@ -24,7 +25,7 @@ export const resetAdminCommand = new Command("reset-admin-password")
   .option("--name <name>", "Also set the admin display name")
   .option("--password <password>", "New password (prompted if omitted)")
   .action(async (opts) => {
-    intro(chalk.cyan("Reset Openship admin password"));
+    intro(chalk.cyan("Reset Kovalio admin password"));
 
     let pw: string | undefined = opts.password;
     if (!pw) {
@@ -60,7 +61,7 @@ export const resetAdminCommand = new Command("reset-admin-password")
       body: JSON.stringify({ password: pw, email: opts.email, name: opts.name }),
     });
     if (call.kind === "unreachable") {
-      log.error(`Couldn't reach the Openship API on port ${port}. Is it running? (openship status)`);
+      log.error(`Couldn't reach the Kovalio API on port ${port}. Is it running? (kovalio status)`);
       log.info("If it's listening on another port, pass --port <n>.");
       process.exit(1);
     }
@@ -73,7 +74,7 @@ export const resetAdminCommand = new Command("reset-admin-password")
     }
 
     const res = call.res;
-    const data = (await res.json().catch(() => ({}))) as { ok?: boolean; email?: string; error?: string };
+    const data = (await res.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/commands/reset-admin"); return ({}); })) as { ok?: boolean; email?: string; error?: string };
     if (!res.ok || !data.ok) {
       // tokenRejected means every token this box holds was refused by internalAuth —
       // say which situation that is instead of echoing the API's bare "Unauthorized".

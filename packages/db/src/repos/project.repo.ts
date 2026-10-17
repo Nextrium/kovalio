@@ -1,6 +1,7 @@
-import { eq, and, isNull, isNotNull, inArray, desc, sql, type SQL } from "drizzle-orm";
-import { generateId } from "@repo/core";
-import type { Database } from "../client";
+import { eq, and, or, isNull, isNotNull, inArray, desc, sql, type SQL } from "drizzle-orm";
+import { generateId, ForbiddenError, UnauthorizedError } from "@repo/core";
+import type { Database, DatabaseTransaction } from "../connection";
+import { createConfigurationSecrets, type ConfigurationEncryption } from "../configuration-secrets";
 import { project, projectGroup, envVar, deployment, service } from "../schema";
 import { member } from "../schema/organization";
 // Cloning a project writes its group and service rows in the same transaction, so this repo
@@ -8,6 +9,11 @@ import { member } from "../schema/organization";
 // rather than re-derived here, so there is one definition of each row shape.
 import type { NewProjectGroup } from "./project-group.repo";
 import type { NewService } from "./service.repo";
+import { personalAccessTokenGrant } from "../schema/personal-access-token-grant";
+import { personalAccessToken } from "../schema/personal-access-token";
+import { assertCloudWorkspacePlacement } from "./cloud-workspace.repo";
+import { projectWorkspaceScope } from "./workspace-scope";
+import { assertProjectConfigurationWritable, withProjectConfigurationWrite } from "./project-work-admission";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -45,9 +51,50 @@ function envVarScope(projectId: string, environment?: string, serviceId?: string
  */
 const boundServerId = sql<string>`coalesce(${project.serverId}, ${deployment.meta} ->> 'serverId')`;
 
+/**
+ * Transaction-compatible primitive for moving every existing GitHub source row
+ * in one workspace to the installation currently claimed for its owner.
+ * Exported so the installation-state consume can include this in the SAME DB
+ * transaction as its upsert; createProjectRepo wraps it for ordinary callers.
+ */
+export async function rebindGitHubInstallationRows(
+  db: DatabaseTransaction,
+  organizationId: string,
+  owner: string,
+  installationId: number,
+): Promise<{ projects: number; groups: number }> {
+  const ownerKey = owner.toLowerCase();
+  const updatedAt = new Date();
+  const projectPredicate = and(
+    eq(project.organizationId, organizationId), eq(project.gitProvider, "github"),
+    sql`lower(${project.gitOwner}) = ${ownerKey}`, isNull(project.deletedAt),
+  )!;
+  const groupPredicate = and(
+    eq(projectGroup.organizationId, organizationId), eq(projectGroup.gitProvider, "github"),
+    sql`lower(${projectGroup.gitOwner}) = ${ownerKey}`, isNull(projectGroup.deletedAt),
+  )!;
+  await assertProjectConfigurationWritable(db, or(projectPredicate,
+    inArray(project.groupId, db.select({ id: projectGroup.id }).from(projectGroup).where(groupPredicate)))!);
+  const projects = await db
+    .update(project)
+    // The App's global webhook is now authoritative. Clearing legacy
+    // per-repository hook metadata prevents the same push from being accepted a
+    // second time through an old PAT/OAuth hook that may still exist at GitHub.
+    .set({ installationId, webhookId: null, webhookSecret: null, updatedAt })
+    .where(projectPredicate)
+    .returning();
+  const groups = await db
+    .update(projectGroup)
+    .set({ installationId, updatedAt })
+    .where(groupPredicate)
+    .returning();
+  return { projects: projects.length, groups: groups.length };
+}
+
 // ─── Repository ──────────────────────────────────────────────────────────────
 
-export function createProjectRepo(db: Database) {
+export function createProjectRepo(db: Database, encryption: ConfigurationEncryption) {
+  const codec = createConfigurationSecrets(encryption);
   return {
     // ── Projects ───────────────────────────────────────────────────────
 
@@ -68,7 +115,8 @@ export function createProjectRepo(db: Database) {
      */
     async listNamesByIds(ids: string[]): Promise<{ id: string; name: string }[]> {
       if (ids.length === 0) return [];
-      return db.select({ id: project.id, name: project.name })
+      return db
+        .select({ id: project.id, name: project.name })
         .from(project)
         .where(inArray(project.id, ids));
     },
@@ -114,11 +162,12 @@ export function createProjectRepo(db: Database) {
      * is reused while a differently-named install still creates a new instance
      * (multiple apps of the same type). Omit `slug` to match any draft of the type.
      */
-    async findDraftByAppTemplate(organizationId: string, appTemplateId: string, slug?: string) {
+    async findDraftByAppTemplate(organizationId: string, appTemplateId: string, slug?: string, workspaceId?: string | null) {
       return db.query.project.findFirst({
         where: and(
           eq(project.organizationId, organizationId),
           eq(project.appTemplateId, appTemplateId),
+          projectWorkspaceScope(workspaceId),
           isNull(project.activeDeploymentId),
           isNull(project.deletedAt),
           eq(project.environmentSlug, "production"),
@@ -238,20 +287,28 @@ export function createProjectRepo(db: Database) {
       return { rows, total: Number(total), page, perPage };
     },
 
+    /** Catalog apps on a particular server, scoped before returning any rows. */
+    async listAppsOnServer(organizationId: string, serverId: string, appTemplateId: string) {
+      return db.query.project.findMany({
+        where: and(eq(project.organizationId, organizationId), eq(project.serverId, serverId),
+          eq(project.appTemplateId, appTemplateId), eq(project.isApp, true),
+          isNull(project.deletedAt)),
+        orderBy: [desc(project.createdAt)],
+      });
+    },
+
     /**
      * Project counts for the dashboard home — total and with-an-active-
      * deployment, in one aggregate query instead of listing every row.
      */
-    async countByOrganization(
-      organizationId: string,
-    ): Promise<{ total: number; active: number }> {
+    async countByOrganization(organizationId: string, projectIds?: readonly string[]): Promise<{ total: number; active: number }> {
       const [row] = await db
         .select({
           total: sql<number>`count(*)::int`,
           active: sql<number>`count(*) filter (where ${project.activeDeploymentId} is not null)::int`,
         })
         .from(project)
-        .where(and(eq(project.organizationId, organizationId), isNull(project.deletedAt)));
+        .where(and(eq(project.organizationId, organizationId), isNull(project.deletedAt), projectIds ? inArray(project.id, [...projectIds]) : undefined));
 
       return { total: Number(row?.total ?? 0), active: Number(row?.active ?? 0) };
     },
@@ -314,15 +371,51 @@ export function createProjectRepo(db: Database) {
       };
     },
 
-    async create(data: Omit<NewProject, "id"> & { id?: string }) {
-      // `id` is normally generated, but re-import (recovering an Openship project
-      // from a server's `.openship/manifest.json`) passes the ORIGINAL id so the
-      // still-running containers' `openship.project` labels re-attach immediately.
+    async create(data: Omit<NewProject, "id"> & { id?: string }, access?: { tokenId: string }) {
+      // `id` is normally generated, but re-import (recovering an Kovalio project
+      // from a server's `.kovalio/manifest.json`) passes the ORIGINAL id so the
+      // still-running containers' `kovalio.project` labels re-attach immediately.
       const { id: providedId, ...rest } = data;
       const id = providedId ?? generateId("proj");
       const row = { id, ...rest };
-      await db.insert(project).values(row);
-      return { ...row, createdAt: new Date(), updatedAt: new Date() } as Project;
+      let inserted: Project;
+      if (access || row.workspaceId || row.serverId) {
+        // A create-only credential must acquire access in the same commit as
+        // its new project. A revoked/missing token rolls back the project too.
+        await db.transaction(async tx => {
+          await assertCloudWorkspacePlacement(tx, row);
+          if (access) {
+          const [token] = await tx.select().from(personalAccessToken)
+            .where(eq(personalAccessToken.id, access.tokenId)).for("update");
+          if (!token || token.revokedAt || (token.expiresAt && token.expiresAt.getTime() <= Date.now()))
+            throw new UnauthorizedError("Project creation credential is no longer valid");
+          if (token.readOnly || (token.organizationId && token.organizationId !== row.organizationId))
+            throw new ForbiddenError("Project creation credential cannot write to this organization");
+          }
+          [inserted] = await tx.insert(project).values(row).returning();
+          if (access) {
+          await tx.insert(personalAccessTokenGrant).values({
+            id: generateId("patgrant"), tokenId: access.tokenId,
+            resourceType: "project", resourceId: id,
+            permissionsJson: JSON.stringify(["read", "write", "admin"]),
+          });
+          }
+        });
+      } else {
+        [inserted] = await db.insert(project).values(row).returning();
+      }
+      return inserted!;
+    },
+
+    async listByWorkspace(workspaceId: string, organizationId: string) {
+      return db.select().from(project).where(and(eq(project.workspaceId, workspaceId), eq(project.organizationId, organizationId), isNull(project.deletedAt))).orderBy(project.createdAt, project.id);
+    },
+
+    async countGroupsForOrganization(organizationId: string, workspaceId?: string | null) {
+      const [row] = await db.select({ count: sql<number>`count(distinct ${project.groupId})::int` }).from(project).where(and(
+        eq(project.organizationId, organizationId), isNull(project.deletedAt), projectWorkspaceScope(workspaceId),
+      ));
+      return row?.count ?? 0;
     },
 
     /**
@@ -364,16 +457,18 @@ export function createProjectRepo(db: Database) {
       for (const svc of input.services) serviceIdBySourceId[svc.sourceId] = generateId("svc");
 
       const projectRow = { id: projectId, groupId, ...input.project };
+      let inserted: Project;
 
       await db.transaction(async (tx) => {
+        await assertCloudWorkspacePlacement(tx, projectRow);
         await tx.insert(projectGroup).values({ id: groupId, ...input.group });
-        await tx.insert(project).values(projectRow);
+        [inserted] = await tx.insert(project).values(projectRow).returning();
         if (input.services.length > 0) {
           await tx.insert(service).values(
             input.services.map((svc) => ({
               id: serviceIdBySourceId[svc.sourceId]!,
               projectId,
-              ...svc.row,
+              ...codec.sealService(svc.row),
             })),
           );
         }
@@ -410,16 +505,19 @@ export function createProjectRepo(db: Database) {
       });
 
       return {
-        project: { ...projectRow, createdAt: new Date(), updatedAt: new Date() } as Project,
+        project: inserted!,
         serviceIdBySourceId,
       };
     },
 
     async update(id: string, data: Partial<NewProject>) {
-      await db
-        .update(project)
-        .set({ ...data, updatedAt: new Date() })
-        .where(eq(project.id, id));
+      await withProjectConfigurationWrite(db, eq(project.id, id), async (tx) => {
+        if (data.workspaceId !== undefined) {
+          const current = await tx.query.project.findFirst({ where: eq(project.id, id) });
+          if (current && data.workspaceId !== current.workspaceId) throw new Error("Changing a project's Cloud workspace requires an explicit migration");
+        }
+        await tx.update(project).set({ ...data, updatedAt: new Date() }).where(eq(project.id, id));
+      });
     },
 
     /**
@@ -441,10 +539,51 @@ export function createProjectRepo(db: Database) {
     },
 
     async updateByApp(groupId: string, data: Partial<NewProject>) {
-      await db
+      const predicate = and(eq(project.groupId, groupId), isNull(project.deletedAt))!;
+      await withProjectConfigurationWrite(db, predicate, async (tx) => tx
         .update(project)
         .set({ ...data, updatedAt: new Date() })
-        .where(and(eq(project.groupId, groupId), isNull(project.deletedAt)));
+        .where(predicate));
+    },
+
+    /** Update a source identity shared by every environment and its project_app
+     * row in one transaction. Source transitions span both tables; exposing one
+     * repository operation prevents a failed second write from leaving the
+     * group and its environments classified differently. */
+    async updateSourceByApp(
+      groupId: string,
+      projectData: Partial<NewProject>,
+      groupData: Partial<NewProjectGroup>,
+    ) {
+      const updatedAt = new Date();
+      await db.transaction(async (tx) => {
+        await assertProjectConfigurationWritable(tx, and(eq(project.groupId, groupId), isNull(project.deletedAt))!);
+        await tx
+          .update(project)
+          .set({ ...projectData, updatedAt })
+          .where(and(eq(project.groupId, groupId), isNull(project.deletedAt)));
+        await tx
+          .update(projectGroup)
+          .set({ ...groupData, updatedAt })
+          .where(and(eq(projectGroup.id, groupId), isNull(projectGroup.deletedAt)));
+      });
+    },
+
+    /**
+     * Rebind every existing GitHub project for one owner inside one workspace
+     * after an App install/reinstall. The installation id is part of webhook
+     * tenant isolation, so leaving legacy project rows on the previous/null id
+     * would make valid App pushes get dropped. Projects and their shared
+     * project_app source rows move together in one transaction.
+     */
+    async rebindGitHubInstallation(
+      organizationId: string,
+      owner: string,
+      installationId: number,
+    ): Promise<{ projects: number; groups: number }> {
+      return db.transaction((tx) =>
+        rebindGitHubInstallationRows(tx, organizationId, owner, installationId),
+      );
     },
 
     /** Update favicon cache metadata without touching the user-visible updatedAt field. */
@@ -468,10 +607,10 @@ export function createProjectRepo(db: Database) {
 
     /** Soft-delete a project */
     async softDelete(id: string) {
-      await db
+      await withProjectConfigurationWrite(db, eq(project.id, id), async (tx) => tx
         .update(project)
         .set({ deletedAt: new Date(), updatedAt: new Date() })
-        .where(eq(project.id, id));
+        .where(eq(project.id, id)));
     },
 
     /**
@@ -486,47 +625,65 @@ export function createProjectRepo(db: Database) {
     },
 
     /**
-     * Atomically mark the project as "teardown in progress". Returns true
-     * when this caller claimed the flag, false if another teardown is
-     * already running (and the caller should reject with a 409). Uses a
-     * conditional UPDATE so the read+write is a single row-locked op.
+     * Mark a live project as "teardown in progress".
+     *
+     * The caller owns the cross-process project-runtime advisory lock. That
+     * lock—not this crash-prone boolean—is the concurrency owner, so an old
+     * `true` left by a dead process is safely reclaimed here in Cloud and
+     * self-hosted modes alike. A protected promotion also fences configuration
+     * writes and requires a receipt; false means its live source is unavailable.
      */
-    async claimDeletion(id: string): Promise<boolean> {
+    async claimDeletion(id: string, opts?: { protectConfiguration?: boolean }): Promise<boolean> {
       const rows = await db
         .update(project)
-        .set({ deletionInProgress: true, updatedAt: new Date() })
+        .set({
+          deletionInProgress: true,
+          updatedAt: new Date(),
+          ...(opts?.protectConfiguration && {
+            cloudPromotion: sql`jsonb_set(${project.cloudPromotion}, '{cleanupInProgress}', 'true'::jsonb)`,
+          }),
+        })
+        .where(and(eq(project.id, id), isNull(project.deletedAt), opts?.protectConfiguration ? isNotNull(project.cloudPromotion) : undefined))
+        .returning();
+      return rows.length > 0;
+    },
+
+    /** Release a transient fence after preflight rejection or receipt-managed
+     * promotion cleanup. Ordinary partial deletion stays fenced. */
+    async clearDeletionInProgress(id: string) {
+      await db
+        .update(project)
+        .set({
+          deletionInProgress: false,
+          lifecycleOperation: null,
+          cloudPromotion: sql`${project.cloudPromotion} - 'cleanupInProgress'`,
+          updatedAt: new Date(),
+        })
+        .where(eq(project.id, id));
+    },
+
+    /** Workers have quiesced. Fence configuration before reading cleanup manifests. */
+    async beginDeletionCleanup(id: string): Promise<boolean> {
+      const rows = await db
+        .update(project)
+        .set({ lifecycleOperation: { kind: "delete", status: "running" }, updatedAt: new Date() })
         .where(
-          and(eq(project.id, id), eq(project.deletionInProgress, false), isNull(project.deletedAt)),
+          and(eq(project.id, id), eq(project.deletionInProgress, true), isNull(project.deletedAt)),
         )
         .returning();
       return rows.length > 0;
     },
 
-    /** Release the deletion-in-progress flag — call on every failure path so
-     *  the row isn't stuck refusing all writes after a partial teardown. */
-    async clearDeletionInProgress(id: string) {
+    /** Caller holds the project runtime lock. A retry preserves this operation's fence. */
+    async markDeletionFailed(id: string, error: string) {
       await db
         .update(project)
-        .set({ deletionInProgress: false, updatedAt: new Date() })
-        .where(eq(project.id, id));
-    },
-
-    /**
-     * Boot-time sweep of stuck deletion locks. A `deletionInProgress=true`
-     * flag can only be left behind by a teardown that died mid-flight — no
-     * teardown survives a process restart — so at startup every such flag is
-     * necessarily stale and must be cleared, otherwise the project refuses all
-     * future deletes with "Another delete is already running" forever. Mirrors
-     * backupRun.sweepStaleRuns / backupRestore.sweepStaleRestores. Returns the
-     * number of locks cleared.
-     */
-    async clearStaleDeletions(): Promise<number> {
-      const rows = await db
-        .update(project)
-        .set({ deletionInProgress: false, updatedAt: new Date() })
-        .where(eq(project.deletionInProgress, true))
-        .returning();
-      return rows.length;
+        .set({
+          deletionInProgress: true,
+          lifecycleOperation: { kind: "delete", status: "failed", error },
+          updatedAt: new Date(),
+        })
+        .where(and(eq(project.id, id), isNull(project.deletedAt)));
     },
 
     /**
@@ -604,52 +761,20 @@ export function createProjectRepo(db: Database) {
      * that isn't a release going live.
      */
     async setActiveDeployment(projectId: string, deploymentId: string | null) {
-      await db
+      await withProjectConfigurationWrite(db, eq(project.id, projectId), async (tx) => tx
         .update(project)
         .set({
           activeDeploymentId: deploymentId,
           ...(deploymentId ? { disabledAt: null } : {}),
           updatedAt: new Date(),
         })
-        .where(eq(project.id, projectId));
-    },
-
-    /**
-     * Bind a project to its Openship Cloud workspace. The unique
-     * partial index on `(cloud_workspace_id) WHERE NOT NULL` enforces
-     * one-project-per-workspace at the DB layer — a unique violation
-     * here means another project row already claims this workspace,
-     * which is a real drift bug the caller must surface.
-     *
-     * `cloudWorkspaceId IS NOT NULL` is the canonical "this is a
-     * cloud project" test downstream; no separate deployTarget column.
-     */
-    async setCloudWorkspaceId(projectId: string, cloudWorkspaceId: string) {
-      await db
-        .update(project)
-        .set({
-          cloudWorkspaceId,
-          updatedAt: new Date(),
-        })
-        .where(eq(project.id, projectId));
-    },
-
-    /**
-     * Clear the cloud workspace binding (detach). Leaves deployTarget
-     * untouched — the caller decides whether to demote to self-hosted
-     * or keep the project as "cloud but unbound" pending a fresh deploy.
-     */
-    async clearCloudWorkspaceId(projectId: string) {
-      await db
-        .update(project)
-        .set({ cloudWorkspaceId: null, updatedAt: new Date() })
-        .where(eq(project.id, projectId));
+        .where(eq(project.id, projectId)));
     },
 
     /**
      * List every cloud-bound project in an org. Used by the drift
      * endpoint to diff against Oblien's `workspaces.list`. A project
-     * is "cloud-bound" iff it has a non-null cloudWorkspaceId — that
+     * is "cloud-bound" iff it has a non-null workspaceId — that
      * column is the single source of truth, no separate deployTarget.
      *
      * Returns the minimal shape the diff needs — id, name, slug, and
@@ -662,13 +787,13 @@ export function createProjectRepo(db: Database) {
           id: project.id,
           name: project.name,
           slug: project.slug,
-          cloudWorkspaceId: project.cloudWorkspaceId,
+          workspaceId: project.workspaceId,
         })
         .from(project)
         .where(
           and(
             eq(project.organizationId, organizationId),
-            sql`${project.cloudWorkspaceId} IS NOT NULL`,
+            sql`${project.workspaceId} IS NOT NULL`,
             isNull(project.deletedAt),
           ),
         );
@@ -690,16 +815,18 @@ export function createProjectRepo(db: Database) {
     async setEnvVar(data: Omit<NewEnvVar, "id">) {
       const id = generateId("env");
       const row = { id, ...data };
-      await db.insert(envVar).values(row);
+      await withProjectConfigurationWrite(db, eq(project.id, data.projectId), async (tx) => tx.insert(envVar).values(row));
       return row;
     },
 
     async updateEnvVar(id: string, value: string) {
-      await db.update(envVar).set({ value, updatedAt: new Date() }).where(eq(envVar.id, id));
+      const predicate = inArray(project.id, db.select({ id: envVar.projectId }).from(envVar).where(eq(envVar.id, id)));
+      await withProjectConfigurationWrite(db, predicate, async (tx) => tx.update(envVar).set({ value, updatedAt: new Date() }).where(eq(envVar.id, id)));
     },
 
     async deleteEnvVar(id: string) {
-      await db.delete(envVar).where(eq(envVar.id, id));
+      const predicate = inArray(project.id, db.select({ id: envVar.projectId }).from(envVar).where(eq(envVar.id, id)));
+      await withProjectConfigurationWrite(db, predicate, async (tx) => tx.delete(envVar).where(eq(envVar.id, id)));
     },
 
     /**
@@ -716,6 +843,7 @@ export function createProjectRepo(db: Database) {
       serviceId?: string | null,
     ) {
       await db.transaction(async (tx) => {
+        await assertProjectConfigurationWritable(tx, eq(project.id, projectId));
         await tx
           .delete(envVar)
           .where(and(...envVarScope(projectId, environment, serviceId ?? null)));
@@ -754,6 +882,7 @@ export function createProjectRepo(db: Database) {
       if (affectedKeys.length === 0) return;
 
       await db.transaction(async (tx) => {
+        await assertProjectConfigurationWritable(tx, eq(project.id, projectId));
         await tx
           .delete(envVar)
           .where(

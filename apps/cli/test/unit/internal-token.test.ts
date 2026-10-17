@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 /**
  * Which internal token the CLI authenticates a running API with.
  *
- * `openship reset-admin-password` failed with "Reset failed: Unauthorized" on EVERY
+ * `kovalio reset-admin-password` failed with "Reset failed: Unauthorized" on EVERY
  * compose install, and the reason was not a sync bug — it called the MINTING helper, so
  * on a box whose token lives in `compose/.env` it generated a brand-new random token,
  * sent that, and could only ever be refused. The api container refuses it outright:
@@ -13,7 +13,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
  * So these cases pin the two halves of the fix:
  *   · readers RESOLVE from whichever store the running API was booted with, in evidence
  *     order, and never mint (a token nothing is running with is a guaranteed 401);
- *   · a store that exists but won't open — the root-owned 0600 `.env` a `sudo openship
+ *   · a store that exists but won't open — the root-owned 0600 `.env` a `sudo kovalio
  *     up` leaves behind — is a PERMISSIONS problem with its own message, not an
  *     authorization failure.
  */
@@ -57,7 +57,7 @@ function composeInstall(token: string | null): void {
   h.files.set(COMPOSE_FILE, "services: {}\n");
   h.files.set(
     COMPOSE_ENV_FILE,
-    ["COMPOSE_PROJECT_NAME=openship", ...(token ? [`INTERNAL_TOKEN=${token}`] : []), "API_PORT=4000"].join("\n"),
+    ["COMPOSE_PROJECT_NAME=kovalio", ...(token ? [`INTERNAL_TOKEN=${token}`] : []), "API_PORT=4000"].join("\n"),
   );
 }
 
@@ -123,7 +123,7 @@ describe("internal token resolution", () => {
   it("names the compose .env when the stack exists but the token key is gone", () => {
     composeInstall(null);
     expect(resolveInternalToken()).toBeNull();
-    expect(internalTokenProblem()).toMatch(/openship up/);
+    expect(internalTokenProblem()).toMatch(/kovalio up/);
   });
 
   it("resolves to null — never a fresh token — on a box with no install", () => {

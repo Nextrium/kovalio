@@ -1,3 +1,4 @@
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { LOOPBACK_HOSTNAMES } from "@repo/core";
 
 /**
@@ -22,7 +23,7 @@ export type ZeroAuthDecision =
 /** A bounce back to /login this recent is the server refusing, not a session that aged out. */
 const BOUNCE_WINDOW_MS = 15_000;
 
-const ATTEMPT_KEY = "openship.zeroAuthAttemptedAt";
+const ATTEMPT_KEY = "kovalio.zeroAuthAttemptedAt";
 
 function isLoopbackOrigin(origin: string): boolean {
   try {
@@ -48,7 +49,7 @@ export function resolveZeroAuthLogin(input: {
   if (attemptedAt !== undefined && now - attemptedAt >= 0 && now - attemptedAt < BOUNCE_WINDOW_MS) {
     return { action: "explain", reason: "refused" };
   }
-  return { action: "redirect", url: `${apiBaseUrl.replace(/\/+$/, "")}/auth/desktop-login` };
+  return { action: "redirect", url: `${apiBaseUrl.replace(/(?<!\/)\/+$/, "")}/auth/desktop-login` };
 }
 
 /* sessionStorage is per-tab and unavailable in some privacy modes — a throw here
@@ -60,7 +61,8 @@ export function readZeroAuthAttempt(): number | undefined {
     if (!raw) return undefined;
     const at = Number(raw);
     return Number.isFinite(at) ? at : undefined;
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/lib/zero-auth");
     return undefined;
   }
 }
@@ -68,7 +70,8 @@ export function readZeroAuthAttempt(): number | undefined {
 export function markZeroAuthAttempt(now: number): void {
   try {
     window.sessionStorage.setItem(ATTEMPT_KEY, String(now));
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/lib/zero-auth");
     /* best-effort: without the mark we can still loop, which is the old behaviour */
   }
 }
@@ -76,7 +79,8 @@ export function markZeroAuthAttempt(now: number): void {
 export function clearZeroAuthAttempt(): void {
   try {
     window.sessionStorage.removeItem(ATTEMPT_KEY);
-  } catch {
+  } catch (diagnosticFailure) {
+    observeCaughtError(diagnosticFailure, "dashboard/lib/zero-auth");
     /* nothing to clear */
   }
 }

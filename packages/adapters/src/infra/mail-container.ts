@@ -1,7 +1,7 @@
 // ── Containerized mail engine ────────────────────────────────────────────────
 //
 // The mail engine (Postfix/Dovecot/Amavis/ClamAV/SpamAssassin/iRedAPD/fail2ban,
-// under s6) runs as a host-networked container beside `openship-edge`, with its
+// under s6) runs as a host-networked container beside `kovalio-edge`, with its
 // vmail database in a pinned `postgres:16-alpine` SIDECAR. This mirrors the edge's
 // container model (`openresty-lua.ts` EDGE_CONTAINER_MOUNTS / EDGE_HOST_PATHS):
 // raw `docker run` over the target executor, ALL mutable state on host bind mounts
@@ -16,11 +16,11 @@
 // host firewall from inside the container.
 
 /** The mail engine container, and its Postgres sidecar. */
-export const MAIL_CONTAINER = "openship-mail";
-export const MAIL_DB_CONTAINER = "openship-mail-db";
+export const MAIL_CONTAINER = "kovalio-mail";
+export const MAIL_DB_CONTAINER = "kovalio-mail-db";
 
-/** Root for mail state on the host. Siblings the edge's /var/lib/openship/edge. */
-export const MAIL_HOST_STATE_DIR = "/var/lib/openship/mail";
+/** Root for mail state on the host. Siblings the edge's /var/lib/kovalio/edge. */
+export const MAIL_HOST_STATE_DIR = "/var/lib/kovalio/mail";
 
 /**
  * The listening ports the engine binds on the host NIC. Used to open the inbound
@@ -91,9 +91,32 @@ export const MAIL_DB_CONTAINER_DATA_DIR = "/var/lib/postgresql/data";
 export const MAIL_DB_PGDATA = `${MAIL_DB_CONTAINER_DATA_DIR}/pgdata`;
 export const MAIL_DB_NAME = "vmail";
 export const MAIL_DB_USER = "vmail";
-/** Loopback only — the host-networked engine reaches it at 127.0.0.1:5432. */
+/** Loopback only — the host-networked engine reaches it at 127.0.0.1. */
 export const MAIL_DB_HOST_BIND = "127.0.0.1";
-export const MAIL_DB_PORT = 5432;
+export const MAIL_DB_DEFAULT_PORT = 5432;
+export const MAIL_DB_FALLBACK_PORT = 5433;
+export const MAIL_DB_PORT_RANGE_MAX = 5460;
+export const MAIL_DB_INTERNAL_PORT = 5432;
+
+/**
+ * Resolve the host port the mail database listens on.
+ * Reads `KOVALIO_MAIL_DB_PORT` at setup time. An invalid explicit setting must
+ * fail instead of silently connecting the mail engine to a different database.
+ */
+export function resolveMailDbPort(
+  raw: string | number | undefined = process.env.KOVALIO_MAIL_DB_PORT,
+): number {
+  if (raw === undefined || raw === "") return MAIL_DB_DEFAULT_PORT;
+  const value = String(raw).trim();
+  const n = Number(value);
+  if (!/^[0-9]+$/.test(value) || !Number.isInteger(n) || n < 1 || n > 65535) {
+    throw new Error("KOVALIO_MAIL_DB_PORT must be a decimal port between 1 and 65535.");
+  }
+  return n;
+}
+
+/** Legacy default constant; runtime host bindings use resolveMailDbPort(). */
+export const MAIL_DB_PORT = MAIL_DB_DEFAULT_PORT;
 
 /**
  * Host-side paths for the files the admin layer writes with `exec.writeFile`
@@ -109,6 +132,6 @@ export const MAIL_HOST_PATHS = {
   // relay hop must be `encrypt` so SASL credentials never cross a plaintext
   // connection, while direct-to-MX delivery for the un-relayed domains stays
   // opportunistic. A GLOBAL smtp_tls_security_level can't express both.
-  relayTlsPolicy: `${MAIL_HOST_STATE_DIR}/config/postfix/openship_tls_policy`,
+  relayTlsPolicy: `${MAIL_HOST_STATE_DIR}/config/postfix/kovalio_tls_policy`,
   amavisUserConf: `${MAIL_HOST_STATE_DIR}/config/amavis/50-user`,
 } as const;

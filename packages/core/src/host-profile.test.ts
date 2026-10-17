@@ -225,7 +225,7 @@ describe("assessHostSupport", () => {
   });
 
   it("distinguishes an OS it won't drive from one it couldn't read", () => {
-    // A BSD answers `uname -s` perfectly well; it is simply not a host Openship provisions.
+    // A BSD answers `uname -s` perfectly well; it is simply not a host Kovalio provisions.
     // Reporting that as "could not determine" sends its operator to debug our probe, which
     // is the same wrong turn the arch pair above exists to prevent.
     const bsd = assessHostSupport({ ...ok, os: "unknown", osRaw: "FreeBSD" });

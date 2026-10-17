@@ -15,7 +15,7 @@
  * speed (a warm `mysqldump | zstd` does hundreds of MB/s) and the sink drains at
  * network speed, so the difference accumulates in the destination PassThrough's
  * write queue until the process dies. That is
- * [#633](https://github.com/oblien/openship/issues/633) — a ~110 GB MySQL dump to
+ * [#633](https://github.com/Nextrium/kovalio/issues/633) — a ~110 GB MySQL dump to
  * SFTP, `RangeError: Out of memory` inside modem's demuxer at a reproducible ~64s,
  * which is exactly how long ~100 MB/s in against ~1.7 MB/s out takes to eat the
  * heap. The dump size was never the problem; the missing `false` was.
@@ -44,6 +44,7 @@
  * with a TTY the daemon sends raw bytes and there is nothing to demux.
  */
 
+import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import type { Readable, Writable } from "node:stream";
 
 /** Frame header: `[streamType, 0, 0, 0, uint32be payloadLength]`. */
@@ -240,7 +241,7 @@ export function demuxDockerStream(
 
   // A source that dies mid-artifact must not look like a clean end to the
   // consumer, which would record a truncated dump as a complete one.
-  src.on("error", (cause: Error) => fail(cause));
+  src.on("error", (cause: Error) => { observeCaughtError(cause, "adapters/runtime/docker-demux"); return fail(cause); });
 
   // Ending with an incomplete frame still buffered is a definitive truncation: the
   // daemon only ever writes whole frames, so a partial one at EOF means the stream
