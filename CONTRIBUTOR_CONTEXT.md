@@ -23,11 +23,11 @@ the names rebranded; see section 9 for what in them is not yet true for Kovalio.
 
 | Area | State |
 |---|---|
-| Upstream base on `main` | v0.9.2 (`480f17abf`) plus fork work |
-| Next sync | PR #10 brings v0.9.3 (`2e42298df`, 43 commits). It also carries a fix for the sync workflow and a fork patch for a ReDoS that v0.9.3 introduced; the other two new CodeQL alerts were false positives |
+| Upstream base on `main` | v0.9.3 (`2e42298df`) plus fork work |
+| Next sync | Sunday 00:00 UTC; it opens a PR into `develop` if upstream has new commits |
 | Releases | None yet. No desktop downloads, no `kovalio` npm package, no `ghcr.io/nextrium/kovalio-*` images |
 | Install domain, docs site | `get.kovalio.nextrium.org` doesn't resolve; `nextrium.org/docs` returns 404 |
-| CodeQL on `main` | 59 open alerts, all in categories not reviewed yet; 172 dismissed with reasons (see [docs/codeql-triage.md](docs/codeql-triage.md)) |
+| CodeQL on `main` | 58 open alerts, all in categories not reviewed yet; 172 dismissed with reasons (see [docs/codeql-triage.md](docs/codeql-triage.md)) |
 | Required checks on `main` | Fork guard, Typecheck, Test |
 
 ## 3. Ground rules
@@ -49,6 +49,9 @@ the names rebranded; see section 9 for what in them is not yet true for Kovalio.
 6. **Merge commits only.** The ruleset allows only "Create a merge commit" into `main`.
    Squash or rebase would cut the link to upstream history and make the next sync
    re-merge everything.
+7. **Pin `gh` to this repository.** This repo is a GitHub fork, so in a clone with an
+   `upstream` remote the `gh` CLI defaults to upstream's repository. Pass
+   `--repo Nextrium/kovalio` (or set `GH_REPO`) in any script that calls `gh`.
 
 ## 4. Branding: how the overlay works
 
@@ -147,7 +150,7 @@ meaning-preserving like branding, so it lives in the same pipeline.
 - **Triage record:** [docs/codeql-triage.md](docs/codeql-triage.md) records every CodeQL
   finding group: fixed, accepted, false positive, or not yet reviewed, with
   measurements. Dismissals in the Security tab point to it.
-- **Policy:** dismiss an alert only after reading the code. The 59 alerts still open on
+- **Policy:** dismiss an alert only after reading the code. The 58 alerts still open on
   `main` are unreviewed, not accepted.
 - **ReDoS fixes, two mechanisms:**
   - **Trailing-run regexes** (`/\/+$/`, `/^\/+|\/+$/g`, `/\.+$/`, `/-+$/` and similar)
@@ -166,10 +169,10 @@ meaning-preserving like branding, so it lives in the same pipeline.
 
 | Item | Notes |
 |---|---|
-| Sync PR #10 (v0.9.3) | Ready to review, now into `develop`. Bring it on to `main` before the next Sunday run: the `GH_REPO` fix and the `develop` default only take effect for the schedule once they're on `main`. |
+| First automatic sync PR | The next scheduled run is the first to open its own PR with the `GH_REPO` fix. If it fails, check the run log before touching the token. |
 | First release | Publishing a `v*.*.*` tag runs `docker-images.yml` and creates the images, desktop builds and CLI package the README already links to. |
 | README | Still upstream's content (section 9). |
-| Remaining CodeQL alerts | 59 unreviewed, mostly missing regex anchors and file/HTTP data flow. |
+| Remaining CodeQL alerts | 58 unreviewed, mostly missing regex anchors and file/HTTP data flow. |
 
 ## 9. Upstream content that isn't true for Kovalio yet
 
