@@ -33,4 +33,10 @@ test that proves it still holds after an upstream sync.
 | Brand overlay: Kovalio names, domains, `ghcr.io/nextrium` images, encoded sources | all files | `scripts/test/rebrand.test.mjs`, Fork guard branding check |
 | `wrapText` keeps backtick-quoted commands whole | `packages/core/src/utils.ts` | `packages/core/src/utils.fork.test.ts` |
 | Retired WordPress and Odoo recipes: accept the Kovalio-branded recipe hash in `replacesBuilds` | `packages/core/src/apps/catalog/{wordpress,odoo}.json`, `catalog.json` | `scripts/catalog-image-repair.fork.test.ts` |
+| ReDoS: trailing-run regexes (`/\/+$/`, `\|\/+$/`, `/\.+$/`, `/[ \t]+#+$/`) rewritten with a lookbehind, by the overlay (`hardenText`) | ~70 files | overlay `--check` in Fork guard, `packages/core/src/security.fork.test.ts` |
+| ReDoS: `render.yaml` `key:` parser | `packages/core/src/metadata/render.ts` | `packages/core/src/security.fork.test.ts` |
+| ReDoS: email checks bounded to 254 characters (public waitlist, ACME email) | `apps/dashboard/src/app/api/cloud-waitlist/route.ts`, `packages/adapters/src/infra/nginx.ts` | `apps/dashboard/src/security.fork.test.ts` |
+| Session ids use `randomUUID()` instead of 6 `Math.random` characters | `edge-consent-session.ts`, `setup-session.ts`, `server-container-session.ts` | `apps/api/src/security.fork.test.ts` |
+| DMARC XML entities decode once (no `&amp;lt;` → `<`) | `apps/api/src/modules/mail/dmarc/xml-parser.ts` | `apps/api/src/security.fork.test.ts` |
+| CLI installer passes paths to PowerShell and the app launch without shell re-parsing | `apps/cli/src/commands/install.ts` | manual (Windows path with `'`, `[`, `&`; see docs/codeql-triage.md) |
 | Dashboard `settings` untranslated baseline +1 (Arabic "Kovalio Cloud" label) | `apps/dashboard/src/i18n/i18n-parity.test.ts` | the parity test itself |
