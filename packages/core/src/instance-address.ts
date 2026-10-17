@@ -1,6 +1,6 @@
 import { instanceOrigin } from "./instance-handoff";
 
-export const DESKTOP_INSTANCE_SCHEME = "openship";
+export const DESKTOP_INSTANCE_SCHEME = "kovalio";
 
 export interface DesktopInstanceLinkRequest {
   id: number;

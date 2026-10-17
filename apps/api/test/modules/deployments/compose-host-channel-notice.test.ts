@@ -546,8 +546,8 @@ describe("compose deploy — host channel unavailable", () => {
     expect(f.activate).toHaveBeenCalledTimes(2);
   });
   it.each([
-    { image: "openship/app-api:bld_previous", rowImage: null, build: "./api" },
-    { image: "openship/app-api:bld_previous", rowImage: "ghcr.io/acme/api:latest", build: "./api" },
+    { image: "kovalio/app-api:bld_previous", rowImage: null, build: "./api" },
+    { image: "kovalio/app-api:bld_previous", rowImage: "ghcr.io/acme/api:latest", build: "./api" },
     { image: "my-private-app:local", rowImage: "my-private-app:local", build: null },
   ])("manual reuse of cached local image $image does not require a registry", async ({ image, rowImage, build }) => {
     h.localImageRefs.add(image);
@@ -977,12 +977,12 @@ describe("compose deploy — host channel unavailable", () => {
       listAllContainers: vi.fn(async () => [
         {
           id: "live-api-container",
-          names: ["openship-app-api"],
+          names: ["kovalio-app-api"],
           image: "ghcr.io/acme/api:old",
           imageId: "sha256:api",
           state: "running",
           status: "Up 2 hours",
-          labels: { "openship.project": "p1", "openship.service": "api" },
+          labels: { "kovalio.project": "p1", "kovalio.service": "api" },
           ports: [{ privatePort: 3000, publicPort: 20_008, type: "tcp", ip: "127.0.0.1" }],
           mounts: [],
           ip: "172.18.0.8",
@@ -1093,12 +1093,12 @@ describe("compose deploy — host channel unavailable", () => {
       listAllContainers: vi.fn(async () => [
         {
           id: "stopped-web-container",
-          names: ["openship-app-web"],
+          names: ["kovalio-app-web"],
           image: "ghcr.io/acme/web:old",
           imageId: "sha256:web",
           state: "exited",
           status: "Exited (1) 2 minutes ago",
-          labels: { "openship.project": "p1", "openship.service": "web" },
+          labels: { "kovalio.project": "p1", "kovalio.service": "web" },
           // Docker's list endpoint may omit published bindings after stop. The
           // inspect endpoint above retains HostConfig.PortBindings.
           ports: [],
@@ -1200,7 +1200,7 @@ describe("compose deploy — host channel unavailable", () => {
       imageId: "sha256:api",
       state: "running",
       status: "Up 2 hours",
-      labels: { "openship.project": "p1", "openship.service": "api" },
+      labels: { "kovalio.project": "p1", "kovalio.service": "api" },
       ports: [{ privatePort: 3000, publicPort: 20_008, type: "tcp", ip: "127.0.0.1" }],
       mounts: [],
       ip: "172.18.0.8",
@@ -1212,8 +1212,8 @@ describe("compose deploy — host channel unavailable", () => {
         capability === "containerInfo" ||
         capability === "hostContainerQuery",
       listAllContainers: vi.fn(async () => [
-        liveContainer("live-api-container-a", "openship-app-api-a"),
-        liveContainer("live-api-container-b", "openship-app-api-b"),
+        liveContainer("live-api-container-a", "kovalio-app-api-a"),
+        liveContainer("live-api-container-b", "kovalio-app-api-b"),
       ]),
     } as unknown as MultiServiceRuntimeAdapter;
     h.services = [
@@ -1514,7 +1514,7 @@ describe("compose deploy — host channel unavailable", () => {
   it.each(["webhook", "update"])("%s pre-pulls the selected image cohort before touching any running service", async (trigger) => {
     const { DockerRuntime } = await import("@repo/adapters");
     const runtime = await DockerRuntime.create({
-      dockerSocketPath: "/tmp/openship-test-absent.sock",
+      dockerSocketPath: "/tmp/kovalio-test-absent.sock",
     });
     const pullImage = vi
       .spyOn(runtime, "pullImage")
@@ -1641,7 +1641,7 @@ describe("compose deploy — host channel unavailable", () => {
   it("does not try to pull a static sub-app's host artifact as a Docker image", async () => {
     const { DockerRuntime } = await import("@repo/adapters");
     const runtime = await DockerRuntime.create({
-      dockerSocketPath: "/tmp/openship-test-absent.sock",
+      dockerSocketPath: "/tmp/kovalio-test-absent.sock",
     });
     const pullImage = vi
       .spyOn(runtime, "pullImage")
@@ -1687,8 +1687,8 @@ describe("compose deploy — host channel unavailable", () => {
         runtime,
         logger,
         {
-          builtImages: new Map([["svc-web", "/opt/openship/static/.builds/web"]]),
-          staticArtifactRefs: new Map([["svc-web", "/opt/openship/static/.builds/web"]]),
+          builtImages: new Map([["svc-web", "/opt/kovalio/static/.builds/web"]]),
+          staticArtifactRefs: new Map([["svc-web", "/opt/kovalio/static/.builds/web"]]),
           staticServiceIds: new Set(["svc-web"]),
           targetServiceIds: new Set(["svc-web", "svc-api"]),
           strictScope: true,
@@ -1705,14 +1705,14 @@ describe("compose deploy — host channel unavailable", () => {
   it("does not trust a failed prior row's matching host path as a static artifact", async () => {
     const { DockerRuntime } = await import("@repo/adapters");
     const runtime = await DockerRuntime.create({
-      dockerSocketPath: "/tmp/openship-test-absent.sock",
+      dockerSocketPath: "/tmp/kovalio-test-absent.sock",
     });
     const pullImage = vi
       .spyOn(runtime, "pullImage")
       .mockRejectedValueOnce(new Error("invalid image reference"));
     const deployServiceWorkload = vi.spyOn(runtime, "deployServiceWorkload");
     vi.spyOn(runtime, "ensureServiceGroup").mockResolvedValue({ id: "group-1" });
-    const attempted = "/opt/openship/static/releases/d-old-svc-host-path";
+    const attempted = "/opt/kovalio/static/releases/d-old-svc-host-path";
     h.services = [
       {
         id: "svc-host-path",
@@ -1764,12 +1764,12 @@ describe("compose deploy — host channel unavailable", () => {
   it("carries an untargeted static release into the new deployment without re-promoting it", async () => {
     const { DockerRuntime } = await import("@repo/adapters");
     const runtime = await DockerRuntime.create({
-      dockerSocketPath: "/tmp/openship-test-absent.sock",
+      dockerSocketPath: "/tmp/kovalio-test-absent.sock",
     });
     vi.spyOn(runtime, "ensureServiceGroup").mockResolvedValue({ id: "group-1" });
     vi.spyOn(runtime, "listAllContainers").mockResolvedValue([]);
     const deployServiceWorkload = vi.spyOn(runtime, "deployServiceWorkload");
-    const release = "/opt/openship/static/releases/d-old-svc-web";
+    const release = "/opt/kovalio/static/releases/d-old-svc-web";
     h.services = [
       {
         id: "svc-web",

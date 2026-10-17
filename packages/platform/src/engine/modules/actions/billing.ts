@@ -42,17 +42,17 @@ export class ActionCredits {
       const request: OblienCheckout = {
         namespace,
         kind: "topup",
-        idempotencyKey: `openship-actions:${id}`,
+        idempotencyKey: `kovalio-actions:${id}`,
         offer: {
           reference: `actions-deposit-v${PRICING.actions.version}-${amountCents}`,
-          name: "Openship Actions funds",
+          name: "Kovalio Actions funds",
           description: "Prepaid Actions budget. Separate from managed server subscriptions.",
           unitAmount: amountCents,
           currency: "usd",
           credits: amountCents,
         },
         metadata: {
-          product: "openship-actions",
+          product: "kovalio-actions",
           organizationId,
           orderId: id,
           priceVersion: String(PRICING.actions.version),

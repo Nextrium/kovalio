@@ -42,15 +42,15 @@ describe("changelog release details", () => {
     expect(extractChangelogSection(changelog, "v0.6.9")).toBe("- **Dashboard** — useful details");
     expect(extractChangelogSection(changelog, "0.6.7")).toBe("");
     expect(changelogMarkdownUrl("v0.6.9")).toBe(
-      "https://raw.githubusercontent.com/oblien/openship/v0.6.9/CHANGELOG.md",
+      "https://raw.githubusercontent.com/oblien/kovalio/v0.6.9/CHANGELOG.md",
     );
   });
 
   it("links to the website changelog and its version route, never GitHub", () => {
-    expect(changelogUrl()).toBe("https://openship.io/changelog");
-    expect(changelogUrl("v0.6.9")).toBe("https://openship.io/changelog/v0-6-9");
-    expect(changelogUrl("0.7.0-dev.1")).toBe("https://openship.io/changelog");
-    expect(changelogUrl("not-a-version")).toBe("https://openship.io/changelog");
+    expect(changelogUrl()).toBe("https://nextrium.org/changelog");
+    expect(changelogUrl("v0.6.9")).toBe("https://nextrium.org/changelog/v0-6-9");
+    expect(changelogUrl("0.7.0-dev.1")).toBe("https://nextrium.org/changelog");
+    expect(changelogUrl("not-a-version")).toBe("https://nextrium.org/changelog");
   });
 });
 

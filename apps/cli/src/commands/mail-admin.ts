@@ -168,7 +168,7 @@ export function registerMailAdminCommands(parent: Command): void {
 
   const cert = parent
     .command("certificate")
-    .description("Inspect and renew mail TLS through Openship's shared edge");
+    .description("Inspect and renew mail TLS through Kovalio's shared edge");
   for (const [name, method] of [
     ["get", "getCertificate"],
     ["check", "checkCertificate"],
@@ -229,7 +229,7 @@ export function registerMailAdminCommands(parent: Command): void {
 
   const backup = parent
     .command("backup")
-    .description("Manage mail backup policy; use openship backup for runs and restores");
+    .description("Manage mail backup policy; use kovalio backup for runs and restores");
   backup
     .command("get")
     .argument("<server>")
@@ -320,7 +320,7 @@ export function registerMailAdminCommands(parent: Command): void {
     .command("rotate-platform-mailbox")
     .argument("<server>")
     .option("-y, --yes", "Confirm rotation")
-    .description("Rotate Openship's private delivery credential; never prints its password")
+    .description("Rotate Kovalio's private delivery credential; never prints its password")
     .action((id: string, opts) =>
       printResult(async () => {
         await confirmOrExit(opts.yes, `Rotate the platform delivery credential on ${id}?`);
@@ -368,7 +368,7 @@ export function registerMailAdminCommands(parent: Command): void {
   jsonCommand(
     webmail
       .command("deploy")
-      .description("Deploy webmail and return IDs for openship deployment wait/logs"),
+      .description("Deploy webmail and return IDs for kovalio deployment wait/logs"),
     input.deployWebmail,
     async (value) => (await mail()).deployWebmail(value),
     "Deploy webmail (replaceLegacy=true explicitly replaces the legacy install)?",

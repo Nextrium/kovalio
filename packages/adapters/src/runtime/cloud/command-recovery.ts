@@ -16,7 +16,7 @@ export async function releaseTask(runtime: Runtime, id: string) {
 /** A task's wrapper can exit while its child still runs. Verify the process
  * group separately, including commands whose creation response was lost. */
 export async function stopCommand(runtime: Runtime, marker: string, taskId?: string) {
-  if (!/^openship-exec-[a-f0-9-]{36}:$/.test(marker)) throw new Error("Invalid command recovery identity");
+  if (!/^kovalio-exec-[a-f0-9-]{36}:$/.test(marker)) throw new Error("Invalid command recovery identity");
   try {
     const result = await runtime.exec.run(["python3", "-u", "-c", CLOUD_EXEC_CANCEL, marker], {
       execMode: "direct", timeoutSeconds: 15, keepLogs: false,

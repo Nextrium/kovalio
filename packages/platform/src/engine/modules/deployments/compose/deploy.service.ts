@@ -2085,7 +2085,7 @@ async function deployComposeServicesUnlocked(
     await withGeneratedConfigWriter(service, async (writer) => {
       for (const [index, file] of files.entries()) {
         throwIfDeploymentCancelled(opts?.signal);
-        const probePath = `${file.hostPath}.openship-preflight-${dep.id.replace(/[^a-zA-Z0-9._-]/g, "_")}-${index}`;
+        const probePath = `${file.hostPath}.kovalio-preflight-${dep.id.replace(/[^a-zA-Z0-9._-]/g, "_")}-${index}`;
         try {
           // Exercise the same write + same-filesystem atomic rename sequence as
           // activation. A successful plain write is insufficient evidence when
@@ -2198,7 +2198,7 @@ async function deployComposeServicesUnlocked(
             logger.log(
               `Couldn't read live port occupancy on the target, so ${allocation.port} for ` +
                 `${service.name} avoids database-pinned ports and ports this deploy already took. ` +
-                `If publishing it fails as "already allocated", check that Openship can reach ` +
+                `If publishing it fails as "already allocated", check that Kovalio can reach ` +
                 `this host (Servers → this box).\n`,
               "warn",
             );
@@ -3438,7 +3438,7 @@ async function deployComposeServicesUnlocked(
         // Sync the managed edge proxy for EACH free .opsh.io route (a multi-port
         // service has several). Best-effort: the container is already running and
         // any custom domain is routed locally; the edge proxy only wires up the
-        // free URL via Openship Cloud, so a failure here (403, slug taken,
+        // free URL via Kovalio Cloud, so a failure here (403, slug taken,
         // unreachable) must not flip a healthy service to "failed".
         const managedRoutes = proxyRoutes.filter((r) => r.isCloud && r.managedSubdomain);
         if (routeContext?.usesManagedRouting && managedRoutes.length > 0) {
@@ -3686,7 +3686,7 @@ async function deployComposeServicesUnlocked(
 
   // ── Cross-project service links (internal / shared-network mode) ────────────
   // Attach this consumer's containers to each internally-linked source app's
-  // `openship-<slug>` network so injected internal hosts resolve (see the shared
+  // `kovalio-<slug>` network so injected internal hosts resolve (see the shared
   // helper). Service links require successful networking before stabilization.
   await attachLinkedNetworks(project.id, runtime, (m, level) => logger.log(`${m}\n`, level), dep.id);
 

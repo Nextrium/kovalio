@@ -5,7 +5,7 @@ import type {
   RoutingConfig,
   RouteRuleSpec,
   ProxySettings,
-  OpenshipReadiness,
+  KovalioReadiness,
   StackRole,
   WorkloadType,
   DeploymentHistoryQuery,
@@ -167,7 +167,7 @@ export interface ScanProjectResponse {
   port: PrepareProjectResponse["port"];
   services?: PrepareComposeService[];
   rootEnv?: PrepareProjectResponse["rootEnv"];
-  openshipEnvKeys?: PrepareProjectResponse["openshipEnvKeys"];
+  kovalioEnvKeys?: PrepareProjectResponse["kovalioEnvKeys"];
   configDiagnostics?: PrepareProjectResponse["configDiagnostics"];
 }
 
@@ -328,7 +328,7 @@ export const projectsApi = {
      * Deploy-time readiness gate. Omitted/null = OFF (the default) — the deploy
      * does no post-start waiting. Opaque passthrough to the project column.
      */
-    readiness?: OpenshipReadiness | null;
+    readiness?: KovalioReadiness | null;
     /** Ordered commands required before activating a single-app release. */
     releaseCommands?: string[] | null;
     roles?: StackRole[] | null;

@@ -8,9 +8,9 @@ import { readPackedArchive } from "./npm-pack";
 
 // A publishing-tools repair can verify the immutable release checkout without
 // rebuilding the product from the newer tools commit.
-const packageDir = resolve(process.env.OPENSHIP_VERIFY_PACKAGE_DIR ?? dirname(fileURLToPath(import.meta.url)));
-const scratch = mkdtempSync(join(tmpdir(), "openship-package-"));
-const node = process.env.OPENSHIP_TEST_NODE ?? process.argv[2] ?? "node";
+const packageDir = resolve(process.env.KOVALIO_VERIFY_PACKAGE_DIR ?? dirname(fileURLToPath(import.meta.url)));
+const scratch = mkdtempSync(join(tmpdir(), "kovalio-package-"));
+const node = process.env.KOVALIO_TEST_NODE ?? process.argv[2] ?? "node";
 const run = (bin: string, args: string[], cwd = scratch, env = process.env) => execFileSync(bin, args, { cwd, env, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 180_000 });
 
 try {
@@ -23,28 +23,28 @@ try {
   if (statSync(join(scratch, archive.filename)).size !== archive.size)
     throw new Error("The packed archive size does not match npm's report.");
   writeFileSync(join(scratch, "package.json"), JSON.stringify({
-    name: "openship-external-check", private: true, type: "module",
-    dependencies: { openship: `file:${join(scratch, archive.filename)}` },
+    name: "kovalio-external-check", private: true, type: "module",
+    dependencies: { kovalio: `file:${join(scratch, archive.filename)}` },
     devDependencies: { typescript: "^5.9.3", "@types/node": "^22.13.0" },
   }, null, 2));
   run("npm", ["install", "--ignore-scripts", "--omit=optional", "--no-audit", "--no-fund", "--no-package-lock"]);
-  const installed = join(scratch, "node_modules/openship");
+  const installed = join(scratch, "node_modules/kovalio");
   writeFileSync(join(scratch, "probe.mjs"), `
 import assert from 'node:assert/strict';
 const environment = { ...process.env };
-const root = await import('openship');
-const native = await import('openship/native');
-const client = await import('openship/client');
+const root = await import('kovalio');
+const native = await import('kovalio/native');
+const client = await import('kovalio/client');
 assert.equal(typeof root.createShip, 'function');
-assert.equal(typeof root.OpenshipClient, 'function');
+assert.equal(typeof root.KovalioClient, 'function');
 assert.equal(typeof native.createShip, 'function');
-assert.equal(typeof client.OpenshipClient, 'function');
-assert.equal(typeof root.OpenshipOperatorClient, 'function');
-assert.equal(typeof client.OpenshipOperatorClient, 'function');
+assert.equal(typeof client.KovalioClient, 'function');
+assert.equal(typeof root.KovalioOperatorClient, 'function');
+assert.equal(typeof client.KovalioOperatorClient, 'function');
 assert.deepEqual({ ...process.env }, environment);
 assert.equal(process.getActiveResourcesInfo().includes('Timeout'), false);
 let requests = 0;
-for (const Client of [root.OpenshipClient, client.OpenshipClient]) {
+for (const Client of [root.KovalioClient, client.KovalioClient]) {
   const ship = new Client({ baseUrl: 'https://ship.example.test', token: 'secret', fetch: async (url, init) => {
     requests++;
     assert.equal(url, 'https://ship.example.test/api/deployments');
@@ -62,11 +62,11 @@ console.log('ESM_OK');
   writeFileSync(join(scratch, "probe.cjs"), `
 const assert = require('node:assert/strict');
 const environment = { ...process.env };
-for (const name of ['openship', 'openship/native']) assert.equal(typeof require(name).createShip, 'function');
-assert.equal(typeof require('openship').OpenshipClient, 'function');
-assert.equal(typeof require('openship/client').OpenshipClient, 'function');
-assert.equal(typeof require('openship').OpenshipOperatorClient, 'function');
-assert.equal(typeof require('openship/client').OpenshipOperatorClient, 'function');
+for (const name of ['kovalio', 'kovalio/native']) assert.equal(typeof require(name).createShip, 'function');
+assert.equal(typeof require('kovalio').KovalioClient, 'function');
+assert.equal(typeof require('kovalio/client').KovalioClient, 'function');
+assert.equal(typeof require('kovalio').KovalioOperatorClient, 'function');
+assert.equal(typeof require('kovalio/client').KovalioOperatorClient, 'function');
 assert.deepEqual({ ...process.env }, environment);
 assert.equal(process.getActiveResourcesInfo().includes('Timeout'), false);
 console.log('CJS_OK');
@@ -81,9 +81,9 @@ import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
-const { createShip } = process.argv[2] === 'cjs' ? createRequire(import.meta.url)('openship/native') : await import('openship');
+const { createShip } = process.argv[2] === 'cjs' ? createRequire(import.meta.url)('kovalio/native') : await import('kovalio');
 const environment = { ...process.env };
-const directory = await mkdtemp(join(tmpdir(), 'openship-installed-native-'));
+const directory = await mkdtemp(join(tmpdir(), 'kovalio-installed-native-'));
 let identity = null;
 let ship;
 const options = {
@@ -163,20 +163,20 @@ try {
   const lifecycle = run(node, ["native-example.mjs"]);
   if (!lifecycle.includes("Native SDK lifecycle completed; temporary installation removed."))
     throw new Error("Installed native lifecycle example did not complete");
-  const example = `import { OpenshipClient, OpenshipOperatorClient, type DeploymentHandle, type ProjectOperations, type EnvironmentVariable, type BillingOperations, type NoticeOperations, type OperatorNoticeOperations } from 'openship';
-import { createShip, type IdentityAdapter } from 'openship/native';
-const client = new OpenshipClient({ baseUrl: 'https://ship.example.test' });
-const mail: import('openship').MailOperations = client.mail;
-const migrations: import('openship').MigrationOperations = client.migrations;
-const instance: import('openship').InstanceOperations = client.instance;
-const terminal: import('openship').TerminalOperations = client.terminal;
+  const example = `import { KovalioClient, KovalioOperatorClient, type DeploymentHandle, type ProjectOperations, type EnvironmentVariable, type BillingOperations, type NoticeOperations, type OperatorNoticeOperations } from 'kovalio';
+import { createShip, type IdentityAdapter } from 'kovalio/native';
+const client = new KovalioClient({ baseUrl: 'https://ship.example.test' });
+const mail: import('kovalio').MailOperations = client.mail;
+const migrations: import('kovalio').MigrationOperations = client.migrations;
+const instance: import('kovalio').InstanceOperations = client.instance;
+const terminal: import('kovalio').TerminalOperations = client.terminal;
 void mail; void migrations; void instance; void terminal;
 const handle: DeploymentHandle = client.deployment('deployment');
 const identity: IdentityAdapter<string> = { resolve: async () => null };
-const operatorNotices: OperatorNoticeOperations = new OpenshipOperatorClient({ baseUrl: 'https://ship.example.test', internalToken: 'operator' }).notices;
+const operatorNotices: OperatorNoticeOperations = new KovalioOperatorClient({ baseUrl: 'https://ship.example.test', internalToken: 'operator' }).notices;
 async function nativeExample() {
   const ship = await createShip({
-    instanceId: 'types', stateDirectory: '/tmp/openship-types', storage: { driver: 'pglite', dataDir: 'memory://' },
+    instanceId: 'types', stateDirectory: '/tmp/kovalio-types', storage: { driver: 'pglite', dataDir: 'memory://' },
     runtime: 'bare', routing: 'none', encryptionKey: 'example-key-with-at-least-32-bytes', identity,
   });
   const scoped = await ship.scope({ identity: 'host-assertion', organizationId: 'org' });
@@ -200,12 +200,12 @@ void handle; void nativeExample;
   const version = run(node, [join(installed, "dist/node-entry.js"), "--version"]).trim();
   const manifest = JSON.parse(readFileSync(join(installed, "package.json"), "utf8"));
   if (version !== manifest.version) throw new Error(`CLI version mismatch: ${version}`);
-  const linkedCommand = join(scratch, "node_modules/.bin", process.platform === "win32" ? "openship.cmd" : "openship");
-  if (!existsSync(linkedCommand)) throw new Error("npm did not install the openship command");
+  const linkedCommand = join(scratch, "node_modules/.bin", process.platform === "win32" ? "kovalio.cmd" : "kovalio");
+  if (!existsSync(linkedCommand)) throw new Error("npm did not install the kovalio command");
   // Exercise npm's command resolution, using the same Node runtime as the imports.
   const nodeExecutable = run(node, ["-p", "process.execPath"]).trim();
   const npmEnvironment = { ...process.env, PATH: [dirname(nodeExecutable), process.env.PATH].filter(Boolean).join(delimiter) };
-  const npmVersion = run("npm", ["exec", "--offline", "--", "openship", "--version"], scratch, npmEnvironment).trim();
+  const npmVersion = run("npm", ["exec", "--offline", "--", "kovalio", "--version"], scratch, npmEnvironment).trim();
   if (npmVersion !== manifest.version) throw new Error(`npm CLI version mismatch: ${npmVersion}`);
   if (!run(node, [join(installed, "dist/node-entry.js"), "up", "--help"]).includes("--compose")) throw new Error("Installed CLI failed to load");
   const nativeConfig = join(scratch, "native-cli.mjs");
@@ -246,7 +246,7 @@ export default {
   if (status.mode !== "native" || status.instanceId !== "installed-cli" || status.organizationId !== created.organizationId)
     throw new Error("Installed native CLI scope mismatch");
   console.log(lifecycle.trim());
-  console.log(`[openship] installed package passed on Node ${run(node, ["--version"]).trim()}: ESM, CommonJS, NodeNext types, passive imports, owned native deployment/persistence, runnable lifecycle example (redeployment, tenant isolation, revocation, persistence, teardown), remote submission, npm command, native CLI persistence/cleanup, CLI (${version}); ${(archive.size / 1024 / 1024).toFixed(1)} MB packed / ${(archive.unpackedSize / 1024 / 1024).toFixed(1)} MB unpacked`);
+  console.log(`[kovalio] installed package passed on Node ${run(node, ["--version"]).trim()}: ESM, CommonJS, NodeNext types, passive imports, owned native deployment/persistence, runnable lifecycle example (redeployment, tenant isolation, revocation, persistence, teardown), remote submission, npm command, native CLI persistence/cleanup, CLI (${version}); ${(archive.size / 1024 / 1024).toFixed(1)} MB packed / ${(archive.unpackedSize / 1024 / 1024).toFixed(1)} MB unpacked`);
 } catch (error) {
   const failure = error as Error & { stdout?: string; stderr?: string };
   console.error(failure.stdout ?? "", failure.stderr ?? "");

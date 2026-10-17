@@ -5,7 +5,7 @@ description: Register and operate servers through the SDK or REST API.
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-Servers identify where Openship builds and runs applications. The same `serverId`
+Servers identify where Kovalio builds and runs applications. The same `serverId`
 is used for Cloud-managed instances and connected SSH/local hosts. Responses
 include `capabilities`; offer only the actions supported by that server. The
 `terminalSessionLimit` field reports the supported concurrent host shell count.
@@ -13,7 +13,7 @@ include `capabilities`; offer only the actions supported by that server. The
 Server administration requires a server grant. Shared host access can affect all
 projects on that host. Connected hosts use their SSH configuration for deployment
 access. Managed Cloud servers expose their own SSH and Runtime API controls below;
-Openship continues to manage their base image and edge infrastructure.
+Kovalio continues to manage their base image and edge infrastructure.
 
 ## Managed Cloud servers
 
@@ -41,7 +41,7 @@ Creation reuses the same server within your organization, including its current
 name; a deleted purchase cannot be recreated with its old key.
 
 Self-hosted and desktop installations can use these same managed servers after
-connecting an Openship Cloud account. Create a new server with `createManaged`,
+connecting an Kovalio Cloud account. Create a new server with `createManaged`,
 or list and link an existing server:
 
 ```ts
@@ -99,7 +99,7 @@ for deployment, capacity and recovery behavior.
 
 ## Register a server
 
-On self-hosted Openship, register a machine you own as an SSH deployment target. Responses never include SSH secrets — passwords and key passphrases
+On self-hosted Kovalio, register a machine you own as an SSH deployment target. Responses never include SSH secrets — passwords and key passphrases
 are encrypted at rest and only decrypted inside the SSH client. See the
 [custom servers guide](/docs/guides/custom-servers).
 
@@ -119,8 +119,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/system/servers" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/system/servers" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"sshHost":"203.0.113.10","sshUser":"root","sshAuthMethod":"agent"}'
 ```
@@ -147,7 +147,7 @@ curl -X POST "$OPENSHIP_URL/api/system/servers" \
 
 ## Managed server access and native processes
 
-Use the Openship `serverId`, not an Oblien VM ID. Each operation resolves that
+Use the Kovalio `serverId`, not an Oblien VM ID. Each operation resolves that
 server's organization, subscription and namespace. API-key read-only restrictions
 and server resource permissions apply equally to native SDK, HTTP SDK and REST.
 The API and dashboard must be from a release that includes these operations.
@@ -172,18 +172,18 @@ const access = await ship.servers.managedRuntimeCredential("srv_123", { confirm:
 <Tab value="REST API">
 
 ```bash
-curl -H "Authorization: Bearer $OPENSHIP_TOKEN" "$OPENSHIP_API/api/system/servers/srv_123/managed/info"
-curl -X POST -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -H "Authorization: Bearer $KOVALIO_TOKEN" "$KOVALIO_API/api/system/servers/srv_123/managed/info"
+curl -X POST -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H 'Content-Type: application/json' \
   --data '{"confirm":true}' \
-  "$OPENSHIP_API/api/system/servers/srv_123/managed/runtime-api/credential"
+  "$KOVALIO_API/api/system/servers/srv_123/managed/runtime-api/credential"
 ```
 
 </Tab>
 </Tabs>
 
 Credential responses are `private, no-store`. Runtime reveal does not enable a
-disabled API; use `enableManagedRuntime` explicitly. The Runtime API powers Openship,
+disabled API; use `enableManagedRuntime` explicitly. The Runtime API powers Kovalio,
 so there is no managed-server disable operation. `rotateManagedRuntimeCredential`
 requires `expectedRevision` from the current credential plus `confirm: true`.
 A stale revision returns `409 MANAGED_RUNTIME_TOKEN_CHANGED`; reveal the current
@@ -235,8 +235,8 @@ console.log(health.ready, health.missing);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/system/check" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/system/check" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"serverId":"srv_123","components":["docker"]}'
 ```
@@ -280,7 +280,7 @@ reload.
 </Callout>
 
 `GET /api/system/monitor/stream?serverId=<id>` emits a `stats` event every few seconds with CPU %, memory,
-disk, uptime, and load average gathered over SSH — `openship server monitor <serverId>`.
+disk, uptime, and load average gathered over SSH — `kovalio server monitor <serverId>`.
 
 ## Per-server rate limiting
 
@@ -323,7 +323,7 @@ Start / stop / delete a saved tunnel with `POST .../tunnels/:tunnelId/start`, `.
 
 ## Server clusters and private networking
 
-On a self-hosted OpenShip instance, private networks connect 2–16 registered Linux
+On a self-hosted Kovalio instance, private networks connect 2–16 registered Linux
 servers over an existing private IPv4 network or a managed WireGuard mesh. Read
 `ship.servers.networkCapabilities()` for the available provider profiles and your
 management permissions. Local and desktop self-hosted controllers support
@@ -400,7 +400,7 @@ same pair reuses its run. Progress and final results use the same SSE stream.
 
 Network reads require fleet-wide server read access. Management requires
 fleet-wide server admin access, with each member also authorized. Removing an
-adopted private network removes OpenShip's inventory records; servers and the
+adopted private network removes Kovalio's inventory records; servers and the
 externally managed network remain. Managed networks use the reviewed cleanup
 flow below. Membership and active operations must be settled before removing a
 server. A private network connects hosts; a [compute cluster](#compute-clusters)
@@ -467,7 +467,7 @@ settings and diagnostics remain available, and the original request cannot resum
 
 Before network apply, removal cancels the old selection and saves the remaining
 servers in a paused (`pending`) preparation. After a partial apply, it also has a
-`cleanupOperationId`. OpenShip reuses rollback to restore this attempt's network
+`cleanupOperationId`. Kovalio reuses rollback to restore this attempt's network
 changes on **all original hosts**, including peer entries for the removed server.
 The server, its workloads, disks, other networks, and shared installed tools remain.
 The pending preparation stream stays open while cleanup runs; subscribe to the
@@ -507,7 +507,7 @@ Hosts require Linux with WireGuard kernel support, Python 3.8+, iproute2, system
 and root or passwordless sudo. Preparation automatically installs missing
 Python 3.8+, iproute2 (4.15+), and WireGuard tools (1.0+) through the shared toolchain.
 It verifies installation before inspection. Kernel, init-system, and privilege
-problems stop at a named step; OpenShip does not replace kernels or reboot hosts.
+problems stop at a named step; Kovalio does not replace kernels or reboot hosts.
 Installed tools remain installed if the later network operation rolls back. Supported
 firewalls are no active host firewall, raw iptables, or nftables with standard
 `inet filter input/output` chains and no additional filtering IPv4 input/output
@@ -524,7 +524,7 @@ administrator action before an explicit retry.
 
 Private keys stay on their hosts. Each host has a persistent twenty-minute
 rollback timer, so incomplete setup can restore even if the controller disconnects
-or the host reboots. OpenShip changes only its own interface, peer routes, and
+or the host reboots. Kovalio changes only its own interface, peer routes, and
 firewall rules. The transport stage uses the same receipt and rollback timer;
 successful promotion preserves the verified interface and keys. Handshakes and
 every directed TCP/UDP/MTU check must succeed before
@@ -810,7 +810,7 @@ shared storage before removing the cluster runtime.
 | Set the root SSH password on this managed server. Requires confirmation. The password is never returned or audited. | `servers.setManagedSshPassword(id, input)` | `PUT /api/system/servers/:id/managed/ssh/password`<br />`server:admin` |
 | Issue a short-lived SSH connection for this managed server. Requires server admin and confirmation. Treat its password as a secret. | `servers.managedSshConnection(id, input)` | `POST /api/system/servers/:id/managed/ssh/connection`<br />`server:admin` |
 | Read the managed server Runtime API status without enabling it or returning a token. | `servers.managedRuntimeStatus(id)` | `GET /api/system/servers/:id/managed/runtime-api`<br />`server:read` |
-| Enable the Runtime API used by Openship for deployments and server management. Requires server admin and active server entitlement. | `servers.enableManagedRuntime(id, input)` | `POST /api/system/servers/:id/managed/runtime-api/enable`<br />`server:admin` |
+| Enable the Runtime API used by Kovalio for deployments and server management. Requires server admin and active server entitlement. | `servers.enableManagedRuntime(id, input)` | `POST /api/system/servers/:id/managed/runtime-api/enable`<br />`server:admin` |
 | Reveal the current workspace-only Runtime API credential. Requires server admin and confirmation. Does not enable the service or issue an account/namespace token. | `servers.managedRuntimeCredential(id, input)` | `POST /api/system/servers/:id/managed/runtime-api/credential`<br />`server:admin` |
 | Rotate the Runtime API credential after reviewing the current revision. Invalidates prior tokens and sessions. A stale revision cannot repeat a successful rotation. | `servers.rotateManagedRuntimeCredential(id, input)` | `POST /api/system/servers/:id/managed/runtime-api/rotate`<br />`server:admin` |
 | List native managed processes with live status, capped at 100 entries. Distinguishes manual, project and system workloads; does not return environments or commands. | `servers.managedWorkloads(id)` | `GET /api/system/servers/:id/managed/workloads`<br />`server:read` |

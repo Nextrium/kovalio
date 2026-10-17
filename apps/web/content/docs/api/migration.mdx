@@ -33,8 +33,8 @@ POST /api/migration/scan
 />
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/migration/scan" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/migration/scan" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"serverId":"srv_123"}'
 ```
@@ -61,8 +61,8 @@ POST /api/migration/adopt
 />
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/migration/adopt" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/migration/adopt" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"serverId":"srv_123","projectName":"legacy-stack","serviceNames":["web","worker"]}'
 ```
@@ -97,7 +97,7 @@ Content-Type: application/json
 
 Use an action ID from the current prompt. An expired, already answered or invalid prompt returns `409`.
 Answering requires write access to both migration servers. Cancelling keeps the original proxy and source
-containers intact. After attachment or deployment, Openship applies the owned routes and retries pending
+containers intact. After attachment or deployment, Kovalio applies the owned routes and retries pending
 domain verification; unresolved routing failures remain visible on the run.
 
 ## Errors
@@ -131,7 +131,7 @@ its Docker is accessible, then retry.
 | Inspect a server's Docker and return the adoptable stack — read-only, changes nothing. | `migrations.scan(input)`<br />Remote client | `POST /api/migration/scan`<br />`server:write` |
 | Reveal explicitly requested environment values for an authorized import. | `migrations.revealEnv(input)`<br />Remote client | `POST /api/migration/reveal-env`<br />`server:write` |
 | Read Compose configuration from a repository for import. | `migrations.repoCompose(input)`<br />Remote client | `POST /api/migration/repo-compose`<br />`server:read` |
-| Create an Openship project from the selected discovered services. | `migrations.adopt(input)`<br />Remote client | `POST /api/migration/adopt`<br />`server:write` · Self-hosted |
+| Create an Kovalio project from the selected discovered services. | `migrations.adopt(input)`<br />Remote client | `POST /api/migration/adopt`<br />`server:write` · Self-hosted |
 | Refresh an imported project from its source. | `migrations.reimport(input)`<br />Remote client | `POST /api/migration/reimport`<br />`server:write` · Self-hosted |
 | Preview a migration plan. | `migrations.preview(input)`<br />Remote client | `POST /api/migration/preview`<br />`server:write` |
 | Start a server migration from the reviewed plan. | `migrations.start(input)`<br />Remote client | `POST /api/migration/migrate`<br />`server:write` |

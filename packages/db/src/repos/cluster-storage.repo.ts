@@ -259,7 +259,7 @@ export function createClusterStorageRepo(db: Database) {
     recoverInterrupted: (exclusive: boolean) =>
       interrupt(
         exclusive ? undefined : expired(),
-        "OpenShip restarted during storage setup. Retry to inspect the saved installation and continue.",
+        "Kovalio restarted during storage setup. Retry to inspect the saved installation and continue.",
       ),
   };
 }

@@ -8,11 +8,11 @@ import type { ProcessSupervisor } from "./supervisor/types";
 const h = vi.hoisted(() => ({ supervisor: null as ProcessSupervisor | null }));
 vi.mock("./supervisor/detect", () => ({ detectSupervisor: async () => h.supervisor! }));
 
-const WORK_DIR = "/tmp/openship-unit-retention-test";
+const WORK_DIR = "/tmp/kovalio-unit-retention-test";
 const target = { id: "dep_old", projectId: "project", containerId: "dep_old", imageRef: null };
 const active = { id: "dep_live", projectId: "project", containerId: "dep_live", imageRef: null };
 class Host extends LocalExecutor {
-  paths = new Set([`${WORK_DIR}/releases/dep_old`, "/etc/systemd/system/openship-dep_old.service"]);
+  paths = new Set([`${WORK_DIR}/releases/dep_old`, "/etc/systemd/system/kovalio-dep_old.service"]);
   commands: string[] = [];
   override async exists(path: string) { return this.paths.has(path); }
   override async exec(command: string) { this.commands.push(command); return ""; }
@@ -32,7 +32,7 @@ it("only offers a unit restore when both release files and restart configuration
 });
 
 it("does not stop the live process for a target whose unit was removed", async () => {
-  host.paths.delete("/etc/systemd/system/openship-dep_old.service");
+  host.paths.delete("/etc/systemd/system/kovalio-dep_old.service");
   expect(await runtime.canRestoreUnit(target)).toBe(false);
   await expect(runtime.makeActive({ from: active, to: target })).rejects.toThrow("Cannot restart");
   expect(host.commands).toEqual([]);
@@ -48,7 +48,7 @@ it("rejects a nohup unit swap before stopping anything", async () => {
 it("still swaps a retained systemd release in the correct order", async () => {
   await runtime.makeActive({ from: active, to: target });
   expect(host.commands.filter((command) => /^systemctl (start|stop) /.test(command))).toEqual([
-    "systemctl stop 'openship-dep_live.service' 2>/dev/null || true",
-    "systemctl start 'openship-dep_old.service'",
+    "systemctl stop 'kovalio-dep_live.service' 2>/dev/null || true",
+    "systemctl start 'kovalio-dep_old.service'",
   ]);
 });

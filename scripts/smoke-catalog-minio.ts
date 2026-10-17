@@ -19,7 +19,7 @@ export async function smokeMinio(): Promise<void> {
   const app = buildCatalog().apps.find((app) => app.id === "minio")!;
   const service = app.services![0]!;
   const step = app.prepare![0]!;
-  const name = "openship-minio-smoke-" + randomUUID();
+  const name = "kovalio-minio-smoke-" + randomUUID();
   const volume = name + "-data";
   const marker = randomUUID();
   const platform = process.env.CATALOG_TEST_PLATFORM;
@@ -31,7 +31,7 @@ export async function smokeMinio(): Promise<void> {
       "--name",
       name,
       "--label",
-      "openship.test=catalog-minio",
+      "kovalio.test=catalog-minio",
       "--memory",
       "512m",
       "--cpus",
@@ -42,13 +42,13 @@ export async function smokeMinio(): Promise<void> {
       "--mount",
       "type=volume,source=" + volume + ",target=/data",
       "-e",
-      "MINIO_ROOT_USER=openship-smoke",
+      "MINIO_ROOT_USER=kovalio-smoke",
       "-e",
       "MINIO_ROOT_PASSWORD=smoke-" + marker,
       "-e",
-      "OPENSHIP_BUCKET=uploads",
+      "KOVALIO_BUCKET=uploads",
       "-e",
-      "OPENSHIP_SMOKE_MARKER=" + marker,
+      "KOVALIO_SMOKE_MARKER=" + marker,
       service.image!,
       ...service.commandArgv!,
     );
@@ -68,7 +68,7 @@ export async function smokeMinio(): Promise<void> {
   };
   try {
     await docker("pull", ...(platform ? ["--platform", platform] : []), service.image!);
-    await docker("volume", "create", "--label", "openship.test=catalog-minio", volume);
+    await docker("volume", "create", "--label", "kovalio.test=catalog-minio", volume);
     volumeCreated = true;
     await start();
     await docker(
@@ -76,7 +76,7 @@ export async function smokeMinio(): Promise<void> {
       name,
       "sh",
       "-c",
-      "printf '%s' \"$OPENSHIP_SMOKE_MARKER\" | mc pipe local/uploads/persist.txt >/dev/null",
+      "printf '%s' \"$KOVALIO_SMOKE_MARKER\" | mc pipe local/uploads/persist.txt >/dev/null",
     );
     await docker("rm", "-f", name);
     await start();

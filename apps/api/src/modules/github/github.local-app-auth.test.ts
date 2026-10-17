@@ -18,7 +18,7 @@ vi.mock("@repo/platform/engine/config/env", () => ({
     CLOUD_MODE: false,
     GITHUB_AUTH_MODE: "auto",
     GITHUB_APP_ID: "123",
-    GITHUB_APP_SLUG: "self-hosted-openship",
+    GITHUB_APP_SLUG: "self-hosted-kovalio",
     GITHUB_PRIVATE_KEY: undefined,
     GITHUB_PRIVATE_KEY_BASE64: undefined,
   },
@@ -90,7 +90,7 @@ describe("self-hosted local GitHub App auth", () => {
     const result = await resolveInstallUrl(ctx);
 
     expect(result.url).toMatch(
-      /^https:\/\/github\.com\/apps\/self-hosted-openship\/installations\/new\?state=/,
+      /^https:\/\/github\.com\/apps\/self-hosted-kovalio\/installations\/new\?state=/,
     );
     expect(result.state).toHaveLength(32);
     expect(h.stateCreate).toHaveBeenCalledWith(

@@ -21,10 +21,10 @@ const docker = async (args: string[], timeout = 30_000) =>
   (await exec("docker", ["--context", context, ...args], { timeout, maxBuffer: 4 * 1024 * 1024 }))
     .stdout;
 const suffix = randomBytes(5).toString("hex");
-const network = `openship-network-test-${suffix}`;
-const image = `openship-network-test:${suffix}`;
-const names = [`openship-net-a-${suffix}`, `openship-net-b-${suffix}`];
-const build = await mkdtemp(join(tmpdir(), "openship-network-image-"));
+const network = `kovalio-network-test-${suffix}`;
+const image = `kovalio-network-test:${suffix}`;
+const names = [`kovalio-net-a-${suffix}`, `kovalio-net-b-${suffix}`];
+const build = await mkdtemp(join(tmpdir(), "kovalio-network-image-"));
 const results: string[] = [];
 try {
   await writeFile(
@@ -150,7 +150,7 @@ try {
     "DROP",
   ]);
   for (let index = 2; index < MAX_CLUSTER_MEMBERS; index++) {
-    const name = `openship-net-${index}-${suffix}`;
+    const name = `kovalio-net-${index}-${suffix}`;
     names.push(name);
     const privateIp = `10.253.246.${index + 2}`;
     await docker(["run", "-d", "--name", name, "--network", network, "--ip", privateIp, image]);

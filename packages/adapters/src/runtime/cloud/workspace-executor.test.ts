@@ -18,7 +18,7 @@ beforeEach(() => {
 afterEach(async () => { await executor.dispose(); vi.restoreAllMocks(); });
 
 function frame(command: string[], channel: "o" | "e" | "x", value: Buffer | string | number): Buffer {
-  const marker = command.at(-1)!.match(/openship-exec-[a-f0-9-]+:/)![0];
+  const marker = command.at(-1)!.match(/kovalio-exec-[a-f0-9-]+:/)![0];
   const bytes = Buffer.isBuffer(value) ? value : Buffer.from(String(value));
   return Buffer.concat([Buffer.from(`\x1e${marker}${channel}:${bytes.length}\x1f`), bytes]);
 }
@@ -217,7 +217,7 @@ describe("workspace command transport", () => {
     const commands = vi.spyOn(executor, "exec").mockResolvedValue("");
     await executor.writeFile("/private/config", "secret", { mode: 0o600 });
     expect(commands.mock.calls[0]![0]).toContain("umask 077");
-    expect(commands.mock.calls[1]![0]).toMatch(/^mv -- .*openship-.* '\/private\/config'$/);
+    expect(commands.mock.calls[1]![0]).toMatch(/^mv -- .*kovalio-.* '\/private\/config'$/);
     files.write.mockResolvedValue({ success: false });
     commands.mockClear();
     await expect(executor.writeFile("/private/config", "new value")).rejects.toThrow("Could not write");

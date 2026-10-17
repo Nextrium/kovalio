@@ -4,9 +4,9 @@ Jellyfin serves your videos, music, and other media through its web UI and suppo
 
 ## First login
 
-Choose an initial administrator username. Openship generates and encrypts the password. The startup helper finishes Jellyfin's setup against a loopback-only listener before starting public access. Existing configuration and changed passwords remain intact on redeployment. Find the initial credentials in **Connection**.
+Choose an initial administrator username. Kovalio generates and encrypts the password. The startup helper finishes Jellyfin's setup against a loopback-only listener before starting public access. Existing configuration and changed passwords remain intact on redeployment. Find the initial credentials in **Connection**.
 
-This template requires Openship 0.9.2 or newer for the declarative container entrypoint override. Older instances must upgrade before installing it; they must not run an uninitialized public setup wizard.
+This template requires Kovalio 0.9.2 or newer for the declarative container entrypoint override. Older instances must upgrade before installing it; they must not run an uninitialized public setup wizard.
 
 ## Add media
 

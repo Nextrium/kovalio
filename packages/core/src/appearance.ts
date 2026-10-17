@@ -268,11 +268,11 @@ export function appearanceVariables(theme?: ThemeDocument): Record<string, strin
     ...theme.tokens,
     "--font-sans":
       theme.typography.sans === "custom"
-        ? `"Openship-${theme.id}-sans", system-ui, 'SF Arabic', sans-serif`
+        ? `"Kovalio-${theme.id}-sans", system-ui, 'SF Arabic', sans-serif`
         : APPEARANCE_FONT_OPTIONS[theme.typography.sans],
     "--font-mono":
       theme.typography.mono === "custom"
-        ? `"Openship-${theme.id}-mono", monospace`
+        ? `"Kovalio-${theme.id}-mono", monospace`
         : APPEARANCE_FONT_OPTIONS[theme.typography.mono],
     "--appearance-font-size": `${theme.typography.size}px`,
     "--appearance-mono-size": `${theme.typography.monoSize}px`,

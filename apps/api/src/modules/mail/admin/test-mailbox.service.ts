@@ -126,7 +126,7 @@ export async function ensureKovalioTestMailbox(
         plaintext = decrypt(cached.password);
       } catch {
         errorDiagnostics.warn("api/modules/mail/admin/test-mailbox.service",
-          `[ensureOpenshipTestMailbox] state.testMailboxes["${targetDomain}"].password failed to decrypt — treating as legacy plaintext. It will be re-encrypted on next rotation.`,
+          `[ensureKovalioTestMailbox] state.testMailboxes["${targetDomain}"].password failed to decrypt — treating as legacy plaintext. It will be re-encrypted on next rotation.`,
         );
         plaintext = cached.password;
       }
@@ -146,7 +146,7 @@ export async function ensureKovalioTestMailbox(
       cached.password
     ) {
       errorDiagnostics.warn("api/modules/mail/admin/test-mailbox.service",
-        `[ensureOpenshipTestMailbox] cached mailbox ${email} is missing or inactive in vmail; recreating it and rotating the stale credential.`,
+        `[ensureKovalioTestMailbox] cached mailbox ${email} is missing or inactive in vmail; recreating it and rotating the stale credential.`,
       );
     }
 

@@ -514,7 +514,7 @@ email.command("test").argument("<address>", "Recipient for one test message")
     return result;
   }));
 systemCommand.addCommand(email);
-const orphans = new Command("untracked-sites").description("Inspect edge sites not tracked by Openship");
+const orphans = new Command("untracked-sites").description("Inspect edge sites not tracked by Kovalio");
 orphans.command("list").description("Read untracked edge sites and scan readiness")
   .action(() => printResult(() => getShipClient().system.listUntrackedEdgeSites()));
 orphans.command("remove").argument("<hostname>", "Exact hostname from the scan")

@@ -7,7 +7,7 @@ describe("applied container resource allocations", () => {
     [{ CpuQuota: 200_000, CpuPeriod: 100_000, Memory: 2048 * 1024 * 1024 }, { cpuCores: 2, memoryMb: 2048 }],
     [{ NanoCpus: 0, Memory: 0 }, { cpuCores: 0, memoryMb: 0 }],
   ])("reports Docker's applied caps, including unlimited values", async (hostConfig, expected) => {
-    const runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/openship-test-absent.sock" });
+    const runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/kovalio-test-absent.sock" });
     (runtime as unknown as { _docker: unknown })._docker = {
       getContainer: () => ({ inspect: async () => ({ HostConfig: hostConfig,
         State: { Status: "exited", Running: false }, NetworkSettings: { Networks: {} } }) }),

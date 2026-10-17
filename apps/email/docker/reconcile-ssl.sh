@@ -46,4 +46,4 @@ link_certificate() {
 
 link_certificate "$MAIL_CERT_DIR/fullchain.pem" "$MAIL_CERT_PATH"
 link_certificate "$MAIL_CERT_DIR/privkey.pem" "$MAIL_KEY_PATH"
-echo "[openship-mail] using TLS certificate for mail.$MAIL_BASE_DOMAIN from $MAIL_CERT_DIR"
+echo "[kovalio-mail] using TLS certificate for mail.$MAIL_BASE_DOMAIN from $MAIL_CERT_DIR"

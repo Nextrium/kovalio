@@ -37,7 +37,7 @@ const __dirname = (() => {
 
 /** apps/api/ directory — repo-local dist anchors + package.json read. */
 const sourceRoot = resolve(__dirname, "../../../../..");
-const API_ROOT = process.env.OPENSHIP_API_ROOT ?? (
+const API_ROOT = process.env.KOVALIO_API_ROOT ?? (
   existsSync(join(sourceRoot, "packages/platform/src/engine/lib/release-resolver.ts"))
     ? join(sourceRoot, "apps/api")
     : resolve(__dirname, "../..")

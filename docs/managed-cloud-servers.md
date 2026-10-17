@@ -185,7 +185,7 @@ as deployments. Their behavior is unchanged by the Cloud spaces UI:
   server-admin authorization and a confirmed request. Rotation compares a hash
   of the current underlying token under the activity lock. A retry after a lost
   success response cannot rotate it again with the old revision. The Runtime API
-  is required by Openship; the dashboard does not offer to disable it.
+  is required by Kovalio; the dashboard does not offer to disable it.
 - Native workloads distinguish platform services, project-owned releases and
   manual processes. Only manual processes created by this interface can be
   started, stopped or deleted here. A deterministic ID and request fingerprint
@@ -209,12 +209,12 @@ Secret responses carry `Cache-Control: private, no-store`. The dashboard holds
 credentials in component memory for at most one minute, clears them when hidden,
 and ignores responses from a previous account/server/tab. Gateway tokens grant
 root-equivalent access to this server, not project-scoped access. Direct SSH/SDK
-clients run outside Openship's deployment queue; administrators must coordinate
+clients run outside Kovalio's deployment queue; administrators must coordinate
 their own commands with application work.
 
 The provider Runtime endpoint defaults to `https://workspace.oblien.com` and can
 be overridden with `OBLIEN_RUNTIME_URL`. All provider methods used here are in
-Oblien SDK 2.10.0; no new provider SDK release is required. Deploy the Openship API
+Oblien SDK 2.10.0; no new provider SDK release is required. Deploy the Kovalio API
 and dashboard from the same release to use the new controls. Existing server
 response shapes are unchanged. Detailed network reads opt in with
 `getNetworkSettings(id, { details: true })` / `?details=true`; writes return
@@ -236,7 +236,7 @@ Unknown fields stay null. Actual guest bytes are converted to MB; allocation,
 credits, CPU time and memory reservation are not treated as live consumption.
 See the [provider metrics contract](https://oblien.com/docs/api/metrics).
 
-Openship verifies server-read access and the existing organization/workspace binding,
+Kovalio verifies server-read access and the existing organization/workspace binding,
 then opens the stream with that workspace's namespace credentials. It never exposes
 provider credentials to the browser or provisions/resumes a machine to observe usage.
 The operation rechecks authorization before each delivered event. Provider streams

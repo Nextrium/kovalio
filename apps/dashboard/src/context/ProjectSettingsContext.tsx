@@ -485,7 +485,7 @@ const ProjectSettingsState: React.FC<ProviderProps> = ({
   // One check for the whole project page: desktop/mobile navigation and the
   // Deployments banner share its result. A source or deployment change must
   // discard the old result, including while the new check is still in flight.
-  const updateKey = projectData.id === id && projectData.appTemplateId !== "openship"
+  const updateKey = projectData.id === id && projectData.appTemplateId !== "kovalio"
     ? JSON.stringify([
         id,
         projectData.activeDeploymentId,

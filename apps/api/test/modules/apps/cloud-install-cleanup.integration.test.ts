@@ -8,13 +8,13 @@ vi.mock("@repo/platform/engine/config/env", async (original) => {
     env: {
       ...config.env,
       CLOUD_MODE: true,
-      OBLIEN_API_URL: "https://provider.openship.test",
+      OBLIEN_API_URL: "https://provider.kovalio.test",
       OBLIEN_CLIENT_ID: "test-control-plane",
       OBLIEN_CLIENT_SECRET: "test-control-plane-secret",
     },
   };
 });
-vi.mock("@repo/platform/engine/lib/openship-cloud", () => ({
+vi.mock("@repo/platform/engine/lib/kovalio-cloud", () => ({
   issueNamespaceToken: async (organizationId: string, workspaceId: string) => {
     const { repos } = await import("@repo/db");
     const owner = await repos.cloudWorkspace.findByIdInOrganization(workspaceId, organizationId);
@@ -89,7 +89,7 @@ beforeEach(async () => {
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = new URL(String(input));
-      if (url.origin !== "https://provider.openship.test") {
+      if (url.origin !== "https://provider.kovalio.test") {
         // Catalog overlay refresh is advisory. Keep this test on the bundled
         // Supabase catalog and never allow external network access.
         throw new Error(`Network disabled in Cloud lifecycle test: ${url.origin}`);
@@ -172,7 +172,7 @@ beforeEach(async () => {
     target: "cloud",
     cloudToken: "test-platform-token",
     cloudNamespace: "test-platform",
-    cloudApiUrl: "https://provider.openship.test",
+    cloudApiUrl: "https://provider.kovalio.test",
   });
 });
 
@@ -320,7 +320,7 @@ describe("Supabase Cloud installation failure and deletion", () => {
   it("installs WordPress with uncapped services and preserves explicit settings when adopting a draft", async () => {
     const owner = await seedOwner();
     const input = { templateId: "wordpress", serverId: owner.serverId, name: "WordPress",
-      config: { OPENSHIP_ADMIN_EMAIL: "owner@example.test", OPENSHIP_SITE_TITLE: "Our site", OPENSHIP_ADMIN_USER: "owner" },
+      config: { KOVALIO_ADMIN_EMAIL: "owner@example.test", KOVALIO_SITE_TITLE: "Our site", KOVALIO_ADMIN_USER: "owner" },
       routes: [{ service: "wordpress", port: 80, mode: "free" }] };
     const install = async () => {
       const response = await app.request("/api/apps", { method: "POST", headers: { ...owner.auth, "Content-Type": "application/json" }, body: JSON.stringify(input) });

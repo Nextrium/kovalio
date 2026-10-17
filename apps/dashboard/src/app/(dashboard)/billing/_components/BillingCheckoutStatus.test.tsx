@@ -94,7 +94,7 @@ const subscription = {
 const monthlyState = {
   ...state,
   workspace: { id: "cws_selected", serverId: "srv_selected", name: "Launch server", provisioned: true },
-  subscription: { interval: "monthly", billingMode: "monthly", offerReference: "openship:starter:v9" },
+  subscription: { interval: "monthly", billingMode: "monthly", offerReference: "kovalio:starter:v9" },
   compute: monthlyCompute(),
   plan: { ...state.plan, billingMode: "monthly", monthlyCredits: null },
 };
@@ -112,7 +112,7 @@ describe("checkout return confirmation", () => {
   it.each(["paid", "no_payment_required"])("confirms monthly capacity with zero credits after verified fulfillment (%s)", async paymentStatus => {
     mocks.state.mockResolvedValue(monthlyState);
     mocks.checkout.mockResolvedValue({ ...paid, paymentStatus, creditsGranted: 0 });
-    await render({ ...subscription, expectedOffer: "openship:starter:v9" });
+    await render({ ...subscription, expectedOffer: "kovalio:starter:v9" });
     expect(container.textContent).toContain(copy.active);
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
     expect(mocks.router.refresh).toHaveBeenCalledOnce();
@@ -125,7 +125,7 @@ describe("checkout return confirmation", () => {
   ])("waits for committed monthly coverage before confirming zero-credit payment: %j", async compute => {
     mocks.state.mockResolvedValueOnce({ ...monthlyState, compute }).mockResolvedValue(monthlyState);
     mocks.checkout.mockResolvedValue({ ...paid, creditsGranted: 0 });
-    await render({ ...subscription, expectedOffer: "openship:starter:v9" });
+    await render({ ...subscription, expectedOffer: "kovalio:starter:v9" });
     expect(container.textContent).toContain(copy.checking);
     expect(document.querySelector('[role="dialog"]')).toBeNull();
     await act(async () => vi.advanceTimersByTimeAsync(3_000));
@@ -134,18 +134,18 @@ describe("checkout return confirmation", () => {
   it("does not use unrelated monthly coverage or a return URL as payment proof", async () => {
     mocks.state.mockResolvedValue(monthlyState);
     mocks.checkout.mockResolvedValue({ ...paid, creditsGranted: 0 });
-    await render({ ...subscription, expectedOffer: "openship:starter:custom-v2:other" });
+    await render({ ...subscription, expectedOffer: "kovalio:starter:custom-v2:other" });
     expect(container.textContent).toContain(copy.checking);
     expect(document.querySelector('[role="dialog"]')).toBeNull();
     mocks.checkout.mockResolvedValue({ ...paid, paymentStatus: "unpaid", creditsGranted: 0 });
-    await render({ ...subscription, expectedOffer: "openship:starter:v9" });
+    await render({ ...subscription, expectedOffer: "kovalio:starter:v9" });
     expect(container.textContent).toContain(copy.checking);
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
   it("does not confirm a monthly refund or top-up from existing capacity coverage", async () => {
     mocks.state.mockResolvedValue(monthlyState);
     mocks.checkout.mockResolvedValue({ ...paid, creditsGranted: 0, fulfillmentStatus: "refunded" });
-    await render({ ...subscription, expectedOffer: "openship:starter:v9" });
+    await render({ ...subscription, expectedOffer: "kovalio:starter:v9" });
     expect(container.textContent).toContain(copy.reversed);
     expect(document.querySelector('[role="dialog"]')).toBeNull();
     mocks.checkout.mockResolvedValue({ ...paid, kind: "topup", creditsGranted: 0 });
@@ -215,7 +215,7 @@ describe("checkout return confirmation", () => {
       mocks.checkout.mockResolvedValue({ ...paid, fulfillmentStatus });
       await render(subscription);
       expect(container.textContent).toContain(copy.reversed);
-      expect(container.querySelector("a")?.href).toBe("mailto:support@openship.io");
+      expect(container.querySelector("a")?.href).toBe("mailto:support@nextrium.org");
     },
   );
   it("reports a superseded checkout without waiting for fulfillment or welcoming again", async () => {
@@ -298,7 +298,7 @@ describe("paid server delivery", () => {
     expect(container.textContent).toContain(copy.setupFailed);
     expect(container.textContent).not.toContain(copy.failed);
     expect(setupLink()).not.toBeNull();
-    expect(container.querySelector('a[href="mailto:support@openship.io"]')).not.toBeNull();
+    expect(container.querySelector('a[href="mailto:support@nextrium.org"]')).not.toBeNull();
     expect(document.querySelector('[role="dialog"]')).toBeNull();
     await act(async () => vi.advanceTimersByTimeAsync(30_000));
     expect(mocks.server).toHaveBeenCalledOnce();
@@ -409,7 +409,7 @@ describe("paid server delivery", () => {
     expect(container.textContent).toContain(copy.paidFailed);
     expect(mocks.server).not.toHaveBeenCalled();
     expect(container.querySelectorAll("a")).toHaveLength(1);
-    expect(container.querySelector("a")?.href).toBe("mailto:support@openship.io");
+    expect(container.querySelector("a")?.href).toBe("mailto:support@nextrium.org");
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 });

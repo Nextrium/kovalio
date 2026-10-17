@@ -10,7 +10,7 @@ import {
 const root = {
   owner: "acme",
   repo: "app",
-  path: ".openship/workflows/ci.yml",
+  path: ".kovalio/workflows/ci.yml",
   sha: "a".repeat(40),
   ref: "refs/heads/main",
 };
@@ -38,15 +38,15 @@ describe("immutable reusable workflow sources", () => {
     expect(read).toHaveBeenCalledTimes(1);
     expect(snapshots.root!.calls.first).toBe(snapshots.root!.calls.second);
   });
-  it("keeps independent reusable files in .openship/workflows", async () => {
+  it("keeps independent reusable files in .kovalio/workflows", async () => {
     const source =
-      "on: workflow_dispatch\njobs:\n  call:\n    uses: ./.openship/workflows/build.yml\n    with: {count: 2}\n    secrets: {deploy: '${{ secrets.DEPLOY }}'}\n";
+      "on: workflow_dispatch\njobs:\n  call:\n    uses: ./.kovalio/workflows/build.yml\n    with: {count: 2}\n    secrets: {deploy: '${{ secrets.DEPLOY }}'}\n";
     const snapshots = await snapshotActionWorkflows({ ...root, source }, async () => ({
       ...root,
-      path: ".openship/workflows/build.yml",
+      path: ".kovalio/workflows/build.yml",
       source: leaf,
     }));
-    expect(snapshots[snapshots.root!.calls.call!]!.path).toBe(".openship/workflows/build.yml");
+    expect(snapshots[snapshots.root!.calls.call!]!.path).toBe(".kovalio/workflows/build.yml");
   });
   it("captures source once, validates workflow_call and retains input types", async () => {
     const source = `on: workflow_dispatch

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Value } from "@sinclair/typebox/value";
 import { SystemInfoSchema } from "@repo/contracts";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 
 /**
  * GET /health/env is the public, read-only surface the dashboard bootstraps
@@ -68,8 +68,8 @@ describe("GET /health/env authProviders — credentials configured", () => {
     expect(Value.Check(SystemInfoSchema, body)).toBe(true);
     const { getSystemInfo } = await import("@repo/platform/engine/modules/system/system-info");
     expect(await getSystemInfo()).toEqual(body);
-    const client = new OpenshipClient({
-      baseUrl: "http://openship.test",
+    const client = new KovalioClient({
+      baseUrl: "http://kovalio.test",
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
     });
     expect(await client.system.info()).toEqual(body);

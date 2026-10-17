@@ -173,7 +173,7 @@ async function materializeInlineBuildContexts(buildable: Service[], inMemory = f
     );
   }
 
-  const root = inMemory ? undefined : await mkdtemp(join(tmpdir(), "openship-catalog-build-"));
+  const root = inMemory ? undefined : await mkdtemp(join(tmpdir(), "kovalio-catalog-build-"));
   const files: NonNullable<BuildConfig["inlineSourceFiles"]> = [];
   const cleanup = async () => {
     if (root) await rm(root, { recursive: true, force: true }).catch((diagnosticFailure) => {
@@ -432,7 +432,7 @@ export async function buildComposeImages(opts: {
   snapshot: BuildConfigSnapshotLike;
   buildSessionId: string;
   /** Project-scoped deployment env only. Compose image interpolation must not
-   *  accidentally consume Openship's injected CI/build helper variables. */
+   *  accidentally consume Kovalio's injected CI/build helper variables. */
   composeInterpolationEnv: Record<string, string>;
   buildEnvVars: Record<string, string>;
   buildResources: ResourceConfig;

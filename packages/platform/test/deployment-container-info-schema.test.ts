@@ -12,7 +12,7 @@ afterEach(async () => {
 async function createRuntime(kind: "Docker" | "Cloud", workspaceStatus = "running") {
   const runtime =
     kind === "Docker"
-      ? await DockerRuntime.create({ dockerSocketPath: "/tmp/openship-test-absent.sock" })
+      ? await DockerRuntime.create({ dockerSocketPath: "/tmp/kovalio-test-absent.sock" })
       : await CloudDockerRuntime.forWorkspace(
           {
             workspaces: {
@@ -68,7 +68,7 @@ describe.each(["Docker", "Cloud"] as const)("%s container-info responses", (kind
       getContainer: () => ({
         inspect: async () => ({
           Image: "sha256:image-a",
-          Config: { Labels: { "openship.project": "project-a" } },
+          Config: { Labels: { "kovalio.project": "project-a" } },
           HostConfig: hostConfig,
           State: { Status: "exited", Running: false },
           NetworkSettings: { Networks: {} },

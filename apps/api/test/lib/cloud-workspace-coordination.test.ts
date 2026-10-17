@@ -57,7 +57,7 @@ const deferred = () => {
   const promise = new Promise<void>(done => { resolve = done; });
   return { promise, resolve };
 };
-const command: ManagedCommandRef = { workspaceId: "provider-vm", marker: "openship-exec-test" };
+const command: ManagedCommandRef = { workspaceId: "provider-vm", marker: "kovalio-exec-test" };
 
 beforeAll(async () => {
   for (let i = 0; i < 3; i++) databases.push(await createDatabase({
@@ -200,7 +200,7 @@ describe("managed server admission across independent installations", () => {
     const second = await cloud.create({ organizationId: "org", name: "Second managed server" });
     h.repositories.set(second.id, cloud);
     h.bindings.set(second.id, "provider-vm-2");
-    const otherCommand = { workspaceId: "provider-vm-2", marker: "openship-exec-other" };
+    const otherCommand = { workspaceId: "provider-vm-2", marker: "kovalio-exec-other" };
     await withCloudWorkspaceActivity(host.id, () =>
       withCloudWorkspaceActivity(second.id, async () => {
         const tracking = currentManagedCommandTracking()!;

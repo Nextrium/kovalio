@@ -1,6 +1,6 @@
 import { exitCommand, rethrowCommandExit } from "../lib/command-exit";
 /**
- * `openship server` — manage registered and managed Cloud servers.
+ * `kovalio server` — manage registered and managed Cloud servers.
  *
  * Grounded in the API's shared server operations (mounted at /api/system):
  *   list/add/rm       → GET|POST /system/servers, DELETE /system/servers/:id
@@ -38,7 +38,7 @@ import { openTerminal } from "../lib/terminal";
 function guard<A extends unknown[]>(fn: (...args: A) => Promise<void>, selfHosted = true): (...args: A) => Promise<void> {
   return async (...args: A) => {
     if (!hasShipCredentials()) {
-      err("Not logged in. Run `openship login` first.");
+      err("Not logged in. Run `kovalio login` first.");
       exitCommand(1);
     }
     try {
@@ -347,7 +347,7 @@ async function followInstall(events: AsyncIterable<DeploymentEvent>): Promise<vo
       if (p.component) info(`  ${p.component}: ${p.status}`);
     } else if (ev.event === "prompt") {
       info(`  ${String(payload.title ?? "Installation needs a decision")}: ${String(payload.message ?? "")}`);
-      if (sessionId) info(`  Respond with openship server install-respond ${sessionId} --action <action>.`);
+      if (sessionId) info(`  Respond with kovalio server install-respond ${sessionId} --action <action>.`);
     } else if (ev.event === "error") {
       err(`  ${(payload as { error?: string }).error ?? "install error"}`);
     }

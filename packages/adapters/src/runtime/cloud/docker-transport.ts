@@ -160,7 +160,7 @@ export function createCloudDockerTransport(open: () => Promise<Duplex>): DockerT
     openStream,
     async establish() {
       if (closed) throw new Error("Cloud Docker transport is closed");
-      const prefix = "openship-cloud-docker-";
+      const prefix = "kovalio-cloud-docker-";
       // Unix socket addresses have a byte limit (103 on macOS). A caller's
       // nested TMPDIR can exceed it even though ordinary files work there.
       // Keep the fallback private with mkdtemp, rather than using public TCP.
@@ -170,7 +170,7 @@ export function createCloudDockerTransport(open: () => Promise<Duplex>): DockerT
         : tmpdir();
       directory = await mkdtemp(join(temporaryRoot, prefix));
       const socketPath = process.platform === "win32"
-        ? `\\\\.\\pipe\\openship-cloud-docker-${randomUUID()}`
+        ? `\\\\.\\pipe\\kovalio-cloud-docker-${randomUUID()}`
         : join(directory, "docker.sock");
       server = createServer({ allowHalfOpen: true }, (client: Socket) => {
         // Bun does not inherit the listener's allowHalfOpen option on accepted

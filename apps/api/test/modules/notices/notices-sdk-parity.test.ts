@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { Hono } from "hono";
 import { db, schema, repos, seedOwner } from "../jobs/_harness";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient, OpenshipOperatorClient } from "@repo/sdk/client";
+import { KovalioClient, KovalioOperatorClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { operatorNoticeOperations } from "@repo/platform/engine/modules/notices/notice.operations";
 import { env } from "@repo/platform/engine/config/index";
@@ -14,8 +14,8 @@ const app = new Hono().onError(handleApiError)
   .use("*", async (c, next) => { c.set("clientIp", "127.0.0.1"); await next(); })
   .route("/api/notices", noticeRoutes);
 const fetcher = ((url, init) => app.request(url as string, init)) as typeof fetch;
-const remote = new OpenshipClient({ baseUrl: "http://openship.test", fetch: fetcher });
-const operator = new OpenshipOperatorClient({ baseUrl: "http://openship.test", internalToken: env.INTERNAL_TOKEN!, fetch: fetcher });
+const remote = new KovalioClient({ baseUrl: "http://kovalio.test", fetch: fetcher });
+const operator = new KovalioOperatorClient({ baseUrl: "http://kovalio.test", internalToken: env.INTERNAL_TOKEN!, fetch: fetcher });
 afterEach(async () => { await db.delete(schema.systemNotice); });
 
 describe("shared public notices and explicit operator administration", () => {
@@ -43,7 +43,7 @@ describe("shared public notices and explicit operator administration", () => {
       }
     }
     expect(await operator.notices.listAll()).toEqual([]);
-    const rejected = new OpenshipOperatorClient({ baseUrl: "http://openship.test", internalToken: "wrong", fetch: fetcher });
+    const rejected = new KovalioOperatorClient({ baseUrl: "http://kovalio.test", internalToken: "wrong", fetch: fetcher });
     await expect(rejected.notices.create({ title: "Blocked", message: "Blocked" })).rejects.toMatchObject({ status: 401 });
   });
 

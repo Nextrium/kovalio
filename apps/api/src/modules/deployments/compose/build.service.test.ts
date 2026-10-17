@@ -227,10 +227,10 @@ describe("Cloud Docker uses the shared Compose source planner", () => {
   it("does not stage a repository for image-only deployments or retained-image rollback", async () => {
     const imageOnly = await runCloud([{ ...repoService({ build: null }), image: "nginx:alpine" }], { repoUrl: "https://github.com/acme/private" });
     expect(imageOnly.prepareSource).not.toHaveBeenCalled();
-    const retained = await runCloud([repoService()], { handoverImages: { dinohash: "openship/app:bld_retained" } });
+    const retained = await runCloud([repoService()], { handoverImages: { dinohash: "kovalio/app:bld_retained" } });
     expect(retained.prepareSource).not.toHaveBeenCalled();
     expect(retained.captured).toEqual([]);
-    expect(retained.result.imageRefs.get("svc-1")).toBe("openship/app:bld_retained");
+    expect(retained.result.imageRefs.get("svc-1")).toBe("kovalio/app:bld_retained");
   });
 
   it("skips an untouched source-built sibling when only an image service is selected", async () => {
@@ -244,7 +244,7 @@ describe("Cloud Docker uses the shared Compose source planner", () => {
   it("prepares a relative mount for a retained image without rebuilding it", async () => {
     const { prepareSource, captured } = await runCloud([
       { ...repoService(), volumes: ["./config:/config:ro"] },
-    ], { repoUrl: "https://github.com/acme/private", rootDirectory: "deploy", handoverImages: { dinohash: "openship/app:bld_retained" } });
+    ], { repoUrl: "https://github.com/acme/private", rootDirectory: "deploy", handoverImages: { dinohash: "kovalio/app:bld_retained" } });
     expect(prepareSource).toHaveBeenCalledOnce();
     expect(prepareSource.mock.calls[0]![0]).toMatchObject({ rootDirectory: "deploy", repoUrl: "https://github.com/acme/private" });
     expect(captured).toEqual([]);
@@ -261,7 +261,7 @@ describe("Cloud Docker uses the shared Compose source planner", () => {
   it("can restore inline configuration mounts without rebuilding the retained image", async () => {
     const { prepareSource, captured } = await runCloud([
       { ...inlineService("web", { dockerfile: "FROM alpine", files: [{ path: "config", content: "v1" }] }), volumes: ["./web/config:/config:ro"] },
-    ], { handoverImages: { web: "openship/web:bld_v1" } });
+    ], { handoverImages: { web: "kovalio/web:bld_v1" } });
     expect(captured).toEqual([]);
     expect(prepareSource.mock.calls[0]![0].inlineSourceFiles).toContainEqual({ path: "web/config", content: "v1" });
   });
@@ -270,7 +270,7 @@ describe("Cloud Docker uses the shared Compose source planner", () => {
     const { prepareSource, captured } = await runCloud([
       inlineService("web", { dockerfile: "FROM alpine", files: [{ path: "config", content: "v1" }] }),
       { ...repoService({ id: "sidecar", name: "sidecar", build: null }), image: "nginx:alpine", volumes: ["./web/config:/config:ro"] },
-    ], { handoverImages: { web: "openship/web:bld_v1" } }, { targetServiceIds: new Set(["sidecar"]) });
+    ], { handoverImages: { web: "kovalio/web:bld_v1" } }, { targetServiceIds: new Set(["sidecar"]) });
     expect(captured).toEqual([]);
     expect(prepareSource.mock.calls[0]![0].inlineSourceFiles).toContainEqual({ path: "web/config", content: "v1" });
   });
@@ -300,7 +300,7 @@ describe("prebuilt registry images (#878)", () => {
 
 describe("buildComposeImages — static artifact provenance", () => {
   it("records an inherited static sub-app's exact host artifact", async () => {
-    const artifact = "/opt/openship/static/.builds/sess-svc-static";
+    const artifact = "/opt/kovalio/static/.builds/sess-svc-static";
     const { result } = await run(
       [
         repoService({
@@ -728,7 +728,7 @@ describe("Compose image interpolation lifecycle (#809)", () => {
     expect(result.buildFailures.get("svc-image")).toMatch(/missing variable: MY_VERSION/);
   });
 
-  it("does not resolve images from Openship's internal build-only variables", async () => {
+  it("does not resolve images from Kovalio's internal build-only variables", async () => {
     const service = {
       ...repoService({ id: "svc-image", name: "api", build: null, dockerfile: null }),
       image: "ghcr.io/acme/api:",

@@ -24,8 +24,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/domains" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/domains" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"projectId":"proj_123","hostname":"app.example.com"}'
 ```
@@ -39,7 +39,7 @@ curl -X POST "$OPENSHIP_URL/api/domains" \
     hostname: { type: 'string', description: 'A hostname such as app.example.com or *.example.com. Wildcards automatically use DNS-01.', required: true },
     isPrimary: { type: 'boolean', description: "Make this the project's primary domain. Requires a concrete hostname, not a wildcard.", default: 'false' },
     sslChallenge: { type: "'http-01' | 'dns-01'", description: 'Certificate challenge for a self-hosted target. Wildcards always use dns-01; other hostnames default to http-01.' },
-    externalIngress: { type: 'boolean', description: 'TLS is terminated upstream (Cloudflare Tunnel, a load balancer). Openship Cloud verifies ownership by DNS TXT; self-hosted instances accept the operator configuration. Openship issues no certificate.', default: 'false' },
+    externalIngress: { type: 'boolean', description: 'TLS is terminated upstream (Cloudflare Tunnel, a load balancer). Kovalio Cloud verifies ownership by DNS TXT; self-hosted instances accept the operator configuration. Kovalio issues no certificate.', default: 'false' },
     includeWww: { type: 'boolean', description: 'Also claim www.<hostname> as a SEPARATE domain — its own row, DNS record, verification and certificate, created as a 301 to the bare domain. The response carries its id in `www` (or the reason it could not be claimed in `wwwError`), and `records` includes its DNS record.', default: 'false' },
     redirectTo: { type: 'string', description: 'Answer a redirect to another domain of the SAME project instead of serving the app. Must be one of the project\'s own hostnames; self-targets and loops are refused. Available on Cloud and self-hosted deployments.' },
     redirectStatus: { type: 'number', description: 'Redirect code used with redirectTo: 301, 302, 307 or 308.', default: '301' },
@@ -70,8 +70,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/domains/preview" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/domains/preview" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"hostname":"app.example.com"}'
 ```
@@ -96,14 +96,14 @@ console.log(verification);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/domains/dom_123/verify" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/domains/dom_123/verify" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
 </Tabs>
 
-Once DNS is in place, verify it. Openship Cloud checks its routing and ownership records. Self-hosted
+Once DNS is in place, verify it. Kovalio Cloud checks its routing and ownership records. Self-hosted
 verification obtains or reuses the certificate on the deployment server. Domains with external ingress
 keep TLS at their upstream proxy.
 
@@ -117,7 +117,7 @@ Deploy and enable the project first. An external ingress or uploaded certificate
 const attempt = await ship.domains.startDnsChallenge("dom_123", { mode: "manual" });
 const current = await ship.domains.dnsChallenge("dom_123");
 // Once current.status is "waiting", publish current.record at the DNS provider.
-// Then explicitly ask Openship to check it:
+// Then explicitly ask Kovalio to check it:
 await ship.domains.checkDnsChallenge("dom_123", { attemptId: attempt.id });
 ```
 

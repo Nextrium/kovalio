@@ -12,7 +12,7 @@ import { describeDockerE2E, dockerSocketPath, requireDocker } from "../helpers/d
 
 const exec = promisify(execFile);
 const slug = `webmail-host-${randomUUID().slice(0, 8)}`;
-const host = "mail.openship.test";
+const host = "mail.kovalio.test";
 const image = "node:22-bookworm-slim";
 const docker = new Dockerode({ socketPath: dockerSocketPath });
 let runtime: DockerRuntime;
@@ -35,7 +35,7 @@ describeDockerE2E("webmail hostname on the mail server's Docker host", () => {
     await requireDocker();
     runtime = await DockerRuntime.create({ transport: "socket" });
     await runtime.pullImage(image);
-    directory = await mkdtemp(join(tmpdir(), "openship-webmail-host-"));
+    directory = await mkdtemp(join(tmpdir(), "kovalio-webmail-host-"));
     await writeFile(
       join(directory, "openssl.cnf"),
       `[req]\nprompt=no\ndistinguished_name=dn\nx509_extensions=cert\n[dn]\nCN=${host}\n[cert]\nsubjectAltName=DNS:${host}\nbasicConstraints=critical,CA:TRUE\n`,
@@ -67,7 +67,7 @@ describeDockerE2E("webmail hostname on the mail server's Docker host", () => {
         `const tls=require('node:tls');const server=tls.createServer({cert:Buffer.from(process.env.TEST_CERT,'base64'),key:Buffer.from(process.env.TEST_KEY,'base64')},socket=>socket.end('* OK fixture ready\\r\\n'));server.on('tlsClientError',()=>{});server.listen(0,'0.0.0.0',()=>console.log(JSON.stringify({port:server.address().port})));`,
       ],
       HostConfig: { NetworkMode: "host" },
-      Labels: { "openship.e2e": slug },
+      Labels: { "kovalio.e2e": slug },
     });
     await backend.start();
     for (let attempt = 0; attempt < 50; attempt++) {
@@ -135,7 +135,7 @@ describeDockerE2E("webmail hostname on the mail server's Docker host", () => {
     const fixed = await probe("host-gateway");
     expect(fixed.address).not.toBe("127.0.1.1");
     expect(fixed.trusted).toBe(true);
-    expect((await probe("host-gateway", "wrong.openship.test")).error).toBe(
+    expect((await probe("host-gateway", "wrong.kovalio.test")).error).toBe(
       "ERR_TLS_CERT_ALTNAME_INVALID",
     );
     expect((await probe("host-gateway")).trusted).toBe(true);

@@ -6,8 +6,8 @@
       "severity": "recommended",
       "announce": true,
       "affects": "<0.9.2",
-      "title": "Update to Openship 0.9.2",
-      "message": "Openship 0.9.2 is available. See the release notes for what's new — updating is recommended.",
+      "title": "Update to Kovalio 0.9.2",
+      "message": "Kovalio 0.9.2 is available. See the release notes for what's new — updating is recommended.",
       "action": {
         "label": "Update now",
         "kind": "update"

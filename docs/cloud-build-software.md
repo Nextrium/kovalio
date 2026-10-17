@@ -29,7 +29,7 @@ owned; private writable build-cache storage keeps its existing limits and cleanu
 
 ## How a build uses the disk
 
-Openship checks for a read-only mount at `/opt/oblien/build-cache`, validates its
+Kovalio checks for a read-only mount at `/opt/oblien/build-cache`, validates its
 bounded manifest and checks that the image layout and blobs exist. For literal,
 native-platform `FROM` references, it re-reads the current registry digest. Only
 an unchanged digest permits a `--build-context` pointing at the pinned local OCI

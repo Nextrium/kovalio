@@ -25,19 +25,19 @@ footer a { color: #c4c4c4; text-decoration: none; }
 </style></head><body>
 <main class="poster">
   <header class="brand"><span class="logo" aria-hidden="true"></span>Ship SDK
-    <code class="install"><span>$</span>npm install openship</code>
+    <code class="install"><span>$</span>npm install kovalio</code>
   </header>
   <h1>Deploy from your code.</h1>
   <p class="intro">Build deployment workflows in JavaScript or TypeScript.</p>
   <section class="editor" aria-label="TypeScript deployment example">
     <div class="editor-header"><span class="ts">TS</span>deploy-app.mts<span class="language">TypeScript</span></div>
     <pre class="shiki github-dark" style="background-color:#24292e;color:#e1e4e8" tabindex="0"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { resolve } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> "node:path"</span><span style="color:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { OpenshipClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> "openship/client"</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> { KovalioClient } </span><span style="color:#F97583">from</span><span style="color:#9ECBFF"> "kovalio/client"</span><span style="color:#E1E4E8">;</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> ship</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> OpenshipClient</span><span style="color:#E1E4E8">({</span></span>
+<span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> ship</span><span style="color:#F97583"> =</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> KovalioClient</span><span style="color:#E1E4E8">({</span></span>
 <span class="line"><span style="color:#E1E4E8">  baseUrl: </span><span style="color:#9ECBFF">"https://ship.example.com"</span><span style="color:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#E1E4E8">  token: process.env.</span><span style="color:#79B8FF">OPENSHIP_TOKEN</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#E1E4E8">  organizationId: process.env.</span><span style="color:#79B8FF">OPENSHIP_ORGANIZATION_ID</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E1E4E8">  token: process.env.</span><span style="color:#79B8FF">KOVALIO_TOKEN</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E1E4E8">  organizationId: process.env.</span><span style="color:#79B8FF">KOVALIO_ORGANIZATION_ID</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">,</span></span>
 <span class="line"><span style="color:#E1E4E8">});</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> run</span><span style="color:#F97583"> =</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> ship.</span><span style="color:#B392F0">deploy</span><span style="color:#E1E4E8">({</span></span>
@@ -52,5 +52,5 @@ footer a { color: #c4c4c4; text-decoration: none; }
 <span class="line"><span style="color:#F97583">if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">result.success) </span><span style="color:#F97583">throw</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> Error</span><span style="color:#E1E4E8">(result.status);</span></span>
 <span class="line"><span style="color:#E1E4E8">console.</span><span style="color:#B392F0">log</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Ready:"</span><span style="color:#E1E4E8">, run.project_id);</span></span></code></pre>
   </section>
-  <footer><span>Connect to OpenShip. Or embed the engine.</span><a href="https://openship.io/docs/api/sdk">openship.io/docs/api/sdk</a></footer>
+  <footer><span>Connect to Kovalio. Or embed the engine.</span><a href="https://nextrium.org/docs/api/sdk">nextrium.org/docs/api/sdk</a></footer>
 </main></body></html>

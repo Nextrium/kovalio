@@ -196,7 +196,7 @@ describe("probeDeployedReadiness", () => {
     expect(verdict.failure).toBeNull();
     expect(verdict.skipped).toContain("read ECONNRESET");
     expect(verdict.skipped).toContain("deployment host's connection");
-    expect(verdict.skipped).not.toContain("openship up");
+    expect(verdict.skipped).not.toContain("kovalio up");
     expect(withHostExecutor).not.toHaveBeenCalled();
   });
 });

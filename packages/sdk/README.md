@@ -2,11 +2,11 @@
 
 The SDK exposes one authorized platform implementation through native and remote clients. Native calls invoke the shared engine inside an owned Node worker in the host process. HTTP controllers call those same operations. Neither SDK import nor native creation starts an HTTP listener.
 
-This private workspace implements the SDK. `packages/openship` assembles the public `openship` package and CLI. Ship SDK is published in `openship` 0.8.0 and later; install it with `npm install openship`. The [full plan](../../docs/ship-sdk-plan.md) tracks the remaining platform migration.
+This private workspace implements the SDK. `packages/kovalio` assembles the public `kovalio` package and CLI. Ship SDK is published in `kovalio` 0.8.0 and later; install it with `npm install kovalio`. The [full plan](../../docs/ship-sdk-plan.md) tracks the remaining platform migration.
 
-The website's [Ship SDK guide](../../apps/web/content/docs/api/sdk/index.mdx) covers installation, native and remote setup, tenant scopes, deployment and scaling workflows, and a [shared SDK/REST reference](../../apps/web/content/docs/api/index.mdx) for the current public groups. Upgrade older CLI-only dependencies with `npm install openship@latest`.
+The website's [Ship SDK guide](../../apps/web/content/docs/api/sdk/index.mdx) covers installation, native and remote setup, tenant scopes, deployment and scaling workflows, and a [shared SDK/REST reference](../../apps/web/content/docs/api/index.mdx) for the current public groups. Upgrade older CLI-only dependencies with `npm install kovalio@latest`.
 
-The public package includes a runnable [native lifecycle example](../openship/examples/native-lifecycle.mjs). From a Node project with `openship` installed, run `node node_modules/openship/examples/native-lifecycle.mjs`. It exercises real deployments, redeployment, tenant isolation, session revocation, persistence, and project teardown in an owned temporary installation. The [package verification](../openship/verify-package.ts) runs and typechecks this exact example outside the workspace on Node 22 and 24. It uses the bare runtime without public routing; live Cloud, Docker, and SSH behavior are separate checks.
+The public package includes a runnable [native lifecycle example](../kovalio/examples/native-lifecycle.mjs). From a Node project with `kovalio` installed, run `node node_modules/kovalio/examples/native-lifecycle.mjs`. It exercises real deployments, redeployment, tenant isolation, session revocation, persistence, and project teardown in an owned temporary installation. The [package verification](../kovalio/verify-package.ts) runs and typechecks this exact example outside the workspace on Node 22 and 24. It uses the bare runtime without public routing; live Cloud, Docker, and SSH behavior are separate checks.
 
 ## Owned native integration
 
@@ -15,7 +15,7 @@ This example creates a persistent installation, maps a host identity, and deploy
 ```ts
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
-import { createShip, type VerifiedIdentity } from "openship/native";
+import { createShip, type VerifiedIdentity } from "kovalio/native";
 
 const sessions = new Map<string, VerifiedIdentity>();
 const stateDirectory = resolve("./ship-state");
@@ -23,7 +23,7 @@ const ship = await createShip({
   instanceId: "my-product",
   stateDirectory,
   storage: { driver: "pglite", dataDir: resolve(stateDirectory, "database") },
-  encryptionKey: process.env.OPENSHIP_ENCRYPTION_KEY!,
+  encryptionKey: process.env.KOVALIO_ENCRYPTION_KEY!,
   runtime: "bare",
   routing: "none",
   policy: { allowHostExecution: true },
@@ -70,7 +70,7 @@ Trusted host code may enable `administration` to access:
 
 Identity mappings and namespaces persist. Email equality does not link existing accounts; linking requires an explicit `userId`. Existing identity mappings do not gain instance-admin privileges when ensured again. Membership changes cannot remove the final organization owner.
 
-A namespace maps to an Openship organization. Projects belong to that organization and follow the existing role/grant model. Create resources under a customer by obtaining a verified identity, selecting its organization with `ship.scope`, then invoking `customer.projects.create` or `customer.deploy`. The operator is never included in the customer's scoped client.
+A namespace maps to an Kovalio organization. Projects belong to that organization and follow the existing role/grant model. Create resources under a customer by obtaining a verified identity, selecting its organization with `ship.scope`, then invoking `customer.projects.create` or `customer.deploy`. The operator is never included in the customer's scoped client.
 
 Every call asks the trusted adapter to revalidate the assertion and rereads membership/grants. The adapter must observe session/token revocation; a permanently cached successful assertion is not an authentication service. Removing membership invalidates an already-created scope. The assertion cannot pick its own role or organization authority. Fixed scopes cannot access another organization's resources even if the same user belongs to both.
 
@@ -79,11 +79,11 @@ For existing scoped PAT/OAuth identities, the trusted adapter returns `tokenScop
 ## Remote integration
 
 ```ts
-import { OpenshipClient } from "openship/client";
+import { KovalioClient } from "kovalio/client";
 
-const customer = new OpenshipClient({
+const customer = new KovalioClient({
   baseUrl: "https://ship.example.com",
-  token: process.env.OPENSHIP_TOKEN,
+  token: process.env.KOVALIO_TOKEN,
   organizationId: "org_customer",
 });
 const submitted = await customer.deploy({
@@ -139,10 +139,10 @@ Incoming hooks, invitations, and Git device continuations retain the initiating 
 Trusted remote automation can manage notices without impersonating a tenant:
 
 ```ts
-import { OpenshipOperatorClient } from "openship/client";
-const operator = new OpenshipOperatorClient({
+import { KovalioOperatorClient } from "kovalio/client";
+const operator = new KovalioOperatorClient({
   baseUrl: "https://ship.example.com",
-  internalToken: process.env.OPENSHIP_INTERNAL_TOKEN!,
+  internalToken: process.env.KOVALIO_INTERNAL_TOKEN!,
 });
 await operator.notices.create({ title: "Maintenance", message: "Scheduled maintenance at 02:00 UTC" });
 ```
@@ -156,10 +156,10 @@ bun run --cwd packages/platform test
 bun run --cwd packages/sdk test
 bun run --cwd apps/api test test/modules/deployments/native-sdk-parity.test.ts
 bun run --cwd apps/cli test
-bun run --cwd packages/openship build
-bun run --cwd packages/openship test:package
+bun run --cwd packages/kovalio build
+bun run --cwd packages/kovalio test:package
 ```
 
-The owned-native tests use real Node workers, PGlite, and the retained deployment pipeline. The packed-artifact check installs outside the workspace and tests ESM/CommonJS, NodeNext declarations, passive imports, native generated deployment and persistence, remote submission, packaged mail/migration/instance calls, actual WebSocket terminal I/O in ESM and CommonJS, and CLI context selection. Set `OPENSHIP_TEST_NODE` to another Node executable to run the same checks there. Live Docker/cloud/SSH scenarios remain distinct provider gates.
+The owned-native tests use real Node workers, PGlite, and the retained deployment pipeline. The packed-artifact check installs outside the workspace and tests ESM/CommonJS, NodeNext declarations, passive imports, native generated deployment and persistence, remote submission, packaged mail/migration/instance calls, actual WebSocket terminal I/O in ESM and CommonJS, and CLI context selection. Set `KOVALIO_TEST_NODE` to another Node executable to run the same checks there. Live Docker/cloud/SSH scenarios remain distinct provider gates.
 
 The [migration audit](../../docs/ship-sdk-migration-audit.md) records the original-to-engine file mapping, reviewed behavior changes, compatibility checks, and remaining limits.

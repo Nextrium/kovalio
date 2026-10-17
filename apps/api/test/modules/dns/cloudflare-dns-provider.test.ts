@@ -3,8 +3,8 @@ import { cloudflareDnsProvider } from "@repo/platform/engine/modules/dns/provide
 import {
   DnsApiError,
   DnsRecordConflictError,
-  OPENSHIP_RECORD_COMMENT,
-  isOpenshipManaged,
+  KOVALIO_RECORD_COMMENT,
+  isKovalioManaged,
 } from "@repo/platform/engine/modules/dns/types";
 
 /** Shape a Cloudflare v4 envelope the way the real API does. */
@@ -207,13 +207,13 @@ describe("cloudflareDnsProvider", () => {
         return cfOk([]);
       });
       await cloudflareDnsProvider.upsertRecord({ apiToken: "t" }, "zone_123", {
-        type: "TXT", name: "_openship-challenge.app.example.com", content,
+        type: "TXT", name: "_kovalio-challenge.app.example.com", content,
       });
-      expect(posted).toMatchObject({ content: '"token"', comment: OPENSHIP_RECORD_COMMENT });
+      expect(posted).toMatchObject({ content: '"token"', comment: KOVALIO_RECORD_COMMENT });
     });
 
     it("repairs an unquoted TXT record once and leaves the resulting record in sync", async () => {
-      let current = record({ type: "TXT", name: "_openship-challenge.app.example.com", content: "token" });
+      let current = record({ type: "TXT", name: "_kovalio-challenge.app.example.com", content: "token" });
       const fetchMock = vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => {
         if (init?.method === "PUT") {
           current = { ...current, ...JSON.parse(init.body as string) };

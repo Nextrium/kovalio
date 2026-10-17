@@ -42,7 +42,7 @@ const app = new Hono()
   .route("/api/cloud", cloudSaasRoutes);
 
 beforeAll(() => {
-  vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory");
+  vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory");
 });
 afterAll(async () => {
   await shutdownRateLimit();
@@ -135,7 +135,7 @@ describe("Cloud promotion receipts and atomic ingest", () => {
     const headers = {
       Authorization: `Bearer ${token}`,
       "X-Organization-Id": cloudOwner.orgId,
-      "X-Openship-Scope": "fixed",
+      "X-Kovalio-Scope": "fixed",
     };
     const forged = structuredClone(body);
     (forged.dump.tables.project[0].cloudPromotion as ProjectPromotion).target.userId =

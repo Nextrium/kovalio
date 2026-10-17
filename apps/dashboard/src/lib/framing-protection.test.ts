@@ -21,7 +21,7 @@ describe.each([false, true])("dashboard framing protection (API proxy: %s)", (ap
       "/api/proxy/api/auth/get-session",
     ]) {
       const response = await unstable_getResponseFromNextConfig({
-        url: `https://app.openship.io${path}`,
+        url: `https://kovalio.nextrium.org${path}`,
         nextConfig,
       });
 

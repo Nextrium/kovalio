@@ -29,7 +29,7 @@ vi.mock("@/context/GitHubContext", () => ({
     loading: h.loading,
     state: {
       primary: h.connected ? "personal-token" : null,
-      sources: { openshipApp: { connected: false }, ghCli: { available: false } },
+      sources: { kovalioApp: { connected: false }, ghCli: { available: false } },
     },
     capabilities: {
       primary: "app",

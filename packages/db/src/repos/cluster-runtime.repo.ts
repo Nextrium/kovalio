@@ -50,7 +50,7 @@ export function createClusterRuntimeRepo(db: Database) {
   async function expire(org: string) {
     await interrupt(
       and(eq(table.organizationId, org), expired()),
-      "OpenShip stopped reporting setup progress. Retry to inspect the saved installation and continue.",
+      "Kovalio stopped reporting setup progress. Retry to inspect the saved installation and continue.",
     );
   }
   async function get(org: string, clusterId: string) {
@@ -314,7 +314,7 @@ export function createClusterRuntimeRepo(db: Database) {
     recoverInterrupted: (exclusive: boolean) =>
       interrupt(
         exclusive ? undefined : expired(),
-        "OpenShip restarted before cluster setup finished. Retry to inspect the saved installation and continue.",
+        "Kovalio restarted before cluster setup finished. Retry to inspect the saved installation and continue.",
       ),
   };
 }

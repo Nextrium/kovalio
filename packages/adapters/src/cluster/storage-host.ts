@@ -13,7 +13,7 @@ if time.time()>c['deadline']: raise RuntimeError('Storage preparation expired. R
 p=pathlib.Path(c['path'])
 for part in [p,*p.parents]:
     if part.is_symlink(): raise RuntimeError('Storage directories must not contain symlinks: '+str(part))
-marker=p/'.openship-storage-owner.json'
+marker=p/'.kovalio-storage-owner.json'
 if marker.exists():
     owner=json.loads(marker.read_text())
     if owner.get('runtimeId') != c['runtimeId']: raise RuntimeError('This directory belongs to another cluster.')

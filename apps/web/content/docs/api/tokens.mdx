@@ -38,8 +38,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/tokens" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/tokens" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"deploy-bot","readOnly":false,"grants":[{"resourceType":"project","resourceId":"proj_123","permissions":["read","write"]}]}'
 ```
@@ -116,8 +116,8 @@ console.log(tokens);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/tokens" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/tokens" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -139,8 +139,8 @@ await ship.tokens.revoke("pat_123");
 <Tab value="REST API">
 
 ```bash
-curl -X DELETE "$OPENSHIP_URL/api/tokens/pat_123" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X DELETE "$KOVALIO_URL/api/tokens/pat_123" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>

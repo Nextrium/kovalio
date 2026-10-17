@@ -77,7 +77,7 @@ describe("deployServiceWorkload — shared namespaces", () => {
     const { docker } = recordingDaemon();
     let removed = false;
     docker.getContainer = () => ({ stop: async () => undefined, remove: async () => { removed = true; } });
-    const runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/openship-test-absent.sock" });
+    const runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/kovalio-test-absent.sock" });
     (runtime as unknown as { _docker: unknown })._docker = docker;
     await expect(runtime.deployServiceWorkload(GROUP, baseConfig({ advanced: { extraHosts: { mail: "invalid" } } }))).rejects.toThrow(/addresses/);
     await expect(runtime.deployServiceWorkload(GROUP, baseConfig({ namespaces: { network: "container:other" }, advanced: { extraHosts: { mail: "host-gateway" } } }))).rejects.toThrow(/shared/);

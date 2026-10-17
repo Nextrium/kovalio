@@ -177,7 +177,7 @@
     "envFromImage": "{n} variables viennent de l'image",
     "envFromImageHint": "Non importées comme configuration — l'image les fournit à l'exécution. Importez-les pour figer les valeurs avant de reconstruire depuis les sources.",
     "envFromImageImport": "Importer quand même",
-    "alreadyManaged": "{count} conteneur(s) déjà géré(s) par Openship ont été ignorés.",
+    "alreadyManaged": "{count} conteneur(s) déjà géré(s) par Kovalio ont été ignorés.",
     "chooseProject": "Choisir les éléments à importer",
     "chooseHint": "Sélectionnez un projet Compose ou des services individuels.",
     "topology": "Topologie",
@@ -192,8 +192,8 @@
     "clearSelection": "Effacer la sélection",
     "selectionKeyboard": "Appuyez sur Entrée ou Espace pour sélectionner un service.",
     "expandProject": "Services de {name}",
-    "proxyExcluded": "Proxy inverse ({ports}) — non importé ; le point d'entrée Openship le remplace.",
-    "edgePortReserved": "Ports {ports} réservés pour le point d'entrée Openship ; non publiés."
+    "proxyExcluded": "Proxy inverse ({ports}) — non importé ; le point d'entrée Kovalio le remplace.",
+    "edgePortReserved": "Ports {ports} réservés pour le point d'entrée Kovalio ; non publiés."
   },
   "reimport": {
     "title": "Projets Kovalio détectés",
@@ -211,7 +211,7 @@
     "failed": "Échec de la ré-importation",
     "review": "Récupérer le projet",
     "reviewNamed": "Récupérer {name}",
-    "groupLabel": "Projet Openship",
+    "groupLabel": "Projet Kovalio",
     "recoverHint": "Restaurez ses paramètres et rattachez les conteneurs en cours d’exécution.",
     "configuration": "Configuration",
     "snapshot": "Instantané enregistré",
@@ -291,7 +291,7 @@
     "disconnect": "Déconnecter la source",
     "empty": "Connectez le serveur depuis lequel vous souhaitez importer.",
     "hint": "Uniquement pour les migrations. Supprimez la connexion une fois terminé.",
-    "importHint": "Copiez les applications et les données vers un serveur Openship géré. La source est conservée jusqu’à la confirmation du basculement."
+    "importHint": "Copiez les applications et les données vers un serveur Kovalio géré. La source est conservée jusqu’à la confirmation du basculement."
   },
   "review": {
     "progress": "Progression de l’import",

@@ -24,7 +24,7 @@ export function fingerprintBuildArgs(
       continue;
     }
     fingerprints[key] = `hmac-sha256:${createHmac("sha256", env.BETTER_AUTH_SECRET)
-      .update(JSON.stringify(["openship-build-arg-v1", projectId, serviceName, key, value]))
+      .update(JSON.stringify(["kovalio-build-arg-v1", projectId, serviceName, key, value]))
       .digest("hex")}`;
   }
   return fingerprints;

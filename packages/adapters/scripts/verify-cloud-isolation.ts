@@ -19,7 +19,7 @@ const baseUrl = config.OBLIEN_API_URL || "https://api.oblien.com";
 if (!config.OBLIEN_CLIENT_ID || !config.OBLIEN_CLIENT_SECRET || new URL(baseUrl).protocol !== "https:") throw new Error("Staging credentials and HTTPS are required");
 const admin = new Oblien({ clientId: config.OBLIEN_CLIENT_ID, clientSecret: config.OBLIEN_CLIENT_SECRET, baseUrl });
 const tag = `os-cycle-${randomUUID().replaceAll("-", "").slice(0, 14)}`;
-const directory = await mkdtemp(join(tmpdir(), "openship-cloud-isolation-"));
+const directory = await mkdtemp(join(tmpdir(), "kovalio-cloud-isolation-"));
 const startedAt = new Date();
 const namespaceIds = new Map<string, string>();
 const pages = new Map<string, string>();
@@ -149,7 +149,7 @@ try {
     : { state: item.status, status: item.reason?.status, code: item.reason?.code, message: item.reason?.message }) });
   check("namespace workspace cap survives concurrent creates", winners.length === 1 && losers.length === 1 && [400, 409, 422].includes(Number((losers[0] as PromiseRejectedResult).reason?.status)));
   const workspaceA = winners[0]!.value;
-  // Inspect the actual wire status, independently of Openship's compatibility
+  // Inspect the actual wire status, independently of Kovalio's compatibility
   // normalization for the provider's former HTTP-200 limit failures.
   const limited = await fetch(new URL("/workspace", baseUrl), {
     method: "POST", headers: { Authorization: `Bearer ${tokenA}`, "Content-Type": "application/json" },
@@ -164,7 +164,7 @@ try {
   check("two customers own different workspaces", workspaceA.id !== workspaceB.id && workspaceA.namespace === a && workspaceB.namespace === b);
   for (const [client, workspace, namespace] of [[clientA, workspaceA, a], [clientB, workspaceB, b]] as const) {
     const executor = new CloudWorkspaceExecutor(() => client.workspace(workspace.id).runtime());
-    const path = `/opt/openship/cloud-docker/routes/${namespace}`;
+    const path = `/opt/kovalio/cloud-docker/routes/${namespace}`;
     try {
       await executor.mkdir(path); await executor.writeFile(`${path}/index.html`, `Isolated customer ${namespace}`);
       if (namespace === a) {

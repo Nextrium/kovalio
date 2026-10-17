@@ -25,8 +25,8 @@ let runner: Runner;
 let responses: Result[];
 
 beforeEach(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openship-notary-test-"));
-  path = join(directory, "Openship-arm64.dmg");
+  directory = await mkdtemp(join(tmpdir(), "kovalio-notary-test-"));
+  path = join(directory, "Kovalio-arm64.dmg");
   await writeFile(path, "signed installer fixture");
   calls = [];
   messages = [];
@@ -50,7 +50,7 @@ describe("resumable macOS notarization", () => {
   it("saves a submission without waiting and binds it to the exact installer and release run", async () => {
     await submitNotarization(path, context, runner);
     const receipt = JSON.parse(await readFile(`${path}.notary.json`, "utf8"));
-    expect(receipt).toMatchObject({ version: 1, id, commit: context.commit, runId: "123", file: "Openship-arm64.dmg" });
+    expect(receipt).toMatchObject({ version: 1, id, commit: context.commit, runId: "123", file: "Kovalio-arm64.dmg" });
     expect(receipt.sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(calls).toHaveLength(1);
     expect(calls[0]).toContain("--no-wait");

@@ -492,8 +492,8 @@ export async function listOrganizationIssues(
       severity: "action_required",
       scope: "platform",
       source: "component",
-      title: "Openship",
-      message: "Openship cannot establish a network connection to the affected servers. Their current service health is unknown. Restore the connection, then recheck monitoring.",
+      title: "Kovalio",
+      message: "Kovalio cannot establish a network connection to the affected servers. Their current service health is unknown. Restore the connection, then recheck monitoring.",
       details: {
         connectionIssue: true,
         observerOffline,
@@ -503,7 +503,7 @@ export async function listOrganizationIssues(
           reason: row.reason,
         })),
       },
-      target: { scope: "platform", id: "observer", name: "Openship", href: "/monitoring" },
+      target: { scope: "platform", id: "observer", name: "Kovalio", href: "/monitoring" },
       resolveWith: [],
     });
   }

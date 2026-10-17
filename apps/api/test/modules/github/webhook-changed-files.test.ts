@@ -38,7 +38,7 @@ describe("extractChangedFiles", () => {
       {
         before: "1111111111111111111111111111111111111111",
         after: "2222222222222222222222222222222222222222",
-        repository: { name: "openship", owner: { login: "oblien" } },
+        repository: { name: "kovalio", owner: { login: "oblien" } },
         commits: Array.from({ length: 20 }, () => ({
           added: [],
           modified: [],

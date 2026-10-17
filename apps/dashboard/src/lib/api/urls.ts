@@ -85,7 +85,7 @@ function sameOriginProxyOrigin(): string | null {
 
 function localApiOverride(): string | null {
   if (typeof window !== "undefined") {
-    const injected = (window as { __OPENSHIP_API_ORIGIN__?: string }).__OPENSHIP_API_ORIGIN__;
+    const injected = (window as { __KOVALIO_API_ORIGIN__?: string }).__KOVALIO_API_ORIGIN__;
     if (!injected) return null;
     return alignLoopbackOrigin(injected.replace(/\/+$/, ""), window.location.origin);
   }
@@ -154,7 +154,7 @@ export function resolveApiNavigationUrl(target: string, apiBase = getRestApiBase
   const value = target.trim();
   if (!value) throw new Error("API navigation URL is empty");
 
-  // Absolute destinations (for example github.com or api.openship.io) are
+  // Absolute destinations (for example github.com or api.nextrium.org) are
   // authoritative, but never allow a non-web scheme into window navigation.
   if (/^[A-Za-z][A-Za-z\d+.-]*:/.test(value)) {
     const absolute = new URL(value);

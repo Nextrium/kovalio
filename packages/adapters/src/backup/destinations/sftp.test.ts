@@ -143,7 +143,7 @@ describe("SFTP destination control deadlines and temporary uploads", () => {
 
   it("verifies a complete probe and removes it after the remote handle closes", async () => {
     expect(await resolveDestination(row).preflight()).toEqual({ ok: true });
-    expect(fake.unlinked).toEqual([expect.stringMatching(/\/\.openship-probe-/)]);
+    expect(fake.unlinked).toEqual([expect.stringMatching(/\/\.kovalio-probe-/)]);
     expect(fake.clients.every(client => client.ended)).toBe(true);
   });
 
@@ -212,7 +212,7 @@ describe("SFTP destination control deadlines and temporary uploads", () => {
 
     await expect(
       resolveDestination(row).put(
-        "openship/project/service/run/artifact.tar.zst",
+        "kovalio/project/service/run/artifact.tar.zst",
         Readable.from(["payload"]),
         {},
       ),
@@ -228,7 +228,7 @@ describe("SFTP destination control deadlines and temporary uploads", () => {
 
     await expect(
       resolveDestination(row).put(
-        "openship/project/service/run/artifact.tar.zst",
+        "kovalio/project/service/run/artifact.tar.zst",
         Readable.from(["payload"]),
         {},
       ),
@@ -240,7 +240,7 @@ describe("SFTP destination control deadlines and temporary uploads", () => {
 
   it("renames the temporary file and keeps it on success", async () => {
     const result = await resolveDestination(row).put(
-      "openship/project/service/run/artifact.tar.zst",
+      "kovalio/project/service/run/artifact.tar.zst",
       Readable.from(["payload"]),
       {},
     );
@@ -248,7 +248,7 @@ describe("SFTP destination control deadlines and temporary uploads", () => {
     expect(result.bytesWritten).toBe(7);
     expect(fake.renamed).toHaveLength(1);
     expect(fake.renamed[0]?.[0]).toMatch(/\.uploading-[0-9a-f]{8}$/);
-    expect(fake.renamed[0]?.[1]).toBe("/backups/openship/project/service/run/artifact.tar.zst");
+    expect(fake.renamed[0]?.[1]).toBe("/backups/kovalio/project/service/run/artifact.tar.zst");
     expect(fake.unlinked).toEqual([]);
     expect(fake.clients).toHaveLength(1);
   });

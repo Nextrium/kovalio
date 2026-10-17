@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { DockerRuntime } from "./docker";
 import type { MultiServiceDeployConfig, MultiServiceGroupHandle } from "./types";
 
-const GROUP: MultiServiceGroupHandle = { id: "net-openship-demo" };
+const GROUP: MultiServiceGroupHandle = { id: "net-kovalio-demo" };
 
 const CONFIG: MultiServiceDeployConfig = {
   deploymentId: "dep-1",
@@ -26,7 +26,7 @@ describe("Docker service replacement ordering", () => {
       getImage: vi.fn(() => ({ inspect: vi.fn().mockRejectedValue(Object.assign(new Error("No such image"), { statusCode: 404 })) })),
       getContainer: vi.fn(() => ({ stop, remove })), createContainer: vi.fn(),
     };
-    const runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/openship-test-absent.sock" });
+    const runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/kovalio-test-absent.sock" });
     (runtime as unknown as { _docker: unknown })._docker = docker;
     await expect(runtime.deployServiceWorkload(GROUP, {
       ...CONFIG, image: `sha256:${"a".repeat(64)}`, imageAlreadyPrepared: true,
@@ -46,7 +46,7 @@ describe("Docker service replacement ordering", () => {
       createContainer: vi.fn().mockRejectedValue(new Error("stop after proving ordering")),
     };
     const runtime = await DockerRuntime.create({
-      dockerSocketPath: "/tmp/openship-test-absent.sock",
+      dockerSocketPath: "/tmp/kovalio-test-absent.sock",
     });
     (runtime as unknown as { _docker: unknown })._docker = docker;
 
@@ -74,7 +74,7 @@ describe("Docker service replacement ordering", () => {
       createContainer: vi.fn(),
     };
     const runtime = await DockerRuntime.create({
-      dockerSocketPath: "/tmp/openship-test-absent.sock",
+      dockerSocketPath: "/tmp/kovalio-test-absent.sock",
     });
     (runtime as unknown as { _docker: unknown })._docker = docker;
     vi.spyOn(runtime, "pullImage").mockRejectedValue(new Error("registry unavailable"));
@@ -89,13 +89,13 @@ describe("Docker service replacement ordering", () => {
     expect(docker.createContainer).not.toHaveBeenCalled();
   });
 
-  it("pulls third-party images in the openship Docker Hub namespace", async () => {
+  it("pulls third-party images in the kovalio Docker Hub namespace", async () => {
     const docker = {
       getContainer: vi.fn(),
       createContainer: vi.fn(),
     };
     const runtime = await DockerRuntime.create({
-      dockerSocketPath: "/tmp/openship-test-absent.sock",
+      dockerSocketPath: "/tmp/kovalio-test-absent.sock",
     });
     (runtime as unknown as { _docker: unknown })._docker = docker;
     const pullImage = vi
@@ -103,10 +103,10 @@ describe("Docker service replacement ordering", () => {
       .mockRejectedValue(new Error("stop after proving pull"));
 
     await expect(
-      runtime.deployServiceWorkload(GROUP, { ...CONFIG, image: "openship/agent:staging" }),
+      runtime.deployServiceWorkload(GROUP, { ...CONFIG, image: "kovalio/agent:staging" }),
     ).rejects.toThrow("stop after proving pull");
 
-    expect(pullImage).toHaveBeenCalledWith("openship/agent:staging", { force: true });
+    expect(pullImage).toHaveBeenCalledWith("kovalio/agent:staging", { force: true });
     expect(docker.getContainer).not.toHaveBeenCalled();
   });
 
@@ -116,7 +116,7 @@ describe("Docker service replacement ordering", () => {
       createContainer: vi.fn(),
     };
     const runtime = await DockerRuntime.create({
-      dockerSocketPath: "/tmp/openship-test-absent.sock",
+      dockerSocketPath: "/tmp/kovalio-test-absent.sock",
     });
     (runtime as unknown as { _docker: unknown })._docker = docker;
     const pullImage = vi
@@ -126,11 +126,11 @@ describe("Docker service replacement ordering", () => {
     await expect(
       runtime.deployServiceWorkload(GROUP, {
         ...CONFIG,
-        image: "openship/user-image:bld_release",
+        image: "kovalio/user-image:bld_release",
       }),
     ).rejects.toThrow("stop after proving pull");
 
-    expect(pullImage).toHaveBeenCalledWith("openship/user-image:bld_release", { force: true });
+    expect(pullImage).toHaveBeenCalledWith("kovalio/user-image:bld_release", { force: true });
     expect(docker.getContainer).not.toHaveBeenCalled();
   });
 
@@ -141,7 +141,7 @@ describe("Docker service replacement ordering", () => {
       createContainer: vi.fn().mockRejectedValue(new Error("stop after proving no pull")),
     };
     const runtime = await DockerRuntime.create({
-      dockerSocketPath: "/tmp/openship-test-absent.sock",
+      dockerSocketPath: "/tmp/kovalio-test-absent.sock",
     });
     (runtime as unknown as { _docker: unknown })._docker = docker;
     const pullImage = vi.spyOn(runtime, "pullImage");
@@ -169,7 +169,7 @@ describe("Docker service replacement ordering", () => {
         createContainer: vi.fn(),
       };
       const runtime = await DockerRuntime.create({
-        dockerSocketPath: "/tmp/openship-test-absent.sock",
+        dockerSocketPath: "/tmp/kovalio-test-absent.sock",
       });
       (runtime as unknown as { _docker: unknown })._docker = docker;
       const result =
@@ -193,7 +193,7 @@ describe("Docker service replacement ordering", () => {
       createContainer: vi.fn(),
     };
     const runtime = await DockerRuntime.create({
-      dockerSocketPath: "/tmp/openship-test-absent.sock",
+      dockerSocketPath: "/tmp/kovalio-test-absent.sock",
     });
     (runtime as unknown as { _docker: unknown })._docker = docker;
     await expect(

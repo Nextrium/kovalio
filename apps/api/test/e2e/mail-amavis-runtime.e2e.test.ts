@@ -8,10 +8,10 @@ import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 
 const exec = promisify(execFile);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
-const RUNNER = `openship-e2e-amavis-${process.pid.toString(36)}`;
+const RUNNER = `kovalio-e2e-amavis-${process.pid.toString(36)}`;
 const PREPARE = "bash /prepare-amavis-runtime.sh";
 // The production mail image uses Debian 12's Amavis. Install those real
-// collaborators without a full iRedMail build or a published Openship image.
+// collaborators without a full iRedMail build or a published Kovalio image.
 const CONFIG = `use strict;
 $mydomain = 'example.test';
 $myhostname = 'mail.example.test';

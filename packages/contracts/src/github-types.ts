@@ -325,5 +325,5 @@ export interface GitHubConnectionState {
    *
    * `null` is the "show the connect prompt" signal.
    */
-  primary: "openship-app" | "gh-cli" | "personal-token" | null;
+  primary: "kovalio-app" | "gh-cli" | "personal-token" | null;
 }

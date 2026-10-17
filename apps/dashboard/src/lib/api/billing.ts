@@ -46,7 +46,7 @@ export interface BillingState {
   monthlyCreditLimit: number | null;
   /** Display-only: out of credits (Oblien is the real enforcer). */
   overQuota: boolean;
-  /** Build time this period in minutes (openship-derived; Oblien has no build meter). */
+  /** Build time this period in minutes (kovalio-derived; Oblien has no build meter). */
   buildTimeMinutes: number | null;
   /** Build allowance resets monthly, even for an annual subscription. */
   buildMinutesResetAt?: string;
@@ -64,7 +64,7 @@ export interface BillingState {
    */
   capacity?: BillingCapacity;
   /**
-   * MASTER billing-feature availability, decided by Openship Cloud
+   * MASTER billing-feature availability, decided by Kovalio Cloud
    * (`BILLING_ENABLED`). When false, new purchases are disabled. Existing
    * customers can still manage their payment details and stop renewal.
    */

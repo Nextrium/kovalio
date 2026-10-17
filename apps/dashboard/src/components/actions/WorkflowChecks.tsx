@@ -79,7 +79,7 @@ function ScopedWorkflowChecks({
           )}
           {independent && (
             <WorkflowRepositoryChecks
-              key={`${repository}:openship`}
+              key={`${repository}:kovalio`}
               repository={repository}
               github={false}
             />

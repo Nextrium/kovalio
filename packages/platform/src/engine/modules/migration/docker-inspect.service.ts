@@ -15,7 +15,7 @@ import { repos } from "@repo/db";
 import { createMigrationDockerRuntime as createServerDockerRuntime } from "./migration-runtime";
 import { withMigrationExecution } from "./migration-runtime";
 import { requireMigrationServer } from "./migration-access";
-import { pruneOrphanManifestArtifacts } from "../../lib/openship-manifest-sync";
+import { pruneOrphanManifestArtifacts } from "../../lib/kovalio-manifest-sync";
 import { parseComposeFile, type ComposeService } from "../../lib/compose-parser";
 import { readManifest, projectSnapshotExists, type ManifestProjectEntry } from "../../lib/kovalio-manifest";
 import {
@@ -397,7 +397,7 @@ export async function discoverServerStack(
           alreadyManaged,
           imageEnv,
           imageCmds,
-          openshipProjects,
+          kovalioProjects,
           proxyRoutesByPort: proxyScan.routesByPort,
           proxy: proxyScan.proxy,
           proxyWarnings: proxyScan.warnings,

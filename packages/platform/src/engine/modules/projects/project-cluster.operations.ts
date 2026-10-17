@@ -95,9 +95,9 @@ export function createProjectClusterOperations(
           );
         if (project.clusterId && input.clusterId !== project.clusterId)
           await assertProjectStorageEmpty(ctx.organizationId, id, project.clusterId);
-        if (project.appTemplateId === "openship")
+        if (project.appTemplateId === "kovalio")
           throw new AppError(
-            "The OpenShip control plane cannot be moved through workload scaling.",
+            "The Kovalio control plane cannot be moved through workload scaling.",
             409,
             "CLUSTER_WORKLOAD_UNSUPPORTED",
           );

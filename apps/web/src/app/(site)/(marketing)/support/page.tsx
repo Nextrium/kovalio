@@ -5,7 +5,7 @@ import { ContactForm } from "@/components/contact-form";
 
 export const metadata: Metadata = {
   title: "Support",
-  description: "Get help with Openship Cloud, deployments, your account, or billing.",
+  description: "Get help with Kovalio Cloud, deployments, your account, or billing.",
   alternates: { canonical: "/support" },
 };
 
@@ -16,7 +16,7 @@ export default function SupportPage() {
       <main className="legal-root">
         <section className="legal-hero">
           <div className="legal-container">
-            <p className="legal-eyebrow">Openship Support</p>
+            <p className="legal-eyebrow">Kovalio Support</p>
             <h1 className="legal-title">
               Let&rsquo;s get you unstuck.
               <br />

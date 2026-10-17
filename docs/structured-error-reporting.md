@@ -1,6 +1,6 @@
 # Structured error reporting
 
-Openship-owned failures go through `ErrorReporter` in
+Kovalio-owned failures go through `ErrorReporter` in
 [`packages/core/src/diagnostics`](../packages/core/src/diagnostics). The same implementation is used
 across the API, platform and dashboard, with automatic collection enabled only for Cloud SaaS.
 Self-hosted instances, Desktop, the native worker and CLI leave collection disabled. Reporting observes
@@ -21,7 +21,7 @@ website and standalone dashboard server do not install an upload destination.
 This is operational diagnostics, separate from the existing security audit log, deployment output and
 Cloud product analytics. Customer applications' own stdout, stderr and exceptions remain their service
 logs. OpenResty, Docker, SSH, database engines and the separately deployed webmail application retain
-their own internal logs; errors that reach an Openship control-plane adapter are observed here.
+their own internal logs; errors that reach an Kovalio control-plane adapter are observed here.
 
 ## Cloud database destination
 

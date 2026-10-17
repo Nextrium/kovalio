@@ -8,7 +8,7 @@ vi.mock("node:timers/promises", () => ({ setTimeout: async () => {} }));
 const definition: KubernetesObject = {
   apiVersion: "batch/v1",
   kind: "Job",
-  metadata: { name: "check", namespace: "owned", labels: { "openship.io/runtime": "runtime" } },
+  metadata: { name: "check", namespace: "owned", labels: { "nextrium.org/runtime": "runtime" } },
   spec: { backoffLimit: 2, activeDeadlineSeconds: 300 },
 };
 const complete = { conditions: [{ type: "Complete", status: "True" }], succeeded: 1 };
@@ -34,7 +34,7 @@ function fixture(statuses: Record<string, unknown>[], existing?: Record<string, 
           ...definition.metadata,
           uid: "original",
           annotations: {
-            "openship.io/job-spec": createHash("sha256")
+            "nextrium.org/job-spec": createHash("sha256")
               .update(JSON.stringify(definition.spec))
               .digest("hex"),
           },
@@ -206,8 +206,8 @@ describe("native cluster Job reconciliation", () => {
     async (kind) => {
       const context = fixture([], failed);
       const current = context.current()!;
-      if (kind === "ownership") current.metadata.labels = { "openship.io/runtime": "foreign" };
-      else current.metadata.annotations = { "openship.io/job-spec": "different-spec" };
+      if (kind === "ownership") current.metadata.labels = { "nextrium.org/runtime": "foreign" };
+      else current.metadata.annotations = { "nextrium.org/job-spec": "different-spec" };
       await expect(
         runClusterJob(context.api, definition, { ...context.options, retryFailed: true }),
       ).rejects.toThrow("different ownership or configuration");

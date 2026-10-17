@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import type { VerifiedIdentity } from "@repo/platform";
 import { ENV_MASK, type AppTemplate } from "@repo/core";
 import type { BackupDestination as StoredBackupDestination } from "@repo/db";
@@ -87,7 +87,7 @@ const h = vi.hoisted(() => ({
   tunnelUpsert: vi.fn(), tunnelRemove: vi.fn(), tunnelForward: vi.fn(), tunnelClose: vi.fn(),
   env: {
     CLOUD_MODE: false, DEPLOY_MODE: "docker", BETTER_AUTH_SECRET: "server-parity-test-encryption-secret-32-bytes",
-    OPENSHIP_PRODUCT: "platform", OPENSHIP_AUTH_MODE: undefined as string | undefined, OPENSHIP_ALLOW_ZERO_AUTH: false,
+    KOVALIO_PRODUCT: "platform", KOVALIO_AUTH_MODE: undefined as string | undefined, KOVALIO_ALLOW_ZERO_AUTH: false,
   },
 }));
 
@@ -178,7 +178,7 @@ vi.mock("@repo/platform/engine/config/env", () => ({
   env: h.env,
   trustedOrigins: [],
   runtimeTargetId: "local",
-  cloudRuntimeTarget: { dashboard: "https://openship.test", api: "https://api.openship.test" },
+  cloudRuntimeTarget: { dashboard: "https://kovalio.test", api: "https://api.kovalio.test" },
 }));
 vi.mock("@repo/platform/engine/lib/instance-authorization", async () => {
   const { createInstanceAuthorization } = await import("@repo/platform");
@@ -205,7 +205,7 @@ vi.mock("@repo/platform/engine/lib/ssh-tunnel", async importOriginal => ({
 vi.mock("@repo/platform/engine/lib/auth", () => ({
   auth: {},
   isSaasDeployment: false,
-  COOKIE_PREFIX: "openship",
+  COOKIE_PREFIX: "kovalio",
 }));
 vi.mock("@repo/platform/engine/lib/cloud/transport", () => ({
   resolveOrgCloudUserId: h.cloudOwner,
@@ -218,7 +218,7 @@ vi.mock("../../../src/middleware/auth", () => ({
   authMiddleware: async (c: any, next: () => Promise<void>) => {
     const { buildRequestContext } = await import("../../../src/lib/request-context");
     const identity = h.identity!;
-    const fixed = c.req.header("X-Openship-Scope") === "fixed";
+    const fixed = c.req.header("X-Kovalio-Scope") === "fixed";
     const org = fixed ? c.req.header("X-Organization-Id") : "org-a";
     c.set("activeOrganizationId", org);
     c.set("clientIp", "127.0.0.1");
@@ -349,7 +349,7 @@ vi.mock("@repo/adapters", async importOriginal => {
     getPlatform: () => ({ target: "selfhosted" }),
     checkComponents: h.componentCheck,
     dockerAvailable: async () => true,
-    detectEdgeContainer: async () => ({ name: "openship-edge", image: "edge:old", running: true, exists: true }),
+    detectEdgeContainer: async () => ({ name: "kovalio-edge", image: "edge:old", running: true, exists: true }),
     probeEdge: async () => ({ canProceedClean: true }),
     getRemovalSupport: async () => ({ supported: true }),
     COMPONENT_INSTALLERS: { ...actual.COMPONENT_INSTALLERS, docker: h.installDocker, edge: h.installEdge },
@@ -434,7 +434,7 @@ const native = (organizationId = "org-a") =>
   });
 
 describe("deployment preparation HTTP/native parity", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   let info: ProjectInfo;
 
   beforeEach(() => {
@@ -445,7 +445,7 @@ describe("deployment preparation HTTP/native parity", () => {
       buildImage: "node:22", outputDirectory: "dist", rootDirectory: "./", productionPaths: ["dist"], port: 3000,
       composePath: "deploy/compose.yaml",
       rootEnv: { ROOT_TOKEN: secret, EMPTY: "" },
-      openshipEnv: { DECLARED_TOKEN: { value: secret, secret: true } },
+      kovalioEnv: { DECLARED_TOKEN: { value: secret, secret: true } },
       services: [{
         name: "web", image: "node:22", ports: ["3000:3000"], dependsOn: [], volumes: [],
         environment: { API_TOKEN: secret, EMPTY: "" },
@@ -468,11 +468,11 @@ describe("deployment preparation HTTP/native parity", () => {
     expect(result).toMatchObject({
       repository: info.repository, stack: "node", projectType: "services", buildCommand: "npm run build",
       composePath: "deploy/compose.yaml", productionPaths: ["dist"],
-      rootEnv: { ROOT_TOKEN: ENV_MASK, EMPTY: "" }, openshipEnvKeys: ["DECLARED_TOKEN"],
+      rootEnv: { ROOT_TOKEN: ENV_MASK, EMPTY: "" }, kovalioEnvKeys: ["DECLARED_TOKEN"],
       services: [{ name: "web", environment: { API_TOKEN: ENV_MASK, EMPTY: "" } }],
       missingRequiredEnv: info.missingRequiredEnv, configDiagnostics: info.configDiagnostics,
     });
-    expect(result).not.toHaveProperty("openshipEnv");
+    expect(result).not.toHaveProperty("kovalioEnv");
     expect(result.services?.[0]).not.toHaveProperty("environmentTemplates");
     expect(JSON.stringify(result)).not.toContain(secret);
     expect(info).toEqual(original);
@@ -630,7 +630,7 @@ describe("deployment preparation HTTP/native parity", () => {
 });
 
 describe("HTTP/native service parity", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   it("uses the same strict write, audit, and output for a parent-scoped creator", async () => {
     h.members.set("org-a:alice", { id: "member-a", role: "restricted" });
     h.grants.set("org-a:alice:project:project-a", { permissions: ["write"] });
@@ -688,7 +688,7 @@ describe("HTTP/native service parity", () => {
 });
 
 describe("app HTTP/native parity through retained catalog, installer, and settings services", () => {
-  const remote = (organizationId = "org-a") => new OpenshipClient({ baseUrl: "http://openship.test", organizationId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = (organizationId = "org-a") => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   const definition: AppTemplate = {
     id: "parity-app", name: "Parity App", description: "Shared installer fixture", kind: "template", logo: "box", category: "other",
     verified: true, available: true, minResources: { memoryMb: 512 },
@@ -808,8 +808,8 @@ describe("app HTTP/native parity through retained catalog, installer, and settin
     h.grants.set("org-a:alice:server:server-a", { permissions: ["read"] });
     expect(await local.apps.hostFit(definition.id, { serverId: "server-a" })).toEqual(await remote().apps.hostFit(definition.id, { serverId: "server-a" }));
     expect(h.hostCapacity).toHaveBeenCalledTimes(2);
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
     expect(await local.apps.hostFit(definition.id)).toMatchObject({ capacity: { source: "unknown" }, fit: { ok: true } });
     expect(h.hostCapacity).toHaveBeenCalledTimes(2);
   });
@@ -823,7 +823,7 @@ describe("app HTTP/native parity through retained catalog, installer, and settin
 });
 
 describe("backup destination HTTP/native parity through retained storage services", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   function destination(id: string, organizationId: string): StoredBackupDestination {
     return { ...backupDestinationFixture(id), organizationId, accessKeyIdEnc: encryptSecretField("storage-access-key"), secretAccessKeyEnc: encryptSecretField("storage-private-secret"),
       sftpPasswordEnc: null, sftpPrivateKeyEnc: null, sftpKeyPassphraseEnc: null, lastVerifiedAt: null, deletedAt: null,
@@ -961,11 +961,11 @@ describe("backup destination HTTP/native parity through retained storage service
   it("requires server authority before using a destination's saved server credentials", async () => {
     h.members.set("org-a:alice", { id: "member-a", role: "restricted" });
     h.grants.set("org-a:alice:backup_destination:*", { permissions: ["write"] });
-    Object.assign(h.destinations.get("destination-a")!, { kind: "openship_server", serverId: "server-a" });
+    Object.assign(h.destinations.get("destination-a")!, { kind: "kovalio_server", serverId: "server-a" });
     const local = await native();
     for (const destinations of [local.backupDestinations, remote().backupDestinations]) {
       await expect(destinations.preflight("destination-a")).rejects.toMatchObject({ code: "NOT_FOUND" });
-      await expect(destinations.create({ name: "Server storage", kind: "openship_server", serverId: "server-a" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+      await expect(destinations.create({ name: "Server storage", kind: "kovalio_server", serverId: "server-a" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     }
     expect(h.destinationProbe).not.toHaveBeenCalled();
     expect(h.destinationCreate).not.toHaveBeenCalled();
@@ -977,9 +977,9 @@ describe("backup destination HTTP/native parity through retained storage service
   });
 
   it("refuses host key files in native preflight before reaching a provider", async () => {
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
-    Object.assign(h.destinations.get("destination-a")!, { kind: "openship_server", serverId: "server-a" });
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    Object.assign(h.destinations.get("destination-a")!, { kind: "kovalio_server", serverId: "server-a" });
     Object.assign(h.servers.get("server-a")!, { sshPrivateKey: null, sshKeyPath: "/tmp/host-private-key" });
     const output = await (await native()).backupDestinations.preflight("destination-a");
     expect(output).toMatchObject({ ok: false });
@@ -1053,8 +1053,8 @@ beforeEach(() => {
   configureNativeSourceRoots([]);
   h.env.CLOUD_MODE = false;
   h.env.DEPLOY_MODE = "docker";
-  h.env.OPENSHIP_AUTH_MODE = undefined;
-  h.env.OPENSHIP_ALLOW_ZERO_AUTH = false;
+  h.env.KOVALIO_AUTH_MODE = undefined;
+  h.env.KOVALIO_ALLOW_ZERO_AUTH = false;
   h.identity = alice;
   h.members.set("org-a:alice", { id: "member-a", role: "owner" });
   h.members.set("org-b:alice", { id: "member-b", role: "member" });
@@ -1113,7 +1113,7 @@ beforeEach(() => {
 });
 
 describe("deployment inspection HTTP/native parity", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   const usage = { cpuPercent: 12, memoryMb: 64, diskMb: 128, networkRxBytes: 123, networkTxBytes: 456 };
   const cases = [
     { method: "containerInfo", engine: h.deploymentContainerInfo, result: { containerId: "primary-service", status: "running", hostPortByContainerPort: { "8080": 49100 }, usage, resources: { cpuCores: 0.25, memoryMb: 512 } } },
@@ -1143,7 +1143,7 @@ describe("deployment inspection HTTP/native parity", () => {
 });
 
 describe("hostname SSL HTTP/native parity", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   const expiresAt = new Date(Date.now() + 90 * 86_400_000).toISOString();
   beforeEach(() => {
     h.domains.set("domain-a", { ...domainFixture(), id: "domain-a", projectId: "project-a", hostname: "app.example.com", sslStatus: "active", sslIssuer: "Let's Encrypt", sslExpiresAt: expiresAt, verified: true });
@@ -1208,8 +1208,8 @@ describe("hostname SSL HTTP/native parity", () => {
       await expect(deployments.renewSsl({ domain: "app.example.com" })).rejects.toMatchObject({ code: "SSL_OPERATION_FAILED", message: "ACME challenge failed" });
     }
     h.manageSsl.mockClear();
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
     await expect((await native()).deployments.renewSsl({ domain: "app.example.com" })).rejects.toMatchObject({ code: "HOST_EXECUTION_DISABLED" });
     expect(h.manageSsl).not.toHaveBeenCalled();
   });
@@ -1285,8 +1285,8 @@ describe("deployment HTTP/native parity", () => {
     await expect(scoped.deployments.create({ projectId: "project-b" })).rejects.toMatchObject({
       code: "NOT_FOUND",
     });
-    const client = new OpenshipClient({
-      baseUrl: "http://openship.test",
+    const client = new KovalioClient({
+      baseUrl: "http://kovalio.test",
       organizationId: "org-a",
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
     });
@@ -1417,7 +1417,7 @@ describe("deployment HTTP/native parity", () => {
 
 describe("project controls HTTP/native parity", () => {
   it("imports the scanner's Compose metadata through the shared create path and audits once", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-import-parity-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-import-parity-"));
     try {
       const services = [{ name: "api", image: "node:22", environment: { TOKEN: secret } }];
       const info = { name: "Imported", stack: "node", projectType: "services", packageManager: "npm", installCommand: "npm ci", buildCommand: "npm run build", startCommand: "node server.js", buildImage: "node:22", outputDirectory: "dist", rootDirectory: "./", productionPaths: ["dist"], services };
@@ -1451,8 +1451,8 @@ describe("project controls HTTP/native parity", () => {
     canForceOrphan: false,
   };
   const remote = () =>
-    new OpenshipClient({
-      baseUrl: "http://openship.test",
+    new KovalioClient({
+      baseUrl: "http://kovalio.test",
       organizationId: "org-a",
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
     });
@@ -1532,7 +1532,7 @@ describe("project controls HTTP/native parity", () => {
     h.projectLinkRepo.mockResolvedValue({
       ok: false,
       code: "app_not_installed",
-      installUrl: "https://github.com/apps/openship/installations/new",
+      installUrl: "https://github.com/apps/kovalio/installations/new",
       owner: "acme",
     });
     const command = { owner: "acme", repo: "example", branch: "main" };
@@ -1544,7 +1544,7 @@ describe("project controls HTTP/native parity", () => {
       .catch((error) => error);
     expect(nativeError).toMatchObject({
       statusCode: 400,
-      details: { owner: "acme", install_url: "https://github.com/apps/openship/installations/new" },
+      details: { owner: "acme", install_url: "https://github.com/apps/kovalio/installations/new" },
     });
     expect(remoteError).toMatchObject({ details: nativeError.details });
     expect(h.audit).not.toHaveBeenCalled();
@@ -1653,7 +1653,7 @@ describe("project controls HTTP/native parity", () => {
     });
     const headers = {
       "Content-Type": "application/json",
-      "X-Openship-Scope": "fixed",
+      "X-Kovalio-Scope": "fixed",
       "X-Organization-Id": "org-a",
     };
     expect(
@@ -1683,7 +1683,7 @@ describe("project controls HTTP/native parity", () => {
 });
 
 describe("domain and DNS HTTP/native parity", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   it("lists and creates domains with a project grant and preserves sibling results", async () => {
     h.members.set("org-a:alice", { id: "member-a", role: "restricted" });
     h.grants.set("org-a:alice:project:project-a", { permissions: ["write"] });
@@ -1711,8 +1711,8 @@ describe("domain and DNS HTTP/native parity", () => {
     expect((await app.request("/api/domains/domain-a/verify", { method: "POST" })).status).toBe(422);
   });
   it("enforces native host policy for forced verification even when stored TLS is healthy", async () => {
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
     h.domainGet.mockResolvedValue({ ...domainFixture(), projectId: "project-a", verified: true, sslStatus: "active", sslExpiresAt: "2030-01-01T00:00:00.000Z" });
     h.domainVerify.mockResolvedValue({ verified: true, cnameVerified: true, txtVerified: true, sslStatus: "active", message: "Already verified" });
     const local = await native();
@@ -1789,7 +1789,7 @@ describe("domain and DNS HTTP/native parity", () => {
 });
 
 describe("project routing HTTP/native parity", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   const rule = { id: "rule-a", organizationId: "org-a", projectId: "project-a", domainId: "domain-a", pathPrefix: "/api", spec: { access: { methods: ["GET"] } }, enabled: true, createdAt: "2026-09-12T00:00:00.000Z", updatedAt: "2026-09-12T00:00:00.000Z" };
   it("retains the sanitizer, project/domain checks, edge push, and one audit per facade", async () => {
     h.ruleCreate.mockResolvedValue(rule);
@@ -1843,7 +1843,7 @@ describe("project routing HTTP/native parity", () => {
 });
 
 describe("provider credential HTTP/native parity", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   it("shares verification, tenant arguments, masking and secret-free audit", async () => {
     const credential = credentialFixture();
     h.credentialCreate.mockResolvedValue(credential);
@@ -1899,13 +1899,13 @@ describe("shared project transfers", () => {
     expect(response.status).toBe(207);
     const body = await response.json();
     expect(body).toMatchObject({ ok: false, code: "PROMOTE_LOCAL_CLEANUP_FAILED", imported: { project: 1 } });
-    const remote = new OpenshipClient({ baseUrl: "http://openship.test", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+    const remote = new KovalioClient({ baseUrl: "http://kovalio.test", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
     expect(await remote.projects.transferToCloud("project-a")).toEqual(body);
     expect(h.audit).toHaveBeenCalledTimes(2);
   });
   it("refuses unmapped fixed scopes before moving data", async () => {
     const local = await native();
-    const remote = new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+    const remote = new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
     for (const projects of [local.projects, remote.projects]) {
       await expect(projects.transferToCloud("project-a")).rejects.toMatchObject({ code: "CLOUD_SCOPE_UNAVAILABLE" });
       await expect(projects.transferToSelfHosted("project-a")).rejects.toMatchObject({ code: "CLOUD_SCOPE_UNAVAILABLE" });
@@ -1942,7 +1942,7 @@ const setupPrompt = {
 };
 
 describe("server installation HTTP/native parity", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   function restrictToServer() {
     h.members.set("org-a:alice", { id: "member-a", role: "restricted" });
     h.grants.set("org-a:alice:server:server-a", { permissions: ["admin"] });
@@ -2090,7 +2090,7 @@ describe("server installation HTTP/native parity", () => {
 });
 
 describe("managed container HTTP/native parity", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
 
   it("shares tenant-scoped cached fleet views, scans and issue classification", async () => {
     const local = await native();
@@ -2119,8 +2119,8 @@ describe("managed container HTTP/native parity", () => {
     }
     h.grants.set("org-a:alice:server:server-a", { permissions: ["write"] });
     h.servers.get("server-a")!.isLocal = true;
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
     for (const servers of [local.servers, remote().servers])
       await expect(servers.scanContainers("server-a")).rejects.toMatchObject({ code: "HOST_EXECUTION_DISABLED" });
     expect(h.serverWithExecutor).not.toHaveBeenCalled();
@@ -2195,7 +2195,7 @@ describe("managed container HTTP/native parity", () => {
 });
 
 describe("server HTTP/native parity", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
 
   it("preserves encrypted credential writes, public presentation and one secret-free audit", async () => {
     const local = await native();
@@ -2275,8 +2275,8 @@ describe("server HTTP/native parity", () => {
 
   it("preserves local-row refusal details and checks host policy before execution", async () => {
     h.servers.set("server-a", { ...h.servers.get("server-a")!, isLocal: true });
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
     const local = await native();
     for (const servers of [local.servers, remote().servers]) {
       await expect(servers.update("server-a", { sshUser: "deployer" })).rejects.toMatchObject({ message: expect.stringContaining("display-only") });
@@ -2309,7 +2309,7 @@ describe("server HTTP/native parity", () => {
 });
 
 describe("HTTP/native system parity", () => {
-  const remote = (organizationId = "org-a") => new OpenshipClient({ baseUrl: "http://openship.test", organizationId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = (organizationId = "org-a") => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
 
   it("refuses anonymous setup writes without the authorized local first-run posture", async () => {
     h.servers.clear();
@@ -2425,12 +2425,12 @@ describe("HTTP/native system parity", () => {
     h.instanceRoles.set("alice", "admin");
     const local = await native();
     for (const system of [local.system, remote().system]) {
-      h.env.OPENSHIP_AUTH_MODE = "local";
+      h.env.KOVALIO_AUTH_MODE = "local";
       await expect(system.updateSettings({ authMode: "cloud" })).rejects.toMatchObject({ statusCode: 409 });
-      h.env.OPENSHIP_AUTH_MODE = undefined;
-      h.env.OPENSHIP_ALLOW_ZERO_AUTH = false;
+      h.env.KOVALIO_AUTH_MODE = undefined;
+      h.env.KOVALIO_ALLOW_ZERO_AUTH = false;
       await expect(system.updateSettings({ authMode: "none", confirm: "I-understand-no-auth" })).rejects.toMatchObject({ statusCode: 403 });
-      h.env.OPENSHIP_ALLOW_ZERO_AUTH = true;
+      h.env.KOVALIO_ALLOW_ZERO_AUTH = true;
       await expect(system.updateSettings({ authMode: "none" })).rejects.toMatchObject({ statusCode: 400 });
       expect(await system.updateSettings({ authMode: "none", confirm: "I-understand-no-auth" })).toEqual({ ok: true });
       await expect(system.updateSettings({ productMode: "unknown-product" })).rejects.toMatchObject({ statusCode: 400 });
@@ -2482,7 +2482,7 @@ describe("HTTP/native system parity", () => {
 
   it("confines native directory browsing and excludes symlinks and hidden directories", async () => {
     h.instanceRoles.set("alice", "admin");
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
     const directory = await mkdtemp(join(tmpdir(), "system-parity-"));
     try {
       const root = join(await realpath(directory), "source");
@@ -2513,7 +2513,7 @@ describe("HTTP/native system parity", () => {
 });
 
 describe("HTTP/native server tunnel parity", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
 
   it("retains configured ports and auto-start when quick-open omits those fields", async () => {
     h.env.DEPLOY_MODE = "desktop";
@@ -2575,12 +2575,12 @@ describe("HTTP/native server tunnel parity", () => {
   it("requires explicit native local-forwarding opt-in and preserves desktop-only HTTP availability", async () => {
     const local = await native();
     await expect(remote().servers.listTunnels("server-a")).rejects.toMatchObject({ code: "CAPABILITY_UNAVAILABLE" });
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_LOCAL_FORWARDING", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_LOCAL_FORWARDING", "false");
     const row = await local.servers.saveTunnel("server-a", { remotePort: 5432 });
     await expect(local.servers.startTunnel("server-a", { tunnelId: row.id })).rejects.toMatchObject({ code: "LOCAL_FORWARDING_DISABLED" });
     expect(h.tunnelForward).not.toHaveBeenCalled();
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_LOCAL_FORWARDING", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_LOCAL_FORWARDING", "true");
     expect(await local.servers.startTunnel("server-a", { tunnelId: row.id })).toMatchObject({ running: true });
   });
 });
@@ -2593,7 +2593,7 @@ vi.mock("@repo/platform/engine/modules/backups/triggers/cron", async importOrigi
 }));
 
 describe("backup HTTP/native parity with retained policy services", () => {
-  const remote = () => new OpenshipClient({ baseUrl: "http://openship.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = () => new KovalioClient({ baseUrl: "http://kovalio.test", organizationId: "org-a", fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   beforeEach(() => {
     for (const [id, organizationId] of [["destination-a", "org-a"], ["destination-b", "org-b"]]) {
       h.destinations.set(id!, { id: id!, organizationId: organizationId! } as StoredBackupDestination);

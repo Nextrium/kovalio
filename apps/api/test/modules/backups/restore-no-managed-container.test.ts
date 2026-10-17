@@ -388,7 +388,7 @@ describe("the unrunnable shapes fail in prepare, in seconds", () => {
   it("refuses an offline volume restore when stopping the service stops filesystem access", async () => {
     h.offlineVolumeRestore = false;
     h.volumes = ["pgdata:/var/lib/postgresql/data"];
-    h.artifacts = [volumeArtifact("openship-shop-pgdata")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata")];
     const last = await prepare();
     expect(last.status).toBe("failed");
     expect(last.patch?.errorMessage).toContain("filesystem connection stops with it");

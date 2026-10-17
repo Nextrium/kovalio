@@ -16,8 +16,8 @@ import { availablePort, sshReady } from "../helpers/migration-host";
 
 const tag = randomUUID().slice(0, 8);
 const fixture = join(dirname(fileURLToPath(import.meta.url)), "../fixtures/migration-target");
-const image = `openship-migration-direct:${tag}`;
-const networkName = `openship-migration-direct-${tag}`;
+const image = `kovalio-migration-direct:${tag}`;
+const networkName = `kovalio-migration-direct-${tag}`;
 const local = new LocalExecutor();
 
 /** Only the provider RPC is simulated: the production Cloud executor frames
@@ -61,7 +61,7 @@ describeDockerE2E("external SSH to a managed execution endpoint", () => {
   beforeAll(async () => {
     await requireDocker();
     parent = await DockerRuntime.create({ transport: "socket" });
-    temp = await mkdtemp(join(tmpdir(), "openship-direct-test-"));
+    temp = await mkdtemp(join(tmpdir(), "kovalio-direct-test-"));
     const identity = join(temp, "identity");
     await local.exec(`ssh-keygen -q -t ed25519 -N '' -f ${sq(identity)}`);
     // Preserve a valid last key with NO newline. Appending must not corrupt it.
@@ -69,12 +69,12 @@ describeDockerE2E("external SSH to a managed execution endpoint", () => {
     await writeFile(`${identity}.pub`, originalKeys);
     await local.exec(`docker build -q -t ${sq(image)} ${sq(fixture)}`, { timeout: 300_000 });
     console.info("[direct-transfer] Isolated Docker/SSH image ready");
-    await parent.docker.createNetwork({ Name: networkName, Labels: { "openship.test": tag } });
+    await parent.docker.createNetwork({ Name: networkName, Labels: { "kovalio.test": tag } });
     const endpoints = [];
     for (const role of ["source", "target"]) {
       const port = await availablePort();
       const vm = await parent.docker.createContainer({
-        Image: image, name: `${networkName}-${role}`, Labels: { "openship.test": tag },
+        Image: image, name: `${networkName}-${role}`, Labels: { "kovalio.test": tag },
         ExposedPorts: { "22/tcp": {} },
         HostConfig: { Privileged: true, NetworkMode: networkName,
           PortBindings: { "22/tcp": [{ HostIp: "127.0.0.1", HostPort: String(port) }] } },
@@ -139,8 +139,8 @@ describeDockerE2E("external SSH to a managed execution endpoint", () => {
     const keys = (await source.readFile("/root/.ssh/authorized_keys")).split("\n").filter(Boolean);
     expect(keys).toHaveLength(3);
     expect(keys[0]).toBe(originalKeys);
-    expect(keys.some(key => key.endsWith(`openship-migration-${first.id}-pull`))).toBe(true);
-    expect(keys.some(key => key.endsWith(`openship-migration-${second.id}-pull`))).toBe(true);
+    expect(keys.some(key => key.endsWith(`kovalio-migration-${first.id}-pull`))).toBe(true);
+    expect(keys.some(key => key.endsWith(`kovalio-migration-${second.id}-pull`))).toBe(true);
     await cleanupDirectTrust(source, target, first.id);
     runs.delete(first.id);
     const remaining = await source.readFile("/root/.ssh/authorized_keys");
@@ -151,13 +151,13 @@ describeDockerE2E("external SSH to a managed execution endpoint", () => {
     await cleanupDirectTrust(source, target, second.id); // Recovery is idempotent.
     runs.delete(second.id);
     expect((await source.readFile("/root/.ssh/authorized_keys")).trim()).toBe(originalKeys);
-    expect(await target.exists(`/tmp/openship-migration-${second.id}-pull`)).toBe(false);
+    expect(await target.exists(`/tmp/kovalio-migration-${second.id}-pull`)).toBe(false);
   });
 
   it("copies named-volume data, directories, empty files and literal special characters", async () => {
     const current = await link();
     await source.exec("docker volume create source-data");
-    await target.exec("docker volume create --label openship.project=fixture target-data");
+    await target.exec("docker volume create --label kovalio.project=fixture target-data");
     const srcMount = (await source.exec("docker volume inspect source-data --format '{{.Mountpoint}}'")).trim();
     const dstMount = (await target.exec("docker volume inspect target-data --format '{{.Mountpoint}}'")).trim();
     const literal = "unchanged $TOKEN `command` 'quoted'\nsecond=line";

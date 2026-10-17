@@ -21,11 +21,11 @@ import { subscribeRoutingRetry } from "./project-routing-retry.operations";
 import { maybeCloudProjectRequest } from "../../lib/cloud/project-creation";
 
 async function checkSource(input: Partial<CreateProjectInput>) {
-  if (input.localPath && process.env.OPENSHIP_NATIVE === "true")
+  if (input.localPath && process.env.KOVALIO_NATIVE === "true")
     await assertNativeSourcePath(input.localPath);
   if (
-    process.env.OPENSHIP_NATIVE === "true" &&
-    process.env.OPENSHIP_NATIVE_ROUTING === "none" &&
+    process.env.KOVALIO_NATIVE === "true" &&
+    process.env.KOVALIO_NATIVE_ROUTING === "none" &&
     input.publicEndpoints === undefined
   )
     input.publicEndpoints = [];

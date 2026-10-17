@@ -1,35 +1,35 @@
 ---
 title: access
-description: Commands, arguments, and options for openship access.
-cliGroup: openship access
+description: Commands, arguments, and options for kovalio access.
+cliGroup: kovalio access
 ---
 
 See the [workflow guide](/docs/cli/access) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship access
+## kovalio access
 
 Manage workspaces, members, invitations and resource grants
 
 ```text
-openship access [options] [command]
+kovalio access [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`workspaces`](/docs/cli/reference/access#openship-access-workspaces) | List accessible workspaces and whether this credential can select an organization |
-| [`organization`](/docs/cli/reference/access#openship-access-organization) | Show the current organization and member count |
-| [`create-team [options] <name>`](/docs/cli/reference/access#openship-access-create-team) | Create a team workspace; select its ID with the global --organization option |
-| [`resources [options] <type>`](/docs/cli/reference/access#openship-access-resources) | List resources available for permission grants |
-| [`members`](/docs/cli/reference/access#openship-access-members) | Manage membership in the selected workspace |
-| [`grants`](/docs/cli/reference/access#openship-access-grants) | Manage per-resource access grants |
-| [`invitations`](/docs/cli/reference/access/invitations#openship-access-invitations) | Manage workspace invitations |
+| [`workspaces`](/docs/cli/reference/access#kovalio-access-workspaces) | List accessible workspaces and whether this credential can select an organization |
+| [`organization`](/docs/cli/reference/access#kovalio-access-organization) | Show the current organization and member count |
+| [`create-team [options] <name>`](/docs/cli/reference/access#kovalio-access-create-team) | Create a team workspace; select its ID with the global --organization option |
+| [`resources [options] <type>`](/docs/cli/reference/access#kovalio-access-resources) | List resources available for permission grants |
+| [`members`](/docs/cli/reference/access#kovalio-access-members) | Manage membership in the selected workspace |
+| [`grants`](/docs/cli/reference/access#kovalio-access-grants) | Manage per-resource access grants |
+| [`invitations`](/docs/cli/reference/access/invitations#kovalio-access-invitations) | Manage workspace invitations |
 
-## openship access create-team
+## kovalio access create-team
 
 Create a team workspace; select its ID with the global --organization option
 
 ```text
-openship access create-team [options] <name>
+kovalio access create-team [options] <name>
 ```
 
 | Argument | Meaning |
@@ -40,51 +40,51 @@ openship access create-team [options] <name>
 | --- | --- |
 | `--slug <slug>` | Workspace slug |
 
-## openship access grants
+## kovalio access grants
 
 Manage per-resource access grants
 
 ```text
-openship access grants [options] [command]
+kovalio access grants [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list <user>`](/docs/cli/reference/access#openship-access-grants-list) | List a user's resource grants |
-| [`set <file>`](/docs/cli/reference/access#openship-access-grants-set) | Create or update one resource grant |
-| [`replace [options] <file>`](/docs/cli/reference/access#openship-access-grants-replace) | Replace a user's complete resource grant set |
-| [`remove <id>`](/docs/cli/reference/access#openship-access-grants-remove) | Revoke one resource grant |
+| [`list <user>`](/docs/cli/reference/access#kovalio-access-grants-list) | List a user's resource grants |
+| [`set <file>`](/docs/cli/reference/access#kovalio-access-grants-set) | Create or update one resource grant |
+| [`replace [options] <file>`](/docs/cli/reference/access#kovalio-access-grants-replace) | Replace a user's complete resource grant set |
+| [`remove <id>`](/docs/cli/reference/access#kovalio-access-grants-remove) | Revoke one resource grant |
 
-## openship access grants list
+## kovalio access grants list
 
 List a user's resource grants
 
 ```text
-openship access grants list [options] <user>
+kovalio access grants list [options] <user>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `user` | User ID |
 
-## openship access grants remove
+## kovalio access grants remove
 
 Revoke one resource grant
 
 ```text
-openship access grants remove [options] <id>
+kovalio access grants remove [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Grant ID |
 
-## openship access grants replace
+## kovalio access grants replace
 
 Replace a user's complete resource grant set
 
 ```text
-openship access grants replace [options] <file>
+kovalio access grants replace [options] <file>
 ```
 
 | Argument | Meaning |
@@ -95,46 +95,46 @@ openship access grants replace [options] <file>
 | --- | --- |
 | `-y, --yes` | Skip confirmation |
 
-## openship access grants set
+## kovalio access grants set
 
 Create or update one resource grant
 
 ```text
-openship access grants set [options] <file>
+kovalio access grants set [options] <file>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `file` | JSON grant with userId, resourceType, resourceId and permissions |
 
-## openship access members
+## kovalio access members
 
 Manage membership in the selected workspace
 
 ```text
-openship access members [options] [command]
+kovalio access members [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list`](/docs/cli/reference/access#openship-access-members-list) | List workspace members |
-| [`role <id> <role>`](/docs/cli/reference/access#openship-access-members-role) | Change a member's role through the shared permission rules |
-| [`remove [options] <id>`](/docs/cli/reference/access#openship-access-members-remove) | Remove a workspace member |
+| [`list`](/docs/cli/reference/access#kovalio-access-members-list) | List workspace members |
+| [`role <id> <role>`](/docs/cli/reference/access#kovalio-access-members-role) | Change a member's role through the shared permission rules |
+| [`remove [options] <id>`](/docs/cli/reference/access#kovalio-access-members-remove) | Remove a workspace member |
 
-## openship access members list
+## kovalio access members list
 
 List workspace members
 
 ```text
-openship access members list [options]
+kovalio access members list [options]
 ```
 
-## openship access members remove
+## kovalio access members remove
 
 Remove a workspace member
 
 ```text
-openship access members remove [options] <id>
+kovalio access members remove [options] <id>
 ```
 
 | Argument | Meaning |
@@ -145,12 +145,12 @@ openship access members remove [options] <id>
 | --- | --- |
 | `-y, --yes` | Skip confirmation |
 
-## openship access members role
+## kovalio access members role
 
 Change a member's role through the shared permission rules
 
 ```text
-openship access members role [options] <id> <role>
+kovalio access members role [options] <id> <role>
 ```
 
 | Argument | Meaning |
@@ -158,20 +158,20 @@ openship access members role [options] <id> <role>
 | `id` | Member ID |
 | `role` | owner \| admin \| member \| restricted |
 
-## openship access organization
+## kovalio access organization
 
 Show the current organization and member count
 
 ```text
-openship access organization [options]
+kovalio access organization [options]
 ```
 
-## openship access resources
+## kovalio access resources
 
 List resources available for permission grants
 
 ```text
-openship access resources [options] <type>
+kovalio access resources [options] <type>
 ```
 
 | Argument | Meaning |
@@ -182,10 +182,10 @@ openship access resources [options] <type>
 | --- | --- |
 | `--owner <id>` | Resource owner filter |
 
-## openship access workspaces
+## kovalio access workspaces
 
 List accessible workspaces and whether this credential can select an organization
 
 ```text
-openship access workspaces [options]
+kovalio access workspaces [options]
 ```

@@ -148,7 +148,7 @@ describe("runBuildPipeline pinned clone failure boundaries", () => {
   const pinnedConfig = (): BuildConfig =>
     makeConfig({
       sourceStaged: false,
-      repoUrl: "https://github.com/oblien/openship.git",
+      repoUrl: "https://github.com/Nextrium/kovalio.git",
       branch: "main",
       commitSha: "30a396bda22eda34bcd2bc73d5b601683b146e7a",
       gitCredentialHelperPath: "/tmp/relay-helper.sh",

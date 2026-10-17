@@ -94,7 +94,7 @@ program
   .enablePositionalOptions()
   .option("--json", "Machine-readable JSON output (stdout data only)")
   .addOption(new Option("--context <name>", "Use a saved connection for this command without changing the default").conflicts(["apiUrl", "nativeConfig", "local"]))
-  .addOption(new Option("--api-url <url>", "Use a remote API for this command; authenticate with OPENSHIP_TOKEN").conflicts(["context", "nativeConfig", "local"]))
+  .addOption(new Option("--api-url <url>", "Use a remote API for this command; authenticate with KOVALIO_TOKEN").conflicts(["context", "nativeConfig", "local"]))
   .addOption(new Option("--local", "Use this machine's installation with its private administrator credential").conflicts(["context", "apiUrl", "nativeConfig"]))
   .option("--organization <id>", "Use a fixed organization scope for SDK resource commands (remote only)")
   .option("--native-config <file>", "Run SDK commands using an explicitly trusted JavaScript configuration")
@@ -129,7 +129,7 @@ program
   // panel once a service is already installed (manage instead of starting over).
   .action(async () => {
     if (process.stdin.isTTY !== true || isJsonMode()) {
-      throw new Error("Choose a command for non-interactive use. Run openship --help to see the available commands.");
+      throw new Error("Choose a command for non-interactive use. Run kovalio --help to see the available commands.");
     }
     // A service is installed AND setup finished → manage it. If a prior setup
     // was interrupted (service installed but never completed), resume the wizard

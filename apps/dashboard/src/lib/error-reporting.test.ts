@@ -21,7 +21,7 @@ vi.mock("./api/urls", () => ({
 beforeAll(() => installClientErrorReporting());
 beforeEach(async () => {
   await errorReporter.flush();
-  Object.assign(window, { __OPENSHIP_ERROR_REPORTING__: true });
+  Object.assign(window, { __KOVALIO_ERROR_REPORTING__: true });
   vi.stubGlobal(
     "fetch",
     vi.fn().mockResolvedValue(new Response(null, { status: 204 })),
@@ -30,7 +30,7 @@ beforeEach(async () => {
 });
 afterEach(async () => {
   await errorReporter.flush();
-  Reflect.deleteProperty(window, "__OPENSHIP_ERROR_REPORTING__");
+  Reflect.deleteProperty(window, "__KOVALIO_ERROR_REPORTING__");
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -39,7 +39,7 @@ describe("browser error delivery", () => {
   it.each([false, undefined])(
     "sends nothing when Cloud mode is %s, including caught/global errors",
     async (enabled) => {
-      Object.assign(window, { __OPENSHIP_ERROR_REPORTING__: enabled });
+      Object.assign(window, { __KOVALIO_ERROR_REPORTING__: enabled });
       const local = vi.spyOn(console, "error").mockImplementation(() => {});
       reportClientError(new Error("local browser failure"));
       reportCaughtError(new Error("local recovered failure"), "dashboard/local");
@@ -56,9 +56,9 @@ describe("browser error delivery", () => {
 
   it("discards queued Cloud events when reporting becomes disabled", async () => {
     reportClientError(new Error("queued before changing mode"));
-    Object.assign(window, { __OPENSHIP_ERROR_REPORTING__: false });
+    Object.assign(window, { __KOVALIO_ERROR_REPORTING__: false });
     await errorReporter.flush();
-    Object.assign(window, { __OPENSHIP_ERROR_REPORTING__: true });
+    Object.assign(window, { __KOVALIO_ERROR_REPORTING__: true });
     window.dispatchEvent(new Event("online"));
     await errorReporter.flush();
     expect(fetch).not.toHaveBeenCalled();

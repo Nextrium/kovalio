@@ -199,7 +199,7 @@ cat <<EOF
 
 $(printf '\033[32m✔\033[0m') Kovalio installed (${TAG}, running under ${NODE_SOURCE} Node).
 
-  $(printf '\033[1mopenship\033[0m')            # connect to Cloud / a server, or install here
+  $(printf '\033[1mkovalio\033[0m')            # connect to Cloud / a server, or install here
 
   kovalio up         # or launch directly with defaults
   kovalio --help     # all commands

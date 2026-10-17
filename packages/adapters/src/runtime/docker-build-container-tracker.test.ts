@@ -12,7 +12,7 @@ const FOREIGN_ID = "ffffffffffff";
 const FIRST_PARENT = "aaaaaaaaaaaa";
 const SECOND_PARENT = "bbbbbbbbbbbb";
 const MEMORY_BYTES = 64 * 1024 * 1024;
-const OWNERSHIP_HOST = "openship-build-test.invalid";
+const OWNERSHIP_HOST = "kovalio-build-test.invalid";
 
 function runningContainer(
   id: string,

@@ -98,14 +98,14 @@ export async function updateActionProjectPolicy(
     throw new ValidationError("Required checks need Deploy after Actions pass");
   // Changing a policy must not silently detach a workflow the editor cannot access.
   const previous = await repos.actions.projectWorkflows(ctx.organizationId, project.id);
-  let needsOpenshipChecks = false;
+  let needsKovalioChecks = false;
   for (const id of new Set([
     ...input.workflowIds,
     ...previous.map(({ workflow }) => workflow.id),
   ])) {
     const workflow = await requireActionWorkflow(ctx, id, true);
     if (!input.requiredWorkflowIds.includes(id)) continue;
-    if (workflow.controller !== "github") needsOpenshipChecks = true;
+    if (workflow.controller !== "github") needsKovalioChecks = true;
     if (
       !workflow.enabled ||
       !workflow.owner ||
@@ -134,7 +134,7 @@ export async function updateActionProjectPolicy(
       );
     if (
       input.mode === "actions" &&
-      needsOpenshipChecks &&
+      needsKovalioChecks &&
       !(await repos.gitInstallation.findByOrgAndOwner(ctx.organizationId, project.gitOwner))
     )
       throw new AppError(

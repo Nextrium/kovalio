@@ -37,7 +37,7 @@ export function composeEndpointChanges(parsed: readonly ComposeRouteInput[], sto
 
 /**
  * Atomic gate for free (*.opsh.io) routes. A free managed subdomain only
- * resolves behind the Openship Cloud edge, so persisting one on a self-hosted
+ * resolves behind the Kovalio Cloud edge, so persisting one on a self-hosted
  * instance that isn't connected to Cloud creates a dead "Pending" route that
  * can never register. Call this at every user-facing write that can INTRODUCE a
  * free endpoint (route add/edit), BEFORE the DB write, so the write is atomic —

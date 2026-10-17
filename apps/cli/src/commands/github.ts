@@ -24,7 +24,7 @@ for (const [name, method, description] of [
   [
     "local-status",
     "getLocalStatus",
-    "Inspect GitHub credentials on the selected Openship instance",
+    "Inspect GitHub credentials on the selected Kovalio instance",
   ],
 ] as const) {
   githubCommand
@@ -219,7 +219,7 @@ repo
   );
 
 const webhook = new Command("webhook").description(
-  "Manage Openship deployment webhooks on a GitHub repository",
+  "Manage Kovalio deployment webhooks on a GitHub repository",
 );
 for (const [name, method] of [
   ["list", "listWebhooks"],

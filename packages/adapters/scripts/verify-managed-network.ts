@@ -29,13 +29,13 @@ const docker = async (args: string[], timeout = 60_000) =>
   (await exec("docker", ["--context", context, ...args], { timeout, maxBuffer: 8 * 1024 * 1024 }))
     .stdout;
 const suffix = randomBytes(5).toString("hex");
-const image = `openship-managed-network-test:${suffix}`;
-const network = `openship-managed-network-${suffix}`;
-const names = ["a", "b", "c"].map((name) => `openship-wg-${name}-${suffix}`);
-const build = await mkdtemp(join(tmpdir(), "openship-managed-network-"));
+const image = `kovalio-managed-network-test:${suffix}`;
+const network = `kovalio-managed-network-${suffix}`;
+const names = ["a", "b", "c"].map((name) => `kovalio-wg-${name}-${suffix}`);
+const build = await mkdtemp(join(tmpdir(), "kovalio-managed-network-"));
 const managedId = randomBytes(16).toString("hex");
 const interfaceName = managedInterfaceName(managedId);
-const stateDir = `/root/.openship/networks/${managedId}`;
+const stateDir = `/root/.kovalio/networks/${managedId}`;
 const executors = names.map(
   (name) =>
     ({
@@ -82,7 +82,7 @@ async function systemdReady(name: string) {
     await delay(200);
   }
   throw new Error(
-    `systemd did not start in ${name}: ${await docker(["exec", name, "systemctl", "list-jobs", "--no-pager"])} ${await docker(["exec", name, "journalctl", "-u", `openship-network-${managedId}.service`, "--no-pager", "-n", "20"])}`,
+    `systemd did not start in ${name}: ${await docker(["exec", name, "systemctl", "list-jobs", "--no-pager"])} ${await docker(["exec", name, "journalctl", "-u", `kovalio-network-${managedId}.service`, "--no-pager", "-n", "20"])}`,
   );
 }
 try {
@@ -243,7 +243,7 @@ try {
   try {
     await assert.rejects(managedNetworkTools.inspect(executors[0]!, {
       managedId, hostIdentity: names[0]!, endpoint: endpoints[0]!, listenPort: 51820,
-    }), /without an OpenShip ownership receipt/);
+    }), /without an Kovalio ownership receipt/);
   } finally {
     await docker(["exec", names[0]!, "ip", "link", "delete", interfaceName]);
   }
@@ -423,7 +423,7 @@ try {
           name,
           "systemctl",
           "is-enabled",
-          `openship-network-${managedId}-rollback.timer`,
+          `kovalio-network-${managedId}-rollback.timer`,
         ])
       ).trim(),
       "enabled",
@@ -523,7 +523,7 @@ try {
   // Shorten only the disposable hosts' installed deadline; production remains
   // twenty minutes. The actual installed timer/boot units perform the recovery.
   for (const name of names) {
-    const script = `import datetime,json,pathlib,time\nb=pathlib.Path('${stateDir}'); p=b/'receipt.json'; r=json.loads(p.read_text()); r['deadline']=int(time.time())+8; p.write_text(json.dumps(r))\nt=pathlib.Path('/etc/systemd/system/openship-network-${managedId}-rollback.timer'); lines=t.read_text().splitlines(); deadline=datetime.datetime.fromtimestamp(r['deadline'],datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC'); t.write_text('\\n'.join('OnCalendar='+deadline if line.startswith('OnCalendar=') else line for line in lines)+'\\n')`;
+    const script = `import datetime,json,pathlib,time\nb=pathlib.Path('${stateDir}'); p=b/'receipt.json'; r=json.loads(p.read_text()); r['deadline']=int(time.time())+8; p.write_text(json.dumps(r))\nt=pathlib.Path('/etc/systemd/system/kovalio-network-${managedId}-rollback.timer'); lines=t.read_text().splitlines(); deadline=datetime.datetime.fromtimestamp(r['deadline'],datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC'); t.write_text('\\n'.join('OnCalendar='+deadline if line.startswith('OnCalendar=') else line for line in lines)+'\\n')`;
     await docker(["exec", name, "python3", "-c", script]);
     await docker(["exec", name, "systemctl", "daemon-reload"]);
     await docker([
@@ -531,7 +531,7 @@ try {
       name,
       "systemctl",
       "restart",
-      `openship-network-${managedId}-rollback.timer`,
+      `kovalio-network-${managedId}-rollback.timer`,
     ]);
   }
   await docker(["stop", names[0]!]);

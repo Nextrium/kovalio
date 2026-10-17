@@ -44,7 +44,7 @@ type AuthModeValidation =
  *
  * Zero-auth on a network-reachable instance means anyone who can hit the
  * API can act as admin, so the operator must opt in via the
- * OPENSHIP_ALLOW_ZERO_AUTH env var (deliberate restart) AND echo the
+ * KOVALIO_ALLOW_ZERO_AUTH env var (deliberate restart) AND echo the
  * confirmation phrase in the request body (deliberate click) before we
  * write the value. Desktop deployments bypass the gate — loopback-only
  * Electron is the default zero-auth target.
@@ -60,7 +60,7 @@ export function validateAuthModeChange(body: Record<string, unknown>): AuthModeV
   }
   const value = raw as AuthMode;
 
-  // A declared mode (OPENSHIP_AUTH_MODE) outranks the DB, so a write that
+  // A declared mode (KOVALIO_AUTH_MODE) outranks the DB, so a write that
   // disagrees with it would persist a value the API will never honour — silent,
   // confusing, and exactly how the desktop ended up with a stored "cloud" it
   // couldn't act on. Refuse instead of writing a lie. Writing the SAME value is
@@ -72,20 +72,20 @@ export function validateAuthModeChange(body: Record<string, unknown>): AuthModeV
       status: 409,
       body: {
         error:
-          `authMode is pinned to "${pinned}" by OPENSHIP_AUTH_MODE and cannot be changed ` +
+          `authMode is pinned to "${pinned}" by KOVALIO_AUTH_MODE and cannot be changed ` +
           `at runtime. Change that environment variable and restart the API.`,
       },
     };
   }
 
   if (value === "none" && env.DEPLOY_MODE !== "desktop") {
-    if (!env.OPENSHIP_ALLOW_ZERO_AUTH) {
+    if (!env.KOVALIO_ALLOW_ZERO_AUTH) {
       return {
         ok: false,
         status: 403,
         body: {
           error:
-            "Zero-auth toggle disabled. Operator must set OPENSHIP_ALLOW_ZERO_AUTH=true and restart.",
+            "Zero-auth toggle disabled. Operator must set KOVALIO_ALLOW_ZERO_AUTH=true and restart.",
         },
       };
     }
@@ -185,7 +185,7 @@ export async function updateSettings(ctx: ExecutionContext, body: UpdateInstance
   }
   if (body.autoUpdateInfra !== undefined) patch.autoUpdateInfra = Boolean(body.autoUpdateInfra);
   if (body.autoScanInfra !== undefined) patch.autoScanInfra = Boolean(body.autoScanInfra);
-  // Openship Mail. `null` clears the override so OPENSHIP_PRODUCT governs again —
+  // Kovalio Mail. `null` clears the override so KOVALIO_PRODUCT governs again —
   // that's a meaningful state, not an absent field, so it's accepted explicitly.
   if (body.productMode !== undefined) {
     if (body.productMode !== null && !isProductMode(body.productMode)) {
@@ -193,8 +193,8 @@ export async function updateSettings(ctx: ExecutionContext, body: UpdateInstance
     }
     patch.productMode = body.productMode;
   }
-  // Host control (#527): may OpenShip deploy to the machine it runs on? `null`
-  // clears the override so OPENSHIP_HOST_CONTROL governs again — a meaningful
+  // Host control (#527): may Kovalio deploy to the machine it runs on? `null`
+  // clears the override so KOVALIO_HOST_CONTROL governs again — a meaningful
   // state, accepted explicitly like productMode.
   //
   // Unlike every other field here this grants PRIVILEGED behavior (host-root
@@ -232,7 +232,7 @@ export async function updateSettings(ctx: ExecutionContext, body: UpdateInstance
       // Enabled: materialize "This Server" now so it's a target immediately (the
       // GET /servers self-heal would do it eventually, but the toggle should be
       // instant). On Compose the row appears and container deploys work at once;
-      // host-OS ops still refuse with the "re-run `openship up`" advisory until the
+      // host-OS ops still refuse with the "re-run `kovalio up`" advisory until the
       // CLI provisions the channel — the deliberate degrade-and-advise behaviour.
       await ensureLocalServer().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/system/settings.operations"); return null; });
     } else {
@@ -384,7 +384,7 @@ export async function deleteSettings(ctx: ExecutionContext): Promise<Awaited<Ret
   // The row just dropped held host_control_enabled (#527). Without reconciling here
   // the cached effective value and the pushed adapters override would both survive
   // the delete and keep serving the deleted choice until the next boot — so re-sync
-  // to let the OPENSHIP_HOST_CONTROL env floor govern again.
+  // to let the KOVALIO_HOST_CONTROL env floor govern again.
   clearHostControlCache();
   await syncHostControlOverride().catch((diagnosticFailure) => {
     observeCaughtError(diagnosticFailure, "platform/engine/modules/system/settings.operations");

@@ -38,7 +38,7 @@ preference edits apply at the next admission.
 
 ## Failure details and reruns
 
-Checks contain status and an Openship deployment URL. When enabled, bounded failure summaries
+Checks contain status and an Kovalio deployment URL. When enabled, bounded failure summaries
 redact captured project/service environment values and sensitive diagnostic text. Full build
 logs are not attached. The overall Check includes service failure reasons even when individual
 service Checks are disabled. Repository readers can see the published summaries.

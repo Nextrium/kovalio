@@ -15,7 +15,7 @@ import { gitSource } from "./git-source";
 // ─── GitHub App installation tracking ────────────────────────────────────────
 
 /**
- * Tracks GitHub App installations per Openship organization.
+ * Tracks GitHub App installations per Kovalio organization.
  * `userId` records the user who connected/last reconciled the installation;
  * authorization and token resolution are always scoped by `organizationId`.
  */
@@ -45,9 +45,9 @@ export const gitInstallation = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (t) => [
-    // One installation row per GitHub owner in each Openship workspace.
+    // One installation row per GitHub owner in each Kovalio workspace.
     // Including organizationId is load-bearing: one user may connect the
-    // same GitHub organization to multiple Openship workspaces, while one
+    // same GitHub organization to multiple Kovalio workspaces, while one
     // workspace must never inherit another workspace's installation row.
     uniqueIndex("uq_git_installation_provider_owner_org_legacy")
       .on(t.provider, t.owner, t.organizationId)

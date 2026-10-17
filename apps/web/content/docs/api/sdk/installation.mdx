@@ -7,21 +7,21 @@ Requires **Node.js 22 or later**. ESM, CommonJS, and TypeScript declarations are
 
 ## Install from npm
 
-The `openship` package includes Ship SDK and the CLI starting with **0.8.0**:
+The `kovalio` package includes Ship SDK and the CLI starting with **0.8.0**:
 
 ```bash
-npm install openship
+npm install kovalio
 ```
 
 If your project has an older CLI-only version, upgrade the local dependency:
 
 ```bash
-npm install openship@latest
-npm ls openship
+npm install kovalio@latest
+npm ls kovalio
 ```
 
 Versions before 0.8.0 do not include the SDK entry points. Upgrading the package does not upgrade
-a remote OpenShip server; see [server compatibility](/docs/api/sdk/compatibility#fixed-organization-scopes).
+a remote Kovalio server; see [server compatibility](/docs/api/sdk/compatibility#fixed-organization-scopes).
 
 ## Test changes from source
 
@@ -37,14 +37,14 @@ Contributors can build and install a local package without publishing it:
 2. Create a tarball. Use the filename printed by `npm pack`:
 
    ```bash
-   cd packages/openship
+   cd packages/kovalio
    npm pack
    ```
 
 3. Install that tarball in your Node project:
 
    ```bash
-   npm install /absolute/path/to/openship-0.8.0.tgz
+   npm install /absolute/path/to/kovalio-0.8.0.tgz
    ```
 
 Use the actual tarball filename printed by `npm pack`; it follows the checkout's package version.
@@ -53,24 +53,24 @@ Use the actual tarball filename printed by `npm pack`; it follows the checkout's
 
 | Import | Provides |
 | --- | --- |
-| `openship` | Native factory, remote clients, deployment helpers, public types, and errors. |
-| `openship/client` | Remote clients and HTTP helpers. |
-| `openship/native` | Native factory, identity types, lifecycle options, and scoped operations. |
+| `kovalio` | Native factory, remote clients, deployment helpers, public types, and errors. |
+| `kovalio/client` | Remote clients and HTTP helpers. |
+| `kovalio/native` | Native factory, identity types, lifecycle options, and scoped operations. |
 
 <Tabs items={['ES modules', 'CommonJS']}>
 <Tab value="ES modules">
 
 ```ts title="imports.mts"
-import { createShip, OpenshipClient } from "openship";
-import type { ScopedShip, ProjectOperations } from "openship";
+import { createShip, KovalioClient } from "kovalio";
+import type { ScopedShip, ProjectOperations } from "kovalio";
 ```
 
 </Tab>
 <Tab value="CommonJS">
 
 ```js title="imports.cjs"
-const { OpenshipClient } = require("openship/client");
-const { createShip } = require("openship/native");
+const { KovalioClient } = require("kovalio/client");
+const { createShip } = require("kovalio/native");
 ```
 
 </Tab>
@@ -81,7 +81,7 @@ Imports are passive. An import does not start the CLI, open a database, or creat
 ## Use the CLI from the same installation
 
 ```bash
-npx openship --help
+npx kovalio --help
 ```
 
 Installing the dependency locally provides both application imports and the command through `npx` or

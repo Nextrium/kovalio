@@ -98,7 +98,7 @@ async function authority(ctx: ExecutionContext, refs: Reference[]): Promise<"loc
   assertCloudProxyScope(ctx);
   if (authorities.some((value) => value !== "cloud"))
     throw new AppError(
-      "Choose projects, workflows and runners from the same Openship instance. Cloud Actions cannot use local destinations.",
+      "Choose projects, workflows and runners from the same Kovalio instance. Cloud Actions cannot use local destinations.",
       409,
       "ACTIONS_MIXED_AUTHORITY",
     );
@@ -113,7 +113,7 @@ async function remote(
   id = "*",
 ): Promise<unknown> {
   assertCloudProxyScope(ctx);
-  const url = new URL(`/api${route.path(id)}`, "http://openship.internal");
+  const url = new URL(`/api${route.path(id)}`, "http://kovalio.internal");
   const payload = isRecord(input) ? await cloudRequestReferences(ctx.organizationId, input) : input;
   if (route.method === "GET" && isRecord(payload))
     for (const [key, value] of Object.entries(payload))
@@ -124,7 +124,7 @@ async function remote(
   });
   if (!response)
     throw new AppError(
-      "Could not reach Openship Cloud. Check your connection and try again.",
+      "Could not reach Kovalio Cloud. Check your connection and try again.",
       503,
       CLOUD_UNREACHABLE_CODE,
     );
@@ -136,7 +136,7 @@ async function remote(
   const data = route.envelope && isRecord(body) ? body[route.envelope] : body;
   if (!isResourceOutput(spec, data))
     throw new AppError(
-      "Openship Cloud returned an invalid Actions response",
+      "Kovalio Cloud returned an invalid Actions response",
       502,
       "INVALID_OPERATION_RESPONSE",
     );

@@ -1,9 +1,9 @@
 ---
 title: Ship SDK
-description: Deploy and manage Openship from JavaScript or TypeScript.
+description: Deploy and manage Kovalio from JavaScript or TypeScript.
 ---
 
-Ship SDK lets you deploy and operate OpenShip from JavaScript or TypeScript. The `openship` package
+Ship SDK lets you deploy and operate Kovalio from JavaScript or TypeScript. The `kovalio` package
 includes remote clients, an embeddable native engine, and the CLI. Native SDK calls and HTTP
 controllers use the same shared core.
 
@@ -11,36 +11,36 @@ controllers use the same shared core.
 
 | Mode | Use when | Start here |
 | --- | --- | --- |
-| **Remote client** | Openship already runs on a server or in Cloud. | [Connect to an API](/docs/api/sdk/client) |
-| **Native SDK** | Your Node application owns storage, providers, and the installation lifecycle. | [Embed Openship](/docs/api/sdk/native) |
+| **Remote client** | Kovalio already runs on a server or in Cloud. | [Connect to an API](/docs/api/sdk/client) |
+| **Native SDK** | Your Node application owns storage, providers, and the installation lifecycle. | [Embed Kovalio](/docs/api/sdk/native) |
 
 Both modes expose the same named operation groups. A configured provider and the caller's permissions
 determine which operations can run.
 
 ## Install
 
-The SDK is published in **`openship` 0.8.0 and later** and requires Node.js 22 or later:
+The SDK is published in **`kovalio` 0.8.0 and later** and requires Node.js 22 or later:
 
 ```bash
-npm install openship
+npm install kovalio
 ```
 
 See [installation](/docs/api/sdk/installation) for ESM, CommonJS, and upgrading an older CLI-only package.
 
 ## Deploy your application
 
-Replace the URL with your OpenShip API, set `OPENSHIP_TOKEN` and `OPENSHIP_ORGANIZATION_ID` for an
+Replace the URL with your Kovalio API, set `KOVALIO_TOKEN` and `KOVALIO_ORGANIZATION_ID` for an
 organization where you can create and deploy projects, and put your application in `./app`.
 The installation must already have a configured deployment target.
 
 ```ts title="deploy-app.mts"
 import { resolve } from "node:path";
-import { OpenshipClient } from "openship/client";
+import { KovalioClient } from "kovalio/client";
 
-const ship = new OpenshipClient({
+const ship = new KovalioClient({
   baseUrl: "https://ship.example.com",
-  token: process.env.OPENSHIP_TOKEN!,
-  organizationId: process.env.OPENSHIP_ORGANIZATION_ID!,
+  token: process.env.KOVALIO_TOKEN!,
+  organizationId: process.env.KOVALIO_ORGANIZATION_ID!,
 });
 
 const run = await ship.deploy({
@@ -71,12 +71,12 @@ for handling a request for review.
 This function accepts either a remote client or a native user scope:
 
 ```ts title="deploy-site.mts"
-import type { OpenshipClient, ScopedShip } from "openship";
+import type { KovalioClient, ScopedShip } from "kovalio";
 
-export async function deploySite(ship: OpenshipClient | ScopedShip) {
+export async function deploySite(ship: KovalioClient | ScopedShip) {
   const submitted = await ship.deploy({
     name: "my-site",
-    source: { type: "files", files: { "index.html": "<h1>Hello from Openship</h1>" } },
+    source: { type: "files", files: { "index.html": "<h1>Hello from Kovalio</h1>" } },
   });
   const outcome = await ship.deployment(submitted.deployment_id).wait({ timeoutMs: 120_000 });
   if (!outcome.success) throw new Error(outcome.message ?? outcome.status);

@@ -42,7 +42,7 @@ import {
 import type { ExecutionContext } from "@repo/platform";
 import type { GitHubRepository } from "@repo/contracts";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { tokenFor, canResolveTokenFor } from "@repo/platform/engine/modules/github/github.token";
 import { resolveBuildGitToken } from "@repo/platform/engine/modules/github/clone-auth";
@@ -71,8 +71,8 @@ async function clients(actor: SeededOwner, organizationId = actor.orgId) {
   });
   return {
     native: await ship.scope({ identity: "verified", organizationId }),
-    http: new OpenshipClient({
-      baseUrl: "http://openship.test",
+    http: new KovalioClient({
+      baseUrl: "http://kovalio.test",
       token: actor.token,
       organizationId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
@@ -182,7 +182,7 @@ describe("Personal GitHub tokens through Cloud HTTP, native SDK and shared engin
         primary: "personal-token",
         sources: {
           personalToken: { connected: true, login: "alice" },
-          openshipApp: { connected: false },
+          kovalioApp: { connected: false },
           ghCli: { available: false },
         },
       });
@@ -347,7 +347,7 @@ describe("Personal GitHub tokens through Cloud HTTP, native SDK and shared engin
     expect(home.accounts.filter((a) => a.login === "team")).toMatchObject([{ source: "app" }]);
     rejected = true;
     const fallback = await c.http.github.getHome();
-    expect(fallback.state.primary).toBe("openship-app");
+    expect(fallback.state.primary).toBe("kovalio-app");
     expect(fallback.state.sources.personalToken).toMatchObject({
       connected: false,
       problem: "rejected",

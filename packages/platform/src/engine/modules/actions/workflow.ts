@@ -25,7 +25,7 @@ export function record(value: unknown): Record<string, unknown> {
 }
 function unsupported(field: string): never {
   throw new ValidationError(
-    `${field} requires a repository workflow in .github/workflows. Connect that file to use it with your Openship runners; standalone workflows do not support this feature.`,
+    `${field} requires a repository workflow in .github/workflows. Connect that file to use it with your Kovalio runners; standalone workflows do not support this feature.`,
   );
 }
 
@@ -33,7 +33,7 @@ function unsupported(field: string): never {
 export async function parseActionWorkflow(
   source: string,
   path = ".github/workflows/ci.yml",
-  controller: ActionWorkflowController = "openship",
+  controller: ActionWorkflowController = "kovalio",
 ): Promise<ActionWorkflowPlan> {
   if (!source.trim() || Buffer.byteLength(source) > ACTIONS_MAX_WORKFLOW_BYTES)
     throw new ValidationError(
@@ -61,7 +61,7 @@ export async function parseActionWorkflow(
   // GitHub owns execution semantics in this mode. The shared parser and editor
   // still validate YAML and show its jobs, but our independent controller's
   // feature limits must never reject a workflow GitHub can run.
-  const independent = controller === "openship";
+  const independent = controller === "kovalio";
   for (const trigger of Object.keys(triggers)) {
     if (
       independent &&
@@ -256,7 +256,7 @@ export function actionConcurrency(
   };
 }
 
-// OIDC is issued separately by Openship; it is never sent to GitHub's token API.
+// OIDC is issued separately by Kovalio; it is never sent to GitHub's token API.
 const permissionNames = [
   "actions",
   "checks",

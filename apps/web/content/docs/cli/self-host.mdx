@@ -10,9 +10,9 @@ Host and resource permissions still apply in native mode.
 ## Servers
 
 ```bash
-openship server list
-openship server check srv_123
-openship server add --host server.example.com --private-key-file /path/to/key
+kovalio server list
+kovalio server check srv_123
+kovalio server add --host server.example.com --private-key-file /path/to/key
 ```
 
 Use the [server reference](/docs/cli/reference/server) to register connections, install components,
@@ -33,13 +33,13 @@ The workflow has four parts:
 | Configure and verify storage | [backup destination](/docs/cli/reference/backup/destination) |
 | Choose a source, schedule, and retention | [backup policy](/docs/cli/reference/backup/policy) |
 | Inspect executions or prepare a restore | [backup run](/docs/cli/reference/backup/run) |
-| Inspect, apply, or cancel a prepared restore | [backup restore](/docs/cli/reference/backup#openship-backup-restore) |
+| Inspect, apply, or cancel a prepared restore | [backup restore](/docs/cli/reference/backup#kovalio-backup-restore) |
 
 ```bash
-openship backup destination list
-openship backup policy list --project proj_123
-openship backup policy run policy_123
-openship backup run list --project proj_123
+kovalio backup destination list
+kovalio backup policy list --project proj_123
+kovalio backup policy run policy_123
+kovalio backup run list --project proj_123
 ```
 
 Preparing a restore does not apply it. Inspect the returned restore session and confirmation
@@ -52,10 +52,10 @@ mailboxes, and inspect delivery health. The [email guide](/docs/guides/email-web
 relay configuration, and webmail. Mail commands require an HTTP context.
 
 ```bash
-openship mail certificate get srv_mail
-openship mail certificate check srv_mail
-openship mail certificate renew srv_mail
-openship mail certificate auto-renew srv_mail --state on
+kovalio mail certificate get srv_mail
+kovalio mail certificate check srv_mail
+kovalio mail certificate renew srv_mail
+kovalio mail certificate auto-renew srv_mail --state on
 ```
 
 Renewal and monitoring reuse the platform's edge certificate workflow. Setup reports DNS/PTR checkpoints
@@ -76,12 +76,12 @@ Whole-instance actions require an unbound administrator credential; workspace me
 ## Move or copy workloads
 
 ```bash
-openship migration scan srv_source
-openship migration preview --schema
-openship migration preview move.json
-openship migration start move.json --yes
-openship migration get mig_123
-openship migration events mig_123
+kovalio migration scan srv_source
+kovalio migration preview --schema
+kovalio migration preview move.json
+kovalio migration start move.json --yes
+kovalio migration get mig_123
+kovalio migration events mig_123
 ```
 
 The preview and start use the existing migration inputs, including exact container IDs. Inspect the

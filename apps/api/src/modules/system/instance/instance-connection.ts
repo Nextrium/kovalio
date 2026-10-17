@@ -92,7 +92,7 @@ export async function claimPairingCode(value: string, origin: string): Promise<I
       userId: identity.userId,
       activeOrganizationId: identity.organizationId,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60_000),
-      userAgent: "Openship Desktop (paired instance)",
+      userAgent: "Kovalio Desktop (paired instance)",
     });
     return deviceConnection(origin, state.installationId, sessionToken);
   });
@@ -100,7 +100,7 @@ export async function claimPairingCode(value: string, origin: string): Promise<I
 
 export async function connectInstance(value: string): Promise<void> {
   if (env.DEPLOY_MODE !== "desktop")
-    throw new AppError("Open Openship Desktop to connect to another instance.", 409);
+    throw new AppError("Open Kovalio Desktop to connect to another instance.", 409);
   const code = pairingSchema.parse(JSON.parse(Buffer.from(value, "base64url").toString("utf8")));
   const response = await fetch(`${code.origin}/api/system/instance/pair/claim`, {
     method: "POST",
@@ -123,7 +123,7 @@ export async function connectInstance(value: string): Promise<void> {
  * endpoints. A public identity document is never an authenticated session. */
 export async function connectInstanceAddress(value: string): Promise<void> {
   if (env.DEPLOY_MODE !== "desktop")
-    throw new AppError("Open Openship Desktop to connect to another instance.", 409);
+    throw new AppError("Open Kovalio Desktop to connect to another instance.", 409);
   const { origin, installationId } = await discoverInstance(value);
   await attachConnection({ origin, installationId, cookies: {} }, true);
 }

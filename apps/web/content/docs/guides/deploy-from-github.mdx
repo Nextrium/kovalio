@@ -28,15 +28,15 @@ Kovalio needs permission to read your repository. You only do this one time.
 Go to **Settings → Git** and choose a GitHub connection method. A GitHub window may open asking "do you allow
 this?" — say yes. When it closes, you're connected.
 
-<Callout title="Self-hosted: two ways to connect (no Openship account required)" type="info">
-On a self-hosted instance you're never forced through Openship Cloud. **Settings → Git** offers:
+<Callout title="Self-hosted: two ways to connect (no Kovalio account required)" type="info">
+On a self-hosted instance you're never forced through Kovalio Cloud. **Settings → Git** offers:
 
-- **Openship Cloud GitHub App** — the managed App (short-lived tokens, great for remote-server deploys).
-  Optional; it needs an Openship Cloud connection.
+- **Kovalio Cloud GitHub App** — the managed App (short-lived tokens, great for remote-server deploys).
+  Optional; it needs an Kovalio Cloud connection.
 - **Your own self-hosted GitHub Apps** — use the one-click manifest flow or register one or more existing
-  GitHub/GitHub Enterprise Apps in the dashboard, then use installation tokens without Openship Cloud or PATs. See
+  GitHub/GitHub Enterprise Apps in the dashboard, then use installation tokens without Kovalio Cloud or PATs. See
   [Self-hosted GitHub App](/docs/guides/self-hosted-github-app).
-- **Manual** — connect with your **own** GitHub identity, no Openship in the middle:
+- **Manual** — connect with your **own** GitHub identity, no Kovalio in the middle:
   - **`gh` CLI on the instance** — press **Log in with GitHub**; if the instance has `gh` authenticated
     it's picked up immediately, otherwise run the shown `gh auth login` on the box and the page detects it
     automatically.
@@ -111,7 +111,7 @@ deploy branch rebuilds and ships automatically.
 ## GitHub deployment Checks
 
 GitHub-backed projects report their deployment result and individual service results on the
-deployed commit by default, on both self-hosted Openship and Openship Cloud. This requires a
+deployed commit by default, on both self-hosted Kovalio and Kovalio Cloud. This requires a
 connected GitHub App with **Checks: Read and write** access to the repository. A clone token
 alone does not enable this integration.
 
@@ -121,12 +121,12 @@ all services, specific services, and whether to include failure details. These s
 to new deployment attempts. Turning reporting off also closes pending Checks from an active attempt.
 
 Checks show queued, running and completed outcomes, including failed builds, cancellations and
-partial service failures. Each links to its deployment in Openship. Failure details are redacted
+partial service failures. Each links to its deployment in Kovalio. Failure details are redacted
 summaries visible to people who can read the repository; full build logs are not attached.
 Delivery retries in the background if GitHub is unavailable and never blocks the deployment.
 Connection problems appear beside these settings.
 
-Check names include the project and environment: `Openship / <project> / <environment>`.
+Check names include the project and environment: `Kovalio / <project> / <environment>`.
 Service Checks append ` / <service>`. If a GitHub repository rule requires an older
 `build:<service>` Check, select the new name after its first report.
 

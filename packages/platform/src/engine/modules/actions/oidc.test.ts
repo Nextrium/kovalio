@@ -29,7 +29,7 @@ function fixture() {
   const run = {
     id: "run-one",
     organizationId: "org-one",
-    controller: "openship",
+    controller: "kovalio",
     status: "running",
     ref: "refs/heads/main",
     revision: "a".repeat(40),
@@ -48,7 +48,7 @@ function fixture() {
         root: {
           owner: "acme",
           repo: "app",
-          path: ".openship/workflows/ci.yml",
+          path: ".kovalio/workflows/ci.yml",
           ref: "refs/heads/main",
           sha: "a".repeat(40),
         },
@@ -98,7 +98,7 @@ async function request(
   );
 }
 
-describe("Openship Actions OIDC", () => {
+describe("Kovalio Actions OIDC", () => {
   it("keeps public verification available but refuses to replace an imported identity without credentials", async () => {
     const f = fixture();
     const original = await f.service.jwks();
@@ -126,11 +126,11 @@ describe("Openship Actions OIDC", () => {
       algorithms: ["RS256"],
     });
     expect(payload).toMatchObject({
-      sub: "openship:organization:org-one:repo:acme/app:ref:refs/heads/main",
+      sub: "kovalio:organization:org-one:repo:acme/app:ref:refs/heads/main",
       repository_id: "123",
       run_id: "run-one",
       run_attempt: "2",
-      openship_job_id: "job-one",
+      kovalio_job_id: "job-one",
       job_workflow_ref: "acme/ci/.github/workflows/deploy.yml@refs/tags/v1",
       job_workflow_sha: "b".repeat(40),
     });

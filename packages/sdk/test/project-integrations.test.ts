@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ProjectControlOperations } from "@repo/contracts";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 import { projectFixture } from "../../contracts/test/fixtures";
 
 const connection = { id: "link/a", sourceProjectId: "database", sourceName: "Database", sourceAppTemplateId: "postgres", sourceServiceId: "svc-db", sourceServiceName: "Postgres", targetProjectId: "project/a", outputId: "url", envKey: "DATABASE_URL", mode: "internal" };
@@ -28,7 +28,7 @@ describe("remote project integrations", () => {
       else expect(init?.body).toBeUndefined();
       return Response.json(test.envelope ? { data: test.output } : test.output);
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     const operation = client.projects[test.name] as (id: string, input?: unknown) => Promise<unknown>;
     expect(await operation("project/a", test.input)).toEqual(test.output);
     expect(fetcher).toHaveBeenCalledOnce();
@@ -49,7 +49,7 @@ describe("remote project integrations", () => {
         default: throw new Error("Unexpected request");
       }
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     await expect(client.projects.importLocal({ name: "Invalid", localPath: "" })).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
     expect(fetcher).not.toHaveBeenCalled();
     expect(await client.projects.scanLocal({ path: "/srv/source" })).toEqual(scan);

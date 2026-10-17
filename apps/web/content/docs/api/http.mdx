@@ -7,8 +7,8 @@ REST requests use your installation's URL plus `/api`. Authenticate scripts with
 token. [Create a token](/docs/api/tokens) or use the [CLI login guide](/docs/cli/access).
 
 ```bash
-curl "$OPENSHIP_URL/api/projects" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/projects" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 Use `Content-Type: application/json` for JSON bodies. Send only the fields you are changing in a partial
@@ -16,7 +16,7 @@ update. The [resource pages](/docs/api) document request fields and the equivale
 
 ## Authentication
 
-A request proves who it is in exactly one of four ways. Openship checks for a `Bearer` token first, then a
+A request proves who it is in exactly one of four ways. Kovalio checks for a `Bearer` token first, then a
 session cookie, then the loopback fallback (only if that mode is enabled).
 
 | Method | What you send | Who uses it |
@@ -28,7 +28,7 @@ session cookie, then the loopback fallback (only if that mode is enabled).
 
 ```bash
 curl https://your-host/api/projects \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 <Callout title="Bearer is for non-browser clients only" type="info">
@@ -47,7 +47,7 @@ Authenticated application routes declare a permission tag of the form
 (`project:service:write`). Shared operations also enforce access for native SDK callers. The action usually lines up with the HTTP method: `read` (GET one), `write`
 (POST/PUT/PATCH), `admin` (DELETE and destructive), `list` (GET a collection).
 
-Access is decided **per organization**. Openship resolves which org you mean from the `X-Organization-Id`
+Access is decided **per organization**. Kovalio resolves which org you mean from the `X-Organization-Id`
 header (falling back to your session default), then checks your role there — `owner`, `admin`, `member`, or
 `restricted` (grant-only). The operation tables list the declared route permission. Shared operations also check resource ownership,
 current membership, token restrictions, and any additional administrative requirements. See
@@ -71,7 +71,7 @@ are per rolling minute.
 
 Every response carries `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset`. `/api/health` is
 never limited (load balancers and SSR poll it). On a self-hosted instance with neither `TRUST_PROXY` nor
-`OPENSHIP_PUBLIC_URL` set, requests arriving over loopback skip the ordinary limits — the `auth-tight` login
+`KOVALIO_PUBLIC_URL` set, requests arriving over loopback skip the ordinary limits — the `auth-tight` login
 gate always enforces.
 
 <Callout title="429 — Too many requests" type="warn">
@@ -103,7 +103,7 @@ Errors come back as JSON with a stable shape: a human `error` message and, for t
 
 ## Fixed organization scope
 
-Send both `X-Organization-Id: org_123` and `X-Openship-Scope: fixed` to require that exact organization.
+Send both `X-Organization-Id: org_123` and `X-Kovalio-Scope: fixed` to require that exact organization.
 Authentication and grants still apply. A token bound to a different organization is rejected.
 The remote SDK sends these headers when configured with `organizationId`; it first checks API capability
 support. See [scope compatibility](/docs/api/sdk/compatibility#fixed-organization-scopes).

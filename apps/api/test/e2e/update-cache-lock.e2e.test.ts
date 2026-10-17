@@ -13,7 +13,7 @@ import {
 import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 
 const exec = promisify(execFile);
-const container = `openship-e2e-update-lock-${process.pid}`;
+const container = `kovalio-e2e-update-lock-${process.pid}`;
 let connection: DatabaseConnection | undefined;
 let repos: ReturnType<typeof createRepositories>;
 const row = (latestSha: string) => ({

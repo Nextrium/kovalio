@@ -6,18 +6,18 @@ import { downloadUpdate } from "../../src/main/updater";
 import { fetchUpdateAsset } from "../../src/main/update-download";
 
 // Only the updater is loaded. This process has its own profile and downloads,
-// no application windows, no API, and no access to the user's Openship state.
+// no application windows, no API, and no access to the user's Kovalio state.
 const directory = process.argv.at(-1)!;
 const downloads = join(directory, "downloads");
 mkdirSync(downloads);
-app.setName("Openship updater regression test");
+app.setName("Kovalio updater regression test");
 app.setPath("userData", join(directory, "profile"));
 app.setPath("temp", downloads);
 app.commandLine.appendSwitch("disable-gpu");
 
 const version = "9.8.7";
-const name = "Openship.AppImage";
-const url = `https://github.com/oblien/openship/releases/download/v${version}/${name}`;
+const name = "Kovalio.AppImage";
+const url = `https://github.com/Nextrium/kovalio/releases/download/v${version}/${name}`;
 const asset = { name, url, size: readFileSync(join(directory, name)).length };
 const cdn = "https://release-assets.githubusercontent.com";
 let mode = "success";

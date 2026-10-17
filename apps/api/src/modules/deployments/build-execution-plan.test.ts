@@ -213,7 +213,7 @@ describe("resolveDeployRouting (post-resolve, keyed off runtime.name)", () => {
   });
 
   it("publishes a bare monorepo's built site without exposing the repository root", async () => {
-    const workDir = await mkdtemp(join(tmpdir(), "openship-static-monorepo-"));
+    const workDir = await mkdtemp(join(tmpdir(), "kovalio-static-monorepo-"));
     const release = join(workDir, "releases", "dep_static");
     const runtime = new BareRuntime({ workDir, executor: new LocalExecutor() });
     try {

@@ -10,7 +10,7 @@
     "managePlan": "Planı yönet",
     "projects": "Projeler",
     "emptyTitle": "Uygulamalarınız burada başlar",
-    "emptyDescription": "Kapasiteyi seçin, ardından uygulama ve projelerinizi Openship Cloud üzerinde dağıtın.",
+    "emptyDescription": "Kapasiteyi seçin, ardından uygulama ve projelerinizi Kovalio Cloud üzerinde dağıtın.",
     "usageHint": "Güncel CPU, bellek ve depolama kullanımı.",
     "noProjects": "Henüz burada proje yok.",
     "spaces": "Bulut alanları",
@@ -237,7 +237,7 @@
     "keyModePaste": "Yapıştır / Yükle",
     "keyModePath": "Ana makine yolu",
     "keyPathBrowse": "Göz at…",
-    "keyPathHelp": "Openship çalıştıran makinedeki özel anahtarın mutlak yolu.",
+    "keyPathHelp": "Kovalio çalıştıran makinedeki özel anahtarın mutlak yolu.",
     "keyPaste": "Özel Anahtar",
     "keyPastePlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----\n…",
     "keyPasteHelp": "Yapıştırılan anahtarlar bekleme durumunda şifrelenir ve sunucudan asla ayrılmaz.",
@@ -337,7 +337,7 @@
       "toastRemovedDestroyedOther": "Sunucu kaldırıldı. {count} iş yükü makineden silindi."
     },
     "reinstallDockerTitle": "Bu sunucuya Docker yeniden yüklensin mi?",
-    "reinstallDockerMessage": "Bu işlem, güncel motoru çeken resmi Docker yükleyicisini çalıştırır — güncel bir sunucuda bu önemli bir yükseltmedir. Docker'ı yüklemek veya yükseltmek arka plan programını yeniden başlatır ve bu da Openship'in burada çalıştırdığı her şey dahil olmak üzere bu sunucudaki her kapsayıcıyı yeniden başlatır. Başka hiçbir şey sizin için Docker yüklemez: diğer adımlar çalışırken bunu atlar."
+    "reinstallDockerMessage": "Bu işlem, güncel motoru çeken resmi Docker yükleyicisini çalıştırır — güncel bir sunucuda bu önemli bir yükseltmedir. Docker'ı yüklemek veya yükseltmek arka plan programını yeniden başlatır ve bu da Kovalio'in burada çalıştırdığı her şey dahil olmak üzere bu sunucudaki her kapsayıcıyı yeniden başlatır. Başka hiçbir şey sizin için Docker yüklemez: diğer adımlar çalışırken bunu atlar."
   },
   "banner": {
     "unreachableTitle": "{host} adresine ulaşılamıyor",
@@ -356,16 +356,16 @@
     "editCredentials": "Kimlik bilgilerini düzenle",
     "editServer": "Sunucuyu düzenle",
     "showRawError": "Ham hatayı göster",
-    "hostChannelTitle": "Openship bu makinenin ana makinesine erişemiyor",
-    "hostChannelBody": "Openship burada bir kapsayıcıda çalışır ve {target} üzerinde SSH üzerinden ana makineyle iletişim kurar. Orada hiçbir yanıt alınamadı, bu nedenle bu makinede ana makine düzeyindeki işlemler çalıştırılamıyor.",
-    "hostChannelImpact": "Bu makineye yapılan sıradan dağıtımlar çalışmaya devam eder — Docker soketinden geçerler. Kanal çalışana kadar engellenenler: ana makine terminali, ana makine sistem bilgisi ve ana makine bağlantı noktası taramaları; Openship'in başlatmadığı bir proxy'den :80/:443'ü devralma; posta motorunu yükleme veya güncelleme; ana makinede oluşturulmuş bir yapılandırma dosyasına ihtiyaç duyan bir katalog uygulamasını dağıtma (örneğin Supabase'in kong.yml dosyası). Kanal kapalıyken bu makine kontrol panelinin sunucu listesinde de \"Çevrimdışı\" görünür.",
+    "hostChannelTitle": "Kovalio bu makinenin ana makinesine erişemiyor",
+    "hostChannelBody": "Kovalio burada bir kapsayıcıda çalışır ve {target} üzerinde SSH üzerinden ana makineyle iletişim kurar. Orada hiçbir yanıt alınamadı, bu nedenle bu makinede ana makine düzeyindeki işlemler çalıştırılamıyor.",
+    "hostChannelImpact": "Bu makineye yapılan sıradan dağıtımlar çalışmaya devam eder — Docker soketinden geçerler. Kanal çalışana kadar engellenenler: ana makine terminali, ana makine sistem bilgisi ve ana makine bağlantı noktası taramaları; Kovalio'in başlatmadığı bir proxy'den :80/:443'ü devralma; posta motorunu yükleme veya güncelleme; ana makinede oluşturulmuş bir yapılandırma dosyasına ihtiyaç duyan bir katalog uygulamasını dağıtma (örneğin Supabase'in kong.yml dosyası). Kanal kapalıyken bu makine kontrol panelinin sunucu listesinde de \"Çevrimdışı\" görünür.",
     "hostChannelFix": "Bunu ana makinede çalıştırın, ardından tekrar deneyin:",
-    "hostChannelMissingTitle": "Openship'in bu makinenin ana makinesine giden kanalı yok",
-    "hostChannelMissingBody": "Openship burada bir kapsayıcıda çalışır ve ana makineye ulaşmak için kullandığı SSH kanalı hiçbir zaman sağlanmadı. İletişim kurulacak bir adres yoktu, bu nedenle burada çöken bir şey yok — bu makinedeki ana makine düzeyindeki işlemlerin çalışacak bir yeri yok.",
+    "hostChannelMissingTitle": "Kovalio'in bu makinenin ana makinesine giden kanalı yok",
+    "hostChannelMissingBody": "Kovalio burada bir kapsayıcıda çalışır ve ana makineye ulaşmak için kullandığı SSH kanalı hiçbir zaman sağlanmadı. İletişim kurulacak bir adres yoktu, bu nedenle burada çöken bir şey yok — bu makinedeki ana makine düzeyindeki işlemlerin çalışacak bir yeri yok.",
     "hostChannelWouldUse": "Kanal sağlandığında ana makineye {target} adresinden ulaşacaktır. Henüz bu adresle iletişim kurulmadı.",
     "hostChannelProvisionFix": "Kanalı sağlamak için bunu ana makinede çalıştırın, ardından tekrar deneyin:",
-    "hostChannelAuthTitle": "Ana makine Openship'in anahtarını reddetti",
-    "hostChannelAuthBody": "Openship burada bir kapsayıcıda çalışır ve SSH üzerinden {target} adresindeki ana makineye ulaşır. Ana makine yanıt verdi ve ardından anahtarı reddetti, bu nedenle ana makine düzeyindeki işlemler çalışamaz. Ya anahtar artık o hesap için yetkilendirilmemiştir ya da sshd o hesabın oturum açmasına hiç izin vermiyordur. Bu sunucuda saklanan SSH kimlik bilgileri bu bağlantı için kullanılmaz — kanalın kendi anahtarı vardır.",
+    "hostChannelAuthTitle": "Ana makine Kovalio'in anahtarını reddetti",
+    "hostChannelAuthBody": "Kovalio burada bir kapsayıcıda çalışır ve SSH üzerinden {target} adresindeki ana makineye ulaşır. Ana makine yanıt verdi ve ardından anahtarı reddetti, bu nedenle ana makine düzeyindeki işlemler çalışamaz. Ya anahtar artık o hesap için yetkilendirilmemiştir ya da sshd o hesabın oturum açmasına hiç izin vermiyordur. Bu sunucuda saklanan SSH kimlik bilgileri bu bağlantı için kullanılmaz — kanalın kendi anahtarı vardır.",
     "hostChannelReauthorizeFix": "Kanal anahtarını yeniden yetkilendirmek için bunu ana makinede çalıştırın, ardından tekrar deneyin:"
   },
   "overview": {
@@ -620,7 +620,7 @@
     "continue": "Devam",
     "cancel": "İptal",
     "retry": "Yeniden dene",
-    "selfHostedOnly": "Sunucu kümeleri kendi barındırdığınız OpenShip üzerinde kullanılabilir. Cloud altyapısını Oblien yönetir.",
+    "selfHostedOnly": "Sunucu kümeleri kendi barındırdığınız Kovalio üzerinde kullanılabilir. Cloud altyapısını Oblien yönetir.",
     "managePermissionRequired": "Kümeleri yapılandırmak için bu çalışma alanındaki tüm sunucuları yönetme izniniz olmalıdır.",
     "notChecked": "Henüz doğrulanmadı",
     "networkStatus": "Ağ doğrulaması",
@@ -710,7 +710,7 @@
     "probingPeers": "Sunucular arasındaki özel bağlantı kontrol ediliyor…",
     "interfaceVerified": "Özel arayüz doğrulandı",
     "encryption": "Şifreleme",
-    "externalEncryption": "OpenShip tarafından doğrulanmadı",
+    "externalEncryption": "Kovalio tarafından doğrulanmadı",
     "verificationScope": "Bu kontroller seçilen özel adresleri ve test portunu doğrular. Hizmet erişimi ve şifreleme, ağ yapılandırmasına ve uygulama politikalarına bağlıdır.",
     "source": "Kaynak",
     "destination": "Hedef",
@@ -718,7 +718,7 @@
     "failed": "Başarısız",
     "noPeerChecks": "Sunucular arasındaki bağlantıları görmek için doğrulamayı çalıştırın.",
     "projectScope": "Sunucuları bağlayın ve özel bağlantıları sunucu kümelerinden bağımsız yönetin.",
-    "selfHostedOnly": "Özel ağlar kendi barındırdığınız OpenShip üzerinde kullanılabilir. Cloud altyapısını Oblien yönetir.",
+    "selfHostedOnly": "Özel ağlar kendi barındırdığınız Kovalio üzerinde kullanılabilir. Cloud altyapısını Oblien yönetir.",
     "managePermissionRequired": "Ağları yapılandırmak için bu çalışma alanındaki tüm sunucuları yönetme izniniz olmalıdır.",
     "editWhileVerifying": "Bu ağı düzenlemeden önce devam eden ağ doğrulamasının bitmesini bekleyin.",
     "status": {
@@ -738,7 +738,7 @@
     "crossProviderNetworkHint": "Farklı sağlayıcılardaki özel ağlar arasında mevcut bir rota veya VPN gerekir. Sağlayıcı seçmek sunucuları birbirine bağlamaz.",
     "managed": {
       "title": "Yönetilen özel ağ",
-      "description": "OpenShip, farklı sağlayıcılardaki sunucularınız da dahil olmak üzere sunucular arasında şifreli bir WireGuard ağı oluşturur.",
+      "description": "Kovalio, farklı sağlayıcılardaki sunucularınız da dahil olmak üzere sunucular arasında şifreli bir WireGuard ağı oluşturur.",
       "requirements": "systemd kullanan Linux ve root veya parolasız sudo erişimi gerektirir. Eksik Python 3.8+, iproute2 ve WireGuard araçları otomatik kurulur. Çekirdek ve güvenlik duvarı uyumluluğu kurulum sırasında denetlenir.",
       "mode": "Ağ modu",
       "existingHint": "Sağlayıcınızın ağında önceden yapılandırılmış adresleri kullanın.",
@@ -747,7 +747,7 @@
       "useServerAddress": "Sunucu adresini kullan",
       "port": "WireGuard UDP portu",
       "automaticRange": "Uygun bir aralığı otomatik seç",
-      "rangeHint": "OpenShip; sunucu, Docker, VPN, DNS ve rota aralıklarını denetler ve sabit özel adresler atar. Özel bir /16–/27 alt ağı da seçebilirsiniz.",
+      "rangeHint": "Kovalio; sunucu, Docker, VPN, DNS ve rota aralıklarını denetler ve sabit özel adresler atar. Özel bir /16–/27 alt ağı da seçebilirsiniz.",
       "inspect": "Sunucuları hazırla",
       "inspecting": "Hazırlık başlatılıyor…",
       "apply": "Ağı uygula",
@@ -756,7 +756,7 @@
       "effect": "Özel bir tünel ve özel rotalar oluşturur, listelenen eşler arasındaki trafiğe izin verir. SSH rotaları ve DNS ayarları korunur.",
       "keys": "Özel anahtarlar her sunucuda oluşturulur ve saklanır.",
       "rollbackHint": "Onaylanmamış değişiklikler, denetleyici bağlantısı kesilse veya sunucu yeniden başlasa bile her sunucuda 20 dakika sonra geri alınır.",
-      "firewallHint": "OpenShip, desteklenen ana makine güvenlik duvarlarını uygulama sırasında yapılandırır. Uygulamadan veya yeniden denemeden önce sağlayıcı ya da yönlendirici kurallarını kaydedin.",
+      "firewallHint": "Kovalio, desteklenen ana makine güvenlik duvarlarını uygulama sırasında yapılandırır. Uygulamadan veya yeniden denemeden önce sağlayıcı ya da yönlendirici kurallarını kaydedin.",
       "expires": "Planın geçerlilik sonu: {time}",
       "expired": "Bu planın süresi doldu. Geri dönüp sunucuları yeniden inceleyin.",
       "packages": "Gereksinimler",
@@ -768,10 +768,10 @@
       "progress": "Sunucu ilerlemesi",
       "resume": "İşlemi sürdür",
       "restore": "Önceki ağı geri yükle",
-      "recoveryHint": "Sürdürmeden önce sunucu sonuçlarını kontrol edin. OpenShip, sunucularda kayıtlı durumları inceler ve onaylanan yapılandırmayı geri yükler veya yeniden uygular.",
+      "recoveryHint": "Sürdürmeden önce sunucu sonuçlarını kontrol edin. Kovalio, sunucularda kayıtlı durumları inceler ve onaylanan yapılandırmayı geri yükler veya yeniden uygular.",
       "viewOperation": "Ağ işlemini görüntüle",
       "viewCluster": "Ağı aç",
-      "removalHint": "Her üyeden yönetilen tüneli, özel rotaları ve OpenShip güvenlik duvarı kurallarını kaldırır. Bu özel adresleri kullanan hizmetlerin bağlantıları kesilir.",
+      "removalHint": "Her üyeden yönetilen tüneli, özel rotaları ve Kovalio güvenlik duvarı kurallarını kaldırır. Bu özel adresleri kullanan hizmetlerin bağlantıları kesilir.",
       "removalApply": "Yönetilen ağı kaldır",
       "status": {
         "planned": "Uygulamaya hazır",
@@ -861,17 +861,17 @@
       "removeAndReset": "Çıkar ve geri al",
       "removeSetupServerTitle": "{name} kurulumdan çıkarılsın mı?",
       "removeSetupServerDescription": "Kalan {count} sunucuyu kaydedin ve Hazırlığı yeniden dene düğmesine basana kadar kurulumu duraklatın. Sunucu, hizmetleri, verileri ve yüklü araçlar korunur.",
-      "removeSetupServerResetDescription": "Seçilen sunucu ve eşlerinde bu denemenin OpenShip ağ değişikliklerini geri alın, ardından kalan {count} sunucuyla duraklatın. Hazır olduğunuzda Hazırlığı yeniden dene düğmesine basın. Hizmetler, veriler ve yüklü araçlar korunur. Hazırlık yeniden denenmeden önce tüm sunucular temizliği onaylamalıdır.",
+      "removeSetupServerResetDescription": "Seçilen sunucu ve eşlerinde bu denemenin Kovalio ağ değişikliklerini geri alın, ardından kalan {count} sunucuyla duraklatın. Hazır olduğunuzda Hazırlığı yeniden dene düğmesine basın. Hizmetler, veriler ve yüklü araçlar korunur. Hazırlık yeniden denenmeden önce tüm sunucular temizliği onaylamalıdır.",
       "keepTwoServers": "En az iki sunucu kalmalıdır.",
       "resetBeforeContinue": "Önceki kurulum geri alınıyor",
-      "resetBeforeContinueDescription": "OpenShip bu denemenin ağ yapılandırmasını ve eş kayıtlarını geri alır. Tüm sunucular temizliği onayladıktan sonra {count} sunucuyla devam etmek için Hazırlığı yeniden dene düğmesine basın. Bir sunucuya ulaşılamıyorsa erişimi geri sağlayıp temizliği yeniden deneyin.",
+      "resetBeforeContinueDescription": "Kovalio bu denemenin ağ yapılandırmasını ve eş kayıtlarını geri alır. Tüm sunucular temizliği onayladıktan sonra {count} sunucuyla devam etmek için Hazırlığı yeniden dene düğmesine basın. Bir sunucuya ulaşılamıyorsa erişimi geri sağlayıp temizliği yeniden deneyin.",
       "continuePreparation": "Hazırlığa devam et",
       "viewCleanup": "Temizlik ayrıntılarını görüntüle",
       "viewUpdatedSetup": "Güncellenen kurulumu görüntüle",
       "selectionSavedHint": "Güncellenmiş sunucu seçiminiz kaydedildi. Hazırlığı yeniden dene düğmesine basana kadar hazırlık duraklatılmış olarak kalır.",
       "selectionReplacedHint": "Bu deneme güncellenen bir sunucu seçimine bağlıdır. Devam etmek için güncellenen kurulumu açın.",
       "transportCheckTitle": "Sunucular arasında UDP erişimi",
-      "transportCheckHint": "Planı uyguladıktan sonra OpenShip, özel adresleri ve rotaları atamadan önce bu UDP uç noktalarında şifreli bağlantıları test eder.",
+      "transportCheckHint": "Planı uyguladıktan sonra Kovalio, özel adresleri ve rotaları atamadan önce bu UDP uç noktalarında şifreli bağlantıları test eder.",
       "transportFailedTitle": "Yeniden denemeden önce başarısız bağlantıları kontrol edin",
       "transportFailedHint": "Şifreli bağlantı kurulamadı. Hedef adresleri ve varsa NAT bağlantı noktası yönlendirmelerini doğrulayın, ardından güvenlik duvarı kurallarını kontrol edin. Her yönü görmek için başarısız bir bağlantıyı seçin.",
       "preparationTopologyHint": "Her sunucu mevcut hazırlık adımını gösterir. UDP bağlantısı, ağ planı incelenip uygulandıktan sonra test edilir.",
@@ -904,11 +904,11 @@
         "nativeFailedHint": "Yeniden denemeden önce özel rotaları, seçilen arayüzleri ve ana makine ile sağlayıcı güvenlik duvarlarındaki TCP/UDP kurallarını kontrol edin.",
         "privateInterfaceHint": "Bu özel IP adresini taşıyan arayüz",
         "nativeScopeHint": "Bu kurallar bağlantı testlerine izin verir. İş yüklerinizin gerektirdiği özel servis portlarını ayrıca ekleyin.",
-        "nativeFirewallHint": "Özel arayüz için ana makine ve sağlayıcı güvenlik duvarlarını yapılandırın. OpenShip bu ağı güvenlik duvarı kurallarını değiştirmeden kontrol eder.",
+        "nativeFirewallHint": "Özel arayüz için ana makine ve sağlayıcı güvenlik duvarlarını yapılandırın. Kovalio bu ağı güvenlik duvarı kurallarını değiştirmeden kontrol eder.",
         "confirmTitle": "Güvenlik duvarı erişimini onayla",
         "confirmManaged": "Bu sunucular arasındaki sağlayıcı güvenlik duvarları ve yönlendiricilerde listelenen UDP trafiğine izin verdim.",
         "confirmNative": "Bu özel adresler için ana makine ve sağlayıcı güvenlik duvarlarında listelenen TCP/UDP trafiğine izin verdim.",
-        "confirmHint": "Devam ettiğinizde OpenShip bağlantıyı doğrular.",
+        "confirmHint": "Devam ettiğinizde Kovalio bağlantıyı doğrular.",
         "confirmRequired": "Devam etmeden önce güvenlik duvarı erişimini onaylayın.",
         "returnTraffic": "Yanıt trafiği",
         "nativeReturnHint": "Durum takibi yapan güvenlik duvarları yanıtlara otomatik izin verir. Şablon, aynı özel eş IP adresleriyle durum takibi yapmayan güvenlik duvarları için yanıt kurallarını da içerir."
@@ -967,7 +967,7 @@
       "outgoing": "Şuraya bağlanabilir",
       "none": "Yok",
       "empty": "Bu sunucu için yapılandırılmış bağlantı yok.",
-      "transportHint": "WireGuard, bağlı her sunucu çifti için iki yönde UDP kullanır. OpenShip, seçilen özel erişim yönlerini sunucularda uygular.",
+      "transportHint": "WireGuard, bağlı her sunucu çifti için iki yönde UDP kullanır. Kovalio, seçilen özel erişim yönlerini sunucularda uygular.",
       "enforcedHint": "Bu izinler, yayımlanan konteyner portları dahil bu yönetilen özel ağı kapsar. Genel erişimin ve diğer ağların kendi kuralları vardır.",
       "blockedVerified": "Yapılandırıldığı gibi engellendi",
       "unexpectedAccess": "Beklenmeyen erişim",
@@ -987,10 +987,10 @@
     "setup": "Ölçeklendirmeyi etkinleştir",
     "oneControl": "Bir kontrol sunucusu. Yüksek erişilebilirlik sağlayan bir kontrol düzlemi için en az üç sunucu gerekir.",
     "threeControls": "Üç kontrol sunucusu kümenin erişilebilirliğini korur. Ek sunucular çalışan düğüm olarak katılır.",
-    "requirements": "OpenShip sunucuları hazırlar, birbirine bağlar ve uygulama yönlendirmesini denetler. İlerleme kaydedilir; daha sonra geri dönebilirsiniz.",
+    "requirements": "Kovalio sunucuları hazırlar, birbirine bağlar ve uygulama yönlendirmesini denetler. İlerleme kaydedilir; daha sonra geri dönebilirsiniz.",
     "readyHint": "Uygulama örneklerini bu kümenin sunucularında dağıtmak için projenin ölçeklendirme ayarlarından bu kümeyi seçin.",
     "privateConnections": "Gerekli özel güvenlik duvarı kuralları",
-    "privateHint": "OpenShip desteklenen sunucu güvenlik duvarlarını otomatik yapılandırır. Sağlayıcınız özel ağı filtreliyorsa listelenen özel kaynak adreslerinden bu hedef portlarına izin verin. Bu portları internete açmayın.",
+    "privateHint": "Kovalio desteklenen sunucu güvenlik duvarlarını otomatik yapılandırır. Sağlayıcınız özel ağı filtreliyorsa listelenen özel kaynak adreslerinden bu hedef portlarına izin verin. Bu portları internete açmayın.",
     "remove": "Ölçeklendirmeyi devre dışı bırak",
     "removeDescription": "Ölçeklendirmeyi devre dışı bırakın ve kurulumunu bu kümeden kaldırın. Önce kümede dağıtılmış uygulamaları ve kalıcı birimleri kaldırın. Sunucu grubu, Docker uygulamaları ve özel ağ kullanılabilir kalır.",
     "details": "Kurulum ayrıntıları",
@@ -1013,7 +1013,7 @@
       "verify": "Uygulama yönlendirmesini denetle",
       "remove": "Ölçeklendirme kurulumunu kaldır"
     },
-    "requirementsDetails": "OpenShip eksik araçları yükler, özel ağ üzerinden K3s kurar ve servis yönlendirmesi ile DNS’i doğrular. systemd kullanan Linux ve filtrelenmeyen veya iptables tabanlı bir sunucu güvenlik duvarı gerekir.",
+    "requirementsDetails": "Kovalio eksik araçları yükler, özel ağ üzerinden K3s kurar ve servis yönlendirmesi ile DNS’i doğrular. systemd kullanan Linux ve filtrelenmeyen veya iptables tabanlı bir sunucu güvenlik duvarı gerekir.",
     "technicalDetails": "Teknik ayrıntılar",
     "technology": "Orkestratör",
     "applicationNetwork": "Pod ağı",
@@ -1025,7 +1025,7 @@
     "label": "Bağlantı",
     "direct": "Doğrudan SSH",
     "hostname": "Access ana makine adı",
-    "help": "Cloudflare Access ana makine adını ve sunucunuzun SSH kimlik bilgilerini kullanın. OpenShip’i çalıştıran makinede Cloudflare oturumunu açın. Windows uygulaması gerekli istemciyi içerir; diğer kurulumlar cloudflared gerektirir.",
+    "help": "Cloudflare Access ana makine adını ve sunucunuzun SSH kimlik bilgilerini kullanın. Kovalio’i çalıştıran makinede Cloudflare oturumunu açın. Windows uygulaması gerekli istemciyi içerir; diğer kurulumlar cloudflared gerektirir.",
     "openAccess": "Cloudflare Access’i aç"
   },
   "acquire": {
@@ -1035,7 +1035,7 @@
     },
     "managed": {
       "label": "Yönetilen sunucu al",
-      "description": "Kurulumu, yönlendirmeyi ve HTTPS’i Openship Cloud yönetir."
+      "description": "Kurulumu, yönlendirmeyi ve HTTPS’i Kovalio Cloud yönetir."
     },
     "signInHint": "Mevcut bir yönetilen sunucuyu kullanmak veya yeni bir sunucu almak için Cloud hesabını bağla.",
     "chooseExisting": "Mevcut bir Cloud sunucusu seç",
@@ -1086,7 +1086,7 @@
     "runtime": {
       "title": "Çalışma zamanı API’si",
       "description": "Kendi araçlarınızla bu yönetilen sunucudaki komutları, dosyaları ve çalışma zamanı işlemlerini otomatikleştirin.",
-      "requiredHint": "Openship bu API’yi dağıtımlar, izleme ve terminaller için kullanır. Sunucu yönetildiği sürece etkin kalır.",
+      "requiredHint": "Kovalio bu API’yi dağıtımlar, izleme ve terminaller için kullanır. Sunucu yönetildiği sürece etkin kalır.",
       "stoppedHint": "Çalışma zamanı bağlantısı açmadan önce sunucuyu plan panelinden devam ettirin.",
       "enable": "Runtime API’yi etkinleştir",
       "credentialHint": "Sunucu yöneticileri yalnızca bu sunucuya ait bir kimlik bilgisi görüntüleyebilir. Sunucudaki tüm projeler dahil çalışma zamanına tam erişim sağlar.",
@@ -1107,7 +1107,7 @@
       "os": "İşletim sistemi",
       "lifecycle": "Yaşam döngüsü",
       "persistent": "Kalıcı sunucu",
-      "imageHint": "Yönetilen Docker imajının bakımını Openship yapar. Uygulama imajlarını her projenin dağıtım ayarlarından seçin. Sunucu imajını değiştirmek tüm projeleri ve verilerini etkiler.",
+      "imageHint": "Yönetilen Docker imajının bakımını Kovalio yapar. Uygulama imajlarını her projenin dağıtım ayarlarından seçin. Sunucu imajını değiştirmek tüm projeleri ve verilerini etkiler.",
       "resources": "Tahsis edilen sunucu kaynakları",
       "resourceHint": "Kaynaklar bu sunucunun aboneliğinden gelir. Değişiklik için mevcut plan ve yeniden boyutlandırma incelemesini kullanın; tüm projeler bu tahsisi paylaşır.",
       "terminal": "Terminali aç",
@@ -1144,7 +1144,7 @@
       "truncated": "İlk 100 yerel süreç gösteriliyor. Ana bilgisayarın tam envanteri için terminali kullanın.",
       "sources": {
         "manual": "Manuel iş yükü",
-        "project": "Openship uygulaması",
+        "project": "Kovalio uygulaması",
         "system": "Platform süreci veya dışarıdan yönetilen süreç"
       },
       "states": {
@@ -1169,7 +1169,7 @@
       "rulesUnavailable": "Çıkış kuralları kullanılamıyor. Düzenlemeden önce yenileyin.",
       "invalidRules": "1–50 hedef girin. Yalnızca * veya URL, port ve yol içermeyen ana bilgisayar adı/IP kullanın.",
       "confirm": "Bu çıkış kuralları sunucudaki tüm projelere uygulansın mı? İnterneti devre dışı bırakmak izin listesini temizler. Yeniden etkinleştirme yukarıda gösterilen hedefleri kullanır.",
-      "routingHint": "Herkese açık alan adları, TLS ve özel ağlar Openship’in proje ve ağ kontrollerini kullanır. Bu form rotaları, giriş kurallarını veya proxy kimlik bilgilerini değiştirmez.",
+      "routingHint": "Herkese açık alan adları, TLS ve özel ağlar Kovalio’in proje ve ağ kontrollerini kullanır. Bu form rotaları, giriş kurallarını veya proxy kimlik bilgilerini değiştirmez.",
       "policyTitle": "İnternet erişimi",
       "policyHint": "Uygulamaların ve derlemelerin ulaşabileceği hedefleri yönetin.",
       "addresses": "Özel adres ve gelen trafik"
@@ -1178,7 +1178,7 @@
       "title": "Giden bağlantı",
       "description": "Bu sunucunun internete nasıl bağlanacağını seçin.",
       "currentIp": "Geçerli giden IP",
-      "managed": "Openship tarafından yönetiliyor",
+      "managed": "Kovalio tarafından yönetiliyor",
       "custom": "Özel proxy",
       "unavailable": "Geçerli ayarlar doğrulanamadı. Değişiklik yapmadan önce yenileyin.",
       "connection": "Bağlantı türü",
@@ -1210,7 +1210,7 @@
     },
     "cloudConnection": {
       "titles": {
-        "not_connected": "Openship Cloud’da oturum açın",
+        "not_connected": "Kovalio Cloud’da oturum açın",
         "account_mismatch": "Sunucunun Cloud hesabını bağlayın",
         "unavailable": "Cloud durumu kullanılamıyor"
       },
@@ -1229,7 +1229,7 @@
     },
     "controlUnavailable": {
       "title": "Kontrol kullanılamıyor",
-      "description": "Bu kontrol, bağlı Cloud API sürümünde henüz kullanılamıyor. Kullanılabilmesi için Openship Cloud güncellenmelidir."
+      "description": "Bu kontrol, bağlı Cloud API sürümünde henüz kullanılamıyor. Kullanılabilmesi için Kovalio Cloud güncellenmelidir."
     }
   },
   "gpu": {

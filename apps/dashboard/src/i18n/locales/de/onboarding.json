@@ -41,7 +41,7 @@
     "local": {
       "title": "Dieser Rechner",
       "badge": "Beta",
-      "desc": "Installieren Sie Openship direkt hier – kein SSH, keine Remote-Einrichtung nötig",
+      "desc": "Installieren Sie Kovalio direkt hier – kein SSH, keine Remote-Einrichtung nötig",
       "comingSoon": "Lokale Installation folgt in Kürze.",
       "comingSoonDesc": "Aktuell ist Self-Hosting auf jedem Linux-Server mit installiertem Docker möglich."
     },

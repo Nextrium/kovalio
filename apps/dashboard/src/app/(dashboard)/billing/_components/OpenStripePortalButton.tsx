@@ -23,7 +23,7 @@ export function OpenStripePortalButton({
   if (!enabled)
     return (
       <Button asChild variant="secondary">
-        <a href="mailto:support@openship.io">
+        <a href="mailto:support@nextrium.org">
           {t.billing.portal.supportButton}
           <UiIcon name="arrow-up-right" className="size-3.5 rtl:-scale-x-100" aria-hidden="true" />
         </a>

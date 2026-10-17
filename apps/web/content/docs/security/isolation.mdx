@@ -63,7 +63,7 @@ Self-hosted projects are unlimited by default; explicit limits are bounded by th
 machine. Cloud requires a concrete allocation within the organization's purchased terms
 and Oblien's effective limits. Resource presets include fractional CPU, down to 0.25 vCPU.
 
-On Openship Cloud, builds use available CPU/RAM from the same pool as runtime, optionally
+On Kovalio Cloud, builds use available CPU/RAM from the same pool as runtime, optionally
 bounded by a saved build cap. Existing runtime allocations remain reserved. Build workers
 are removed and temporary CPU/RAM is reconciled after the operation; a failed or pending
 provider resize is not reported as released capacity. See [resource settings](/docs/guides/sleep-mode-resources).

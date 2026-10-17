@@ -1,8 +1,8 @@
 ## Mail on a domain you control
 
-Openship Mail combines SMTP, IMAP, mailbox administration, and webmail. Run your own mailboxes, or keep an existing provider and deploy the webmail client separately.
+Kovalio Mail combines SMTP, IMAP, mailbox administration, and webmail. Run your own mailboxes, or keep an existing provider and deploy the webmail client separately.
 
-This entry opens the dedicated mail setup flow. Mail-server provisioning is available through desktop or self-hosted Openship; the Cloud mail console is not available yet.
+This entry opens the dedicated mail setup flow. Mail-server provisioning is available through desktop or self-hosted Kovalio; the Cloud mail console is not available yet.
 
 ## More than a web application
 

@@ -1,22 +1,22 @@
 ---
 title: install
-description: Commands, arguments, and options for openship install.
-cliGroup: openship install
+description: Commands, arguments, and options for kovalio install.
+cliGroup: kovalio install
 ---
 
 See the [CLI overview](/docs/cli) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship install
+## kovalio install
 
-Download and install the Openship desktop app for this OS
+Download and install the Kovalio desktop app for this OS
 
 ```text
-openship install [options] [command]
+kovalio install [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`cache`](/docs/cli/reference/install#openship-install-cache) | Manage the local download cache (list/verify/clean/path) |
+| [`cache`](/docs/cli/reference/install#kovalio-install-cache) | Manage the local download cache (list/verify/clean/path) |
 
 | Option | Meaning |
 | --- | --- |
@@ -26,55 +26,55 @@ openship install [options] [command]
 | `--no-verify` | Skip SHA-256 verification (allowed when no sidecar exists) |
 | `--no-launch` | Install without launching the app |
 
-## openship install cache
+## kovalio install cache
 
 Manage the local download cache (list/verify/clean/path)
 
 ```text
-openship install cache [options] [command]
+kovalio install cache [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`path`](/docs/cli/reference/install#openship-install-cache-path) | Print the cache directory path |
-| [`list\|ls`](/docs/cli/reference/install#openship-install-cache-list) | List cached release assets |
-| [`verify [tag]`](/docs/cli/reference/install#openship-install-cache-verify) | Re-hash cached assets and compare to their .sha256 sidecar |
-| [`clean [tag]`](/docs/cli/reference/install#openship-install-cache-clean) | Delete cached release assets |
+| [`path`](/docs/cli/reference/install#kovalio-install-cache-path) | Print the cache directory path |
+| [`list\|ls`](/docs/cli/reference/install#kovalio-install-cache-list) | List cached release assets |
+| [`verify [tag]`](/docs/cli/reference/install#kovalio-install-cache-verify) | Re-hash cached assets and compare to their .sha256 sidecar |
+| [`clean [tag]`](/docs/cli/reference/install#kovalio-install-cache-clean) | Delete cached release assets |
 
-## openship install cache clean
+## kovalio install cache clean
 
 Delete cached release assets
 
 ```text
-openship install cache clean [options] [tag]
+kovalio install cache clean [options] [tag]
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `tag` | Only remove this release tag (default: all) |
 
-## openship install cache list
+## kovalio install cache list
 
 List cached release assets
 
 ```text
-openship install cache list|ls [options]
+kovalio install cache list|ls [options]
 ```
 
-## openship install cache path
+## kovalio install cache path
 
 Print the cache directory path
 
 ```text
-openship install cache path [options]
+kovalio install cache path [options]
 ```
 
-## openship install cache verify
+## kovalio install cache verify
 
 Re-hash cached assets and compare to their .sha256 sidecar
 
 ```text
-openship install cache verify [options] [tag]
+kovalio install cache verify [options] [tag]
 ```
 
 | Argument | Meaning |

@@ -9,9 +9,9 @@ import {
   type ThemeMode,
 } from "@repo/core";
 
-export const APPEARANCE_CACHE_POINTER = "openship-appearance-owner";
-export const APPEARANCE_CHANGED = "openship:appearance-changed";
-export const appearanceCacheKey = (owner: string) => `openship-appearance-v1:${owner}`;
+export const APPEARANCE_CACHE_POINTER = "kovalio-appearance-owner";
+export const APPEARANCE_CHANGED = "kovalio:appearance-changed";
+export const appearanceCacheKey = (owner: string) => `kovalio-appearance-v1:${owner}`;
 export function cachedAppearance(key: string): AppearancePreferences | null {
   try {
     const raw = localStorage.getItem(key);
@@ -67,7 +67,7 @@ export function applyAppearance(preferences: AppearancePreferences, mode: ThemeM
     const key = `${custom!.id}:${font.role}:${font.data}`;
     if (fontFaces.has(key)) continue;
     const face = new FontFace(
-      `Openship-${custom!.id}-${font.role}`,
+      `Kovalio-${custom!.id}-${font.role}`,
       `url(data:font/woff2;base64,${font.data})`,
     );
     fontFaces.set(key, face);
@@ -128,8 +128,8 @@ export function bootAppearance(
               : "dark"
             : "light"
           : "light";
-    const owner = localStorage.getItem("openship-appearance-owner");
-    const raw = owner?.startsWith("openship-appearance-v1:")
+    const owner = localStorage.getItem("kovalio-appearance-owner");
+    const raw = owner?.startsWith("kovalio-appearance-v1:")
       ? localStorage.getItem(`${owner}:paint`)
       : null;
     const snapshot = raw && raw.length < 64_000 ? JSON.parse(raw) : null;

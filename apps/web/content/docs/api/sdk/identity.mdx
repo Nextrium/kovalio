@@ -1,6 +1,6 @@
 ---
 title: Users and organizations
-description: Map your application users to Openship and keep each operation inside an authorized organization.
+description: Map your application users to Kovalio and keep each operation inside an authorized organization.
 ---
 
 An organization is the resource boundary. A scope selects the organization and carries a verified user
@@ -9,9 +9,9 @@ identity. Supplying an organization ID does not grant access to it.
 ## Remote scopes
 
 ```ts title="remote-scopes.mts"
-import type { OpenshipClient } from "openship";
+import type { KovalioClient } from "kovalio";
 
-export async function listProjectsFor(client: OpenshipClient, organizationId: string) {
+export async function listProjectsFor(client: KovalioClient, organizationId: string) {
   return client.scope(organizationId).projects.list();
 }
 ```
@@ -32,7 +32,7 @@ Removing a membership or revoking a host session invalidates an existing scope.
 | Assertion | Your application, such as a session identifier. |
 | Verified user and session ID | Your trusted authentication adapter. |
 | Organization ID | Your application chooses from organizations the user may access. |
-| Roles and resource grants | Openship's persisted membership and permission model. |
+| Roles and resource grants | Kovalio's persisted membership and permission model. |
 
 For verified PAT/OAuth identities, the adapter may supply `tokenScope` and credential restrictions.
 It must authenticate the credential before doing so. See [permissions](/docs/security/permissions).
@@ -40,10 +40,10 @@ It must authenticate the credential before doing so. See [permissions](/docs/sec
 ## Provision a customer workspace
 
 Enable `administration: true` for trusted host code. A namespace is a stable external key mapped to an
-Openship organization:
+Kovalio organization:
 
 ```ts title="customer-workspace.mts"
-import type { OwnedShip } from "openship";
+import type { OwnedShip } from "kovalio";
 
 export async function provisionCustomer(
   ship: OwnedShip<string>,

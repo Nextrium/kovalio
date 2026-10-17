@@ -30,7 +30,7 @@ import { fail, confirmOrExit, reportResult, reportExecResult } from "../lib/cmd-
 
 function requireAuth(): void {
   if (!hasShipCredentials()) {
-    err("  Not logged in. Run `openship login` first.");
+    err("  Not logged in. Run `kovalio login` first.");
     exitCommand(1);
   }
 }
@@ -313,7 +313,7 @@ function containerActionCommand(action: "start" | "stop" | "restart"): Command {
         err(`  Restart refused: "${body.serviceName ?? service}" has pending environment changes.`);
         if (keys.length > 0) info(`  Pending: ${keys.join(", ")}`);
         info(
-          `  Apply them:  openship service env apply ${serviceId} --project ${opts.project}`,
+          `  Apply them:  kovalio service env apply ${serviceId} --project ${opts.project}`,
         );
         info(`  Bounce anyway (changes NOT applied):  add --force`);
         exitCommand(1);
@@ -472,7 +472,7 @@ const envSetCmd = stackCommand("set")
           deletes: [],
         });
       }
-      reportResult(result, `Saved ${Object.keys(desired).length} variable(s) on "${svc.name}" (${environment}). Apply to the running service with openship service env apply ${svc.id} --project ${projectId}.`);
+      reportResult(result, `Saved ${Object.keys(desired).length} variable(s) on "${svc.name}" (${environment}). Apply to the running service with kovalio service env apply ${svc.id} --project ${projectId}.`);
     } catch (e) {
       observeCaughtError(e, "cli/commands/service");
       rethrowCommandExit(e);
@@ -536,7 +536,7 @@ envCmd.addCommand(stackCommand("delete").alias("unset")
       const selected = new Set(keys);
       const deletes = existing.filter(row => selected.has(row.key)).map(row => ({ key: row.key, sourceId: row.id }));
       const result = await getShipClient().services.mergeEnvVars(projectId, svc.id, { environment, upserts: [], deletes });
-      reportResult(result, `Removed ${deletes.length} override(s). Apply saved changes with openship service env apply ${svc.id} --project ${projectId}.`);
+      reportResult(result, `Removed ${deletes.length} override(s). Apply saved changes with kovalio service env apply ${svc.id} --project ${projectId}.`);
     } catch (error) {
       observeCaughtError(error, "cli/commands/service");
  fail(error); }

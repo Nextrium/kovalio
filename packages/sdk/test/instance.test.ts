@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 import { SDK_CAPABILITIES } from "@repo/contracts";
 
 const archive = {
-  kind: "openship-instance-export" as const,
+  kind: "kovalio-instance-export" as const,
   envelopeVersion: 4,
   createdAt: "2026-10-07",
   sourceDriver: "pglite" as const,
@@ -12,7 +12,7 @@ const archive = {
 };
 function fixture(reply: () => Response, organizationId?: string) {
   const calls: Array<{ url: string; init: RequestInit }> = [];
-  const ship = new OpenshipClient({
+  const ship = new KovalioClient({
     baseUrl: "https://controller.test/prefix",
     token: "opsh_pat_fixture",
     organizationId,

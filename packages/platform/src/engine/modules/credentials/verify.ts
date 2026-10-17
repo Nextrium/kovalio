@@ -54,7 +54,7 @@ function registryConnectionFailure(target: string, error: unknown): VerifyResult
     ) {
       return {
         ok: false,
-        reason: `${target} failed TLS certificate verification. Check its hostname, certificate expiry, and the CA trusted by the Openship API.`,
+        reason: `${target} failed TLS certificate verification. Check its hostname, certificate expiry, and the CA trusted by the Kovalio API.`,
       };
     }
     cause = nested;

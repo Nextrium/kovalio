@@ -816,11 +816,11 @@ describe("triggerDeployment", () => {
     );
   });
 
-  it("applies openship.json env to a single-app trigger without parsing Compose", async () => {
+  it("applies kovalio.json env to a single-app trigger without parsing Compose", async () => {
     repos.project.findById.mockResolvedValue(baseProject({ framework: "nextjs" }));
     resolveProjectSourceEnv.mockResolvedValueOnce({
       rootEnv: { NEXT_PUBLIC_API_URL: "https://api.example.com" },
-      openshipEnv: { NEXT_PUBLIC_API_URL: "https://api.example.com" },
+      kovalioEnv: { NEXT_PUBLIC_API_URL: "https://api.example.com" },
     });
     resolveServicePipelineMode.mockResolvedValueOnce({
       useServicePipeline: false,
@@ -881,7 +881,7 @@ describe("triggerDeployment", () => {
       stack: project.framework,
       projectType: "app",
       services: source === "local" ? [] : undefined,
-      openshipEnv: { SHARED: "repository-default", FROM_REPO: "source-default" },
+      kovalioEnv: { SHARED: "repository-default", FROM_REPO: "source-default" },
     });
     syncProjectRouteState.mockResolvedValue({ publicEndpoints: [] });
 
@@ -954,7 +954,7 @@ describe("triggerDeployment", () => {
   it.each([null, "  "])(
     "reconciles an imported Compose project behind app markers with an unset path %j (#1020)",
     async (composePath) => {
-      const localPath = mkdtempSync(join(tmpdir(), "openship-compose-app-markers-"));
+      const localPath = mkdtempSync(join(tmpdir(), "kovalio-compose-app-markers-"));
       try {
         writeFileSync(
           join(localPath, "package.json"),
@@ -1025,7 +1025,7 @@ describe("triggerDeployment", () => {
   ])("keeps source reconciliation for $framework service projects (#959)", async ({ framework, importedSpec }) => {
     repos.project.findById.mockResolvedValue(baseProject({ framework, composePath: null }));
     repos.service.listByProject.mockResolvedValue([{ ...composeServices[0], importedSpec }]);
-    // Native openship.json services retain their detected framework. Migrated
+    // Native kovalio.json services retain their detected framework. Migrated
     // projects can start with an unknown framework and no imported baseline.
     resolveProjectInfo.mockResolvedValue({ projectType: "services", services: composeServices });
 
@@ -1038,7 +1038,7 @@ describe("triggerDeployment", () => {
   it.each(["repository", "subfolder"])(
     "refreshes a subfolder deployment from its %s manifest using the real parser and reconciler",
     async (manifestLocation) => {
-      const localPath = mkdtempSync(join(tmpdir(), "openship-subfolder-deploy-"));
+      const localPath = mkdtempSync(join(tmpdir(), "kovalio-subfolder-deploy-"));
       try {
         mkdirSync(join(localPath, "go-api"));
         writeFileSync(join(localPath, "go-api", "Dockerfile"), "FROM node:22-alpine\n");
@@ -1053,7 +1053,7 @@ describe("triggerDeployment", () => {
           services: [{ name: "web", build: ".", env: { SOURCE_VALUE: "refreshed" } }],
         };
         writeFileSync(
-          join(localPath, "openship.json"),
+          join(localPath, "kovalio.json"),
           JSON.stringify(
             manifestLocation === "repository"
               ? config
@@ -1061,7 +1061,7 @@ describe("triggerDeployment", () => {
           ),
         );
         if (manifestLocation === "subfolder") {
-          writeFileSync(join(localPath, "go-api", "openship.json"), JSON.stringify(config));
+          writeFileSync(join(localPath, "go-api", "kovalio.json"), JSON.stringify(config));
         }
 
         const baseline = { ...composeServices[0], buildArgs: {}, environment: {} };
@@ -1517,7 +1517,7 @@ describe("triggerDeployment", () => {
   });
 
   it.each(["", "go-api"])(
-    "reconciles native services when openship.json changes under %j",
+    "reconciles native services when kovalio.json changes under %j",
     async (rootDirectory) => {
       repos.project.findById.mockResolvedValue(
         baseProject({
@@ -1541,7 +1541,7 @@ describe("triggerDeployment", () => {
         projectId: "project-1",
         trigger: "webhook",
         commitSha: "1eeaf7692a19ee6e7ecb64b9d1a5c3ee7c0ac2f5",
-        changedPaths: [rootDirectory ? `${rootDirectory}/openship.json` : "openship.json"],
+        changedPaths: [rootDirectory ? `${rootDirectory}/kovalio.json` : "kovalio.json"],
       });
 
       expect(resolveProjectInfo).toHaveBeenCalledOnce();
@@ -1900,7 +1900,7 @@ describe("triggerDeployment", () => {
     );
     repos.deployment.findById.mockResolvedValue({
       id: "dep-live", projectId: "project-1", organizationId: "org-1",
-      imageRef: "openship/app:bld_live",
+      imageRef: "kovalio/app:bld_live",
       commitSha: "abc123",
       commitMessage: "live commit",
       createdAt: new Date("2026-08-23T00:00:00Z"),
@@ -2151,7 +2151,7 @@ describe("redeployBuildSession environment snapshot", () => {
     expect(previous.composeServices.every((service) => service.advanced.resources === undefined)).toBe(true);
   });
 
-  it("refreshes openship.json env for a single-app redeploy without parsing Compose", async () => {
+  it("refreshes kovalio.json env for a single-app redeploy without parsing Compose", async () => {
     repos.deployment.findById.mockResolvedValue({
       id: "dep-old",
       projectId: "project-1",
@@ -2165,7 +2165,7 @@ describe("redeployBuildSession environment snapshot", () => {
       meta: { ...baseSnapshot(), framework: "nextjs", serviceDeploymentMode: "single" },
     });
     resolveProjectSourceEnv.mockResolvedValueOnce({
-      openshipEnv: { NEXT_PUBLIC_API_URL: "https://api.example.com" },
+      kovalioEnv: { NEXT_PUBLIC_API_URL: "https://api.example.com" },
     });
 
     await redeployBuildSession(ctx, "dep-old");
@@ -2181,7 +2181,7 @@ describe("redeployBuildSession environment snapshot", () => {
       organizationId: "org-1",
       activeDeploymentId: "dep-old",
       gitOwner: "oblien",
-      gitRepo: "openship",
+      gitRepo: "kovalio",
       gitBranch: "main",
     });
     repos.project.findById.mockResolvedValue(project);
@@ -2199,7 +2199,7 @@ describe("redeployBuildSession environment snapshot", () => {
         kind: "commit",
         checkedAt: expect.any(Date),
         detail: expect.objectContaining({
-          key: "oblien/openship#main",
+          key: "oblien/kovalio#main",
           latestSha: "new-sha-123456789012345678901234567890",
           latestMessage: "feat: new commit",
         }),
@@ -2513,7 +2513,7 @@ describe("requestBuildAccess — folder-upload compose services", () => {
     );
   });
 
-  it("#795 carries openship.json env through the deployment snapshot for Docker builds", async () => {
+  it("#795 carries kovalio.json env through the deployment snapshot for Docker builds", async () => {
     const sourceServices = [
       {
         ...scannedServices[0],
@@ -2534,7 +2534,7 @@ describe("requestBuildAccess — folder-upload compose services", () => {
         PAYLOAD_SECRET: "payload-secret",
         SERVER_URL: "https://admin.example.com",
       },
-      openshipEnv: {
+      kovalioEnv: {
         DATABASE_URI: { value: "postgres://db/app", secret: true },
         PAYLOAD_SECRET: { value: "payload-secret", secret: true },
         SERVER_URL: "https://admin.example.com",
@@ -2547,7 +2547,7 @@ describe("requestBuildAccess — folder-upload compose services", () => {
         PAYLOAD_SECRET: "payload-secret",
         SERVER_URL: "https://admin.example.com",
       },
-      openshipEnv: {
+      kovalioEnv: {
         DATABASE_URI: { value: "postgres://db/app", secret: true },
         PAYLOAD_SECRET: { value: "payload-secret", secret: true },
         SERVER_URL: "https://admin.example.com",
@@ -2577,14 +2577,14 @@ describe("requestBuildAccess — folder-upload compose services", () => {
     );
   });
 
-  it("keeps an operator project-env override above openship.json defaults", async () => {
+  it("keeps an operator project-env override above kovalio.json defaults", async () => {
     const uploadSessionId = seedSession({
-      openshipEnv: { SERVER_URL: "https://source.example.com" },
+      kovalioEnv: { SERVER_URL: "https://source.example.com" },
       rootEnv: { SERVER_URL: "https://source.example.com" },
     });
     scanFolderSession.mockResolvedValueOnce({
       services: scannedServices,
-      openshipEnv: { SERVER_URL: "https://source.example.com" },
+      kovalioEnv: { SERVER_URL: "https://source.example.com" },
       rootEnv: { SERVER_URL: "https://source.example.com" },
     });
 
@@ -2956,7 +2956,7 @@ describe("requestBuildAccess — folder-upload compose services", () => {
   it.each([
     { missing: "ghcr.io/acme/api:migrated" },
     { api: "" },
-    { api: "/opt/openship/static/releases/forged" },
+    { api: "/opt/kovalio/static/releases/forged" },
   ])("rejects invalid internal migration handover %o", async (handoverImages) => {
     const uploadSessionId = seedSession();
 
@@ -3152,13 +3152,13 @@ describe("requestBuildAccess — folder-upload compose services", () => {
     );
   });
 
-  it("applies openship.json env for an unscanned single-app upload", async () => {
+  it("applies kovalio.json env for an unscanned single-app upload", async () => {
     const uploadSessionId = seedSession({ services: undefined });
     repos.project.findById.mockResolvedValue(
       baseProject({ gitProvider: "upload", localPath: null, framework: "nextjs" }),
     );
     resolveFolderSessionSourceEnv.mockResolvedValueOnce({
-      openshipEnv: {
+      kovalioEnv: {
         NEXT_PUBLIC_API_URL: "https://api.example.com",
         AUTH_SECRET: { value: "source-secret", secret: true },
       },

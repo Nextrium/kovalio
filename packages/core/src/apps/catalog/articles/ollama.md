@@ -1,6 +1,6 @@
 ## Run models on your server
 
-Ollama provides a model API and stores downloads in a persistent volume. Choose CPU mode or one NVIDIA GPU during installation. GPU mode requires a compatible host driver and NVIDIA Container Toolkit; Openship does not install either or reserve GPU memory.
+Ollama provides a model API and stores downloads in a persistent volume. Choose CPU mode or one NVIDIA GPU during installation. GPU mode requires a compatible host driver and NVIDIA Container Toolkit; Kovalio does not install either or reserve GPU memory.
 
 The model API stays private because Ollama does not authenticate requests. Use **Open in localhost** for a local client or **Use in a project** to connect another application. The template does not expose the API on a public domain.
 

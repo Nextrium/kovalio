@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { SDK_CAPABILITIES } from "@repo/contracts";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 
 function fixture(reply: (url: URL, init: RequestInit) => Response) {
   const calls: Array<{ url: URL; init: RequestInit }> = [];
-  const ship = new OpenshipClient({
+  const ship = new KovalioClient({
     baseUrl: "https://cloud.example.test/control",
     token: "opsh_pat_fixture",
     organizationId: "org_fixture",

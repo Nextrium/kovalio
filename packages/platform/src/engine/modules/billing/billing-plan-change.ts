@@ -18,7 +18,7 @@ import { resolveSubscriptionSelection, subscriptionMetadata, subscriptionPlan } 
 import { canChangeCloudSubscription, hasPendingSubscriptionChange, presentChangeOffer, presentSubscriptionChange } from "./billing-subscription";
 import { assertWorkspaceCheckoutsSettled } from "./workspace-checkout";
 
-const requestKey = (...parts: string[]) => `openship:${createHash("sha256").update(JSON.stringify(parts)).digest("hex")}`;
+const requestKey = (...parts: string[]) => `kovalio:${createHash("sha256").update(JSON.stringify(parts)).digest("hex")}`;
 const terminal = (change: OblienPlanChange) => ["applied", "canceled", "expired", "failed"].includes(change.status);
 
 async function requireOwner(organizationId: string, workspaceId?: string): Promise<CloudWorkspace & { namespace: string }> {
@@ -66,7 +66,7 @@ export async function previewSubscriptionChange(ctx: ExecutionContext, input: Pa
       throw new AppError("This server already has the selected plan", 409, "BILLING_PLAN_UNCHANGED");
     const request = {
       offer, billingInterval: subscription!.billingInterval,
-      metadata: { ...subscriptionMetadata(input.planTierId, ctx.organizationId, owner.namespace, customLimits), openship_workspace: owner.id },
+      metadata: { ...subscriptionMetadata(input.planTierId, ctx.organizationId, owner.namespace, customLimits), kovalio_workspace: owner.id },
       idempotencyKey: requestKey("preview", ctx.organizationId, owner.id, input.idempotencyKey),
     };
     const resize = await previewResources(ctx, current, request);

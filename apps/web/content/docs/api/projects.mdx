@@ -35,8 +35,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/projects" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"marketing-site","gitOwner":"acme","gitRepo":"site","gitBranch":"main","framework":"nextjs"}'
 ```
@@ -119,7 +119,7 @@ if (live.activeDeploymentId && live.activeClusterId === live.clusterId) {
 Replica changes are configuration releases. They reuse the active image, wait for ready pods and
 use the existing update/rollback history. Allow capacity for the old and new releases together.
 `status` and `observedAt` describe the last observation; saved `config` describes future intent.
-OpenShip Edge currently enters through the first cluster control server. Automatic gateway
+Kovalio Edge currently enters through the first cluster control server. Automatic gateway
 failover and policy-driven autoscaling are not implemented.
 
 ### Share application files
@@ -171,8 +171,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X PATCH "$OPENSHIP_URL/api/projects/proj_123" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PATCH "$KOVALIO_URL/api/projects/proj_123" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"buildCommand":"pnpm build","gitBranch":"release"}'
 ```
@@ -201,8 +201,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects/proj_123/git/link" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/projects/proj_123/git/link" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"owner":"acme","repo":"site","branch":"main"}'
 ```
@@ -243,8 +243,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects/proj_123/connect" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/projects/proj_123/connect" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"domain":"app.example.com"}'
 ```
@@ -293,8 +293,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X PATCH "$OPENSHIP_URL/api/projects/proj_123/env" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PATCH "$KOVALIO_URL/api/projects/proj_123/env" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "environment": "production",
@@ -348,8 +348,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X PATCH "$OPENSHIP_URL/api/projects/proj_123/resources" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PATCH "$KOVALIO_URL/api/projects/proj_123/resources" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"production":{"cpuCores":1,"memoryMb":1024},"sleepMode":"always_on"}'
 ```
@@ -410,8 +410,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects/proj_123/transfer/to-cloud" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/projects/proj_123/transfer/to-cloud" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -519,7 +519,7 @@ IDs.
 
 | Operation | SDK | REST API |
 | --- | --- | --- |
-| List the project's operator-managed databases and saved observations. Available on self-hosted OpenShip. | `projects.listClusterDatabases(id)` | `GET /api/projects/:id/cluster/databases`<br />`project:read` · Self-hosted |
+| List the project's operator-managed databases and saved observations. Available on self-hosted Kovalio. | `projects.listClusterDatabases(id)` | `GET /api/projects/:id/cluster/databases`<br />`project:read` · Self-hosted |
 | List eligible PostgreSQL and Redis backup imports from this project. Requires project administrator access; source backups and running services are preserved. | `projects.listClusterDatabaseImports(id)` | `GET /api/projects/:id/cluster/databases/imports`<br />`project:read` · Self-hosted |
 | Read saved database progress, or refresh the operator's instances, volumes and archive status with observe. Does not start or retry setup. | `projects.getClusterDatabase(id, input)` | `POST /api/projects/:id/cluster/databases/inspect`<br />`project:read` · Self-hosted |
 | Create PostgreSQL or Redis on a ready server cluster with a stable request UUID. Recover a database archive, import an existing project backup or create an upgraded PostgreSQL copy. Requires fleet administration; the source is preserved. | `projects.createClusterDatabase(id, input)` | `POST /api/projects/:id/cluster/databases`<br />`project:write` · Self-hosted |

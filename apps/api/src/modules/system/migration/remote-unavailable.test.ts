@@ -10,9 +10,9 @@ vi.mock("@repo/platform/engine/lib/ssh-manager", () => ({
   sshManager: { withExecutor: (...args: unknown[]) => io.ssh(...(args as [])) },
 }));
 vi.mock("node:dns/promises", () => ({ resolve4: async () => ["10.0.0.1"] }));
-vi.mock("./openship-dist", async (original) => ({
-  ...(await original<typeof import("./openship-dist")>()),
-  resolveOpenshipDistDirOrNull: () => "/test/release",
+vi.mock("./kovalio-dist", async (original) => ({
+  ...(await original<typeof import("./kovalio-dist")>()),
+  resolveKovalioDistDirOrNull: () => "/test/release",
 }));
 const app = new Hono().onError(handleApiError).route("/api/system", systemRoutes);
 const domain = { kind: "custom", hostname: "migration.test.invalid" };
@@ -23,7 +23,7 @@ async function request(
   owner: Awaited<ReturnType<typeof seedOwner>>,
   serverId: string,
 ) {
-  return app.request(`http://openship.test/api/system/migration/${path}`, {
+  return app.request(`http://kovalio.test/api/system/migration/${path}`, {
     method: "POST",
     headers: {
       ...owner.auth,

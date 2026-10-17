@@ -13,7 +13,7 @@ vi.mock("../../config/env", () => ({
       return h.cloud;
     },
     BETTER_AUTH_SECRET: "test-key",
-    OPENSHIP_PUBLIC_URL: "https://actions.example.test",
+    KOVALIO_PUBLIC_URL: "https://actions.example.test",
   },
 }));
 vi.mock("../../lib/authorization", () => ({ authorization: { authorize: vi.fn() } }));

@@ -456,7 +456,7 @@ export function createClusterDatabaseOperations(
             !clusterId ||
             (p.clusterId && p.clusterId !== clusterId) ||
             p.workspaceId ||
-            p.appTemplateId === "openship"
+            p.appTemplateId === "kovalio"
           )
             throw new AppError(
               "Choose a ready server cluster for this database.",

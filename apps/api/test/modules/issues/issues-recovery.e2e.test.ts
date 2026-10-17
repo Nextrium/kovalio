@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, onTestFinished, vi } from "vitest";
 import { initPlatform, resetPlatform } from "@repo/adapters";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { makeApp, seedOwner, seedServer, resetJobs, installFakeRunner, repos } from "../jobs/_harness";
 import { issuesRoutes } from "../../../src/modules/issues/issues.routes";
 import { healthRoutes } from "../../../src/modules/health/health.routes";
@@ -31,7 +31,7 @@ vi.mock("@repo/platform/engine/lib/deployment-runtime", async (original) => ({
         h.reads();
         if (h.gate) await h.gate;
         if (h.fail) throw new Error(h.failureReason);
-        return [{ id: "observed-container", names: ["/observed-container"], state: "running", status: "Up", labels: { "openship.project": h.projectId } }];
+        return [{ id: "observed-container", names: ["/observed-container"], state: "running", status: "Up", labels: { "kovalio.project": h.projectId } }];
       },
       dispose: h.dispose,
     },
@@ -64,8 +64,8 @@ describe("desktop monitoring recovery through HTTP and the SDK", () => {
       createdAt: old, updatedAt: old,
     }))!;
     await repos.project.setActiveDeployment(project.id, deployment.id);
-    const client = new OpenshipClient({
-      baseUrl: "http://openship.test", token: owner.token, organizationId: owner.orgId,
+    const client = new KovalioClient({
+      baseUrl: "http://kovalio.test", token: owner.token, organizationId: owner.orgId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
     });
 

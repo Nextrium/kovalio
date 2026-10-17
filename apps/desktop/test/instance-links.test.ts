@@ -36,7 +36,7 @@ describe("Desktop instance link inbox", () => {
 
   it("rejects unsafe input and bounds the queue without dropping the current request", () => {
     const inbox = new InstanceLinkInbox();
-    expect(inbox.receive("openship://connect?url=file:///etc/passwd")).toBe(false);
+    expect(inbox.receive("kovalio://connect?url=file:///etc/passwd")).toBe(false);
     for (let i = 0; i < 8; i++)
       expect(inbox.receive(desktopInstanceLink(`https://ops${i}.test`))).toBe(true);
     expect(inbox.receive(link)).toBe(false);
@@ -56,7 +56,7 @@ describe("OS link entry points", () => {
       app as Parameters<typeof registerInstanceLinks>[0],
       receive,
       activate,
-      ["openship", link],
+      ["kovalio", link],
     );
     return { app, receive, activate, owner };
   }
@@ -64,7 +64,7 @@ describe("OS link entry points", () => {
     const f = fixture();
     expect(f.owner).toBe(true);
     expect(f.receive).toHaveBeenCalledExactlyOnceWith(link);
-    f.app.emit("second-instance", {}, ["openship", "--inspect", link, "file:///tmp/file"]);
+    f.app.emit("second-instance", {}, ["kovalio", "--inspect", link, "file:///tmp/file"]);
     expect(f.receive).toHaveBeenCalledTimes(2);
     expect(f.activate).toHaveBeenCalledTimes(1);
   });
@@ -97,6 +97,6 @@ it("advertises the same handler in macOS and Linux packages", () => {
     item.name.endsWith("maker-appimage"),
   );
   const desktop = readFileSync(maker.config.options.desktopFile, "utf8");
-  expect(desktop).toContain("Exec=openship %U");
+  expect(desktop).toContain("Exec=kovalio %U");
   expect(desktop).toContain(`MimeType=x-scheme-handler/${DESKTOP_INSTANCE_SCHEME};`);
 });

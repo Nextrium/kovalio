@@ -10,7 +10,7 @@ import { expect, it } from "vitest";
 import { desktopInstanceLink } from "@repo/core";
 
 it("delivers cold and second-process invitations in real Electron without starting another controller", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "openship-electron-links-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-electron-links-"));
   try {
     const entry = join(directory, "test.cjs");
     await build({

@@ -10,7 +10,7 @@ const exec = promisify(execFile);
 let directory: string;
 let env: NodeJS.ProcessEnv;
 beforeEach(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openship-release-869-"));
+  directory = await mkdtemp(join(tmpdir(), "kovalio-release-869-"));
   env = {
     PATH: process.env.PATH,
     HOME: directory,
@@ -18,7 +18,7 @@ beforeEach(async () => {
     PGLITE_DATA_DIR: "memory://",
     BETTER_AUTH_SECRET: "release-test-encryption-secret",
     INTERNAL_TOKEN: "release-test-internal-token-000000000000000000",
-    OPENSHIP_PGLITE_ASSETS_DIR: join(directory, "wrong-cli-assets"),
+    KOVALIO_PGLITE_ASSETS_DIR: join(directory, "wrong-cli-assets"),
   };
   await copyReleaseTransferScripts(directory);
   // Model the real flat source layout while reusing the installed workspace
@@ -80,7 +80,7 @@ describe("source release transfer entry points (#869)", () => {
     await writeFile(input, "{}");
     const invalid = await run("api/scripts/import-instance.ts", ["--in", input]);
     expect(invalid.code).toBe(1);
-    expect(invalid.stderr).toContain("Not an Openship export file");
+    expect(invalid.stderr).toContain("Not an Kovalio export file");
     expect(invalid.stderr).not.toMatch(/pglite.wasm|ASM_CONSTS/);
     const mode = await run("api/scripts/import-instance.ts", ["--in", input, "--mode", "typo"]);
     expect(mode.code).toBe(1);
@@ -88,7 +88,7 @@ describe("source release transfer entry points (#869)", () => {
     await writeFile(input, JSON.stringify({ secrets: {} }));
     const sealed = await run("api/scripts/import-instance.ts", ["--in", input]);
     expect(sealed.code).toBe(1);
-    expect(sealed.stderr).toContain("OPENSHIP_IMPORT_PASSPHRASE is required");
+    expect(sealed.stderr).toContain("KOVALIO_IMPORT_PASSPHRASE is required");
   }, 45_000);
 
   it("keeps ordinary inherited settings but removes CLI WASM overrides from both supervised children", async () => {
@@ -98,7 +98,7 @@ describe("source release transfer entry points (#869)", () => {
     await mkdir(join(directory, "api/src"));
     await mkdir(join(directory, "dashboard/apps/dashboard"), { recursive: true });
     const child = (name: string) => `import { writeFileSync } from "node:fs";
-writeFileSync(${JSON.stringify(join(directory, name))}, JSON.stringify({ assets: process.env.OPENSHIP_PGLITE_ASSETS_DIR ?? null, ordinary: process.env.AUDIT_INHERITED, port: process.env.PORT }));
+writeFileSync(${JSON.stringify(join(directory, name))}, JSON.stringify({ assets: process.env.KOVALIO_PGLITE_ASSETS_DIR ?? null, ordinary: process.env.AUDIT_INHERITED, port: process.env.PORT }));
 setInterval(() => {}, 1000);`;
     await writeFile(join(directory, "api/src/index.ts"), child("api.json"));
     await writeFile(

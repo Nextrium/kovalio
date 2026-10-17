@@ -42,7 +42,7 @@
 
 import { repos } from "@repo/db";
 import { Oblien } from "@repo/adapters";
-import { issueNamespaceToken } from "@repo/platform/engine/lib/openship-cloud";
+import { issueNamespaceToken } from "@repo/platform/engine/lib/kovalio-cloud";
 
 export type CloudAnalyticsOperation = "timeseries" | "requests" | "streamToken" | "geo";
 

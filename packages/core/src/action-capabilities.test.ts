@@ -41,7 +41,7 @@ describe("Actions execution architectures", () => {
     expect(actionRunnerMismatch(verified, runner, arm)).toBeNull();
     expect(actionRunnerLabels(verified, runner)).toEqual([
       "self-hosted",
-      "openship",
+      "kovalio",
       "linux",
       "x64",
       "arm64",

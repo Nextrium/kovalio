@@ -70,7 +70,7 @@ import { backupDestinationRoutes } from "./modules/backup-destinations/destinati
 import { reconcileAllSchedules } from "@repo/platform/engine/modules/backups/triggers/cron";
 import { reconcileJobs, runScheduledJob } from "@repo/platform/engine/modules/jobs/job.service";
 import { scheduleBillingAnniversary } from "@repo/platform/engine/modules/billing/billing-anniversary.cron";
-import { ensureOblienWebhook } from "@repo/platform/engine/lib/openship-cloud";
+import { ensureOblienWebhook } from "@repo/platform/engine/lib/kovalio-cloud";
 import { ensureOblienDefaultQuota } from "@repo/platform/engine/modules/billing/billing-oblien-quota";
 import { backfillWebhookSecrets } from "@repo/platform/engine/modules/github/github.service";
 import { backupOrchestrator } from "@repo/platform/engine/modules/backups/backup.orchestrator";
@@ -177,7 +177,7 @@ app.onError(handleApiError);
 //
 // An independent pre-auth ceiling protects the session lookup on standalone
 // installations. Its flood-ip bucket does not charge the per-route policies.
-// Cloud mode and OPENSHIP_TRUST_EDGE delegate this ceiling to the trusted edge.
+// Cloud mode and KOVALIO_TRUST_EDGE delegate this ceiling to the trusted edge.
 app.use("/api/*", floodGuard);
 
 // Better Auth is a RAW catch-all (not secureRouter), so it carries one central
@@ -357,7 +357,7 @@ if (env.CLOUD_MODE) {
    */
   const { instanceRoutes } = await import("./modules/system/instance/instance.routes");
   app.route("/api/system/instance", instanceRoutes);
-  if (process.env.OPENSHIP_API_ONLY === "true") {
+  if (process.env.KOVALIO_API_ONLY === "true") {
     const { instanceAccessPages } = await import("./modules/system/instance/access-page");
     app.route("/", instanceAccessPages);
   }
@@ -368,7 +368,7 @@ if (env.CLOUD_MODE) {
   const { mailRoutes } = await import("./modules/mail/mail.routes");
   app.route("/api/mail", mailRoutes);
 
-  /** Cloud account management - connect/disconnect to Openship Cloud */
+  /** Cloud account management - connect/disconnect to Kovalio Cloud */
   const { cloudLocalRoutes } = await import("./modules/cloud/cloud-local.routes");
   app.route("/api/cloud", cloudLocalRoutes);
 

@@ -68,7 +68,7 @@ describe("MCP route input and transport contracts", () => {
     expect(request.method).toBe("DELETE");
     expect(await request.json()).toEqual(args.body);
     expect(request.headers.get("x-organization-id")).toBe("org-a");
-    expect(request.headers.get("x-openship-scope")).toBe("fixed");
+    expect(request.headers.get("x-kovalio-scope")).toBe("fixed");
   });
 
   it.each([

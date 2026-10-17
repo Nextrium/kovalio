@@ -25,7 +25,7 @@ vi.mock("@repo/adapters", () => ({
 }));
 
 vi.mock("@repo/platform/engine/lib/mail-image", () => ({
-  pinnedMailImage: vi.fn(() => "ghcr.io/oblien/openship-mail:0.5.0"),
+  pinnedMailImage: vi.fn(() => "ghcr.io/oblien/kovalio-mail:0.5.0"),
   mailBuildSpec: vi.fn(() => undefined),
 }));
 

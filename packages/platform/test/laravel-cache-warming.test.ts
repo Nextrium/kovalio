@@ -8,7 +8,7 @@ import { detectStack, type RepoFile } from "../src/engine/lib/stack-detector";
  * Integration coverage for issue #19 — opt-in Laravel web-role cache warming.
  *
  * These tests drive the REAL resolution path: `detectStack` reads the repo
- * files, parses `openship.json` into deployment metadata, folds it over the
+ * files, parses `kovalio.json` into deployment metadata, folds it over the
  * detected stack, and finalizes the web command. They would FAIL if the
  * `optimize` flag were parsed but never wired into that path (the gap Rex
  * caught), because they assert on `detectStack`'s output, not on
@@ -20,15 +20,15 @@ const WARMUP_PREFIX = "php artisan optimize && ";
 const LARAVEL_FILES: RepoFile[] = [
   { name: "composer.json", type: "file" },
   { name: "artisan", type: "file" },
-  { name: "openship.json", type: "file" },
+  { name: "kovalio.json", type: "file" },
 ];
 
 const COMPOSER_JSON = JSON.stringify({ require: { "laravel/framework": "^11.0" } });
 
-function detectLaravelWith(openshipConfig: Record<string, unknown>) {
+function detectLaravelWith(kovalioConfig: Record<string, unknown>) {
   return detectStack(LARAVEL_FILES, undefined, {
     "composer.json": COMPOSER_JSON,
-    "openship.json": JSON.stringify(openshipConfig),
+    "kovalio.json": JSON.stringify(kovalioConfig),
   });
 }
 
@@ -79,10 +79,10 @@ describe("Laravel opt-in cache warming (#19) — real detectStack path", () => {
     const node = detectStack(
       [
         { name: "package.json", type: "file" },
-        { name: "openship.json", type: "file" },
+        { name: "kovalio.json", type: "file" },
       ],
       { dependencies: { express: "^4.19.0" }, scripts: { start: "node server.js" } },
-      { "openship.json": JSON.stringify({ optimize: true }) },
+      { "kovalio.json": JSON.stringify({ optimize: true }) },
     );
 
     expect(node.stack).not.toBe("laravel");

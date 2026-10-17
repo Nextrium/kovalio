@@ -39,14 +39,14 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: api.push }) }));
 const disconnected: GitHubConnectionState = {
   primary: null,
   sources: {
-    openshipApp: { connected: false },
+    kovalioApp: { connected: false },
     ghCli: { available: false, problem: "rejected", method: "device" },
   },
 };
 const connected: GitHubConnectionState = {
   primary: "gh-cli",
   sources: {
-    openshipApp: { connected: false },
+    kovalioApp: { connected: false },
     ghCli: { available: true, login: "new-account", method: "device" },
   },
 };
@@ -118,9 +118,9 @@ function expectDeviceInstructions() {
 }
 
 const appWithRejectedToken: GitHubConnectionState = {
-  primary: "openship-app",
+  primary: "kovalio-app",
   sources: {
-    openshipApp: { connected: true, login: "app-user", hasInstallations: true },
+    kovalioApp: { connected: true, login: "app-user", hasInstallations: true },
     ghCli: { available: false, method: "token", problem: "rejected" },
   },
 };
@@ -171,7 +171,7 @@ describe("Settings repairs the stored GitHub token (#944)", () => {
     expect(container.textContent).not.toContain("Clear saved token");
   });
 
-  it("opens a GitHub token field from Change method instead of the OpenShip API-token page", async () => {
+  it("opens a GitHub token field from Change method instead of the Kovalio API-token page", async () => {
     await render(appWithRejectedToken);
     await click("Change method");
     await click("Access token");
@@ -197,9 +197,9 @@ describe("Settings repairs the stored GitHub token (#944)", () => {
 describe("selecting a detected host CLI identity", () => {
   it("offers explicit CLI selection even with a connected Cloud App and no device client", async () => {
     const state: GitHubConnectionState = {
-      primary: "openship-app",
+      primary: "kovalio-app",
       sources: {
-        openshipApp: { connected: true, login: "app-user", hasInstallations: true },
+        kovalioApp: { connected: true, login: "app-user", hasInstallations: true },
         ghCli: { available: true, login: "operator", method: "host-cli" },
       },
     };
@@ -288,8 +288,8 @@ describe("Settings GitHub device sign-in (#851)", () => {
   it("keeps device instructions when switching from an already connected App", async () => {
     const appState: GitHubConnectionState = {
       ...disconnected,
-      primary: "openship-app",
-      sources: { ...disconnected.sources, openshipApp: { connected: true, login: "app-user" } },
+      primary: "kovalio-app",
+      sources: { ...disconnected.sources, kovalioApp: { connected: true, login: "app-user" } },
     };
     api.getStatusDeduped.mockResolvedValue({ state: appState });
     api.getUserHome.mockResolvedValue({ state: appState });

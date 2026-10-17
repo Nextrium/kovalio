@@ -245,8 +245,8 @@ describe("Oblien billing SDK and transport contract", () => {
       offer,
       metadata,
       billingInterval: "yearly" as const,
-      successUrl: "https://app.openship.io/billing/overview",
-      cancelUrl: "https://app.openship.io/billing/plans",
+      successUrl: "https://kovalio.nextrium.org/billing/overview",
+      cancelUrl: "https://kovalio.nextrium.org/billing/plans",
       idempotencyKey: "checkout-123",
     };
     await api.createCheckout(input);
@@ -258,7 +258,7 @@ describe("Oblien billing SDK and transport contract", () => {
     const url = `https://api.oblien.com/billing/pay#${"a".repeat(43)}`;
     const { api } = setup({ success: true, url, checkoutId });
     await expect(api.createCheckout({ namespace: "os-one", kind: "topup", offer, metadata,
-      successUrl: "https://app.openship.io", cancelUrl: "https://app.openship.io", idempotencyKey: "promotion-checkout" }))
+      successUrl: "https://kovalio.nextrium.org", cancelUrl: "https://kovalio.nextrium.org", idempotencyKey: "promotion-checkout" }))
       .resolves.toMatchObject({ url, checkoutId });
   });
   it.each([
@@ -269,8 +269,8 @@ describe("Oblien billing SDK and transport contract", () => {
   ])("rejects an invalid promotion checkout URL: %s", async (value) => {
     const url = value + (value === "https://api.oblien.com/billing/pay" ? "#short" : `#${"a".repeat(43)}`);
     await expect(setup({ success: true, url, checkoutId: "bco_24f15202-6a3d-4b27-b7c2-c3abbc401bee" }).api.createCheckout({
-      namespace: "os-one", kind: "topup", offer, metadata, successUrl: "https://app.openship.io",
-      cancelUrl: "https://app.openship.io", idempotencyKey: "bad-promotion-checkout" }))
+      namespace: "os-one", kind: "topup", offer, metadata, successUrl: "https://kovalio.nextrium.org",
+      cancelUrl: "https://kovalio.nextrium.org", idempotencyKey: "bad-promotion-checkout" }))
       .rejects.toMatchObject({ code: "OBLIEN_BILLING_INVALID_RESPONSE" });
   });
   it("rejects unexpected checkout hosts and malformed entitlements", async () => {
@@ -284,8 +284,8 @@ describe("Oblien billing SDK and transport contract", () => {
         kind: "topup",
         offer,
         metadata,
-        successUrl: "https://app.openship.io",
-        cancelUrl: "https://app.openship.io",
+        successUrl: "https://kovalio.nextrium.org",
+        cancelUrl: "https://kovalio.nextrium.org",
         idempotencyKey: "topup-1",
       }),
     ).rejects.toMatchObject({ code: "OBLIEN_BILLING_INVALID_RESPONSE" });
@@ -300,7 +300,7 @@ describe("Oblien billing SDK and transport contract", () => {
     const { api, fetcher } = setup({ success: false, code,
       message: "private provider capacity details", details: { customer: "cus_private" } }, 503);
     const error = await api.createCheckout({ namespace: "os-one", kind: "subscription", offer, metadata,
-      billingInterval: "monthly", successUrl: "https://app.openship.io", cancelUrl: "https://app.openship.io",
+      billingInterval: "monthly", successUrl: "https://kovalio.nextrium.org", cancelUrl: "https://kovalio.nextrium.org",
       idempotencyKey: "private-attempt" }).catch(error => error);
     expect(error).toMatchObject({ statusCode: 503, code: "CLOUD_CAPACITY_UNAVAILABLE",
       message: "This server size is temporarily unavailable. Please try again later or contact support.",
@@ -315,10 +315,10 @@ describe("Oblien billing SDK and transport contract", () => {
       message: "private owner identity", details: { accountTier: "free", requiredAccountTier: "enterprise" } }, 403);
     const error = await api.createCheckout({
       namespace: "os-one", kind: "subscription", offer, metadata, billingInterval: "monthly",
-      successUrl: "https://app.openship.io", cancelUrl: "https://app.openship.io", idempotencyKey: "attempt",
+      successUrl: "https://kovalio.nextrium.org", cancelUrl: "https://kovalio.nextrium.org", idempotencyKey: "attempt",
     }).catch(error => error);
     expect(error).toMatchObject({ statusCode: 503, code: "OBLIEN_CHECKOUT_UNAVAILABLE",
-      message: "Cloud payments require an account configuration update by Openship. Contact Openship support.",
+      message: "Cloud payments require an account configuration update by Kovalio. Contact Kovalio support.",
       details: { providerCode: "reseller_enterprise_required", checkoutRejected: true },
     });
     expect(JSON.stringify(error)).not.toMatch(/private|accountTier/);
@@ -335,8 +335,8 @@ describe("Oblien billing SDK and transport contract", () => {
         offer,
         metadata,
         billingInterval: "monthly",
-        successUrl: "https://app.openship.io/billing/overview",
-        cancelUrl: "https://app.openship.io/billing/plans",
+        successUrl: "https://kovalio.nextrium.org/billing/overview",
+        cancelUrl: "https://kovalio.nextrium.org/billing/plans",
         idempotencyKey: "private-attempt",
       })
       .catch((error) => error);
@@ -357,8 +357,8 @@ describe("Oblien billing SDK and transport contract", () => {
         offer,
         metadata,
         billingInterval: "monthly",
-        successUrl: "https://app.openship.io",
-        cancelUrl: "https://app.openship.io",
+        successUrl: "https://kovalio.nextrium.org",
+        cancelUrl: "https://kovalio.nextrium.org",
         idempotencyKey: "attempt",
       }),
     ).rejects.toMatchObject({
@@ -377,13 +377,13 @@ describe("Oblien billing SDK and transport contract", () => {
         offer,
         metadata,
         billingInterval: "monthly",
-        successUrl: "https://app.openship.io",
-        cancelUrl: "https://app.openship.io",
+        successUrl: "https://kovalio.nextrium.org",
+        cancelUrl: "https://kovalio.nextrium.org",
         idempotencyKey: "attempt",
       })
       .catch((error) => error);
     expect(error).toMatchObject({ statusCode: 503, code: "OBLIEN_CHECKOUT_UNAVAILABLE",
-      message: "Cloud billing is unavailable. Contact Openship support. Reference: billing-support-123.",
+      message: "Cloud billing is unavailable. Contact Kovalio support. Reference: billing-support-123.",
       details: { providerCode: "billing_database_collation_error", details: { reference: "billing-support-123", retryable: false } },
     });
     expect(errorDiagnostics.warn).toHaveBeenCalledExactlyOnceWith(expect.any(String), "[oblien:billing] Provider request failed", {
@@ -407,8 +407,8 @@ describe("Oblien billing SDK and transport contract", () => {
         kind: "topup",
         offer,
         metadata,
-        successUrl: "https://app.openship.io",
-        cancelUrl: "https://app.openship.io",
+        successUrl: "https://kovalio.nextrium.org",
+        cancelUrl: "https://kovalio.nextrium.org",
         idempotencyKey: "attempt",
       })
       .catch((error) => error);
@@ -422,7 +422,7 @@ describe("Oblien billing SDK and transport contract", () => {
     const { api } = setup({ success: false, code: "invalid_offer" }, 500);
     const error = await api.createCheckout({
       namespace: "os-one", kind: "subscription", offer, metadata, billingInterval: "monthly",
-      successUrl: "https://app.openship.io", cancelUrl: "https://app.openship.io", idempotencyKey: "attempt",
+      successUrl: "https://kovalio.nextrium.org", cancelUrl: "https://kovalio.nextrium.org", idempotencyKey: "attempt",
     }).catch(error => error);
     expect(error.details.checkoutRejected).toBeUndefined();
   });
@@ -430,7 +430,7 @@ describe("Oblien billing SDK and transport contract", () => {
     const { api } = setup({ success: false, code, message: "private provider detail" }, status);
     const error = await api.createCheckout({
       namespace: "os-one", kind: "subscription", offer, metadata, billingInterval: "monthly",
-      successUrl: "https://app.openship.io", cancelUrl: "https://app.openship.io", idempotencyKey: "attempt",
+      successUrl: "https://kovalio.nextrium.org", cancelUrl: "https://kovalio.nextrium.org", idempotencyKey: "attempt",
     }).catch(error => error);
     expect(error).toMatchObject({ statusCode: status === 500 ? 503 : status,
       message: "This checkout has expired. Choose your plan again to start a new checkout.",
@@ -445,10 +445,10 @@ describe("Oblien billing SDK and transport contract", () => {
     }, status);
     const error = await api.createCheckout({
       namespace: "os-one", kind: "subscription", offer, metadata, billingInterval: "monthly",
-      successUrl: "https://app.openship.io", cancelUrl: "https://app.openship.io", idempotencyKey: "attempt",
+      successUrl: "https://kovalio.nextrium.org", cancelUrl: "https://kovalio.nextrium.org", idempotencyKey: "attempt",
     }).catch(error => error);
     expect(error).toMatchObject({ statusCode: 503, code: "OBLIEN_CHECKOUT_UNAVAILABLE",
-      message: "Cloud server purchases are temporarily unavailable. Contact Openship support.",
+      message: "Cloud server purchases are temporarily unavailable. Contact Kovalio support.",
       details: { providerCode: "insufficient_redeemable_balance" },
     });
     expect(error.details.checkoutRejected).toBe(status === 402 ? true : undefined);
@@ -476,18 +476,18 @@ describe("Oblien billing SDK and transport contract", () => {
   });
   it("opens only the supplied namespace's portal with a safe hosted URL", async () => {
     const { api, fetcher } = setup({ success: true, namespace: "os-one", url: "https://billing.stripe.com/p/session/test" });
-    const input = { namespace: "os-one", returnUrl: "https://app.openship.io/billing/overview" };
+    const input = { namespace: "os-one", returnUrl: "https://kovalio.nextrium.org/billing/overview" };
     expect((await api.createPortal(input)).url).toBe("https://billing.stripe.com/p/session/test");
     expect(fetcher).toHaveBeenCalledWith("https://api.oblien.com/billing/portal", expect.objectContaining({ method: "POST", body: JSON.stringify(input), redirect: "error", signal: expect.any(AbortSignal) }));
     await expect(api.createPortal({ ...input, namespace: "os-two" })).rejects.toMatchObject({ code: "OBLIEN_BILLING_NAMESPACE_MISMATCH" });
   });
   it("rejects a legacy owner portal even when its hosted URL is otherwise valid", async () => {
     const { api } = setup({ success: true, url: "https://billing.stripe.com/p/session/owner" });
-    await expect(api.createPortal({ namespace: "os-one", returnUrl: "https://app.openship.io" }))
+    await expect(api.createPortal({ namespace: "os-one", returnUrl: "https://kovalio.nextrium.org" }))
       .rejects.toMatchObject({ code: "OBLIEN_BILLING_INVALID_RESPONSE" });
   });
   it.each(["http://billing.stripe.com/session", "https://billing.stripe.com.evil.test/session", "https://billing.stripe.com:8443/session", "https://user:password@billing.stripe.com/session"])("rejects unsafe portal URL %s", async (url) => {
-    await expect(setup({ success: true, namespace: "os-one", url }).api.createPortal({ namespace: "os-one", returnUrl: "https://app.openship.io" }))
+    await expect(setup({ success: true, namespace: "os-one", url }).api.createPortal({ namespace: "os-one", returnUrl: "https://kovalio.nextrium.org" }))
       .rejects.toMatchObject({ code: "OBLIEN_BILLING_INVALID_RESPONSE" });
   });
   it.each([
@@ -514,7 +514,7 @@ describe("Oblien billing SDK and transport contract", () => {
     [409, "subscription_ended", "Start a new checkout"],
   ])("preserves actionable %s/%s errors without exposing provider identities", async (status, code, message) => {
     const { api } = setup({ success: false, code, message: "private customer cus_secret subscription sub_secret" }, status as number);
-    const error = await api.createPortal({ namespace: "os-one", returnUrl: "https://app.openship.io" }).catch(error => error);
+    const error = await api.createPortal({ namespace: "os-one", returnUrl: "https://kovalio.nextrium.org" }).catch(error => error);
     expect(error.statusCode).toBe(status);
     expect(error.message).toContain(message);
     expect(error.message).not.toContain("secret");
@@ -587,7 +587,7 @@ describe("Oblien monthly capacity contract", () => {
     const { api, fetcher } = setup({ success: true, url: "https://checkout.stripe.com/c/pay/test", checkoutId: "cs_monthly" });
     await api.createCheckout({ kind: "subscription", namespace: "os-one", billingInterval: "monthly",
       offer: subscription.offer!, metadata: subscription.metadata!, idempotencyKey: "saved-monthly-order",
-      successUrl: "https://app.openship.io/billing/overview", cancelUrl: "https://app.openship.io/billing/plans" });
+      successUrl: "https://kovalio.nextrium.org/billing/overview", cancelUrl: "https://kovalio.nextrium.org/billing/plans" });
     const [url, request] = fetcher.mock.calls[0]!;
     expect(String(url)).toBe("https://api.oblien.com/billing/checkout");
     const sent = JSON.parse(String(request?.body));
@@ -622,7 +622,7 @@ describe("Oblien monthly capacity contract", () => {
     const { subscription } = monthlyCloudBilling("org-one", "os-one");
     const { api, fetcher } = setup({ success: true });
     const input = { namespace: "os-one", offer: subscription.offer!, metadata: subscription.metadata!,
-      idempotencyKey: "monthly-only", successUrl: "https://app.openship.io/billing", cancelUrl: "https://app.openship.io/billing" };
+      idempotencyKey: "monthly-only", successUrl: "https://kovalio.nextrium.org/billing", cancelUrl: "https://kovalio.nextrium.org/billing" };
     await expect(api.createCheckout(mode === "topup"
       ? { ...input, kind: "topup" }
       : { ...input, kind: "subscription", billingInterval: "yearly" })).rejects.toThrow("monthly subscription");

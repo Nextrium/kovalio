@@ -44,7 +44,7 @@ const initial = (cluster: ComputeCluster): ClusterStorageConfig => ({
   replicas: Math.max(2, Math.min(3, cluster.serverIds.length)),
   disks: cluster.serverIds.map((serverId) => ({
     serverId,
-    path: "/var/lib/openship/storage",
+    path: "/var/lib/kovalio/storage",
     reservedGiB: 5,
   })),
 });
@@ -288,7 +288,7 @@ export function ClusterStoragePanel({
                                     ...current.disks,
                                     {
                                       serverId: member.serverId,
-                                      path: "/var/lib/openship/storage",
+                                      path: "/var/lib/kovalio/storage",
                                       reservedGiB: 5,
                                     },
                                   ]
@@ -359,7 +359,7 @@ export function ClusterStoragePanel({
               <summary className="cursor-pointer text-muted-foreground">Disk options</summary>
               <div className="mt-4 space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  OpenShip uses a dedicated folder on each selected server. A mounted data disk can
+                  Kovalio uses a dedicated folder on each selected server. A mounted data disk can
                   be used here. Disks are never formatted during setup.
                 </p>
                 {config.disks.map((disk) => (
@@ -531,7 +531,7 @@ export function ClusterStoragePanel({
             <div className="mt-3 space-y-2 text-xs leading-relaxed text-muted-foreground">
               <p>
                 Longhorn provides replicated disks and shared file access inside this cluster.
-                OpenShip manages the installation, disk selection and checks.
+                Kovalio manages the installation, disk selection and checks.
               </p>
               <p>
                 File volumes use shared access. Each database instance keeps its own separate disk.

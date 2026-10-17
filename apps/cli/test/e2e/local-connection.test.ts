@@ -17,7 +17,7 @@ afterEach(async () => {
 });
 
 async function fixture(method: "bare" | "compose" = "bare") {
-  const directory = await mkdtemp(join(tmpdir(), "openship-cli-local-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-cli-local-"));
   const servers: Server[] = [];
   const requests: Array<{
     target: string;
@@ -111,12 +111,12 @@ async function fixture(method: "bare" | "compose" = "bare") {
           cwd: directory,
           env: {
             ...process.env,
-            OPENSHIP_HOME: directory,
-            OPENSHIP_JSON: "1",
-            OPENSHIP_CONTEXT: undefined,
-            OPENSHIP_API_URL: undefined,
-            OPENSHIP_TOKEN: undefined,
-            OPENSHIP_ORGANIZATION_ID: undefined,
+            KOVALIO_HOME: directory,
+            KOVALIO_JSON: "1",
+            KOVALIO_CONTEXT: undefined,
+            KOVALIO_API_URL: undefined,
+            KOVALIO_TOKEN: undefined,
+            KOVALIO_ORGANIZATION_ID: undefined,
             ...environment,
           },
           timeout: 20_000,
@@ -171,9 +171,9 @@ describe("installed CLI local administrator connection", { timeout: 30_000 }, ()
     };
     await f.configure({ cloud: remote });
     const result = await f.run(["--local", "project", "list"], {
-      OPENSHIP_API_URL: f.endpoints.remote,
-      OPENSHIP_TOKEN: "opsh_pat_ambient",
-      OPENSHIP_ORGANIZATION_ID: "org-ambient",
+      KOVALIO_API_URL: f.endpoints.remote,
+      KOVALIO_TOKEN: "opsh_pat_ambient",
+      KOVALIO_ORGANIZATION_ID: "org-ambient",
     });
     expect(result.code, result.err).toBe(0);
     expect(f.requests.every((r) => r.target === "local" && r.organization === undefined)).toBe(
@@ -198,7 +198,7 @@ describe("installed CLI local administrator connection", { timeout: 30_000 }, ()
             : [];
       const result = await f.run(
         [...flags, "project", "list"],
-        mode === "environment" ? { OPENSHIP_API_URL: f.endpoints.remote } : {},
+        mode === "environment" ? { KOVALIO_API_URL: f.endpoints.remote } : {},
       );
       expect(result.code, result.err).toBe(0);
       expect(f.requests).toEqual([

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { DockerContainerDetail } from "@repo/adapters";
 import { buildProxyRouteIndex } from "@repo/adapters";
-import type { ManifestProjectEntry } from "@repo/platform/engine/lib/openship-manifest";
+import type { ManifestProjectEntry } from "@repo/platform/engine/lib/kovalio-manifest";
 import {
   reconcileKovalioProjects,
   isBuildHelper,
@@ -298,7 +298,7 @@ describe("migration proxy discovery across Docker networks", () => {
   });
 });
 
-describe("reconcileOpenshipProjects", () => {
+describe("reconcileKovalioProjects", () => {
   it("recovers an orphaned project and enriches name/slug/domains from the manifest", () => {
     const details = [
       container({

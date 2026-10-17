@@ -50,7 +50,7 @@ const docker = async (...args: string[]) => {
       (error as { stderr?: string }).stderr?.replace(/[a-f0-9]{64}/g, "[redacted]") ?? "";
     const failurePath = join(
       tmpdir(),
-      "openship-catalog-smoke-" + operation.split("/")[0] + "-docker-failure.log",
+      "kovalio-catalog-smoke-" + operation.split("/")[0] + "-docker-failure.log",
     );
     if (stderr && !operation.endsWith("/cleanup"))
       await writeFile(failurePath, stderr, {
@@ -83,7 +83,7 @@ async function smokeApp(app: AppTemplate) {
         files: (app.files ?? []).filter((f) => f.service !== app.id),
       }
     : app;
-  const prefix = "openship-app-smoke-" + randomUUID().slice(0, 8);
+  const prefix = "kovalio-app-smoke-" + randomUUID().slice(0, 8);
   const dir = await mkdtemp(join(tmpdir(), prefix));
   const names = new Map(app.services!.map((s) => [s.name, prefix + "-" + s.name]));
   const volumes = new Map<string, string>();
@@ -112,7 +112,7 @@ async function smokeApp(app: AppTemplate) {
     for (const field of group.fields) {
       config.set(
         field.key,
-        field.key.includes("EMAIL") ? "smoke@openship.io" : (field.default ?? ""),
+        field.key.includes("EMAIL") ? "smoke@nextrium.org" : (field.default ?? ""),
       );
     }
   const resolve = (value: string) =>
@@ -164,7 +164,7 @@ async function smokeApp(app: AppTemplate) {
       "--network-alias",
       s.name,
       "--label",
-      "openship.test=catalog-apps",
+      "kovalio.test=catalog-apps",
       "--memory",
       memory,
     ];
@@ -208,7 +208,7 @@ async function smokeApp(app: AppTemplate) {
       const fileRoot = join(dir, "config", s.name);
       const volume = configVolumes.get(s.name) ?? prefix + "-" + s.name + "-config";
       if (!configVolumes.has(s.name)) {
-        await docker("volume", "create", "--label", "openship.test=catalog-apps", volume);
+        await docker("volume", "create", "--label", "kovalio.test=catalog-apps", volume);
         configVolumes.set(s.name, volume);
       }
       const helper = prefix + "-" + s.name + "-config-writer";
@@ -218,7 +218,7 @@ async function smokeApp(app: AppTemplate) {
           "--name",
           helper,
           "--label",
-          "openship.test=catalog-apps",
+          "kovalio.test=catalog-apps",
           "--network",
           "none",
           "--entrypoint",
@@ -301,7 +301,7 @@ async function smokeApp(app: AppTemplate) {
   };
   try {
     operation = app.id + "/provision";
-    await docker("network", "create", "--label", "openship.test=catalog-apps", prefix);
+    await docker("network", "create", "--label", "kovalio.test=catalog-apps", prefix);
     for (const s of runtimeRecipe.services!) {
       const values: Record<string, string> = {};
       for (const [key, value] of Object.entries(s.environment ?? {})) values[key] = resolve(value);
@@ -318,7 +318,7 @@ async function smokeApp(app: AppTemplate) {
             "volume",
             "create",
             "--label",
-            "openship.test=catalog-apps",
+            "kovalio.test=catalog-apps",
             volumes.get(name)!,
           );
         }
@@ -333,7 +333,7 @@ async function smokeApp(app: AppTemplate) {
           await writeFile(path, resolve(file.content));
         }
         const image = prefix + "/" + s.name + ":test";
-        await docker("build", "--label", "openship.test=catalog-apps", "-t", image, context);
+        await docker("build", "--label", "kovalio.test=catalog-apps", "-t", image, context);
         generatedImages.add(image);
         images.set(s.name, image);
       } else {
@@ -382,7 +382,7 @@ async function smokeApp(app: AppTemplate) {
         assert((await request("open-webui", "/api/v1/auths/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: "Blocked", email: "blocked@openship.io", password: randomBytes(32).toString("hex") }),
+          body: JSON.stringify({ name: "Blocked", email: "blocked@nextrium.org", password: randomBytes(32).toString("hex") }),
         })).status === 403, "Open WebUI public sign-up was not disabled");
         const response = await request("open-webui", "/api/v1/chats/new", {
           method: "POST", headers, body: JSON.stringify({ chat: { title: marker, messages: [] } }),
@@ -399,8 +399,8 @@ async function smokeApp(app: AppTemplate) {
         assert(response.status === 401, "Homepage allowed unauthenticated public access");
         const headers = {
           Authorization: basic(
-            env("homepage-access", "OPENSHIP_ADMIN_USER"),
-            env("homepage-access", "OPENSHIP_ADMIN_PASSWORD"),
+            env("homepage-access", "KOVALIO_ADMIN_USER"),
+            env("homepage-access", "KOVALIO_ADMIN_PASSWORD"),
           ),
         };
         assert(
@@ -425,19 +425,19 @@ async function smokeApp(app: AppTemplate) {
       }
       case "jellyfin": {
         const authorization =
-          'MediaBrowser Client="Openship", Device="Smoke", DeviceId="openship-smoke", Version="1"';
+          'MediaBrowser Client="Kovalio", Device="Smoke", DeviceId="kovalio-smoke", Version="1"';
         const login = async (password: string) => {
           const response = await request("jellyfin", "/Users/AuthenticateByName", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: authorization },
             body: JSON.stringify({
-              Username: env("jellyfin", "OPENSHIP_ADMIN_USER"),
+              Username: env("jellyfin", "KOVALIO_ADMIN_USER"),
               Pw: password,
             }),
           });
           return response.ok ? ((await response.json()) as any) : null;
         };
-        const session = await login(env("jellyfin", "OPENSHIP_ADMIN_PASSWORD"));
+        const session = await login(env("jellyfin", "KOVALIO_ADMIN_PASSWORD"));
         assert(
           session?.AccessToken && session.User.Policy.IsAdministrator,
           "Jellyfin initial owner login failed",
@@ -453,7 +453,7 @@ async function smokeApp(app: AppTemplate) {
               method: "POST",
               headers,
               body: JSON.stringify({
-                CurrentPw: env("jellyfin", "OPENSHIP_ADMIN_PASSWORD"),
+                CurrentPw: env("jellyfin", "KOVALIO_ADMIN_PASSWORD"),
                 NewPw: changedPassword,
               }),
             })
@@ -464,7 +464,7 @@ async function smokeApp(app: AppTemplate) {
           (
             await request(
               "jellyfin",
-              "/Library/VirtualFolders?name=Openship%20test&collectionType=music&refreshLibrary=false",
+              "/Library/VirtualFolders?name=Kovalio%20test&collectionType=music&refreshLibrary=false",
               {
                 method: "POST",
                 headers,
@@ -474,7 +474,7 @@ async function smokeApp(app: AppTemplate) {
           ).ok,
           "Jellyfin library creation failed",
         );
-        await exec("jellyfin", `printf '%s' '${marker}' > /media/openship-smoke`);
+        await exec("jellyfin", `printf '%s' '${marker}' > /media/kovalio-smoke`);
         assert(
           !(
             await request("jellyfin", "/Startup/User", {
@@ -489,7 +489,7 @@ async function smokeApp(app: AppTemplate) {
         const restored = await login(changedPassword);
         assert(restored?.AccessToken, "Jellyfin reset the changed administrator password");
         assert(
-          !(await login(env("jellyfin", "OPENSHIP_ADMIN_PASSWORD"))),
+          !(await login(env("jellyfin", "KOVALIO_ADMIN_PASSWORD"))),
           "Jellyfin restored initial credentials",
         );
         const libraries = await request("jellyfin", "/Library/VirtualFolders", {
@@ -497,12 +497,12 @@ async function smokeApp(app: AppTemplate) {
         });
         assert(
           ((await libraries.json()) as any[]).some(
-            (library) => library.Name === "Openship test" && library.Locations.includes("/media"),
+            (library) => library.Name === "Kovalio test" && library.Locations.includes("/media"),
           ),
           "Jellyfin library settings did not persist",
         );
         assert(
-          (await exec("jellyfin", "cat /media/openship-smoke")) === marker,
+          (await exec("jellyfin", "cat /media/kovalio-smoke")) === marker,
           "Jellyfin media did not persist",
         );
         break;
@@ -529,14 +529,14 @@ async function smokeApp(app: AppTemplate) {
           (
             await graph(
               'mutation($username:String!,$password:String!){authentication{login(username:$username,password:$password,strategy:"local"){responseResult{succeeded} jwt}}}',
-              { username: env("wiki", "OPENSHIP_ADMIN_EMAIL"), password },
+              { username: env("wiki", "KOVALIO_ADMIN_EMAIL"), password },
             )
           ).authentication.login;
-        const owner = await login(env("wiki", "OPENSHIP_ADMIN_PASSWORD"));
+        const owner = await login(env("wiki", "KOVALIO_ADMIN_PASSWORD"));
         assert(owner.responseResult.succeeded && owner.jwt, "Wiki.js administrator login failed");
         const page = (
           await graph(
-            'mutation($content:String!){pages{create(content:$content,description:"",editor:"markdown",isPublished:true,isPrivate:false,locale:"en",path:"openship-smoke",tags:[],title:"Openship smoke"){responseResult{succeeded} page{id}}}}',
+            'mutation($content:String!){pages{create(content:$content,description:"",editor:"markdown",isPublished:true,isPrivate:false,locale:"en",path:"kovalio-smoke",tags:[],title:"Kovalio smoke"){responseResult{succeeded} page{id}}}}',
             { content: marker },
             owner.jwt,
           )
@@ -547,13 +547,13 @@ async function smokeApp(app: AppTemplate) {
           (
             await graph(
               "mutation($current:String!,$new:String!){users{changePassword(current:$current,new:$new){responseResult{succeeded}}}}",
-              { current: env("wiki", "OPENSHIP_ADMIN_PASSWORD"), new: changedPassword },
+              { current: env("wiki", "KOVALIO_ADMIN_PASSWORD"), new: changedPassword },
               owner.jwt,
             )
           ).users.changePassword.responseResult.succeeded,
           "Wiki.js password change failed",
         );
-        await exec("wiki", `printf '%s' '${marker}' > /wiki/data/openship-smoke`);
+        await exec("wiki", `printf '%s' '${marker}' > /wiki/data/kovalio-smoke`);
         await replace();
         const restored = await login(changedPassword);
         assert(
@@ -561,7 +561,7 @@ async function smokeApp(app: AppTemplate) {
           "Wiki.js reset the changed administrator password",
         );
         assert(
-          !(await login(env("wiki", "OPENSHIP_ADMIN_PASSWORD"))).responseResult.succeeded,
+          !(await login(env("wiki", "KOVALIO_ADMIN_PASSWORD"))).responseResult.succeeded,
           "Wiki.js restored initial credentials",
         );
         assert(
@@ -575,7 +575,7 @@ async function smokeApp(app: AppTemplate) {
           "Wiki.js document did not persist",
         );
         assert(
-          (await exec("wiki", "cat /wiki/data/openship-smoke")) === marker,
+          (await exec("wiki", "cat /wiki/data/kovalio-smoke")) === marker,
           "Wiki.js files did not persist",
         );
         break;
@@ -585,11 +585,11 @@ async function smokeApp(app: AppTemplate) {
           const response = await request("immich", "/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: env("immich", "OPENSHIP_ADMIN_EMAIL"), password }),
+            body: JSON.stringify({ email: env("immich", "KOVALIO_ADMIN_EMAIL"), password }),
           });
           return response.ok ? ((await response.json()) as any) : null;
         };
-        const owner = await login(env("immich", "OPENSHIP_ADMIN_PASSWORD"));
+        const owner = await login(env("immich", "KOVALIO_ADMIN_PASSWORD"));
         assert(owner?.accessToken && owner.isAdmin, "Immich administrator login failed");
         const headers = { Authorization: "Bearer " + owner.accessToken };
         const photo = Buffer.from(
@@ -615,7 +615,7 @@ async function smokeApp(app: AppTemplate) {
               method: "POST",
               headers: { ...headers, "Content-Type": "application/json" },
               body: JSON.stringify({
-                password: env("immich", "OPENSHIP_ADMIN_PASSWORD"),
+                password: env("immich", "KOVALIO_ADMIN_PASSWORD"),
                 newPassword: changedPassword,
               }),
             })
@@ -640,7 +640,7 @@ async function smokeApp(app: AppTemplate) {
         const restored = await login(changedPassword);
         assert(restored?.accessToken, "Immich reset the changed administrator password");
         assert(
-          !(await login(env("immich", "OPENSHIP_ADMIN_PASSWORD"))),
+          !(await login(env("immich", "KOVALIO_ADMIN_PASSWORD"))),
           "Immich restored initial credentials",
         );
         const original = await request("immich", "/api/assets/" + asset.id + "/original", {
@@ -671,7 +671,7 @@ async function smokeApp(app: AppTemplate) {
           "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 160] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
           "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
         ];
-        const documentText = "Openship catalog verification";
+        const documentText = "Kovalio catalog verification";
         const stream = `BT /F1 20 Tf 30 80 Td (${documentText}) Tj ET`;
         objects.push(`<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}\nendstream`);
         let pdf = "%PDF-1.4\n";
@@ -744,7 +744,7 @@ async function smokeApp(app: AppTemplate) {
             method: "POST",
             redirect: "manual",
             body: new URLSearchParams({
-              log: env("wordpress", "OPENSHIP_ADMIN_USER"),
+              log: env("wordpress", "KOVALIO_ADMIN_USER"),
               pwd: password,
               "wp-submit": "Log In",
               redirect_to: url("wordpress", "/wp-admin/"),
@@ -752,7 +752,7 @@ async function smokeApp(app: AppTemplate) {
             }),
             headers: { Cookie: "wordpress_test_cookie=WP%20Cookie%20check" },
           });
-        const login = await loginAs(env("wordpress", "OPENSHIP_ADMIN_PASSWORD"));
+        const login = await loginAs(env("wordpress", "KOVALIO_ADMIN_PASSWORD"));
         assert(
           login.headers.getSetCookie().some((c) => c.startsWith("wordpress_logged_in_")),
           "WordPress admin login failed",
@@ -763,22 +763,22 @@ async function smokeApp(app: AppTemplate) {
             "su -s /bin/sh www-data -c " +
               quote("php -r " + quote("require '/var/www/html/wp-load.php'; " + code)),
           );
-        await php(`update_option('openship_smoke', '${marker}');`);
+        await php(`update_option('kovalio_smoke', '${marker}');`);
         const changedPassword = randomBytes(32).toString("hex");
         await php(
-          `wp_set_password('${changedPassword}', get_user_by('login', getenv('OPENSHIP_ADMIN_USER'))->ID);`,
+          `wp_set_password('${changedPassword}', get_user_by('login', getenv('KOVALIO_ADMIN_USER'))->ID);`,
         );
         await exec(
           "wordpress",
-          `printf '%s' '${marker}' > /var/www/html/wp-content/openship-smoke`,
+          `printf '%s' '${marker}' > /var/www/html/wp-content/kovalio-smoke`,
         );
         await replace();
         assert(
-          (await php("echo get_option('openship_smoke');")) === marker,
+          (await php("echo get_option('kovalio_smoke');")) === marker,
           "WordPress content did not persist",
         );
         assert(
-          (await exec("wordpress", "cat /var/www/html/wp-content/openship-smoke")) === marker,
+          (await exec("wordpress", "cat /var/www/html/wp-content/kovalio-smoke")) === marker,
           "WordPress uploaded files did not persist",
         );
         assert(
@@ -788,7 +788,7 @@ async function smokeApp(app: AppTemplate) {
           "WordPress reset the administrator's changed password on redeploy",
         );
         assert(
-          !(await loginAs(env("wordpress", "OPENSHIP_ADMIN_PASSWORD"))).headers
+          !(await loginAs(env("wordpress", "KOVALIO_ADMIN_PASSWORD"))).headers
             .getSetCookie()
             .some((c) => c.startsWith("wordpress_logged_in_")),
           "WordPress restored the initial administrator password",
@@ -804,27 +804,27 @@ async function smokeApp(app: AppTemplate) {
             method: "call",
             params: {
               db: "odoo",
-              login: env("odoo", "OPENSHIP_ADMIN_EMAIL"),
-              password: env("odoo", "OPENSHIP_ADMIN_PASSWORD"),
+              login: env("odoo", "KOVALIO_ADMIN_EMAIL"),
+              password: env("odoo", "KOVALIO_ADMIN_PASSWORD"),
             },
           }),
         });
         assert(((await login.json()) as any).result?.uid, "Odoo administrator login failed");
         await exec(
           "odoo-db",
-          `psql -U odoo -d odoo -c "INSERT INTO ir_config_parameter (key, value) VALUES ('openship_smoke', '${marker}')"`,
+          `psql -U odoo -d odoo -c "INSERT INTO ir_config_parameter (key, value) VALUES ('kovalio_smoke', '${marker}')"`,
         );
-        await exec("odoo", `printf '%s' '${marker}' > /var/lib/odoo/openship-smoke`);
+        await exec("odoo", `printf '%s' '${marker}' > /var/lib/odoo/kovalio-smoke`);
         await replace();
         assert(
           (await exec(
             "odoo-db",
-            "psql -U odoo -d odoo -Atc \"SELECT value FROM ir_config_parameter WHERE key = 'openship_smoke'\"",
+            "psql -U odoo -d odoo -Atc \"SELECT value FROM ir_config_parameter WHERE key = 'kovalio_smoke'\"",
           )) === marker,
           "Odoo database did not persist",
         );
         assert(
-          (await exec("odoo", "cat /var/lib/odoo/openship-smoke")) === marker,
+          (await exec("odoo", "cat /var/lib/odoo/kovalio-smoke")) === marker,
           "Odoo filestore volume did not persist",
         );
         break;
@@ -833,7 +833,7 @@ async function smokeApp(app: AppTemplate) {
         const appSql = (sql: string) =>
           exec(
             "postgres",
-            'PGPASSWORD="$OPENSHIP_APP_PASSWORD" psql -h 127.0.0.1 -U app -d app -Atc ' +
+            'PGPASSWORD="$KOVALIO_APP_PASSWORD" psql -h 127.0.0.1 -U app -d app -Atc ' +
               quote(sql),
           );
         assert(
@@ -847,7 +847,7 @@ async function smokeApp(app: AppTemplate) {
         const csrf =
           inputValue(body, "csrf_token") ?? /"csrfToken"\s*:\s*"([^"]+)"/.exec(body)?.[1];
         if (!csrf)
-          await writeFile(join(tmpdir(), "openship-pgadmin-login-form.html"), body, {
+          await writeFile(join(tmpdir(), "kovalio-pgadmin-login-form.html"), body, {
             mode: 0o600,
           });
         assert(csrf, "pgAdmin login did not provide a CSRF token");
@@ -882,11 +882,11 @@ async function smokeApp(app: AppTemplate) {
           "pgAdmin administrator login failed (HTTP " + login.status + ")",
         );
         await appSql(
-          `CREATE TABLE openship_smoke (value text); INSERT INTO openship_smoke VALUES ('${marker}')`,
+          `CREATE TABLE kovalio_smoke (value text); INSERT INTO kovalio_smoke VALUES ('${marker}')`,
         );
         await replace();
         assert(
-          (await appSql("SELECT value FROM openship_smoke")) === marker,
+          (await appSql("SELECT value FROM kovalio_smoke")) === marker,
           "PostgreSQL data did not persist",
         );
         break;
@@ -909,25 +909,25 @@ async function smokeApp(app: AppTemplate) {
             token,
             "auth[driver]": "server",
             "auth[server]": "MariaDB",
-            "auth[username]": "openship",
+            "auth[username]": "kovalio",
             "auth[password]": env("mariadb", "MARIADB_PASSWORD"),
             "auth[db]": "app",
           }),
         });
         assert(
           [302, 303].includes(login.status) &&
-            login.headers.get("Location")?.includes("username=openship"),
+            login.headers.get("Location")?.includes("username=kovalio"),
           "Adminer database login failed (HTTP " + login.status + ")",
         );
         await exec(
           "mariadb",
-          `mariadb -u openship -p"$MARIADB_PASSWORD" app -e "CREATE TABLE openship_smoke (value text); INSERT INTO openship_smoke VALUES ('${marker}')"`,
+          `mariadb -u kovalio -p"$MARIADB_PASSWORD" app -e "CREATE TABLE kovalio_smoke (value text); INSERT INTO kovalio_smoke VALUES ('${marker}')"`,
         );
         await replace();
         assert(
           (await exec(
             "mariadb",
-            "mariadb -N -s -u openship -p\"$MARIADB_PASSWORD\" app -e 'SELECT value FROM openship_smoke'",
+            "mariadb -N -s -u kovalio -p\"$MARIADB_PASSWORD\" app -e 'SELECT value FROM kovalio_smoke'",
           )) === marker,
           "MariaDB data did not persist",
         );
@@ -935,7 +935,7 @@ async function smokeApp(app: AppTemplate) {
       }
       case "rabbitmq": {
         const headers = {
-          Authorization: basic("openship", env("rabbitmq", "RABBITMQ_DEFAULT_PASS")),
+          Authorization: basic("kovalio", env("rabbitmq", "RABBITMQ_DEFAULT_PASS")),
           "Content-Type": "application/json",
         };
         assert(
@@ -948,7 +948,7 @@ async function smokeApp(app: AppTemplate) {
         );
         assert(
           (
-            await request("rabbitmq", "/api/queues/openship/smoke", {
+            await request("rabbitmq", "/api/queues/kovalio/smoke", {
               method: "PUT",
               headers,
               body: JSON.stringify({ durable: true, auto_delete: false, arguments: {} }),
@@ -956,7 +956,7 @@ async function smokeApp(app: AppTemplate) {
           ).ok,
           "RabbitMQ queue creation failed",
         );
-        const published = await request("rabbitmq", "/api/exchanges/openship/amq.default/publish", {
+        const published = await request("rabbitmq", "/api/exchanges/kovalio/amq.default/publish", {
           method: "POST",
           headers,
           body: JSON.stringify({
@@ -968,7 +968,7 @@ async function smokeApp(app: AppTemplate) {
         });
         assert(((await published.json()) as any).routed, "RabbitMQ did not route the message");
         await replace();
-        const message = await request("rabbitmq", "/api/queues/openship/smoke/get", {
+        const message = await request("rabbitmq", "/api/queues/kovalio/smoke/get", {
           method: "POST",
           headers,
           body: JSON.stringify({
@@ -998,13 +998,13 @@ async function smokeApp(app: AppTemplate) {
         );
         await exec(
           "authentik-db",
-          `psql -U authentik -d authentik -c "CREATE TABLE openship_smoke (value text); INSERT INTO openship_smoke VALUES ('${marker}')"`,
+          `psql -U authentik -d authentik -c "CREATE TABLE kovalio_smoke (value text); INSERT INTO kovalio_smoke VALUES ('${marker}')"`,
         );
         await replace();
         assert(
           (await exec(
             "authentik-db",
-            "psql -U authentik -d authentik -Atc 'SELECT value FROM openship_smoke'",
+            "psql -U authentik -d authentik -Atc 'SELECT value FROM kovalio_smoke'",
           )) === marker,
           "Authentik data did not persist",
         );
@@ -1014,7 +1014,7 @@ async function smokeApp(app: AppTemplate) {
         const headers = {
           Authorization: basic("admin", env("nextcloud", "NEXTCLOUD_ADMIN_PASSWORD")),
         };
-        const path = "/remote.php/dav/files/admin/openship-smoke.txt";
+        const path = "/remote.php/dav/files/admin/kovalio-smoke.txt";
         assert(
           (await request("nextcloud", path, { method: "PUT", headers, body: marker })).ok,
           "Nextcloud authenticated file upload failed",
@@ -1048,7 +1048,7 @@ async function smokeApp(app: AppTemplate) {
     const sanitized = [...config.values()]
       .filter((v) => v.length >= 24)
       .reduce((text, secret) => text.replaceAll(secret, "[redacted]"), logs.join("\n"));
-    const logPath = join(tmpdir(), "openship-catalog-smoke-" + app.id + "-failure.log");
+    const logPath = join(tmpdir(), "kovalio-catalog-smoke-" + app.id + "-failure.log");
     await writeFile(logPath, sanitized, { mode: 0o600 });
     console.error("Sanitized startup logs: " + logPath);
     throw error;

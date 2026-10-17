@@ -1,6 +1,6 @@
 {
   "home": {
-    "label": "Openship Cloud",
+    "label": "Kovalio Cloud",
     "title": "Bereit zum Start?",
     "plansAndBilling": "Tarife und Abrechnung",
     "description": "Verwaltete Builds und Hosting, mit Platz zum Wachsen.",
@@ -80,11 +80,11 @@
     },
     "notEnabled": {
       "title": "Cloud-Käufe sind noch nicht verfügbar",
-      "description": "Openship hat Abonnements und Guthabenkäufe noch nicht freigeschaltet. Bitte versuche es später erneut."
+      "description": "Kovalio hat Abonnements und Guthabenkäufe noch nicht freigeschaltet. Bitte versuche es später erneut."
     },
     "notConfigured": {
       "title": "Die Cloud-Abrechnung ist noch nicht vollständig eingerichtet",
-      "description": "Openship muss die Einrichtung der Abrechnung abschließen. Bitte kontaktiere den Openship-Support."
+      "description": "Kovalio muss die Einrichtung der Abrechnung abschließen. Bitte kontaktiere den Kovalio-Support."
     },
     "forbidden": {
       "title": "Du hast keinen Zugriff auf die Abrechnung",
@@ -97,7 +97,7 @@
     },
     "loadFailed": {
       "title": "Die Abrechnung konnte nicht geladen werden",
-      "description": "Die Abrechnung ist vorübergehend nicht verfügbar. Versuche es erneut. Wenn das Problem weiterhin besteht, kontaktiere den Openship-Support."
+      "description": "Die Abrechnung ist vorübergehend nicht verfügbar. Versuche es erneut. Wenn das Problem weiterhin besteht, kontaktiere den Kovalio-Support."
     }
   },
   "plansRoute": {
@@ -408,7 +408,7 @@
     "planRequired": "Tarif erforderlich",
     "savedCredits": "Gespeichertes Nutzungsguthaben",
     "savedCreditsHint": "Deine vorausbezahlte Nutzung bleibt in diesem Arbeitsbereich. Wähle einen Tarif, um sie für Cloud-Bereitstellungen zu verwenden.",
-    "offerTitle": "Starte auf Openship Cloud",
+    "offerTitle": "Starte auf Kovalio Cloud",
     "offerLabel": "Jetzt bereitstellen",
     "offerDescription": "Verwaltete Ressourcen für deine Projekte.",
     "startingWith": "Starte mit {name}",
@@ -449,7 +449,7 @@
     "diskHint": "Gelesene und geschriebene App-Daten, nicht der belegte Speicherplatz.",
     "transfer": "App-Datentransfer",
     "transferHint": "Ein- und ausgehende Daten deiner Anwendungen. Edge-Traffic wird separat angezeigt.",
-    "edgeTitle": "Openship Edge",
+    "edgeTitle": "Kovalio Edge",
     "bandwidth": "Edge-Datentransfer",
     "bandwidthHint": "Ein- und ausgehender Traffic aller Edge-Routen deines Arbeitsbereichs. Das monatliche Kontingent ist vom Rechenkontingent getrennt. Am Limit pausieren Routen bis zum Reset oder Upgrade.",
     "requests": "Edge-Anfragen",
@@ -536,7 +536,7 @@
   "workspaces": {
     "title": "Cloud-Bereiche",
     "singular": "Cloud-Bereich",
-    "description": "Plan wählen und deployen. Openship verwaltet den Server; deine Projekte teilen CPU, Arbeitsspeicher und Speicherplatz.",
+    "description": "Plan wählen und deployen. Kovalio verwaltet den Server; deine Projekte teilen CPU, Arbeitsspeicher und Speicherplatz.",
     "loading": "Cloud-Bereiche werden geladen…",
     "choose": "Server auswählen",
     "chooseBilling": "Wähle einen Cloud-Bereich für die Abrechnung.",
@@ -558,7 +558,7 @@
     "create": "Cloud-Bereich hinzufügen",
     "mode": "Projektisolierung",
     "createHint": "Das Erstellen eines Server ist kostenlos. Wähle anschließend einen Plan; die Abrechnung beginnt nach dem Checkout.",
-    "cloudOnly": "Verwaltete Server sind in Openship Cloud verfügbar. Verwalten Sie selbst gehostete Infrastruktur unter Server.",
+    "cloudOnly": "Verwaltete Server sind in Kovalio Cloud verfügbar. Verwalten Sie selbst gehostete Infrastruktur unter Server.",
     "projectCount": "{count} Projekte",
     "noProjects": "Noch keine Projekte in diesem Server.",
     "liveUsage": "Aktuelle Nutzung",
@@ -615,7 +615,7 @@
     "plan": "Server-Plan",
     "actions": "Server-Aktionen",
     "changePlan": "Plan ändern",
-    "managedBy": "Verwaltet von Openship Cloud",
+    "managedBy": "Verwaltet von Kovalio Cloud",
     "network": {
       "title": "Netzwerk",
       "description": "Provider-Einstellungen für diesen verwalteten Server.",
@@ -813,7 +813,7 @@
     "retry": "Zahlung erneut versuchen",
     "close": "Schließen",
     "done": "Fertig",
-    "requestFailed": "Deine Anfrage konnte nicht gespeichert werden. Versuche es erneut oder schreibe an support@openship.io."
+    "requestFailed": "Deine Anfrage konnte nicht gespeichert werden. Versuche es erneut oder schreibe an support@nextrium.org."
   },
   "pendingPayments": {
     "title": "Ausstehende Zahlungen",

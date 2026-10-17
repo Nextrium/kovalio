@@ -19,7 +19,7 @@ Optional `mapping` contains
 The normal deployment engine installs the compatible API image with persistent storage; `browser`
 also installs the dashboard. Server preparation completes before the source is paused.
 
-See [Move your Openship instance](/docs/guides/migrate-control-plane) for prerequisites, credential
+See [Move your Kovalio instance](/docs/guides/migrate-control-plane) for prerequisites, credential
 handling, API addresses, cancellation and recovery. Archive import below is for data recovery and
 does not retire another controller.
 
@@ -30,7 +30,7 @@ administrator**. New instance moves use the handoff above. Forward requests requ
 `teamMode === "single_user"`; switch-back requires an earlier team mode.
 
 `POST /api/system/migration/start`, `client.instance.migrateToServer()` and
-`openship system migration start` remain disabled with **501 `SERVER_MIGRATION_UNAVAILABLE`**.
+`kovalio system migration start` remain disabled with **501 `SERVER_MIGRATION_UNAVAILABLE`**.
 They do not start the new handoff or copy any data. Use **Settings → Instance → Instance location**
 to review the destination and confirm a move.
 
@@ -47,7 +47,7 @@ POST /api/system/migration/start
   }}
 />
 
-- `POST /api/system/migration/start-cloud` — Path B, migrate to Openship Cloud. Body: `{ allowNonEmptyTarget?: boolean }`.
+- `POST /api/system/migration/start-cloud` — Path B, migrate to Kovalio Cloud. Body: `{ allowNonEmptyTarget?: boolean }`.
 - `POST /api/system/migration/start-tunnel` — Path C, expose via an edge tunnel. Body: `{ slug: string }` (required).
 - `POST /api/system/migration/switch-back` — reverse any of them. Body: `{ abandonRemote?: boolean }`.
 
@@ -137,7 +137,7 @@ Import requires an explicit `mode` in the SDK. `selection` supports project IDs,
 server mappings and included resources. Database rows and secret envelopes are opaque to the client;
 the controller owns archive validation and restoration.
 
-Use `openship system data-transfer` for JSON exports/imports. Direct-transfer pairing and chunk upload
+Use `kovalio system data-transfer` for JSON exports/imports. Direct-transfer pairing and chunk upload
 remain the dashboard's recovery protocol. Legacy `instance` team-mode migration calls retain the API's
 capability restrictions; `migrations` is the separate workload move/copy API.
 
@@ -149,7 +149,7 @@ capability restrictions; `migrations` is the separate workload move/copy API.
 | --- | --- | --- |
 | Team-migration readiness check (read-only). | `instance.preflightMigration(input)`<br />Remote client | `POST /api/system/migration/preflight`<br />`settings:admin` · Self-hosted |
 | Earlier server migration (501 unavailable; use Instance location). | `instance.migrateToServer(input)`<br />Remote client | `POST /api/system/migration/start`<br />`settings:admin` · Self-hosted |
-| Migrate → Openship Cloud. | `instance.migrateToCloud(input?)`<br />Remote client | `POST /api/system/migration/start-cloud`<br />`settings:admin` · Self-hosted |
+| Migrate → Kovalio Cloud. | `instance.migrateToCloud(input?)`<br />Remote client | `POST /api/system/migration/start-cloud`<br />`settings:admin` · Self-hosted |
 | Expose this instance via an edge tunnel. | `instance.exposeTunnel(input)`<br />Remote client | `POST /api/system/migration/start-tunnel`<br />`settings:admin` · Self-hosted |
 | Reverse a migration back to single-user. | `instance.switchBack(input?)`<br />Remote client | `POST /api/system/migration/switch-back`<br />`settings:admin` · Self-hosted |
 | Preview a project selection and its dependencies (instance administrator). | `instance.previewExport(input?)`<br />Remote client | `POST /api/system/data-transfer/preview`<br />`settings:admin` · Self-hosted |

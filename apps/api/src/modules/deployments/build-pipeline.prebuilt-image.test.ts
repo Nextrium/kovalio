@@ -136,7 +136,7 @@ vi.mock("@repo/adapters", () => {
     DockerRuntime: class DockerRuntime {},
     CloudRuntime: class CloudRuntime {},
     CloudDockerRuntime: class CloudDockerRuntime {},
-    STATIC_RELEASE_BASE: "/opt/openship/static/releases",
+    STATIC_RELEASE_BASE: "/opt/kovalio/static/releases",
     sharedMountExecutor: vi.fn(async () => null),
     resolveStaticOutputPath: (id: string) => id,
     ensurePortAvailable: vi.fn(async () => undefined),
@@ -256,7 +256,7 @@ vi.mock("@repo/platform/engine/lib/routing-domains", () => ({
   withEnsuredDomainRecord: vi.fn((route) => route),
 }));
 
-vi.mock("@repo/platform/engine/lib/openship-manifest-sync", () => ({
+vi.mock("@repo/platform/engine/lib/kovalio-manifest-sync", () => ({
   syncProjectToServerManifest: vi.fn(async () => undefined),
 }));
 vi.mock("@repo/platform/engine/modules/deployments/attach-linked-networks", () => ({ attachLinkedNetworks: vi.fn(async () => undefined) }));
@@ -1110,7 +1110,7 @@ describe("single-app prebuilt release-image pipeline", () => {
   it("skips commands for an unpinned rollback rebuilt from source on Bare", async () => {
     resolvedRuntime.name = "bare";
     mocks.build.mockResolvedValueOnce({
-      status: "deploying", imageRef: "/opt/openship/.builds/candidate", durationMs: 1,
+      status: "deploying", imageRef: "/opt/kovalio/.builds/candidate", durationMs: 1,
     });
     await run(deployment({ trigger: "rollback", meta: {
       ...snapshot(), source: "git", build: "none", runtimeMode: "bare", releaseImageRef: undefined,
@@ -1181,7 +1181,7 @@ describe("single-app prebuilt release-image pipeline", () => {
     });
     const buildImages = vi.fn(async (specs) => {
       for (const spec of specs) {
-        spec.onResult({ status: "running", imageRef: `openship/test:${spec.serviceName}` });
+        spec.onResult({ status: "running", imageRef: `kovalio/test:${spec.serviceName}` });
       }
     });
     Object.assign(resolvedRuntime, { buildImages });
@@ -1737,7 +1737,7 @@ describe("single-app prebuilt release-image pipeline", () => {
     resolvedPlatform.runtimeMode = "bare";
     resolvedPlatform.hostPortTarget = null;
     mocks.build.mockResolvedValueOnce({
-      status: "deploying", imageRef: "/opt/openship/.builds/candidate", durationMs: 1,
+      status: "deploying", imageRef: "/opt/kovalio/.builds/candidate", durationMs: 1,
     });
     mocks.runDeployPipeline.mockImplementationOnce(async (env, input) => {
       await env.preflight(input.config, async () => "migrate");
@@ -1913,7 +1913,7 @@ describe("single-app prebuilt release-image pipeline", () => {
 
     it.each(["docker", "bare"])("enforces a managed %s app's HTTP gate through its server", async (mode) => {
       resolvedRuntime.name = mode;
-      const exec = vi.fn(async () => "OPENSHIP_PROBE 503 1");
+      const exec = vi.fn(async () => "KOVALIO_PROBE 503 1");
       useTarget("cloud", { exec });
       const { env, containerId, config } = await captureEnvironment({
         enabled: true, onFailure: "fail", stabilization: false,

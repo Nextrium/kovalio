@@ -27,7 +27,7 @@ describe("generated build cache mounts", () => {
     const contents = "node_modules\n!public\n";
     const result = generatedBuildIgnore(contents);
     expect(result.startsWith(contents)).toBe(true);
-    expect(result).toContain("Dockerfile.openship*\n");
+    expect(result).toContain("Dockerfile.kovalio*\n");
     expect(generatedBuildIgnore(result)).toBe(result);
   });
   it("reuses caches across commits and sessions while isolating projects and branches", () => {

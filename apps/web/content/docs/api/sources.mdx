@@ -16,7 +16,7 @@ const submitted = await ship.deploy({
   name: "generated-site",
   source: {
     type: "files",
-    files: { "index.html": "<h1>Hello from Openship</h1>" },
+    files: { "index.html": "<h1>Hello from Kovalio</h1>" },
   },
 });
 
@@ -58,8 +58,8 @@ console.log(session.sessionId, session.upload);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects/folder/session" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/projects/folder/session" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"projectId":"proj_my_site"}'
 ```
@@ -114,8 +114,8 @@ console.log(scan.stack, scan.buildCommand, scan.configDiagnostics);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects/folder/scan/session_123" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/projects/folder/scan/session_123" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"includeEnv":true}'
 ```

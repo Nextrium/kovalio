@@ -68,7 +68,7 @@ describeDockerE2E("PHP selection through build, deploy and rollback (#937)", () 
     await requireDocker();
     runtime = await DockerRuntime.create({ transport: "socket" });
     owner = await seedOrg();
-    directory = await mkdtemp(join(tmpdir(), "openship-php-937-"));
+    directory = await mkdtemp(join(tmpdir(), "kovalio-php-937-"));
     await mkdir(join(directory, "public"));
     await writeFile(
       join(directory, "public/index.php"),
@@ -169,12 +169,12 @@ describeDockerE2E("PHP selection through build, deploy and rollback (#937)", () 
     const first = await builds.triggerDeployment(ctx, { projectId: project.id, trigger: "manual" });
     const initial83 = await ready(first.deployment.id);
     await check(initial83, "8.3");
-    const custom83 = `openship-runtime-test/php:${project.id}-83`;
+    const custom83 = `kovalio-runtime-test/php:${project.id}-83`;
     // BuildKit's FROM cache does not populate Docker's image store for tagging.
     await runtime.pullImage("dunglas/frankenphp:1-php8.3-bookworm");
     await runtime.docker
       .getImage("dunglas/frankenphp:1-php8.3-bookworm")
-      .tag({ repo: "openship-runtime-test/php", tag: `${project.id}-83` });
+      .tag({ repo: "kovalio-runtime-test/php", tag: `${project.id}-83` });
     customImageRefs.push(custom83);
     await projects.updateOptions(project.id, { runtimeImage: custom83 }, owner.organizationId);
     const custom = await builds.triggerDeployment(ctx, {
@@ -257,16 +257,16 @@ describeDockerE2E("PHP selection through build, deploy and rollback (#937)", () 
     expect((await repos.project.findById(project.id))?.runtimeImage).toBeNull();
   }, 1_800_000);
   it("uses a custom Node base and refuses an incompatible actual ABI before activation", async () => {
-    nodeDirectory = await mkdtemp(join(tmpdir(), "openship-runtime-node-"));
+    nodeDirectory = await mkdtemp(join(tmpdir(), "kovalio-runtime-node-"));
     await writeFile(
       join(nodeDirectory, "server.js"),
       `require("http").createServer((req, res) => res.end(process.versions.node)).listen(process.env.PORT || 8000, "0.0.0.0");`,
     );
-    const customNode = `openship-runtime-test/node:${project.id}`;
+    const customNode = `kovalio-runtime-test/node:${project.id}`;
     await runtime.pullImage("node:22-bookworm-slim");
     await runtime.docker
       .getImage("node:22-bookworm-slim")
-      .tag({ repo: "openship-runtime-test/node", tag: project.id });
+      .tag({ repo: "kovalio-runtime-test/node", tag: project.id });
     customImageRefs.push(customNode);
     nodeProject = await seedProject(owner.organizationId, {
       gitProvider: "local",

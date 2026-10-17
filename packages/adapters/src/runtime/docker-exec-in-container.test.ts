@@ -298,7 +298,7 @@ describe("buildInContainerExecCmd — the container enforces the deadline", () =
   it.each([false, true])(
     "reaps the timer promptly even if TERM is ignored: %s",
     async (ignoreTerm) => {
-      const dir = await mkdtemp(join(tmpdir(), "openship-watchdog-"));
+      const dir = await mkdtemp(join(tmpdir(), "kovalio-watchdog-"));
       const pidFile = join(dir, "timer.pid");
       let timerPid: number | undefined;
       try {
@@ -306,16 +306,16 @@ describe("buildInContainerExecCmd — the container enforces the deadline", () =
           join(dir, "sleep"),
           // Model cancellation arriving while a shell child cannot act on TERM.
           // BusyBox can hit that startup window for an immediately completed command.
-          `#!/bin/sh\n${ignoreTerm ? 'trap "" TERM\n' : ""}printf "%s\\n" "$$" > "$OPENSHIP_WATCHDOG_TEST_PID_FILE"\nexec /bin/sleep "$@"\n`,
+          `#!/bin/sh\n${ignoreTerm ? 'trap "" TERM\n' : ""}printf "%s\\n" "$$" > "$KOVALIO_WATCHDOG_TEST_PID_FILE"\nexec /bin/sleep "$@"\n`,
           { mode: 0o700 },
         );
         const result = await runWatchdog(
-          'while [ ! -s "$OPENSHIP_WATCHDOG_TEST_PID_FILE" ]; do /bin/sleep 0.01; done',
+          'while [ ! -s "$KOVALIO_WATCHDOG_TEST_PID_FILE" ]; do /bin/sleep 0.01; done',
           5_000,
           {
             ...process.env,
             PATH: `${dir}:${process.env.PATH}`,
-            OPENSHIP_WATCHDOG_TEST_PID_FILE: pidFile,
+            KOVALIO_WATCHDOG_TEST_PID_FILE: pidFile,
           },
         );
         expect(result.code).toBe(0);

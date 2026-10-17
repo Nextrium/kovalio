@@ -17,7 +17,7 @@ describe("resolveProjectInfo", () => {
   });
 
   async function nativeServicesProject(compose: string) {
-    const path = await mkdtemp(join(tmpdir(), "openship-native-source-"));
+    const path = await mkdtemp(join(tmpdir(), "kovalio-native-source-"));
     tempDirs.push(path);
     await Promise.all([
       writeFile(
@@ -27,7 +27,7 @@ describe("resolveProjectInfo", () => {
       writeFile(join(path, "vite.config.ts"), "export default {};\n"),
       writeFile(join(path, "Dockerfile"), "FROM node:22-alpine\n"),
       writeFile(
-        join(path, "openship.json"),
+        join(path, "kovalio.json"),
         JSON.stringify({
           services: [{ name: "production-web", image: "nginx:1.27" }],
         }),
@@ -66,7 +66,7 @@ describe("resolveProjectInfo", () => {
   it.each(["./", "apps/web"])(
     "uses Dockerfile runtime defaults at %s despite Bun/Next scripts",
     async (rootDirectory) => {
-      const repo = await mkdtemp(join(tmpdir(), "openship-docker-runtime-"));
+      const repo = await mkdtemp(join(tmpdir(), "kovalio-docker-runtime-"));
       tempDirs.push(repo);
       const root = join(repo, rootDirectory);
       await mkdir(root, { recursive: true });
@@ -118,7 +118,7 @@ describe("resolveProjectInfo", () => {
 
       // A declared override is intentional, even when it differs from image CMD.
       await writeFile(
-        join(root, "openship.json"),
+        join(root, "kovalio.json"),
         JSON.stringify({ startCommand: "node worker.js", port: 9000 }),
       );
       const overridden = await resolveProjectInfo({
@@ -137,7 +137,7 @@ describe("resolveProjectInfo", () => {
   it.each(["public", "web-assets"])(
     "keeps a Node server instead of promoting its %s assets",
     async (assets) => {
-      const tempDir = await mkdtemp(join(tmpdir(), "openship-server-assets-"));
+      const tempDir = await mkdtemp(join(tmpdir(), "kovalio-server-assets-"));
       tempDirs.push(tempDir);
       await writeFile(
         join(tempDir, "package.json"),
@@ -169,7 +169,7 @@ describe("resolveProjectInfo", () => {
   );
 
   it("keeps a Vite app's local-dev Compose separate unless explicitly selected (#959)", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-app-with-compose-"));
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-app-with-compose-"));
     tempDirs.push(tempDir);
     await writeFile(join(tempDir, "package.json"), JSON.stringify({
       name: "app", scripts: { build: "vite build" }, devDependencies: { vite: "^6.0.0" },
@@ -198,7 +198,7 @@ describe("resolveProjectInfo", () => {
   });
 
   it("parses a Compose project's services when its root also looks like a Vite app (#1020)", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-compose-behind-vite-"));
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-compose-behind-vite-"));
     tempDirs.push(tempDir);
     await writeFile(
       join(tempDir, "package.json"),
@@ -329,7 +329,7 @@ describe("resolveProjectInfo", () => {
   });
 
   it("combines Compose .env and deployment env when resolving an image", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-prepare-"));
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-prepare-"));
     tempDirs.push(tempDir);
     await writeFile(join(tempDir, ".env"), "CHANNEL=stable\n");
     await writeFile(
@@ -356,11 +356,11 @@ describe("resolveProjectInfo", () => {
   });
 
   it("#795 carries native service build args and source-env provenance", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-build-args-"));
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-build-args-"));
     tempDirs.push(tempDir);
     await writeFile(join(tempDir, "Dockerfile"), "FROM node:22-alpine\nARG SERVER_URL\n");
     await writeFile(
-      join(tempDir, "openship.json"),
+      join(tempDir, "kovalio.json"),
       JSON.stringify({
         env: {
           SERVER_URL: "https://source.example.com",
@@ -385,7 +385,7 @@ describe("resolveProjectInfo", () => {
       SERVER_URL: "https://source.example.com",
       PAYLOAD_SECRET: "source-secret",
     });
-    expect(info.openshipEnv).toEqual({
+    expect(info.kovalioEnv).toEqual({
       SERVER_URL: "https://source.example.com",
       PAYLOAD_SECRET: { value: "source-secret", secret: true },
     });
@@ -397,11 +397,11 @@ describe("resolveProjectInfo", () => {
     });
   });
 
-  it("scans a subpath project's own openship.json when its rootDirectory is pinned", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-subpath-services-"));
+  it("scans a subpath project's own kovalio.json when its rootDirectory is pinned", async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-subpath-services-"));
     tempDirs.push(tempDir);
     await writeFile(
-      join(tempDir, "openship.json"),
+      join(tempDir, "kovalio.json"),
       JSON.stringify({
         framework: "fastapi",
         env: { ROOT_APP_ONLY: "not-for-go-api" },
@@ -410,7 +410,7 @@ describe("resolveProjectInfo", () => {
     await mkdir(join(tempDir, "go-api"));
     await writeFile(join(tempDir, "go-api", "Dockerfile"), "FROM golang:1.25-alpine\n");
     await writeFile(
-      join(tempDir, "go-api", "openship.json"),
+      join(tempDir, "go-api", "kovalio.json"),
       JSON.stringify({
         framework: "docker-compose",
         rootDirectory: "./",
@@ -429,13 +429,13 @@ describe("resolveProjectInfo", () => {
     });
     expect(info.rootDirectory).toBe("go-api");
     expect(info.services).toEqual([expect.objectContaining({ name: "backend", build: "." })]);
-    expect(info.openshipEnv).toEqual({ API_URL: "https://child.example.com" });
+    expect(info.kovalioEnv).toEqual({ API_URL: "https://child.example.com" });
     expect(info.rootEnv).toEqual({ API_URL: "https://child.example.com" });
   });
 
   describe("repository-root config for a saved subfolder", () => {
     async function repoWithBuildDirectory() {
-      const path = await mkdtemp(join(tmpdir(), "openship-subfolder-config-"));
+      const path = await mkdtemp(join(tmpdir(), "kovalio-subfolder-config-"));
       tempDirs.push(path);
       await mkdir(join(path, "deploy"));
       await writeFile(join(path, "deploy", "Dockerfile"), "FROM node:22-alpine\n");
@@ -445,7 +445,7 @@ describe("resolveProjectInfo", () => {
     it("retains native service definitions across an initial scan and refresh", async () => {
       const path = await repoWithBuildDirectory();
       await writeFile(
-        join(path, "openship.json"),
+        join(path, "kovalio.json"),
         JSON.stringify({
           rootDirectory: "deploy",
           services: [{ name: "api", build: "." }],
@@ -470,7 +470,7 @@ describe("resolveProjectInfo", () => {
     it("retains env defaults and a declared Compose path across refreshes", async () => {
       const path = await repoWithBuildDirectory();
       await writeFile(
-        join(path, "openship.json"),
+        join(path, "kovalio.json"),
         JSON.stringify({
           composePath: "deploy/stack.yml",
           env: { API_URL: "https://api.example.com" },
@@ -491,7 +491,7 @@ describe("resolveProjectInfo", () => {
 
       const initial = await resolveProjectInfo({ source: "local", path });
       expect(initial.rootDirectory).toBe("deploy");
-      expect(initial.openshipEnv).toEqual({ API_URL: "https://api.example.com" });
+      expect(initial.kovalioEnv).toEqual({ API_URL: "https://api.example.com" });
       expect(initial.services?.[0]?.environment).toEqual({
         API_URL: "https://api.example.com",
         CHANNEL: "stable",
@@ -507,7 +507,7 @@ describe("resolveProjectInfo", () => {
 
         expect(refreshed.rootDirectory).toBe("deploy");
         expect(refreshed.composePath).toBe("deploy/stack.yml");
-        expect(refreshed.openshipEnv).toEqual(initial.openshipEnv);
+        expect(refreshed.kovalioEnv).toEqual(initial.kovalioEnv);
         expect(refreshed.services?.[0]?.environment).toEqual(initial.services?.[0]?.environment);
         expect(refreshed.missingRequiredEnv).toBeUndefined();
       }
@@ -529,26 +529,26 @@ describe("resolveProjectInfo", () => {
       async (content) => {
         const path = await repoWithBuildDirectory();
         await writeFile(
-          join(path, "openship.json"),
+          join(path, "kovalio.json"),
           JSON.stringify({
             env: { ROOT_APP_SECRET: "belongs-to-root-app" },
             services: [{ name: "root-app", image: "nginx:alpine" }],
           }),
         );
-        await writeFile(join(path, "deploy", "openship.json"), content);
+        await writeFile(join(path, "deploy", "kovalio.json"), content);
 
         const info = await resolveProjectInfo({ source: "local", path, rootDirectory: "deploy" });
 
         expect(info.rootDirectory).toBe("deploy");
         expect(info.services).toBeUndefined();
-        expect(info.openshipEnv).toBeUndefined();
+        expect(info.kovalioEnv).toBeUndefined();
         if (content === "{ broken json") expect(info.configDiagnostics?.wholeFile).toBe(true);
       },
     );
   });
 
-  it("#795 retains a Compose build-arg template alongside openship.json env", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-compose-build-args-"));
+  it("#795 retains a Compose build-arg template alongside kovalio.json env", async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-compose-build-args-"));
     tempDirs.push(tempDir);
     await writeFile(join(tempDir, "Dockerfile"), "FROM node:22-alpine\nARG SERVER_URL\n");
     await writeFile(
@@ -564,7 +564,7 @@ describe("resolveProjectInfo", () => {
       ].join("\n"),
     );
     await writeFile(
-      join(tempDir, "openship.json"),
+      join(tempDir, "kovalio.json"),
       JSON.stringify({ env: { SERVER_URL: "https://source.example.com" } }),
     );
 
@@ -577,18 +577,18 @@ describe("resolveProjectInfo", () => {
       buildArgs: { SERVER_URL: "${SERVER_URL:?set SERVER_URL}" },
       advanced: { buildArgTemplateKeys: ["SERVER_URL"] },
     });
-    expect(info.openshipEnv).toEqual({ SERVER_URL: "https://source.example.com" });
+    expect(info.kovalioEnv).toEqual({ SERVER_URL: "https://source.example.com" });
     expect(info.missingRequiredEnv).toBeUndefined();
   });
 
   it("reads single-app source env without parsing an unrelated Compose file", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-source-env-"));
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-source-env-"));
     tempDirs.push(tempDir);
     await mkdir(join(tempDir, "apps", "web"), { recursive: true });
     await writeFile(join(tempDir, "compose.yaml"), "services: [this is not valid");
     await writeFile(join(tempDir, "apps", "web", ".env"), "LOCAL_DEFAULT=from-dotenv\n");
     await writeFile(
-      join(tempDir, "OpenShip.json"),
+      join(tempDir, "Kovalio.json"),
       JSON.stringify({
         env: {
           PUBLIC_URL: "https://app.example.com",
@@ -605,7 +605,7 @@ describe("resolveProjectInfo", () => {
         PUBLIC_URL: "https://app.example.com",
         AUTH_SECRET: "source-secret",
       },
-      openshipEnv: {
+      kovalioEnv: {
         PUBLIC_URL: "https://app.example.com",
         AUTH_SECRET: { value: "source-secret", secret: true },
       },
@@ -613,7 +613,7 @@ describe("resolveProjectInfo", () => {
   });
 
   it('normalizes an undetected package manager to "npm" instead of the internal "unknown" sentinel (#415)', async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "openship-prepare-"));
+    const tempDir = await mkdtemp(join(tmpdir(), "kovalio-prepare-"));
     tempDirs.push(tempDir);
 
     // A compose-only subfolder with no manifest anywhere (package.json, go.mod,

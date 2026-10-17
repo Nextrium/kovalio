@@ -40,8 +40,8 @@ vi.mock("@repo/platform/engine/modules/billing/billing-anniversary.cron", () => 
 vi.mock("@repo/platform/engine/modules/billing/billing-namespace.provision", () => ({
   backfillOrgNamespaces: async () => ({ done: 0, failed: 0 }),
 }));
-vi.mock("@repo/platform/engine/lib/openship-cloud", async (original) => ({
-  ...(await original<typeof import("@repo/platform/engine/lib/openship-cloud")>()),
+vi.mock("@repo/platform/engine/lib/kovalio-cloud", async (original) => ({
+  ...(await original<typeof import("@repo/platform/engine/lib/kovalio-cloud")>()),
   ensureOblienWebhook: async () => {},
 }));
 vi.mock("@repo/platform/engine/modules/billing/billing-oblien-quota", async (original) => ({

@@ -19,11 +19,11 @@ import type {
   DockerVolumeInfo,
   ProxyKind,
 } from "@repo/adapters";
-import { classifyProxy, isBuildHelperMarkers, OPENSHIP_LABEL } from "@repo/adapters";
+import { classifyProxy, isBuildHelperMarkers, KOVALIO_LABEL } from "@repo/adapters";
 import type { ComposeHealthcheck, ProxySettings, ComposeGpuConfig } from "@repo/core";
 import { isLoopbackHost } from "@repo/core";
 import type { ComposeService } from "../../lib/compose-parser";
-import type { ManifestProjectEntry } from "../../lib/openship-manifest";
+import type { ManifestProjectEntry } from "../../lib/kovalio-manifest";
 import type { ExistingRoute, ProxyRouteScan } from "./proxy-route-scan";
 
 export interface DiscoveredVolumeMount {

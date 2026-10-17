@@ -1,32 +1,32 @@
 ---
 title: backup run
-description: Commands, arguments, and options for openship backup run.
-cliGroup: openship backup run
+description: Commands, arguments, and options for kovalio backup run.
+cliGroup: kovalio backup run
 ---
 
 See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship backup run
+## kovalio backup run
 
 Backup runs (executions)
 
 ```text
-openship backup run [options] [command]
+kovalio backup run [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list [options]`](/docs/cli/reference/backup/run#openship-backup-run-list) | List backup runs for a project |
-| [`get [options] <runId>`](/docs/cli/reference/backup/run#openship-backup-run-get) | Show one run (optionally stream it) |
-| [`protect [options] <runId>`](/docs/cli/reference/backup/run#openship-backup-run-protect) | Protect a run from retention pruning (or release it) |
-| [`restore [options] <runId>`](/docs/cli/reference/backup/run#openship-backup-run-restore) | Prepare a restore from a run (stages it; apply separately) |
+| [`list [options]`](/docs/cli/reference/backup/run#kovalio-backup-run-list) | List backup runs for a project |
+| [`get [options] <runId>`](/docs/cli/reference/backup/run#kovalio-backup-run-get) | Show one run (optionally stream it) |
+| [`protect [options] <runId>`](/docs/cli/reference/backup/run#kovalio-backup-run-protect) | Protect a run from retention pruning (or release it) |
+| [`restore [options] <runId>`](/docs/cli/reference/backup/run#kovalio-backup-run-restore) | Prepare a restore from a run (stages it; apply separately) |
 
-## openship backup run get
+## kovalio backup run get
 
 Show one run (optionally stream it)
 
 ```text
-openship backup run get [options] <runId>
+kovalio backup run get [options] <runId>
 ```
 
 | Argument | Meaning |
@@ -37,12 +37,12 @@ openship backup run get [options] <runId>
 | --- | --- |
 | `--follow` | Stream progress to completion |
 
-## openship backup run list
+## kovalio backup run list
 
 List backup runs for a project
 
 ```text
-openship backup run list [options]
+kovalio backup run list [options]
 ```
 
 | Option | Meaning |
@@ -51,12 +51,12 @@ openship backup run list [options]
 | `--service <id>` | Filter to a single service |
 | `--limit <n>` | Max rows (default 50) |
 
-## openship backup run protect
+## kovalio backup run protect
 
 Protect a run from retention pruning (or release it)
 
 ```text
-openship backup run protect [options] <runId>
+kovalio backup run protect [options] <runId>
 ```
 
 | Argument | Meaning |
@@ -68,12 +68,12 @@ openship backup run protect [options] <runId>
 | `--until <iso>` | Protect until this ISO timestamp |
 | `--release` | Clear the protection so retention can prune it |
 
-## openship backup run restore
+## kovalio backup run restore
 
 Prepare a restore from a run (stages it; apply separately)
 
 ```text
-openship backup run restore [options] <runId>
+kovalio backup run restore [options] <runId>
 ```
 
 | Argument | Meaning |

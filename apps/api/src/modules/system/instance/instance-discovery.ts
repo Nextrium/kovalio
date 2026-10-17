@@ -9,7 +9,7 @@ const identitySchema = z.object({
 });
 
 /** A person can enter the dashboard URL or the API-only URL. Probe only the
- * two Openship mounts on that reviewed HTTPS origin, without credentials or
+ * two Kovalio mounts on that reviewed HTTPS origin, without credentials or
  * redirects. The public identity chooses no account and grants no authority. */
 export async function discoverInstance(value: string) {
   const origin = instanceOrigin(value);
@@ -41,7 +41,7 @@ export async function discoverInstance(value: string) {
     return identity.data;
   }
   throw new AppError(
-    "Could not connect to Openship at this address. Check that the instance is online and its HTTPS address is correct.",
+    "Could not connect to Kovalio at this address. Check that the instance is online and its HTTPS address is correct.",
     409,
   );
 }

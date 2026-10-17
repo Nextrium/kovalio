@@ -1,7 +1,7 @@
 /**
  * MigrationOrchestrator — drives a full Docker migration:
  *
- *   adopt  → create the Openship `services` project from the selected stack
+ *   adopt  → create the Kovalio `services` project from the selected stack
  *   moving_data → quiesce (stop) the originals on the source; copy volumes and
  *                 app-data bind mounts through the shared transfer adapters.
  *                 The storage plan maps source paths to project-owned target data.
@@ -2038,7 +2038,7 @@ class MigrationOrchestratorImpl {
         if (remainder) throw new Error(remainder);
         // A project move also has to leave the OLD EDGE. Door A never needs this: an
         // adopted stack sat behind the operator's own proxy, which the migration
-        // deliberately never touches. Ours was served by Openship's edge on the source,
+        // deliberately never touches. Ours was served by Kovalio's edge on the source,
         // and destroying a container does not remove the vhost pointing at it.
         if (claimed.mode === "project_move" && claimed.projectId) {
           await this.retireSourceRoutes(
@@ -2208,7 +2208,7 @@ class MigrationOrchestratorImpl {
       for (const name of volumes) {
         try {
           const volume = await runtime.docker.getVolume(name).inspect();
-          if (volume.Labels?.["openship.project"] !== projectId || volume.Labels?.["openship.migration"] !== runId)
+          if (volume.Labels?.["kovalio.project"] !== projectId || volume.Labels?.["kovalio.migration"] !== runId)
             continue; // Creation raced another owner; this run never owned it.
           await runtime.docker.getVolume(name).remove({ force: false });
           removed++;
@@ -2267,7 +2267,7 @@ class MigrationOrchestratorImpl {
           // siblings of the first service that referenced a shared volume.
           const targetContainers = await targetRuntime.listAllContainers();
           runningTargets = [...new Set([...(run.recovery.targetRunningContainerIds ?? []),
-            ...targetContainers.filter(container => container.labels["openship.project"] === project.id &&
+            ...targetContainers.filter(container => container.labels["kovalio.project"] === project.id &&
               ["running", "restarting"].includes(container.state)).map(container => container.id)])];
           await repos.dockerMigrationRun.updateRecovery(id, { targetRunningContainerIds: runningTargets });
           for (const cid of runningTargets) await setMigrationContainerState(targetRuntime, cid, false);

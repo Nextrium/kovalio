@@ -106,7 +106,7 @@ async function readValidatedTargetId(
     }
   } catch (diagnosticFailure) {
     observeCaughtError(diagnosticFailure, "platform/engine/lib/host-port-target");
-    // Fall through to the existing OpenShip target id, then the locator.
+    // Fall through to the existing Kovalio target id, then the locator.
   }
   try {
     const hostId = normalizeTargetHostId(await executor.readFile(KOVALIO_HOST_ID_PATH));

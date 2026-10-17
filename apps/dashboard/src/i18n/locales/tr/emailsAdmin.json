@@ -360,7 +360,7 @@
     "dnsEmpty": "Henüz kayıtlı DNS kaydı yok. Taramada kullanılacak kayıtları oluşturmak için kurulum sihirbazını tamamlayın.",
     "reachability": {
       "title": "Genel posta portları",
-      "desc": "Yerel dinleyicileri denetler, ardından Openship kontrol düzleminden genel posta adresine bağlanır.",
+      "desc": "Yerel dinleyicileri denetler, ardından Kovalio kontrol düzleminden genel posta adresine bağlanır.",
       "descFor": "Yerel dinleyicileri ve {hostname} ({address}) için dış erişimi denetler.",
       "remediation": "Sunucu dinliyor ancak bir veya daha fazla genel port kullanılamıyor. Hem ana makine güvenlik duvarında hem de sağlayıcı güvenlik duvarı/güvenlik grubu/NSG’de TCP 25, 465, 587 ve 993’e izin verin.",
       "reachableHint": "Ana makinede dinliyor ve kontrol düzleminden erişilebilir.",
@@ -738,7 +738,7 @@
     "renewing": "Yenileniyor…",
     "autoRenew": "Otomatik yenileme",
     "autoRenewHint": "Süresi dolmadan yenile ve posta hizmetlerini yeniden yükle.",
-    "desktopHint": "Otomatik yenileme için Openship açık kalmalıdır.",
+    "desktopHint": "Otomatik yenileme için Kovalio açık kalmalıdır.",
     "jobDisabled": "Ortak SSL yenileme görevi devre dışı.",
     "manageJob": "Yenileme görevini aç",
     "failed": "Posta sertifikası güncellenemedi.",

@@ -7,7 +7,7 @@
 import { randomBytes } from "node:crypto";
 // Type-only — keeps this module runtime-dependency-free (see the note above).
 import type { DeployableService } from "../../../lib/deployable-service";
-import type { OpenshipEnv } from "@repo/core";
+import type { KovalioEnv } from "@repo/core";
 
 export type FolderUploadMode = "api-relay";
 
@@ -40,8 +40,8 @@ export interface FolderSession {
   services?: DeployableService[];
   /** Trusted, pre-mask source env retained for the eventual build request. */
   rootEnv?: Record<string, string>;
-  /** The subset explicitly declared by openship.json (automatic defaults). */
-  openshipEnv?: OpenshipEnv;
+  /** The subset explicitly declared by kovalio.json (automatic defaults). */
+  kovalioEnv?: KovalioEnv;
 }
 
 const sessions = new Map<string, FolderSession>();

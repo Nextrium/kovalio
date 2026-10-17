@@ -4,14 +4,14 @@ description: Run commands on connected or managed servers, with schedules, retri
 ---
 
 Jobs run commands or saved Actions workflows on a **schedule**, once, on demand,
-or after an event. Find them under **Jobs** in self-hosted Openship and Openship Cloud.
+or after an event. Find them under **Jobs** in self-hosted Kovalio and Kovalio Cloud.
 
 Every run is recorded — when it last ran, whether it succeeded, how long it took,
 and its output.
 
 ## Built-in jobs
 
-Self-hosted installations also show the system jobs Openship runs for you.
+Self-hosted installations also show the system jobs Kovalio runs for you.
 Cloud maintenance is managed privately by the platform; Cloud customers see
 their own command jobs and authorized backup schedules.
 
@@ -53,7 +53,7 @@ fire after the workflow completes and its worker cleanup finishes. Replayed time
 or dependency deliveries reuse their execution identity. Disabling or revoking
 access to the workflow prevents new authorized execution.
 
-See [Openship Actions](/docs/guides/actions) for runner setup, triggers and project
+See [Kovalio Actions](/docs/guides/actions) for runner setup, triggers and project
 deployment rules.
 
 ### Choosing a Cloud server
@@ -104,22 +104,22 @@ scheduled run, marked as manual — so you always have a full record.
 
 ## CLI
 
-Use `openship job` (alias `jobs`) with your Cloud or self-hosted connection context:
+Use `kovalio job` (alias `jobs`) with your Cloud or self-hosted connection context:
 
 ```bash
-openship job list
-openship job create --name weekly-sync --server <server-id> \
+kovalio job list
+kovalio job create --name weekly-sync --server <server-id> \
   --command 'cd /srv/app && npm run db:sync' --cron '17 4 * * 1'
-openship job get <key>
-openship job update <key> --no-enabled
-openship job update <key> --enabled --cron '0 3 * * *'
-openship job run <key> --follow
-openship job runs <key> --limit 10
-openship job logs <run-id> --follow
-openship job delete <key> --yes
+kovalio job get <key>
+kovalio job update <key> --no-enabled
+kovalio job update <key> --enabled --cron '0 3 * * *'
+kovalio job run <key> --follow
+kovalio job runs <key> --limit 10
+kovalio job logs <run-id> --follow
+kovalio job delete <key> --yes
 ```
 
-Jobs also work with `openship --native-config <file> job ...` through the native SDK.
+Jobs also work with `kovalio --native-config <file> job ...` through the native SDK.
 
 Use the job **key** from `list` or `create`, not its database ID. For a one-time
 job, pass `--schedule once --at <ISO-timestamp>`. For manual execution only, pass

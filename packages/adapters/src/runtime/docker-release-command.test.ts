@@ -58,7 +58,7 @@ function config(overrides: Partial<DeployConfig> = {}): DeployConfig {
     projectId: "proj_1",
     deploymentId: "dep_1",
     buildSessionId: "bs_1",
-    imageRef: "openship/proj_1:dep_1",
+    imageRef: "kovalio/proj_1:dep_1",
     environment: "production",
     port: 3000,
     hostPort: 41234,
@@ -73,7 +73,7 @@ function config(overrides: Partial<DeployConfig> = {}): DeployConfig {
 
 async function runtimeWith(docker: unknown): Promise<DockerRuntime> {
   const runtime = await DockerRuntime.create({
-    dockerSocketPath: "/tmp/openship-test-absent.sock",
+    dockerSocketPath: "/tmp/kovalio-test-absent.sock",
   });
   (runtime as unknown as { _docker: unknown })._docker = docker;
   return runtime;
@@ -83,7 +83,7 @@ describe("DockerRuntime.runReleaseCommand", () => {
   // The release container gets the app's env by construction (deploymentContainerEnv),
   // so it inherits deploy's rules rather than a copy of them. A project-set PATH
   // replaces the image's own (the one our Dockerfile bakes node_modules/.bin into),
-  // which is the openship#623 failure: a release command exiting 127 on a
+  // which is the kovalio#623 failure: a release command exiting 127 on a
   // completely green build.
   it("drops a project-set PATH, exactly as deploy does, and says so", async () => {
     const { docker, created } = fakeDaemon({});
@@ -129,9 +129,9 @@ describe("DockerRuntime.runReleaseCommand", () => {
 
     expect(created).toHaveLength(1);
     const args = created[0]!;
-    expect(args.Image).toBe("openship/proj_1:dep_1");
-    expect(args.Labels).toMatchObject({ "openship.project": "proj_1", "openship.build": "bs_1" });
-    expect(args.Labels).not.toHaveProperty("openship.deployment");
+    expect(args.Image).toBe("kovalio/proj_1:dep_1");
+    expect(args.Labels).toMatchObject({ "kovalio.project": "proj_1", "kovalio.build": "bs_1" });
+    expect(args.Labels).not.toHaveProperty("kovalio.deployment");
     // Entrypoint override: a base image's docker-entrypoint.sh would swallow Cmd.
     expect(args.Entrypoint).toEqual(["/bin/sh", "-c"]);
     expect(args.Cmd).toEqual(["php artisan migrate --force"]);
@@ -140,7 +140,7 @@ describe("DockerRuntime.runReleaseCommand", () => {
     // Same mounts the app gets, project-scoped — a migration has to write to the
     // volume the app will read from.
     const hostConfig = args.HostConfig as Record<string, unknown>;
-    expect(hostConfig.Binds).toEqual(["openship-my-app-storage:/app/storage"]);
+    expect(hostConfig.Binds).toEqual(["kovalio-my-app-storage:/app/storage"]);
     // The two things it must NOT inherit from the deploy.
     expect(hostConfig.PortBindings).toBeUndefined();
     expect(hostConfig.RestartPolicy).toBeUndefined();
@@ -226,7 +226,7 @@ describe("DockerRuntime.runReleaseCommand", () => {
     await expect((await runtimeWith(docker)).runReleaseCommand(
       config(), "migrate", () => {}, { timeoutMs: 20 },
     )).rejects.toThrow(/timed out/);
-    expect(docker.getContainer).toHaveBeenCalledWith(expect.stringContaining("openship-release-dep_1-"));
+    expect(docker.getContainer).toHaveBeenCalledWith(expect.stringContaining("kovalio-release-dep_1-"));
     finish(container);
     await vi.waitFor(() => expect(container.remove).toHaveBeenCalledTimes(2));
     expect(container.start).not.toHaveBeenCalled();

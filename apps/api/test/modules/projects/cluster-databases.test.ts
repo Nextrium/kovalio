@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
 import { repos, seedOwner, type SeededOwner } from "../jobs/_harness";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { sshManager } from "@repo/platform/engine/lib/ssh-manager";
 import * as lifecycle from "@repo/platform/engine/modules/system/network-setup-lifecycle";
@@ -37,8 +37,8 @@ async function clients(owner: SeededOwner) {
     },
   });
   const native = await ship.scope({ identity: "verified", organizationId: owner.orgId });
-  const remote = new OpenshipClient({
-    baseUrl: "http://openship.test",
+  const remote = new KovalioClient({
+    baseUrl: "http://kovalio.test",
     token: owner.token,
     organizationId: owner.orgId,
     fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
@@ -98,7 +98,7 @@ describe("project databases through real HTTP and native operations", () => {
         engine: "postgres" as const,
         mode: "standalone" as const,
         instances: 1,
-        storageClass: "openship-local",
+        storageClass: "kovalio-local",
         storageGiB: 1,
         cpuMillis: 250,
         memoryMiB: 256,
@@ -186,7 +186,7 @@ describe("project databases through real HTTP and native operations", () => {
       engine: "postgres" as const,
       mode: "standalone" as const,
       instances: 1,
-      storageClass: "openship-local",
+      storageClass: "kovalio-local",
       storageGiB: 1,
       cpuMillis: 250,
       memoryMiB: 256,
@@ -248,7 +248,7 @@ describe("project databases through real HTTP and native operations", () => {
     ).toBeNull();
     expect(
       (await repos.clusterDatabase.get(owner.orgId, target.id, copy.id)).restoreSource!.backupId,
-    ).toMatch(/^openship\/databases\/os-db-[a-f0-9]+\/postgres\/b-[a-f0-9]+\/manifest.json$/);
+    ).toMatch(/^kovalio\/databases\/os-db-[a-f0-9]+\/postgres\/b-[a-f0-9]+\/manifest.json$/);
   });
 
   it("shares idempotent setup, progress, connection ownership and retry without leaking credentials", async () => {
@@ -266,7 +266,7 @@ describe("project databases through real HTTP and native operations", () => {
         engine: "postgres" as const,
         mode: "standalone" as const,
         instances: 1,
-        storageClass: "openship-local",
+        storageClass: "kovalio-local",
         storageGiB: 20,
         cpuMillis: 500,
         memoryMiB: 512,

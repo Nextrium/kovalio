@@ -132,8 +132,8 @@ function makeExec(
         ].join("\n");
       }
       if (cmd.includes("docker inspect")) {
-        if (flavor !== "container") throw new Error("Error: No such object: openship-mail");
-        return "true\topenship/mail:test";
+        if (flavor !== "container") throw new Error("Error: No such object: kovalio-mail");
+        return "true\tkovalio/mail:test";
       }
       if (cmd.includes("systemctl show")) {
         return flavor === "host"
@@ -174,8 +174,8 @@ describe("configureOutboundRelay", () => {
       const { exec, execCalls, writes, renames } = makeExec(flavor);
       await configureOutboundRelay(exec, base);
 
-      expect(writes[0].path.startsWith(`${SASL_MAP[flavor].write}.openship-`)).toBe(true);
-      expect(writes[0].path).toMatch(/\.openship-[0-9a-f]{16}$/);
+      expect(writes[0].path.startsWith(`${SASL_MAP[flavor].write}.kovalio-`)).toBe(true);
+      expect(writes[0].path).toMatch(/\.kovalio-[0-9a-f]{16}$/);
       expect(writes[0].mode).toBe(0o600);
       expect(renames[0]).toEqual({ from: writes[0].path, to: SASL_MAP[flavor].write });
       expect(writes[0].content).toContain("[email-smtp.us-east-1.amazonaws.com]:587 AKIASMTPUSER:s3cr3tPass");
@@ -264,9 +264,9 @@ describe("configureOutboundRelay", () => {
     const { exec, execCalls, writes } = makeExec("container", "sudo");
     await configureOutboundRelay(exec, base);
 
-    const dockerCommands = execCalls.filter((cmd) => cmd.includes("docker exec openship-mail"));
+    const dockerCommands = execCalls.filter((cmd) => cmd.includes("docker exec kovalio-mail"));
     expect(dockerCommands.length).toBeGreaterThan(0);
-    expect(dockerCommands.every((cmd) => cmd.startsWith("docker exec openship-mail"))).toBe(true);
+    expect(dockerCommands.every((cmd) => cmd.startsWith("docker exec kovalio-mail"))).toBe(true);
     expect(execCalls.some((cmd) => cmd.startsWith("sudo -n sh -c"))).toBe(true);
 
     // elevatedExecutor's one canonical private staging path is reused. The
@@ -275,7 +275,7 @@ describe("configureOutboundRelay", () => {
       content: expect.stringContaining("AKIASMTPUSER:s3cr3tPass"),
       mode: 0o600,
     });
-    expect(writes[0].path).toMatch(/^\/tmp\/\.openship-elev-[0-9a-f]{24}\/payload$/);
+    expect(writes[0].path).toMatch(/^\/tmp\/\.kovalio-elev-[0-9a-f]{24}\/payload$/);
     expect(execCalls.join("\n")).not.toContain("s3cr3tPass");
   });
 
@@ -306,8 +306,8 @@ describe("configureOutboundRelay", () => {
     expect(execCalls.some((command) => command.startsWith("sudo -n sh -c"))).toBe(false);
     expect(
       execCalls
-        .filter((command) => command.includes("docker exec openship-mail"))
-        .every((command) => command.startsWith("docker exec openship-mail")),
+        .filter((command) => command.includes("docker exec kovalio-mail"))
+        .every((command) => command.startsWith("docker exec kovalio-mail")),
     ).toBe(true);
   });
 });

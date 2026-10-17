@@ -53,7 +53,7 @@ describe("kovalio server list", () => {
 });
 
 it("adds an SSH server using a key from the caller's machine, keeping local paths out of the remote request", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "openship-ssh-input-"));
+  const directory = mkdtempSync(join(tmpdir(), "kovalio-ssh-input-"));
   try {
     setJsonMode(true);
     const file = join(directory, "key");
@@ -69,7 +69,7 @@ it("adds an SSH server using a key from the caller's machine, keeping local path
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
-describe("openship server rm", () => {
+describe("kovalio server rm", () => {
   it("reports a kept server and exits unsuccessfully when workload cleanup fails", async () => {
     fetchStub = stubFetch(() => ({ status: 409, json: {
       ok: false, serverRemoved: false, code: "SERVER_WORKLOAD_TEARDOWN_FAILED", error: "workload still running",

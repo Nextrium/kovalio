@@ -45,7 +45,7 @@ function accountChanged(): never {
 
 const unavailable = () =>
   new AppError(
-    "We couldn’t reach Openship Support. Please try again.",
+    "We couldn’t reach Kovalio Support. Please try again.",
     502,
     "SUPPORT_CLOUD_UNAVAILABLE",
   );
@@ -91,8 +91,8 @@ async function forward(
   // A support failure must not clear the shared deployment connection.
   const messages: Record<number, string> = {
     400: "Check your support request and try again.",
-    401: "Sign in to Openship Cloud again to view your tickets.",
-    403: "Sign in to Openship Cloud to manage your tickets.",
+    401: "Sign in to Kovalio Cloud again to view your tickets.",
+    403: "Sign in to Kovalio Cloud to manage your tickets.",
     404: "Support ticket not found.",
     409: "This request reference was already used for a different message.",
     413: "The message is too large. Please shorten it and try again.",

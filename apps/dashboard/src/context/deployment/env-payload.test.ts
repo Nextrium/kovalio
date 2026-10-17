@@ -21,7 +21,7 @@ const saved = (key: string, value: string, isSecret = false): PersistedProjectEn
 });
 
 describe("mergePreparedSourceEnv", () => {
-  it("activates openship.json keys, keeps .env opt-in, and preserves operator overrides", () => {
+  it("activates kovalio.json keys, keeps .env opt-in, and preserves operator overrides", () => {
     const result = mergePreparedSourceEnv(
       [row("SHARED", "operator")],
       {

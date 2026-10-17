@@ -98,7 +98,7 @@ export function WorkflowSetupDialog(props: WorkflowSetupProps) {
 }
 
 const STARTER =
-  "name: CI\non: [push, workflow_dispatch]\njobs:\n  check:\n    runs-on: [self-hosted, openship, linux]\n    steps:\n      - uses: actions/checkout@v4\n      - run: echo 'Ready to build'\n";
+  "name: CI\non: [push, workflow_dispatch]\njobs:\n  check:\n    runs-on: [self-hosted, kovalio, linux]\n    steps:\n      - uses: actions/checkout@v4\n      - run: echo 'Ready to build'\n";
 const STANDALONE =
   "name: Automation\non: workflow_dispatch\njobs:\n  run:\n    runs-on: [self-hosted, linux]\n    steps:\n      - run: echo 'Ready to run'\n";
 const storageKinds = ["s3_compatible", "local"] as const,
@@ -153,7 +153,7 @@ function SetupForm({
   const [ref, setRef] = useState(workflow?.ref ?? initial?.ref ?? "main");
   const [path, setPath] = useState(
     standalone
-      ? ".openship/workflows/automation.yml"
+      ? ".kovalio/workflows/automation.yml"
       : (workflow?.path ?? initial?.path ?? ".github/workflows/ci.yml"),
   );
   const native = inferActionWorkflowController(path, !standalone) === "github";
@@ -390,7 +390,7 @@ function SetupForm({
     loaded.current = null;
     setSelection(null);
     setOriginal(null);
-    setPath(value ? ".openship/workflows/automation.yml" : ".github/workflows/ci.yml");
+    setPath(value ? ".kovalio/workflows/automation.yml" : ".github/workflows/ci.yml");
   };
   const collectSubmission = async (): Promise<WorkflowSaveEntry[]> => {
     if (

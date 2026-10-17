@@ -1,31 +1,31 @@
 ---
 title: edge rules
-description: Commands, arguments, and options for openship edge rules.
-cliGroup: openship edge rules
+description: Commands, arguments, and options for kovalio edge rules.
+cliGroup: kovalio edge rules
 ---
 
 See the [workflow guide](/docs/cli/edge) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship edge rules
+## kovalio edge rules
 
 Per-route edge rules: rate-limit, ban, access control
 
 ```text
-openship edge rules [options] [command]
+kovalio edge rules [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list [options]`](/docs/cli/reference/edge/rules#openship-edge-rules-list) | List a project's edge route rules |
-| [`add [options]`](/docs/cli/reference/edge/rules#openship-edge-rules-add) | Add an edge route rule (rate-limit · ban · access · block) |
-| [`rm [options] <ruleId>`](/docs/cli/reference/edge/rules#openship-edge-rules-rm) | Delete an edge route rule |
+| [`list [options]`](/docs/cli/reference/edge/rules#kovalio-edge-rules-list) | List a project's edge route rules |
+| [`add [options]`](/docs/cli/reference/edge/rules#kovalio-edge-rules-add) | Add an edge route rule (rate-limit · ban · access · block) |
+| [`rm [options] <ruleId>`](/docs/cli/reference/edge/rules#kovalio-edge-rules-rm) | Delete an edge route rule |
 
-## openship edge rules add
+## kovalio edge rules add
 
 Add an edge route rule (rate-limit · ban · access · block)
 
 ```text
-openship edge rules add [options]
+kovalio edge rules add [options]
 ```
 
 | Option | Meaning |
@@ -43,24 +43,24 @@ openship edge rules add [options]
 | `--block-status <code>` | HTTP status returned on block (401/403/404/429/444/451/503) |
 | `--disabled` | Create the rule disabled (default: false) |
 
-## openship edge rules list
+## kovalio edge rules list
 
 List a project's edge route rules
 
 ```text
-openship edge rules list [options]
+kovalio edge rules list [options]
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `-p, --project <id>` | Project ID |
 
-## openship edge rules rm
+## kovalio edge rules rm
 
 Delete an edge route rule
 
 ```text
-openship edge rules rm [options] <ruleId>
+kovalio edge rules rm [options] <ruleId>
 ```
 
 | Argument | Meaning |

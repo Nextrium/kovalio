@@ -18,8 +18,8 @@ import {
 } from "./workspace-ready";
 
 export const CLOUD_SERVER_IMAGE = "oblien/docker:29";
-const BRIDGE_SCRIPT = "/opt/openship/cloud-docker/bridge-v1.py";
-const BRIDGE_WORKLOAD = "openship-docker-api-v1";
+const BRIDGE_SCRIPT = "/opt/kovalio/cloud-docker/bridge-v1.py";
+const BRIDGE_WORKLOAD = "kovalio-docker-api-v1";
 
 export interface CloudServerConnectionOptions {
   workspaceId: string;
@@ -32,10 +32,10 @@ export interface CloudServerConnectionOptions {
 /** Managed process listeners remain reserved while the process is stopped. */
 export function managedProcessPorts(workload: WorkloadInfo): number[] {
   const labels = workload.labels as Record<string, unknown> | undefined;
-  if (!labels?.["openship.project"] || !labels["openship.deployment"]) return [];
-  if (typeof labels["openship.ports"] !== "string")
+  if (!labels?.["kovalio.project"] || !labels["kovalio.deployment"]) return [];
+  if (typeof labels["kovalio.ports"] !== "string")
     throw new Error("Managed process listener metadata is missing");
-  const ports: unknown = JSON.parse(labels["openship.ports"]);
+  const ports: unknown = JSON.parse(labels["kovalio.ports"]);
   if (
     !Array.isArray(ports) ||
     ports.some((port) => !Number.isInteger(port) || port < 1 || port > 65535)
@@ -201,7 +201,7 @@ export class CloudServerConnection {
     for (const workload of await this.workspace().workloads.list()) {
       if (
         excludeBareProjectId &&
-        (workload.labels as Record<string, unknown> | undefined)?.["openship.project"] ===
+        (workload.labels as Record<string, unknown> | undefined)?.["kovalio.project"] ===
           excludeBareProjectId
       )
         continue;
@@ -321,7 +321,7 @@ export class CloudServerConnection {
           cmd: ["python3", BRIDGE_SCRIPT],
           restart_policy: "always",
           max_restarts: 0,
-          labels: { "openship.workspace": this.workspaceId, "openship.role": "docker-api" },
+          labels: { "kovalio.workspace": this.workspaceId, "kovalio.role": "docker-api" },
         });
       }
       const deadline = Date.now() + 60_000;

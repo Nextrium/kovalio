@@ -9,7 +9,7 @@ export function assertCloudRoutingCapabilities(
 ): void {
   if (isCloud && routing?.proxy && Object.keys(routing.proxy).length > 0) {
     throw new AppError(
-      "Proxy settings are only supported on self-hosted edges. Remove routingConfig.proxy to save routing rules on Openship Cloud.",
+      "Proxy settings are only supported on self-hosted edges. Remove routingConfig.proxy to save routing rules on Kovalio Cloud.",
       400,
       "CLOUD_PROXY_SETTINGS_UNSUPPORTED",
     );

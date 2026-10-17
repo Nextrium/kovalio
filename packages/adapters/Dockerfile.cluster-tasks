@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     && rm -rf /var/lib/apt/lists/*
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
 COPY --from=redis /usr/local/bin/redis-cli /usr/local/bin/redis-server /usr/local/bin/
-COPY --from=build /task.cjs /opt/openship/task.cjs
+COPY --from=build /task.cjs /opt/kovalio/task.cjs
 RUN node --version && redis-cli --version && redis-server --version && pg_dump --version && pg_restore --version
 USER 1000:1000
-ENTRYPOINT ["node", "/opt/openship/task.cjs"]
+ENTRYPOINT ["node", "/opt/kovalio/task.cjs"]

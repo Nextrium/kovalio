@@ -1,10 +1,10 @@
 # Monitoring
 
-For failures inside Openship itself, see [Structured error reporting](structured-error-reporting.md).
+For failures inside Kovalio itself, see [Structured error reporting](structured-error-reporting.md).
 That covers request references, exceptions, background operations and configurable log destinations.
 The monitoring system below measures deployed applications and traffic.
 
-Openship's per-project Monitoring tab answers three questions — what is my app using
+Kovalio's per-project Monitoring tab answers three questions — what is my app using
 right now, where is my traffic coming from, and what is it returning — and it is designed
 so that answering them costs your visitors nothing.
 
@@ -305,14 +305,14 @@ yourself at the origin does nothing. See
 [`edge-real-ip.ts`](../packages/adapters/src/infra/edge-real-ip.ts) for why
 `CF-Connecting-IP` and not `X-Forwarded-For`.
 
-For a non-Cloudflare proxy, set `OPENSHIP_EDGE_TRUSTED_PROXIES` (comma-separated CIDRs)
-and optionally `OPENSHIP_EDGE_REAL_IP_HEADER`. Settings are read on the next routing change.
+For a non-Cloudflare proxy, set `KOVALIO_EDGE_TRUSTED_PROXIES` (comma-separated CIDRs)
+and optionally `KOVALIO_EDGE_REAL_IP_HEADER`. Settings are read on the next routing change.
 Only IP literals and CIDRs with valid addresses and prefix lengths are accepted; malformed
 entries are dropped instead of making nginx reject every routing update.
 
 On the containerized edge, the trusted proxies are written to
-`sites-enabled/_openship-real-ip.conf`, because the image's `nginx.conf` is baked. There,
-`OPENSHIP_EDGE_REAL_IP_HEADER` is not applied: the baked config already sets
+`sites-enabled/_kovalio-real-ip.conf`, because the image's `nginx.conf` is baked. There,
+`KOVALIO_EDGE_REAL_IP_HEADER` is not applied: the baked config already sets
 `real_ip_header`, and nginx allows only one per scope. A tunnel connector on the same host
 that forwards Cloudflare traffic still sends `CF-Connecting-IP`, so trusting its address is
 enough.
@@ -368,6 +368,6 @@ retryable; retrying after a lost success response is safe.
 This is available on Desktop and self-hosted instances, through the same engine
 operation in HTTP (`DELETE /api/issues/history`) and the SDK
 (`ship.issues.clearHistory()`). The CLI exposes
-`openship monitoring clear-history --yes`; without `--yes` it asks for confirmation.
+`kovalio monitoring clear-history --yes`; without `--yes` it asks for confirmation.
 Read-only or restricted credentials cannot clear organization history, and Cloud
 does not expose this self-hosted incident-history operation.

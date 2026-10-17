@@ -138,7 +138,7 @@
       "addCustom": "Özel ekle",
       "howToAddApp": "Nasıl uygulama eklenir",
       "removeCustomApp": "Özel uygulamayı kaldır",
-      "needsUpdateDesc": "Bu uygulamayı yüklemek için Openship örneğinizi güncelleyin.",
+      "needsUpdateDesc": "Bu uygulamayı yüklemek için Kovalio örneğinizi güncelleyin.",
       "needsUpdateBadge": "Güncelleme gerekli",
       "needsVersionBadge": "v{version} gerekli",
       "removedToast": "\"{name}\" kaldırıldı.",

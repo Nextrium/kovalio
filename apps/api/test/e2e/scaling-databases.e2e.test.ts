@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { Hono } from "hono";
 import { serve, type ServerType } from "@hono/node-server";
 import { db, repos, schema } from "@repo/db";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import {
   patchKubernetesObject,
   clusterDatabaseHosts,
@@ -33,8 +33,8 @@ vi.hoisted(() => {
     "21903cffb5adfba83427848d2f63a2a809535980559664842d28fe9e68280fd9b";
   process.env.CLOUD_MODE = "false";
   process.env.DEPLOY_MODE = "docker";
-  process.env.OPENSHIP_AUTH_MODE = "local";
-  process.env.OPENSHIP_JOB_RUNNER = "in-process";
+  process.env.KOVALIO_AUTH_MODE = "local";
+  process.env.KOVALIO_JOB_RUNNER = "in-process";
 });
 vi.mock("../../src/app", () => ({ app: { fetch: vi.fn() } }));
 
@@ -45,7 +45,7 @@ describeDockerE2E.sequential(
     let store: Awaited<ReturnType<typeof scalingBackupStore>>;
     let tasks: Awaited<ReturnType<typeof scalingTaskImage>>;
     let server: ServerType | undefined;
-    let client: OpenshipClient;
+    let client: KovalioClient;
     let org: Awaited<ReturnType<typeof seedOrg>>;
     let project: Awaited<ReturnType<typeof seedProject>>;
     let clusterId: string;
@@ -117,7 +117,7 @@ describeDockerE2E.sequential(
       mode: instances === 1 ? "standalone" : "cluster",
       instances,
       storageGiB: 1,
-      storageClass: "openship-local",
+      storageClass: "kovalio-local",
       cpuMillis: 250,
       memoryMiB: 384,
       databaseName: "app",
@@ -160,9 +160,9 @@ describeDockerE2E.sequential(
         `/api/v1/namespaces/${clusterDatabaseNamespace(row.id)}/secrets/credentials`,
       );
       const labels = {
-        "openship.io/runtime": lab.runtimeId,
-        "openship.io/database": row.id,
-        "openship.io/database-probe": "true",
+        "nextrium.org/runtime": lab.runtimeId,
+        "nextrium.org/database": row.id,
+        "nextrium.org/database-probe": "true",
       };
       const secret = await lab.api.request("POST", `/api/v1/namespaces/${namespace}/secrets`, {
         apiVersion: "v1",
@@ -195,11 +195,11 @@ describeDockerE2E.sequential(
           : 'test "$(timeout 5 redis-cli -h "$REDIS_HOST" --raw PING)" = PONG';
       const waitForConnection = `
 attempt=0
-while ! (${ready}) > /tmp/openship-connection.log 2>&1; do
+while ! (${ready}) > /tmp/kovalio-connection.log 2>&1; do
   attempt=$((attempt + 1))
   if [ "$attempt" -ge 30 ]; then
     echo 'The authenticated database connection did not become ready from this pod.' >&2
-    cat /tmp/openship-connection.log >&2
+    cat /tmp/kovalio-connection.log >&2
     exit 1
   fi
   sleep 1
@@ -221,7 +221,7 @@ done
                 spec: {
                   automountServiceAccountToken: false,
                   restartPolicy: "Never",
-                  nodeSelector: { "openship.io/runtime": lab.runtimeId },
+                  nodeSelector: { "nextrium.org/runtime": lab.runtimeId },
                   containers: [
                     {
                       name: "data",
@@ -276,7 +276,7 @@ done
         spec: { unschedulable: true },
       }));
       tasks = await scalingTaskImage(lab);
-      vi.stubEnv("OPENSHIP_CLUSTER_TASKS_IMAGE", tasks.image);
+      vi.stubEnv("KOVALIO_CLUSTER_TASKS_IMAGE", tasks.image);
       store = await scalingBackupStore((options) => lab.container(options), lab.id);
       org = await seedOrg();
       const { encryptSecretField } =
@@ -415,7 +415,7 @@ done
           resolve(address.port),
         );
       });
-      client = new OpenshipClient({
+      client = new KovalioClient({
         baseUrl: `http://127.0.0.1:${port}`,
         organizationId: org.organizationId,
         token: pat.token,
@@ -603,7 +603,7 @@ done
         'i=0; while [ "$i" -lt 128 ]; do redis-cli -c -h "$REDIS_HOST" SET "acceptance:$i" "value:$i" >/dev/null; i=$((i+1)); done; redis-cli -c -h "$REDIS_HOST" SET acceptance:expires expiring PX 86400000',
       );
       for (const instances of [4, 3]) {
-        const dataPodsPath = `/api/v1/namespaces/${clusterDatabaseNamespace(redis.id)}/pods?labelSelector=${encodeURIComponent(`openship.io/database=${redis.id},redis_setup_type=cluster`)}`;
+        const dataPodsPath = `/api/v1/namespaces/${clusterDatabaseNamespace(redis.id)}/pods?labelSelector=${encodeURIComponent(`nextrium.org/database=${redis.id},redis_setup_type=cluster`)}`;
         const before = await lab.api.request<{ items: KubernetesObject[] }>("GET", dataPodsPath);
         redis = await finish(
           await client.projects.updateClusterDatabase(project.id, {

@@ -39,11 +39,11 @@ describe("shared bare lifecycle on a managed server", () => {
     await supervisor.deploy(options);
     await supervisor.deploy(options);
     expect(workloads.create).toHaveBeenCalledOnce();
-    expect(rows.get("openship-release-a")).toMatchObject({ enabled: true, labels: { "openship.project": "project-a", "openship.deployment": "release-a" } });
+    expect(rows.get("kovalio-release-a")).toMatchObject({ enabled: true, labels: { "kovalio.project": "project-a", "kovalio.deployment": "release-a" } });
   });
   it("uses live status when saved configuration retains a stale stopped state", async () => {
     await supervisor.deploy(options);
-    rows.get("openship-release-a")!.state = "stopped";
+    rows.get("kovalio-release-a")!.state = "stopped";
     expect(await supervisor.getInfo("release-a")).toMatchObject({ status: "running", hostPortByContainerPort: { 3000: 3000 } });
   });
   it("preserves stopped state across a VM restart with no guest process", async () => {
@@ -53,7 +53,7 @@ describe("shared bare lifecycle on a managed server", () => {
     expect(await supervisor.getInfo("release-a")).toMatchObject({ status: "stopped" });
     await supervisor.start("release-a");
     expect(await supervisor.isRunning("release-a")).toBe(true);
-    expect(rows.get("openship-release-a")!.enabled).toBe(true);
+    expect(rows.get("kovalio-release-a")!.enabled).toBe(true);
   });
   it("does not accept a successful stop response unless disabled state is persisted", async () => {
     await supervisor.deploy(options);
@@ -70,10 +70,10 @@ describe("shared bare lifecycle on a managed server", () => {
   });
   it("does not trust a saved stopped state while the live process is still running", async () => {
     await supervisor.deploy(options);
-    Object.assign(rows.get("openship-release-a")!, { enabled: false, state: "stopped" });
+    Object.assign(rows.get("kovalio-release-a")!, { enabled: false, state: "stopped" });
     await supervisor.stop("release-a");
     expect(workloads.stop).toHaveBeenCalledOnce();
-    expect(live.get("openship-release-a")).toBe("stopped");
+    expect(live.get("kovalio-release-a")).toBe("stopped");
   });
   it.each([false, true])("confirms both disabled and stopped state after a conflicting stop (disabled=%s)", async disabled => {
     await supervisor.deploy(options);
@@ -88,7 +88,7 @@ describe("shared bare lifecycle on a managed server", () => {
   });
   it("rejects foreign ownership before changing or deleting a process", async () => {
     await supervisor.deploy(options);
-    rows.get("openship-release-a")!.labels = { "openship.project": "project-b", "openship.deployment": "release-a" };
+    rows.get("kovalio-release-a")!.labels = { "kovalio.project": "project-b", "kovalio.deployment": "release-a" };
     for (const action of ["start", "stop", "destroy"] as const)
       await expect(supervisor[action]("release-a")).rejects.toMatchObject({ code: "PROCESS_NOT_FOUND" });
     expect(workloads.start).not.toHaveBeenCalled();
@@ -102,10 +102,10 @@ describe("shared bare lifecycle on a managed server", () => {
   });
   it("removes only the selected process and confirms its disappearance", async () => {
     await supervisor.deploy(options);
-    const other = { ...rows.get("openship-release-a")!, id: "foreign", labels: { "openship.project": "project-b" } };
+    const other = { ...rows.get("kovalio-release-a")!, id: "foreign", labels: { "kovalio.project": "project-b" } };
     rows.set("foreign", other);
     await supervisor.destroy("release-a");
-    expect(workloads.delete).toHaveBeenCalledExactlyOnceWith("openship-release-a");
+    expect(workloads.delete).toHaveBeenCalledExactlyOnceWith("kovalio-release-a");
     expect(rows.get("foreign")).toEqual(other);
   });
   it("preserves log failure and does not read the whole VM's logs as fallback", async () => {

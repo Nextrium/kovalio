@@ -77,7 +77,7 @@
     },
     "runtimeVersionLabel": "Çalışma zamanı sürümü",
     "runtimeVersionDefault": "Varsayılan",
-    "runtimeVersionDesc": "Seçilen sürüme uygun derleme ve çalışma imajlarını kullanır. Openship tarafından oluşturulan bir Docker derlemesi gerektirir.",
+    "runtimeVersionDesc": "Seçilen sürüme uygun derleme ve çalışma imajlarını kullanır. Kovalio tarafından oluşturulan bir Docker derlemesi gerektirir.",
     "buildImageLabel": "Derleme İmajı",
     "buildImageDesc": "Bulut veya sunucu derlemeleri için derleyici konteyner imajı. Tespit edilen taban imajı yanlışsa değiştirin.",
     "productionPathsLabel": "Canlı ortam yolları",
@@ -222,7 +222,7 @@
       "statefulWarnBold": "yeniden derlemelerde korunmaz",
       "statefulWarnPart2": ". Çalışma alanını değiştirmeden önce verileri açıkça yedekleyin ve geri yükleyin.",
       "volumeHint": "Adlandırılmış disk birimi veya sunucu yolu → konteyner yolu.",
-      "volumeCloudNote": "Openship Cloud kalıcı birim bağlamalarını desteklemez. Birim gerektiren iş yükleri için bir sunucu seçin.",
+      "volumeCloudNote": "Kovalio Cloud kalıcı birim bağlamalarını desteklemez. Birim gerektiren iş yükleri için bir sunucu seçin.",
       "sourcePlaceholder": "Kaynak",
       "containerPathPlaceholder": "Konteyner yolu",
       "readOnlyMount": "Salt okunur bağlama",
@@ -464,8 +464,8 @@
   "configDiagnostics": {
     "title": "Bazı depo dağıtım ayarları uygulanmadı",
     "description": "Dağıtımdan önce aşağıdaki atlanan ayarları inceleyin.",
-    "titleWholeFile": "Bu deponun openship.json dosyası yok sayıldı",
-    "descriptionWholeFile": "Dosyanın hiçbir kısmı uygulanmadı. Dağıtım, Openship'in algıladığı ayarlarla devam edecek.",
+    "titleWholeFile": "Bu deponun kovalio.json dosyası yok sayıldı",
+    "descriptionWholeFile": "Dosyanın hiçbir kısmı uygulanmadı. Dağıtım, Kovalio'in algıladığı ayarlarla devam edecek.",
     "refused": "Reddedildi",
     "unrecognized": "Tanınmadı",
     "hint": "Sonraki dağıtımdan önce belirtilen yapılandırma dosyalarını kontrol edin ve desteklenmeyen ayarları güncelleyin."

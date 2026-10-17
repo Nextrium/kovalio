@@ -2,7 +2,7 @@
 export const K3S_HOST = String.raw`
 import fcntl, hashlib, ipaddress, json, os, pathlib, re, shutil, socket, subprocess, sys, tempfile, time, urllib.parse, urllib.request
 
-ROOT = pathlib.Path('/var/lib/openship/k3s')
+ROOT = pathlib.Path('/var/lib/kovalio/k3s')
 OWNER = ROOT / 'owner.json'
 CONFIG = pathlib.Path('/etc/rancher/k3s/config.yaml')
 BIN = pathlib.Path('/usr/local/bin/k3s')
@@ -33,7 +33,7 @@ def atomic(path, content, mode=0o600):
     path = pathlib.Path(path)
     if path.is_symlink(): raise RuntimeError('Refusing a symlink at ' + str(path))
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    fd, name = tempfile.mkstemp(dir=str(path.parent), prefix='.openship-')
+    fd, name = tempfile.mkstemp(dir=str(path.parent), prefix='.kovalio-')
     try:
         os.fchmod(fd, mode)
         with os.fdopen(fd, 'wb') as stream:
@@ -47,7 +47,7 @@ def owner():
     if ROOT.is_symlink() or OWNER.is_symlink(): raise RuntimeError('The runtime ownership directory is not a regular directory.')
     if not OWNER.exists(): return None
     value = json.loads(OWNER.read_text())
-    if value.get('id') != C['id']: raise RuntimeError('This host belongs to a different OpenShip runtime. Its installation was left untouched.')
+    if value.get('id') != C['id']: raise RuntimeError('This host belongs to a different Kovalio runtime. Its installation was left untouched.')
     return value
 
 def guard(value):
@@ -58,7 +58,7 @@ def guard(value):
 def foreign():
     # The upstream uninstaller owns global CNI/Kubernetes paths. Never adopt those implicitly.
     for path in [str(BIN), '/usr/bin/k3s', str(CONFIG.parent), str(DATA), '/usr/local/bin/k3s-uninstall.sh', '/usr/local/bin/k3s-agent-uninstall.sh', '/usr/local/bin/k3s-killall.sh', '/etc/kubernetes', '/var/lib/kubelet', '/var/lib/cni', '/etc/cni/net.d', '/etc/rancher/rke2', '/var/lib/rancher/rke2', '/var/lib/k0s', '/var/snap/microk8s']:
-        if os.path.lexists(path): raise RuntimeError('An existing Kubernetes or CNI installation uses ' + path + '. OpenShip will not replace it.')
+        if os.path.lexists(path): raise RuntimeError('An existing Kubernetes or CNI installation uses ' + path + '. Kovalio will not replace it.')
     for unit in pathlib.Path('/etc/systemd/system').glob('k3s*.service'):
         raise RuntimeError('An existing K3s service is installed: ' + unit.name)
     for chain in ['OSHIP-K3S-IN', 'OSHIP-K3S-OUT']:
@@ -89,7 +89,7 @@ def inspect():
     else: foreign()
     if not pathlib.Path('/run/systemd/system').is_dir(): raise RuntimeError('K3s setup requires systemd on the host.')
     if len(pathlib.Path('/proc/swaps').read_text().strip().splitlines()) > 1:
-        raise RuntimeError('Swap is enabled. Disable swap on this server before setting up Kubernetes; OpenShip will not change memory settings used by existing workloads.')
+        raise RuntimeError('Swap is enabled. Disable swap on this server before setting up Kubernetes; Kovalio will not change memory settings used by existing workloads.')
     memory = int(re.search(r'MemTotal:\s+(\d+)', pathlib.Path('/proc/meminfo').read_text()).group(1)) * 1024
     required = 1800 * 1024**2 if C['host']['role'] == 'server' else 900 * 1024**2
     if memory < required or (os.cpu_count() or 0) < (2 if C['host']['role'] == 'server' else 1):
@@ -162,7 +162,7 @@ def binary():
     else:
         # Stage on the destination filesystem so separate /var and /usr mounts also work.
         BIN.parent.mkdir(parents=True, exist_ok=True)
-        fd, path = tempfile.mkstemp(dir=str(BIN.parent), prefix='.openship-k3s-')
+        fd, path = tempfile.mkstemp(dir=str(BIN.parent), prefix='.kovalio-k3s-')
         try:
             digest = hashlib.sha256(); total = 0
             with os.fdopen(fd, 'wb') as stream, urllib.request.urlopen(base + name, timeout=30) as response:
@@ -187,7 +187,7 @@ def configure():
     value = claim()
     host = C['host']
     config = {'node-name': host['nodeName'], 'node-ip': host['privateIp'], 'flannel-iface': host['interfaceName'],
-        'node-label': ['openship.io/runtime=' + C['id']], 'kubelet-arg': ['address=' + host['privateIp']], 'protect-kernel-defaults': False}
+        'node-label': ['nextrium.org/runtime=' + C['id']], 'kubelet-arg': ['address=' + host['privateIp']], 'protect-kernel-defaults': False}
     if host['role'] == 'server':
         config.update({'bind-address': host['privateIp'], 'advertise-address': host['privateIp'], 'tls-san': [host['privateIp']],
             'cluster-cidr': C['podCidr'], 'service-cidr': C['serviceCidr'], 'flannel-backend': 'vxlan',
@@ -219,7 +219,7 @@ def configure():
     unit = 'k3s' if host['role'] == 'server' else 'k3s-agent'
     firewall = ROOT / 'firewall.sh'
     if not firewall.is_file(): raise RuntimeError('The private firewall configuration is missing.')
-    atomic('/etc/systemd/system/' + unit + '.service.d/openship.conf', '[Service]\nExecStartPre=/bin/sh ' + str(firewall) + '\n')
+    atomic('/etc/systemd/system/' + unit + '.service.d/kovalio.conf', '[Service]\nExecStartPre=/bin/sh ' + str(firewall) + '\n')
     run(['systemctl', 'daemon-reload']); run(['systemctl', 'enable', unit])
     run(['systemctl', 'start', '--no-block', unit])
     value = owner()
@@ -250,11 +250,11 @@ def assert_empty():
     value = owner()
     if not value: raise RuntimeError('The owned runtime installation is missing. Automatic cleanup was refused.')
     # Interrupted verification may have left its disposable pods. They contain no user data.
-    checks = json.loads(kubectl(['get', 'namespaces', '-l', 'openship.io/runtime=' + C['id'] + ',openship.io/purpose=runtime-check', '-o', 'json']))['items']
+    checks = json.loads(kubectl(['get', 'namespaces', '-l', 'nextrium.org/runtime=' + C['id'] + ',nextrium.org/purpose=runtime-check', '-o', 'json']))['items']
     names = []
     for item in checks:
         name = item['metadata']['name']
-        if not re.fullmatch('openship-check-' + re.escape(C['id'][:8]) + r'-\d+', name): raise RuntimeError('An unexpected namespace has the runtime verification label: ' + name)
+        if not re.fullmatch('kovalio-check-' + re.escape(C['id'][:8]) + r'-\d+', name): raise RuntimeError('An unexpected namespace has the runtime verification label: ' + name)
         names.append(name)
     if names: kubectl(['delete', 'namespace'] + names + ['--wait=true', '--timeout=90s'], 105)
     # Cleanup is refused when workload ownership cannot be established.
@@ -270,7 +270,7 @@ def assert_empty():
     }
     def owned_addon(item, addon):
         meta = item['metadata']; labels = meta.get('labels', {})
-        return labels.get('openship.io/runtime') == C['id'] and labels.get('openship.io/addon') == addon and re.fullmatch(r'[0-9a-f]{64}', meta.get('annotations', {}).get('openship.io/addon-spec', ''))
+        return labels.get('nextrium.org/runtime') == C['id'] and labels.get('nextrium.org/addon') == addon and re.fullmatch(r'[0-9a-f]{64}', meta.get('annotations', {}).get('nextrium.org/addon-spec', ''))
     accepted = set()
     for item in resources:
         meta = item['metadata']
@@ -330,7 +330,7 @@ def remove():
         if check.returncode == 0: run(['iptables', '-w', '5', '-D', base, '-j', chain])
         if subprocess.run(['iptables', '-w', '5', '-S', chain], capture_output=True).returncode == 0:
             run(['iptables', '-w', '5', '-F', chain]); run(['iptables', '-w', '5', '-X', chain])
-    dropin = pathlib.Path('/etc/systemd/system/' + unit + '.service.d/openship.conf')
+    dropin = pathlib.Path('/etc/systemd/system/' + unit + '.service.d/kovalio.conf')
     if dropin.exists(): dropin.unlink()
     run(['systemctl', 'daemon-reload'])
     if BIN.exists() or CONFIG.exists() or DATA.exists(): raise RuntimeError('Runtime cleanup left installed files or data. Inspect the server before retrying.')
@@ -349,12 +349,12 @@ try:
     elif ACTION == 'nodes': result = json.loads(kubectl(['get', 'nodes', '-o', 'json']))
     elif ACTION == 'claim':
         ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
-        with open('/run/lock/openship-k3s.lock', 'a') as lock:
+        with open('/run/lock/kovalio-k3s.lock', 'a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX); result = claim()
         result = {'claimed': True}
     else:
         ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
-        with open('/run/lock/openship-k3s.lock', 'a') as lock:
+        with open('/run/lock/kovalio-k3s.lock', 'a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             result = configure() if ACTION == 'install' else remove() if ACTION == 'remove' else None
             if result is None: raise RuntimeError('Unknown runtime action.')

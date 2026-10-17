@@ -19,7 +19,7 @@ vi.mock("@/components/auth-shell", () => ({ AuthShell: ({ children }: { children
 function render(Page: typeof LoginPage, selfHosted: boolean, authMode: "local" | "none" | "cloud" = "local") {
   return renderToStaticMarkup(
     <I18nProvider>
-      <AuthProviders selfHosted={selfHosted} authMode={authMode} cloudAuthUrl="https://app.openship.io"
+      <AuthProviders selfHosted={selfHosted} authMode={authMode} cloudAuthUrl="https://kovalio.nextrium.org"
         authProviders={[{ id: "github", kind: "social" }]}>
         <Page />
       </AuthProviders>

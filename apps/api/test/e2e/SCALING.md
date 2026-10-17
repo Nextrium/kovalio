@@ -28,7 +28,7 @@ gh workflow run scaling-e2e.yml --ref main -f journey=storage
 ```
 
 The application fixture creates its own Docker network, an authenticated image registry,
-one K3s control node, two workers, and OpenShip Edge. Published test ports bind
+one K3s control node, two workers, and Kovalio Edge. Published test ports bind
 only to loopback. It uses a migrated, in-memory database and a test owner/PAT.
 It never uses the developer's kubeconfig or registered servers. Cleanup removes
 only the fixture's containers, volumes, network and fixture-built images.

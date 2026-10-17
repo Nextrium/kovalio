@@ -40,7 +40,7 @@ describe("shared-file verification policy", () => {
     ).toEqual(["one", "two"]);
     expect(cleanup).toHaveBeenCalledOnce();
 
-    const directory = mkdtempSync(join(tmpdir(), "openship-storage-probe-"));
+    const directory = mkdtempSync(join(tmpdir(), "kovalio-storage-probe-"));
     const command = (job: KubernetesObject): [string, string[]] => {
       const [program, ...args] = job.spec.template.spec.containers[0].command as string[];
       // Run the actual submitted checker against an isolated shared directory.

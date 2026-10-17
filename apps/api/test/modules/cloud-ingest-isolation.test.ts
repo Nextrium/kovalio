@@ -110,7 +110,7 @@ describe("Cloud ingest ownership and atomicity with a real database", () => {
             id: destinationId,
             organizationId: "claimed-source",
             name: "Borrowed server",
-            kind: "openship_server",
+            kind: "kovalio_server",
             serverId,
           },
         ],
@@ -140,7 +140,7 @@ describe("Cloud ingest ownership and atomicity with a real database", () => {
         id: randomUUID(),
         organizationId: attacker.orgId,
         name: "Corrupt historical import",
-        kind: "openship_server",
+        kind: "kovalio_server",
         serverId,
       })
       .returning();

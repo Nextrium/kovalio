@@ -3,14 +3,14 @@ import { CloudDockerRuntime } from "./docker";
 import type { ProvisionLock } from "../../types";
 
 const projectId = "project-a";
-const networkName = "openship-retained-slug";
+const networkName = "kovalio-retained-slug";
 const networkId = "a".repeat(64);
 
 function fixture(owner: unknown = projectId, id: unknown = networkId) {
   let locked = false;
   const inspect = vi.fn(async () => {
     expect(locked).toBe(true);
-    return { Id: id, Labels: { "openship.project": owner } };
+    return { Id: id, Labels: { "kovalio.project": owner } };
   });
   const remove = vi.fn(async () => {
     expect(locked).toBe(true);
@@ -107,7 +107,7 @@ describe("Cloud project network cleanup", () => {
         throw new Error("Unexpected network reference");
       });
       f.remove.mockRejectedValueOnce(Object.assign(new Error("gone"), { statusCode: 404 }));
-      return { Id: networkId, Labels: { "openship.project": projectId } };
+      return { Id: networkId, Labels: { "kovalio.project": projectId } };
     });
     await expect(f.runtime.removeProjectNetwork("retained-slug")).resolves.toBeUndefined();
     expect(f.remove).toHaveBeenCalledOnce();
@@ -115,7 +115,7 @@ describe("Cloud project network cleanup", () => {
     expect(f.getNetwork.mock.calls).toEqual([[networkName], [networkId]]);
   });
 
-  it.each([null, "", "openship-another-network"])(
+  it.each([null, "", "kovalio-another-network"])(
     "refuses an invalid immutable identity: %j",
     async (id) => {
       const f = fixture(projectId, id);

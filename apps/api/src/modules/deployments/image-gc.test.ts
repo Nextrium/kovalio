@@ -79,17 +79,17 @@ describe("selectImageRemovalRefs (never ruin an operator's image)", () => {
   });
 
   it("removes an expired build tag even when its image also has a retained tag", () => {
-    expect(selectImageRemovalRefs({ id: "shared", repoTags: ["openship/app-web:keep", "openship/app-web:bld_old"] }, keep))
-      .toEqual(["openship/app-web:bld_old"]);
+    expect(selectImageRemovalRefs({ id: "shared", repoTags: ["kovalio/app-web:keep", "kovalio/app-web:bld_old"] }, keep))
+      .toEqual(["kovalio/app-web:bld_old"]);
   });
 
-  it("keeps a registry or operator tag inside the openship namespace", () => {
-    expect(selectImageRemovalRefs({ id: "registry", repoTags: ["openship/agent:v1"] }, keep)).toEqual([]);
-    expect(selectImageRemovalRefs({ id: "tagged", repoTags: ["openship/app:bld_old", "openship/app:production"] }, keep))
-      .toEqual(["openship/app:bld_old"]);
+  it("keeps a registry or operator tag inside the kovalio namespace", () => {
+    expect(selectImageRemovalRefs({ id: "registry", repoTags: ["kovalio/agent:v1"] }, keep)).toEqual([]);
+    expect(selectImageRemovalRefs({ id: "tagged", repoTags: ["kovalio/app:bld_old", "kovalio/app:production"] }, keep))
+      .toEqual(["kovalio/app:bld_old"]);
   });
 
-  it("removes ONLY our openship tags (never by id) for a prunable built image", () => {
+  it("removes ONLY our kovalio tags (never by id) for a prunable built image", () => {
     expect(
       selectImageRemovalRefs({ id: "sha2", repoTags: ["kovalio/app-web:bld_old-svc_x"] }, keep),
     ).toEqual(["kovalio/app-web:bld_old-svc_x"]);

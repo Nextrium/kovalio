@@ -3,7 +3,7 @@ import { once } from "node:events";
 import { WebSocketServer, type WebSocket } from "ws";
 import { afterEach, describe, expect, it } from "vitest";
 import { SDK_CAPABILITIES, TERMINAL_SUBPROTOCOL_PREFIX } from "@repo/contracts";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 
 interface RequestRecord {
   path: string;
@@ -87,7 +87,7 @@ describe("remote interactive terminals over real HTTP and WebSocket transports",
         connected: (socket) => socket.send(new Uint8Array([0, 0x1b, 0xff])),
       });
       const bytes: Uint8Array[] = [];
-      const ship = new OpenshipClient({
+      const ship = new KovalioClient({
         baseUrl: f.baseUrl,
         token: "opsh_pat_fixture",
         organizationId: "org-fixture",
@@ -110,7 +110,7 @@ describe("remote interactive terminals over real HTTP and WebSocket transports",
         headers: {
           authorization: "Bearer opsh_pat_fixture",
           "x-organization-id": "org-fixture",
-          "x-openship-scope": "fixed",
+          "x-kovalio-scope": "fixed",
         },
       });
       expect(f.upgrades[0].path).toBe(
@@ -138,7 +138,7 @@ describe("remote interactive terminals over real HTTP and WebSocket transports",
 
   it("explicitly closes a remote shell instead of parking it", async () => {
     const f = await fixture();
-    const session = await new OpenshipClient({ baseUrl: f.baseUrl }).terminal.openServer(
+    const session = await new KovalioClient({ baseUrl: f.baseUrl }).terminal.openServer(
       "server-fixture",
       {
         origin: "https://dashboard.example.test",
@@ -161,7 +161,7 @@ describe("remote interactive terminals over real HTTP and WebSocket transports",
       },
     });
     await expect(
-      new OpenshipClient({ baseUrl: f.baseUrl }).terminal.openServer("server-fixture", {
+      new KovalioClient({ baseUrl: f.baseUrl }).terminal.openServer("server-fixture", {
         origin: "https://dashboard.example.test",
         onData: () => {},
         resumeToken: "resume-fixture",
@@ -170,14 +170,14 @@ describe("remote interactive terminals over real HTTP and WebSocket transports",
     expect(f.requests).toHaveLength(1);
     expect(f.upgrades).toHaveLength(1);
     expect(f.upgrades[0].headers["sec-websocket-protocol"]).toContain(
-      "openship.terminal.resume+resume-fixture",
+      "kovalio.terminal.resume+resume-fixture",
     );
   });
 
   it("does not open a WebSocket after an authorization denial", async () => {
     const f = await fixture({ status: 403, ticket: { error: "Server administration required" } });
     await expect(
-      new OpenshipClient({ baseUrl: f.baseUrl }).terminal.openServer("server-fixture", {
+      new KovalioClient({ baseUrl: f.baseUrl }).terminal.openServer("server-fixture", {
         origin: "https://dashboard.example.test",
         onData: () => {},
       }),
@@ -190,7 +190,7 @@ describe("remote interactive terminals over real HTTP and WebSocket transports",
     const secret = "bad ticket SECRET";
     const f = await fixture({ ticket: { success: true, token: secret, expiresIn: 30 } });
     await expect(
-      new OpenshipClient({ baseUrl: f.baseUrl }).terminal.openServer("server-fixture", {
+      new KovalioClient({ baseUrl: f.baseUrl }).terminal.openServer("server-fixture", {
         origin: "https://dashboard.example.test",
         onData: () => {},
       }),
@@ -201,7 +201,7 @@ describe("remote interactive terminals over real HTTP and WebSocket transports",
   it("bounds the readiness handshake and closes the pending connection", async () => {
     const f = await fixture({ initial: null });
     await expect(
-      new OpenshipClient({ baseUrl: f.baseUrl }).terminal.openServer("server-fixture", {
+      new KovalioClient({ baseUrl: f.baseUrl }).terminal.openServer("server-fixture", {
         origin: "https://dashboard.example.test",
         onData: () => {},
         connectTimeoutMs: 100,
@@ -212,7 +212,7 @@ describe("remote interactive terminals over real HTTP and WebSocket transports",
 
   it("treats a dropped connection as unknown completion, never a successful exit", async () => {
     const f = await fixture();
-    const session = await new OpenshipClient({ baseUrl: f.baseUrl }).terminal.openServer(
+    const session = await new KovalioClient({ baseUrl: f.baseUrl }).terminal.openServer(
       "server-fixture",
       {
         origin: "https://dashboard.example.test",
@@ -226,7 +226,7 @@ describe("remote interactive terminals over real HTTP and WebSocket transports",
   it("aborts a live terminal and requests remote shell teardown", async () => {
     const f = await fixture();
     const abort = new AbortController();
-    const session = await new OpenshipClient({ baseUrl: f.baseUrl }).terminal.openService(
+    const session = await new KovalioClient({ baseUrl: f.baseUrl }).terminal.openService(
       "service-fixture",
       {
         origin: "https://dashboard.example.test",
@@ -244,7 +244,7 @@ describe("remote interactive terminals over real HTTP and WebSocket transports",
   it("does not mint a ticket for a pre-aborted operation", async () => {
     const f = await fixture();
     await expect(
-      new OpenshipClient({ baseUrl: f.baseUrl }).terminal.openServer("server-fixture", {
+      new KovalioClient({ baseUrl: f.baseUrl }).terminal.openServer("server-fixture", {
         onData: () => {},
         signal: AbortSignal.abort(new Error("Cancelled")),
       }),

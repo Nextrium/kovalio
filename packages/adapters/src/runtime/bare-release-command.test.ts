@@ -39,7 +39,7 @@ function config(overrides: Partial<DeployConfig> = {}): DeployConfig {
     projectId: "proj_1",
     deploymentId: "dep_1",
     buildSessionId: "bs_1",
-    imageRef: "/opt/openship/.builds/bs_1",
+    imageRef: "/opt/kovalio/.builds/bs_1",
     environment: "production",
     port: 8000,
     envVars: { DATABASE_URL: "postgres://u:p@db/app", "not-an-ident": "x" },
@@ -50,7 +50,7 @@ function config(overrides: Partial<DeployConfig> = {}): DeployConfig {
 
 describe("BareRuntime.runReleaseCommand", () => {
   it("migrates the shared persistent data on successive releases", async () => {
-    const workDir = await mkdtemp(join(tmpdir(), "openship-release-data-"));
+    const workDir = await mkdtemp(join(tmpdir(), "kovalio-release-data-"));
     try {
       const runtime = new BareRuntime({ workDir, executor: new LocalExecutor() });
       for (const release of ["first", "second"]) {
@@ -71,7 +71,7 @@ describe("BareRuntime.runReleaseCommand", () => {
   });
 
   it.each([0, 1])("never modifies a retained release's application files, even on exit %i", async exitCode => {
-    const workDir = await mkdtemp(join(tmpdir(), "openship-release-retained-"));
+    const workDir = await mkdtemp(join(tmpdir(), "kovalio-release-retained-"));
     try {
       const imageRef = join(workDir, "releases", "live");
       const storage = join(workDir, "shared", "proj_1", "storage");
@@ -110,7 +110,7 @@ describe("BareRuntime.runReleaseCommand", () => {
   });
 
   it("reaps a local grandchild before acknowledging cancellation", async () => {
-    const workDir = await mkdtemp(join(tmpdir(), "openship-release-cancel-"));
+    const workDir = await mkdtemp(join(tmpdir(), "kovalio-release-cancel-"));
     const abort = new AbortController();
     let pid: number | undefined;
     try {
@@ -149,7 +149,7 @@ describe("BareRuntime.runReleaseCommand", () => {
   });
 
   // `prisma migrate deploy` names a node_modules/.bin binary exactly the way
-  // `next start` does; the start command gets that dir prepended (openship#623),
+  // `next start` does; the start command gets that dir prepended (kovalio#623),
   // so the release command has to as well, or it exits 127 where the app runs.
   it("puts node_modules/.bin on PATH for a Node package manager, as the start command gets", async () => {
     const { executor, commands } = makeExecutor({ code: 0, output: "" });
@@ -159,7 +159,7 @@ describe("BareRuntime.runReleaseCommand", () => {
       () => {},
     );
     expect(commands[0]).toMatch(
-      /cd '\/opt\/openship\/\.builds\/bs_1' && export PATH='\/opt\/openship\/\.builds\/bs_1\/node_modules\/\.bin':"\$PATH" && prisma migrate deploy/,
+      /cd '\/opt\/kovalio\/\.builds\/bs_1' && export PATH='\/opt\/kovalio\/\.builds\/bs_1\/node_modules\/\.bin':"\$PATH" && prisma migrate deploy/,
     );
   });
 
@@ -174,7 +174,7 @@ describe("BareRuntime.runReleaseCommand", () => {
 
     expect(commands).toHaveLength(1);
     const command = commands[0]!;
-    expect(command).toContain("cd '/opt/openship/.builds/bs_1' && php artisan migrate --force");
+    expect(command).toContain("cd '/opt/kovalio/.builds/bs_1' && php artisan migrate --force");
     expect(command).toContain("export DATABASE_URL='postgres://u:p@db/app'");
     // PORT/NODE_ENV are part of the start command's env, so they're part of this one.
     expect(command).toContain("export PORT='8000'");

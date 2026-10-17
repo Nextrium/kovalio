@@ -12,7 +12,7 @@ const PROJECT_MARKERS = new Set(["package.json", "docker-compose.yml", "docker-c
 
 export async function browseDirectories(input: { path?: string } = {}) {
   assertSelfHosted();
-  const native = process.env.OPENSHIP_NATIVE === "true";
+  const native = process.env.KOVALIO_NATIVE === "true";
   const raw = input.path || (native ? defaultNativeSourceRoot() : homedir());
   let dirPath = resolve(raw);
   try {

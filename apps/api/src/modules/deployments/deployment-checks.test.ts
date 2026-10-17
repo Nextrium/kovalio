@@ -27,7 +27,7 @@ vi.mock("@repo/db", () => ({ repos: {
   },
 } }));
 vi.mock("@repo/platform/engine/native/execution-policy", () => ({ nativeJobsEnabled: () => h.enabled }));
-vi.mock("@repo/platform/engine/config/index", () => ({ runtimeTarget: { dashboard: "https://openship.test" } }));
+vi.mock("@repo/platform/engine/config/index", () => ({ runtimeTarget: { dashboard: "https://kovalio.test" } }));
 vi.mock("@repo/platform/engine/lib/org-actor", () => ({ resolveOrgOwner: h.owner }));
 vi.mock("@repo/platform/engine/modules/github/check-runs", async original => ({
   ...await original<typeof import("@repo/platform/engine/modules/github/check-runs")>(), syncGitHubCheck: h.publish,
@@ -43,9 +43,9 @@ beforeEach(() => {
   h.dep = { id: "dep", projectId: "project", organizationId: "org", commitSha: "a".repeat(40), status: "queued", createdAt: new Date(), updatedAt: new Date(), envVars: null } as Deployment;
   h.rows = [];
   h.root = {
-    id: "root", deploymentId: "dep", kind: "rollup", name: "Openship / app / production", checkRunId: null,
+    id: "root", deploymentId: "dep", kind: "rollup", name: "Kovalio / app / production", checkRunId: null,
     publishedDigest: null, attempts: 0, createdAt: new Date(),
-    source: { owner: "acme", repo: "app", name: "Openship / app / production", checks: { ...DEFAULT_GITHUB_DEPLOYMENT_CHECKS }, services: [{ name: "web", targeted: true }, { name: "db", targeted: false }] },
+    source: { owner: "acme", repo: "app", name: "Kovalio / app / production", checks: { ...DEFAULT_GITHUB_DEPLOYMENT_CHECKS }, services: [{ name: "web", targeted: true }, { name: "db", targeted: false }] },
   } as DeploymentCheck;
   h.mirrors = [h.root];
   h.owner.mockResolvedValue({ userId: "owner" });
@@ -69,7 +69,7 @@ describe("durable deployment Checks on every execution target", () => {
     await runDeploymentChecksSweep();
     expect(updates().slice(-2).map(update => update.conclusion)).toEqual(["failure", "failure"]);
     expect(updates().at(-1).output.summary).toContain("Clone failed");
-    expect(updates()[0].detailsUrl).toBe("https://openship.test/build/dep");
+    expect(updates()[0].detailsUrl).toBe("https://kovalio.test/build/dep");
     expect(h.publish.mock.calls.at(-1)?.[0]).toMatchObject({ userId: "owner", organizationId: "org" });
     expect(h.released.mock.calls.at(-1)?.[0].nextAttemptAt).toBeNull();
     expect(h.mirrors).toHaveLength(3);

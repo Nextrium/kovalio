@@ -43,12 +43,12 @@ describe("app installation post-auth return", () => {
 
   it("keeps the app across login, registration, verification, 2FA and organization selection", () => {
     let href = authContinuationHref("/login", destination);
-    href = buildAuthPageHref("/register", new URL(href, "https://app.openship.io").searchParams);
-    href = emailVerificationHref("user@example.test", new URL(href, "https://app.openship.io").searchParams);
-    expect(getPostAuthRedirect(new URL(href, "https://app.openship.io").searchParams)).toBe(destination);
+    href = buildAuthPageHref("/register", new URL(href, "https://kovalio.nextrium.org").searchParams);
+    href = emailVerificationHref("user@example.test", new URL(href, "https://kovalio.nextrium.org").searchParams);
+    expect(getPostAuthRedirect(new URL(href, "https://kovalio.nextrium.org").searchParams)).toBe(destination);
     for (const route of ["/two-factor", "/select-organization", "/forgot-password", "/reset-password", "/login"] as const) {
-      href = buildAuthPageHref(route, new URL(href, "https://app.openship.io").searchParams);
-      expect(getPostAuthRedirect(new URL(href, "https://app.openship.io").searchParams)).toBe(destination);
+      href = buildAuthPageHref(route, new URL(href, "https://kovalio.nextrium.org").searchParams);
+      expect(getPostAuthRedirect(new URL(href, "https://kovalio.nextrium.org").searchParams)).toBe(destination);
     }
   });
 
@@ -66,8 +66,8 @@ describe("app installation post-auth return", () => {
 it("preserves a landing-page plan purchase through login without allowing arbitrary billing routes", () => {
   const destination = "/billing/plans?newServer=1&plan=starter&startCheckout=1&checkoutIntent=72e918ec-8d9c-4b81-bf43-7a5790ca239a";
   const login = authContinuationHref("/login", destination);
-  const signup = buildAuthPageHref("/register", new URL(login, "https://app.openship.io").searchParams);
-  expect(getPostAuthRedirect(new URL(signup, "https://app.openship.io").searchParams)).toBe(destination);
+  const signup = buildAuthPageHref("/register", new URL(login, "https://kovalio.nextrium.org").searchParams);
+  expect(getPostAuthRedirect(new URL(signup, "https://kovalio.nextrium.org").searchParams)).toBe(destination);
   for (const unsafe of ["//evil.test/billing/plans", "/billing/plans/../../settings", "/billing/plans\\evil.test", "/billing/plans%2fextra", "/billing/payment"])
     expect(validateReturnTo(unsafe)).toBeNull();
 });

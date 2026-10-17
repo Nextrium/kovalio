@@ -4,8 +4,8 @@ import { env, runtimeTargetId } from "../config/env";
 /** Public/CLI installations bootstrap with their host token, never anonymously. */
 export function localBootstrapEnabled(): boolean {
   return !env.CLOUD_MODE && runtimeTargetId !== "cloud-saas" &&
-    !env.OPENSHIP_PUBLIC_URL && !env.OPENSHIP_REQUIRE_AUTH &&
-    (env.DEPLOY_MODE === "desktop" || env.OPENSHIP_ALLOW_ZERO_AUTH);
+    !env.KOVALIO_PUBLIC_URL && !env.KOVALIO_REQUIRE_AUTH &&
+    (env.DEPLOY_MODE === "desktop" || env.KOVALIO_ALLOW_ZERO_AUTH);
 }
 
 // Carry the HTTP peer authorization into Better Auth's database hook without

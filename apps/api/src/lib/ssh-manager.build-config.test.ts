@@ -53,8 +53,8 @@ afterEach(() => vi.unstubAllEnvs());
 
 describe("native SSH host policy", () => {
   it("refuses ambient agent/config and host key files before reading any credentials", async () => {
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
     for (const settings of [
       { ...base, sshKeyPath: "/root/.ssh/id_ed25519" },
       { ...base, sshAuthMethod: "agent" },
@@ -62,8 +62,8 @@ describe("native SSH host policy", () => {
     expect(readFileSync).not.toHaveBeenCalled();
   });
   it("allows explicit remote passwords and pasted keys without host access", async () => {
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
     expect(await buildSshConfig({ ...base, sshPrivateKey: "EXPLICIT-KEY", sshKeyPath: "/root/.ssh/id_ed25519" }))
       .toMatchObject({ privateKey: "EXPLICIT-KEY" });
     expect(await buildSshConfig({ ...base, sshAuthMethod: "password", sshPassword: "EXPLICIT-PASSWORD" }))
@@ -71,8 +71,8 @@ describe("native SSH host policy", () => {
     expect(readFileSync).not.toHaveBeenCalled();
   });
   it("retains host-key access when the owning application explicitly enables it", async () => {
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "true");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "true");
     expect(await buildSshConfig({ ...base, sshKeyPath: "/root/.ssh/id_ed25519" })).toMatchObject({ privateKey: "FILE-ON-HOST-KEY" });
     expect(readFileSync).toHaveBeenCalledOnce();
   });

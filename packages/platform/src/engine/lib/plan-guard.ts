@@ -17,7 +17,7 @@
  *   and change nothing.
  *
  * Oblien enforces credit limits and subscription suspension. These gates
- * enforce Openship application allowances using the verified subscription.
+ * enforce Kovalio application allowances using the verified subscription.
  */
 
 import {
@@ -221,7 +221,7 @@ export async function assertPlanAllowsServices(organizationId: string, workspace
  * Refuse a machine size larger than the tier allows.
  *
  * Oblien enforces the VM and namespace allocation; several Docker services
- * can share one VM. Openship also enforces the selected per-service tier inside
+ * can share one VM. Kovalio also enforces the selected per-service tier inside
  * that host, so a container cannot silently exceed its service configuration.
  *
  * Named presets and custom sizes are compared on CPU and RAM against the

@@ -226,7 +226,7 @@ export interface KovalioConfig {
    * Warming must run at startup, never at build or in `releaseCommands`:
    * `config:cache` (inside `optimize`) freezes the env present when it runs and
    * makes every `env()` call outside `config/*.php` return `null`, so it is only
-   * correct after Openship injects the runtime env. See `resolveWebCommand` in
+   * correct after Kovalio injects the runtime env. See `resolveWebCommand` in
    * `../stack-roles`.
    */
   optimize?: boolean;

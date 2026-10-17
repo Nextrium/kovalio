@@ -1,7 +1,7 @@
 {
   "cloudClient": {
     "title": "Emails",
-    "subtitle": "Use your existing mailboxes with Openship Webmail.",
+    "subtitle": "Use your existing mailboxes with Kovalio Webmail.",
     "connectTitle": "Connect your mail server",
     "description": "Connect any IMAP/SMTP server. Your provider keeps your mailboxes and mail delivery.",
     "connectAction": "Connect existing mail server",
@@ -11,8 +11,8 @@
   "cloudComingSoon": {
     "title": "Managed email",
     "badge": "Coming soon",
-    "description": "Managed email on Openship Cloud is coming soon. Cloud server plans are for hosting applications and do not provision a mail server.",
-    "selfHosted": "Self-hosted email is available on your own server through a self-hosted Openship installation."
+    "description": "Managed email on Kovalio Cloud is coming soon. Cloud server plans are for hosting applications and do not provision a mail server.",
+    "selfHosted": "Self-hosted email is available on your own server through a self-hosted Kovalio installation."
   },
   "page": {
     "title": "Email Server",

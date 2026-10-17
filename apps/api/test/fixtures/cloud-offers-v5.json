@@ -1,8 +1,8 @@
 {
   "hobby": {
     "offer": {
-      "reference": "openship:hobby:v5",
-      "name": "Openship Hobby",
+      "reference": "kovalio:hobby:v5",
+      "name": "Kovalio Hobby",
       "unitAmount": 500,
       "currency": "usd",
       "credits": 400,
@@ -40,8 +40,8 @@
   },
   "starter": {
     "offer": {
-      "reference": "openship:starter:v5",
-      "name": "Openship Starter",
+      "reference": "kovalio:starter:v5",
+      "name": "Kovalio Starter",
       "unitAmount": 2000,
       "currency": "usd",
       "credits": 1700,
@@ -79,8 +79,8 @@
   },
   "pro": {
     "offer": {
-      "reference": "openship:pro:v5",
-      "name": "Openship Pro",
+      "reference": "kovalio:pro:v5",
+      "name": "Kovalio Pro",
       "unitAmount": 3900,
       "currency": "usd",
       "credits": 3500,
@@ -118,8 +118,8 @@
   },
   "team": {
     "offer": {
-      "reference": "openship:team:v5",
-      "name": "Openship Scale",
+      "reference": "kovalio:team:v5",
+      "name": "Kovalio Scale",
       "unitAmount": 9900,
       "currency": "usd",
       "credits": 9000,

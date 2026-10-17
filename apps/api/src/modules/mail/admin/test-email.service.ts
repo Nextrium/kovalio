@@ -54,7 +54,7 @@ import {
   ensureKovalioPlatformMailbox,
   type PlatformMailboxCreds,
 } from "@repo/platform/engine/modules/mail/admin/platform-mailbox.service";
-import { ensureOpenshipTestMailbox } from "./test-mailbox.service";
+import { ensureKovalioTestMailbox } from "./test-mailbox.service";
 import { isSmtpAuthFailure } from "@repo/platform/engine/modules/mail/smtp-auth-error";
 import {
   checkMailPortReachability,
@@ -216,7 +216,7 @@ export async function sendTestEmail(
     // path and bypass the live vmail check, which is how a deleted system
     // mailbox kept producing 535 forever even after ensure* was hardened.
     const minted: PlatformMailboxCreds =
-      await ensureOpenshipPlatformMailbox(serverId);
+      await ensureKovalioPlatformMailbox(serverId);
     creds = {
       email: minted.email,
       password: minted.password,

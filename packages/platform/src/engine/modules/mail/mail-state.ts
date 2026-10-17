@@ -74,7 +74,7 @@ export interface MailWebmailState {
  * doveadm-hashed password is stored in `vmail.mailbox`; the plaintext
  * here is the credential cache the API hands to nodemailer. Every read is
  * reconciled against the live mailbox + forwarding rows, and both ends are
- * written in a SINGLE call to `ensureOpenshipPlatformMailbox` — see
+ * written in a SINGLE call to `ensureKovalioPlatformMailbox` — see
  * apps/api/src/modules/mail/admin/platform-mailbox.service.ts.
  *
  * Absence of the field on an existing state file = "not yet provisioned"
@@ -392,7 +392,7 @@ export async function readState(
   exec: CommandExecutor,
   options: { strict?: boolean } = {},
 ): Promise<MailServerState | null> {
-  const trimmed = await readOpenshipFile(exec, MAIL_STATE_FILE, options);
+  const trimmed = await readKovalioFile(exec, MAIL_STATE_FILE, options);
   if (!trimmed) return null;
 
   try {

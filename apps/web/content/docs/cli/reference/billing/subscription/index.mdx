@@ -1,32 +1,32 @@
 ---
 title: billing subscription
-description: Commands, arguments, and options for openship billing subscription.
-cliGroup: openship billing subscription
+description: Commands, arguments, and options for kovalio billing subscription.
+cliGroup: kovalio billing subscription
 ---
 
 See the [workflow guide](/docs/cli/cloud) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship billing subscription
+## kovalio billing subscription
 
 Purchase, inspect or change a managed server subscription
 
 ```text
-openship billing subscription [options] [command]
+kovalio billing subscription [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`get [options]`](/docs/cli/reference/billing/subscription#openship-billing-subscription-get) | Read the current subscription and renewal state |
-| [`create [options] <plan>`](/docs/cli/reference/billing/subscription#openship-billing-subscription-create) | Create a checkout; complete payment at the returned URL |
-| [`cancel [options]`](/docs/cli/reference/billing/subscription#openship-billing-subscription-cancel) | Cancel renewal of this subscription |
-| [`resume [options]`](/docs/cli/reference/billing/subscription#openship-billing-subscription-resume) | Resume renewal of this subscription |
+| [`get [options]`](/docs/cli/reference/billing/subscription#kovalio-billing-subscription-get) | Read the current subscription and renewal state |
+| [`create [options] <plan>`](/docs/cli/reference/billing/subscription#kovalio-billing-subscription-create) | Create a checkout; complete payment at the returned URL |
+| [`cancel [options]`](/docs/cli/reference/billing/subscription#kovalio-billing-subscription-cancel) | Cancel renewal of this subscription |
+| [`resume [options]`](/docs/cli/reference/billing/subscription#kovalio-billing-subscription-resume) | Resume renewal of this subscription |
 
-## openship billing subscription cancel
+## kovalio billing subscription cancel
 
 Cancel renewal of this subscription
 
 ```text
-openship billing subscription cancel [options]
+kovalio billing subscription cancel [options]
 ```
 
 | Option | Meaning |
@@ -35,12 +35,12 @@ openship billing subscription cancel [options]
 | `--workspace <id>` | Billing workspace ID, including retained subscriptions |
 | `-y, --yes` | Confirm the renewal change |
 
-## openship billing subscription create
+## kovalio billing subscription create
 
 Create a checkout; complete payment at the returned URL
 
 ```text
-openship billing subscription create [options] <plan>
+kovalio billing subscription create [options] <plan>
 ```
 
 | Argument | Meaning |
@@ -55,12 +55,12 @@ openship billing subscription create [options] <plan>
 | `--custom <file>` | JSON resources and quoteReference from billing quote |
 | `--idempotency-key <key>` | Reuse this key when recovering the same checkout request |
 
-## openship billing subscription get
+## kovalio billing subscription get
 
 Read the current subscription and renewal state
 
 ```text
-openship billing subscription get [options]
+kovalio billing subscription get [options]
 ```
 
 | Option | Meaning |
@@ -68,12 +68,12 @@ openship billing subscription get [options]
 | `--server <id>` | Use this managed server's billing workspace |
 | `--workspace <id>` | Billing workspace ID, including retained subscriptions |
 
-## openship billing subscription resume
+## kovalio billing subscription resume
 
 Resume renewal of this subscription
 
 ```text
-openship billing subscription resume [options]
+kovalio billing subscription resume [options]
 ```
 
 | Option | Meaning |

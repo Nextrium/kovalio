@@ -53,11 +53,11 @@ vi.mock("@repo/adapters", () => ({
 }));
 
 vi.mock("@repo/platform/engine/lib/edge-image", () => ({
-  pinnedEdgeImage: vi.fn(() => "ghcr.io/oblien/openship-edge:0.5.0"),
+  pinnedEdgeImage: vi.fn(() => "ghcr.io/oblien/kovalio-edge:0.5.0"),
 }));
 
 vi.mock("@repo/platform/engine/lib/mail-image", () => ({
-  pinnedMailImage: vi.fn(() => "ghcr.io/oblien/openship-mail:0.5.0"),
+  pinnedMailImage: vi.fn(() => "ghcr.io/oblien/kovalio-mail:0.5.0"),
 }));
 
 vi.mock("@repo/platform/engine/lib/edge-reconcile", () => ({

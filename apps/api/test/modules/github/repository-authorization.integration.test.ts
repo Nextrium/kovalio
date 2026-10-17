@@ -20,10 +20,10 @@ vi.mock("@repo/platform/engine/config/env", async (original) => {
     },
     runtimeTarget: {
       ...config.runtimeTarget,
-      api: "https://api.openship.test",
-      dashboard: "https://app.openship.test",
+      api: "https://api.kovalio.test",
+      dashboard: "https://app.kovalio.test",
     },
-    localDashboardUrl: "https://app.openship.test",
+    localDashboardUrl: "https://app.kovalio.test",
   };
 });
 
@@ -52,7 +52,7 @@ import {
   oauthBridgeStore,
   startGithubLinkFromBridgeToken,
 } from "@repo/platform/engine/modules/cloud/cloud-github.service";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { githubRoutes } from "../../../src/modules/github/github.routes";
 import { authRoutes } from "../../../src/modules/auth/auth.routes";
 import { healthRoutes } from "../../../src/modules/health/health.routes";
@@ -71,7 +71,7 @@ const app = new Hono()
   .route("/api/auth", authRoutes)
   .route("/api/health", healthRoutes)
   .get("/api/cloud/github/install-callback", githubInstallCallback);
-const apiOrigin = "https://api.openship.test";
+const apiOrigin = "https://api.kovalio.test";
 const installation = {
   id: 42,
   app_id: 9,
@@ -176,7 +176,7 @@ async function actor() {
   const authContext = await auth.$context;
   const signature = createHmac("sha256", env.BETTER_AUTH_SECRET).update(token).digest("base64");
   const cookie = `${authContext.authCookies.sessionToken.name}=${encodeURIComponent(`${token}.${signature}`)}`;
-  const client = new OpenshipClient({
+  const client = new KovalioClient({
     baseUrl: apiOrigin,
     token: owner.token,
     organizationId: owner.orgId,
@@ -229,7 +229,7 @@ async function authorize(owner: Actor) {
   const completed = await callback(attempt, code);
   expect(completed.status).toBe(302);
   expect(completed.headers.get("location")).toBe(
-    `https://app.openship.test/auth/callback/install?state=${attempt.state}`,
+    `https://app.kovalio.test/auth/callback/install?state=${attempt.state}`,
   );
   expect(exchanges.at(-1)?.get("code_verifier")).toBe(attempt.verifier);
   expect(exchanges.at(-1)?.get("redirect_uri")).toBe(
@@ -253,7 +253,7 @@ function claim(owner: Actor, state: string, installationId = "42") {
 }
 
 describe("Cloud repository authorization from browser callback through library and clone", () => {
-  it("lets two Openship accounts connect the same GitHub identity without transferring either login", async () => {
+  it("lets two Kovalio accounts connect the same GitHub identity without transferring either login", async () => {
     const first = await actor();
     const second = await actor();
     await db

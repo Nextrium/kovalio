@@ -20,10 +20,10 @@ export function resolveCloudflaredExecutable(options: CloudflaredOptions = {}): 
     try { return statSync(file).isFile(); } catch (diagnosticFailure) {
       observeCaughtError(diagnosticFailure, "adapters/system/cloudflare-ssh"); return false; }
   });
-  const configured = env.OPENSHIP_CLOUDFLARED_PATH?.trim();
+  const configured = env.KOVALIO_CLOUDFLARED_PATH?.trim();
   if (configured) {
     if (!path.isAbsolute(configured) || !isFile(configured)) {
-      throw new Error("OPENSHIP_CLOUDFLARED_PATH must point to an installed cloudflared executable.");
+      throw new Error("KOVALIO_CLOUDFLARED_PATH must point to an installed cloudflared executable.");
     }
     return configured;
   }
@@ -34,7 +34,7 @@ export function resolveCloudflaredExecutable(options: CloudflaredOptions = {}): 
     const candidate = path.join(directory, platform === "win32" ? "cloudflared.exe" : "cloudflared");
     if (isFile(candidate)) return candidate;
   }
-  throw new Error("Cloudflare Access requires cloudflared on the machine running OpenShip. Install it or set OPENSHIP_CLOUDFLARED_PATH, then retry.");
+  throw new Error("Cloudflare Access requires cloudflared on the machine running Kovalio. Install it or set KOVALIO_CLOUDFLARED_PATH, then retry.");
 }
 
 /** Generated from a fixed command and validated hostname, never raw SSH options. */

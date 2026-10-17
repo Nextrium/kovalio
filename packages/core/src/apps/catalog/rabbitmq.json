@@ -1,5 +1,5 @@
 {
-  "$schema": "https://openship.io/app.schema.json",
+  "$schema": "https://nextrium.org/app.schema.json",
   "available": true,
   "verified": true,
   "minEngine": "0.9.0",
@@ -16,8 +16,8 @@
       "restart": "unless-stopped",
       "image": "rabbitmq:4.3.6-management-alpine",
       "environment": {
-        "RABBITMQ_DEFAULT_USER": "openship",
-        "RABBITMQ_DEFAULT_VHOST": "openship",
+        "RABBITMQ_DEFAULT_USER": "kovalio",
+        "RABBITMQ_DEFAULT_VHOST": "kovalio",
         "RABBITMQ_NODENAME": "rabbit@rabbitmq"
       },
       "volumes": ["rabbitmq_data:/var/lib/rabbitmq"],
@@ -80,7 +80,7 @@
       {
         "id": "url",
         "label": "AMQP URL",
-        "source": "template:amqp://openship:{{env:rabbitmq:RABBITMQ_DEFAULT_PASS}}@rabbitmq:5672/openship",
+        "source": "template:amqp://kovalio:{{env:rabbitmq:RABBITMQ_DEFAULT_PASS}}@rabbitmq:5672/kovalio",
         "service": "rabbitmq",
         "secret": true,
         "envKey": "AMQP_URL",

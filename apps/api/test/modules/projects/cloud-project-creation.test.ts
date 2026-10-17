@@ -6,7 +6,7 @@ import type { ExecutionContext } from "@repo/platform";
 const h = vi.hoisted(() => ({
   linked: new Set<string>(),
   identity: {
-    apiUrl: "https://api.openship.test",
+    apiUrl: "https://api.kovalio.test",
     userId: "cloud-owner",
     organizationId: "cloud-org",
   },
@@ -70,7 +70,7 @@ const ctx = (): ExecutionContext =>
   }) as ExecutionContext;
 
 beforeEach(async () => {
-  vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory");
+  vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory");
   h.fetch.mockReset();
   h.linked.clear();
   h.identity.organizationId = "cloud-org";

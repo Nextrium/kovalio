@@ -30,8 +30,8 @@ const digest = (value: unknown) => createHash("sha256").update(JSON.stringify(va
 /** Session-named generated Dockerfiles otherwise invalidate COPY on every
  * monorepo deployment, even when application sources have not changed. */
 export function generatedBuildIgnore(contents: string): string {
-  if (contents.split(/\r?\n/).includes("Dockerfile.openship*")) return contents;
-  return `${contents}${contents.endsWith("\n") || !contents ? "" : "\n"}# OpenShip generated build files\nDockerfile.openship*\n`;
+  if (contents.split(/\r?\n/).includes("Dockerfile.kovalio*")) return contents;
+  return `${contents}${contents.endsWith("\n") || !contents ? "" : "\n"}# Kovalio generated build files\nDockerfile.kovalio*\n`;
 }
 
 export function cachedRunPrefix(
@@ -85,7 +85,7 @@ export function cachedRunPrefix(
     .map((path) => {
       const id = digest([scope, path, packagePaths.includes(path) ? "packages" : buildInputs]);
       // Exclusive writers also work for tools whose cache format is not concurrent.
-      return `--mount=type=cache,id=openship-${id}-\${TARGETPLATFORM},target=${path},sharing=locked`;
+      return `--mount=type=cache,id=kovalio-${id}-\${TARGETPLATFORM},target=${path},sharing=locked`;
     });
   return mounts.length ? `RUN ${mounts.join(" ")} ` : "RUN ";
 }

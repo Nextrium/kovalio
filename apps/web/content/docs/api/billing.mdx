@@ -6,7 +6,7 @@ description: Read plans and manage subscriptions, credits, and usage.
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 Billing covers plans, subscriptions, credits, and usage. Plan listing is public on every installation.
-Openship defines its prices, namespace credits, limits and checkout copy. Oblien
+Kovalio defines its prices, namespace credits, limits and checkout copy. Oblien
 collects the payment and applies the saved offer on payment and renewal. Each
 subscription owns a managed server and maps to an immutable provider namespace.
 Account operations require configured Cloud billing. Self-hosted HTTP routes can proxy a connected user's
@@ -61,7 +61,7 @@ console.log(catalog.plans);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/billing/plans"
+curl "$KOVALIO_URL/api/billing/plans"
 ```
 
 </Tab>
@@ -89,13 +89,13 @@ Each entry in `plans` looks like:
 <TypeTable
   type={{
     id: { type: 'string', description: 'Stable tier id — free, hobby, starter, pro, team, enterprise. Never localized; this is what you send back when starting a subscription.' },
-    name: { type: 'string', description: 'Openship display name. Do not key logic off this.' },
-    description: { type: 'string', description: "Openship's checkout description." },
+    name: { type: 'string', description: 'Kovalio display name. Do not key logic off this.' },
+    description: { type: 'string', description: "Kovalio's checkout description." },
     popular: { type: 'boolean', description: 'Render the "most popular" badge on exactly this tier.' },
     price: { type: 'object', description: 'Monthly and annual price in the currency’s MINOR units (cents). null on either side means that interval is not purchasable.' },
     monthlyCredits: { type: 'number | null', description: 'Included monthly allowance in milli-credits. null means no monthly allowance is reported; it does not prove unlimited usage.' },
-    limits: { type: 'object', description: 'Openship application allowances, including workloads, running services, projects, machine tier, build minutes, domains, and seats.' },
-    features: { type: 'string[]', description: 'Openship feature bullets. Render verbatim.' },
+    limits: { type: 'object', description: 'Kovalio application allowances, including workloads, running services, projects, machine tier, build minutes, domains, and seats.' },
+    features: { type: 'string[]', description: 'Kovalio feature bullets. Render verbatim.' },
     contactSales: { type: 'string | null', description: 'Where to send a buyer when the tier has no self-serve price — a mailto or URL. null on purchasable tiers.' },
   }}
 />
@@ -110,17 +110,17 @@ Two conventions matter when you render this:
   `false` while annual terms are unpublished, and every `price.annual` is `null`
   to match — keep annual affordances hidden while it is.
 
-Prices, credits, packs and limits come from Openship's server catalog in
+Prices, credits, packs and limits come from Kovalio's server catalog in
 `@repo/core`. The API, dashboard and [pricing page](/pricing) read the same
 published catalog. Monthly paid plans are $5 / $20 / $39 / $99; annual checkout is
 hidden until explicit yearly terms are published. Linked local installations
 read the SaaS public catalog without sending local credentials.
 
 New checkouts send a generic Oblien `offer`. It contains the server-selected
-price, credits, grace and VM caps; versioned metadata records the Openship plan,
+price, credits, grace and VM caps; versioned metadata records the Kovalio plan,
 application limits, organization and immutable namespace. Customers cannot
 submit their own price, offer or namespace. Existing Oblien catalog subscriptions
-remain readable, while all new purchases use Openship's catalog.
+remain readable, while all new purchases use Kovalio's catalog.
 
 The payment funds the reseller's Oblien wallet. It does not change the reseller
 account's platform subscription. Each customer subscription belongs to its
@@ -132,7 +132,7 @@ promise of fixed CPU minutes.
 Each subscription purchases one managed server with its advertised CPU, RAM
 and disk. Projects and services share that server, with no count cap on new
 paid offers. Container limits are ceilings inside the server, not additional
-VM reservations. Oblien enforces the saved offer's host limits. Openship does
+VM reservations. Oblien enforces the saved offer's host limits. Kovalio does
 not rewrite saved purchase terms on renewal.
 
 ## Quote Custom resources
@@ -192,8 +192,8 @@ console.log(state);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/billing/state?workspaceId=cws_..." \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/billing/state?workspaceId=cws_..." \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -267,7 +267,7 @@ required fresh restart review. The existing server operation supplies progress
 and recovery. Disks cannot shrink in place.
 
 Quotes expire in at most ten minutes. Use a new preview key after expiry or a
-changed quote. Retry an uncertain confirmation with the same `quoteId`; Openship
+changed quote. Retry an uncertain confirmation with the same `quoteId`; Kovalio
 persists its provider retry key before acceptance. Signed events and background
 recovery continue it after navigation or a restart. No client-supplied price,
 namespace, credits or metadata is accepted. MCP exposes preview and status;
@@ -321,7 +321,7 @@ supported cancellation action can be resumed, allowed to expire, or referred to 
 const checkout = await ship.billing.getCheckout({ checkoutId: 'cs_...' });
 ```
 
-`GET /api/billing/checkout?checkoutId=cs_...` requires `billing:read`. Openship
+`GET /api/billing/checkout?checkoutId=cs_...` requires `billing:read`. Kovalio
 resolves the current organization's namespace before asking Oblien about that
 specific session. Another organization's checkout cannot be read. The response
 contains `id`, `kind`, `status`, `paymentStatus`, `fulfilled`,
@@ -356,14 +356,14 @@ if (resources.edge.status === "available") {
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/billing/resources" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/billing/resources" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
 </Tabs>
 
-Requires `billing:read`. Openship resolves the authenticated organization's
+Requires `billing:read`. Kovalio resolves the authenticated organization's
 namespace; callers do not supply a namespace or another customer's account.
 The REST response wraps the resource snapshot in `{ data }`.
 
@@ -398,7 +398,7 @@ paid subscription and a current Oblien entitlement of `active` or `credit_exhaus
 past-due entitlement cannot qualify through a stale active subscription record;
 an unavailable entitlement read blocks the purchase.
 A top-up cannot increase resource/project/build limits or activate a subscription.
-Openship never resets or grants credits itself.
+Kovalio never resets or grants credits itself.
 
 `POST /portal` returns `{ portalUrl }` for this organization's invoices, payment
 methods, and cancellation. It requires `billing:admin`, like cancel/resume,

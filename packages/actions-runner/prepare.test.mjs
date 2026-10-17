@@ -18,7 +18,7 @@ test("prepares a runner from an empty module cache without modifying upstream so
   const original = readFileSync(join(upstream.Dir, sourcePath), "utf8");
   const cache = spawnSync("go", ["env", "GOMODCACHE"], { cwd: directory, encoding: "utf8" });
   assert.equal(cache.status, 0, cache.stderr);
-  const temporary = mkdtempSync(join(tmpdir(), "openship-runner-prepare-"));
+  const temporary = mkdtempSync(join(tmpdir(), "kovalio-runner-prepare-"));
   // Serve the actual pinned module from the local Go proxy cache. No network
   // fallback: the child must populate a new module cache before patching.
   const env = {

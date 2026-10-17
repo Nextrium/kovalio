@@ -73,17 +73,17 @@ const url = resolveDatabaseUrl();
 const options: DatabaseOptions = {
   driver: url.startsWith("postgres") ? "pg" : "pglite",
   url,
-  dataDir: process.env.OPENSHIP_NATIVE === "true"
+  dataDir: process.env.KOVALIO_NATIVE === "true"
     ? resolvePgliteDataDir()
     : process.env.VITEST || process.env.NODE_ENV === "test" ? "memory://" : resolvePgliteDataDir(),
-  migrationsDir: process.env.OPENSHIP_MIGRATIONS_DIR,
-  migrations: process.env.OPENSHIP_DB_MIGRATIONS === "verify" ? "verify" : "apply",
-  pgliteAssetsDir: process.env.OPENSHIP_PGLITE_ASSETS_DIR,
-  connectTimeoutMs: process.env.OPENSHIP_DB_CONNECT_TIMEOUT_MS === undefined ? undefined : Number(process.env.OPENSHIP_DB_CONNECT_TIMEOUT_MS),
-  registerExitHook: process.env.OPENSHIP_NATIVE !== "true",
-  lockOwnerId: process.env.OPENSHIP_DB_LOCK_OWNER,
-  lockWaitMs: process.env.OPENSHIP_NATIVE === "true" ? 0 : undefined,
-  takeover: process.env.OPENSHIP_NATIVE !== "true" && (process.execArgv.includes("--watch") || process.env.OPENSHIP_DEV_LOCK_TAKEOVER === "true"),
+  migrationsDir: process.env.KOVALIO_MIGRATIONS_DIR,
+  migrations: process.env.KOVALIO_DB_MIGRATIONS === "verify" ? "verify" : "apply",
+  pgliteAssetsDir: process.env.KOVALIO_PGLITE_ASSETS_DIR,
+  connectTimeoutMs: process.env.KOVALIO_DB_CONNECT_TIMEOUT_MS === undefined ? undefined : Number(process.env.KOVALIO_DB_CONNECT_TIMEOUT_MS),
+  registerExitHook: process.env.KOVALIO_NATIVE !== "true",
+  lockOwnerId: process.env.KOVALIO_DB_LOCK_OWNER,
+  lockWaitMs: process.env.KOVALIO_NATIVE === "true" ? 0 : undefined,
+  takeover: process.env.KOVALIO_NATIVE !== "true" && (process.execArgv.includes("--watch") || process.env.KOVALIO_DEV_LOCK_TAKEOVER === "true"),
 };
 export const storageEncryption = createEncryption(process.env.BETTER_AUTH_SECRET ?? DEFAULT_ENCRYPTION_SECRET);
 const connection = await createDatabase(options).catch(error => {

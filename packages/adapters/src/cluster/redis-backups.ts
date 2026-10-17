@@ -19,8 +19,8 @@ const conflict = (message: string) =>
   new AppError(message, 409, "CLUSTER_DATABASE_BACKUP_NOT_READY");
 export function databaseTaskImage() {
   return buildImageRef(undefined, {
-    name: "openship-cluster-tasks",
-    imageOverride: process.env.OPENSHIP_CLUSTER_TASKS_IMAGE,
+    name: "kovalio-cluster-tasks",
+    imageOverride: process.env.KOVALIO_CLUSTER_TASKS_IMAGE,
   });
 }
 export const databaseArchiveName = (requestId: string) =>
@@ -152,12 +152,12 @@ export class DatabaseArchiveTasks {
       activeDeadlineSeconds: 1800,
       ttlSecondsAfterFinished: 86400,
       template: {
-        metadata: { labels: { ...this.labels, "openship.io/database-task": "true" } },
+        metadata: { labels: { ...this.labels, "nextrium.org/database-task": "true" } },
         spec: {
           restartPolicy: "Never",
           serviceAccountName: "database-archives",
           automountServiceAccountToken: true,
-          nodeSelector: { "openship.io/runtime": this.labels["openship.io/runtime"] },
+          nodeSelector: { "nextrium.org/runtime": this.labels["nextrium.org/runtime"] },
           securityContext: {
             runAsNonRoot: true,
             runAsUser: 1000,
@@ -171,7 +171,7 @@ export class DatabaseArchiveTasks {
               imagePullPolicy: "IfNotPresent",
               securityContext: { allowPrivilegeEscalation: false, capabilities: { drop: ["ALL"] } },
               env: [
-                { name: "OPENSHIP_DATABASE_TASK", value: "1" },
+                { name: "KOVALIO_DATABASE_TASK", value: "1" },
                 { name: "TASK_CONFIG", value: JSON.stringify(config) },
                 {
                   name: "JOB_NAME",
@@ -212,8 +212,8 @@ export class DatabaseArchiveTasks {
   ): DatabaseTaskConfig {
     return {
       operation: this.config.engine === "postgres" ? "postgres-backup" : "redis-backup",
-      databaseId: this.labels["openship.io/database"],
-      runtimeId: this.labels["openship.io/runtime"],
+      databaseId: this.labels["nextrium.org/database"],
+      runtimeId: this.labels["nextrium.org/runtime"],
       namespace: this.namespace,
       indexUid: index.metadata.uid!,
       destinationPath: storage.destinationPath,
@@ -427,7 +427,7 @@ export class DatabaseArchiveTasks {
         : {
             source: {
               databaseId: source.databaseId,
-              runtimeId: source.runtimeId ?? this.labels["openship.io/runtime"],
+              runtimeId: source.runtimeId ?? this.labels["nextrium.org/runtime"],
               manifestKey: source.backupId,
             },
           }),

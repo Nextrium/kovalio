@@ -132,7 +132,7 @@ describe("getAuthMode() — undeclared (DB-backed)", () => {
 
 describe("pin helpers", () => {
   it("reports the declared mode", async () => {
-    envMock.OPENSHIP_AUTH_MODE = "none";
+    envMock.KOVALIO_AUTH_MODE = "none";
     const { isAuthModePinned, pinnedAuthMode } = await import("@repo/platform/engine/lib/auth-mode");
     expect(isAuthModePinned()).toBe(true);
     expect(pinnedAuthMode()).toBe("none");

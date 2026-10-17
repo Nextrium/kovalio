@@ -1,5 +1,5 @@
 name: Bug report
-description: Report unexpected or incorrect behavior in OpenShip
+description: Report unexpected or incorrect behavior in Kovalio
 title: "[Bug]: "
 labels: ["bug"]
 type: bug
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for helping us improve OpenShip. Please provide enough detail for us to reproduce the problem.
+        Thanks for helping us improve Kovalio. Please provide enough detail for us to reproduce the problem.
 
   - type: checkboxes
     id: existing-issue
@@ -46,7 +46,7 @@ body:
       label: Environment
       description: Include the details that are relevant to this problem.
       value: |
-        - OpenShip version/commit:
+        - Kovalio version/commit:
         - Deployment method:
         - Operating system:
         - Browser (if applicable):

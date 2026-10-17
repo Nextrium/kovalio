@@ -42,7 +42,7 @@ function frame(patch = {}) {
   return Buffer.concat([header, body]);
 }
 function launch(t) {
-  const directory = mkdtempSync(join(tmpdir(), "openship-github-gate-"));
+  const directory = mkdtempSync(join(tmpdir(), "kovalio-github-gate-"));
   const worker = join(directory, "worker");
   const marker = join(directory, "started");
   // Read and echo the original IPC bytes, as the unmodified Worker would. An

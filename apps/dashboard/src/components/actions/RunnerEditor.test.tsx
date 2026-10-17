@@ -22,7 +22,7 @@ vi.mock("@/lib/api/actions", () => ({
   },
 }));
 vi.mock("@/context/PlatformContext", () => ({
-  usePlatform: () => ({ selfHosted: true, cloudAuthUrl: "https://app.openship.io" }),
+  usePlatform: () => ({ selfHosted: true, cloudAuthUrl: "https://kovalio.nextrium.org" }),
 }));
 vi.mock("@/components/servers/add-server-modal", () => ({ useAddServerModal: () => vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: h.push }) }));

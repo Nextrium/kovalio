@@ -112,7 +112,7 @@ describe("SshExecutor bounded SFTP lifecycle", () => {
     const controller = new AbortController();
 
     const pending = executor.runWithAbortSignal(controller.signal, () =>
-      executor.readFile("/etc/openship/state.json"),
+      executor.readFile("/etc/kovalio/state.json"),
     );
     await vi.waitFor(() => expect(stuck.readFile).toHaveBeenCalledTimes(1));
 
@@ -122,7 +122,7 @@ describe("SshExecutor bounded SFTP lifecycle", () => {
     expect(stuck.end).toHaveBeenCalledTimes(1);
     const lateReadCallback = stuck.readFile.mock.calls[0]![2];
     expect(() => lateReadCallback(null, Buffer.from("late"))).not.toThrow();
-    await expect(executor.readFile("/etc/openship/state.json")).resolves.toBe("data");
+    await expect(executor.readFile("/etc/kovalio/state.json")).resolves.toBe("data");
     expect(openSftpMock).toHaveBeenCalledTimes(2);
   });
 

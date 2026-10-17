@@ -16,13 +16,13 @@ function verifyPackageManager({ manager, version }: PackageManagerSelection): vo
         (actual || "no executable") +
         ".",
     );
-  console.log("[openship] Verified package manager: " + manager + "@" + actual);
+  console.log("[kovalio] Verified package manager: " + manager + "@" + actual);
 }
 
 export function bootstrapPackageManager(manager: ManagedPackageManager): void {
   const discovery = discoverPackageManager(manager);
   const selection = resolvePackageManager(manager, discovery);
-  console.log("[openship] Selected package manager: " + selection.pin);
+  console.log("[kovalio] Selected package manager: " + selection.pin);
   installPackageManager(selection);
   verifyPackageManager(selection);
 }

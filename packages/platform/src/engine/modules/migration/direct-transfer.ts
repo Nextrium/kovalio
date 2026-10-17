@@ -104,7 +104,7 @@ async function hasCommand(exec: CommandExecutor, cmd: string): Promise<boolean> 
  *  exactly our authorized_keys line and nothing else. */
 function trustMarker(runId: string, tag: string): string {
   if (!/^[a-zA-Z0-9_-]+$/.test(runId) || !/^(push|pull)$/.test(tag)) throw new Error("Invalid transfer identity");
-  return `openship-migration-${runId}-${tag}`;
+  return `kovalio-migration-${runId}-${tag}`;
 }
 
 /** Kernel-owned lock: a disconnected/crashed writer cannot strand it or
@@ -113,7 +113,7 @@ function editAuthorizedKeys(script: string): string {
   return `umask 077; mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh" && (` +
     `attempt=0; until flock -x -n 9; do attempt=$((attempt + 1)); ` +
     `[ "$attempt" -lt 100 ] || exit 1; sleep 0.1; done; ${script}` +
-    `) 9> "$HOME/.ssh/.openship-migration.lock"`;
+    `) 9> "$HOME/.ssh/.kovalio-migration.lock"`;
 }
 
 function removeAuthorizedKey(marker: string): string {
@@ -123,7 +123,7 @@ function removeAuthorizedKey(marker: string): string {
     `found=$(awk -v marker=${sq(marker)} '$NF == marker {found=1} END {print found ? "yes" : "no"}' "$HOME/.ssh/authorized_keys") || exit 1; ` +
     `[ "$found" = yes ] || exit 0; ` +
     editAuthorizedKeys(`ak="$HOME/.ssh/authorized_keys"; if [ -f "$ak" ]; then ` +
-    `tmp=$(mktemp "$HOME/.ssh/.openship-keys.XXXXXX") || exit 1; ` +
+    `tmp=$(mktemp "$HOME/.ssh/.kovalio-keys.XXXXXX") || exit 1; ` +
     `trap 'rm -f -- "$tmp"' EXIT; trap 'exit 1' HUP INT TERM; ` +
     `awk -v marker=${sq(marker)} '$NF != marker' "$ak" > "$tmp" && chmod 600 "$tmp" && mv "$tmp" "$ak"; fi`);
 }
@@ -133,7 +133,7 @@ export async function stopDirectTransfer(executor: CommandExecutor, runId: strin
   trustMarker(runId, "push"); // Validate the durable marker before using it.
   // The bracket prevents pgrep/pkill from matching their own shell command.
   const pattern = sq(`[o]penship-migration-${runId}-(push|pull)/id`);
-  await executor.exec(`[ -d ${sq(`/tmp/openship-migration-${runId}-push`)} ] || [ -d ${sq(`/tmp/openship-migration-${runId}-pull`)} ] || exit 0; ` +
+  await executor.exec(`[ -d ${sq(`/tmp/kovalio-migration-${runId}-push`)} ] || [ -d ${sq(`/tmp/kovalio-migration-${runId}-pull`)} ] || exit 0; ` +
     `command -v pgrep >/dev/null && command -v pkill >/dev/null || exit 1; ` +
     `pkill -TERM -f ${pattern} 2>/dev/null || true; ` +
     `attempt=0; while pgrep -f ${pattern} >/dev/null; do ` +
@@ -263,7 +263,7 @@ async function probeDirectLink(
       { timeout: PROBE_TIMEOUT_MS },
     )
     .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/migration/direct-transfer"); return ""; });
-  return out.includes("OPENSHIP_LINK_OK");
+  return out.includes("KOVALIO_LINK_OK");
 }
 
 /** Resolve a named volume's on-host mountpoint (handles a custom data-root). */
@@ -330,7 +330,7 @@ export function rsyncCommand(
   // The reviewed destination is an empty/owned copy (or an explicitly
   // approved overwrite). Remove stale destination files after a successful
   // directory copy, matching the streamed transport's replacement semantics.
-  const flags = `-a --protect-args --partial --partial-dir=.openship-partial --info=progress2 --timeout=60${dir ? " --delete-delay" : ""}${compress ? " -z" : ""}`;
+  const flags = `-a --protect-args --partial --partial-dir=.kovalio-partial --info=progress2 --timeout=60${dir ? " --delete-delay" : ""}${compress ? " -z" : ""}`;
   const dash_e = `-e ${sq(sshCommand)}`;
   const slash = dir ? "/" : "";
   const local = `${sq(localPath)}${slash}`;

@@ -18,7 +18,7 @@ import { runCommand, stubFetch, type FetchStub } from "../helpers/harness";
 let fetchStub: FetchStub;
 let directory: string;
 beforeEach(() => {
-  directory = mkdtempSync(join(tmpdir(), "openship-mail-cli-"));
+  directory = mkdtempSync(join(tmpdir(), "kovalio-mail-cli-"));
   setJsonMode(true);
 });
 afterEach(() => {

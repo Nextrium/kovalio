@@ -18,7 +18,7 @@ export interface InstallAppRoute {
  * Turn one catalog-authored port spec into the deliberate public binding that
  * an install-wizard `mode:"port"` choice promises.
  *
- * Docker runtime ports default to loopback in Openship (a bare `8080:80` must
+ * Docker runtime ports default to loopback in Kovalio (a bare `8080:80` must
  * not bypass the edge accidentally), so the all-interface address has to be
  * explicit here. A template that already pins an interface made a stronger
  * author decision and is preserved verbatim.

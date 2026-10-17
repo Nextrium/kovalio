@@ -15,7 +15,7 @@ function buildKitWorker(projectId: string, prefix: string) {
 /** Version the worker identity so unlabeled state left by older releases is
  * never mistaken for a managed, retained cache volume. */
 export function projectBuildKitWorker(projectId: string) {
-  return buildKitWorker(projectId, "openship-cache-");
+  return buildKitWorker(projectId, "kovalio-cache-");
 }
 
 /** Requires exclusive ownership of this project's builds. First stop/recover
@@ -27,7 +27,7 @@ export async function removeProjectBuildKitWorker(
   projectId: string,
 ): Promise<void> {
   for (const [worker, keepState] of [
-    [buildKitWorker(projectId, "openship-"), false],
+    [buildKitWorker(projectId, "kovalio-"), false],
     [projectBuildKitWorker(projectId), true],
   ] as const) await removeBuildKitWorker(executor, worker, keepState);
 }

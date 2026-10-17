@@ -6,12 +6,12 @@ import { POLICIES } from "../../src/lib/rate-limit/policies";
 import { shutdownRateLimit } from "../../src/lib/rate-limit";
 import { env } from "@repo/platform/engine/config/index";
 
-const originalEnv = { CLOUD_MODE: env.CLOUD_MODE, OPENSHIP_TRUST_EDGE: env.OPENSHIP_TRUST_EDGE };
+const originalEnv = { CLOUD_MODE: env.CLOUD_MODE, KOVALIO_TRUST_EDGE: env.KOVALIO_TRUST_EDGE };
 const floodLimit = POLICIES["flood-ip"].limit;
 beforeEach(() => {
   env.CLOUD_MODE = false;
-  env.OPENSHIP_TRUST_EDGE = false;
-  vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory");
+  env.KOVALIO_TRUST_EDGE = false;
+  vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory");
 });
 afterEach(async () => {
   await shutdownRateLimit();
@@ -69,7 +69,7 @@ describe("floodGuard middleware", () => {
   });
 
   it("keeps the raw auth-route limit active behind a trusted edge", async () => {
-    env.OPENSHIP_TRUST_EDGE = true;
+    env.KOVALIO_TRUST_EDGE = true;
     const app = new Hono();
     app.use("*", withIp("203.0.113.51"));
     app.use("/api/*", floodGuard);
@@ -128,18 +128,18 @@ describe("floodGuard middleware", () => {
   });
 
   it("is a no-op when an upstream edge is trusted to rate-limit", async () => {
-    // Behind the Edge (CLOUD_MODE) or with OPENSHIP_TRUST_EDGE set, the guard
+    // Behind the Edge (CLOUD_MODE) or with KOVALIO_TRUST_EDGE set, the guard
     // steps aside — the edge already rate-limits, so re-doing it here is
     // redundant. Requested by the maintainer on #123.
     const cloud = env.CLOUD_MODE;
-    const trust = env.OPENSHIP_TRUST_EDGE;
+    const trust = env.KOVALIO_TRUST_EDGE;
     try {
       for (const [k, v] of [
-        ["OPENSHIP_TRUST_EDGE", true],
+        ["KOVALIO_TRUST_EDGE", true],
         ["CLOUD_MODE", true],
       ] as const) {
         env.CLOUD_MODE = false;
-        env.OPENSHIP_TRUST_EDGE = false;
+        env.KOVALIO_TRUST_EDGE = false;
         (env as Record<string, unknown>)[k] = v;
 
         const app = new Hono();
@@ -154,7 +154,7 @@ describe("floodGuard middleware", () => {
       }
     } finally {
       env.CLOUD_MODE = cloud;
-      env.OPENSHIP_TRUST_EDGE = trust;
+      env.KOVALIO_TRUST_EDGE = trust;
     }
   });
 

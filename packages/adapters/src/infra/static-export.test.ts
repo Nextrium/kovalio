@@ -13,7 +13,7 @@ afterEach(async () => {
 });
 
 it("publishes private-mode build artifacts as readable assets without changing the source", async () => {
-  const root = await mkdtemp(join(tmpdir(), "openship-static-modes-"));
+  const root = await mkdtemp(join(tmpdir(), "kovalio-static-modes-"));
   roots.push(root);
   const source = join(root, "source");
   const staging = join(root, "public");
@@ -31,7 +31,7 @@ it("publishes private-mode build artifacts as readable assets without changing t
 });
 
 it("refuses symlinks in the staged export without changing their target", async () => {
-  const root = await mkdtemp(join(tmpdir(), "openship-static-symlink-"));
+  const root = await mkdtemp(join(tmpdir(), "kovalio-static-symlink-"));
   roots.push(root);
   const source = join(root, "source");
   await mkdir(source);

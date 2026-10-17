@@ -1,15 +1,15 @@
 {
-  "name": "openship",
+  "name": "kovalio",
   "version": "0.9.2",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oblien/openship.git",
-    "directory": "packages/openship"
+    "url": "https://github.com/Nextrium/kovalio.git",
+    "directory": "packages/kovalio"
   },
-  "homepage": "https://github.com/oblien/openship",
+  "homepage": "https://github.com/Nextrium/kovalio",
   "keywords": [
-    "openship",
+    "kovalio",
     "deploy",
     "deployment",
     "cli",
@@ -20,12 +20,12 @@
   ],
   "type": "module",
   "bin": {
-    "openship": "./dist/node-entry.js"
+    "kovalio": "./dist/node-entry.js"
   },
   "engines": {
     "node": ">=22"
   },
-  "description": "Openship SDK and CLI for native and remote deployments",
+  "description": "Kovalio SDK and CLI for native and remote deployments",
   "main": "./dist/sdk/index.cjs",
   "module": "./dist/sdk/index.js",
   "types": "./dist/sdk/index.d.ts",

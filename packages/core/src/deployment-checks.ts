@@ -30,5 +30,5 @@ export interface DeploymentCheckSource {
 }
 
 export function deploymentCheckName(projectSlug: string, environment: string): string {
-  return `Openship / ${projectSlug.slice(0, 80)} / ${environment.slice(0, 40)}`;
+  return `Kovalio / ${projectSlug.slice(0, 80)} / ${environment.slice(0, 40)}`;
 }

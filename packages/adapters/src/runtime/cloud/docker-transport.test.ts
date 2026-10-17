@@ -69,7 +69,7 @@ describe("Oblien Docker byte transport", () => {
   });
 
   beforeAll(async () => {
-    directory = await mkdtemp(join(tmpdir(), "openship-bridge-test-"));
+    directory = await mkdtemp(join(tmpdir(), "kovalio-bridge-test-"));
     // macOS limits Unix socket paths to ~104 bytes; tmpdir can itself be long.
     const upstreamPath = join(directory, "up.sock");
     upstream.listen(upstreamPath);
@@ -82,7 +82,7 @@ describe("Oblien Docker byte transport", () => {
     const script = join(directory, "bridge.py");
     await writeFile(script, CLOUD_DOCKER_BRIDGE_SOURCE
       .replace('"/var/run/docker.sock"', JSON.stringify(upstreamPath))
-      .replace('"/opt/openship/cloud-docker/requests"', JSON.stringify(join(directory, "requests")))
+      .replace('"/opt/kovalio/cloud-docker/requests"', JSON.stringify(join(directory, "requests")))
       .replace("EPOCH = host_epoch()", 'EPOCH = "test-boot"')
       .replace('("127.0.0.1", 23750)', `("127.0.0.1", ${port})`));
     python = spawn("python3", [script], { stdio: ["ignore", "ignore", "pipe"] });
@@ -131,7 +131,7 @@ describe("Oblien Docker byte transport", () => {
     }) } as unknown as Runtime;
   }
   const identity = (id = randomUUID()): ManagedCommandRef => ({
-    workspaceId: "test-vm", marker: "openship-exec-" + id + ":", kind: "docker",
+    workspaceId: "test-vm", marker: "kovalio-exec-" + id + ":", kind: "docker",
   });
 
   it("waits for the guest's persisted acknowledgement before releasing a tracked request", async () => {

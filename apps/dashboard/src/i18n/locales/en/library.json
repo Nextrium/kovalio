@@ -64,14 +64,14 @@
     "installationPicker": {
       "title": "Choose GitHub access",
       "description": "Select an existing App installation for this workspace.",
-      "sharedHint": "Using it here keeps your other Openship connections intact.",
+      "sharedHint": "Using it here keeps your other Kovalio connections intact.",
       "connect": "Use this account",
       "connected": "Already connected",
       "installAnother": "Install on another GitHub account",
       "failed": "Could not connect this installation.",
       "tryAgain": "Start again",
       "successTitle": "GitHub connected",
-      "successDescription": "Repository access is ready. You can return to Openship.",
+      "successDescription": "Repository access is ready. You can return to Kovalio.",
       "errorTitle": "GitHub connection needs attention",
       "returnToApp": "Back to Library"
     }
@@ -244,7 +244,7 @@
       "posthog": "Product analytics, session replay, and feature flags in a self-hosted hobby stack.",
       "redis": "In-memory data store for caching, sessions, rate limits, and queues — Valkey, the open-source Redis fork. Drop-in Redis-compatible: point any redis client at it. Ships with RedisInsight, a browser UI that arrives already connected to this instance.",
       "umami": "Privacy-friendly, cookie-free web analytics — a self-hosted alternative to Google Analytics. Add one script tag to your site and see traffic in a clean dashboard you own.",
-      "webmail": "A fast, self-hosted webmail client. Point it at any IMAP/SMTP mailbox — an Openship Mail server, Gmail, Fastmail, or your company's — and read, search and send from a clean UI on your own domain. Nothing is stored outside your server.",
+      "webmail": "A fast, self-hosted webmail client. Point it at any IMAP/SMTP mailbox — an Kovalio Mail server, Gmail, Fastmail, or your company's — and read, search and send from a clean UI on your own domain. Nothing is stored outside your server.",
       "clickhouse": "Columnar SQL for analytical data, with the CH-UI console for queries and schema browsing.",
       "mindwire": "Run coding-agent runtimes behind a self-hosted control plane. MindWire keeps the runtime private and gives you one console to manage agents, credentials, and sessions.",
       "pocketbase": "Self-hosted PocketBase with auth, a realtime SQLite database, file storage, and an admin dashboard in one small service.",

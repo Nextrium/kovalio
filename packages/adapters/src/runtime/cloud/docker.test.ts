@@ -75,18 +75,18 @@ beforeEach(async () => {
   vi.spyOn(runtime.executor, "writeFile").mockResolvedValue();
   vi.spyOn(runtime, "docker", "get").mockReturnValue({
     listContainers: async () => rows,
-    getNetwork: () => ({ inspect: async () => ({ Labels: { "openship.project": "project-a" } }) }),
+    getNetwork: () => ({ inspect: async () => ({ Labels: { "kovalio.project": "project-a" } }) }),
     getContainer: (id: string) => ({ inspect: async () => ({
-      Id: id, Config: { Labels: rows.find(row => row.Id === id)?.Labels ?? { "openship.project": "project-a" } },
+      Id: id, Config: { Labels: rows.find(row => row.Id === id)?.Labels ?? { "kovalio.project": "project-a" } },
       State: { Status: "exited", Running: false },
       HostConfig: { PortBindings: stoppedPorts.get(id) },
       NetworkSettings: { Ports: {} },
     }) }),
     getImage: () => ({ inspect: async () => ({ Config: { Volumes: { "/image-data": {} } } }) }),
     getVolume: (name: string) => ({ inspect: async () => {
-      if (!name.startsWith("openship-project-a-"))
+      if (!name.startsWith("kovalio-project-a-"))
         throw Object.assign(new Error("missing volume"), { statusCode: 404 });
-      return { Labels: { "openship.project": "project-a" } };
+      return { Labels: { "kovalio.project": "project-a" } };
     } }),
   } as never);
   vi.spyOn(DockerRuntime.prototype, "deployServiceWorkload").mockImplementation(async (_group, input) => {
@@ -96,8 +96,8 @@ beforeEach(async () => {
       return { PrivatePort: Number(container), PublicPort: Number(host), Type: "tcp" };
     });
     const id = `container-${++count}`;
-    rows = rows.filter(row => row.Labels["openship.service"] !== input.serviceName);
-    rows.push({ Id: id, Names: [`/openship-${input.slug}-${input.serviceName}`], State: "running", Ports: ports, Labels: { "openship.project": input.projectId, "openship.service": input.serviceName } });
+    rows = rows.filter(row => row.Labels["kovalio.service"] !== input.serviceName);
+    rows.push({ Id: id, Names: [`/kovalio-${input.slug}-${input.serviceName}`], State: "running", Ports: ports, Labels: { "kovalio.project": input.projectId, "kovalio.service": input.serviceName } });
     return { containerId: id, status: "running", hostPortByContainerPort: Object.fromEntries(ports.map(port => [port.PrivatePort, port.PublicPort])) } as MultiServiceDeployResult;
   });
 });
@@ -124,7 +124,7 @@ describe("containers on one Oblien Docker workspace", () => {
     vi.useFakeTimers();
     ws.runtime.mockResolvedValue({ proxy: () => ({ fetch: async () => new Response("bad gateway", { status: 502 }) }) });
     ws.workloads = {
-      list: vi.fn(async () => [{ id: "bridge-a", name: "openship-docker-api-v1", state: "running" }]),
+      list: vi.fn(async () => [{ id: "bridge-a", name: "kovalio-docker-api-v1", state: "running" }]),
       stop: vi.fn(), start: vi.fn(),
       logs: vi.fn(async () => ({ logs: "", success: true, _serverId: "node2" })),
     };
@@ -161,8 +161,8 @@ describe("containers on one Oblien Docker workspace", () => {
       State: "running",
       Ports: [],
       Labels: {
-        "openship.project": "project-a",
-        "io.openship.managed-node-listener": "1",
+        "kovalio.project": "project-a",
+        "io.kovalio.managed-node-listener": "1",
       },
     });
     stoppedPorts.set("node-a", { "3000/tcp": [{ HostIp: "0.0.0.0", HostPort: "30001" }] });
@@ -173,19 +173,19 @@ describe("containers on one Oblien Docker workspace", () => {
       "node-a",
       {
         NODE_OPTIONS: "--max-old-space-size=128",
-        OPENSHIP_MANAGED_PUBLIC_PORTS: "9229",
+        KOVALIO_MANAGED_PUBLIC_PORTS: "9229",
       },
       { projectId: "project-a", serviceName: "app", onReplaced: vi.fn() },
     );
     expect(apply.mock.calls[0]?.[1]).toEqual({
       NODE_OPTIONS: "--max-old-space-size=128",
-      OPENSHIP_MANAGED_PUBLIC_PORTS: "3000",
+      KOVALIO_MANAGED_PUBLIC_PORTS: "3000",
     });
   });
   it.each(["running", "stopped"])("updates a %s bridge before accepting Docker connections", async initialState => {
     vi.useFakeTimers();
     let bridgeState = initialState;
-    let runningVersion = "openship-docker-bridge-v1";
+    let runningVersion = "kovalio-docker-bridge-v1";
     let installedVersion: string | undefined;
     vi.mocked(runtime.executor.writeFile).mockImplementation(async (_path, content) => {
       installedVersion = String(content).match(/^VERSION = "([^"]+)"/m)?.[1];
@@ -196,7 +196,7 @@ describe("containers on one Oblien Docker workspace", () => {
         : new Response("stopped", { status: 503 }),
     }) });
     ws.workloads = {
-      list: vi.fn(async () => [{ id: "bridge-a", name: "openship-docker-api-v1", state: bridgeState }]),
+      list: vi.fn(async () => [{ id: "bridge-a", name: "kovalio-docker-api-v1", state: bridgeState }]),
       stop: vi.fn(async () => { bridgeState = "stopped"; }),
       start: vi.fn(async () => {
         if (bridgeState === "running") throw new Error("Bridge is already running");
@@ -313,7 +313,7 @@ describe("containers on one Oblien Docker workspace", () => {
       });
     } }) });
     ws.workloads = {
-      list: vi.fn(async () => [{ id: "bridge-a", name: "openship-docker-api-v1", state: "running" }]),
+      list: vi.fn(async () => [{ id: "bridge-a", name: "kovalio-docker-api-v1", state: "running" }]),
       stop: vi.fn(), start: vi.fn(), logs: vi.fn(async () => ({ logs: "", success: true, _serverId: "node2" })),
     };
     try {
@@ -361,16 +361,16 @@ describe("containers on one Oblien Docker workspace", () => {
   it("keeps named and image-declared volume identities across container replacements", async () => {
     await runtime.deployServiceWorkload(group, config);
     await runtime.deployServiceWorkload(group, { ...config, deploymentId: "d2", image: "test:2" });
-    expect(captures[0]!.volumes).toContain("openship-project-a-data:/data");
+    expect(captures[0]!.volumes).toContain("kovalio-project-a-data:/data");
     expect(captures[0]!.volumes.some(volume => volume.endsWith(":/image-data"))).toBe(true);
     expect(captures[1]!.volumes).toEqual(captures[0]!.volumes);
     expect(ws.delete).not.toHaveBeenCalled();
   });
   it("isolates a new WordPress installation from a previous project's volumes and keeps backup identities stable", async () => {
     vi.mocked(DockerRuntime.prototype.deployServiceWorkload).mockRestore();
-    const legacy = "openship-wordpress-wordpress_db_data";
+    const legacy = "kovalio-wordpress-wordpress_db_data";
     const stored = new Map<string, { Labels: Record<string, string> }>([
-      [legacy, { Labels: { "openship.project": "deleted-project" } }],
+      [legacy, { Labels: { "kovalio.project": "deleted-project" } }],
     ]);
     const createVolume = vi.fn(async (input: { Name: string; Labels: Record<string, string> }) => {
       stored.set(input.Name, { Labels: input.Labels });
@@ -413,10 +413,10 @@ describe("containers on one Oblien Docker workspace", () => {
     await runtime.deployServiceWorkload(group, { ...wordpress, deploymentId: "d2" });
     const binds = docker.createContainer.mock.calls.map(([input]) => input.HostConfig.Binds);
     const source = binds[0]!.find((volume) => volume.endsWith(":/var/lib/mysql"))!.split(":")[0]!;
-    expect(source).toMatch(/^openship-project-[a-f0-9]{32}-wordpress_db_data$/);
+    expect(source).toMatch(/^kovalio-project-[a-f0-9]{32}-wordpress_db_data$/);
     expect(binds[1]).toEqual(binds[0]);
-    expect(stored.get(legacy)).toEqual({ Labels: { "openship.project": "deleted-project" } });
-    expect(stored.get(source)).toEqual({ Labels: { "openship.project": "project-a" } });
+    expect(stored.get(legacy)).toEqual({ Labels: { "kovalio.project": "deleted-project" } });
+    expect(stored.get(source)).toEqual({ Labels: { "kovalio.project": "project-a" } });
     const creates = createVolume.mock.calls.length;
     const backup = new DockerBackupExecutor(runtime);
     const sources = await backup.listSources({
@@ -436,14 +436,14 @@ describe("containers on one Oblien Docker workspace", () => {
   it.each(["project-a", "project-b"])(
     "preserves explicit backup source identity and checks its owner (%s)",
     async (owner) => {
-      const source = "openship-project-00000000000000000000000000000000-data";
+      const source = "kovalio-project-00000000000000000000000000000000-data";
       vi.spyOn(runtime, "docker", "get").mockReturnValue({
         ...runtime.docker,
         getVolume: (name: string) => ({
           inspect: async () => {
             if (name !== source)
               throw Object.assign(new Error("missing volume"), { statusCode: 404 });
-            return { Labels: { "openship.project": owner } };
+            return { Labels: { "kovalio.project": owner } };
           },
         }),
       } as never);
@@ -467,8 +467,8 @@ describe("containers on one Oblien Docker workspace", () => {
     const first = await runtime.deployServiceWorkload(group, config);
     const reservedPort = first.hostPortByContainerPort![8080];
     const stopped = rows[0]!;
-    stopped.Labels["openship.service"] = "reserved";
-    stopped.Names = ["/openship-project-a-reserved"];
+    stopped.Labels["kovalio.service"] = "reserved";
+    stopped.Names = ["/kovalio-project-a-reserved"];
     stopped.State = "exited";
     stopped.Ports = [];
     stoppedPorts.set(stopped.Id, { "8080/tcp": [{ HostIp: "0.0.0.0", HostPort: String(reservedPort) }] });
@@ -502,7 +502,7 @@ describe("containers on one Oblien Docker workspace", () => {
     expect(routes).not.toHaveBeenCalled();
   });
   it("creates separate route owners for custom domains without rebinding the shared workspace", async () => {
-    rows = [{ Id: "container-a", State: "running", Labels: { "openship.project": "project-a" },
+    rows = [{ Id: "container-a", State: "running", Labels: { "kovalio.project": "project-a" },
       Ports: [30001, 30002].map(port => ({ PrivatePort: 8080, PublicPort: port, Type: "tcp" })) }];
     await infra.publishRoute("one.example.com", 30001, true);
     await infra.publishRoute("two.example.com", 30002, true);
@@ -543,8 +543,8 @@ describe("containers on one Oblien Docker workspace", () => {
     const stop = vi.spyOn(DockerRuntime.prototype, "stop").mockResolvedValue();
     const destroy = vi.spyOn(DockerRuntime.prototype, "destroy").mockResolvedValue();
     const image = vi.spyOn(DockerRuntime.prototype, "removeImage").mockResolvedValue();
-    await runtime.archive({ containerId: "old-container", imageRef: "openship/project-a:bld_old" } as never);
-    await runtime.purge({ containerId: "old-container", imageRef: "openship/project-a:bld_old" } as never);
+    await runtime.archive({ containerId: "old-container", imageRef: "kovalio/project-a:bld_old" } as never);
+    await runtime.purge({ containerId: "old-container", imageRef: "kovalio/project-a:bld_old" } as never);
     expect(stop).toHaveBeenCalledWith("old-container");
     expect(destroy).toHaveBeenCalledWith("old-container");
     expect(image).not.toHaveBeenCalled(); // Retention owns image GC separately from unit cleanup.
@@ -559,14 +559,14 @@ describe("containers on one Oblien Docker workspace", () => {
     const id = "a".repeat(64);
     const siblingId = "b".repeat(64);
     rows = [
-      { Id: id, State: "running", Labels: { "openship.project": "project-a" }, Ports: [{ PrivatePort: 8080, PublicPort: 31001, Type: "tcp" }] },
-      { Id: siblingId, State: "running", Labels: { "openship.project": "project-b" }, Ports: [{ PrivatePort: 8080, PublicPort: 31002, Type: "tcp" }] },
+      { Id: id, State: "running", Labels: { "kovalio.project": "project-a" }, Ports: [{ PrivatePort: 8080, PublicPort: 31001, Type: "tcp" }] },
+      { Id: siblingId, State: "running", Labels: { "kovalio.project": "project-b" }, Ports: [{ PrivatePort: 8080, PublicPort: 31002, Type: "tcp" }] },
     ];
     vi.spyOn(runtime, "docker", "get").mockReturnValue({
       listContainers: async () => rows,
       getContainer: (input: string) => ({ inspect: async () => ({
         Id: input === siblingId ? siblingId : id,
-        Config: { Labels: { "openship.project": input === siblingId ? "project-b" : "project-a" } },
+        Config: { Labels: { "kovalio.project": input === siblingId ? "project-b" : "project-a" } },
       }) }),
     } as never);
     ws.network.get.mockResolvedValue({ ingress_ports: [31001, 31002, 443] });
@@ -580,7 +580,7 @@ describe("containers on one Oblien Docker workspace", () => {
     expect(ws.network.update).not.toHaveBeenCalled();
   });
   it("route teardown deletes only this workspace's routing anchor", async () => {
-    rows = [{ Id: "container-a", State: "running", Labels: { "openship.project": "project-a" },
+    rows = [{ Id: "container-a", State: "running", Labels: { "kovalio.project": "project-a" },
       Ports: [{ PrivatePort: 8080, PublicPort: 30001, Type: "tcp" }] }];
     await infra.publishRoute("project-a.opsh.io", 30001, false);
     const cleanup = new CloudInfraProvider(provider as unknown as Oblien, { namespace: "namespace-a", scope: runtime.routingScope(),
@@ -591,11 +591,11 @@ describe("containers on one Oblien Docker workspace", () => {
     await expect(cleanup.removeRoute("project-a.opsh.io")).rejects.toThrow("not owned");
   });
   it("inventories disabled routing Pages without confusing their numeric IDs with slugs", async () => {
-    rows = [{ Id: "container-a", State: "running", Labels: { "openship.project": "project-a" },
+    rows = [{ Id: "container-a", State: "running", Labels: { "kovalio.project": "project-a" },
       Ports: [{ PrivatePort: 8080, PublicPort: 30001, Type: "tcp" }] }];
     await infra.publishRoute("project-a.opsh.io", 30001, false);
     pageRows.get("project-a")!.status = "disabled";
-    pageRows.set("other", { slug: "other", domain: "opsh.io", namespace: "namespace-a", source_workspace_id: "workspace-other", exported_path: "/opt/openship/cloud-docker/routes/other" });
+    pageRows.set("other", { slug: "other", domain: "opsh.io", namespace: "namespace-a", source_workspace_id: "workspace-other", exported_path: "/opt/kovalio/cloud-docker/routes/other" });
     expect(await infra.listProjectRouteHostnames()).toEqual(["project-a.opsh.io"]);
     const cleanup = new CloudInfraProvider(provider as unknown as Oblien, { namespace: "namespace-a", scope: runtime.routingScope() });
     await cleanup.removeRoute("project-a.opsh.io");
@@ -659,7 +659,7 @@ describe("containers on one Oblien Docker workspace", () => {
         { path: "web/config", content: "configured" },
       ] } as never;
     await runtime.buildImages([{ serviceName: "web", config: source, logger }], logger);
-    expect(runtime.executor.writeFile).toHaveBeenCalledWith(expect.stringMatching(/^\/tmp\/openship-cloud-source-[a-f0-9]+\/web\/config$/), "configured");
+    expect(runtime.executor.writeFile).toHaveBeenCalledWith(expect.stringMatching(/^\/tmp\/kovalio-cloud-source-[a-f0-9]+\/web\/config$/), "configured");
     expect(transfer).not.toHaveBeenCalled();
     expect(sharedBuild).toHaveBeenCalledExactlyOnceWith([
       expect.objectContaining({ serviceName: "web", config: expect.objectContaining({
@@ -686,7 +686,7 @@ describe("containers on one Oblien Docker workspace", () => {
 });
 
 it("removes failed static staging files while preserving application data and neighboring projects", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "openship-delete-static-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-delete-static-"));
   const project = join(directory, "project-a");
   const staging = join(project, "bare", ".builds");
   const data = join(project, "database", "keep.txt");

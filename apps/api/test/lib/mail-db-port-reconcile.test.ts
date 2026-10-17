@@ -22,7 +22,7 @@ afterEach(async () => {
 });
 
 async function root() {
-  const directory = await mkdtemp(join(tmpdir(), "openship-mail-port-test-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-mail-port-test-"));
   roots.push(directory);
   return directory;
 }

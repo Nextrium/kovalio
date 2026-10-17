@@ -1,10 +1,10 @@
 import { resolve } from "node:path";
-import { OpenshipClient } from "openship/client";
+import { KovalioClient } from "kovalio/client";
 
-const ship = new OpenshipClient({
+const ship = new KovalioClient({
   baseUrl: "https://ship.example.com",
-  token: process.env.OPENSHIP_TOKEN!,
-  organizationId: process.env.OPENSHIP_ORGANIZATION_ID!,
+  token: process.env.KOVALIO_TOKEN!,
+  organizationId: process.env.KOVALIO_ORGANIZATION_ID!,
 });
 
 const run = await ship.deploy({

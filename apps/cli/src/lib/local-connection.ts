@@ -10,7 +10,7 @@ export function localConnectionEndpoints(): { apiUrl: string; dashboardUrl: stri
   const dashboard = storedDashboardPort();
   for (const value of [port, dashboard]) {
     if (!Number.isInteger(value) || value < 1 || value > 65535)
-      throw new Error("Invalid stored Openship port. Check this installation's ports.json.");
+      throw new Error("Invalid stored Kovalio port. Check this installation's ports.json.");
   }
   return {
     apiUrl: `http://127.0.0.1:${port}`,
@@ -46,13 +46,13 @@ export async function openLocalCliSession(apiUrl: string, required: boolean) {
     throw new Error(`Could not authenticate with the local installation: ${call.detail}`);
   if (call.res.status === 404) {
     throw new Error(
-      "This local server does not support automatic CLI authentication yet. Update the server, or use openship login with a Personal Access Token.",
+      "This local server does not support automatic CLI authentication yet. Update the server, or use kovalio login with a Personal Access Token.",
     );
   }
   if (!call.res.ok) {
     // Never echo the response body of a credential exchange.
     throw new Error(
-      `Local administrator authentication failed (HTTP ${call.res.status}). Check the installation's operator credential and finish its admin setup, or use openship login.`,
+      `Local administrator authentication failed (HTTP ${call.res.status}). Check the installation's operator credential and finish its admin setup, or use kovalio login.`,
     );
   }
   const body = (await call.res.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/lib/local-connection"); return null; })) as {

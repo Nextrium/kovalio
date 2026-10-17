@@ -63,7 +63,7 @@ vi.mock("@repo/adapters", () => ({
   },
   edgeProxyFor: h.edgeProxyFor,
   isRuntimeNotFoundError: () => false,
-  ownsBuiltImage: (ref: string) => ref.startsWith("openship/"),
+  ownsBuiltImage: (ref: string) => ref.startsWith("kovalio/"),
 }));
 
 vi.mock("@repo/platform/engine/lib/server-reachability", () => ({
@@ -422,8 +422,8 @@ describe("runOrphanSweep target selection", () => {
           slug: "app",
           wipeVolumes: true,
           containerIds: ["known-container"],
-          imageRefs: ["openship/app:bld_1", "postgres:17"],
-          artifactRefs: ["/opt/openship/static/releases/dep-1"],
+          imageRefs: ["kovalio/app:bld_1", "postgres:17"],
+          artifactRefs: ["/opt/kovalio/static/releases/dep-1"],
           volumeNames: [],
         },
       }),
@@ -447,14 +447,14 @@ describe("runOrphanSweep target selection", () => {
     expect(h.destroy.mock.calls.map(([ref]) => ref)).toEqual([
       "known-container",
       "labelled-container",
-      "/opt/openship/static/releases/dep-1",
+      "/opt/kovalio/static/releases/dep-1",
     ]);
     expect(h.removeVolume).toHaveBeenCalledWith("app-data");
     expect(h.updatePayload).toHaveBeenCalledWith(
       "orphan-target-sweep",
       expect.objectContaining({ volumeNames: ["app-data"] }),
     );
-    expect(h.removeImage).toHaveBeenCalledWith("openship/app:bld_1");
+    expect(h.removeImage).toHaveBeenCalledWith("kovalio/app:bld_1");
     expect(h.removeImage).toHaveBeenCalledWith("sha256:owned");
     expect(h.removeImage).not.toHaveBeenCalledWith("postgres:17");
     expect(h.removeNetwork).toHaveBeenCalledWith("app");

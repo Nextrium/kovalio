@@ -37,7 +37,7 @@ afterEach(async () => {
 });
 
 it.each(["grid", "list"])("keeps catalog apps out of the project %s view", async (view) => {
-  localStorage.setItem("openship-projects-view", view);
+  localStorage.setItem("kovalio-projects-view", view);
   await act(async () => root.render(<I18nProvider><ModalProvider><ProjectsPage /></ModalProvider></I18nProvider>));
   expect(container.textContent).toContain("Custom website");
   expect(container.textContent).not.toContain("Catalog automation");

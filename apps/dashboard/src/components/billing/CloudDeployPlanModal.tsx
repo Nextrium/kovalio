@@ -221,7 +221,7 @@ export function CloudDeployPlanModal({
               )}
               {recovery === "paused" && (
                 <a
-                  href="mailto:support@openship.io"
+                  href="mailto:support@nextrium.org"
                   className="inline-flex text-sm font-medium text-primary hover:underline"
                 >
                   {t.billing.portal.supportButton}

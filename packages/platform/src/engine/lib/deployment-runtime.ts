@@ -40,7 +40,7 @@ import { edgeProviderOptions } from "./edge-provider-options";
 import { findLocalServer } from "./startup/self-server";
 import { requireOrgServer } from "./server-target";
 import { registryAuthResolver } from "../modules/credentials/registry-auth";
-import { issueNamespaceToken } from "./openship-cloud";
+import { issueNamespaceToken } from "./kovalio-cloud";
 import { createTenantCloudAdmin } from "./cloud-tenant-admin";
 import {
   LOCAL_HOST_PORT_TARGET,
@@ -298,8 +298,8 @@ async function assertLocalDeploymentAccess(organizationId?: string): Promise<voi
   }
   // An embedding application explicitly owns its native runtime policy. Desktop
   // runs on its user's machine; the multi-organization host boundary is selfhosted.
-  if (process.env.OPENSHIP_NATIVE === "true") {
-    if (process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION !== "true") {
+  if (process.env.KOVALIO_NATIVE === "true") {
+    if (process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION !== "true") {
       throw new AppError("Host execution is disabled by this native installation's policy", 403, "HOST_EXECUTION_DISABLED");
     }
     return;
@@ -363,7 +363,7 @@ export function resolveEffectiveTarget(
   // An explicit Cloud destination must never degrade to local execution merely
   // because an old or incomplete client omitted its managed-server binding.
   if (snapshot.deployTarget === "cloud") return "cloud";
-  if (process.env.OPENSHIP_NATIVE === "true") {
+  if (process.env.KOVALIO_NATIVE === "true") {
     // The embedded host explicitly selects its default runtime. Desktop's
     // product default (cloud) must not reinterpret a native bare installation.
     return snapshot.deployTarget ?? (snapshot.serverId ? "server" : env.DEPLOY_MODE === "cloud" ? "cloud" : "local");
@@ -441,7 +441,7 @@ export function usesManagedRouting(
   base: Platform["target"],
   effectiveTarget: DeployTarget,
 ): boolean {
-  if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ROUTING === "none" && effectiveTarget === "local") return false;
+  if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ROUTING === "none" && effectiveTarget === "local") return false;
   // Managed (local OpenResty) routing applies only to on-box targets. A cloud
   // target — including the local-orchestrated cloud deploy — routes via cloud
   // pages/edge, not the local proxy.
@@ -477,7 +477,7 @@ async function resolveCloudPlatformForOrg(
     target: "cloud", runtime: runtimeMode,
     cloudToken: result.token, cloudNamespace: result.namespace, cloudApiUrl: result.providerApiUrl,
     cloudBeforeProvision: () => assertManagedServerCanWork(organizationId, managedWorkspaceId),
-    allowHostBuild: !env.CLOUD_MODE && (process.env.OPENSHIP_NATIVE !== "true" || process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION === "true"),
+    allowHostBuild: !env.CLOUD_MODE && (process.env.KOVALIO_NATIVE !== "true" || process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION === "true"),
     cloudAdminProxy: env.CLOUD_MODE ? createTenantCloudAdmin(organizationId, result.namespace, managedWorkspaceId) : createRemoteCloudAdmin(organizationId, managedWorkspaceId),
     cloudServer: {
       ...bindingMeta, ownerWorkspaceId: managedWorkspaceId,
@@ -688,7 +688,7 @@ export async function resolveTargetPlatform(
   organizationId?: string,
 ): Promise<Platform> {
   if (target === "local") await assertLocalDeploymentAccess(organizationId);
-  if (process.env.OPENSHIP_NATIVE === "true" && target === "local") {
+  if (process.env.KOVALIO_NATIVE === "true" && target === "local") {
     const owned = platform();
     if (owned.runtime.name !== runtimeMode) throw new AppError("This native installation is configured for a different local runtime", 409, "RUNTIME_UNAVAILABLE");
     // Reuse the instance-owned runtime, including its work directory and

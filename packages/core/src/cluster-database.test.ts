@@ -11,7 +11,7 @@ const config: ClusterDatabaseConfig = {
   mode: "cluster",
   instances: 3,
   storageGiB: 20,
-  storageClass: "openship-local",
+  storageClass: "kovalio-local",
   cpuMillis: 500,
   memoryMiB: 512,
   databaseName: "app",

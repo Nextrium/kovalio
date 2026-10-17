@@ -46,7 +46,7 @@ vi.mock("./github-api", () => ({
     run = state.run;
   },
 }));
-import { reconcileGitHubRunners, requestsOpenshipRunner } from "./github-runners";
+import { reconcileGitHubRunners, requestsKovalioRunner } from "./github-runners";
 let connection: DatabaseConnection;
 let repo: ReturnType<typeof createRepositories>["actions"];
 beforeAll(async () => {
@@ -138,7 +138,7 @@ async function fixture(finished = true) {
   const spec = {
     jobId: "build",
     name: "Build",
-    labels: ["self-hosted", "openship", "linux"],
+    labels: ["self-hosted", "kovalio", "linux"],
     matrix: {},
     strategy: {},
     needs: {},
@@ -221,7 +221,7 @@ async function fixture(finished = true) {
     demandJobId: jobId,
     repoOwner: "owner",
     repoName: "test",
-    runnerName: `openship-${id}`,
+    runnerName: `kovalio-${id}`,
     spec,
   });
   await repo.claimRunnerSession(org, id, "fixture");
@@ -266,10 +266,10 @@ async function assignmentFixture() {
     .set({
       status: "running",
       finishedAt: null,
-      github: { ...job.github!, runnerId: "777", runnerName: `openship-${f.id}` },
+      github: { ...job.github!, runnerId: "777", runnerName: `kovalio-${f.id}` },
     })
     .where(eq(schema.actionJob.id, f.jobId));
-  state.registrations.mockResolvedValue([{ id: 777, name: `openship-${f.id}`, busy: true }]);
+  state.registrations.mockResolvedValue([{ id: 777, name: `kovalio-${f.id}`, busy: true }]);
   state.run.mockResolvedValue(remote);
   state.synchronize.mockImplementation(() => repo.run(f.org, f.runId));
   const admit = vi.fn(),
@@ -413,9 +413,9 @@ describe("official GitHub runner reconciliation", () => {
   });
 
   it("allocates only explicitly opted-in labels", () => {
-    expect(requestsOpenshipRunner(["ubuntu-latest"])).toBe(false);
-    expect(requestsOpenshipRunner(["self-hosted", "linux"])).toBe(false);
-    expect(requestsOpenshipRunner(["SELF-HOSTED", "Openship", "linux"])).toBe(true);
+    expect(requestsKovalioRunner(["ubuntu-latest"])).toBe(false);
+    expect(requestsKovalioRunner(["self-hosted", "linux"])).toBe(false);
+    expect(requestsKovalioRunner(["SELF-HOSTED", "Kovalio", "linux"])).toBe(true);
   });
   it("resumes asynchronous VM deletion without reconnecting or releasing capacity early", async () => {
     const f = await fixture();
@@ -471,7 +471,7 @@ describe("official GitHub runner reconciliation", () => {
   });
   it("treats an already removed GitHub registration as completed cleanup", async () => {
     const f = await fixture();
-    state.registrations.mockResolvedValue([{ id: 10, name: `openship-${f.id}`, busy: false }]);
+    state.registrations.mockResolvedValue([{ id: 10, name: `kovalio-${f.id}`, busy: false }]);
     state.deregister.mockRejectedValue({ status: 404 });
     await reconcileGitHubRunners();
     expect((await f.get())?.cleanedAt).toBeTruthy();

@@ -12,7 +12,7 @@ export function sharedServiceAlias(serviceId: string): string {
 }
 
 export function sharedServiceNetwork(serviceId: string): string {
-  return `openship-${sharedServiceAlias(serviceId)}`;
+  return `kovalio-${sharedServiceAlias(serviceId)}`;
 }
 
 export async function ensureSharedServiceNetwork(

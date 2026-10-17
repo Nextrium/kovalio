@@ -124,7 +124,7 @@ export async function journal(id: string): Promise<Journal> {
 const keys = (row: Journal): Secrets => JSON.parse(decrypt(row.secrets));
 const chunkKey = (row: Journal, index: number) =>
   createHmac("sha256", Buffer.from(keys(row).key, "base64url"))
-    .update(`openship:instance:${row.id}:${index}`)
+    .update(`kovalio:instance:${row.id}:${index}`)
     .digest();
 
 export async function authenticatePeer(id: string, token: string, abort = false): Promise<Journal> {
@@ -381,7 +381,7 @@ export async function stageTarget(id: string, input: HandoffManifest): Promise<v
       throw fail("The snapshot belongs to another instance.");
     if (manifest.version !== readApiVersion())
       throw fail(
-        "Install the same Openship version on both instances before moving.",
+        "Install the same Kovalio version on both instances before moving.",
         "INSTANCE_VERSION_MISMATCH",
       );
     if (row.manifest) {
@@ -503,7 +503,7 @@ export async function prepareTarget(id: string): Promise<void> {
           // installation binding, never a project id supplied by the sender.
           await tx
             .update(schema.project)
-            .set({ appTemplateId: "openship" })
+            .set({ appTemplateId: "kovalio" })
             .where(eq(schema.project.id, state.projectId));
         }
         await tx
@@ -578,7 +578,7 @@ export async function activateTarget(
         userId: row.manifest!.ownerUserId,
         activeOrganizationId: membership.organizationId,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60_000),
-        userAgent: "Openship Desktop (paired instance)",
+        userAgent: "Kovalio Desktop (paired instance)",
       });
       await tx
         .update(schema.instanceHandoff)

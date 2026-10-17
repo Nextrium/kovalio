@@ -1064,7 +1064,7 @@ describe("cluster setup pages", () => {
       network: {
         ...operation.plan.config.network,
         id: "network",
-        ownership: "openship",
+        ownership: "kovalio",
         encryption: "wireguard",
       },
     });
@@ -1086,7 +1086,7 @@ describe("cluster setup pages", () => {
       network: {
         ...operation.plan.config.network,
         id: "network",
-        ownership: "openship",
+        ownership: "kovalio",
         encryption: "wireguard",
       },
     });
@@ -1118,11 +1118,11 @@ describe("cluster setup pages", () => {
         status: "interrupted",
         sequence: preparation.sequence + 1,
         leaseExpiresAt: null,
-        error: "OpenShip restarted before server preparation finished.",
+        error: "Kovalio restarted before server preparation finished.",
       }),
     );
     expect(host.textContent).toContain(c.managed.preparationStatus.interrupted);
-    expect(host.textContent).toContain("OpenShip restarted before server preparation finished.");
+    expect(host.textContent).toContain("Kovalio restarted before server preparation finished.");
     expect(host.textContent).toContain(c.managed.stepStatus.interrupted);
     const server = host.querySelector('section[aria-label="server-a"]')!;
     await act(async () =>

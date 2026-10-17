@@ -42,7 +42,7 @@ if (!process.argv.includes("--check")) {
   cpSync(join(root, "LICENSE"), join(packageDir, "LICENSE"));
 }
 
-if (manifest.name !== "openship" || manifest.private) throw new Error("Invalid public package ownership");
+if (manifest.name !== "kovalio" || manifest.private) throw new Error("Invalid public package ownership");
 if (JSON.stringify(manifest).includes("workspace:")) throw new Error("The public package contains an unresolved workspace dependency");
 const cliManifest = JSON.parse(readFileSync(join(root, "apps/cli/package.json"), "utf8"));
 if (manifest.version !== cliManifest.version) throw new Error("SDK and CLI release versions must match");
@@ -69,4 +69,4 @@ function inspect(directory: string) {
   }
 }
 inspect(dist);
-console.log(`[openship] SDK, declarations, CLI and server assets verified (${(bytes / 1024 / 1024).toFixed(1)} MB unpacked)`);
+console.log(`[kovalio] SDK, declarations, CLI and server assets verified (${(bytes / 1024 / 1024).toFixed(1)} MB unpacked)`);

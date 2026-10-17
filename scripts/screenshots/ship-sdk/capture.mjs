@@ -56,7 +56,7 @@ footer a { color: #c4c4c4; text-decoration: none; }
 </style></head><body>
 <main class="poster">
   <header class="brand"><span class="logo" aria-hidden="true"></span>Ship SDK
-    <code class="install"><span>$</span>npm install openship</code>
+    <code class="install"><span>$</span>npm install kovalio</code>
   </header>
   <h1>Deploy from your code.</h1>
   <p class="intro">Build deployment workflows in JavaScript or TypeScript.</p>
@@ -64,7 +64,7 @@ footer a { color: #c4c4c4; text-decoration: none; }
     <div class="editor-header"><span class="ts">TS</span>deploy-app.mts<span class="language">TypeScript</span></div>
     ${highlighted}
   </section>
-  <footer><span>Connect to OpenShip. Or embed the engine.</span><a href="https://openship.io/docs/api/sdk">openship.io/docs/api/sdk</a></footer>
+  <footer><span>Connect to Kovalio. Or embed the engine.</span><a href="https://nextrium.org/docs/api/sdk">nextrium.org/docs/api/sdk</a></footer>
 </main></body></html>`;
 
 await mkdir(output, { recursive: true });

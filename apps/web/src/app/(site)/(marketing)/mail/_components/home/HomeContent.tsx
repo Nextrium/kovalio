@@ -128,7 +128,7 @@ export default function HomeContent() {
           className="mb-6 lg:hidden"
         >
           <Link href="/docs/getting-started/quickstart">
-            <Button>Install Openship</Button>
+            <Button>Install Kovalio</Button>
           </Link>
         </motion.div>
       </section>

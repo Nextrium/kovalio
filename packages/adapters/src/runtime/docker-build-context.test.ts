@@ -21,12 +21,12 @@ const cleanups: Array<() => Promise<void>> = [];
 it("keeps generated session files and concurrent ignore-write temporaries out of application copies", async () => {
   const repo = await makeRepo("node_modules\n!public\n");
   await rm(join(repo, "Dockerfile"));
-  const temporary = ".openship-dockerignore-00000000-0000-0000-0000-000000000000";
+  const temporary = ".kovalio-dockerignore-00000000-0000-0000-0000-000000000000";
   await writeFile(join(repo, temporary), "concurrent writer");
   const resolved = await Promise.all(["first", "second"].map(session => resolveServiceDockerfile(repo,
-    { ...config(repo), buildCache: true }, { generatedName: `Dockerfile.openship.${session}` })));
+    { ...config(repo), buildCache: true }, { generatedName: `Dockerfile.kovalio.${session}` })));
   expect(await readFile(join(repo, ".dockerignore"), "utf8")).toContain("node_modules\n!public\n");
-  expect(await readFile(join(repo, ".dockerignore"), "utf8")).toContain("Dockerfile.openship*\n");
+  expect(await readFile(join(repo, ".dockerignore"), "utf8")).toContain("Dockerfile.kovalio*\n");
   for (const context of resolved) {
     expect(context.requiresBuildKit).toBe(true);
     expect(context.contextEntries).not.toContain(temporary);

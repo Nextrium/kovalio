@@ -8,7 +8,7 @@ import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics"
 import type { Encryption } from "./encryption";
 
 export type ConfigurationEncryption = Pick<Encryption, "encrypt" | "decrypt">;
-export const CONFIGURATION_PREFIX = "openship:config:v1:";
+export const CONFIGURATION_PREFIX = "kovalio:config:v1:";
 export const SERVICE_SECRET_FIELDS = [
   "environment",
   "buildArgs",

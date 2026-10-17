@@ -375,7 +375,7 @@ export const DomainSettings = ({ serviceScope, onRoutesChanged }: DomainSettings
   const freeNeedsCloud = () => requireCloud("managed-project-domain", { domain: baseDomain });
   const openEdgeModal = useEdgeModal();
   const resourceKey = useCloudResourceKey();
-  const routingLogStorageKey = `openship:routing-log:dismissed:${resourceKey}:${id}`;
+  const routingLogStorageKey = `kovalio:routing-log:dismissed:${resourceKey}:${id}`;
   const seenRoutingSession = useRef<string | null>(null);
   const routingSessionId = useRef<string | null>(null);
   const rememberRoutingSession = useCallback((sessionId: string) => {
@@ -612,7 +612,7 @@ export const DomainSettings = ({ serviceScope, onRoutesChanged }: DomainSettings
   const [showAddRoute, setShowAddRoute] = useState(serviceScope?.add ?? false);
   const [portFilter, setPortFilter] = useState(serviceScope?.port);
   const [addRouteServiceId, setAddRouteServiceId] = useState(serviceScope?.serviceId ?? "");
-  // A free *.<baseDomain> subdomain only routes through the Openship Cloud edge,
+  // A free *.<baseDomain> subdomain only routes through the Kovalio Cloud edge,
   // so it's a usable default only on a cloud-connected (or SaaS) instance.
   const freeDomainsAvailable = !selfHosted || cloudConnected;
   const emptyAddRouteDraft = {

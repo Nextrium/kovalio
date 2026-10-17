@@ -40,7 +40,7 @@ The cluster's **Enable scaling** action installs missing prerequisites, pins and
 configures private cluster firewall rules, joins the servers and validates real
 cross-node pod/service traffic and DNS. It reuses shared progress presentation,
 toolchain, server locks, authorization, durable SSE and shutdown recovery. Retry
-is explicit; stopped work remains visible after restarting OpenShip.
+is explicit; stopped work remains visible after restarting Kovalio.
 
 One or three servers form the control plane, with additional workers. Runtime
 removal is a separate confirmed, resumable operation which requires an empty
@@ -179,7 +179,7 @@ It checks SSH, machine identity, Linux/systemd, privilege and firewall support,
 then uses the shared toolchain to install missing Python 3.8+, iproute2, and WireGuard
 tools. Kernel support and JSON network inspection are checked separately. Inspection
 and planning remain read-only. Transport endpoints default to resolved IPv4 SSH addresses and can
-be overridden. OpenShip allocates a free subnet and private addresses; advanced
+be overridden. Kovalio allocates a free subnet and private addresses; advanced
 settings allow a subnet, tunnel MTU, and verification port. The review shows the
 exact hosts, endpoints, private addresses, required packages, and network changes.
 IP addresses respect demo-mode masking throughout setup, review, and progress.
@@ -200,7 +200,7 @@ or all server templates can be copied; these are provider-neutral TSV blocks, no
 provider API payloads. Only transport endpoints are included, never private service
 or probe ports. Preparation publishes resolved DNS endpoints and inherited cluster
 ports through its existing SSE stream; incomplete values disable full-template
-copying. OpenShip manages supported host firewall rules, while provider firewalls,
+copying. Kovalio manages supported host firewall rules, while provider firewalls,
 upstream routing and NAT forwarding remain administrator configuration. SSH access
 is never presented as proof of peer UDP access.
 The panel uses restrained warning and direction icons. Failed connection diagnostics
@@ -372,12 +372,12 @@ deletion cannot bypass managed cleanup. These operations do not drain or migrate
 workloads; that remains a separate milestone.
 
 Organization deletion also requires managed network cleanup. The shared engine
-and database both refuse deletion while an Openship-owned network or an unresolved
+and database both refuse deletion while an Kovalio-owned network or an unresolved
 host claim remains, so cascading inventory deletion cannot erase its recovery
 history. Finish recovery and remove the managed network first. Native, externally
 owned network inventory can still be removed with its organization.
 
-Host state is root-only at `/root/.openship/networks/<managedId>`, with atomic writes
+Host state is root-only at `/root/.kovalio/networks/<managedId>`, with atomic writes
 and generation-fenced receipts. Finalization removes obsolete staged keys and
 backups. If SSH fails after commit, obsolete backups may remain root-only; the
 live configuration and durable operation result are preserved. Private keys are
@@ -390,7 +390,7 @@ through the shared toolchain before planning. Networking package recipes avoid
 optional recommendations. Package output is bounded and credential-redacted before
 persistence. The Linux/systemd base, persistent identity, root access, and WireGuard
 kernel support must be available; preparation reports incompatible hosts with a
-specific failed step. OpenShip does not replace kernels, reboot servers, change
+specific failed step. Kovalio does not replace kernels, reboot servers, change
 their init system, or replace their firewall manager. Installed prerequisites remain
 installed if a later network operation rolls back.
 Custom connection policies additionally check conntrack support and install

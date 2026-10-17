@@ -86,7 +86,7 @@ export function validateRedisManifest(
   prefix: string,
 ) {
   if (
-    value?.format !== "openship-redis-rdb-v1" ||
+    value?.format !== "kovalio-redis-rdb-v1" ||
     value.databaseId !== source.databaseId ||
     value.runtimeId !== source.runtimeId ||
     !["standalone", "cluster"].includes(value.mode) ||
@@ -123,7 +123,7 @@ export async function captureRedis(
         ? redisPrimaries(String(await source.call("CLUSTER", "NODES")))
         : [{ id: "standalone", host: endpoint.host, port: endpoint.port, slots: [] }];
     const manifest: RedisArchiveManifest = {
-      format: "openship-redis-rdb-v1",
+      format: "kovalio-redis-rdb-v1",
       ...identity,
       mode: endpoint.mode,
       createdAt: new Date().toISOString(),

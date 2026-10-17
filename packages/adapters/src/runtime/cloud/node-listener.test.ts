@@ -30,7 +30,7 @@ describe("managed Node runtime listener", () => {
   it.each(["positional", "options", "ipv6"])(
     "adapts the declared public %s listener without changing a private listener",
     async (form) => {
-      const directory = await mkdtemp(join(tmpdir(), "openship-listener-"));
+      const directory = await mkdtemp(join(tmpdir(), "kovalio-listener-"));
       directories.push(directory);
       const file = join(directory, "listener.cjs");
       await writeFile(file, managedNodeListenerSource);
@@ -54,7 +54,7 @@ describe("managed Node runtime listener", () => {
     },
   );
   it("does not adapt an image used without Cloud activation", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-listener-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-listener-"));
     directories.push(directory);
     const file = join(directory, "listener.cjs");
     await writeFile(file, managedNodeListenerSource);

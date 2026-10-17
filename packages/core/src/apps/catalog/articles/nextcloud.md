@@ -4,7 +4,7 @@ Run the official Nextcloud Apache image with a dedicated MariaDB database, Redis
 
 ## Routing
 
-Only Nextcloud receives a domain by default. The selected URL drives trusted-domain, host, and protocol configuration; it works with Openship Cloud and self-hosted routing without assuming that every route uses HTTPS. Use the configured route for access. A local tunnel does not change Nextcloud's canonical URL or trusted domains.
+Only Nextcloud receives a domain by default. The selected URL drives trusted-domain, host, and protocol configuration; it works with Kovalio Cloud and self-hosted routing without assuming that every route uses HTTPS. Use the configured route for access. A local tunnel does not change Nextcloud's canonical URL or trusted domains.
 
 ## Data and maintenance
 

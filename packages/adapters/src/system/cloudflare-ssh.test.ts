@@ -15,10 +15,10 @@ afterEach(() => vi.unstubAllEnvs());
 
 describe("Cloudflare executable policy", () => {
   it("resolves the bundled Windows client without splitting paths containing spaces", () => {
-    const path = "C:\\Program Files (x86)\\OpenShip\\cloudflared.exe";
-    const options = { platform: "win32" as const, env: { OPENSHIP_CLOUDFLARED_PATH: path }, isFile: (p: string) => p === path };
+    const path = "C:\\Program Files (x86)\\Kovalio\\cloudflared.exe";
+    const options = { platform: "win32" as const, env: { KOVALIO_CLOUDFLARED_PATH: path }, isFile: (p: string) => p === path };
     expect(resolveCloudflaredExecutable(options)).toBe(path);
-    expect(buildCloudflareProxyCommand("ssh.example.com", options)).toBe('"C:/Program Files (x86)/OpenShip/cloudflared.exe" access ssh --hostname ssh.example.com');
+    expect(buildCloudflareProxyCommand("ssh.example.com", options)).toBe('"C:/Program Files (x86)/Kovalio/cloudflared.exe" access ssh --hostname ssh.example.com');
   });
   it("uses case-insensitive Windows Path and never searches the current directory", () => {
     const path = "C:\\Tools\\cloudflared.exe";
@@ -28,10 +28,10 @@ describe("Cloudflare executable policy", () => {
   });
   it("fails with an installation remedy instead of falling back to direct SSH", () => {
     expect(() => resolveCloudflaredExecutable({ env: { PATH: ".:" }, platform: "linux", isFile: () => true })).toThrow(/Install it/);
-    expect(() => resolveCloudflaredExecutable({ env: { OPENSHIP_CLOUDFLARED_PATH: "./cloudflared" }, isFile: () => true })).toThrow(/installed/);
+    expect(() => resolveCloudflaredExecutable({ env: { KOVALIO_CLOUDFLARED_PATH: "./cloudflared" }, isFile: () => true })).toThrow(/installed/);
   });
   it.each(["C:\\Users\\%USERNAME%\\cloudflared.exe", "C:\\Tools\\bad\"path\\cloudflared.exe", "C:\\Tools\\bad!path\\cloudflared.exe"])("refuses executable path expansion: %s", path => {
-    expect(() => buildCloudflareProxyCommand("ssh.example.com", { platform: "win32", env: { OPENSHIP_CLOUDFLARED_PATH: path }, isFile: () => true })).toThrow(/path/);
+    expect(() => buildCloudflareProxyCommand("ssh.example.com", { platform: "win32", env: { KOVALIO_CLOUDFLARED_PATH: path }, isFile: () => true })).toThrow(/path/);
   });
 });
 
@@ -51,7 +51,7 @@ describe.skipIf(process.platform === "win32")("Cloudflare SSH transport lifecycl
 
   beforeEach(async () => {
     handshakes = 0;
-    dir = mkdtempSync(join(tmpdir(), "openship cloudflare test "));
+    dir = mkdtempSync(join(tmpdir(), "kovalio cloudflare test "));
     server = new Server({ hostKeys: [hostKey] }, client => {
       connections.add(client);
       client.on("error", () => {});
@@ -92,7 +92,7 @@ describe.skipIf(process.platform === "win32")("Cloudflare SSH transport lifecycl
     const port = (server.address() as { port: number }).port;
     const binary = join(dir, "cloudflared");
     writeFileSync(binary, `#!${process.execPath}\nconst net = require('node:net');\nif (JSON.stringify(process.argv.slice(2)) !== JSON.stringify(['access', 'ssh', '--hostname', 'ssh.example.test'])) process.exit(4);\nconst socket = net.connect(${port}, '127.0.0.1');\nprocess.stdin.pipe(socket).pipe(process.stdout);\nsocket.on('error', () => process.exit(5));\nsocket.on('close', () => process.exit(0));\n`, { mode: 0o700 });
-    vi.stubEnv("OPENSHIP_CLOUDFLARED_PATH", binary);
+    vi.stubEnv("KOVALIO_CLOUDFLARED_PATH", binary);
   });
   afterEach(async () => {
     await executor?.dispose?.();

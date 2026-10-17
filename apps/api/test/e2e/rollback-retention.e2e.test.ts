@@ -34,7 +34,7 @@ describeDockerE2E("rollback retention matches rows and real artifacts", () => {
     runtime = await DockerRuntime.create({ transport: "socket" });
     h.runtime = runtime;
     await runtime.pullImage(BASE_IMAGE);
-    contextDir = await mkdtemp(join(tmpdir(), "openship-retention-e2e-"));
+    contextDir = await mkdtemp(join(tmpdir(), "kovalio-retention-e2e-"));
     await writeFile(join(contextDir, "Dockerfile"), `FROM ${BASE_IMAGE}\nCMD ["sleep", "3600"]\n`);
     await repos.instanceSettings.upsert({ defaultRollbackWindow: 5 });
   });
@@ -55,7 +55,7 @@ describeDockerE2E("rollback retention matches rows and real artifacts", () => {
     cleanupTags.add(tag);
     const stream = await runtime.docker.buildImage(
       { context: contextDir, src: ["Dockerfile"] },
-      { t: tag, labels: { "openship.project": projectId, "retention-test": tag } },
+      { t: tag, labels: { "kovalio.project": projectId, "retention-test": tag } },
     );
     await new Promise<void>((resolve, reject) => runtime.docker.modem.followProgress(stream,
       (err: Error | null) => err ? reject(err) : resolve()));
@@ -63,7 +63,7 @@ describeDockerE2E("rollback retention matches rows and real artifacts", () => {
 
   async function container(projectId: string, tag: string) {
     const created = await runtime.docker.createContainer({
-      Image: tag, Cmd: ["sleep", "3600"], Labels: { "openship.project": projectId },
+      Image: tag, Cmd: ["sleep", "3600"], Labels: { "kovalio.project": projectId },
       StopTimeout: 1,
     });
     cleanupContainers.add(created.id);
@@ -74,7 +74,7 @@ describeDockerE2E("rollback retention matches rows and real artifacts", () => {
   async function fixture(options: { count?: number; compose?: boolean; pinned?: boolean } = {}) {
     const org = await seedOrg();
     const project = await seedProject(org.organizationId, { rollbackWindow: null, rollbackWindowComputed: 20, runtimeMode: "docker" });
-    const repository = `openship/e2e-retention-${process.pid}-${sequence++}`;
+    const repository = `kovalio/e2e-retention-${process.pid}-${sequence++}`;
     const tags = Array.from({ length: options.count ?? 9 }, (_, index) => `${repository}:bld_v${index}`);
     // Multiple releases legitimately share layers/an image ID. Old tags must
     // still disappear while a retained tag and its live container survive.
@@ -240,7 +240,7 @@ describeDockerE2E("rollback retention matches rows and real artifacts", () => {
 
   it("does not force-remove an unrecorded container's image", async () => {
     const f = await fixture({ count: 2 });
-    const orphan = `openship/e2e-retention-orphan-${process.pid}-${sequence++}:bld_old`;
+    const orphan = `kovalio/e2e-retention-orphan-${process.pid}-${sequence++}:bld_old`;
     await image(f.project.id, orphan);
     const id = await container(f.project.id, orphan);
     // No deployment row names this manually created container. Docker itself

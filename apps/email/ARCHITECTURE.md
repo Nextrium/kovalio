@@ -48,7 +48,7 @@ themselves separately.
 
 Container installs publish the mail database only on host loopback. New setups try
 port 5432, then the first free port in 5433–5460 if 5432 is occupied. To select a
-specific port, set `OPENSHIP_MAIL_DB_PORT` in the API process environment before
+specific port, set `KOVALIO_MAIL_DB_PORT` in the API process environment before
 running mail setup. The value must be a decimal port from 1 to 65535; an occupied
 explicit port stops setup with an error.
 
@@ -59,7 +59,7 @@ the existing container binding. Inside the PostgreSQL container the port remains
 5432, and the mail daemons use the selected host port.
 
 At container boot, fail2ban receives its own root-readable PostgreSQL connection
-settings and password file in `/etc/fail2ban/openship-postgresql.{conf,pgpass}`.
+settings and password file in `/etc/fail2ban/kovalio-postgresql.{conf,pgpass}`.
 Its database helper reads these files for the selected TCP host and port, including
 direct or scheduled invocations without the container environment. Other users'
 `.pgpass` files are preserved. SQL failures return an error instead of reporting a

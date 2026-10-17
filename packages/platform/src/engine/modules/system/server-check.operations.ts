@@ -82,7 +82,7 @@ async function checkServerComponents(ctx: ExecutionContext, serverId: string, na
         );
       }
       const docker = components.find((component) => component.name === "docker")!;
-      docker.message += " Restart Openship to apply the updated user group membership.";
+      docker.message += " Restart Kovalio to apply the updated user group membership.";
     }
     return withCapabilities(executor, components);
   });
@@ -253,7 +253,7 @@ export async function checkServer(ctx: ExecutionContext, serverId: string, body:
 
   if (!managed) await assertServerExecution(await requireSelfHostedServer(ctx, serverId));
   if (managed && valid?.some(name => !["docker", "git"].includes(name)))
-    return failSystem({ error: "Host software is managed by Openship Cloud", code: "CAPABILITY_UNAVAILABLE" }, 409);
+    return failSystem({ error: "Host software is managed by Kovalio Cloud", code: "CAPABILITY_UNAVAILABLE" }, 409);
   try {
     systemDebug("system-check",
       `check:start server=${serverId} ${valid?.length ? valid.join(",") : "all"}`,

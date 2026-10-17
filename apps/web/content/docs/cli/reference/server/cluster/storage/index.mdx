@@ -1,34 +1,34 @@
 ---
 title: server cluster storage
-description: Commands, arguments, and options for openship server cluster storage.
-cliGroup: openship server cluster storage
+description: Commands, arguments, and options for kovalio server cluster storage.
+cliGroup: kovalio server cluster storage
 ---
 
 See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship server cluster storage
+## kovalio server cluster storage
 
 Manage replicated cluster storage and its backup destination
 
 ```text
-openship server cluster storage [options] [command]
+kovalio server cluster storage [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`get [options] <id>`](/docs/cli/reference/server/cluster/storage#openship-server-cluster-storage-get) | Read storage status, disks and current sequence |
-| [`setup [options] [file]`](/docs/cli/reference/server/cluster/storage#openship-server-cluster-storage-setup) | Configure replicated storage with explicit disks and capacity reservations |
-| [`retry [options] <id>`](/docs/cli/reference/server/cluster/storage#openship-server-cluster-storage-retry) | retry storage at the reviewed sequence |
-| [`remove [options] <id>`](/docs/cli/reference/server/cluster/storage#openship-server-cluster-storage-remove) | remove storage at the reviewed sequence |
-| [`backup [options] <id> <destination>`](/docs/cli/reference/server/cluster/storage#openship-server-cluster-storage-backup) | Set the storage backup destination at its current sequence |
-| [`events [options] <id>`](/docs/cli/reference/server/cluster/storage#openship-server-cluster-storage-events) | Stream storage progress |
+| [`get [options] <id>`](/docs/cli/reference/server/cluster/storage#kovalio-server-cluster-storage-get) | Read storage status, disks and current sequence |
+| [`setup [options] [file]`](/docs/cli/reference/server/cluster/storage#kovalio-server-cluster-storage-setup) | Configure replicated storage with explicit disks and capacity reservations |
+| [`retry [options] <id>`](/docs/cli/reference/server/cluster/storage#kovalio-server-cluster-storage-retry) | retry storage at the reviewed sequence |
+| [`remove [options] <id>`](/docs/cli/reference/server/cluster/storage#kovalio-server-cluster-storage-remove) | remove storage at the reviewed sequence |
+| [`backup [options] <id> <destination>`](/docs/cli/reference/server/cluster/storage#kovalio-server-cluster-storage-backup) | Set the storage backup destination at its current sequence |
+| [`events [options] <id>`](/docs/cli/reference/server/cluster/storage#kovalio-server-cluster-storage-events) | Stream storage progress |
 
-## openship server cluster storage backup
+## kovalio server cluster storage backup
 
 Set the storage backup destination at its current sequence
 
 ```text
-openship server cluster storage backup [options] <id> <destination>
+kovalio server cluster storage backup [options] <id> <destination>
 ```
 
 | Argument | Meaning |
@@ -40,12 +40,12 @@ openship server cluster storage backup [options] <id> <destination>
 | --- | --- |
 | `--sequence <number>` | Current sequence from storage get |
 
-## openship server cluster storage events
+## kovalio server cluster storage events
 
 Stream storage progress
 
 ```text
-openship server cluster storage events [options] <id>
+kovalio server cluster storage events [options] <id>
 ```
 
 | Argument | Meaning |
@@ -56,12 +56,12 @@ openship server cluster storage events [options] <id>
 | --- | --- |
 | `--timeout <ms>` | Stop after this deadline |
 
-## openship server cluster storage get
+## kovalio server cluster storage get
 
 Read storage status, disks and current sequence
 
 ```text
-openship server cluster storage get [options] <id>
+kovalio server cluster storage get [options] <id>
 ```
 
 | Argument | Meaning |
@@ -72,12 +72,12 @@ openship server cluster storage get [options] <id>
 | --- | --- |
 | `--observe` | Refresh storage health from the cluster |
 
-## openship server cluster storage remove
+## kovalio server cluster storage remove
 
 remove storage at the reviewed sequence
 
 ```text
-openship server cluster storage remove [options] <id>
+kovalio server cluster storage remove [options] <id>
 ```
 
 | Argument | Meaning |
@@ -89,12 +89,12 @@ openship server cluster storage remove [options] <id>
 | `--sequence <number>` | Current sequence from storage get |
 | `-y, --yes` | Confirm storage changes |
 
-## openship server cluster storage retry
+## kovalio server cluster storage retry
 
 retry storage at the reviewed sequence
 
 ```text
-openship server cluster storage retry [options] <id>
+kovalio server cluster storage retry [options] <id>
 ```
 
 | Argument | Meaning |
@@ -106,12 +106,12 @@ openship server cluster storage retry [options] <id>
 | `--sequence <number>` | Current sequence from storage get |
 | `-y, --yes` | Confirm storage changes |
 
-## openship server cluster storage setup
+## kovalio server cluster storage setup
 
 Configure replicated storage with explicit disks and capacity reservations
 
 ```text
-openship server cluster storage setup [options] [file]
+kovalio server cluster storage setup [options] [file]
 ```
 
 | Argument | Meaning |

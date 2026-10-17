@@ -512,7 +512,7 @@ export const ServerClusterSchema = Type.Object({
     Type.Object({
       ...WireGuardClusterConfigSchema.properties.network.properties,
       id: text,
-      ownership: Type.Literal("openship"),
+      ownership: Type.Literal("kovalio"),
       encryption: Type.Literal("wireguard"),
     }),
   ]),

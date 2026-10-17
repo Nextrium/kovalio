@@ -322,7 +322,7 @@ export async function getStatus(c: Context) {
       let observationError: string | undefined;
       const engine = found ? await detectMailEngine(executor).catch((diagnosticFailure) => {
         observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller");
-        observationError = "Openship could not check the mail engine. Its current health is unknown.";
+        observationError = "Kovalio could not check the mail engine. Its current health is unknown.";
         return null;
       }) : null;
       return { state: found, engine, observationError };
@@ -349,7 +349,7 @@ export async function getStatus(c: Context) {
     observeCaughtError(diagnosticFailure, "api/modules/mail/mail.controller");
     return c.json({
       code: "MAIL_STATUS_UNAVAILABLE",
-      message: "Openship could not read this mail server's status. Its health is unknown. Check the connection and retry.",
+      message: "Kovalio could not read this mail server's status. Its health is unknown. Check the connection and retry.",
     }, 503);
   }
 }
@@ -486,7 +486,7 @@ export async function scanMailInstall(c: Context) {
       }),
     );
     const installComplete = !!state && setupStateIsComplete(state);
-    // Informational: does openship already manage a webmail for this server?
+    // Informational: does kovalio already manage a webmail for this server?
     // Read from the DB, since the webmail is a project — a re-adopted box whose
     // kovalio DB was rebuilt correctly reads "not deployed": the container may
     // still be running, but nothing here manages or can redeploy it.
@@ -1109,7 +1109,7 @@ export async function startSetup(c: Context) {
       // Dynamic import mirrors the pattern domains.service.ts uses to dodge a
       // load-time cycle (mail-state ↔ mail.controller ↔ admin services).
       try {
-        const { ensureOpenshipPlatformMailbox } = await import(
+        const { ensureKovalioPlatformMailbox } = await import(
           "@repo/platform/engine/modules/mail/admin/platform-mailbox.service"
         );
         // Clear any cached "platform mailbox unavailable" marker from BEFORE the
@@ -1126,7 +1126,7 @@ export async function startSetup(c: Context) {
         });
       } catch (err) {
         errorDiagnostics.warn("api/modules/mail/mail.controller",
-          `[mail.install] ensureOpenshipPlatformMailbox failed for ${serverId}:`,
+          `[mail.install] ensureKovalioPlatformMailbox failed for ${serverId}:`,
           err,
         );
         await stream.writeSSE({

@@ -56,7 +56,7 @@ async function createProject(api: RunningApi, name: string) {
   ).data;
 }
 async function pair(environment?: Record<string, string>) {
-  const directory = await mkdtemp(join(tmpdir(), "openship-instance-e2e-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-instance-e2e-"));
   roots.push(directory);
   const source = await startApi({
     dbDir: join(directory, "source"),
@@ -346,7 +346,7 @@ it("restores integration credentials before auth initialization in the packaged 
   // Build and execute the same Node bundle recipe used by Desktop and the CLI.
   // Its lazy imports must not initialize OAuth before the encrypted env loads.
   const repo = resolve(import.meta.dirname, "../../../..");
-  const bundle = await mkdtemp(join(tmpdir(), "openship-instance-bundle-"));
+  const bundle = await mkdtemp(join(tmpdir(), "kovalio-instance-bundle-"));
   roots.push(bundle);
   const entry = join(bundle, "index.mjs");
   await run(
@@ -378,8 +378,8 @@ it("restores integration credentials before auth initialization in the packaged 
     entry,
     authMode: "local",
     environment: {
-      OPENSHIP_MIGRATIONS_DIR: join(repo, "packages/db/drizzle"),
-      OPENSHIP_PGLITE_ASSETS_DIR: dirname(require.resolve("@electric-sql/pglite")),
+      KOVALIO_MIGRATIONS_DIR: join(repo, "packages/db/drizzle"),
+      KOVALIO_PGLITE_ASSETS_DIR: dirname(require.resolve("@electric-sql/pglite")),
     },
   });
   apis.push(resumed);
@@ -511,7 +511,7 @@ it("accepts an API-only invitation through Desktop without granting the teammate
     role: "member",
     delivery: "link",
   });
-  const directory = await mkdtemp(join(tmpdir(), "openship-teammate-desktop-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-teammate-desktop-"));
   roots.push(directory);
   const teammate = await startApi({
     dbDir: directory,

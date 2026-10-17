@@ -170,12 +170,12 @@ describe("durable network prerequisite preparation", () => {
   it("interrupts only the worker generation being stopped and treats a missing lease as abandoned on read", async () => {
     await start();
     expect(await repo.interrupt(fixture.id, 2, "Wrong worker")).toEqual([]);
-    expect(await repo.interrupt(fixture.id, 1, "OpenShip stopped")).toEqual([
+    expect(await repo.interrupt(fixture.id, 1, "Kovalio stopped")).toEqual([
       { id: fixture.id, organizationId: "org-a" },
     ]);
     expect(await repo.get("org-a", fixture.id)).toMatchObject({
       status: "interrupted",
-      error: "OpenShip stopped",
+      error: "Kovalio stopped",
       sequence: 2,
     });
     await start();

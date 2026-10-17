@@ -3,7 +3,7 @@
  *
  * GitHub documents `installation_id` on the Setup URL as attacker-controlled.
  * The claim therefore requires all three independent bindings:
- *   1. a one-shot state minted for this Openship user + workspace;
+ *   1. a one-shot state minted for this Kovalio user + workspace;
  *   2. the user's GitHub App authorization can see the installation;
  *   3. the configured App JWT can read that same installation.
  */

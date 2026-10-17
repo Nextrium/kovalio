@@ -113,7 +113,7 @@
     "needsLoginPre": "انضم إلى ",
     "needsLoginMid": " على Kovalio. سجّل الدخول أو أنشئ حسابًا باستخدام ",
     "needsLoginPost": " للقبول.",
-    "signInToAccept": "انضم إلى {org} على Openship. سجّل الدخول باستخدام {email} للقبول.",
+    "signInToAccept": "انضم إلى {org} على Kovalio. سجّل الدخول باستخدام {email} للقبول.",
     "accountCreationDisabled": "يجب على مسؤول المثيل إنشاء حسابك قبل أن تتمكن من قبول هذه الدعوة.",
     "signIn": "تسجيل الدخول",
     "createAccount": "إنشاء حساب",
@@ -157,8 +157,8 @@
     "authorizeError": "تعذّر تفويض هذا الاتصال.",
     "invalidTitle": "طلب تفويض غير صالح",
     "title": "تفويض الجهاز",
-    "instancePre": "إن مثيل Openship على ",
-    "instancePost": " يريد الاتصال بحساب Openship Cloud الخاص بك.",
+    "instancePre": "إن مثيل Kovalio على ",
+    "instancePost": " يريد الاتصال بحساب Kovalio Cloud الخاص بك.",
     "organization": "المؤسسة",
     "switch": "تبديل",
     "switchAccount": "تبديل الحساب",
@@ -176,7 +176,7 @@
     "authorizing": "جارٍ التفويض…",
     "authorize": "تفويض",
     "cancel": "إلغاء",
-    "deviceDoneTitle": "متصل بـ Openship Cloud",
+    "deviceDoneTitle": "متصل بـ Kovalio Cloud",
     "deviceDoneBody": "يمكنك إغلاق علامة التبويب هذه والعودة إلى جهازك الطرفي — سيستمر الإعداد تلقائياً."
   },
   "cloudConnect": {

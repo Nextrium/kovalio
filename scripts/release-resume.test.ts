@@ -43,7 +43,7 @@ const resumedWorkflow = workflow.replace(
         if: ${RESUME_GUARD}
 `,
 );
-const repository = "oblien/openship";
+const repository = "oblien/kovalio";
 const run: ResumeRun = {
   id: 123,
   head_sha: "a".repeat(40),
@@ -57,7 +57,7 @@ const job = {
   name: "Release gate / Scaling E2E / Scaling journey (application)",
   status: "completed",
   conclusion: "success",
-  html_url: "https://github.com/oblien/openship/actions/runs/123/job/456",
+  html_url: "https://github.com/Nextrium/kovalio/actions/runs/123/job/456",
 };
 
 describe("release continuation", () => {
@@ -85,9 +85,9 @@ describe("release continuation", () => {
 
   it("does not allow arbitrary skip lists or ambiguous resume records", () => {
     expect(resumeRuns("v0.8.0")).toEqual([]);
-    expect(resumeRuns("v0.8.0\n\nOpenShip-Resume-Runs: 123,456,123\n")).toEqual(["123", "456"]);
-    expect(() => resumeRuns("OpenShip-Resume-Runs: success,skip-storage")).toThrow();
-    expect(() => resumeRuns("OpenShip-Resume-Runs: 123\nOpenShip-Resume-Runs: 456")).toThrow();
+    expect(resumeRuns("v0.8.0\n\nKovalio-Resume-Runs: 123,456,123\n")).toEqual(["123", "456"]);
+    expect(() => resumeRuns("Kovalio-Resume-Runs: success,skip-storage")).toThrow();
+    expect(() => resumeRuns("Kovalio-Resume-Runs: 123\nKovalio-Resume-Runs: 456")).toThrow();
   });
 
   it("accepts only this repository's tag workflows", () => {
@@ -238,7 +238,7 @@ describe("release continuation", () => {
 
   it("reuses a real ancestor only for unchanged inputs and available artifacts", async () => {
     const initialDirectory = process.cwd();
-    const directory = mkdtempSync(join(tmpdir(), "openship-release-resume-"));
+    const directory = mkdtempSync(join(tmpdir(), "kovalio-release-resume-"));
     const initialFetch = globalThis.fetch;
     const initialToken = process.env.GITHUB_TOKEN;
     const git = (...args: string[]) =>

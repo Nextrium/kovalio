@@ -10,7 +10,7 @@
     "managePlan": "Gérer le forfait",
     "projects": "Projets",
     "emptyTitle": "Vos applications commencent ici",
-    "emptyDescription": "Choisissez une capacité, puis déployez vos applications et projets sur Openship Cloud.",
+    "emptyDescription": "Choisissez une capacité, puis déployez vos applications et projets sur Kovalio Cloud.",
     "usageHint": "Utilisation actuelle du processeur, de la mémoire et du stockage.",
     "noProjects": "Aucun projet ici pour le moment.",
     "spaces": "Espaces Cloud",
@@ -225,7 +225,7 @@
     "keyModePaste": "Coller / Téléverser",
     "keyModePath": "Chemin sur l'hôte",
     "keyPathBrowse": "Parcourir…",
-    "keyPathHelp": "Chemin absolu vers la clé privée sur la machine exécutant Openship.",
+    "keyPathHelp": "Chemin absolu vers la clé privée sur la machine exécutant Kovalio.",
     "keyPaste": "Clé privée",
     "keyPastePlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----\n…",
     "keyPasteHelp": "Les clés collées sont chiffrées au repos et ne quittent jamais le serveur.",
@@ -325,7 +325,7 @@
     "sshPort": "Port SSH : {port}",
     "port": "Port",
     "reinstallDockerTitle": "Réinstaller Docker sur ce serveur ?",
-    "reinstallDockerMessage": "Cela exécute le programme d'installation officiel de Docker, qui télécharge le moteur actuel — sur un serveur à jour, il s'agit d'une mise à niveau majeure. L'installation ou la mise à niveau de Docker redémarre le démon, ce qui redémarre tous les conteneurs sur ce serveur, y compris tout ce qu'Openship exécute ici. Rien d'autre n'installe Docker pour vous : les autres étapes l'ignorent tant qu'il fonctionne."
+    "reinstallDockerMessage": "Cela exécute le programme d'installation officiel de Docker, qui télécharge le moteur actuel — sur un serveur à jour, il s'agit d'une mise à niveau majeure. L'installation ou la mise à niveau de Docker redémarre le démon, ce qui redémarre tous les conteneurs sur ce serveur, y compris tout ce qu'Kovalio exécute ici. Rien d'autre n'installe Docker pour vous : les autres étapes l'ignorent tant qu'il fonctionne."
   },
   "banner": {
     "unreachableTitle": "Impossible de joindre {host}",
@@ -344,16 +344,16 @@
     "editCredentials": "Modifier les identifiants",
     "editServer": "Modifier le serveur",
     "showRawError": "Afficher l'erreur brute",
-    "hostChannelTitle": "Openship ne peut pas joindre l'hôte de cette machine",
-    "hostChannelBody": "Openship s'exécute dans un conteneur ici et communique avec l'hôte via SSH sur {target}. Aucune réponse n'a été reçue, il est donc impossible d'exécuter des opérations au niveau de l'hôte sur cette machine.",
-    "hostChannelImpact": "Les déploiements ordinaires sur cette machine fonctionnent toujours — ils passent par le socket Docker. Sont bloqués jusqu'à ce que le canal fonctionne : le terminal hôte, les informations système de l'hôte et les analyses de ports de l'hôte ; la reprise de :80/:443 depuis un proxy non démarré par Openship ; l'installation ou la mise à jour du moteur de messagerie ; le déploiement d'une application du catalogue nécessitant un fichier de configuration généré sur l'hôte (par exemple kong.yml de Supabase). Cette machine apparaît également comme « Hors ligne » dans la liste des serveurs du tableau de bord tant que le canal est inactif.",
+    "hostChannelTitle": "Kovalio ne peut pas joindre l'hôte de cette machine",
+    "hostChannelBody": "Kovalio s'exécute dans un conteneur ici et communique avec l'hôte via SSH sur {target}. Aucune réponse n'a été reçue, il est donc impossible d'exécuter des opérations au niveau de l'hôte sur cette machine.",
+    "hostChannelImpact": "Les déploiements ordinaires sur cette machine fonctionnent toujours — ils passent par le socket Docker. Sont bloqués jusqu'à ce que le canal fonctionne : le terminal hôte, les informations système de l'hôte et les analyses de ports de l'hôte ; la reprise de :80/:443 depuis un proxy non démarré par Kovalio ; l'installation ou la mise à jour du moteur de messagerie ; le déploiement d'une application du catalogue nécessitant un fichier de configuration généré sur l'hôte (par exemple kong.yml de Supabase). Cette machine apparaît également comme « Hors ligne » dans la liste des serveurs du tableau de bord tant que le canal est inactif.",
     "hostChannelFix": "Exécutez ceci sur l'hôte, puis réessayez :",
-    "hostChannelMissingTitle": "Openship n'a aucun canal vers l'hôte de cette machine",
-    "hostChannelMissingBody": "Openship s'exécute dans un conteneur ici, et le canal SSH utilisé pour joindre l'hôte n'a jamais été configuré. Il n'y avait aucune adresse à contacter, donc rien n'est en panne ici — les opérations au niveau de l'hôte sur cette machine n'ont simplement nulle part où s'exécuter.",
+    "hostChannelMissingTitle": "Kovalio n'a aucun canal vers l'hôte de cette machine",
+    "hostChannelMissingBody": "Kovalio s'exécute dans un conteneur ici, et le canal SSH utilisé pour joindre l'hôte n'a jamais été configuré. Il n'y avait aucune adresse à contacter, donc rien n'est en panne ici — les opérations au niveau de l'hôte sur cette machine n'ont simplement nulle part où s'exécuter.",
     "hostChannelWouldUse": "Une fois configuré, le canal joindra l'hôte sur {target}. Rien n'a encore contacté cette adresse.",
     "hostChannelProvisionFix": "Exécutez ceci sur l'hôte pour configurer le canal, puis réessayez :",
-    "hostChannelAuthTitle": "L'hôte a refusé la clé d'Openship",
-    "hostChannelAuthBody": "Openship s'exécute dans un conteneur ici et joint l'hôte via SSH sur {target}. L'hôte a répondu puis a rejeté la clé, les opérations au niveau de l'hôte ne peuvent donc pas s'exécuter. Soit la clé n'plus autorisée pour ce compte, soit sshd n'autorise pas du tout ce compte à se connecter. Les identifiants SSH stockés sur ce serveur ne sont pas utilisés pour cette connexion — le canal possède sa propre clé.",
+    "hostChannelAuthTitle": "L'hôte a refusé la clé d'Kovalio",
+    "hostChannelAuthBody": "Kovalio s'exécute dans un conteneur ici et joint l'hôte via SSH sur {target}. L'hôte a répondu puis a rejeté la clé, les opérations au niveau de l'hôte ne peuvent donc pas s'exécuter. Soit la clé n'plus autorisée pour ce compte, soit sshd n'autorise pas du tout ce compte à se connecter. Les identifiants SSH stockés sur ce serveur ne sont pas utilisés pour cette connexion — le canal possède sa propre clé.",
     "hostChannelReauthorizeFix": "Exécutez ceci sur l'hôte pour réautoriser la clé du canal, puis réessayez :"
   },
   "overview": {
@@ -620,7 +620,7 @@
     "continue": "Continuer",
     "cancel": "Annuler",
     "retry": "Réessayer",
-    "selfHostedOnly": "Les clusters sont disponibles sur OpenShip auto-hébergé. Oblien gère l’infrastructure Cloud.",
+    "selfHostedOnly": "Les clusters sont disponibles sur Kovalio auto-hébergé. Oblien gère l’infrastructure Cloud.",
     "managePermissionRequired": "Vous devez avoir l’autorisation de gérer tous les serveurs de cet espace de travail pour configurer des clusters.",
     "notChecked": "Pas encore vérifié",
     "networkStatus": "Vérification réseau",
@@ -710,7 +710,7 @@
     "probingPeers": "Vérification de la connectivité privée entre serveurs…",
     "interfaceVerified": "Interface privée vérifiée",
     "encryption": "Chiffrement",
-    "externalEncryption": "Non vérifié par OpenShip",
+    "externalEncryption": "Non vérifié par Kovalio",
     "verificationScope": "Ces tests vérifient les adresses privées sélectionnées et le port de test. L’accès aux services et le chiffrement dépendent du réseau et des politiques applicatives.",
     "source": "Source",
     "destination": "Destination",
@@ -718,7 +718,7 @@
     "failed": "Échec",
     "noPeerChecks": "Lancez une vérification pour afficher les connexions entre serveurs.",
     "projectScope": "Connectez les serveurs et gérez leur connectivité privée indépendamment des clusters.",
-    "selfHostedOnly": "Les réseaus sont disponibles sur OpenShip auto-hébergé. Oblien gère l’infrastructure Cloud.",
+    "selfHostedOnly": "Les réseaus sont disponibles sur Kovalio auto-hébergé. Oblien gère l’infrastructure Cloud.",
     "managePermissionRequired": "Vous devez avoir l’autorisation de gérer tous les serveurs de cet espace de travail pour configurer des réseaus.",
     "editWhileVerifying": "Attendez la fin de la vérification réseau en cours avant de modifier ce réseau.",
     "status": {
@@ -738,7 +738,7 @@
     "crossProviderNetworkHint": "Les réseaux privés de fournisseurs différents nécessitent une route ou un VPN existant entre eux. Choisir un fournisseur ne connecte pas les serveurs.",
     "managed": {
       "title": "Réseau privé géré",
-      "description": "OpenShip crée un réseau WireGuard chiffré entre vos serveurs, même chez différents fournisseurs.",
+      "description": "Kovalio crée un réseau WireGuard chiffré entre vos serveurs, même chez différents fournisseurs.",
       "requirements": "Nécessite Linux avec systemd et un accès root ou sudo sans mot de passe. Python 3.8+, iproute2 et les outils WireGuard manquants sont installés automatiquement. La compatibilité du noyau et du pare-feu est vérifiée pendant la configuration.",
       "mode": "Mode réseau",
       "existingHint": "Utiliser les adresses déjà configurées sur le réseau de votre fournisseur.",
@@ -747,7 +747,7 @@
       "useServerAddress": "Utiliser l’adresse du serveur",
       "port": "Port UDP WireGuard",
       "automaticRange": "Choisir automatiquement une plage disponible",
-      "rangeHint": "OpenShip vérifie les plages des hôtes, de Docker, des VPN, du DNS et des routes, puis attribue des adresses privées stables. Vous pouvez aussi choisir un sous-réseau privé /16–/27.",
+      "rangeHint": "Kovalio vérifie les plages des hôtes, de Docker, des VPN, du DNS et des routes, puis attribue des adresses privées stables. Vous pouvez aussi choisir un sous-réseau privé /16–/27.",
       "inspect": "Préparer les serveurs",
       "inspecting": "Démarrage de la préparation…",
       "apply": "Appliquer le réseau",
@@ -756,7 +756,7 @@
       "effect": "Crée un tunnel dédié et des routes privées, et autorise le trafic entre les pairs indiqués. Les routes SSH et les paramètres DNS sont conservés.",
       "keys": "Les clés privées sont générées et conservées sur chaque serveur.",
       "rollbackHint": "Les modifications non validées sont annulées sur chaque hôte après 20 minutes, même après une déconnexion du contrôleur ou un redémarrage de l’hôte.",
-      "firewallHint": "OpenShip configure les pare-feu hôtes pris en charge lors de l’application. Enregistrez les règles du fournisseur ou du routeur avant d’appliquer ou de réessayer.",
+      "firewallHint": "Kovalio configure les pare-feu hôtes pris en charge lors de l’application. Enregistrez les règles du fournisseur ou du routeur avant d’appliquer ou de réessayer.",
       "expires": "Plan valable jusqu’à {time}",
       "expired": "Ce plan a expiré. Revenez en arrière et inspectez à nouveau les serveurs.",
       "packages": "Prérequis",
@@ -768,10 +768,10 @@
       "progress": "Progression par serveur",
       "resume": "Reprendre l’opération",
       "restore": "Restaurer le réseau précédent",
-      "recoveryHint": "Consultez les résultats des serveurs avant de reprendre. OpenShip vérifie les états enregistrés sur les hôtes, puis restaure ou réapplique la configuration approuvée.",
+      "recoveryHint": "Consultez les résultats des serveurs avant de reprendre. Kovalio vérifie les états enregistrés sur les hôtes, puis restaure ou réapplique la configuration approuvée.",
       "viewOperation": "Voir l’opération réseau",
       "viewCluster": "Ouvrir le réseau",
-      "removalHint": "Supprime le tunnel géré, les routes privées et les règles de pare-feu appartenant à OpenShip sur chaque membre. Les services utilisant ces adresses privées perdront leurs connexions.",
+      "removalHint": "Supprime le tunnel géré, les routes privées et les règles de pare-feu appartenant à Kovalio sur chaque membre. Les services utilisant ces adresses privées perdront leurs connexions.",
       "removalApply": "Supprimer le réseau géré",
       "status": {
         "planned": "Prêt à appliquer",
@@ -861,17 +861,17 @@
       "removeAndReset": "Retirer et réinitialiser",
       "removeSetupServerTitle": "Retirer {name} de la configuration ?",
       "removeSetupServerDescription": "Enregistrez les {count} serveurs restants et mettez la configuration en pause jusqu’à une nouvelle tentative de préparation. Le serveur, ses services, ses données et les outils installés sont conservés.",
-      "removeSetupServerResetDescription": "Restaurez les modifications réseau OpenShip de cette tentative sur le serveur sélectionné et ses pairs, puis mettez en pause avec les {count} serveurs restants. Relancez la préparation lorsque vous êtes prêt. Les services, données et outils installés sont conservés. Chaque serveur doit confirmer le nettoyage avant de relancer la préparation.",
+      "removeSetupServerResetDescription": "Restaurez les modifications réseau Kovalio de cette tentative sur le serveur sélectionné et ses pairs, puis mettez en pause avec les {count} serveurs restants. Relancez la préparation lorsque vous êtes prêt. Les services, données et outils installés sont conservés. Chaque serveur doit confirmer le nettoyage avant de relancer la préparation.",
       "keepTwoServers": "Il doit rester au moins deux serveurs.",
       "resetBeforeContinue": "Réinitialisation de la configuration précédente",
-      "resetBeforeContinueDescription": "OpenShip restaure la configuration réseau et les entrées des pairs de cette tentative. Lorsque chaque serveur confirme le nettoyage, relancez la préparation pour continuer avec {count} serveurs. Si un serveur est inaccessible, rétablissez l’accès et réessayez le nettoyage.",
+      "resetBeforeContinueDescription": "Kovalio restaure la configuration réseau et les entrées des pairs de cette tentative. Lorsque chaque serveur confirme le nettoyage, relancez la préparation pour continuer avec {count} serveurs. Si un serveur est inaccessible, rétablissez l’accès et réessayez le nettoyage.",
       "continuePreparation": "Continuer la préparation",
       "viewCleanup": "Voir les détails du nettoyage",
       "viewUpdatedSetup": "Voir la configuration mise à jour",
       "selectionSavedHint": "Votre sélection de serveurs mise à jour est enregistrée. La préparation reste en pause jusqu’à ce que vous la relanciez.",
       "selectionReplacedHint": "Cette tentative est liée à une nouvelle sélection de serveurs. Ouvrez la configuration mise à jour pour continuer.",
       "transportCheckTitle": "Accès UDP entre les serveurs",
-      "transportCheckHint": "Après application du plan, OpenShip teste les connexions chiffrées sur ces points de terminaison UDP avant d’attribuer les adresses et routes privées.",
+      "transportCheckHint": "Après application du plan, Kovalio teste les connexions chiffrées sur ces points de terminaison UDP avant d’attribuer les adresses et routes privées.",
       "transportFailedTitle": "Vérifier les connexions en échec avant de réessayer",
       "transportFailedHint": "Une connexion chiffrée n’a pas pu être établie. Vérifiez les adresses de destination et les éventuelles redirections de ports NAT, puis les règles du pare-feu. Sélectionnez un lien en échec pour voir chaque sens.",
       "preparationTopologyHint": "Chaque serveur affiche son étape de préparation actuelle. La connectivité UDP est testée après vérification et application du réseau.",
@@ -904,11 +904,11 @@
         "nativeFailedHint": "Vérifiez les routes privées, les interfaces sélectionnées et les règles TCP/UDP des pare-feu hôtes et du fournisseur avant de réessayer.",
         "privateInterfaceHint": "Interface portant cette IP privée",
         "nativeScopeHint": "Ces règles permettent les tests de connectivité. Ajoutez séparément les ports de services privés nécessaires à vos applications.",
-        "nativeFirewallHint": "Configurez les pare-feu hôtes et du fournisseur pour l’interface privée. OpenShip vérifie ce réseau sans modifier ses règles de pare-feu.",
+        "nativeFirewallHint": "Configurez les pare-feu hôtes et du fournisseur pour l’interface privée. Kovalio vérifie ce réseau sans modifier ses règles de pare-feu.",
         "confirmTitle": "Confirmer l’accès du pare-feu",
         "confirmManaged": "J’ai autorisé le trafic UDP indiqué dans les pare-feu du fournisseur et les routeurs entre ces serveurs.",
         "confirmNative": "J’ai autorisé le trafic TCP/UDP indiqué dans les pare-feu hôtes et du fournisseur pour ces adresses privées.",
-        "confirmHint": "OpenShip vérifiera la connectivité après avoir continué.",
+        "confirmHint": "Kovalio vérifiera la connectivité après avoir continué.",
         "confirmRequired": "Confirmez l’accès du pare-feu avant de continuer.",
         "returnTraffic": "Trafic de retour",
         "nativeReturnHint": "Les pare-feu à états autorisent automatiquement les réponses. Le modèle inclut aussi des règles de retour pour les pare-feu sans état, avec les mêmes IP privées des pairs."
@@ -967,7 +967,7 @@
       "outgoing": "Peut se connecter à",
       "none": "Aucun",
       "empty": "Ce serveur ne possède aucune connexion configurée.",
-      "transportHint": "WireGuard utilise UDP dans les deux sens pour chaque paire connectée. OpenShip applique les sens d’accès privé sélectionnés sur les serveurs.",
+      "transportHint": "WireGuard utilise UDP dans les deux sens pour chaque paire connectée. Kovalio applique les sens d’accès privé sélectionnés sur les serveurs.",
       "enforcedHint": "Ces autorisations couvrent ce réseau privé géré, y compris les ports publiés des conteneurs. L’accès public et les autres réseaux ont leurs propres règles.",
       "blockedVerified": "Bloqué conformément à la configuration",
       "unexpectedAccess": "Accès inattendu",
@@ -987,10 +987,10 @@
     "setup": "Activer la mise à l’échelle",
     "oneControl": "Un serveur de contrôle. Au moins trois serveurs sont nécessaires pour un plan de contrôle hautement disponible.",
     "threeControls": "Trois serveurs de contrôle assurent la disponibilité du cluster. Les serveurs supplémentaires deviennent des nœuds de travail.",
-    "requirements": "OpenShip prépare les serveurs, les connecte et vérifie le routage des applications. La progression est enregistrée pour vous permettre de revenir plus tard.",
+    "requirements": "Kovalio prépare les serveurs, les connecte et vérifie le routage des applications. La progression est enregistrée pour vous permettre de revenir plus tard.",
     "readyHint": "Choisissez ce cluster dans les réglages de mise à l’échelle d’un projet pour déployer des instances sur ses serveurs.",
     "privateConnections": "Règles de pare-feu privé requises",
-    "privateHint": "OpenShip configure automatiquement les pare-feu hôtes pris en charge. Si votre fournisseur filtre le réseau privé, autorisez ces ports de destination depuis les adresses privées sources indiquées. Ne les exposez pas à Internet.",
+    "privateHint": "Kovalio configure automatiquement les pare-feu hôtes pris en charge. Si votre fournisseur filtre le réseau privé, autorisez ces ports de destination depuis les adresses privées sources indiquées. Ne les exposez pas à Internet.",
     "remove": "Désactiver la mise à l’échelle",
     "removeDescription": "Désactivez la mise à l’échelle et supprimez son installation de ce cluster. Supprimez d’abord les applications déployées sur le cluster et les volumes persistants. Le groupe de serveurs, les applications Docker et le réseau privé restent disponibles.",
     "details": "Détails de configuration",
@@ -1013,7 +1013,7 @@
       "verify": "Vérifier le routage des applications",
       "remove": "Supprimer la configuration de mise à l’échelle"
     },
-    "requirementsDetails": "OpenShip installe les outils manquants, configure K3s sur le réseau privé et vérifie le routage des services et le DNS. Linux avec systemd et un pare-feu hôte sans filtrage ou basé sur iptables sont nécessaires.",
+    "requirementsDetails": "Kovalio installe les outils manquants, configure K3s sur le réseau privé et vérifie le routage des services et le DNS. Linux avec systemd et un pare-feu hôte sans filtrage ou basé sur iptables sont nécessaires.",
     "technicalDetails": "Détails techniques",
     "technology": "Orchestrateur",
     "applicationNetwork": "Réseau des pods",
@@ -1025,7 +1025,7 @@
     "label": "Connexion",
     "direct": "SSH direct",
     "hostname": "Nom d’hôte Access",
-    "help": "Utilisez votre nom d’hôte Cloudflare Access et les identifiants SSH du serveur. Connectez-vous à Cloudflare sur la machine exécutant OpenShip. L’application Windows inclut le client requis ; les autres installations nécessitent cloudflared.",
+    "help": "Utilisez votre nom d’hôte Cloudflare Access et les identifiants SSH du serveur. Connectez-vous à Cloudflare sur la machine exécutant Kovalio. L’application Windows inclut le client requis ; les autres installations nécessitent cloudflared.",
     "openAccess": "Ouvrir Cloudflare Access"
   },
   "acquire": {
@@ -1035,7 +1035,7 @@
     },
     "managed": {
       "label": "Obtenir un serveur géré",
-      "description": "Openship Cloud gère la configuration, le routage et HTTPS."
+      "description": "Kovalio Cloud gère la configuration, le routage et HTTPS."
     },
     "signInHint": "Connectez votre compte Cloud pour utiliser un serveur géré existant ou en obtenir un nouveau.",
     "chooseExisting": "Choisir un serveur Cloud existant",
@@ -1086,7 +1086,7 @@
     "runtime": {
       "title": "API d’exécution",
       "description": "Automatisez les commandes, les fichiers et les opérations d’exécution de ce serveur géré avec vos propres outils.",
-      "requiredHint": "Openship utilise cette API pour les déploiements, la surveillance et les terminaux. Elle reste donc activée tant que le serveur est géré.",
+      "requiredHint": "Kovalio utilise cette API pour les déploiements, la surveillance et les terminaux. Elle reste donc activée tant que le serveur est géré.",
       "stoppedHint": "Relancez le serveur depuis le panneau de son forfait avant d’ouvrir une connexion d’exécution.",
       "enable": "Activer Runtime API",
       "credentialHint": "Les administrateurs peuvent afficher un identifiant propre à ce serveur. Il donne un accès complet à l’environnement d’exécution, y compris à tous ses projets.",
@@ -1107,7 +1107,7 @@
       "os": "Système d’exploitation",
       "lifecycle": "Cycle de vie",
       "persistent": "Serveur persistant",
-      "imageHint": "Openship entretient l’image Docker gérée. Choisissez les images d’application dans les paramètres de déploiement de chaque projet. Remplacer l’image du serveur affecterait tous les projets et leurs données.",
+      "imageHint": "Kovalio entretient l’image Docker gérée. Choisissez les images d’application dans les paramètres de déploiement de chaque projet. Remplacer l’image du serveur affecterait tous les projets et leurs données.",
       "resources": "Ressources allouées au serveur",
       "resourceHint": "Les ressources proviennent de l’abonnement de ce serveur. Modifiez-les via la procédure existante de révision du forfait et de redimensionnement ; tous les projets partagent cette allocation.",
       "terminal": "Ouvrir le terminal",
@@ -1144,7 +1144,7 @@
       "truncated": "Affichage des 100 premiers processus natifs. Utilisez le terminal pour consulter l’inventaire complet de l’hôte.",
       "sources": {
         "manual": "Charge de travail manuelle",
-        "project": "Application Openship",
+        "project": "Application Kovalio",
         "system": "Processus de plateforme ou géré en externe"
       },
       "states": {
@@ -1169,7 +1169,7 @@
       "rulesUnavailable": "Les règles sortantes sont indisponibles. Actualisez avant de les modifier.",
       "invalidRules": "Saisissez 1 à 50 destinations. Utilisez * seul ou des noms d’hôte/IP sans URL, port ni chemin.",
       "confirm": "Appliquer ces règles sortantes à tous les projets du serveur ? Désactiver Internet efface la liste des destinations autorisées. Sa réactivation utilise les destinations affichées ci-dessus.",
-      "routingHint": "Les domaines publics, TLS et les réseaux privés utilisent les outils de projets et de réseaux d’Openship. Ce formulaire ne modifie ni leurs routes, ni les règles entrantes, ni les identifiants de proxy.",
+      "routingHint": "Les domaines publics, TLS et les réseaux privés utilisent les outils de projets et de réseaux d’Kovalio. Ce formulaire ne modifie ni leurs routes, ni les règles entrantes, ni les identifiants de proxy.",
       "policyTitle": "Accès Internet",
       "policyHint": "Contrôlez les destinations accessibles aux applications et aux builds.",
       "addresses": "Adresse privée et trafic entrant"
@@ -1178,7 +1178,7 @@
       "title": "Connexion sortante",
       "description": "Choisissez comment ce serveur accède à Internet.",
       "currentIp": "IP sortante actuelle",
-      "managed": "Géré par Openship",
+      "managed": "Géré par Kovalio",
       "custom": "Proxy personnalisé",
       "unavailable": "Les réglages actuels n’ont pas pu être vérifiés. Actualisez avant toute modification.",
       "connection": "Type de connexion",
@@ -1210,7 +1210,7 @@
     },
     "cloudConnection": {
       "titles": {
-        "not_connected": "Connectez-vous à Openship Cloud",
+        "not_connected": "Connectez-vous à Kovalio Cloud",
         "account_mismatch": "Connectez le compte Cloud du serveur",
         "unavailable": "État Cloud indisponible"
       },
@@ -1229,7 +1229,7 @@
     },
     "controlUnavailable": {
       "title": "Commande indisponible",
-      "description": "Cette commande n’est pas encore disponible dans la version de l’API Cloud connectée. Openship Cloud doit être mis à jour avant son utilisation."
+      "description": "Cette commande n’est pas encore disponible dans la version de l’API Cloud connectée. Kovalio Cloud doit être mis à jour avant son utilisation."
     }
   },
   "gpu": {

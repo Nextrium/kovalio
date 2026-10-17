@@ -56,8 +56,8 @@ describe("Cloud changes the execution destination, not the deployment runtime", 
   });
   it("resolves bare process ports without opening Docker and rejects sibling ports", async () => {
     const workloads = [
-      { id: "openship-release-a", labels: { "openship.project": "project-a", "openship.deployment": "release-a", "openship.ports": "[3000]" } },
-      { id: "openship-release-b", labels: { "openship.project": "project-b", "openship.deployment": "release-b", "openship.ports": "[4000]" } },
+      { id: "kovalio-release-a", labels: { "kovalio.project": "project-a", "kovalio.deployment": "release-a", "kovalio.ports": "[3000]" } },
+      { id: "kovalio-release-b", labels: { "kovalio.project": "project-b", "kovalio.deployment": "release-b", "kovalio.ports": "[4000]" } },
     ];
     fixture.client.workspace.mockReturnValue({ workloads: { list: async () => workloads } });
     const connection = new CloudServerConnection(fixture.client, { workspaceId: server.workspaceId, namespace: config.cloudNamespace });

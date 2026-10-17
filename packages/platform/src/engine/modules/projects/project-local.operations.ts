@@ -20,7 +20,7 @@ async function localDirectory(path: string): Promise<string> {
   const info = await stat(path).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/projects/project-local.operations"); return null; });
   if (!info) throw new NotFoundError("Directory");
   if (!info.isDirectory()) throw new AppError("Path is not a directory", 400, "INVALID_SOURCE_PATH");
-  if (process.env.OPENSHIP_NATIVE !== "true") return path;
+  if (process.env.KOVALIO_NATIVE !== "true") return path;
   const canonical = await assertNativeSourcePath(path);
   return validateSourceDirectory(canonical);
 }

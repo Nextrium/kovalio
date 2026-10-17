@@ -19,7 +19,7 @@ async function preparationSource(ctx: ExecutionContext, body: PrepareDeploymentI
   if (source === "github") {
     if (!body.owner || !body.repo) throw new ValidationError("owner and repo are required");
     if (body.includeEnv) {
-      // Values can combine Compose, .env and openship.json. A deployment or
+      // Values can combine Compose, .env and kovalio.json. A deployment or
       // metadata grant alone must not expose the contents of those files.
       const { checkSourceTier } = await import("../github/github-access");
       const { ok } = await checkSourceTier(ctx, { owner: body.owner, repo: body.repo }, "content-whole", "");
@@ -30,7 +30,7 @@ async function preparationSource(ctx: ExecutionContext, body: PrepareDeploymentI
   if (source === "local") {
     if (env.CLOUD_MODE) throw new AppError("Local projects are not available in cloud mode", 403);
     if (!body.path) throw new ValidationError("path is required");
-    const path = process.env.OPENSHIP_NATIVE === "true" ? await assertNativeSourcePath(body.path) : body.path;
+    const path = process.env.KOVALIO_NATIVE === "true" ? await assertNativeSourcePath(body.path) : body.path;
     return { source, path, composePath, env: envVars };
   }
   throw new ValidationError("source must be 'github' or 'local'");
@@ -43,14 +43,14 @@ export const buildDependencies: BuildDependencies = {
     return JSON.parse(JSON.stringify(prepare.projectInfoToPublicResponse(await prepare.resolveProjectInfo(input), body)));
   },
   async access(ctx, input) {
-    if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ROUTING === "none" && input.publicEndpoints === undefined) input.publicEndpoints = [];
+    if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ROUTING === "none" && input.publicEndpoints === undefined) input.publicEndpoints = [];
     const source = await resolveProjectAuthority(input.projectId, ctx.organizationId);
     // A destination changes where commands run, never where a project is stored.
     // Only projects explicitly owned by Cloud are forwarded to its control plane.
     if (source === "cloud") {
       assertCloudProxyScope(ctx);
       const response = await cloudFetchAsOrgOwner(ctx.organizationId, "/api/deployments/build/access", { method: "POST", body: JSON.stringify(input) });
-      if (!response) throw new AppError("Openship Cloud is unreachable", 503, CLOUD_UNREACHABLE_CODE);
+      if (!response) throw new AppError("Kovalio Cloud is unreachable", 503, CLOUD_UNREACHABLE_CODE);
       const body = await response.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/deployments/build.operations"); return null; }) as Record<string, unknown> | null;
       if (!response.ok) throw new AppError(typeof body?.error === "string" ? body.error : typeof body?.message === "string" ? body.message : "Cloud deployment failed", response.status, typeof body?.code === "string" ? body.code : undefined);
       if (!isAcceptedDeploymentResult(body)) throw new AppError("Invalid cloud build response", 502, "INVALID_CLOUD_RESPONSE");

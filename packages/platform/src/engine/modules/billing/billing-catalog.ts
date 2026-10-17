@@ -22,7 +22,7 @@ import type { OblienCapacityCatalog } from "../../lib/oblien-capacity";
 import { getOblienBillingApi } from "../../lib/oblien-client";
 import { isDeepStrictEqual } from "node:util";
 
-// Read compatibility for subscriptions sold before Openship owned its offers.
+// Read compatibility for subscriptions sold before Kovalio owned its offers.
 // New checkouts never use these platform catalog IDs.
 const LEGACY_PLAN_IDS: Readonly<Partial<Record<PlanTierId, string>>> = {
   free: "free", starter: "hobby", pro: "pro", team: "scale", enterprise: "enterprise",
@@ -43,11 +43,11 @@ export const CLOUD_EDGE_BANDWIDTH_GB: Readonly<Record<PlanTierId, number | null>
 export const OFFER_VERSION = "11";
 const MONTHLY_OFFER_VERSIONS: ReadonlySet<string> = new Set(["9", "10", OFFER_VERSION]);
 const TOPUP_OFFER_VERSION = "3";
-export const offerReference = (tier: PlanTierId) => `openship:${tier}:v${OFFER_VERSION}`;
+export const offerReference = (tier: PlanTierId) => `kovalio:${tier}:v${OFFER_VERSION}`;
 
 export function supportedOfferReference(reference: string | undefined, tier: PlanTierId): boolean {
-  return [...MONTHLY_OFFER_VERSIONS].some(version => reference === `openship:${tier}:v${version}`) || reference === `openship:${tier}:v8` || reference === `openship:${tier}:v7` || reference === `openship:${tier}:v6` || reference === `openship:${tier}:v5` || reference === `openship:${tier}:v4` || reference === `openship:${tier}:v3` || (tier !== "hobby" &&
-    (reference === `openship:${tier}:v1` || reference === `openship:${tier}:v2`));
+  return [...MONTHLY_OFFER_VERSIONS].some(version => reference === `kovalio:${tier}:v${version}`) || reference === `kovalio:${tier}:v8` || reference === `kovalio:${tier}:v7` || reference === `kovalio:${tier}:v6` || reference === `kovalio:${tier}:v5` || reference === `kovalio:${tier}:v4` || reference === `kovalio:${tier}:v3` || (tier !== "hobby" &&
+    (reference === `kovalio:${tier}:v1` || reference === `kovalio:${tier}:v2`));
 }
 
 /** Offers without a complete saved capacity policy retain their old ceilings.
@@ -65,7 +65,7 @@ function inheritedResourceLimits(tier: PlanTierId): ReturnType<typeof cloudNames
  * New offers retain their complete saved allocation through renewal. */
 export function savedResourceLimits(tier: PlanTierId, offer: OblienOffer): ReturnType<typeof cloudNamespaceLimits> {
   if (!offer.resourceLimits || !supportedOfferReference(offer.reference, tier)) invalidContract();
-  const legacy = offer.reference === `openship:${tier}:v1`;
+  const legacy = offer.reference === `kovalio:${tier}:v1`;
   const ceiling = legacy ? inheritedResourceLimits(tier) : cloudNamespaceLimits(tier);
   const keys = Object.keys(ceiling) as Array<keyof typeof ceiling>;
   return Object.fromEntries(keys.map(key => {
@@ -79,7 +79,7 @@ export function savedResourceLimits(tier: PlanTierId, offer: OblienOffer): Retur
 
 function invalidContract(): never {
   throw new AppError(
-    "This organization's saved Cloud offer could not be verified. Contact Openship support.",
+    "This organization's saved Cloud offer could not be verified. Contact Kovalio support.",
     502,
     "OBLIEN_RESELLER_CONTRACT_INVALID",
   );
@@ -92,24 +92,24 @@ export function subscriptionPlan(subscription: OblienSubscription, organizationI
   if (subscription?.tierId !== "reseller") {
     const providerTier = subscription?.tierId;
     const tier = providerTier == null ? "free" : PLAN_IDS.find(id => LEGACY_PLAN_IDS[id] === providerTier);
-    if (!tier) throw new AppError("This cloud plan is not supported by this Openship version", 503, "OBLIEN_PLAN_UNSUPPORTED");
+    if (!tier) throw new AppError("This cloud plan is not supported by this Kovalio version", 503, "OBLIEN_PLAN_UNSUPPORTED");
     // Platform subscriptions predate explicit service ceilings; retain their
     // preset rather than applying a new retail offer to an existing customer.
     return { tier, limits: { ...planLimits(tier), ...(tier !== "free" ? { maxProjects: null, runningServices: null, concurrentBuilds: null } : {}), maxServiceResources: undefined }, resourceLimits: inheritedResourceLimits(tier) };
   }
   const { offer, metadata } = subscription;
-  const tier = metadata?.openship_plan as PlanTierId;
-  const version = metadata?.openship_offer_version;
+  const tier = metadata?.kovalio_plan as PlanTierId;
+  const version = metadata?.kovalio_offer_version;
   const custom = isCustomOfferVersion(version);
   const monthly = offer?.billingMode === "monthly";
   const monthlyVersion = custom ? version === CUSTOM_OFFER_VERSION : MONTHLY_OFFER_VERSIONS.has(version ?? "");
   if (!PLAN_IDS.includes(tier) || tier === "free" || !offer || !metadata ||
-      (!custom && (!supportedOfferReference(offer.reference, tier) || offer.reference !== `openship:${tier}:v${version}`)) ||
-      !metadata.openship_organization || !metadata.openship_namespace ||
-      (organizationId !== undefined && metadata.openship_organization !== organizationId) ||
-      (namespace !== undefined && metadata.openship_namespace !== namespace) || (!monthly && !offer.policy) || !offer.resourceLimits) invalidContract();
+      (!custom && (!supportedOfferReference(offer.reference, tier) || offer.reference !== `kovalio:${tier}:v${version}`)) ||
+      !metadata.kovalio_organization || !metadata.kovalio_namespace ||
+      (organizationId !== undefined && metadata.kovalio_organization !== organizationId) ||
+      (namespace !== undefined && metadata.kovalio_namespace !== namespace) || (!monthly && !offer.policy) || !offer.resourceLimits) invalidContract();
   let decoded: unknown;
-  try { decoded = JSON.parse(metadata.openship_limits ?? ""); } catch { invalidContract(); }
+  try { decoded = JSON.parse(metadata.kovalio_limits ?? ""); } catch { invalidContract(); }
   const parsed = planLimitsSchema.strict().safeParse(decoded);
   if (!parsed.success) invalidContract();
   if (monthly) {
@@ -128,7 +128,7 @@ export function subscriptionPlan(subscription: OblienSubscription, organizationI
   return { tier, limits: parsed.data, resourceLimits: savedResourceLimits(tier, offer) };
 }
 
-/** Openship controls retail price and copy; Oblien purchases the resource pool. */
+/** Kovalio controls retail price and copy; Oblien purchases the resource pool. */
 export function subscriptionOffer(tier: PlanTierId, interval: "monthly" | "annual"): OblienOffer {
   const raw = PRICING.plans.find(plan => plan.id === tier);
   const amount = raw?.price[interval];
@@ -137,7 +137,7 @@ export function subscriptionOffer(tier: PlanTierId, interval: "monthly" | "annua
   }
   const plan = resolvePlan(tier);
   return {
-    reference: offerReference(tier), name: raw.billing.checkoutName ?? `Openship ${plan.name}`,
+    reference: offerReference(tier), name: raw.billing.checkoutName ?? `Kovalio ${plan.name}`,
     description: raw.billing.checkoutDescription ?? plan.description,
     unitAmount: amount, currency: "usd", billingMode: "monthly", credits: 0,
     capacity: monthlyCapacity(cloudNamespaceLimits(tier)),
@@ -162,11 +162,11 @@ export function subscriptionMetadata(
   customLimits?: PlanLimits,
 ): Record<string, string> {
   return {
-    openship_plan: tier,
-    openship_offer_version: customLimits ? CUSTOM_OFFER_VERSION : OFFER_VERSION,
-    openship_organization: organizationId,
-    openship_namespace: namespace,
-    openship_limits: JSON.stringify(customLimits ?? planLimits(tier)),
+    kovalio_plan: tier,
+    kovalio_offer_version: customLimits ? CUSTOM_OFFER_VERSION : OFFER_VERSION,
+    kovalio_organization: organizationId,
+    kovalio_namespace: namespace,
+    kovalio_limits: JSON.stringify(customLimits ?? planLimits(tier)),
   };
 }
 
@@ -175,8 +175,8 @@ export function topupOffer(packId: string): OblienOffer {
   if (!pack)
     throw new AppError("This credit pack is no longer available", 404, "BILLING_PACK_NOT_FOUND");
   return {
-    reference: `openship:${pack.id}:v${TOPUP_OFFER_VERSION}`,
-    name: "Openship compute credits",
+    reference: `kovalio:${pack.id}:v${TOPUP_OFFER_VERSION}`,
+    name: "Kovalio compute credits",
     description: `${toOblienCredits(pack.creditsMilli).toLocaleString("en-US")} additional credits for your namespace`,
     unitAmount: pack.priceCents,
     currency: "usd",
@@ -250,7 +250,7 @@ export async function cloudPlan(tier: PlanTierId, subscription?: OblienSubscript
   const yearly = subscription.billingInterval === "yearly";
   return {
     ...plan,
-    configuration: isCustomOfferVersion(subscription.metadata?.openship_offer_version) ? "custom" as const : "preset" as const,
+    configuration: isCustomOfferVersion(subscription.metadata?.kovalio_offer_version) ? "custom" as const : "preset" as const,
     offerReference: offer.reference,
     billingMode: offer.billingMode === "monthly" ? "monthly" as const : "metered" as const,
     name: offer.name,

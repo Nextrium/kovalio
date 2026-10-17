@@ -152,7 +152,7 @@ async function prepareActionWorkflow(
     await authorizeActionStorage(ctx, storageDestinationId, true);
   }
   if (
-    controller === "openship" &&
+    controller === "kovalio" &&
     !storageDestinationId &&
     /uses:\s*['"]?actions\/(?:upload-artifact|download-artifact|cache)(?:\/|@)/i.test(source)
   )
@@ -160,7 +160,7 @@ async function prepareActionWorkflow(
   const secrets = controller === "github" ? {} : { ...existing?.secrets };
   for (const key of input.removeSecrets ?? []) delete secrets[key];
   for (const [key, value] of Object.entries(input.secrets ?? {})) {
-    if (/^(GITHUB_|ACTIONS_|RUNNER_|OPENSHIP_)/i.test(key))
+    if (/^(GITHUB_|ACTIONS_|RUNNER_|KOVALIO_)/i.test(key))
       throw new ValidationError(
         `${key} is reserved. Store a token under a custom secret name and reference it explicitly in your workflow.`,
       );
@@ -302,7 +302,7 @@ export async function discoverActionWorkflows(
 ) {
   await authorizeActionRepository(ctx, owner, repo);
   const results: Array<{ path: string; name: string }> = [];
-  for (const path of [".github/workflows", ".openship/workflows"]) {
+  for (const path of [".github/workflows", ".kovalio/workflows"]) {
     try {
       for (const file of await listFiles(ctx, owner, repo, { branch: ref, path }))
         if (file.type === "file" && /\.ya?ml$/i.test(file.name))
@@ -598,7 +598,7 @@ export async function triggerActionWorkflow(
   if (workflow.accessPolicy)
     value.admission = await evaluateActionRunAdmission(ctx, workflow, {
       ...value,
-      controller: "openship",
+      controller: "kovalio",
       attempt: 1,
       untrusted: !!trigger.untrusted,
       github: null,

@@ -40,11 +40,11 @@ export const GitHubAccountSchema = Type.Unsafe<MappedAccount>(Type.Object({
 }));
 export const GitHubStateSchema = Type.Unsafe<GitHubConnectionState>(Type.Object({
   sources: Type.Object({
-    openshipApp: Type.Object({ connected: bool, login: optionalString, avatarUrl: optionalString, hasInstallations: Type.Optional(bool) }),
+    kovalioApp: Type.Object({ connected: bool, login: optionalString, avatarUrl: optionalString, hasInstallations: Type.Optional(bool) }),
     ghCli: Type.Object({ available: bool, login: optionalString, avatarUrl: optionalString, method: optionalString, problem: optionalString, checkedAt: optionalString }),
     personalToken: Type.Optional(Type.Object({ connected: bool, login: optionalString, avatarUrl: optionalString, problem: optionalString })),
   }),
-  primary: Type.Union([Type.Literal("openship-app"), Type.Literal("gh-cli"), Type.Literal("personal-token"), Type.Null()]),
+  primary: Type.Union([Type.Literal("kovalio-app"), Type.Literal("gh-cli"), Type.Literal("personal-token"), Type.Null()]),
 }));
 const methodKind = Type.Union([Type.Literal("device"), Type.Literal("token"), Type.Literal("app"), Type.Literal("ssh-key"), Type.Literal("forwarding")]);
 export const GitHubCapabilitiesSchema = Type.Object({

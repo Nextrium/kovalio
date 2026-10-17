@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 import type { ClusterDatabase } from "@repo/contracts";
 
 const config = {
@@ -9,7 +9,7 @@ const config = {
   cpuMillis: 500,
   memoryMiB: 512,
   storageGiB: 20,
-  storageClass: "openship-local",
+  storageClass: "kovalio-local",
   databaseName: "app",
   backup: { destinationId: "archives", schedule: "daily" as const, retentionDays: 30 },
 };
@@ -45,7 +45,7 @@ describe("project database SDK", () => {
       });
       return Response.json({ data: init?.method === "GET" ? [view] : view });
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     const create = {
       requestId: "faaa1111-2222-4333-8444-555555555555",
       name: "recovered",
@@ -101,7 +101,7 @@ describe("project database SDK", () => {
           { headers: { "Content-Type": "text/event-stream" } },
         ),
     );
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     const controller = new AbortController();
     const events = [];
     for await (const event of client.projects.streamClusterDatabaseEvents("project/a", {

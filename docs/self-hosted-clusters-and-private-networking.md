@@ -56,7 +56,7 @@ UFW/firewalld and provider API/VLAN provisioning remain separate work. Cluster
 workload support now includes single stateless applications and workers: projects
 can target a ready K3s cluster, deploy/update immutable images, change replicas,
 pause/resume and roll back through the existing deployment lifecycle. Topology
-shows observed pods; Kubernetes Services balance traffic behind OpenShip Edge.
+shows observed pods; Kubernetes Services balance traffic behind Kovalio Edge.
 Multi-service Kubernetes projects, shared storage and database operators remain
 subsequent stages. See [cluster runtime and application scaling](k3s-cluster-runtime.md)
 for the delivered cycle, gateway limitations and live acceptance requirements.
@@ -77,19 +77,19 @@ live Linux validation still needed before production rollout.
 
 Implemented separation: Networking owns setup, attachments, firewall review, progress, recovery and diagnostics. Cluster creation selects a network and servers already connected to it. Removing a cluster preserves servers and networks; deleting a network or detaching a server is blocked while a cluster depends on it. These are enforced in shared operations and database constraints. Migration `0139` preserves network IDs and operation history, converts settled legacy groups to compute pools, and keeps unsettled setups free to recover. Projects retain their current service placements.
 
-OpenShip provides separate cluster and network models across providers, with two networking drivers: existing private networking and managed WireGuard. Provider integrations supply the appropriate discovery, forms, validation, and optional infrastructure operations. Custom servers use the same lifecycle and health checks.
+Kovalio provides separate cluster and network models across providers, with two networking drivers: existing private networking and managed WireGuard. Provider integrations supply the appropriate discovery, forms, validation, and optional infrastructure operations. Custom servers use the same lifecycle and health checks.
 
 Private networking comes first. Cross-server service connections follow, then coordinated placement and replicas. Shared storage has its own capabilities and lifecycle. Creating an infrastructure cluster alone does not establish database replication, workload failover, or storage availability.
 
 **Scaling belongs to customer-managed infrastructure.**
 
-“Self-hosted” describes management authority here. An AWS VM or Hetzner Cloud server controlled by the customer qualifies. An OpenShip Cloud workload managed by Oblien follows the cloud platform's controls, including when the dashboard accessing it is self-hosted.
+“Self-hosted” describes management authority here. An AWS VM or Hetzner Cloud server controlled by the customer qualifies. An Kovalio Cloud workload managed by Oblien follows the cloud platform's controls, including when the dashboard accessing it is self-hosted.
 
 | Context                                                | Cluster and private-network controls                        | Project scaling behavior                                       |
 | ------------------------------------------------------ | ----------------------------------------------------------- | -------------------------------------------------------------- |
-| Self-hosted OpenShip, customer-managed Linux servers   | Available according to permissions and runtime capabilities | OpenShip manages placement, resources, and eventually replicas |
-| Self-hosted OpenShip, project targeting OpenShip Cloud | No infrastructure controls for that workload                | Existing Oblien-supported resource and deployment controls     |
-| OpenShip Cloud installation                            | Self-hosted infrastructure module unavailable               | Oblien manages the underlying infrastructure                   |
+| Self-hosted Kovalio, customer-managed Linux servers   | Available according to permissions and runtime capabilities | Kovalio manages placement, resources, and eventually replicas |
+| Self-hosted Kovalio, project targeting Kovalio Cloud | No infrastructure controls for that workload                | Existing Oblien-supported resource and deployment controls     |
+| Kovalio Cloud installation                            | Self-hosted infrastructure module unavailable               | Oblien manages the underlying infrastructure                   |
 | Project without a deployment target                    | Infrastructure can be prepared separately                   | Use the existing target-selection flow before enabling scaling |
 
 The backend must derive this authority from canonical platform and deployment state. Frontend `selfHosted` state, presentation preferences, a submitted server ID, and stale deployment metadata cannot grant it. Intended placement and the location of the active release must remain distinct during migration.
@@ -122,28 +122,28 @@ The initial provider catalog should target these adoption workflows:
 
 These are proposed integrations. Each profile becomes available only after its adoption flow and verification pass. “First-class” means usable configuration, accurate errors, documented prerequisites, and tested lifecycle behavior. Provider logos alone do not qualify.
 
-Adopting an existing network should work without provider credentials. API discovery, network creation, server attachment, and server provisioning are separately advertised capabilities. A profile can support adoption before it supports creation. Show only implemented actions, and record whether a resource is externally owned or created by OpenShip.
+Adopting an existing network should work without provider credentials. API discovery, network creation, server attachment, and server provisioning are separately advertised capabilities. A profile can support adoption before it supports creation. Show only implemented actions, and record whether a resource is externally owned or created by Kovalio.
 
 Hosting provider metadata belongs to server/network attachments. The adopted native network has its own source: provider and actual network reference. A shared provider alone does not identify a shared network; two Hetzner vSwitches or AWS VPCs remain separate resources. Managed WireGuard can contain servers from any provider without repeating a provider question. Custom native configuration covers already-routed infrastructure and receives the same review, progress, recovery, and health UI. It accepts validated fields; arbitrary shell scripts supplied through the dashboard are outside this model.
 
 **Choose networking from verified reachability.**
 
-| Network mode             | Recommended use                                                                                         | What OpenShip manages                                                                            |
+| Network mode             | Recommended use                                                                                         | What Kovalio manages                                                                            |
 | ------------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Existing private network | Members already have, or can be attached to, mutually reachable private networks                        | Adopt interfaces/routes; configure explicitly requested VLANs and addresses; verify connectivity |
 | Managed WireGuard        | Public-only servers, disconnected provider networks, mixed infrastructure, or an encryption requirement | Host keys, peer configuration, overlay addresses, routes, firewall changes, and health           |
 
 Native networking is selected only after connectivity is verified. Matching providers or private-looking addresses do not prove that servers can communicate. The contract is routed IP connectivity; servers do not need to share a Layer 2 network or one subnet.
 
-For Hetzner Dedicated, the user can create the vSwitch and attach servers in Robot. OpenShip then configures the guest VLAN interface and private addresses, using the documented MTU of 1400. Existing provider-assigned addresses and DHCP remain authoritative on products that supply them. A provider-specific manual step should have a clear verification action before continuing.
+For Hetzner Dedicated, the user can create the vSwitch and attach servers in Robot. Kovalio then configures the guest VLAN interface and private addresses, using the documented MTU of 1400. Existing provider-assigned addresses and DHCP remain authoritative on products that supply them. A provider-specific manual step should have a clear verification action before continuing.
 
 For WireGuard, prefer reachable private transport addresses between peers when available, and public addresses where needed. Select transport endpoints per peer. Native networks can carry encrypted WireGuard traffic. The UI distinguishes private connectivity from encryption rather than implying all provider networks are encrypted.
 
-Use directly reachable UDP peers with 2–16 members and a full mesh by default. Managed networks support a versioned directed access policy: selecting a topology connection controls which server can initiate, while replies remain permitted. Removing a connection keeps both servers, removes their WireGuard peer relationship and omits their provider UDP rules. One-way private access still requires bidirectional WireGuard transport. Owned conntrack rules enforce the policy for private host traffic and published container ports, and block transit between peers. Native/provider network access remains externally configured. Unsupported NAT/firewall conditions are checked before assigning private routes. Larger meshes, automatic NAT traversal, and relays need separate validation or an established mesh implementation behind the same driver contract. Traffic flows directly between servers, independently of the OpenShip controller.
+Use directly reachable UDP peers with 2–16 members and a full mesh by default. Managed networks support a versioned directed access policy: selecting a topology connection controls which server can initiate, while replies remain permitted. Removing a connection keeps both servers, removes their WireGuard peer relationship and omits their provider UDP rules. One-way private access still requires bidirectional WireGuard transport. Owned conntrack rules enforce the policy for private host traffic and published container ports, and block transit between peers. Native/provider network access remains externally configured. Unsupported NAT/firewall conditions are checked before assigning private routes. Larger meshes, automatic NAT traversal, and relays need separate validation or an established mesh implementation behind the same driver contract. Traffic flows directly between servers, independently of the Kovalio controller.
 
 Joining a compute cluster requires attachment to its selected network. Adopting a native network and creating a managed WireGuard network are separate operations; changing a cluster’s network selects an existing attachment. Network mode changes and address changes must account for existing service endpoints before application.
 
-Every plan validates IP uniqueness, address ownership, routes, DNS conflicts, and overlap with Docker, host, VPN, and management networks. It records whether address allocation belongs to the provider, the administrator, or OpenShip. MTU is derived from the actual transport and verified across peers, including encapsulation overhead.
+Every plan validates IP uniqueness, address ownership, routes, DNS conflicts, and overlap with Docker, host, VPN, and management networks. It records whether address allocation belongs to the provider, the administrator, or Kovalio. MTU is derived from the actual transport and verified across peers, including encapsulation overhead.
 
 Keep the SSH management address separate from cluster addresses. Preserve management routes throughout setup. WireGuard private keys should be generated and retained on their servers; the controller stores public keys and references. Each server may have multiple network attachments, leaving room for a separate storage network later.
 
@@ -185,7 +185,7 @@ The following names describe responsibilities; implementation should follow exis
 
 Initially, one server belongs to one active compute cluster. Multiple network attachments remain possible. Use verified host identity to detect duplicate inventory entries pointing at the same machine, and prevent competing management ownership.
 
-All references must remain within the authorized organization. Desired configuration and observed health are separate. Removing a compute cluster never changes networking. Adopted provider resources retain external ownership; removing a network only removes OpenShip inventory. Managed network removal uses reviewed cleanup and cannot proceed until cluster dependencies are removed.
+All references must remain within the authorized organization. Desired configuration and observed health are separate. Removing a compute cluster never changes networking. Adopted provider resources retain external ownership; removing a network only removes Kovalio inventory. Managed network removal uses reviewed cleanup and cannot proceed until cluster dependencies are removed.
 
 Introduce cluster placement through explicit, versioned contracts and a deliberate database migration. The current environment is a project record with a server binding. A cluster target needs its own representation, and deployments must snapshot the actual placements. Choosing one member's server ID as a stand-in would make migrations and runtime operations ambiguous.
 
@@ -220,7 +220,7 @@ A private host network does not connect Docker bridges across hosts. Preserve th
 
 Publish a service on the intended private interface through runtime adapters and the existing port-claim machinery. Allocate a stable private port for the logical endpoint within its network scope, and validate destination conflicts before a move. Never silently bind a private service to every host interface. Native-network firewall policy and provider-side rules also need verification.
 
-Provide stable internal service names through a small private DNS component, with a namespace chosen to avoid existing DNS conflicts. A resolver such as CoreDNS is a candidate implementation, not an existing OpenShip capability. Configure workload resolution explicitly, preserve normal upstream DNS, and persist the last valid zone locally. DNS resolves addresses; endpoint outputs still include the actual port. Changes to ports or credentials use the existing connection-output and consumer-redeploy flow. DNS updates alone do not provide instant failover for cached addresses or existing connections.
+Provide stable internal service names through a small private DNS component, with a namespace chosen to avoid existing DNS conflicts. A resolver such as CoreDNS is a candidate implementation, not an existing Kovalio capability. Configure workload resolution explicitly, preserve normal upstream DNS, and persist the last valid zone locally. DNS resolves addresses; endpoint outputs still include the actual port. Changes to ports or credentials use the existing connection-output and consumer-redeploy flow. DNS updates alone do not provide instant failover for cached addresses or existing connections.
 
 The connection policy must identify allowed workloads. WireGuard authenticates hosts, and Docker can translate several environments to one host address. Enforce consumer policy before that translation and validate private ingress; a host-level allowlist alone cannot isolate projects on the same server. Host administrators remain trusted. Cross-server connections ship only after these enforcement paths are tested on supported runtimes.
 
@@ -237,7 +237,7 @@ Existing clone and move flows already provide valuable transfer, launch, cutover
 
 The first coordinated scaling release should target stateless application replicas. It needs desired replica counts, placement constraints, capacity checks, instance identity, health admission, routing updates, draining, and coordinated deployments. Start with explicit user-selected placement and reviewed changes. One update to a logical service must reach its managed instances through the existing deployment pipeline.
 
-Route healthy instances through OpenShip Edge using the existing routing contracts, extended deliberately for multiple destinations. Scaling down drains traffic before stopping an instance. Automatic rescheduling needs fencing and stateful-workload rules before it can safely replace an unreachable instance; it is a later capability.
+Route healthy instances through Kovalio Edge using the existing routing contracts, extended deliberately for multiple destinations. Scaling down drains traffic before stopping an instance. Automatic rescheduling needs fencing and stateful-workload rules before it can safely replace an unreachable instance; it is a later capability.
 
 Database clustering remains a service-type capability. PostgreSQL replication, Redis replication/Sentinel/Cluster, and a standalone database have different operations and guarantees. Generic cloning cannot establish those guarantees. Database workflows should come from typed, versioned engine capabilities and verification, building on the existing service catalog.
 

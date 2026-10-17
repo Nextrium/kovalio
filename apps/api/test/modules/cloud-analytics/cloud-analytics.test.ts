@@ -40,7 +40,7 @@ import { cloudAnalyticsRoutes } from "../../../src/modules/cloud-analytics/cloud
 const config: CloudAnalyticsConfig = {
   key: "phc_test",
   host: "https://us.i.posthog.com",
-  dashboardOrigin: "https://app.openship.io",
+  dashboardOrigin: "https://kovalio.nextrium.org",
   excludedOrganizations: new Set(),
   excludedUsers: new Set(),
 };

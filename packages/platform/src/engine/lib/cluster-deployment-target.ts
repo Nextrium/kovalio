@@ -29,7 +29,7 @@ export async function requireClusterDeploymentTarget(
 ) {
   if (env.CLOUD_MODE)
     throw new AppError(
-      "Server clusters are available on self-hosted OpenShip.",
+      "Server clusters are available on self-hosted Kovalio.",
       404,
       "CAPABILITY_UNAVAILABLE",
     );
@@ -118,7 +118,7 @@ export async function openClusterApi(
   const privileged = await privilegedExecutor(target.executor, "Connecting to the cluster API");
   if (!privileged.supported) throw new AppError(privileged.reason, 409, "CLUSTER_API_UNAVAILABLE");
   const owner = JSON.parse(
-    await privileged.value.executor.readFile("/var/lib/openship/k3s/owner.json"),
+    await privileged.value.executor.readFile("/var/lib/kovalio/k3s/owner.json"),
   );
   if (owner.id !== runtime.id)
     throw new AppError("The server's cluster ownership has changed.", 409, "CLUSTER_HOST_CHANGED");
@@ -162,7 +162,7 @@ export async function openClusterApi(
         "CLUSTER_IDENTITY_CHANGED",
       );
     const node = await api.request("GET", `/api/v1/nodes/${gateway.nodeName}`);
-    if (node.metadata.labels?.["openship.io/runtime"] !== runtime.id)
+    if (node.metadata.labels?.["nextrium.org/runtime"] !== runtime.id)
       throw new AppError(
         "The Edge server no longer belongs to this cluster runtime.",
         409,

@@ -589,7 +589,7 @@ export interface MultiServiceDeployConfig {
   forcePull?: boolean;
   /** The exact image reference was produced/pinned by the orchestrator or was
    * already pulled during cohort preparation. Docker must not infer this from
-   * the tag text: a registry image can legitimately use Openship's tag shape. */
+   * the tag text: a registry image can legitimately use Kovalio's tag shape. */
   imageAlreadyPrepared?: boolean;
   /** Extended compose fields (healthcheck, …). Docker honors them; runtimes
    *  that can't (cloud) warn-and-drop. See ComposeAdvanced in @repo/core. */

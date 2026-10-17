@@ -84,8 +84,8 @@ beforeEach(async () => {
   await recorded(webId, "web-container", 2048);
   await recorded(databaseId, "database-container");
   h.containers.mockResolvedValue([
-    { id: "web-container", names: ["web"], state: "running", labels: { "openship.project": projectId, "openship.service": "web" } },
-    { id: "database-container", names: ["database"], state: "running", labels: { "openship.project": projectId, "openship.service": "database" } },
+    { id: "web-container", names: ["web"], state: "running", labels: { "kovalio.project": projectId, "kovalio.service": "web" } },
+    { id: "database-container", names: ["database"], state: "running", labels: { "kovalio.project": projectId, "kovalio.service": "database" } },
   ]);
   h.readRuntime.mockResolvedValue({ runtime, serverId: null });
   h.resolvePlatform.mockResolvedValue({ platform: { runtime, routing: {}, ssl: {}, system: null, executor: null, localHost: false },
@@ -131,7 +131,7 @@ describe("Cloud service Start placement and recovery", () => {
   it("starts an existing container without resizing the workspace or provisioning", async () => {
     await recorded(addedId, "cache-container", 2048);
     h.containers.mockResolvedValue([{ id: "cache-container", names: ["cache"], state: "exited",
-      labels: { "openship.project": projectId, "openship.service": "cache" } }]);
+      labels: { "kovalio.project": projectId, "kovalio.service": "cache" } }]);
     await startServiceContainer(ctx(), projectId, addedId);
     expect(h.start).toHaveBeenCalledExactlyOnceWith("cache-container");
     expect(h.ensureWorkspace).not.toHaveBeenCalled();

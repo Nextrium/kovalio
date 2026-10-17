@@ -25,7 +25,7 @@ export async function requireSelfHostedServer(ctx: ExecutionContext, id: string)
 export async function assertServerExecution(server: Server): Promise<void> {
   assertDeploymentServer(server);
   if (server.workspaceId) throw new AppError("Use the Cloud workspace's execution context for this managed server", 409, "MANAGED_SERVER_CONTEXT_REQUIRED");
-  if (process.env.OPENSHIP_NATIVE !== "true") return;
+  if (process.env.KOVALIO_NATIVE !== "true") return;
   // Match SSH target selection, including founding-org loopback rows that have
   // not yet been adopted as the canonical local server.
   if (await isLocalHostRow(server)) assertNativeHostExecution();

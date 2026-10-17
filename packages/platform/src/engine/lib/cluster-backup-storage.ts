@@ -48,7 +48,7 @@ export async function resolveClusterBackupStorage(
       422,
       "CLUSTER_DATABASE_BACKUP_DESTINATION",
     );
-  const path = `s3://${destination.bucket}/${prefix ? `${prefix}/` : ""}${restore?.format === "backup-artifact" ? "" : "openship/databases"}`;
+  const path = `s3://${destination.bucket}/${prefix ? `${prefix}/` : ""}${restore?.format === "backup-artifact" ? "" : "kovalio/databases"}`;
   if (restore && (restore.destinationPath !== path || restore.endpoint !== destination.endpoint))
     throw new AppError(
       "The original backup destination address changed. Restore its saved address before recovering this database.",

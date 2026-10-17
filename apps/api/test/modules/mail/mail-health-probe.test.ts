@@ -118,7 +118,7 @@ describe("parseMailUnitProbe — container flavor", () => {
 
     it("still reports missing when warnings precede docker's answer", () => {
       expect(
-        pg("WARNING: some notice\nError response from daemon: No such object: openship-mail-db")
+        pg("WARNING: some notice\nError response from daemon: No such object: kovalio-mail-db")
           .status,
       ).toBe("missing");
     });
@@ -167,7 +167,7 @@ describe("parseMailUnitProbe — host flavor", () => {
 });
 
 /** Detection answers first; `{{.Config.Image}}` is only in that probe's format. */
-function engine(reply: (cmd: string) => string | Error, detect: string | Error = "true\topenship/mail:latest") {
+function engine(reply: (cmd: string) => string | Error, detect: string | Error = "true\tkovalio/mail:latest") {
   return {
     exec: vi.fn(async (cmd: string) => {
       const out = cmd.includes("{{.Config.Image}}") ? detect : reply(cmd);
@@ -213,7 +213,7 @@ describe("checkMailHealth", () => {
   // No engine of either flavor is a CONCLUSION — "there is nothing here" — so it
   // must not read as nine failed probes.
   it("reports missing, not unknown, on a box with no mail engine at all", async () => {
-    const rows = await checkMailHealth(engine(() => "__OPENSHIP_NO_SYSTEMCTL__", new Error("Error: No such object: openship-mail")));
+    const rows = await checkMailHealth(engine(() => "__KOVALIO_NO_SYSTEMCTL__", new Error("Error: No such object: kovalio-mail")));
 
     expect(rows).toHaveLength(9);
     expect(rows.every((r) => r.status === "missing")).toBe(true);
@@ -246,7 +246,7 @@ it("leaves SSH channel capacity for the queue, state and certificate probes", as
   let active = 0;
   let peak = 0;
   const executor = { exec: vi.fn(async (command: string) => {
-    if (command.includes("{{.Config.Image}}")) return "true\topenship/mail:latest";
+    if (command.includes("{{.Config.Image}}")) return "true\tkovalio/mail:latest";
     active++;
     peak = Math.max(peak, active);
     await new Promise<void>((resolve) => queueMicrotask(resolve));

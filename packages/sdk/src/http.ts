@@ -116,7 +116,7 @@ export class HttpClient {
       // FormData must retain fetch's generated multipart boundary.
       if (!headers.has("Content-Type") && !(init.body instanceof FormData))
         headers.set("Content-Type", "application/json");
-      if (!headers.has("User-Agent")) headers.set("User-Agent", this.options.userAgent ?? "openship-sdk/client");
+      if (!headers.has("User-Agent")) headers.set("User-Agent", this.options.userAgent ?? "kovalio-sdk/client");
       await this.requireScopeSupport(signal);
       const token = this.options.token;
       const credential = typeof token === "function" ? await abortable(Promise.resolve().then(token), signal) : token;

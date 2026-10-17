@@ -5,7 +5,7 @@ import type Dockerode from "dockerode";
 import { DockerRuntime } from "@repo/adapters";
 import { ENV_MASK } from "@repo/core";
 import { toComposeSpec } from "@repo/db";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { encrypt } from "@repo/platform/engine/lib/encryption";
 import { parseComposeFile } from "@repo/platform/engine/lib/compose-parser";
 import * as deploymentRuntime from "@repo/platform/engine/lib/deployment-runtime";
@@ -60,7 +60,7 @@ async function exec(container: Dockerode.Container, command: string[]): Promise<
 describeDockerE2E("service environment apply through the HTTP API and real Docker", () => {
   let runtime: DockerRuntime;
   let owner: Awaited<ReturnType<typeof seedOwner>>;
-  let client: OpenshipClient;
+  let client: KovalioClient;
   let project: Awaited<ReturnType<typeof seedProject>>;
   let service: Awaited<ReturnType<typeof seedService>>;
   let sibling: Awaited<ReturnType<typeof seedService>>;
@@ -97,10 +97,10 @@ describeDockerE2E("service environment apply through the HTTP API and real Docke
     });
     await setActive(project.id, deployment.id);
     project = (await repos.project.findById(project.id))!;
-    imageTag = `openship/env-apply-e2e:bld_${project.id}`;
+    imageTag = `kovalio/env-apply-e2e:bld_${project.id}`;
     await runtime.docker
       .getImage("busybox:latest")
-      .tag({ repo: "openship/env-apply-e2e", tag: `bld_${project.id}` });
+      .tag({ repo: "kovalio/env-apply-e2e", tag: `bld_${project.id}` });
     network = await runtime.docker.createNetwork({
       Name: `env-apply-${project.id}`,
       Driver: "bridge",
@@ -111,7 +111,7 @@ describeDockerE2E("service environment apply through the HTTP API and real Docke
     await runtime.docker.createVolume({ Name: volumeName });
     volumes.add(volumeName);
     original = await runtime.docker.createContainer({
-      name: `openship-${project.slug}-api`,
+      name: `kovalio-${project.slug}-api`,
       Image: imageTag,
       Hostname: "api",
       Env: [
@@ -127,9 +127,9 @@ describeDockerE2E("service environment apply through the HTTP API and real Docke
         '[ "$FAIL_START" != "1" ] || exit 9; mkdir -p /www; printf "%s" "$VALUE" > /www/index.html; trap \'echo stopped >> /data/stops; exit 0\' TERM; httpd -f -p 3000 -h /www & wait "$!"',
       ],
       Labels: {
-        "openship.project": project.id,
-        "openship.service": service.name,
-        "openship.deployment": deployment.id,
+        "kovalio.project": project.id,
+        "kovalio.service": service.name,
+        "kovalio.deployment": deployment.id,
       },
       Volumes: { "/cache": {} },
       ExposedPorts: { "3000/tcp": {} },
@@ -161,13 +161,13 @@ describeDockerE2E("service environment apply through the HTTP API and real Docke
     });
     await repos.deployment.setContainerId(deployment.id, original.id);
     probe = await runtime.docker.createContainer({
-      name: `openship-${project.slug}-worker`,
+      name: `kovalio-${project.slug}-worker`,
       Image: "busybox:latest",
       Cmd: ["sleep", "600"],
       Labels: {
-        "openship.project": project.id,
-        "openship.service": sibling.name,
-        "openship.deployment": deployment.id,
+        "kovalio.project": project.id,
+        "kovalio.service": sibling.name,
+        "kovalio.deployment": deployment.id,
       },
       HostConfig: { NetworkMode: network.id },
     });
@@ -181,8 +181,8 @@ describeDockerE2E("service environment apply through the HTTP API and real Docke
       serverId: null,
     } as never);
     vi.spyOn(runtime, "dispose").mockResolvedValue();
-    client = new OpenshipClient({
-      baseUrl: "http://openship.test",
+    client = new KovalioClient({
+      baseUrl: "http://kovalio.test",
       token: owner.token,
       organizationId: owner.orgId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
@@ -201,7 +201,7 @@ describeDockerE2E("service environment apply through the HTTP API and real Docke
     if (project) {
       const containers = await runtime.docker.listContainers({
         all: true,
-        filters: JSON.stringify({ label: [`openship.project=${project.id}`] }),
+        filters: JSON.stringify({ label: [`kovalio.project=${project.id}`] }),
       });
       for (const container of containers)
         await runtime.docker
@@ -514,7 +514,7 @@ describeDockerE2E("service environment apply through the HTTP API and real Docke
   it("refuses a different customer's service without stopping it", async () => {
     const other = await seedOwner();
     const response = await app.request(
-      `http://openship.test/api/projects/${project.id}/services/${service.id}/apply-env`,
+      `http://kovalio.test/api/projects/${project.id}/services/${service.id}/apply-env`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${other.token}` },

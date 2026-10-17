@@ -63,7 +63,7 @@ function storage(): ClusterStorage {
       replicas: 2,
       disks: c.serverIds.map((serverId) => ({
         serverId,
-        path: "/var/lib/openship/storage",
+        path: "/var/lib/kovalio/storage",
         reservedGiB: 5,
       })),
     },

@@ -149,14 +149,14 @@ describe("run approval review", () => {
     await render({
       ...run,
       admission: undefined,
-      controller: "openship",
+      controller: "kovalio",
       untrusted: true,
       canApprove: false,
     });
     expect(host.textContent).toContain("disposable Cloud VM");
     expect(host.textContent).toContain("administrator");
     expect(button("Approve isolated run")).toBeUndefined();
-    await render({ ...run, admission: undefined, controller: "openship", untrusted: true });
+    await render({ ...run, admission: undefined, controller: "kovalio", untrusted: true });
     await act(async () => button("Approve isolated run")!.click());
     expect(h.approve).toHaveBeenCalledOnce();
   });

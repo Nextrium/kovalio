@@ -6,7 +6,7 @@ import { Hono } from "hono";
 import { repos } from "@repo/db";
 import { seedOwner } from "../jobs/_harness";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { buildConfigSnapshot } from "@repo/platform/engine/modules/deployments/build.service";
 import { projectRoutes } from "../../../src/modules/projects/project.routes";
@@ -31,8 +31,8 @@ async function setup() {
   });
   const clients = [
     await ship.scope({ identity: "verified", organizationId: owner.orgId }),
-    new OpenshipClient({
-      baseUrl: "http://openship.test",
+    new KovalioClient({
+      baseUrl: "http://kovalio.test",
       token: owner.token,
       organizationId: owner.orgId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
@@ -182,15 +182,15 @@ describe("runtime roles through native SDK and HTTP", () => {
     }
   });
 
-  it("imports openship.json roles from a local source while honoring explicit opt-outs", async () => {
-    const source = await mkdtemp(join(tmpdir(), "openship-roles-import-"));
+  it("imports kovalio.json roles from a local source while honoring explicit opt-outs", async () => {
+    const source = await mkdtemp(join(tmpdir(), "kovalio-roles-import-"));
     try {
       await writeFile(
         join(source, "package.json"),
         JSON.stringify({ name: "demo", scripts: { start: "node app.js" } }),
       );
       await writeFile(
-        join(source, "openship.json"),
+        join(source, "kovalio.json"),
         JSON.stringify({ roles: [{ name: "jobs", kind: "worker", command: "bin/jobs" }] }),
       );
       for (const [index, client] of (await clients()).entries()) {
@@ -213,14 +213,14 @@ describe("runtime roles through native SDK and HTTP", () => {
     }
   });
 
-  it("keeps a declared empty roles list from openship.json as [] rather than dropping it", async () => {
-    const source = await mkdtemp(join(tmpdir(), "openship-roles-empty-"));
+  it("keeps a declared empty roles list from kovalio.json as [] rather than dropping it", async () => {
+    const source = await mkdtemp(join(tmpdir(), "kovalio-roles-empty-"));
     try {
       await writeFile(
         join(source, "package.json"),
         JSON.stringify({ name: "demo", scripts: { start: "node app.js" } }),
       );
-      await writeFile(join(source, "openship.json"), JSON.stringify({ roles: [] }));
+      await writeFile(join(source, "kovalio.json"), JSON.stringify({ roles: [] }));
       for (const [index, client] of (await clients()).entries()) {
         const imported = await client.projects.importLocal({
           name: `Local empty roles ${index}`,

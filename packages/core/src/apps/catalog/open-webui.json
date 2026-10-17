@@ -1,5 +1,5 @@
 {
-  "$schema": "https://openship.io/app.schema.json",
+  "$schema": "https://nextrium.org/app.schema.json",
   "schemaVersion": 2,
   "supportsCloud": false,
   "available": true,

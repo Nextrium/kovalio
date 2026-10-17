@@ -12,7 +12,7 @@ import { runCommand, stubFetch, type FetchStub } from "../helpers/harness";
 let fetchStub: FetchStub;
 let directory: string;
 beforeEach(() => {
-  directory = mkdtempSync(join(tmpdir(), "openship-migration-cli-"));
+  directory = mkdtempSync(join(tmpdir(), "kovalio-migration-cli-"));
   setJsonMode(true);
 });
 afterEach(() => {

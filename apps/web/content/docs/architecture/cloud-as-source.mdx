@@ -3,7 +3,7 @@ title: Cloud as source
 description: Cloud projects are owned by Kovalio Cloud; your self-hosted instance is a gateway in front of it — plus how projects promote up and come back home.
 ---
 
-For a **Cloud-owned project**, Openship Cloud (our hosted service) holds the one true copy — the
+For a **Cloud-owned project**, Kovalio Cloud (our hosted service) holds the one true copy — the
 **canonical** owner. Its record, deployments, domains, environment variables, and logs all live on the
 cloud, and the cloud runs its builds and lifecycle. Your self-hosted instance keeps **no local copy** of
 that project. Instead it acts as a **gateway** — a thin pass-through that forwards requests for that project
@@ -43,7 +43,7 @@ their owner, even when they run on a linked managed server. Use an explicit tran
 Credentials scoped to the local installation keep their existing execution path; connect
 SDK and CLI clients directly to the Cloud API to create Cloud-owned projects.
 
-A failed Cloud creation or capacity check remains an error. Openship does not fall back
+A failed Cloud creation or capacity check remains an error. Kovalio does not fall back
 to creating a local project or selecting a different Cloud account.
 
 <Callout title="Your local permission checks still run first" type="info">

@@ -476,7 +476,7 @@ export async function runClusterRuntime(
             nodes.items.some(
               (node) =>
                 node.metadata.name === host.nodeName &&
-                node.metadata.labels?.["openship.io/runtime"] === row.id &&
+                node.metadata.labels?.["nextrium.org/runtime"] === row.id &&
                 node.status.nodeInfo?.kubeletVersion === plan.version &&
                 node.status.addresses?.some(
                   (address) => address.type === "InternalIP" && address.address === host.privateIp,

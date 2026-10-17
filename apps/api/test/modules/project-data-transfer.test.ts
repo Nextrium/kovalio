@@ -273,7 +273,7 @@ async function source() {
       id: "destination",
       organizationId: "org_source",
       name: "Offsite",
-      kind: "openship_server",
+      kind: "kovalio_server",
       serverId: "backup_server",
       pathPrefix: "/backups",
     });
@@ -385,7 +385,7 @@ describe("project control-plane export and import", () => {
   it("keeps legacy sealed archives readable with all selected dependencies and no unrelated projects", async () => {
     await source();
     const file = await exportFile();
-    expect(file.kind).toBe("openship-project-export");
+    expect(file.kind).toBe("kovalio-project-export");
     expect(file.dump.tables.project!.map((row) => row.id).sort()).toEqual([
       "database",
       "staging",
@@ -521,7 +521,7 @@ describe("project control-plane export and import", () => {
       minute: 1234, requests: 42,
     });
     const file: DataTransferFile = JSON.parse(JSON.stringify(await exportInstance({})));
-    expect(file.kind).toBe("openship-instance-export");
+    expect(file.kind).toBe("kovalio-instance-export");
     expect(file.envelopeVersion).toBe(4);
     expect(file.secrets).toMatchObject({ encoding: "plaintext", version: 1 });
     expect(file.secrets).not.toHaveProperty("kdf");
@@ -1095,7 +1095,7 @@ describe("project control-plane export and import", () => {
     });
   });
 
-  it.each(["local", "sftp", "openship_server"])(
+  it.each(["local", "sftp", "kovalio_server"])(
     "requires backup verification for imported %s storage that changes location",
     async (kind) => {
       await source();
@@ -1103,7 +1103,7 @@ describe("project control-plane export and import", () => {
         .update(schema.backupDestination)
         .set({
           kind,
-          serverId: kind === "openship_server" ? "backup_server" : null,
+          serverId: kind === "kovalio_server" ? "backup_server" : null,
           endpoint: kind === "local" ? "/source/backups" : null,
           sshHost: kind === "sftp" ? "localhost" : null,
           lastVerifiedAt: new Date(),
@@ -1118,7 +1118,7 @@ describe("project control-plane export and import", () => {
         context,
         selection: {
           scope: "projects",
-          serverMappings: kind === "openship_server" ? { backup_server: "target_server" } : {},
+          serverMappings: kind === "kovalio_server" ? { backup_server: "target_server" } : {},
         },
       });
       const [policy] = await db.select().from(schema.backupPolicy);
@@ -1313,7 +1313,7 @@ describe("project control-plane export and import", () => {
 
   it.each([false, true])("embeds SSH key files and inherited clone tokens without requiring source-machine paths (legacy sealed: %s)", async (passwordProtected) => {
     await source();
-    const dir = await mkdtemp(join(tmpdir(), "openship-project-key-test-"));
+    const dir = await mkdtemp(join(tmpdir(), "kovalio-project-key-test-"));
     try {
       const keyPath = join(dir, "id_test");
       await writeFile(keyPath, "ssh-file-private-key", { mode: 0o600 });
@@ -1356,7 +1356,7 @@ describe("project control-plane export and import", () => {
   it("imports a selection from a legacy instance archive and blocks domains owned by unselected projects", async () => {
     await source();
     const file = await exportFile();
-    file.kind = "openship-instance-export";
+    file.kind = "kovalio-instance-export";
     file.envelopeVersion = 1;
     file.dump.scope = { kind: "instance" };
     await destination();

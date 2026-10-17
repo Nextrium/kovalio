@@ -137,7 +137,7 @@ export class ActionStorageProtocol {
         ref: ctx.run.ref,
         name: string(name),
         version,
-        key: `openship-actions/${ctx.run.organizationId}/${ctx.run.id}/${randomUUID()}`,
+        key: `kovalio-actions/${ctx.run.organizationId}/${ctx.run.id}/${randomUUID()}`,
         // One final object + up to three attempts' worth of chunks are accounted for.
         maxBytes,
         reservedBytes: Math.max(1, maxBytes) * 4,

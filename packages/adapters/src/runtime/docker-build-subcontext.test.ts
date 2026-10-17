@@ -260,7 +260,7 @@ describe("remote docker build — declared build context (#634)", () => {
     expect(buildCmd).not.toContain("DOCKER_BUILDKIT=1");
     expect(buildCmd).not.toContain("--progress");
     expect(buildCmd).toContain("--force-rm");
-    expect(buildCmd).toMatch(/--add-host 'openship-build-[0-9a-f-]+\.invalid:127\.0\.0\.1'/);
+    expect(buildCmd).toMatch(/--add-host 'kovalio-build-[0-9a-f-]+\.invalid:127\.0\.0\.1'/);
   });
 
   it("does not read a version banner as buildx", async () => {
@@ -462,7 +462,7 @@ describe.each([
           {
             _docker: {
               buildImage,
-              modem: new Dockerode({ socketPath: "/tmp/openship-test-absent.sock" }).modem,
+              modem: new Dockerode({ socketPath: "/tmp/kovalio-test-absent.sock" }).modem,
             },
             verifyImageBuilt,
           },

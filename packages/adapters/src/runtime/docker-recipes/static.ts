@@ -47,9 +47,9 @@ export function builderContextRoot(config: BuildConfig): string {
 /**
  * Is this a TOP-LEVEL doc-root entry that is a build input rather than content?
  *
- * `Dockerfile.*` covers both the single-app generated name (`Dockerfile.openship`)
+ * `Dockerfile.*` covers both the single-app generated name (`Dockerfile.kovalio`)
  * and the compose batch builder's per-service one
- * (`Dockerfile.openship.<sessionId>`), plus a repo's own `Dockerfile.prod`.
+ * (`Dockerfile.kovalio.<sessionId>`), plus a repo's own `Dockerfile.prod`.
  */
 export function isExcludedDocRootEntry(name: string): boolean {
   return (

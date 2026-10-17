@@ -10,7 +10,7 @@
     "managePlan": "Manage plan",
     "projects": "Projects",
     "emptyTitle": "Your apps start here",
-    "emptyDescription": "Choose capacity, then deploy apps and projects to Openship Cloud.",
+    "emptyDescription": "Choose capacity, then deploy apps and projects to Kovalio Cloud.",
     "usageHint": "Current CPU, memory and storage usage.",
     "noProjects": "No projects here yet.",
     "spaces": "Cloud spaces",
@@ -33,7 +33,7 @@
     },
     "managed": {
       "label": "Get a managed server",
-      "description": "Openship Cloud handles setup, routing and HTTPS."
+      "description": "Kovalio Cloud handles setup, routing and HTTPS."
     },
     "signInHint": "Connect your Cloud account to use an existing managed server or get a new one.",
     "chooseExisting": "Choose an existing Cloud server",
@@ -58,7 +58,7 @@
     "continue": "Continue",
     "cancel": "Cancel",
     "retry": "Retry",
-    "selfHostedOnly": "Server clusters are available on a self-hosted OpenShip instance. Oblien manages Cloud infrastructure.",
+    "selfHostedOnly": "Server clusters are available on a self-hosted Kovalio instance. Oblien manages Cloud infrastructure.",
     "managePermissionRequired": "You need permission to manage all servers in this workspace to configure clusters.",
     "notChecked": "Not verified yet",
     "networkStatus": "Network verification",
@@ -723,7 +723,7 @@
     "probingPeers": "Checking private connectivity between servers…",
     "interfaceVerified": "Private interface verified",
     "encryption": "Encryption",
-    "externalEncryption": "Not verified by OpenShip",
+    "externalEncryption": "Not verified by Kovalio",
     "verificationScope": "These checks verify the selected private addresses and test port. Service access and encryption depend on your network configuration and application policies.",
     "source": "From",
     "destination": "To",
@@ -731,7 +731,7 @@
     "failed": "Failed",
     "noPeerChecks": "Run verification to see connections between servers.",
     "projectScope": "Connect servers and manage private connectivity independently of server clusters.",
-    "selfHostedOnly": "Private networks are available on a self-hosted OpenShip instance. Oblien manages Cloud infrastructure.",
+    "selfHostedOnly": "Private networks are available on a self-hosted Kovalio instance. Oblien manages Cloud infrastructure.",
     "managePermissionRequired": "You need permission to manage all servers in this workspace to configure networks.",
     "editWhileVerifying": "Wait for network verification to finish before editing this network.",
     "status": {
@@ -751,7 +751,7 @@
     "crossProviderNetworkHint": "Private networks on different providers need an existing route or VPN between them. Selecting a provider does not connect the servers.",
     "managed": {
       "title": "Managed private network",
-      "description": "OpenShip creates an encrypted WireGuard network between your servers, including servers at different providers.",
+      "description": "Kovalio creates an encrypted WireGuard network between your servers, including servers at different providers.",
       "requirements": "Requires Linux with systemd and root or passwordless sudo. Missing Python 3.8+, iproute2 and WireGuard tools are installed automatically. Kernel and firewall compatibility are checked during setup.",
       "mode": "Network mode",
       "existingHint": "Use addresses already configured on your provider network.",
@@ -760,7 +760,7 @@
       "useServerAddress": "Use server address",
       "port": "WireGuard UDP port",
       "automaticRange": "Choose an available range automatically",
-      "rangeHint": "OpenShip checks host, Docker, VPN, DNS and route ranges, then allocates stable private addresses. You can also choose a private /16–/27 subnet.",
+      "rangeHint": "Kovalio checks host, Docker, VPN, DNS and route ranges, then allocates stable private addresses. You can also choose a private /16–/27 subnet.",
       "inspect": "Prepare servers",
       "inspecting": "Starting preparation…",
       "apply": "Apply network",
@@ -769,7 +769,7 @@
       "effect": "Creates a dedicated tunnel and private routes, and allows traffic between the listed peers. SSH routes and DNS settings stay as they are.",
       "keys": "Private keys are generated and kept on each server.",
       "rollbackHint": "Uncommitted changes roll back on each host after 20 minutes, including after a controller disconnect or host reboot.",
-      "firewallHint": "OpenShip configures supported host firewalls during Apply. Save provider or router rules before applying or retrying.",
+      "firewallHint": "Kovalio configures supported host firewalls during Apply. Save provider or router rules before applying or retrying.",
       "expires": "Plan valid until {time}",
       "expired": "This plan expired. Go back and inspect the servers again.",
       "packages": "Prerequisites",
@@ -781,7 +781,7 @@
       "progress": "Server progress",
       "resume": "Resume operation",
       "restore": "Restore previous network",
-      "recoveryHint": "Check the server results before resuming. OpenShip inspects host receipts and restores or reapplies the approved configuration.",
+      "recoveryHint": "Check the server results before resuming. Kovalio inspects host receipts and restores or reapplies the approved configuration.",
       "viewOperation": "View network operation",
       "viewCluster": "Open network",
       "removalHint": "Remove the managed tunnel, private routes and owned firewall rules from every member. Services using these private addresses will lose their connections.",
@@ -874,17 +874,17 @@
       "removeAndReset": "Remove and reset",
       "removeSetupServerTitle": "Remove {name} from setup?",
       "removeSetupServerDescription": "Save the remaining {count} servers and pause setup until you press Retry preparation. The server, its services, data, and installed tools stay in place.",
-      "removeSetupServerResetDescription": "Restore this attempt’s OpenShip network changes on the selected server and its peers, then pause with the remaining {count} servers. Press Retry preparation when you are ready. Services, data, and installed tools stay in place. Every server must acknowledge cleanup before retrying preparation.",
+      "removeSetupServerResetDescription": "Restore this attempt’s Kovalio network changes on the selected server and its peers, then pause with the remaining {count} servers. Press Retry preparation when you are ready. Services, data, and installed tools stay in place. Every server must acknowledge cleanup before retrying preparation.",
       "keepTwoServers": "At least two servers must remain.",
       "resetBeforeContinue": "Resetting the previous setup",
-      "resetBeforeContinueDescription": "OpenShip restores this attempt’s network configuration and peer entries. After every server confirms cleanup, press Retry preparation to continue with {count} servers. If a server is unreachable, restore access and retry cleanup.",
+      "resetBeforeContinueDescription": "Kovalio restores this attempt’s network configuration and peer entries. After every server confirms cleanup, press Retry preparation to continue with {count} servers. If a server is unreachable, restore access and retry cleanup.",
       "continuePreparation": "Continue preparation",
       "viewCleanup": "View cleanup details",
       "viewUpdatedSetup": "View updated setup",
       "selectionSavedHint": "Your updated server selection is saved. Preparation stays paused until you press Retry preparation.",
       "selectionReplacedHint": "This attempt is linked to an updated server selection. Open the updated setup to continue.",
       "transportCheckTitle": "UDP access between servers",
-      "transportCheckHint": "After you apply, OpenShip tests encrypted connections on these UDP endpoints before assigning private addresses and routes.",
+      "transportCheckHint": "After you apply, Kovalio tests encrypted connections on these UDP endpoints before assigning private addresses and routes.",
       "transportFailedTitle": "Check the failed connections before retrying",
       "transportFailedHint": "An encrypted connection could not be established. Confirm the destination addresses and any NAT port forwarding, then check firewall rules. Select a failed link to see each direction.",
       "preparationTopologyHint": "Each server shows its current preparation step. UDP connectivity is tested after you review and apply the network.",
@@ -917,11 +917,11 @@
         "nativeFailedHint": "Check the private routes, selected interfaces, and TCP/UDP rules in host and provider firewalls before retrying.",
         "privateInterfaceHint": "Interface carrying this private IP",
         "nativeScopeHint": "These rules allow connectivity checks. Add the private service ports required by your workloads separately.",
-        "nativeFirewallHint": "Configure host and provider firewalls for the private interface. OpenShip checks this network without changing its firewall rules.",
+        "nativeFirewallHint": "Configure host and provider firewalls for the private interface. Kovalio checks this network without changing its firewall rules.",
         "confirmTitle": "Confirm firewall access",
         "confirmManaged": "I’ve allowed the listed UDP traffic in the provider firewalls and routers between these servers.",
         "confirmNative": "I’ve allowed the listed TCP/UDP traffic in the host and provider firewalls for these private addresses.",
-        "confirmHint": "OpenShip will verify connectivity after you continue.",
+        "confirmHint": "Kovalio will verify connectivity after you continue.",
         "confirmRequired": "Confirm firewall access before continuing.",
         "returnTraffic": "Return traffic",
         "nativeReturnHint": "Stateful firewalls allow replies automatically. The template also includes reply rules for stateless firewalls, using the same private peer IPs."
@@ -980,7 +980,7 @@
       "outgoing": "Can connect to",
       "none": "None",
       "empty": "This server has no configured connections.",
-      "transportHint": "WireGuard uses UDP in both directions for each connected pair. OpenShip enforces the selected private-access directions on the servers.",
+      "transportHint": "WireGuard uses UDP in both directions for each connected pair. Kovalio enforces the selected private-access directions on the servers.",
       "enforcedHint": "These permissions cover this managed private network, including published container ports. Public access and other networks have their own rules.",
       "blockedVerified": "Blocked as configured",
       "unexpectedAccess": "Unexpected access",
@@ -1000,10 +1000,10 @@
     "setup": "Enable scaling",
     "oneControl": "One control server. At least three servers are needed for a highly available control plane.",
     "threeControls": "Three control servers maintain cluster availability. Additional servers join as workers.",
-    "requirements": "OpenShip prepares the servers, connects them, and checks application routing. Progress is saved so you can leave and return.",
+    "requirements": "Kovalio prepares the servers, connects them, and checks application routing. Progress is saved so you can leave and return.",
     "readyHint": "Choose this cluster in a project’s Scale controls to deploy application instances across its servers.",
     "privateConnections": "Required private firewall rules",
-    "privateHint": "OpenShip configures supported host firewalls automatically. If your provider filters the private network, allow these destination ports from the listed private source addresses. Keep these ports off the public internet.",
+    "privateHint": "Kovalio configures supported host firewalls automatically. If your provider filters the private network, allow these destination ports from the listed private source addresses. Keep these ports off the public internet.",
     "remove": "Disable scaling",
     "removeDescription": "Disable scaling and remove its installation from this cluster. Remove deployed cluster applications and persistent volumes first. The server group, Docker applications and private network remain available.",
     "details": "Setup details",
@@ -1026,7 +1026,7 @@
       "verify": "Check application routing",
       "remove": "Clean up scaling"
     },
-    "requirementsDetails": "OpenShip installs missing tools, configures K3s over the private network, and verifies service routing and DNS. Linux with systemd and an unfiltered or iptables host firewall is required.",
+    "requirementsDetails": "Kovalio installs missing tools, configures K3s over the private network, and verifies service routing and DNS. Linux with systemd and an unfiltered or iptables host firewall is required.",
     "technicalDetails": "Technical details",
     "technology": "Orchestrator",
     "applicationNetwork": "Pod network",
@@ -1038,7 +1038,7 @@
     "label": "Connection",
     "direct": "Direct SSH",
     "hostname": "Access hostname",
-    "help": "Use your Cloudflare Access hostname and your server’s SSH credentials. Complete Cloudflare sign-in on the machine running OpenShip. Windows desktop includes the required client; other installations need cloudflared.",
+    "help": "Use your Cloudflare Access hostname and your server’s SSH credentials. Complete Cloudflare sign-in on the machine running Kovalio. Windows desktop includes the required client; other installations need cloudflared.",
     "openAccess": "Open Cloudflare Access"
   },
   "managedControls": {
@@ -1086,7 +1086,7 @@
     "runtime": {
       "title": "Runtime API",
       "description": "Automate commands, files and runtime operations on this managed server from your own tools.",
-      "requiredHint": "Openship uses this API for deployments, monitoring and terminals, so it stays enabled while the server is managed.",
+      "requiredHint": "Kovalio uses this API for deployments, monitoring and terminals, so it stays enabled while the server is managed.",
       "stoppedHint": "Resume the server from its plan panel before opening a runtime connection.",
       "enable": "Enable Runtime API",
       "credentialHint": "Server administrators can reveal a credential for this server only. It grants full runtime access, including every project on the server.",
@@ -1107,7 +1107,7 @@
       "os": "Operating system",
       "lifecycle": "Lifecycle",
       "persistent": "Persistent server",
-      "imageHint": "Openship maintains the managed Docker image. Choose application images in each project’s deployment settings. Replacing the server image would affect every project and its data.",
+      "imageHint": "Kovalio maintains the managed Docker image. Choose application images in each project’s deployment settings. Replacing the server image would affect every project and its data.",
       "resources": "Allocated server resources",
       "resourceHint": "Resources come from this server’s subscription. Use the existing plan and resize review to change them; all projects share this allocation.",
       "terminal": "Open terminal",
@@ -1144,7 +1144,7 @@
       "truncated": "Showing the first 100 native processes. Use the terminal for the complete host inventory.",
       "sources": {
         "manual": "Manual workload",
-        "project": "Openship application",
+        "project": "Kovalio application",
         "system": "Platform or externally managed process"
       },
       "states": {
@@ -1169,7 +1169,7 @@
       "rulesUnavailable": "Outbound rules are unavailable. Refresh before editing them.",
       "invalidRules": "Enter 1–50 destinations. Use * alone, or specify hostnames/IPs without a URL, port or path.",
       "confirm": "Apply these outbound rules to every project on this server? Disabling internet clears the outbound allowlist. Re-enabling it uses the destinations shown above.",
-      "routingHint": "Public domains, TLS and private networking use Openship’s project and network controls. This form does not change their routes, ingress rules or proxy credentials.",
+      "routingHint": "Public domains, TLS and private networking use Kovalio’s project and network controls. This form does not change their routes, ingress rules or proxy credentials.",
       "policyTitle": "Internet access",
       "policyHint": "Control which destinations apps and builds can reach.",
       "addresses": "Private address & ingress"
@@ -1178,7 +1178,7 @@
       "title": "Outbound connection",
       "description": "Choose how this server connects to the internet.",
       "currentIp": "Current outbound IP",
-      "managed": "Managed by Openship",
+      "managed": "Managed by Kovalio",
       "custom": "Custom proxy",
       "unavailable": "Current settings could not be verified. Refresh before making changes.",
       "connection": "Connection type",
@@ -1210,7 +1210,7 @@
     },
     "cloudConnection": {
       "titles": {
-        "not_connected": "Sign in to Openship Cloud",
+        "not_connected": "Sign in to Kovalio Cloud",
         "account_mismatch": "Connect this space’s Cloud account",
         "unavailable": "Cloud status unavailable"
       },
@@ -1229,7 +1229,7 @@
     },
     "controlUnavailable": {
       "title": "Control unavailable",
-      "description": "This control is not available on the connected Cloud API version yet. Openship Cloud needs an update before it can be used."
+      "description": "This control is not available on the connected Cloud API version yet. Kovalio Cloud needs an update before it can be used."
     }
   },
   "gpu": {

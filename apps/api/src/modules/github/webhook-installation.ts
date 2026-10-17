@@ -55,7 +55,7 @@ export async function handleInstallation(
   payload: GitHubInstallationPayload,
 ): Promise<WebhookHandlerResult> {
   const scope = await resolveInstallationScope(payload);
-  // SaaS-only contract: the GitHub App is owned by openship.io, so
+  // SaaS-only contract: the GitHub App is owned by nextrium.org, so
   // installation events ONLY have authoritative meaning on the SaaS
   // (env.CLOUD_MODE=true). On a self-hosted instance the App's webhook
   // is configured to point at api.nextrium.org — an installation event
@@ -105,7 +105,7 @@ async function handleInstallationCreated(
   const accountLogin = payload.installation.account.login.toLowerCase();
   const accountType = payload.installation.account.type;
 
-  // Installation webhooks carry no Openship workspace binding and can arrive
+  // Installation webhooks carry no Kovalio workspace binding and can arrive
   // before or after the browser setup redirect. They may refresh a row that the
   // verified claim callback already owns, but must never invent one by guessing
   // from sender membership order.

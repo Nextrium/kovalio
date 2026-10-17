@@ -15,7 +15,7 @@ const payment = z.object({
     unitAmount: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
     currency: z.literal("usd"),
   }),
-  metadata: z.object({ openship_organization: z.string().optional() }).optional(),
+  metadata: z.object({ kovalio_organization: z.string().optional() }).optional(),
 });
 
 export async function observeVerifiedBillingEvent(
@@ -32,8 +32,8 @@ export async function observeVerifiedBillingEvent(
     if (
       parsed.success &&
       (eventType !== "subscription.renewed" || parsed.data.kind === "subscription") &&
-      (!parsed.data.metadata?.openship_organization ||
-        parsed.data.metadata.openship_organization === organizationId)
+      (!parsed.data.metadata?.kovalio_organization ||
+        parsed.data.metadata.kovalio_organization === organizationId)
     ) {
       const row = parsed.data;
       const date =

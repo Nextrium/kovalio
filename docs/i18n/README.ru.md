@@ -1,4 +1,4 @@
-<h1 align="center">Openship</h1>
+<h1 align="center">Kovalio</h1>
 
 <p align="center">
   Платформа развёртывания с открытым исходным кодом для самостоятельного хостинга со встроенным CI/CD.<br>
@@ -6,16 +6,16 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/openship"><img src="https://img.shields.io/npm/v/openship?color=0b7285&label=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/kovalio"><img src="https://img.shields.io/npm/v/kovalio?color=0b7285&label=npm" alt="npm version" /></a>
   <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License" /></a>
-  <a href="https://openship.io"><img src="https://img.shields.io/badge/website-openship.io-0b7285" alt="Website" /></a>
+  <a href="https://nextrium.org"><img src="https://img.shields.io/badge/website-nextrium.org-0b7285" alt="Website" /></a>
 </p>
 
 <p align="center">
   <a href="#быстрый-старт">Быстрый старт</a> ·
   <a href="#возможности">Возможности</a> ·
   <a href="#три-интерфейса">Интерфейсы</a> ·
-  <a href="https://openship.io/docs">Документация</a> ·
+  <a href="https://nextrium.org/docs">Документация</a> ·
   <a href="../../CONTRIBUTING.md">Участие в разработке</a>
 </p>
 
@@ -34,7 +34,7 @@
 </p>
 
 <p align="center">
-  <img src="../screenshots/screen.png" alt="Openship dashboard" width="800" />
+  <img src="../screenshots/screen.png" alt="Kovalio dashboard" width="800" />
 </p>
 
 ---
@@ -42,37 +42,37 @@
 ## Быстрый старт
 
 ```bash
-npm i -g openship     # или: curl -fsSL https://get.openship.io | sh
-openship up           # устанавливает Openship как фоновую службу (автозапуск при загрузке)
+npm i -g kovalio     # или: curl -fsSL https://get.kovalio.nextrium.org | sh
+kovalio up           # устанавливает Kovalio как фоновую службу (автозапуск при загрузке)
 ```
 
-`openship open` открывает панель управления; `openship stop` останавливает службу. Для разового запуска: `openship up --foreground`. Для деплоя проекта:
+`kovalio open` открывает панель управления; `kovalio stop` останавливает службу. Для разового запуска: `kovalio up --foreground`. Для деплоя проекта:
 
 ```bash
 cd your-project
-openship init         # связать эту папку с проектом
-openship deploy
+kovalio init         # связать эту папку с проектом
+kovalio deploy
 ```
 
 Предпочитаете Docker? Клонируйте репозиторий и используйте Compose:
 
 ```bash
-git clone https://github.com/oblien/openship.git && cd openship
+git clone https://github.com/Nextrium/kovalio.git && cd kovalio
 cp .env.example .env
 docker compose up -d
 ```
 
-Или установите приложение для рабочего стола (`openship install` или скачайте с [openship.io](https://openship.io)).
+Или установите приложение для рабочего стола (`kovalio install` или скачайте с [nextrium.org](https://nextrium.org)).
 
 ---
 
-## Что делает Openship
+## Что делает Kovalio
 
-Укажите репозиторий. Openship автоматически определит стек, соберёт проект, всё настроит и запустит — без необходимости писать файлы конфигурации, пайплайны или YAML.
+Укажите репозиторий. Kovalio автоматически определит стек, соберёт проект, всё настроит и запустит — без необходимости писать файлы конфигурации, пайплайны или YAML.
 
 Базы данных, домены, SSL, CDN, почта, резервные копии — всё управляется в едином окне.
 
-Работает с **Openship Cloud** (управляемый хостинг) или на **любом вашем сервере Linux**. Подходит как для индивидуальных разработчиков с пет-проектами, так и для команд с нагруженным продакшеном.
+Работает с **Kovalio Cloud** (управляемый хостинг) или на **любом вашем сервере Linux**. Подходит как для индивидуальных разработчиков с пет-проектами, так и для команд с нагруженным продакшеном.
 
 ---
 
@@ -96,7 +96,7 @@ docker compose up -d
 
 ## Развёртывание где угодно
 
-- **Openship Cloud** — управляемый сервис, автомасштабирование, нулевая настройка
+- **Kovalio Cloud** — управляемый сервис, автомасштабирование, нулевая настройка
 - **Любой VPS** — Hetzner, DigitalOcean, Linode, Timeweb, Selectel, OVH и другие
 - **Выделенные серверы** — Bare Metal, Colocation, домашние серверы (Homelab)
 - **Кластеры серверов** — распределяйте сервисы по нескольким машинам
@@ -111,12 +111,12 @@ docker compose up -d
 - **Веб-дашборд** — тот же интерфейс в браузере, созданный для командной работы.
 - **CLI** — для скриптов и автоматизации в терминале.
 
-Также доступны **REST API** и протокол **MCP** (Model Context Protocol для ИИ-агентов). Подробная документация доступна на [openship.io/docs](https://openship.io/docs).
+Также доступны **REST API** и протокол **MCP** (Model Context Protocol для ИИ-агентов). Подробная документация доступна на [nextrium.org/docs](https://nextrium.org/docs).
 
 ---
 
 ## Лицензия
 
-Openship — программное обеспечение с **открытым исходным кодом** под лицензией [Apache License 2.0](../../LICENSE).
+Kovalio — программное обеспечение с **открытым исходным кодом** под лицензией [Apache License 2.0](../../LICENSE).
 
 Вы можете использовать, запускать, модифицировать, размещать на своих серверах и распространять его — в том числе в коммерческих продуктах — в соответствии с условиями лицензии Apache 2.0.

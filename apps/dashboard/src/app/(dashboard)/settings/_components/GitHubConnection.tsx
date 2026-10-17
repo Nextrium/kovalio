@@ -57,7 +57,7 @@ export function GitHubConnection() {
   const [installUrl, setInstallUrl] = useState<string | null>(null);
   const [capabilities, setCapabilities] = useState<GitHubCapabilities | null>(null);
   // Workspace-owned Apps are created, installed, edited and removed by the
-  // source manager above this card. This flag prevents the legacy Openship App
+  // source manager above this card. This flag prevents the legacy Kovalio App
   // controls from impersonating those sources (especially its OAuth-only
   // "Disconnect", which cannot remove a custom source).
   const [customSourcesConfigured, setCustomSourcesConfigured] = useState(false);
@@ -159,7 +159,7 @@ export function GitHubConnection() {
   );
 
   // The backend decides whether the App is operator-owned locally or proxied
-  // through Openship Cloud. The dashboard only follows `requiresCloud`.
+  // through Kovalio Cloud. The dashboard only follows `requiresCloud`.
   const { connected: cloudConnected, startConnect: startCloudConnect } = useCloud();
   const { showModal, hideModal } = useModal();
   const { selfHosted: isSelfHosted, deployMode } = usePlatform();
@@ -365,7 +365,7 @@ export function GitHubConnection() {
                 icon={"github"}
                 label={appLogin ? `@${appLogin}` : t.settings.github.methodApp}
                 method={t.settings.github.methodApp}
-                active={state.primary === "openship-app"}
+                active={state.primary === "kovalio-app"}
               />
               {/* Installations the App can actually deploy from. */}
               {hasInstallations && (

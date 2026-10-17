@@ -1,17 +1,17 @@
 # Actions execution verification
 
 Verified against the private sample repository
-[Hydralerne/openship-independent-ci-verification-20261011](https://github.com/Hydralerne/openship-independent-ci-verification-20261011)
+[Hydralerne/kovalio-independent-ci-verification-20261011](https://github.com/Hydralerne/kovalio-independent-ci-verification-20261011)
 on 12 October 2026. GitHub Actions is disabled there, and its Actions run count
-remained zero. Workflow code lives in `.openship/workflows/`.
+remained zero. Workflow code lives in `.kovalio/workflows/`.
 
 ## Live independent workflows
 
 | Case                                                 | Result | GitHub Check                                                                                                  |
 | ---------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
-| Native Mac, three workflow levels                    | Passed | [leaf job](https://github.com/Hydralerne/openship-independent-ci-verification-20261011/runs/114787855311)     |
-| Temporary Cloud Linux, three workflow levels         | Passed | [leaf job](https://github.com/Hydralerne/openship-independent-ci-verification-20261011/runs/114787855127)     |
-| Native Mac, HTTPS Openship OIDC in a called workflow | Passed | [identity job](https://github.com/Hydralerne/openship-independent-ci-verification-20261011/runs/114793285204) |
+| Native Mac, three workflow levels                    | Passed | [leaf job](https://github.com/Hydralerne/kovalio-independent-ci-verification-20261011/runs/114787855311)     |
+| Temporary Cloud Linux, three workflow levels         | Passed | [leaf job](https://github.com/Hydralerne/kovalio-independent-ci-verification-20261011/runs/114787855127)     |
+| Native Mac, HTTPS Kovalio OIDC in a called workflow | Passed | [identity job](https://github.com/Hydralerne/kovalio-independent-ci-verification-20261011/runs/114793285204) |
 
 The reusable cases ran at repository commit `5b5ed0e`; the OIDC case ran at
 `ed54198`. Each reusable run used two coordinator records and two real workers.
@@ -63,7 +63,7 @@ dashboard changes. PR #1116 retains the original execution evidence.
 
 ## Release boundaries
 
-OIDC providers must trust the Openship issuer and appropriate organization,
+OIDC providers must trust the Kovalio issuer and appropriate organization,
 repository/ref and workflow subjects. Protected environments remain delegated to
 GitHub-coordinated workflows. Linux and native macOS are supported; Windows and
 GitHub Enterprise runner destinations are not available.

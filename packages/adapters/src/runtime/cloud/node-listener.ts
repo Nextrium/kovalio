@@ -2,8 +2,8 @@ import type { BuildConfig } from "../../types";
 import { validateImageReference } from "@repo/core";
 import { sq } from "../build-pipeline";
 
-export const MANAGED_NODE_LABEL = "io.openship.managed-node-listener";
-export const MANAGED_NODE_PORTS = "OPENSHIP_MANAGED_PUBLIC_PORTS";
+export const MANAGED_NODE_LABEL = "io.kovalio.managed-node-listener";
+export const MANAGED_NODE_PORTS = "KOVALIO_MANAGED_PUBLIC_PORTS";
 
 /** Loaded by Node, not inserted into or evaluated from application source. */
 export const managedNodeListenerSource = `"use strict";
@@ -20,7 +20,7 @@ if (ports.size) {
     if (tcp && (typeof port === "number" || typeof port === "string" && /^\\d+$/.test(port)) && ports.has(Number(port)) && ["127.0.0.1", "localhost", "::1"].includes(host)) {
       if (object) args[0] = { ...options, host: "0.0.0.0" };
       else args[1] = "0.0.0.0";
-      process.stderr.write("[openship] Managed ingress enabled for application port " + port + "\\n");
+      process.stderr.write("[kovalio] Managed ingress enabled for application port " + port + "\\n");
     }
     return Reflect.apply(listen, this, args);
   };
@@ -52,7 +52,7 @@ export function managedNodeDockerLines(config: BuildConfig): string[] {
     )
   )
     return [];
-  const directory = "/opt/openship/runtime";
+  const directory = "/opt/kovalio/runtime";
   const entrypoint = `#!/bin/sh\nset -e\nif [ -n "\${${MANAGED_NODE_PORTS}:-}" ]; then\n  export NODE_OPTIONS="--require=${directory}/listener.cjs \${NODE_OPTIONS:-}"\nfi\nexec "$@"\n`;
   const write = `const fs=require('node:fs');fs.mkdirSync(${JSON.stringify(directory)},{recursive:true});fs.writeFileSync(${JSON.stringify(directory + "/listener.cjs")},${JSON.stringify(managedNodeListenerSource)});fs.writeFileSync(${JSON.stringify(directory + "/entrypoint.sh")},${JSON.stringify(entrypoint)});`;
   return [

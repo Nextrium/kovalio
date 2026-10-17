@@ -108,7 +108,7 @@ export const appDependencies: AppDependencies = {
         if (server.workspaceId && input.deployTarget && input.deployTarget !== "cloud")
           throw new AppError("This managed server is a Cloud destination", 409, "PROJECT_SERVER_TARGET_CONFLICT");
         if (!server.workspaceId) await assertServerExecution(server);
-      } else if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION !== "true") {
+      } else if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION !== "true") {
         const template = await getTemplateForOrg(ctx.organizationId, id);
         return { minResources: template?.minResources ?? null, capacity: { ...UNKNOWN_CAPACITY }, fit: { ok: true } };
       }

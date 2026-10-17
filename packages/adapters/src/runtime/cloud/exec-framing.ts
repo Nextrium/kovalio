@@ -20,7 +20,7 @@ with os.fdopen(os.open(lock_path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
         sys.exit(0)
     process = subprocess.Popen(['sh', '-c', sys.argv[1]], stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True,
-        env=dict(os.environ, _OPENSHIP_EXEC_OWNER=sys.argv[2]))
+        env=dict(os.environ, _KOVALIO_EXEC_OWNER=sys.argv[2]))
     with open('/proc/' + str(process.pid) + '/stat') as stat:
         start = stat.read().rsplit(')', 1)[1].split()[19]
     lock.seek(0)
@@ -69,7 +69,7 @@ finally:
 export const CLOUD_EXEC_CANCEL = String.raw`
 import fcntl, json, os, signal, sys, time
 
-owner = ('_OPENSHIP_EXEC_OWNER=' + sys.argv[1]).encode()
+owner = ('_KOVALIO_EXEC_OWNER=' + sys.argv[1]).encode()
 lock_path = '/tmp/' + sys.argv[1] + 'lock'
 with os.fdopen(os.open(lock_path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600), 'r+') as lock:
     fcntl.flock(lock, fcntl.LOCK_EX)
@@ -137,7 +137,7 @@ with os.fdopen(os.open('/tmp/' + marker + 'lock', os.O_CREAT | os.O_RDWR | os.O_
     lock.truncate()
     json.dump({'pid': os.getpid(), 'start': start}, lock)
     lock.flush()
-    os.environ['_OPENSHIP_EXEC_OWNER'] = marker
+    os.environ['_KOVALIO_EXEC_OWNER'] = marker
     # The open fd is close-on-exec; keep the cancellation lock until exec so
     # recovery cannot observe a gap between registration and shell creation.
     os.execvpe('/bin/sh', ['/bin/sh', '-i'], os.environ)

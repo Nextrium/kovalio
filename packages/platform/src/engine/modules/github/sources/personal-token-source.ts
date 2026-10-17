@@ -20,7 +20,7 @@ import { mapRepositories, mergeRepositorySources } from "./mappers";
 import type { GitHubConnectionStatus, GitHubHome, GitHubSource } from "./types";
 
 const emptyState = (): GitHubConnectionState => ({
-  sources: { openshipApp: { connected: false }, ghCli: { available: false } },
+  sources: { kovalioApp: { connected: false }, ghCli: { available: false } },
   primary: null,
 });
 

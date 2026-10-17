@@ -1,6 +1,6 @@
 ---
 title: API overview
-description: Control Openship with the Node.js SDK or REST API.
+description: Control Kovalio with the Node.js SDK or REST API.
 ---
 
 Create projects, deploy code, and operate your installation from an application or script. Each resource
@@ -11,10 +11,10 @@ has one reference page: shared behavior and fields, with **SDK** and **REST API*
 | Your application needs to… | Use |
 | --- | --- |
 | Control an existing self-hosted or Cloud installation | [Remote SDK client](/docs/api/sdk/client) or [REST API](/docs/api/http) |
-| Run Openship inside a Node application | [Native SDK](/docs/api/sdk/native) |
+| Run Kovalio inside a Node application | [Native SDK](/docs/api/sdk/native) |
 | Run commands from a terminal or CI | [CLI](/docs/cli) |
 
-Ship SDK ships in `openship` 0.8.0 and later. Start with `npm install openship` and the
+Ship SDK ships in `kovalio` 0.8.0 and later. Start with `npm install kovalio` and the
 [SDK guide](/docs/api/sdk).
 
 ## Make a request
@@ -26,13 +26,13 @@ REST returns the endpoint's JSON response.
 <Tab value="SDK">
 
 ```ts title="list-projects.mts"
-import { OpenshipClient } from "openship";
+import { KovalioClient } from "kovalio";
 
-const token = process.env.OPENSHIP_TOKEN;
-const organizationId = process.env.OPENSHIP_ORGANIZATION_ID;
+const token = process.env.KOVALIO_TOKEN;
+const organizationId = process.env.KOVALIO_ORGANIZATION_ID;
 if (!token || !organizationId) throw new Error("Set a token and organization ID");
 
-const ship = new OpenshipClient({
+const ship = new KovalioClient({
   baseUrl: "https://ship.example.com",
   token,
   organizationId,
@@ -46,14 +46,14 @@ console.log(projects.data);
 <Tab value="REST API">
 
 ```bash
-export OPENSHIP_URL="https://ship.example.com"
-export OPENSHIP_ORGANIZATION_ID="org_123"
-# Set OPENSHIP_TOKEN to your personal access token.
+export KOVALIO_URL="https://ship.example.com"
+export KOVALIO_ORGANIZATION_ID="org_123"
+# Set KOVALIO_TOKEN to your personal access token.
 
-curl "$OPENSHIP_URL/api/projects?page=1&perPage=20" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
-  -H "X-Organization-Id: $OPENSHIP_ORGANIZATION_ID" \
-  -H "X-Openship-Scope: fixed"
+curl "$KOVALIO_URL/api/projects?page=1&perPage=20" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
+  -H "X-Organization-Id: $KOVALIO_ORGANIZATION_ID" \
+  -H "X-Kovalio-Scope: fixed"
 ```
 
 </Tab>

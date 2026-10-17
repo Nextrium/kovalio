@@ -37,7 +37,7 @@ export async function ensureOblienWebhook(): Promise<void> {
   if (existing) {
     await client.webhooks.update(existing.id, { events, secret, active: true, namespace: null });
   } else {
-    await client.webhooks.create({ url, events, secret, description: "Openship cloud billing and entitlements" });
+    await client.webhooks.create({ url, events, secret, description: "Kovalio cloud billing and entitlements" });
   }
 }
 
@@ -56,7 +56,7 @@ export async function ensureNamespace(organizationId: string, workspaceId?: Clou
     if (existing.namespace) return existing.namespace;
     const slug = `os-w-${createHash("sha256").update(selected).digest("hex").slice(0, 40)}`;
     await ensureCloudNamespace({
-      name: `Openship ${existing.workspace.name}`, slug,
+      name: `Kovalio ${existing.workspace.name}`, slug,
       resource_limits: await initialCloudNamespaceLimits(),
     });
     await repos.cloudWorkspace.setNamespace(selected, organizationId, slug);
@@ -109,7 +109,7 @@ export async function issueNamespaceToken(organizationId: string, workspaceId?: 
     const result = await getOblienClient().tokens.create({ scope: "namespace", namespace, ttl: 1800 });
     return { token: result.token, namespace, expiresAt: result.expiresAt, providerApiUrl: env.OBLIEN_API_URL };
   } catch (error) {
-    errorDiagnostics.warn("platform/engine/lib/openship-cloud", `[oblien] token issuance failed for org ${organizationId}: ${safeErrorMessage(error)}`, error);
+    errorDiagnostics.warn("platform/engine/lib/kovalio-cloud", `[oblien] token issuance failed for org ${organizationId}: ${safeErrorMessage(error)}`, error);
     throw new AppError("Cloud access is temporarily unavailable. Please retry.", 503, "CLOUD_TOKEN_UNAVAILABLE");
   }
 }

@@ -64,7 +64,7 @@ export function CloudWaitlistModal({ onClose }: { onClose: () => void }) {
       {status === "done" ? (
         <div className="flex items-center gap-2.5 rounded-xl bg-success-bg px-4 py-3 text-sm text-success">
           <UiIcon name="check" className="size-4 shrink-0" />
-          Thank you — we&apos;ll email you the moment Openship Cloud is ready.
+          Thank you — we&apos;ll email you the moment Kovalio Cloud is ready.
         </div>
       ) : (
         <div className="space-y-2">

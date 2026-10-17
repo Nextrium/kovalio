@@ -5,7 +5,7 @@ import { AppError, PRICING, type PlanTierId } from "@repo/core";
 import { runtimeTarget, env } from "../../config/env";
 import type { ExecutionContext as RequestContext } from "../../../context";
 import { getOblienBillingApi } from "../../lib/oblien-client";
-import { ensureNamespace } from "../../lib/openship-cloud";
+import { ensureNamespace } from "../../lib/kovalio-cloud";
 import {
   resolveSubscriptionSelection,
   subscriptionMetadata,
@@ -23,7 +23,7 @@ import { createTrackedWorkspaceCheckout } from "./workspace-checkout";
 
 export function assertBillingEnabled(): void {
   if (!env.BILLING_ENABLED) {
-    throw new AppError("Billing is not enabled yet. It's coming soon to Openship Cloud.", 403, "BILLING_NOT_ENABLED");
+    throw new AppError("Billing is not enabled yet. It's coming soon to Kovalio Cloud.", 403, "BILLING_NOT_ENABLED");
   }
 }
 
@@ -38,7 +38,7 @@ function checkoutKey(orgId: string, resource: string, requestKey?: string): stri
   // Scope a caller's key to its authenticated organization and selected purchase.
   // Older clients get a retry window; new clients supply a UUID per purchase.
   const nonce = requestKey ?? String(Math.floor(Date.now() / (15 * 60_000)));
-  return "openship:" + createHash("sha256").update(JSON.stringify([orgId, resource, nonce])).digest("hex");
+  return "kovalio:" + createHash("sha256").update(JSON.stringify([orgId, resource, nonce])).digest("hex");
 }
 
 async function assertBillingOwnerAvailable(orgId: string, workspaceId?: CloudWorkspaceScope): Promise<void> {
@@ -87,7 +87,7 @@ export async function createCheckoutSession(
       namespace,
       kind: "subscription",
       offer,
-      metadata: { ...subscriptionMetadata(planTierId, ctx.organizationId, namespace, customLimits), ...(owner.workspaceId ? { openship_workspace: owner.workspaceId } : {}) },
+      metadata: { ...subscriptionMetadata(planTierId, ctx.organizationId, namespace, customLimits), ...(owner.workspaceId ? { kovalio_workspace: owner.workspaceId } : {}) },
       billingInterval: interval === "annual" ? "yearly" : "monthly",
       successUrl: `${runtimeTarget.dashboard}/billing/overview?checkout=success&tier=${planTierId}&interval=${interval}&offer=${encodeURIComponent(offer.reference!)}&session_id={CHECKOUT_SESSION_ID}${selection}`,
       cancelUrl: `${runtimeTarget.dashboard}/billing/plans?checkout=cancelled${selection}`,
@@ -125,10 +125,10 @@ export async function createTopupCheckoutSession(ctx: RequestContext, packId: st
     kind: "topup",
     offer,
     metadata: {
-      openship_organization: ctx.organizationId,
-      openship_namespace: namespace,
-      ...(owner.workspaceId ? { openship_workspace: owner.workspaceId } : {}),
-      openship_pack: packId,
+      kovalio_organization: ctx.organizationId,
+      kovalio_namespace: namespace,
+      ...(owner.workspaceId ? { kovalio_workspace: owner.workspaceId } : {}),
+      kovalio_pack: packId,
     },
     successUrl: `${runtimeTarget.dashboard}/billing/overview?topup=success&session_id={CHECKOUT_SESSION_ID}${selection}`,
     cancelUrl: `${runtimeTarget.dashboard}/billing/overview?topup=cancelled${selection}`,

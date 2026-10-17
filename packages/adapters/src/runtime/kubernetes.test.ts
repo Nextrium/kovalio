@@ -119,7 +119,7 @@ function setup(
       runtimeId: "runtime-1",
       sharedDatabases,
       edgePrivateIp: "10.20.0.1",
-      servers: [{ serverId: "server-a", name: "Production A", nodeName: "openship-a" }],
+      servers: [{ serverId: "server-a", name: "Production A", nodeName: "kovalio-a" }],
       config: { replicas: 3, imageRepository: "ghcr.io/team/api", mounts },
       builder: async () => builder as unknown as DockerRuntime,
       resolveRegistryAuth: async () => ({
@@ -181,9 +181,9 @@ describe("Kubernetes workload lifecycle", () => {
     ]) {
       const namespace = clusterDatabaseNamespace(id);
       const labels = {
-        "openship.io/project": kubernetesIdLabel("project-1"),
-        "openship.io/runtime": "runtime-1",
-        "openship.io/database": id,
+        "nextrium.org/project": kubernetesIdLabel("project-1"),
+        "nextrium.org/runtime": "runtime-1",
+        "nextrium.org/database": id,
       };
       await fixture.request("POST", "/api/v1/namespaces", {
         kind: "Namespace",
@@ -215,13 +215,13 @@ describe("Kubernetes workload lifecycle", () => {
         { databaseId, projectId: "source-project" },
       ]);
       for (const object of fixture.resources.values())
-        if (object.metadata.labels?.["openship.io/database"] === databaseId)
-          object.metadata.labels["openship.io/project"] = kubernetesIdLabel("source-project");
+        if (object.metadata.labels?.["nextrium.org/database"] === databaseId)
+          object.metadata.labels["nextrium.org/project"] = kubernetesIdLabel("source-project");
       const result = await fixture.runtime.deploy(fixture.deployment);
       expect(result.status).toBe("running");
       for (const object of fixture.resources.values())
-        if (object.metadata.labels?.["openship.io/database"] === databaseId)
-          expect(object.metadata.labels["openship.io/project"]).toBe(
+        if (object.metadata.labels?.["nextrium.org/database"] === databaseId)
+          expect(object.metadata.labels["nextrium.org/project"]).toBe(
             kubernetesIdLabel("source-project"),
           );
     },
@@ -231,7 +231,7 @@ describe("Kubernetes workload lifecycle", () => {
     const fixture = await withDatabaseConnections();
     const db = fixture.databases[0];
     fixture.resources.get(`/api/v1/namespaces/${db.namespace}`)!.metadata.labels![
-      "openship.io/project"
+      "nextrium.org/project"
     ] = "foreign";
     fixture.request.mockClear();
     await expect(fixture.runtime.deploy(fixture.deployment)).rejects.toMatchObject({
@@ -250,8 +250,8 @@ describe("Kubernetes workload lifecycle", () => {
       ++checks === 1 ? [{ databaseId: "orders", projectId: "source-project" }] : [],
     );
     for (const object of fixture.resources.values())
-      if (object.metadata.labels?.["openship.io/database"] === "orders")
-        object.metadata.labels["openship.io/project"] = "source-project";
+      if (object.metadata.labels?.["nextrium.org/database"] === "orders")
+        object.metadata.labels["nextrium.org/project"] = "source-project";
     await expect(fixture.runtime.deploy(fixture.deployment)).rejects.toThrow(
       "database connection is unavailable",
     );
@@ -270,8 +270,8 @@ describe("Kubernetes workload lifecycle", () => {
         granted ? [{ databaseId: "orders", projectId: "source-project" }] : [],
       );
       for (const object of fixture.resources.values())
-        if (object.metadata.labels?.["openship.io/database"] === "orders")
-          object.metadata.labels["openship.io/project"] = "source-project";
+        if (object.metadata.labels?.["nextrium.org/database"] === "orders")
+          object.metadata.labels["nextrium.org/project"] = "source-project";
       const result = await fixture.runtime.deploy(fixture.deployment);
       await fixture.runtime.stop(result.containerId!);
       granted = false;
@@ -292,8 +292,8 @@ describe("Kubernetes workload lifecycle", () => {
       `/api/v1/namespaces/${runtime.namespace}/secrets/${release.metadata.name}-env`,
     )!;
     secret.data = Object.fromEntries(Object.entries(secret.data).reverse());
-    const identities = JSON.parse(release.metadata.annotations!["openship.io/database-identities"]);
-    release.metadata.annotations!["openship.io/database-identities"] = JSON.stringify(
+    const identities = JSON.parse(release.metadata.annotations!["nextrium.org/database-identities"]);
+    release.metadata.annotations!["nextrium.org/database-identities"] = JSON.stringify(
       Object.fromEntries(
         Object.entries(identities)
           .reverse()
@@ -303,7 +303,7 @@ describe("Kubernetes workload lifecycle", () => {
           ]),
       ),
     );
-    expect(release.metadata.annotations!["openship.io/database-identities"]).not.toContain(
+    expect(release.metadata.annotations!["nextrium.org/database-identities"]).not.toContain(
       "database-password",
     );
     await runtime.start(result.containerId!);
@@ -326,10 +326,10 @@ describe("Kubernetes workload lifecycle", () => {
       if (change === "database") resources.get(database.path)!.metadata.uid = "replacement";
       if (change === "stopped") resources.delete(database.path);
       if (change === "foreign")
-        resources.get(database.path)!.metadata.labels!["openship.io/database"] = "another-database";
+        resources.get(database.path)!.metadata.labels!["nextrium.org/database"] = "another-database";
       if (change === "legacy")
         delete [...resources.values()].find((value) => value.kind === "Deployment")!.metadata
-          .annotations!["openship.io/database-identities"];
+          .annotations!["nextrium.org/database-identities"];
       request.mockClear();
       await expect(runtime.start(result.containerId!)).rejects.toMatchObject({
         code: "CLUSTER_DATABASE_UNAVAILABLE",
@@ -351,10 +351,10 @@ describe("Kubernetes workload lifecycle", () => {
       { name: "uploads", mountPath: "/app/uploads", readOnly: true },
     ]);
     const labels = {
-      "openship.io/project": kubernetesIdLabel("project-1"),
-      "openship.io/runtime": "runtime-1",
-      "app.kubernetes.io/managed-by": "openship",
-      "openship.io/volume": "uploads",
+      "nextrium.org/project": kubernetesIdLabel("project-1"),
+      "nextrium.org/runtime": "runtime-1",
+      "app.kubernetes.io/managed-by": "kovalio",
+      "nextrium.org/volume": "uploads",
     };
     const claim = await fixture.request(
       "POST",
@@ -365,7 +365,7 @@ describe("Kubernetes workload lifecycle", () => {
         metadata: { name: "shared-uploads", labels },
         spec: {
           accessModes: ["ReadWriteMany"],
-          storageClassName: "openship-replicated",
+          storageClassName: "kovalio-replicated",
           volumeName: "files-disk",
         },
         status: { phase: "Bound" },
@@ -420,7 +420,7 @@ describe("Kubernetes workload lifecycle", () => {
     for (const change of ["foreign", "pending"]) {
       const { runtime, resources, claimPath } = await withSharedFiles();
       const claim = resources.get(claimPath)!;
-      if (change === "foreign") claim.metadata.labels!["openship.io/project"] = "other";
+      if (change === "foreign") claim.metadata.labels!["nextrium.org/project"] = "other";
       else claim.status.phase = "Pending";
       await expect(runtime.deploy(config())).rejects.toThrow();
       expect([...resources.values()].some((value) => value.kind === "Deployment")).toBe(false);
@@ -437,27 +437,27 @@ describe("Kubernetes workload lifecycle", () => {
       expect(result.deploymentId).toBe(deploymentId);
       const values = [...resources.values()];
       const workload = values.find((value) => value.kind === "Deployment")!;
-      const projectLabel = workload.metadata.labels!["openship.io/project"];
-      const deploymentLabel = workload.metadata.labels!["openship.io/deployment"];
+      const projectLabel = workload.metadata.labels!["nextrium.org/project"];
+      const deploymentLabel = workload.metadata.labels!["nextrium.org/deployment"];
       for (const value of values) {
         for (const label of Object.values(value.metadata.labels ?? {})) {
           expect(label).toMatch(/^[a-z0-9](?:[-a-z0-9_.]*[a-z0-9])?$/i);
           expect(label.length).toBeLessThanOrEqual(63);
         }
-        expect(value.metadata.labels!["openship.io/project"]).toBe(projectLabel);
+        expect(value.metadata.labels!["nextrium.org/project"]).toBe(projectLabel);
         if (value.kind === "Service")
-          expect(value.spec.selector).toEqual({ "openship.io/deployment": deploymentLabel });
+          expect(value.spec.selector).toEqual({ "nextrium.org/deployment": deploymentLabel });
       }
       expect(workload.spec.template.metadata.labels).toEqual(workload.metadata.labels);
       expect(workload.spec.selector.matchLabels).toEqual({
-        "openship.io/deployment": deploymentLabel,
+        "nextrium.org/deployment": deploymentLabel,
       });
       expect(
         workload.spec.template.spec.topologySpreadConstraints[0].labelSelector.matchLabels,
-      ).toEqual({ "openship.io/project": projectLabel });
+      ).toEqual({ "nextrium.org/project": projectLabel });
       expect(await runtime.listProjectContainerIds(projectId)).toEqual([result.containerId]);
       expect(request.mock.calls.at(-1)?.[1]).toContain(
-        `labelSelector=${encodeURIComponent(`openship.io/project=${projectLabel}`)}`,
+        `labelSelector=${encodeURIComponent(`nextrium.org/project=${projectLabel}`)}`,
       );
       await runtime.stop(result.containerId!);
       await runtime.start(result.containerId!);
@@ -479,7 +479,7 @@ describe("Kubernetes workload lifecycle", () => {
     expect(deployment.spec.replicas).toBe(3);
     expect(deployment.spec.template.spec).toMatchObject({
       automountServiceAccountToken: false,
-      nodeSelector: { "openship.io/runtime": "runtime-1", "kubernetes.io/arch": "arm64" },
+      nodeSelector: { "nextrium.org/runtime": "runtime-1", "kubernetes.io/arch": "arm64" },
       containers: [{ image, resources: { requests: { cpu: "0.5", memory: "256Mi" } } }],
     });
     expect(JSON.stringify(deployment)).not.toContain("private-value");
@@ -492,7 +492,7 @@ describe("Kubernetes workload lifecycle", () => {
       ip: "10.43.0.20",
     });
     for (const [name, nodeName] of [
-      ["instance-a", "openship-a"],
+      ["instance-a", "kovalio-a"],
       ["instance-b", "unrecognized-node"],
     ]) {
       resources.set(`/api/v1/namespaces/${runtime.namespace}/pods/${name}`, {
@@ -506,7 +506,7 @@ describe("Kubernetes workload lifecycle", () => {
     expect(status.pods).toEqual([
       {
         name: "instance-a",
-        nodeName: "openship-a",
+        nodeName: "kovalio-a",
         serverId: "server-a",
         serverName: "Production A",
         ready: true,
@@ -580,7 +580,7 @@ describe("Kubernetes workload lifecycle", () => {
   it("leaves a foreign namespace untouched", async () => {
     const { runtime, resources, request } = setup();
     resources.set(`/api/v1/namespaces/${runtime.namespace}`, {
-      metadata: { name: runtime.namespace, labels: { "openship.io/project": "other-project" } },
+      metadata: { name: runtime.namespace, labels: { "nextrium.org/project": "other-project" } },
     });
     await expect(runtime.deploy(config())).rejects.toThrow("not owned");
     expect(
@@ -647,7 +647,7 @@ describe("Kubernetes workload lifecycle", () => {
     await runtime.destroy(next.containerId!);
     expect(
       resources.get(`/api/v1/namespaces/${runtime.namespace}/services/app`)!.spec.selector[
-        "openship.io/deployment"
+        "nextrium.org/deployment"
       ],
     ).toBe("deploy-1");
   });

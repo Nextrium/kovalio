@@ -23,7 +23,7 @@ const h = vi.hoisted(() => ({
     kind: "monorepo",
     framework: null,
     startCommand: null,
-    image: "/opt/openship/static/releases/dep_1-svc_web",
+    image: "/opt/kovalio/static/releases/dep_1-svc_web",
     build: null,
     enabled: true,
   },

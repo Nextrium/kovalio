@@ -8,7 +8,7 @@ import { Icon as UiIcon } from "@repo/ui/icons";
  * Instead of dead-ending invites, we tell the operator exactly what to do based
  * on the instance-reachability detector (the single source of truth from the API
  * `getInstanceReachability`): move through Instance location, or finish an
- * existing Openship app's domain. Renders nothing once the
+ * existing Kovalio app's domain. Renders nothing once the
  * instance is reachable (then invites are on).
  */
 

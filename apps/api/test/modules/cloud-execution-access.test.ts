@@ -7,8 +7,8 @@ vi.mock("@repo/platform/engine/config/env", async (original) => {
   const actual = await original<typeof import("@repo/platform/engine/config/env")>();
   return { ...actual, env: { ...actual.env, CLOUD_MODE: true } };
 });
-vi.mock("@repo/platform/engine/lib/openship-cloud", async (original) => ({
-  ...(await original<typeof import("@repo/platform/engine/lib/openship-cloud")>()),
+vi.mock("@repo/platform/engine/lib/kovalio-cloud", async (original) => ({
+  ...(await original<typeof import("@repo/platform/engine/lib/kovalio-cloud")>()),
   issueNamespaceToken: h.token,
   ensureNamespace: h.namespace,
 }));
@@ -36,7 +36,7 @@ let serverId: string;
 let workspaceId: string;
 let memberId: string;
 
-beforeAll(() => vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory"));
+beforeAll(() => vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory"));
 afterAll(async () => {
   await shutdownRateLimit();
   vi.unstubAllEnvs();
@@ -83,7 +83,7 @@ function post(path: string, body?: unknown) {
     headers: {
       Authorization: `Bearer ${token}`,
       "X-Organization-Id": actor.orgId,
-      "X-Openship-Scope": "fixed",
+      "X-Kovalio-Scope": "fixed",
       "content-type": "application/json",
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),

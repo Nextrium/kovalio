@@ -1,5 +1,5 @@
 name: Prepare Actions runner
-description: Build and verify the pinned execution bridge for installed Openship releases.
+description: Build and verify the pinned execution bridge for installed Kovalio releases.
 runs:
   using: composite
   steps:

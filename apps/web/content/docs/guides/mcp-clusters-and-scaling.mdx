@@ -3,13 +3,13 @@ title: Clusters and scaling through MCP
 description: Connect servers, scale applications and databases, share files, and recover data through the existing engine workflows.
 ---
 
-Openship's MCP tools use the same HTTP routes, authorization and engine operations as the dashboard and SDK. Fetch the `cluster-and-scale` prompt for an ordered workflow, and use `tools/list` for the exact input schemas available on your instance. The [generated catalog](/docs/api/mcp-tools) lists every tool and explains the HTTP-only routes.
+Kovalio's MCP tools use the same HTTP routes, authorization and engine operations as the dashboard and SDK. Fetch the `cluster-and-scale` prompt for an ordered workflow, and use `tools/list` for the exact input schemas available on your instance. The [generated catalog](/docs/api/mcp-tools) lists every tool and explains the HTTP-only routes.
 
 ## What is supported
 
 | Capability | Current behavior |
 | --- | --- |
-| Private networking | Register and verify an existing provider/private network, or prepare and apply an Openship-managed WireGuard network. |
+| Private networking | Register and verify an existing provider/private network, or prepare and apply an Kovalio-managed WireGuard network. |
 | Compute clusters | Group registered servers on a private network, with revision-checked configuration. |
 | Server setup | Durable prerequisite checks, installation, joining the selected hosts, networking verification, retry and owned-runtime removal. |
 | Application scaling | Set 1–100 replicas for a single application or worker, without rebuilding its image. Project-owned shared files are supported. |
@@ -20,11 +20,11 @@ Openship's MCP tools use the same HTTP routes, authorization and engine operatio
 | Live worker changes | **Not implemented.** Changing cluster membership requires removing its runtime first. |
 | Compose application scaling | **Not supported by this cluster application path.** Node-local bind mounts and Docker private links also require separate migration. Managed databases have their own lifecycle. |
 
-Kubernetes can replace failed application pods inside the prepared cluster. That recovery behavior does not provision new servers or implement an Openship autoscaling policy.
+Kubernetes can replace failed application pods inside the prepared cluster. That recovery behavior does not provision new servers or implement an Kovalio autoscaling policy.
 
 ## Prerequisites and workspace
 
-Use a self-hosted or desktop Openship controller with registered SSH-accessible Linux servers. Network and runtime changes require fleet administration and access to every selected server. A grant to only one server does not authorize a cluster-wide operation. These tools are unavailable on the hosted Cloud controller; a desktop controller may still manage remote servers.
+Use a self-hosted or desktop Kovalio controller with registered SSH-accessible Linux servers. Network and runtime changes require fleet administration and access to every selected server. A grant to only one server does not authorize a cluster-wide operation. These tools are unavailable on the hosted Cloud controller; a desktop controller may still manage remote servers.
 
 Call `get_permissions_workspaces` first. Pass the chosen `organizationId` at the top level of **every** tool call. An organization-bound credential cannot select another workspace. A private network ID, compute cluster ID, runtime ID, project ID and deployment ID identify different resources.
 
@@ -215,7 +215,7 @@ Fetch `cluster-database` for managed PostgreSQL/Redis operations. Database repli
 
 To share a ready native PostgreSQL or Redis database, open its panel and select
 **Use in a project**. Choose a consumer in the same organization and native
-cluster. You need write access to both projects. OpenShip saves an encrypted
+cluster. You need write access to both projects. Kovalio saves an encrypted
 connection URL and an explicit database reference, then grants the consumer's
 application namespace private access to the database port. The source project
 keeps ownership of the database, backups and storage.
@@ -263,7 +263,7 @@ For ordinary project/service volume backups, fetch `backup-and-restore` and foll
 
 The scaling release gate has separate application, shared-storage and database
 journeys on disposable infrastructure. The application journey drives MCP requests
-through auth, the engine, an image registry, Kubernetes and OpenShip Edge. The
+through auth, the engine, an image registry, Kubernetes and Kovalio Edge. The
 storage journey uses Linux/systemd/SSH hosts for installation, shared writes,
 backup/restore and disk-copy rebuilding. Database tests exercise real operators,
 data, replica/shard changes, recovery, Docker imports and upgraded copies.

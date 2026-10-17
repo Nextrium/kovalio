@@ -37,7 +37,7 @@ describe("independent network migration", () => {
           id,
           managed ? "wireguard" : "native",
           '["10.244.0.0/24"]',
-          managed ? "openship" : "external",
+          managed ? "kovalio" : "external",
         ],
       );
       for (const [index, serverId] of [`${id}-a`, `${id}-b`].entries()) {
@@ -137,7 +137,7 @@ describe("independent network migration", () => {
       operationId: "op:initial",
     });
     expect(
-      (await client.query("SELECT openship_has_managed_network_state($1) AS active", ["org"])).rows,
+      (await client.query("SELECT kovalio_has_managed_network_state($1) AS active", ["org"])).rows,
     ).toEqual([{ active: true }]);
     // A saved first setup can still claim its rollback; the migration added no pool dependency.
     const recovery = await networks.claimOperation("org", saved.id, saved.planHash, "rollback");

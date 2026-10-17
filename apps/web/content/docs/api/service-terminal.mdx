@@ -28,8 +28,8 @@ seconds — mint it right before opening the socket. This route resolves the ser
 burn a WebSocket attempt) if it doesn't exist, isn't yours, or has no active deployment yet.
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/services/terminal/ticket" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/services/terminal/ticket" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"serviceId":"svc_123"}'
 ```
@@ -67,8 +67,8 @@ Once open, the wire protocol is:
 ```bash
 # Mint a ticket, then connect with websocat, passing it as a subprotocol:
 websocat "wss://your-host/api/services/terminal/ws/svc_123" \
-  --protocol "openship.terminal.v1+$TICKET" \
-  -H "Origin: $OPENSHIP_URL"
+  --protocol "kovalio.terminal.v1+$TICKET" \
+  -H "Origin: $KOVALIO_URL"
 ```
 
 ## Errors
@@ -106,7 +106,7 @@ Use `client.terminal.openService(serviceId, { origin, onData })` for the same au
 protocol as server terminals. The session supports `write`, `resize`, `close`, and a `closed` promise
 with the confirmed exit result. See [terminal transport](/docs/api/terminal#sdk-and-cli).
 
-`openship service terminal <id> --project <project-id>` opens an interactive PTY. Use `openship service exec <id> "..." --project <project-id>`
+`kovalio service terminal <id> --project <project-id>` opens an interactive PTY. Use `kovalio service exec <id> "..." --project <project-id>`
 for scripts; it preserves the remote command's exit status.
 
 {/* api-operations:start */}

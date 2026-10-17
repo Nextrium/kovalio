@@ -4,7 +4,7 @@ the public key embedded from `src/main/update-trust.json`. Missing or invalid
 proofs stop installation, including for unsigned legacy release assets.
 
 The GitHub release workflow runs `scripts/sign-updates.mjs` with the encrypted
-repository secret `OPENSHIP_DESKTOP_SIGNING_KEY` (an Ed25519 PKCS#8 PEM private
+repository secret `KOVALIO_DESKTOP_SIGNING_KEY` (an Ed25519 PKCS#8 PEM private
 key). It verifies that the secret matches the checked-in public key, then uploads
 an additional `<installer>.sig` file for each desktop installer. The private key
 is never bundled or committed. OS signing and notarization run separately.

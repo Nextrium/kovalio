@@ -63,12 +63,12 @@ describe("pinned Cloud identity", () => {
 
   it("pins authorization headers and refuses a different configured Cloud endpoint", async () => {
     await cloudFetchAsOrgOwner("local-org", "/api/system/servers", {
-      headers: { Authorization: "Bearer forged", "X-Organization-Id": "foreign-org", "X-Openship-Scope": "resource" },
+      headers: { Authorization: "Bearer forged", "X-Organization-Id": "foreign-org", "X-Kovalio-Scope": "resource" },
     });
     const init = h.fetch.mock.calls[0]![1] as RequestInit;
     expect(new Headers(init.headers).get("Authorization")).toBe(`Bearer ${first.token}`);
     expect(new Headers(init.headers).get("X-Organization-Id")).toBe(first.organizationId);
-    expect(new Headers(init.headers).get("X-Openship-Scope")).toBe("fixed");
+    expect(new Headers(init.headers).get("X-Kovalio-Scope")).toBe("fixed");
     h.fetch.mockClear();
     h.api.api = "https://different-cloud.example.test";
     expect(await cloudFetch("local-owner", "/api/system/servers")).toBeNull();

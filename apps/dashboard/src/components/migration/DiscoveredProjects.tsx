@@ -17,7 +17,7 @@ import { Tabs } from "@/components/ui/Tabs";
 import type {
   DiscoveredGroup,
   DiscoveredService,
-  OpenshipProjectGroup,
+  KovalioProjectGroup,
 } from "@/lib/api/server-migration";
 import {
   discoveryGraph,
@@ -38,7 +38,7 @@ interface SelectionProject {
 }
 interface DiscoveredProjectsProps {
   groups: DiscoveredGroup[];
-  recovered: OpenshipProjectGroup[];
+  recovered: KovalioProjectGroup[];
   recoveryId: string | null;
   onSelectRecovery: (id: string) => void;
   activeProject: SelectionProject;
@@ -121,7 +121,7 @@ function DiscoveredProject({
 }: DiscoveredProjectsProps & {
   group: DiscoveredGroup;
   initiallyExpanded: boolean;
-  recoveredProject?: OpenshipProjectGroup;
+  recoveredProject?: KovalioProjectGroup;
 }) {
   const { t } = useI18n();
   const d = t.migration.discover;

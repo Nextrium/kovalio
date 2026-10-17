@@ -1,6 +1,6 @@
 {
   "home": {
-    "label": "Openship Cloud",
+    "label": "Kovalio Cloud",
     "title": "Pronto para lançar?",
     "plansAndBilling": "Planos e faturação",
     "description": "Builds e alojamento geridos, com espaço para crescer.",
@@ -80,11 +80,11 @@
     },
     "notEnabled": {
       "title": "As compras do Cloud ainda não estão disponíveis",
-      "description": "O Openship ainda não ativou as assinaturas e a compra de créditos. Tente novamente mais tarde."
+      "description": "O Kovalio ainda não ativou as assinaturas e a compra de créditos. Tente novamente mais tarde."
     },
     "notConfigured": {
       "title": "A configuração de cobrança do Cloud está incompleta",
-      "description": "O Openship precisa concluir a configuração de cobrança. Entre em contato com o suporte do Openship."
+      "description": "O Kovalio precisa concluir a configuração de cobrança. Entre em contato com o suporte do Kovalio."
     },
     "forbidden": {
       "title": "Você não tem acesso à cobrança",
@@ -97,7 +97,7 @@
     },
     "loadFailed": {
       "title": "Não foi possível carregar a cobrança",
-      "description": "A cobrança está temporariamente indisponível. Tente novamente. Se o problema persistir, entre em contato com o suporte do Openship."
+      "description": "A cobrança está temporariamente indisponível. Tente novamente. Se o problema persistir, entre em contato com o suporte do Kovalio."
     }
   },
   "plansRoute": {
@@ -408,7 +408,7 @@
     "planRequired": "Requer um plano",
     "savedCredits": "Saldo de uso salvo",
     "savedCreditsHint": "Seu uso pré-pago permanece neste espaço de trabalho. Escolha um plano para usá-lo em deploys na Cloud.",
-    "offerTitle": "Lance no Openship Cloud",
+    "offerTitle": "Lance no Kovalio Cloud",
     "offerLabel": "Comece a implantar",
     "offerDescription": "Recursos gerenciados para seus projetos.",
     "startingWith": "Comece com {name}",
@@ -449,7 +449,7 @@
     "diskHint": "Dados lidos e gravados nos discos dos apps, não o espaço armazenado.",
     "transfer": "Transferência dos apps",
     "transferHint": "Dados de entrada e saída dos seus apps. O tráfego Edge é exibido separadamente.",
-    "edgeTitle": "Openship Edge",
+    "edgeTitle": "Kovalio Edge",
     "bandwidth": "Transferência Edge",
     "bandwidthHint": "Tráfego de entrada e saída das rotas do seu espaço. A franquia mensal é separada da computação. No limite, as rotas pausam até a renovação ou o upgrade.",
     "requests": "Requisições Edge",
@@ -536,7 +536,7 @@
   "workspaces": {
     "title": "Espaços Cloud",
     "singular": "Espaço Cloud",
-    "description": "Escolha um plano e implante. O Openship gerencia o servidor; seus projetos compartilham CPU, memória e armazenamento.",
+    "description": "Escolha um plano e implante. O Kovalio gerencia o servidor; seus projetos compartilham CPU, memória e armazenamento.",
     "loading": "Carregando espaços Cloud…",
     "choose": "Escolha um servidor",
     "chooseBilling": "Escolha um espaço Cloud para ver a cobrança.",
@@ -558,7 +558,7 @@
     "create": "Adicionar espaço Cloud",
     "mode": "Isolamento de projetos",
     "createHint": "Criar um servidor é grátis. Escolha o plano em seguida; a cobrança começa após concluir o pagamento.",
-    "cloudOnly": "Servidores gerenciados estão disponíveis no Openship Cloud. Use Servidores para gerenciar a infraestrutura auto-hospedada.",
+    "cloudOnly": "Servidores gerenciados estão disponíveis no Kovalio Cloud. Use Servidores para gerenciar a infraestrutura auto-hospedada.",
     "projectCount": "{count} projetos",
     "noProjects": "Ainda não há projetos neste servidor.",
     "liveUsage": "Uso atual",
@@ -615,7 +615,7 @@
     "plan": "Plano do servidor",
     "actions": "Ações do servidor",
     "changePlan": "Alterar plano",
-    "managedBy": "Gerenciado pelo Openship Cloud",
+    "managedBy": "Gerenciado pelo Kovalio Cloud",
     "network": {
       "title": "Rede",
       "description": "Configurações do provedor para este servidor gerenciado.",
@@ -813,7 +813,7 @@
     "retry": "Tentar pagar novamente",
     "close": "Fechar",
     "done": "Concluído",
-    "requestFailed": "Não foi possível salvar sua solicitação. Tente novamente ou envie um e-mail para support@openship.io."
+    "requestFailed": "Não foi possível salvar sua solicitação. Tente novamente ou envie um e-mail para support@nextrium.org."
   },
   "pendingPayments": {
     "title": "Pagamentos pendentes",

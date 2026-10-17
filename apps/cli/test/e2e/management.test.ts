@@ -22,7 +22,7 @@ afterEach(async () => {
   for (const directory of directories.splice(0)) await rm(directory, { recursive: true, force: true });
 });
 async function file(value: unknown) {
-  const directory = await mkdtemp(join(tmpdir(), "openship-management-")); directories.push(directory);
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-management-")); directories.push(directory);
   const path = join(directory, "input.json"); await writeFile(path, JSON.stringify(value)); return path;
 }
 

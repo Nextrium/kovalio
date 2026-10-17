@@ -544,7 +544,7 @@ export const AUDIT_EVENTS: Record<string, AuditEventDef> = {
     action: "provisioned the identity",
     label: "Identity provisioned",
     tone: "info",
-    description: "A trusted host mapped an external identity to an Openship user.",
+    description: "A trusted host mapped an external identity to an Kovalio user.",
   },
   "organization.created": {
     category: "members",

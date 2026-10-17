@@ -23,7 +23,7 @@ const purchasesConfigured = () =>
 function requireCloud() {
   if (!env.CLOUD_MODE)
     throw new AppError(
-      "Actions funding is managed by Openship Cloud",
+      "Actions funding is managed by Kovalio Cloud",
       409,
       "ACTIONS_BILLING_CLOUD_ONLY",
     );

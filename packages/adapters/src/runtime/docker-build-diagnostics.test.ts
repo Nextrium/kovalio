@@ -103,7 +103,7 @@ describe("Docker build diagnostics", () => {
       memoryLimitApplied: false,
     });
 
-    expect(hint).toContain("not under an OpenShip-enforced memory cap");
+    expect(hint).toContain("not under an Kovalio-enforced memory cap");
     expect(hint).not.toContain("capped at 512 MB");
   });
 
@@ -199,17 +199,17 @@ function buildConfig(): BuildConfig {
 }
 
 describe("DockerRuntime build failure paths", () => {
-  const previousTimeout = process.env.OPENSHIP_BUILD_IDLE_TIMEOUT_MS;
+  const previousTimeout = process.env.KOVALIO_BUILD_IDLE_TIMEOUT_MS;
 
   beforeEach(() => {
     vi.useFakeTimers();
-    process.env.OPENSHIP_BUILD_IDLE_TIMEOUT_MS = String(MIN_DOCKER_BUILD_IDLE_TIMEOUT_MS);
+    process.env.KOVALIO_BUILD_IDLE_TIMEOUT_MS = String(MIN_DOCKER_BUILD_IDLE_TIMEOUT_MS);
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    if (previousTimeout === undefined) delete process.env.OPENSHIP_BUILD_IDLE_TIMEOUT_MS;
-    else process.env.OPENSHIP_BUILD_IDLE_TIMEOUT_MS = previousTimeout;
+    if (previousTimeout === undefined) delete process.env.KOVALIO_BUILD_IDLE_TIMEOUT_MS;
+    else process.env.KOVALIO_BUILD_IDLE_TIMEOUT_MS = previousTimeout;
   });
 
   describe.each(["classic", "buildkit stdout", "buildkit stderr"])(
@@ -316,7 +316,7 @@ describe("DockerRuntime build failure paths", () => {
         const trace = new BuildKitTraceDecoder();
         const onLog = vi.fn();
         Object.assign(runtime, {
-          _docker: new Dockerode({ socketPath: "/tmp/openship-test-absent.sock" }),
+          _docker: new Dockerode({ socketPath: "/tmp/kovalio-test-absent.sock" }),
         });
         const stream = new PassThrough();
         const result = (runtime as any).streamDockerodeBuild(stream, new BuildLogger(onLog), {
@@ -340,7 +340,7 @@ describe("DockerRuntime build failure paths", () => {
         );
         if (scenario.errorEvent) events.push(scenario.errorEvent);
         events.push({ stream: "Successfully built abc123\n" });
-        events.push({ stream: "Successfully tagged openship/test:build\n" });
+        events.push({ stream: "Successfully tagged kovalio/test:build\n" });
         const output = events.map((event) => `${JSON.stringify(event)}\n`).join("");
         const splitAt = Math.floor(output.length / 2);
         stream.write(output.slice(0, splitAt));
@@ -371,7 +371,7 @@ describe("DockerRuntime build failure paths", () => {
     async (failed) => {
       const runtime = Object.create(DockerRuntime.prototype) as DockerRuntime;
       Object.assign(runtime, {
-        _docker: new Dockerode({ socketPath: "/tmp/openship-test-absent.sock" }),
+        _docker: new Dockerode({ socketPath: "/tmp/kovalio-test-absent.sock" }),
       });
       const stream = new PassThrough();
       const onLog = vi.fn();
@@ -448,7 +448,7 @@ describe("DockerRuntime build failure paths", () => {
     stream.on("error", () => {});
     const buildId = "111111111111";
     const parentId = "aaaaaaaaaaaa";
-    const ownershipHost = "openship-build-test.invalid";
+    const ownershipHost = "kovalio-build-test.invalid";
     const kill = vi.fn(async () => {});
     const getContainer = vi.fn((id: string) => ({
       inspect: vi.fn(async () => ({
@@ -510,7 +510,7 @@ describe("DockerRuntime build failure paths", () => {
     stream.on("error", () => {});
     const buildId = "111111111111";
     const parentId = "aaaaaaaaaaaa";
-    const ownershipHost = "openship-build-test.invalid";
+    const ownershipHost = "kovalio-build-test.invalid";
     const kill = vi.fn(async () => {});
     const getContainer = vi.fn((id: string) => ({
       inspect: vi.fn(async () => ({
@@ -593,7 +593,7 @@ describe("DockerRuntime build failure paths", () => {
         buildConfig(),
         "/tmp/diagnostic-build",
         "Dockerfile",
-        "openship/diagnostic:bld_test",
+        "kovalio/diagnostic:bld_test",
         new BuildLogger(),
       )
       .catch((error: Error) => error);
@@ -628,7 +628,7 @@ describe("DockerRuntime build failure paths", () => {
         buildConfig(),
         "/tmp/diagnostic-build",
         "Dockerfile",
-        "openship/diagnostic:bld_test",
+        "kovalio/diagnostic:bld_test",
         new BuildLogger(),
       );
       if (code === 0) {
@@ -663,7 +663,7 @@ describe("DockerRuntime build failure paths", () => {
         buildConfig(),
         "/tmp/diagnostic-build",
         "Dockerfile",
-        "openship/diagnostic:bld_test",
+        "kovalio/diagnostic:bld_test",
         new BuildLogger(),
       ),
     ).resolves.toBeUndefined();
@@ -694,12 +694,12 @@ describe("DockerRuntime build failure paths", () => {
         buildConfig(),
         "/tmp/diagnostic-build",
         "Dockerfile",
-        "openship/diagnostic:bld_test",
+        "kovalio/diagnostic:bld_test",
         new BuildLogger(),
       )
       .catch((caught: Error) => caught);
 
     expect(error.message).toContain("killed by SIGKILL (exit code 137)");
-    expect(error.message).toContain("not under an OpenShip-enforced memory cap");
+    expect(error.message).toContain("not under an Kovalio-enforced memory cap");
   });
 });

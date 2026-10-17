@@ -75,14 +75,14 @@ export function TopologyScaling({
   const canPlace =
     project.deployTarget === "server" &&
     !!project.serverId &&
-    project.appTemplateId !== "openship" &&
+    project.appTemplateId !== "kovalio" &&
     !!project.activeDeploymentId;
   const staticApplication =
     !service &&
     resolveWorkload(project.options?.workloadType, project.options?.hasServer) === "static";
   return (
     <div className="space-y-6">
-      {!service && !staticApplication && project.appTemplateId !== "openship" && (
+      {!service && !staticApplication && project.appTemplateId !== "kovalio" && (
         <TopologyClusterScaling
           project={project}
           resources={view?.production}
@@ -216,7 +216,7 @@ export function TopologyScaling({
           <p className="text-xs leading-relaxed text-muted-foreground">
             {project.serverName ||
               (project.deployTarget === "cloud"
-                ? "OpenShip Cloud"
+                ? "Kovalio Cloud"
                 : project.deployTarget === "local"
                   ? "Local machine"
                   : "Current server")}

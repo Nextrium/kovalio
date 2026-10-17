@@ -8,7 +8,7 @@ export interface CustomServerResources {
   diskGb: number;
 }
 
-/** Openship retail bundle pricing. Oblien validates funding and reserves the
+/** Kovalio retail bundle pricing. Oblien validates funding and reserves the
  * pool at checkout; this calculation never grants paid coverage. */
 export function quoteCustomResources(resources: CustomServerResources, catalog: PricingCatalogRaw = PRICING) {
   for (const key of Object.keys(catalog.custom.resources) as Array<keyof CustomServerResources>) {

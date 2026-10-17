@@ -66,7 +66,7 @@ export class CloudWorkspaceExecutor implements CommandExecutor {
     let taskId: string | undefined;
     let killed = false;
     let stopping: Promise<void> | undefined;
-    const markerName = `openship-exec-${randomUUID()}:`;
+    const markerName = `kovalio-exec-${randomUUID()}:`;
     const tracking = currentManagedCommandTracking();
     if (tracking && !this.workspaceId) throw new Error("Managed command is missing its server identity");
     const identity = () => ({ workspaceId: this.workspaceId!, marker: markerName, ...(taskId ? { taskId } : {}) });
@@ -225,7 +225,7 @@ export class CloudWorkspaceExecutor implements CommandExecutor {
 
   async writeFile(path: string, content: string, opts?: { mode?: number }): Promise<void> {
     const runtime = await this.rt();
-    const temp = `${path}.openship-${randomUUID()}`;
+    const temp = `${path}.kovalio-${randomUUID()}`;
     await this.exec(`umask 077; mkdir -p ${sq(posix.dirname(path))} && : > ${sq(temp)} && chmod ${(opts?.mode ?? 0o600).toString(8)} ${sq(temp)}`);
     try {
       const written = await runtime.files.write({ fullPath: temp, content });

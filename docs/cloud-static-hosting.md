@@ -1,7 +1,7 @@
 # Static hosting on managed Cloud
 
 New deployments of single-app static source projects default to **Cloud Pages**.
-The selected managed server builds in a Docker sandbox. Openship extracts the
+The selected managed server builds in a Docker sandbox. Kovalio extracts the
 output, publishes a copy through Cloud Pages, and removes the build image and
 extraction container. No nginx application container remains running for the site.
 The managed server itself is retained: other applications may use it, and it

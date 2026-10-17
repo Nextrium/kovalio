@@ -17,8 +17,8 @@ vi.mock("@repo/platform/engine/config/env", async (original) => ({
   },
 }));
 vi.mock("@repo/platform/engine/lib/oblien-client", () => ({ getOblienClient: () => h.client }));
-vi.mock("@repo/platform/engine/lib/openship-cloud", async (original) => ({
-  ...(await original<typeof import("@repo/platform/engine/lib/openship-cloud")>()),
+vi.mock("@repo/platform/engine/lib/kovalio-cloud", async (original) => ({
+  ...(await original<typeof import("@repo/platform/engine/lib/kovalio-cloud")>()),
   getNamespaceClient: h.namespaceClient,
 }));
 vi.mock("@repo/platform/engine/lib/cloud-workspace-access", () => ({
@@ -50,7 +50,7 @@ import { handleApiError } from "../../../src/middleware/error-handler";
 import { scanRoutes } from "../../../src/lib/route-scanner";
 import { flushAudit } from "@repo/platform/engine/lib/audit-emitter";
 import { withCloudWorkspaceActivity } from "@repo/platform/engine/lib/cloud-workspace-lock";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { SDK_CAPABILITIES } from "@repo/contracts";
 import { createShip } from "@repo/sdk/native";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
@@ -735,7 +735,7 @@ describe("managed server controls through real HTTP, policy and SQL ownership", 
     const created = await request("managed/workloads", "POST", input);
     expect(created.status, JSON.stringify(created.body)).toBe(200);
     expect(created.body).toMatchObject({
-      id: `openship-manual-${input.idempotencyKey}`,
+      id: `kovalio-manual-${input.idempotencyKey}`,
       state: "stopped",
       manageable: true,
     });
@@ -751,11 +751,11 @@ describe("managed server controls through real HTTP, policy and SQL ownership", 
   });
   it("protects platform, application and unowned manual processes", async () => {
     for (const row of [
-      { id: "openship-docker-api-v1", labels: {} },
-      { id: "openship-project-release", labels: { "openship.project": "project-a" } },
+      { id: "kovalio-docker-api-v1", labels: {} },
+      { id: "kovalio-project-release", labels: { "kovalio.project": "project-a" } },
       {
-        id: "openship-manual-foreign",
-        labels: { "openship.manual": "v1", "openship.workspace": "other-vm" },
+        id: "kovalio-manual-foreign",
+        labels: { "kovalio.manual": "v1", "kovalio.workspace": "other-vm" },
       },
     ])
       workloads.set(row.id, { ...row, state: "running" });
@@ -928,7 +928,7 @@ describe("managed server controls through real HTTP, policy and SQL ownership", 
       identity: { resolve: async () => ({ user, sessionId: "managed-controls-test" }) },
     });
     const native = await ship.scope({ identity: "verified", organizationId: actor.orgId });
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "http://fixture.test/api",
       token: actor.token,
       organizationId: actor.orgId,
@@ -963,7 +963,7 @@ describe("managed server controls through real HTTP, policy and SQL ownership", 
       });
       const input = createInput();
       expect(await servers.createManagedWorkload(serverId, input as any)).toMatchObject({
-        id: `openship-manual-${input.idempotencyKey}`,
+        id: `kovalio-manual-${input.idempotencyKey}`,
       });
       expect(await servers.managedRuntimeCredential(serverId, { confirm: true })).toMatchObject({
         endpoint: "https://runtime.example.test",
@@ -971,7 +971,7 @@ describe("managed server controls through real HTTP, policy and SQL ownership", 
     }
   });
   it("does not attach malformed credential responses to SDK errors", async () => {
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "http://fixture.test/api",
       token: actor.token,
       organizationId: actor.orgId,

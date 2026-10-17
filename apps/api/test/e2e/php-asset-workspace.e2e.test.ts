@@ -23,8 +23,8 @@ describeDockerE2E("PHP dependency assets reach the generated Node stage", () => 
     "builds a stylesheet in $rootDirectory with dependencies in $vendor",
     async ({ rootDirectory, vendor }) => {
       await requireDocker();
-      const dir = await mkdtemp(join(tmpdir(), "openship-php-assets-"));
-      const image = `openship-test-php-assets:${randomUUID()}`;
+      const dir = await mkdtemp(join(tmpdir(), "kovalio-php-assets-"));
+      const image = `kovalio-test-php-assets:${randomUUID()}`;
       try {
         const recipe = generateDockerfile({
           buildImage: "php:8.4-cli",

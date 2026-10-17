@@ -131,7 +131,7 @@ beforeEach(async () => {
   h.projectRoutes.mockReset().mockResolvedValue(undefined);
   h.serviceRoutes.mockReset().mockResolvedValue(undefined);
   h.updateRow.mockReset().mockResolvedValue(undefined);
-  runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/openship-test-absent.sock" });
+  runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/kovalio-test-absent.sock" });
   vi.spyOn(runtime, "dispose").mockResolvedValue(undefined);
   apply = vi
     .spyOn(runtime, "applyEnvironment")

@@ -189,7 +189,7 @@ describe("run admission", () => {
   });
   it("does not substitute the original actor for an unverified independent rerun request", async () => {
     const f = fixture();
-    f.run.controller = "openship";
+    f.run.controller = "kovalio";
     f.run.github = null;
     f.run.configuration.actorIdentity = actor;
     f.run.configuration.triggeringActorIdentity = null;

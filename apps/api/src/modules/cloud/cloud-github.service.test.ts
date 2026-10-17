@@ -44,10 +44,10 @@ vi.mock("@repo/db", () => ({
 }));
 vi.mock("@repo/platform/engine/lib/auth", () => ({
   auth: { api: {} },
-  COOKIE_PREFIX: "openship",
+  COOKIE_PREFIX: "kovalio",
 }));
 vi.mock("@repo/platform/engine/config/env", () => ({
-  cloudRuntimeTarget: { api: "https://api.openship.io" },
+  cloudRuntimeTarget: { api: "https://api.nextrium.org" },
   env: { GITHUB_APP_ID: "9" },
 }));
 vi.mock("@repo/platform/engine/lib/org-actor", () => ({
@@ -120,7 +120,7 @@ describe("cloud GitHub App installation attribution", () => {
     h.invalidateUser.mockResolvedValue(undefined);
     h.invalidateOrg.mockResolvedValue(undefined);
     h.getInstallUrl.mockReturnValue(
-      "https://github.com/apps/openship-io/installations/new",
+      "https://github.com/apps/kovalio-io/installations/new",
     );
   });
 
@@ -129,7 +129,7 @@ describe("cloud GitHub App installation attribution", () => {
 
     expect(result.state).toMatch(/^ghrepo_[A-Za-z0-9_-]{32}$/);
     expect(result.url).toBe(
-      `https://api.openship.io/api/cloud/github/install-callback?flow=select&state=${result.state}`,
+      `https://api.nextrium.org/api/cloud/github/install-callback?flow=select&state=${result.state}`,
     );
     expect(h.stateCreate).toHaveBeenCalledWith(expect.objectContaining({
       state: result.state,
@@ -149,7 +149,7 @@ describe("cloud GitHub App installation attribution", () => {
       kind: "ready",
       state: "nonce",
       workspaceName: "Acme workspace",
-      installUrl: "https://github.com/apps/openship-io/installations/new?state=nonce",
+      installUrl: "https://github.com/apps/kovalio-io/installations/new?state=nonce",
       installations: [{ id: 42, login: "Acme", avatarUrl: "", type: "Organization", connected: false }],
     });
     expect(h.listInstallations).toHaveBeenCalledWith("user_1");
@@ -221,7 +221,7 @@ describe("cloud GitHub App installation attribution", () => {
 
     await expect(attributeGithubInstall(callbackInput)).resolves.toEqual({
       kind: "forbidden",
-      message: "You no longer have access to the Openship workspace that started this install.",
+      message: "You no longer have access to the Kovalio workspace that started this install.",
     });
     expect(h.stateFailure).toHaveBeenCalledWith("nonce", "user_1", "org_1", expect.stringContaining("no longer have access"));
     expect(h.verify).not.toHaveBeenCalled();

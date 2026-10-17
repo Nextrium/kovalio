@@ -29,7 +29,7 @@ function executor(
       return options.mode === "docker" ? "docker" : "systemd";
     if (cmd.includes("cat ") && cmd.includes(".service")) return options.unit ?? "foreign service";
     if (cmd.includes("test -e") && cmd.includes(".service")) return options.unit ? "yes" : "no";
-    if (cmd.includes("test -e") && cmd.includes("/etc/openship/ingress/"))
+    if (cmd.includes("test -e") && cmd.includes("/etc/kovalio/ingress/"))
       return options.present ? "yes" : "no";
     if (cmd.includes("test -f") && cmd.includes("/runtime")) return options.present ? "yes" : "no";
     if (cmd.includes("systemctl --version")) return options.mode ?? "systemd 252";
@@ -40,9 +40,9 @@ function executor(
     if (cmd.includes("docker inspect")) return c.id;
     if (cmd.includes("docker ps")) {
       if (options.dockerUnavailable) throw new Error("Docker unavailable");
-      return options.dockerExists ? "openship-cloudflare-igc_test" : "";
+      return options.dockerExists ? "kovalio-cloudflare-igc_test" : "";
     }
-    if (cmd.startsWith("mktemp")) return "/tmp/openship-ingress.ABC123";
+    if (cmd.startsWith("mktemp")) return "/tmp/kovalio-ingress.ABC123";
     if (cmd.includes("test -f")) return "no";
     return "";
   });
@@ -61,15 +61,15 @@ describe("destination-owned cloudflared connector", () => {
   it("installs a checksum-verified native binary and a credential-isolated service without logging the token", async () => {
     const e = executor();
     await manageConnector(e.adapter, c, "sensitive-token");
-    expect(e.files.get("/tmp/openship-ingress.ABC123/token")).toEqual({
+    expect(e.files.get("/tmp/kovalio-ingress.ABC123/token")).toEqual({
       content: "sensitive-token",
       mode: 0o600,
     });
-    const unit = e.files.get("/tmp/openship-ingress.ABC123/unit")?.content ?? "";
+    const unit = e.files.get("/tmp/kovalio-ingress.ABC123/unit")?.content ?? "";
     expect(unit).toContain("\nDynamicUser=yes\n");
-    expect(unit).toContain("LoadCredential=token:/etc/openship/ingress/igc_test/token");
+    expect(unit).toContain("LoadCredential=token:/etc/kovalio/ingress/igc_test/token");
     expect(unit).toContain(
-      "--token-file /run/credentials/openship-cloudflare-igc_test.service/token",
+      "--token-file /run/credentials/kovalio-cloudflare-igc_test.service/token",
     );
     const commands = e.exec.mock.calls.map(([cmd]) => cmd);
     expect(commands.join("\n")).not.toContain("sensitive-token");
@@ -79,7 +79,7 @@ describe("destination-owned cloudflared connector", () => {
     const bytes = execFileSync("sh", ["-c", checksum.split("|")[0]]).toString();
     expect(bytes.endsWith("\n")).toBe(true);
     expect(bytes).not.toContain("\\n");
-    expect(bytes).toContain("/tmp/openship-ingress.ABC123/cloudflared");
+    expect(bytes).toContain("/tmp/kovalio-ingress.ABC123/cloudflared");
   });
   it.each(["docker", "systemd 240"])(
     "uses a pinned nonprivileged Docker fallback on %s without a Docker socket mount",
@@ -120,7 +120,7 @@ describe("destination-owned cloudflared connector", () => {
   it("leaves a healthy native connector running on retry and reloads it after token rotation", async () => {
     const initial = executor();
     await manageConnector(initial.adapter, c, "token");
-    const unit = initial.files.get("/tmp/openship-ingress.ABC123/unit")!.content;
+    const unit = initial.files.get("/tmp/kovalio-ingress.ABC123/unit")!.content;
     const unchanged = executor({ present: true, unit, active: true, sameToken: true });
     await manageConnector(unchanged.adapter, c, "token");
     expect(unchanged.exec.mock.calls.some(([cmd]) => cmd.includes("systemctl restart"))).toBe(

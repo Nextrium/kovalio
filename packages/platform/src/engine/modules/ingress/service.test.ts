@@ -295,9 +295,9 @@ describe("domain lifecycle through the real database and Cloudflare adapter", ()
     );
   });
   it("rejects native host execution policy before provisioning any Cloudflare resource", async () => {
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_JOBS", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_JOBS", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
     await expect(ingress.connect(ctx, input)).rejects.toMatchObject({
       code: "HOST_EXECUTION_DISABLED",
     });

@@ -97,9 +97,9 @@ function isStringRecord(value: unknown): value is Record<string, string> {
 export function assertValidEnvelope(file: DataTransferFile): void {
   if (
     !file ||
-    (file.kind !== "openship-instance-export" && file.kind !== "openship-project-export")
+    (file.kind !== "kovalio-instance-export" && file.kind !== "kovalio-project-export")
   ) {
-    throw new InvalidTransferFileError("Not an Openship export file.");
+    throw new InvalidTransferFileError("Not an Kovalio export file.");
   }
   if (![1, 2, 3, 4].includes(file.envelopeVersion)) {
     throw new InvalidTransferFileError(
@@ -107,8 +107,8 @@ export function assertValidEnvelope(file: DataTransferFile): void {
     );
   }
   if (
-    (file.kind === "openship-instance-export" && file.dump?.scope?.kind !== "instance") ||
-    (file.kind === "openship-project-export" && file.dump?.scope?.kind !== "project")
+    (file.kind === "kovalio-instance-export" && file.dump?.scope?.kind !== "instance") ||
+    (file.kind === "kovalio-project-export" && file.dump?.scope?.kind !== "project")
   ) {
     throw new InvalidTransferFileError("The export scope does not match its contents.");
   }
@@ -141,7 +141,7 @@ export function assertValidEnvelope(file: DataTransferFile): void {
       if (
         file.secrets.encoding !== "plaintext" ||
         (file.envelopeVersion !== 3 && file.envelopeVersion !== 4) ||
-        (file.envelopeVersion === 3 && file.kind !== "openship-project-export") ||
+        (file.envelopeVersion === 3 && file.kind !== "kovalio-project-export") ||
         "kdf" in file.secrets || "blob" in file.secrets
       ) {
         throw new InvalidTransferFileError("Plaintext credentials require a version 4 export or a legacy version 3 project export.");
@@ -236,10 +236,10 @@ export async function previewInstanceImport(opts: {
   validateImportSelection(opts.selection);
   const scope =
     opts.selection?.scope ??
-    (opts.file.kind === "openship-project-export" ? "projects" : "instance");
+    (opts.file.kind === "kovalio-project-export" ? "projects" : "instance");
   if (scope === "projects")
     return (await planProjectImport(opts.file, { ...opts.selection, scope }, opts.context)).preview;
-  if (opts.file.kind === "openship-project-export")
+  if (opts.file.kind === "kovalio-project-export")
     throw new ProjectImportError(
       "A project archive cannot replace an instance. Choose project import.",
     );
@@ -327,8 +327,8 @@ export async function importPreparedInstance(opts: {
     stripTransferSecrets(file.dump.tables);
   }
   const projectScope =
-    opts.selection?.scope === "projects" || file.kind === "openship-project-export";
-  if (file.kind === "openship-project-export" && opts.selection?.scope === "instance")
+    opts.selection?.scope === "projects" || file.kind === "kovalio-project-export";
+  if (file.kind === "kovalio-project-export" && opts.selection?.scope === "instance")
     throw new ProjectImportError("A project archive cannot replace an instance.");
   if (projectScope && mode === "wipe")
     throw new ProjectImportError(

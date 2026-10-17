@@ -1,9 +1,9 @@
 ---
-title: Run and maintain Openship
+title: Run and maintain Kovalio
 description: Start a local installation, inspect it, and manage its lifecycle.
 ---
 
-Use these commands on the machine that runs Openship. To manage an existing remote installation,
+Use these commands on the machine that runs Kovalio. To manage an existing remote installation,
 [configure a connection context](/docs/cli/access) instead.
 
 ## Start
@@ -12,40 +12,40 @@ Use these commands on the machine that runs Openship. To manage an existing remo
 kovalio
 ```
 
-On a fresh machine, choose **Install Openship on this machine** for the interactive setup. The same
+On a fresh machine, choose **Install Kovalio on this machine** for the interactive setup. The same
 menu also connects to Cloud or an existing self-hosted installation. On an installed machine,
-`openship` opens the local control panel or resumes an interrupted setup.
+`kovalio` opens the local control panel or resumes an interrupted setup.
 
 For direct startup:
 
 ```bash
-openship up
-openship status
-openship open
+kovalio up
+kovalio status
+kovalio open
 ```
 
 `up` installs or starts a persistent service. `status` reports local service state and the active
-context's API health. `open` opens the dashboard. Use `openship up --foreground` for an attached process.
+context's API health. `open` opens the dashboard. Use `kovalio up --foreground` for an attached process.
 See [all startup options](/docs/cli/reference/up), including Docker Compose configuration.
 
-The installation owner can use `openship --local project list` without creating or pasting a token.
+The installation owner can use `kovalio --local project list` without creating or pasting a token.
 Local resource commands authenticate with the installation's protected credential; the public API
 still requires authentication. See [local and remote access](/docs/cli/access).
 
 ## Stop and update
 
 ```bash
-openship stop
-openship update
+kovalio stop
+kovalio update
 ```
 
 `stop` disables the service so it stays stopped across reboot. `update` updates the CLI and bundled
-server. Read [updating Openship](/docs/guides/updating) before updating a production installation.
+server. Read [updating Kovalio](/docs/guides/updating) before updating a production installation.
 
 ## Diagnose a problem
 
 ```bash
-openship doctor
+kovalio doctor
 ```
 
 The [doctor reference](/docs/cli/reference/doctor) describes health and repair options. Local admin
@@ -55,12 +55,12 @@ account recovery uses [reset-admin-password](/docs/cli/reference/reset-admin-pas
 
 | Command | Purpose |
 | --- | --- |
-| `npm install -g openship` | Install the CLI globally. |
-| `npm install openship` | Add Ship SDK and the CLI to a Node project. SDK imports are available in 0.8.0 and later. |
-| `openship install` | Download and install the desktop application. |
-| `openship install cache` | Inspect or manage cached installation downloads. |
-| `openship up` | Start the Openship API and dashboard as a local service. |
-| `openship uninstall` | Remove local installation state and data; deployed apps are left running. |
+| `npm install -g kovalio` | Install the CLI globally. |
+| `npm install kovalio` | Add Ship SDK and the CLI to a Node project. SDK imports are available in 0.8.0 and later. |
+| `kovalio install` | Download and install the desktop application. |
+| `kovalio install cache` | Inspect or manage cached installation downloads. |
+| `kovalio up` | Start the Kovalio API and dashboard as a local service. |
+| `kovalio uninstall` | Remove local installation state and data; deployed apps are left running. |
 
 See [installation](/docs/getting-started/installation) for platform requirements and
 [command options](/docs/cli/reference#local-installation) before removing or repairing an installation.

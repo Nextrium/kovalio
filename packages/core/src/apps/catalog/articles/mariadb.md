@@ -1,6 +1,6 @@
 ## MariaDB with Adminer
 
-Run a private MariaDB database and the official Adminer container. The application database is `app`, with the user `openship` and a generated password. The root account has a different generated password.
+Run a private MariaDB database and the official Adminer container. The application database is `app`, with the user `kovalio` and a generated password. The root account has a different generated password.
 
 ## Browser administration
 

@@ -67,7 +67,7 @@ function guard<A extends unknown[]>(
 ): (...args: A) => Promise<void> {
   return async (...args: A) => {
     if (!hasShipCredentials()) {
-      err("Not logged in. Run `openship login` first.");
+      err("Not logged in. Run `kovalio login` first.");
       process.exit(1);
     }
     try {
@@ -256,14 +256,14 @@ const setupCmd = new Command("setup")
             break;
           case "dns_pending":
             info("  Publish the DNS records above, then:");
-            info(`    openship mail dns-ack ${serverId}`);
-            info(`    openship mail setup ${serverId} --domain ${opts.domain} --start-step ${p.resumeStep}`);
+            info(`    kovalio mail dns-ack ${serverId}`);
+            info(`    kovalio mail setup ${serverId} --domain ${opts.domain} --start-step ${p.resumeStep}`);
             if (failed) process.exit(1);
             return;
           case "ptr_pending":
             info(`  Set reverse DNS (PTR) for ${p.ipv4}${p.ipv6 ? ` / ${p.ipv6}` : ""} → ${p.target}, then:`);
-            info(`    openship mail ptr-ack ${serverId}`);
-            info(`    openship mail setup ${serverId} --domain ${opts.domain} --start-step ${p.resumeStep}`);
+            info(`    kovalio mail ptr-ack ${serverId}`);
+            info(`    kovalio mail setup ${serverId} --domain ${opts.domain} --start-step ${p.resumeStep}`);
             if (failed) process.exit(1);
             return;
           case "complete":
@@ -284,7 +284,7 @@ const setupCmd = new Command("setup")
         }
       }
       if (failed) process.exit(1);
-      if (!completed) throw new Error("Setup stream ended before completion. Check `openship mail status` before explicitly resuming; no retry was started.");
+      if (!completed) throw new Error("Setup stream ended before completion. Check `kovalio mail status` before explicitly resuming; no retry was started.");
     }),
   );
 

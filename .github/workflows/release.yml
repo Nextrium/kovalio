@@ -45,10 +45,10 @@ jobs:
         uses: ./.github/actions/release-resume
         with:
           scope: build
-          job-name: Build openship release artifact
+          job-name: Build kovalio release artifact
           workflow: .github/workflows/release.yml
-          job-id: build-openship
-          artifact: openship-release
+          job-id: build-kovalio
+          artifact: kovalio-release
 
       - name: Read bun version
         if: steps.resume.outputs.reused != 'true'
@@ -78,7 +78,7 @@ jobs:
         if: steps.resume.outputs.reused != 'true'
         uses: ./.github/actions/actions-runner
 
-      - name: Build openship release
+      - name: Build kovalio release
         if: steps.resume.outputs.reused != 'true'
         run: bun run --cwd apps/api build-release
 
@@ -119,10 +119,10 @@ jobs:
         uses: ./.github/actions/release-resume
         with:
           scope: build
-          job-name: Build openship email release artifact
+          job-name: Build kovalio email release artifact
           workflow: .github/workflows/release.yml
           job-id: build-email
-          artifact: openship-email-release
+          artifact: kovalio-email-release
 
       - name: Read bun version
         if: steps.resume.outputs.reused != 'true'
@@ -192,10 +192,10 @@ jobs:
         uses: ./.github/actions/release-resume
         with:
           scope: build
-          job-name: Build dashboard bundle (lazy-downloaded by `openship up`)
+          job-name: Build dashboard bundle (lazy-downloaded by `kovalio up`)
           workflow: .github/workflows/release.yml
           job-id: build-dashboard
-          artifact: openship-dashboard-release
+          artifact: kovalio-dashboard-release
 
       - name: Read bun version
         if: steps.resume.outputs.reused != 'true'
@@ -283,7 +283,7 @@ jobs:
           job-name: Build CLI runtime payload (downloaded by scripts/install.sh)
           workflow: .github/workflows/release.yml
           job-id: build-cli-payload
-          artifact: openship-cli-release
+          artifact: kovalio-cli-release
 
       - name: Read bun version
         if: steps.resume.outputs.reused != 'true'
@@ -683,14 +683,14 @@ jobs:
         if: env.APPLE_ID != ''
         run: |
           set -euo pipefail
-          (cd dist && shasum -a 256 -c "Openship-${{ matrix.arch }}.dmg.sha256")
-          bun scripts/macos-notarization.ts submit "dist/Openship-${{ matrix.arch }}.dmg"
+          (cd dist && shasum -a 256 -c "Kovalio-${{ matrix.arch }}.dmg.sha256")
+          bun scripts/macos-notarization.ts submit "dist/Kovalio-${{ matrix.arch }}.dmg"
       - name: Save the Apple submission receipt
         if: env.APPLE_ID != ''
         uses: actions/upload-artifact@v7
         with:
           name: macos-notary-${{ matrix.arch }}
-          path: dist/Openship-${{ matrix.arch }}.dmg.notary.json
+          path: dist/Kovalio-${{ matrix.arch }}.dmg.notary.json
           if-no-files-found: error
           retention-days: 7
 
@@ -723,24 +723,24 @@ jobs:
           name: macos-notary-${{ matrix.arch }}
           path: dist
       - name: Verify the saved installer
-        run: cd dist && shasum -a 256 -c "Openship-${{ matrix.arch }}.dmg.sha256"
+        run: cd dist && shasum -a 256 -c "Kovalio-${{ matrix.arch }}.dmg.sha256"
       - name: Resume Apple processing and validate the ticket
         if: env.APPLE_ID != ''
-        run: bun scripts/macos-notarization.ts finish "dist/Openship-${{ matrix.arch }}.dmg"
+        run: bun scripts/macos-notarization.ts finish "dist/Kovalio-${{ matrix.arch }}.dmg"
       - name: Checksum the finished installer
-        run: cd dist && shasum -a 256 "Openship-${{ matrix.arch }}.dmg" > "Openship-${{ matrix.arch }}.dmg.sha256"
+        run: cd dist && shasum -a 256 "Kovalio-${{ matrix.arch }}.dmg" > "Kovalio-${{ matrix.arch }}.dmg.sha256"
       - name: Upload the finished installer
         uses: actions/upload-artifact@v7
         with:
           name: desktop-macos-${{ matrix.arch }}
           path: |
-            dist/Openship-${{ matrix.arch }}.dmg
-            dist/Openship-${{ matrix.arch }}.dmg.sha256
+            dist/Kovalio-${{ matrix.arch }}.dmg
+            dist/Kovalio-${{ matrix.arch }}.dmg.sha256
           if-no-files-found: error
           retention-days: 7
 
   publish-npm:
-    name: Publish Openship to npm
+    name: Publish Kovalio to npm
     runs-on: ubuntu-24.04
     # npm is the ONE immutable artifact — a published version can never be
     # replaced. So it must publish LAST, only after every other job in the
@@ -790,7 +790,7 @@ jobs:
         id: npm-source
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          OPENSHIP_NPM_RELEASE_RUN: ${{ inputs.npm_release_run }}
+          KOVALIO_NPM_RELEASE_RUN: ${{ inputs.npm_release_run }}
         run: bun scripts/npm-release-resume.ts
 
       - name: Checkout the verified release commit
@@ -841,7 +841,7 @@ jobs:
 
       - name: Build SDK and CLI package
         working-directory: ${{ env.NPM_SOURCE_ROOT }}
-        run: bun run --cwd packages/openship build
+        run: bun run --cwd packages/kovalio build
 
       # Gate: run the ACTUAL built bundle across node/bun/shebang/no-node and
       # boot the real server. This is the last check before the IMMUTABLE npm
@@ -854,21 +854,21 @@ jobs:
 
       - name: Verify packed SDK outside the workspace
         env:
-          OPENSHIP_VERIFY_PACKAGE_DIR: ${{ format('{0}/packages/openship', env.NPM_SOURCE_ROOT) }}
-        run: bun run packages/openship/verify-package.ts
+          KOVALIO_VERIFY_PACKAGE_DIR: ${{ format('{0}/packages/kovalio', env.NPM_SOURCE_ROOT) }}
+        run: bun run packages/kovalio/verify-package.ts
 
       - name: Recheck the immutable source before npm publication
         if: inputs.npm_release_run != ''
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          OPENSHIP_NPM_RELEASE_RUN: ${{ inputs.npm_release_run }}
-          OPENSHIP_NPM_EXPECTED_SHA: ${{ steps.npm-source.outputs.sha }}
+          KOVALIO_NPM_RELEASE_RUN: ${{ inputs.npm_release_run }}
+          KOVALIO_NPM_EXPECTED_SHA: ${{ steps.npm-source.outputs.sha }}
         run: |
           bun scripts/npm-release-resume.ts
-          test "$(git -C "$NPM_SOURCE_ROOT" rev-parse HEAD)" = "$OPENSHIP_NPM_EXPECTED_SHA"
+          test "$(git -C "$NPM_SOURCE_ROOT" rev-parse HEAD)" = "$KOVALIO_NPM_EXPECTED_SHA"
 
       - name: Publish to npm (OIDC trusted publishing — no token)
-        working-directory: ${{ format('{0}/packages/openship', env.NPM_SOURCE_ROOT) }}
+        working-directory: ${{ format('{0}/packages/kovalio', env.NPM_SOURCE_ROOT) }}
         env:
           VERIFIED_RELEASE_TAG: ${{ steps.npm-source.outputs.tag }}
           VERIFIED_RELEASE_SHA: ${{ steps.npm-source.outputs.sha }}
@@ -904,7 +904,7 @@ jobs:
   publish:
     name: Publish GitHub release
     if: github.event_name == 'push'
-    needs: [gate, build-openship, build-email, build-dashboard, build-cli-payload, build-desktop, notarize-desktop-macos]
+    needs: [gate, build-kovalio, build-email, build-dashboard, build-cli-payload, build-desktop, notarize-desktop-macos]
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -1019,7 +1019,7 @@ jobs:
             fi
           else
             gh release create "${TAG}" \
-              --title "Openship ${TAG}" \
+              --title "Kovalio ${TAG}" \
               --notes-file "${NOTES_FILE}" \
               ${PRERELEASE_FLAG} \
               "${CORE_ASSETS[@]}"
@@ -1027,7 +1027,7 @@ jobs:
 
       - name: Sign desktop installers
         env:
-          OPENSHIP_DESKTOP_SIGNING_KEY: ${{ secrets.OPENSHIP_DESKTOP_SIGNING_KEY }}
+          KOVALIO_DESKTOP_SIGNING_KEY: ${{ secrets.KOVALIO_DESKTOP_SIGNING_KEY }}
         run: node apps/desktop/scripts/sign-updates.mjs dist
 
       - name: Attach desktop installers

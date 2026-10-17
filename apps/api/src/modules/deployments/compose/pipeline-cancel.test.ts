@@ -220,12 +220,12 @@ describe("executeComposePipeline — cancellation", () => {
         cancelled: false,
         buildFailures: new Map(),
         imageRefs: new Map([
-          ["svc-api", "openship/api:bld_x"],
-          ["svc-worker", "openship/worker:bld_x"],
+          ["svc-api", "kovalio/api:bld_x"],
+          ["svc-worker", "kovalio/worker:bld_x"],
         ]),
         builtImageRefs: new Map([
-          ["svc-api", "openship/api:bld_x"],
-          ["svc-worker", "openship/worker:bld_x"],
+          ["svc-api", "kovalio/api:bld_x"],
+          ["svc-worker", "kovalio/worker:bld_x"],
         ]),
         staticArtifactRefs: new Map(),
         staticServiceIds: new Set(),
@@ -236,11 +236,11 @@ describe("executeComposePipeline — cancellation", () => {
     expect(mocks.cleanupBuildArtifact).toHaveBeenCalledTimes(2);
     expect(mocks.cleanupBuildArtifact).toHaveBeenCalledWith(
       expect.anything(),
-      "openship/api:bld_x",
+      "kovalio/api:bld_x",
     );
     expect(mocks.cleanupBuildArtifact).toHaveBeenCalledWith(
       expect.anything(),
-      "openship/worker:bld_x",
+      "kovalio/worker:bld_x",
     );
   });
 
@@ -289,7 +289,7 @@ describe("executeComposePipeline — cancellation", () => {
         imageRef: "a-different-ref-is-still-conservative",
       },
       { serviceId: "svc-unknown", status: "indeterminate", imageRef: null },
-      { serviceId: "svc-failed", status: "failure", imageRef: "openship/failed:bld_x" },
+      { serviceId: "svc-failed", status: "failure", imageRef: "kovalio/failed:bld_x" },
       { serviceId: "svc-unused", status: "skipped", imageRef: null },
     ] as never);
 
@@ -299,11 +299,11 @@ describe("executeComposePipeline — cancellation", () => {
         buildFailures: new Map(),
         imageRefs: new Map(),
         builtImageRefs: new Map([
-          ["svc-live", "openship/shared:bld_x"],
-          ["svc-shared", "openship/shared:bld_x"],
-          ["svc-unknown", "openship/unknown:bld_x"],
-          ["svc-failed", "openship/failed:bld_x"],
-          ["svc-unused", "openship/unused:bld_x"],
+          ["svc-live", "kovalio/shared:bld_x"],
+          ["svc-shared", "kovalio/shared:bld_x"],
+          ["svc-unknown", "kovalio/unknown:bld_x"],
+          ["svc-failed", "kovalio/failed:bld_x"],
+          ["svc-unused", "kovalio/unused:bld_x"],
         ]),
         staticArtifactRefs: new Map(),
         staticServiceIds: new Set(),
@@ -314,15 +314,15 @@ describe("executeComposePipeline — cancellation", () => {
     expect(mocks.cleanupBuildArtifact).toHaveBeenCalledTimes(2);
     expect(mocks.cleanupBuildArtifact).toHaveBeenCalledWith(
       expect.anything(),
-      "openship/failed:bld_x",
+      "kovalio/failed:bld_x",
     );
     expect(mocks.cleanupBuildArtifact).toHaveBeenCalledWith(
       expect.anything(),
-      "openship/unused:bld_x",
+      "kovalio/unused:bld_x",
     );
     expect(mocks.cleanupBuildArtifact).not.toHaveBeenCalledWith(
       expect.anything(),
-      "openship/shared:bld_x",
+      "kovalio/shared:bld_x",
     );
   });
 
@@ -333,8 +333,8 @@ describe("executeComposePipeline — cancellation", () => {
       run({
         cancelled: false,
         buildFailures: new Map(),
-        imageRefs: new Map([["svc-api", "openship/api:bld_x"]]),
-        builtImageRefs: new Map([["svc-api", "openship/api:bld_x"]]),
+        imageRefs: new Map([["svc-api", "kovalio/api:bld_x"]]),
+        builtImageRefs: new Map([["svc-api", "kovalio/api:bld_x"]]),
         staticArtifactRefs: new Map(),
         staticServiceIds: new Set(),
         durationMs: 5,
@@ -356,12 +356,12 @@ describe("executeComposePipeline — cancellation", () => {
         cancelled: false,
         buildFailures: new Map(),
         imageRefs: new Map([
-          ["svc-api", "openship/api:bld_x"],
-          ["svc-worker", "openship/worker:bld_x"],
+          ["svc-api", "kovalio/api:bld_x"],
+          ["svc-worker", "kovalio/worker:bld_x"],
         ]),
         builtImageRefs: new Map([
-          ["svc-api", "openship/api:bld_x"],
-          ["svc-worker", "openship/worker:bld_x"],
+          ["svc-api", "kovalio/api:bld_x"],
+          ["svc-worker", "kovalio/worker:bld_x"],
         ]),
         staticArtifactRefs: new Map(),
         staticServiceIds: new Set(),
@@ -379,8 +379,8 @@ describe("executeComposePipeline — cancellation", () => {
       run({
         cancelled: false,
         buildFailures: new Map(),
-        imageRefs: new Map([["svc-api", "openship/api:bld_x"]]),
-        builtImageRefs: new Map([["svc-api", "openship/api:bld_x"]]),
+        imageRefs: new Map([["svc-api", "kovalio/api:bld_x"]]),
+        builtImageRefs: new Map([["svc-api", "kovalio/api:bld_x"]]),
         staticArtifactRefs: new Map(),
         staticServiceIds: new Set(),
         durationMs: 5,
@@ -463,8 +463,8 @@ describe("executeComposePipeline — cancellation", () => {
       {
         cancelled: false,
         buildFailures: new Map([["svc-worker", buildError]]),
-        imageRefs: new Map([["svc-api", "openship/api:bld_x"]]),
-        builtImageRefs: new Map([["svc-api", "openship/api:bld_x"]]),
+        imageRefs: new Map([["svc-api", "kovalio/api:bld_x"]]),
+        builtImageRefs: new Map([["svc-api", "kovalio/api:bld_x"]]),
         staticArtifactRefs: new Map(),
         staticServiceIds: new Set(),
         durationMs: 17,
@@ -481,7 +481,7 @@ describe("executeComposePipeline — cancellation", () => {
     expect(mocks.setDeploymentStatus).not.toHaveBeenCalled();
     expect(mocks.cleanupBuildArtifact).toHaveBeenCalledWith(
       expect.anything(),
-      "openship/api:bld_x",
+      "kovalio/api:bld_x",
     );
     expect(repos.service.markServiceDeploymentFailed).toHaveBeenCalledTimes(2);
     expect(repos.service.markServiceDeploymentFailed).toHaveBeenCalledWith(
@@ -509,8 +509,8 @@ describe("executeComposePipeline — cancellation", () => {
       run({
         cancelled: false,
         buildFailures: new Map([["svc-worker", "worker failed"]]),
-        imageRefs: new Map([["svc-api", "openship/api:bld_x"]]),
-        builtImageRefs: new Map([["svc-api", "openship/api:bld_x"]]),
+        imageRefs: new Map([["svc-api", "kovalio/api:bld_x"]]),
+        builtImageRefs: new Map([["svc-api", "kovalio/api:bld_x"]]),
         staticArtifactRefs: new Map(),
         staticServiceIds: new Set(),
         durationMs: 5,
@@ -534,9 +534,9 @@ describe("executeComposePipeline — cancellation", () => {
         buildFailures: new Map(),
         imageRefs: new Map([
           ["svc-api", "ghcr.io/acme/api:staging"],
-          ["svc-worker", "openship/worker:bld_x"],
+          ["svc-worker", "kovalio/worker:bld_x"],
         ]),
-        builtImageRefs: new Map([["svc-worker", "openship/worker:bld_x"]]),
+        builtImageRefs: new Map([["svc-worker", "kovalio/worker:bld_x"]]),
         staticArtifactRefs: new Map(),
         staticServiceIds: new Set(),
         durationMs: 23,

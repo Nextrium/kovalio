@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 import { projectFixture } from "../../contracts/test/fixtures";
 import type { ProjectControlOperations, RollbackCapacity } from "@repo/contracts";
 import { OperationError } from "../src";
@@ -366,7 +366,7 @@ describe("remote project controls", () => {
           { status: 207 },
         ),
       );
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     const failure = await client.projects.remove("project-a").catch((error) => error);
     expect(failure).toBeInstanceOf(OperationError);
     expect(failure).toMatchObject({
@@ -390,7 +390,7 @@ describe("remote project controls", () => {
       else expect(init?.body).toBeUndefined();
       return Response.json(test.envelope ? { [test.envelope]: test.output } : test.output);
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     const operation = client.projects[test.name] as (
       id: string,
       input?: unknown,
@@ -401,7 +401,7 @@ describe("remote project controls", () => {
 
   it("validates input before sending it and rejects malformed remote results", async () => {
     const fetcher = vi.fn(async () => Response.json({ data: [{ key: "PARTIAL" }] }));
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     await expect(client.projects.runtimeLogs("project-a", { tail: -1 })).rejects.toMatchObject({
       code: "VALIDATION_ERROR",
     });

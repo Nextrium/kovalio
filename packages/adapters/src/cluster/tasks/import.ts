@@ -69,7 +69,7 @@ export async function importDatabaseBackup(
     await restoreRedis(
       config.redis,
       {
-        format: "openship-redis-rdb-v1",
+        format: "kovalio-redis-rdb-v1",
         databaseId: config.databaseId,
         runtimeId: config.runtimeId,
         mode: "standalone",

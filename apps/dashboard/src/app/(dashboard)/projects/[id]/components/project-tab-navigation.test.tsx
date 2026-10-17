@@ -285,7 +285,7 @@ describe("project update indicator", () => {
   });
 
   it("skips the CLI-managed control plane", async () => {
-    await render("overview", "server", { appTemplateId: "openship" });
+    await render("overview", "server", { appTemplateId: "kovalio" });
     expect(platform.commitStatus).not.toHaveBeenCalled();
     expect(indicators()).toHaveLength(0);
   });

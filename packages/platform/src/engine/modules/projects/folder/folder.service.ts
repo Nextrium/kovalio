@@ -68,7 +68,7 @@ export interface UploadTarget {
    * The same target, fully resolved — so a client that doesn't know this API's
    * base URL (MCP, curl) doesn't have to guess one. On the self-hosted relay
    * this is built from the instance's public URL, so it's only as reachable as
-   * that is configured (OPENSHIP_PUBLIC_URL / a verified self-app domain);
+   * that is configured (KOVALIO_PUBLIC_URL / a verified self-app domain);
    * `url` stays the authoritative form for a client that has its own base.
    */
   absoluteUrl: string;
@@ -79,7 +79,7 @@ export interface UploadTarget {
    * relay route is permission-checked like any other (send the same
    * `Authorization: Bearer …` you used to open the session, or the session
    * cookie). False for an external target, which carries its own token in
-   * `headers` and must never see Openship credentials.
+   * `headers` and must never see Kovalio credentials.
    */
   requiresAuth: boolean;
   /** Send the browser's session cookie? true for the same-origin API relay,
@@ -128,9 +128,9 @@ export async function createFolderSession(
   }
 
   // Store only uploaded bytes on the control plane; builds run on the destination.
-  const stagingRoot = process.env.OPENSHIP_NATIVE === "true" ? join(process.env.OPENSHIP_DATA_DIR!, "sources") : tmpdir();
+  const stagingRoot = process.env.KOVALIO_NATIVE === "true" ? join(process.env.KOVALIO_DATA_DIR!, "sources") : tmpdir();
   await mkdir(stagingRoot, { recursive: true, mode: 0o700 });
-  const stagingDir = await mkdtemp(join(stagingRoot, "openship-upload-"));
+  const stagingDir = await mkdtemp(join(stagingRoot, "kovalio-upload-"));
   const uploadTicket = randomBytes(24).toString("base64url");
 
   putFolderSession({
@@ -183,7 +183,7 @@ export async function acceptRelayUpload(
     throw new Error("Session does not accept relay uploads");
   }
 
-  const temporary = await mkdtemp(join(dirname(session.stagingDir), "openship-transfer-"));
+  const temporary = await mkdtemp(join(dirname(session.stagingDir), "kovalio-transfer-"));
   const archivePath = join(temporary, "source.tar.gz");
   const extracted = join(temporary, "source");
   try {
@@ -233,7 +233,7 @@ export async function scanFolderSession(session: FolderSession, opts: FolderScan
   if (rememberServices) {
     session.services = info.services;
     session.rootEnv = info.rootEnv;
-    session.openshipEnv = info.openshipEnv;
+    session.kovalioEnv = info.kovalioEnv;
   }
   return info;
 }

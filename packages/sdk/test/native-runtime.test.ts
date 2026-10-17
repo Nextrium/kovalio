@@ -51,7 +51,7 @@ beforeAll(async () => {
 
 describe("owned native platform on Node", () => {
   it("streams shared file status and routes storage status through the native worker", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-native-storage-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-native-storage-"));
     let identity: VerifiedIdentity | null = null;
     let ship: OwnedShip<string> | undefined;
     const cancellation = new AbortController();
@@ -101,7 +101,7 @@ describe("owned native platform on Node", () => {
   }, 60_000);
 
   it("persists operator notices while ordinary scopes only read public announcements", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-native-notices-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-native-notices-"));
     let identity: VerifiedIdentity | null = null;
     let ship: OwnedShip<string> | undefined;
     const options = {
@@ -140,7 +140,7 @@ describe("owned native platform on Node", () => {
   }, 60_000);
 
   it("persists server Git configuration without granting tenants access to the host Git identity", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-native-github-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-native-github-"));
     let identity: VerifiedIdentity | null = null;
     let ship: OwnedShip<string> | undefined;
     const options = {
@@ -175,7 +175,7 @@ describe("owned native platform on Node", () => {
   }, 60_000);
 
   it("persists organization invitations and grants, and applies membership revocation after restart", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-native-permissions-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-native-permissions-"));
     let identity: VerifiedIdentity | null = null;
     let ship: OwnedShip<string> | undefined;
     const options = {
@@ -219,7 +219,7 @@ describe("owned native platform on Node", () => {
   }, 60_000);
 
   it("persists notification channels and subscriptions while keeping secrets and users isolated", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-native-notifications-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-native-notifications-"));
     let identity: VerifiedIdentity | null = null;
     let ship: OwnedShip<string> | undefined;
     const options = { instanceId: "notifications", stateDirectory: directory,
@@ -275,7 +275,7 @@ describe("owned native platform on Node", () => {
   }, 60_000);
 
   it("persists jobs and drains a real accepted command without starting an HTTP server", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-native-jobs-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-native-jobs-"));
     let identity: VerifiedIdentity | null = null;
     let ship: OwnedShip<string> | undefined;
     const options = { instanceId: "jobs", stateDirectory: directory,
@@ -325,7 +325,7 @@ describe("owned native platform on Node", () => {
   }, 90_000);
 
   it("persists backup policies, refuses disabled execution, and drains accepted runs through the retained FSM", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-native-backups-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-native-backups-"));
     let identity: VerifiedIdentity | null = null;
     let ship: OwnedShip<string> | undefined;
     const root = join(directory, "backups");
@@ -401,7 +401,7 @@ describe("owned native platform on Node", () => {
   }, 90_000);
 
   it("reuses backup destination encryption and local adapter probes with persistent tenant isolation", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-native-destinations-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-native-destinations-"));
     let identity: VerifiedIdentity | null = null;
     let ship: OwnedShip<string> | undefined;
     const root = join(directory, "backups");
@@ -454,7 +454,7 @@ describe("owned native platform on Node", () => {
   }, 90_000);
 
   it("installs custom catalog apps with tenant-scoped settings and protected connection credentials", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-native-apps-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-native-apps-"));
     let identity: VerifiedIdentity | null = null;
     let ship: OwnedShip<string> | undefined;
     try {
@@ -513,7 +513,7 @@ describe("owned native platform on Node", () => {
   }, 90_000);
 
   it("isolates concurrent instances and tenants, revalidates membership, and drains independently", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-owned-test-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-owned-test-"));
     const ambient = { ...process.env };
     const opened: OwnedShip<string>[] = [];
     try {
@@ -746,7 +746,7 @@ describe("owned native platform on Node", () => {
   }, 60_000);
 
   it("prepares and imports allowed local source through the shared scanner and permission policy", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-local-import-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-local-import-"));
     const source = join(directory, "source");
     await mkdir(source);
     await writeFile(join(source, "index.html"), "<h1>Local import</h1>");
@@ -837,7 +837,7 @@ describe("owned native platform on Node", () => {
   }, 60_000);
 
   it("persists external mappings, refuses another key, releases failed initialization, and verifies migrations", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-persistence-test-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-persistence-test-"));
     const options = { instanceId: "persistent", stateDirectory: directory, storage: { driver: "pglite" as const, dataDir: join(directory, "database") },
       encryptionKey: key, runtime: "bare" as const, routing: "none" as const, administration: true, identity: { resolve: async () => null },
     };
@@ -872,7 +872,7 @@ describe("owned native platform on Node", () => {
     const port = (listener.address() as import("node:net").AddressInfo).port;
     await new Promise<void>((resolve, reject) => listener.close(error => error ? reject(error) : resolve()));
 
-    const directory = await mkdtemp(join(tmpdir(), "openship-native-http-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-native-http-"));
     const source = join(directory, "source");
     await mkdir(source);
     let identity: VerifiedIdentity | null = null;
@@ -890,7 +890,7 @@ describe("owned native platform on Node", () => {
       const scope = await ship.scope({ identity: "verified", organizationId: mapped.personalOrganizationId });
       const files = (version: number) => ({
         "package.json": JSON.stringify({ name: "native-http-app", private: true, type: "module", scripts: { start: "node server.mjs" } }),
-        "openship.json": JSON.stringify({ runtime: "bare", workload: "web", port, installCommand: "", buildCommand: "", startCommand: "node server.mjs" }),
+        "kovalio.json": JSON.stringify({ runtime: "bare", workload: "web", port, installCommand: "", buildCommand: "", startCommand: "node server.mjs" }),
         "server.mjs": [
           'import { createServer } from "node:http";',
           `const server = createServer((_req, res) => res.end(JSON.stringify({ version: ${version}, value: process.env.SDK_TEST_VALUE ?? null })));`,
@@ -932,7 +932,7 @@ describe("owned native platform on Node", () => {
   }, 90_000);
 
   it("deploys generated code through the real pipeline and keeps artifacts inside its owned directory", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-generated-test-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-generated-test-"));
     let identity: VerifiedIdentity | null = null;
     const ship = await createShip({ instanceId: "generated", stateDirectory: directory, storage: { driver: "pglite", dataDir: "memory://" },
       encryptionKey: key, runtime: "bare", routing: "none", policy: { allowHostExecution: true }, administration: true,

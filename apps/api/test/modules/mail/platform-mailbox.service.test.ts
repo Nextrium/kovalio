@@ -58,12 +58,12 @@ vi.mock("@repo/platform/engine/modules/mail/admin/domains.service", () => ({
   recountDomain: mocks.recountDomain,
 }));
 
-import { ensureOpenshipPlatformMailbox } from "@repo/platform/engine/modules/mail/admin/platform-mailbox.service";
+import { ensureKovalioPlatformMailbox } from "@repo/platform/engine/modules/mail/admin/platform-mailbox.service";
 
 const state = {
   domain: "example.com",
   platformMailbox: {
-    email: "openship@example.com",
+    email: "kovalio@example.com",
     password: "sealed-old-password",
     smtpHost: "mail.example.com",
     smtpPort: 465,
@@ -72,7 +72,7 @@ const state = {
   },
 };
 
-describe("ensureOpenshipPlatformMailbox live reconciliation", () => {
+describe("ensureKovalioPlatformMailbox live reconciliation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.readState.mockResolvedValue(state);
@@ -91,10 +91,10 @@ describe("ensureOpenshipPlatformMailbox live reconciliation", () => {
       forwardingActive: true,
     });
 
-    const result = await ensureOpenshipPlatformMailbox("srv_mail");
+    const result = await ensureKovalioPlatformMailbox("srv_mail");
 
     expect(result).toMatchObject({
-      email: "openship@example.com",
+      email: "kovalio@example.com",
       password: "old-plaintext",
       rotated: false,
     });
@@ -109,7 +109,7 @@ describe("ensureOpenshipPlatformMailbox live reconciliation", () => {
   ])("recreates stale cached state for $mailboxActive/$forwardingActive", async (live) => {
     mocks.queryOne.mockResolvedValue(live);
 
-    const result = await ensureOpenshipPlatformMailbox("srv_mail");
+    const result = await ensureKovalioPlatformMailbox("srv_mail");
 
     expect(result.rotated).toBe(true);
     expect(mocks.hashPassword).toHaveBeenCalledOnce();
@@ -118,7 +118,7 @@ describe("ensureOpenshipPlatformMailbox live reconciliation", () => {
   });
 
   it("forced rotation bypasses the live-row fast-path lookup", async () => {
-    const result = await ensureOpenshipPlatformMailbox("srv_mail", {
+    const result = await ensureKovalioPlatformMailbox("srv_mail", {
       rotate: true,
     });
 

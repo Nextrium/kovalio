@@ -1,12 +1,12 @@
 /**
  * GET /api/system/health — internal-token-gated deep health rollup for the CLI
- * `openship doctor`. Distinct from the public `/api/health` liveness stub: this
+ * `kovalio doctor`. Distinct from the public `/api/health` liveness stub: this
  * actually probes the database (the CLI can't reach the embedded PGlite itself,
  * it lives inside this API process) and reports instance-wide project/service
  * counts.
  *
  * Live per-container status is gathered CLI-side (it runs on the same machine as
- * the Docker daemon, so a single `docker ps` on the openship labels is cleaner
+ * the Docker daemon, so a single `docker ps` on the kovalio labels is cleaner
  * and needs no server-side runtime instantiation). This endpoint is the source
  * of truth for DB health + migration state, the bare-mode fallback for "how many
  * services are configured", and — over HTTP, from anywhere — whether this
@@ -31,9 +31,9 @@ import { env } from "@repo/platform/engine/config/index";
  * The container→host SSH channel, as a monitor can see it (#509).
  *
  * Every other surface that reports this channel is LOCAL — the boot banner, the
- * `openship doctor` rows, the dashboard's server list. So on the box #509 describes,
+ * `kovalio doctor` rows, the dashboard's server list. So on the box #509 describes,
  * host execution was unobservable over HTTP: the install said success, the rollup said
- * healthy, and the first host operation failed with text naming `openship doctor` as
+ * healthy, and the first host operation failed with text naming `kovalio doctor` as
  * the way to check. This is that check, on the endpoint doctor already calls.
  *
  * Deliberately narrower than {@link HostChannelHealth}:
@@ -143,13 +143,13 @@ export async function inspectSystemHealth() {
   // here: a probe that couldn't RUN reports `null`, never a verdict about the host.
   // Kept OUT of the top-level `ok`, which means "the database answers" — a box with
   // no host channel is degraded, not down (HOST_CHANNEL_UNAFFECTED), and folding it
-  // in would make `openship doctor --fix` reach for the database repair.
+  // in would make `kovalio doctor --fix` reach for the database repair.
   let hostChannel: HostChannelReport | null = null;
   // On the SaaS control plane there is no host to drive. `hostChannelHealth` already
-  // returns before any key read when OPENSHIP_HOST_SSH_HOST is unset — which it is on
+  // returns before any key read when KOVALIO_HOST_SSH_HOST is unset — which it is on
   // the SaaS — but gate on CLOUD_MODE explicitly so this endpoint can never call
   // readFileSync on a host key path, rather than relying on that env staying absent.
-  if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION !== "true") {
+  if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION !== "true") {
     hostChannel = { ok: false, state: "disabled", remedy: "Host execution is disabled by this native installation's policy." };
   } else if (!env.CLOUD_MODE) {
     try {

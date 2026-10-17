@@ -1,6 +1,6 @@
 {
   "home": {
-    "label": "Openship Cloud",
+    "label": "Kovalio Cloud",
     "title": "Ready to ship?",
     "plansAndBilling": "Plans & billing",
     "description": "Managed builds and hosting, with room to grow.",
@@ -80,11 +80,11 @@
     },
     "notEnabled": {
       "title": "Cloud purchases are not available yet",
-      "description": "Openship has not enabled subscriptions and credit purchases yet. Please try again later."
+      "description": "Kovalio has not enabled subscriptions and credit purchases yet. Please try again later."
     },
     "notConfigured": {
       "title": "Cloud billing setup is incomplete",
-      "description": "Openship needs to finish setting up billing. Please contact Openship support."
+      "description": "Kovalio needs to finish setting up billing. Please contact Kovalio support."
     },
     "forbidden": {
       "title": "You don't have access to billing",
@@ -97,7 +97,7 @@
     },
     "loadFailed": {
       "title": "Couldn't load billing",
-      "description": "Billing is temporarily unavailable. Try again. If the problem continues, contact Openship support."
+      "description": "Billing is temporarily unavailable. Try again. If the problem continues, contact Kovalio support."
     }
   },
   "plansRoute": {
@@ -408,7 +408,7 @@
     "planRequired": "Requires a plan",
     "savedCredits": "Saved usage balance",
     "savedCreditsHint": "Your prepaid usage stays in this workspace. Choose a plan to use it for Cloud deployments.",
-    "offerTitle": "Launch on Openship Cloud",
+    "offerTitle": "Launch on Kovalio Cloud",
     "offerLabel": "Start deploying",
     "offerDescription": "Managed resources for your projects.",
     "startingWith": "Start with {name}",
@@ -449,7 +449,7 @@
     "diskHint": "Data read from and written to app disks. This is disk activity, not stored disk size.",
     "transfer": "App data transfer",
     "transferHint": "Inbound and outbound data from your compute workloads. Edge delivery is shown separately.",
-    "edgeTitle": "Openship Edge",
+    "edgeTitle": "Kovalio Edge",
     "bandwidth": "Edge bandwidth",
     "bandwidthHint": "Incoming and outgoing traffic across your workspace’s edge routes. This monthly allowance is separate from compute. Routes pause at the limit until reset or upgrade.",
     "requests": "Edge requests",
@@ -577,7 +577,7 @@
     "serverPlanReady": "Your plan is active. Return to setup to deploy.",
     "returnToSetup": "Back to setup",
     "singular": "Cloud space",
-    "description": "Choose capacity and deploy. Openship handles setup, routing and maintenance.",
+    "description": "Choose capacity and deploy. Kovalio handles setup, routing and maintenance.",
     "loading": "Loading Cloud spaces…",
     "choose": "Choose a destination",
     "chooseBilling": "Choose a Cloud space to view its billing.",
@@ -594,14 +594,14 @@
     "empty": "Ready to deploy",
     "defaultName": "Production",
     "defaultHint": "Choose a plan and deploy. Setup is automatic.",
-    "noneAvailable": "Choose a plan to deploy on Openship Cloud.",
+    "noneAvailable": "Choose a plan to deploy on Kovalio Cloud.",
     "manage": "Manage Cloud space",
     "subscriptionHint": "Each Cloud space has its own subscription.",
     "placementHint": "Projects share these resources. Deleting one leaves the others in place.",
     "create": "Add Cloud space",
     "mode": "Project isolation",
     "createHint": "Choose a plan next. Billing starts after checkout; setup is automatic.",
-    "cloudOnly": "Openship Cloud manages setup, routing and HTTPS for you.",
+    "cloudOnly": "Kovalio Cloud manages setup, routing and HTTPS for you.",
     "projectCount": "{count} projects",
     "noProjects": "No projects here yet.",
     "liveUsage": "Live usage",
@@ -670,7 +670,7 @@
     "plan": "Plan",
     "actions": "Actions",
     "changePlan": "Change plan",
-    "managedBy": "Managed by Openship Cloud",
+    "managedBy": "Managed by Kovalio Cloud",
     "network": {
       "title": "Networking",
       "description": "Managed connectivity settings.",
@@ -813,7 +813,7 @@
     "retry": "Try checkout again",
     "close": "Close",
     "done": "Done",
-    "requestFailed": "We couldn’t save your request. Try again or email support@openship.io."
+    "requestFailed": "We couldn’t save your request. Try again or email support@nextrium.org."
   },
   "pendingPayments": {
     "title": "Pending payments",

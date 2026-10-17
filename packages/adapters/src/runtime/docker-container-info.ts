@@ -28,7 +28,7 @@ function bindingPriority(ip: string | undefined): number {
  * Normalize Docker's published-port rows into the runtime's durable mapping.
  *
  * Docker can report several host bindings for one container port. Routes must
- * prefer the loopback binding Openship owns instead of depending on daemon
+ * prefer the loopback binding Kovalio owns instead of depending on daemon
  * array order. Kept here so list and inspect paths cannot drift.
  */
 export function dockerPublishedPortInfo(

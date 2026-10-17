@@ -95,7 +95,7 @@ export default async function PricingPage() {
         <section className="pp-hero">
           <div className="pp-hero-glow" aria-hidden="true" />
           <div className="pp-container pp-hero-inner">
-            <p className="pp-eyebrow">Openship Cloud</p>
+            <p className="pp-eyebrow">Kovalio Cloud</p>
             <h1 className="pp-headline">
               Start small. <span>Grow from here.</span>
             </h1>
@@ -226,7 +226,7 @@ export default async function PricingPage() {
               <div className="pp-option">
                 <h3>Prefer your own servers?</h3>
                 <p>
-                  The full Openship platform is free to self-host. Open source, under Apache 2.0.
+                  The full Kovalio platform is free to self-host. Open source, under Apache 2.0.
                 </p>
                 <a href={SELF_HOST_CTA_HREF}>
                   Start self-hosting <span aria-hidden="true">↗</span>

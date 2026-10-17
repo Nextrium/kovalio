@@ -41,7 +41,7 @@
     "local": {
       "title": "このマシン",
       "badge": "ベータ",
-      "desc": "Openship をここに直接インストールします。SSH やリモート設定は不要です",
+      "desc": "Kovalio をここに直接インストールします。SSH やリモート設定は不要です",
       "comingSoon": "ローカルインストールは近日公開予定です。",
       "comingSoonDesc": "現時点では、Docker がインストールされた任意の Linux サーバーでセルフホストできます。"
     },

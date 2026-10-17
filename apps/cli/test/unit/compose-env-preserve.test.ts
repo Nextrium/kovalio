@@ -1379,7 +1379,7 @@ describe("database inspection failures preserve configuration (#487, #488)", () 
   });
 
   it("cannot overwrite missing secrets when the existence of old data is unknown", () => {
-    seedEnv({ COMPOSE_PROJECT_NAME: "openship", OPENSHIP_PGDATA: "/var/lib/postgresql/data/pgdata" });
+    seedEnv({ COMPOSE_PROJECT_NAME: "kovalio", KOVALIO_PGDATA: "/var/lib/postgresql/data/pgdata" });
     const before = h.written.get(composePaths.env);
     h.volumeInspectError = "permission denied while connecting to the Docker socket";
     expect(() => composePrefetch({})).toThrow(/Cannot inspect database volume/);
@@ -1390,7 +1390,7 @@ describe("database inspection failures preserve configuration (#487, #488)", () 
   it("refuses foreign data during prefetch, before that path can replace the env file", () => {
     seedEnv(CONFIGURED);
     const before = h.written.get(composePaths.env);
-    h.dbVolumes.add("openship_postgres_data");
+    h.dbVolumes.add("kovalio_postgres_data");
     h.pgProbe = () => ({ status: 0, stdout: "foreign", stderr: "" });
     expect(composePrefetch({})).toEqual({ ok: false, envChanged: false });
     expect(h.written.get(composePaths.env)).toBe(before);
@@ -1400,7 +1400,7 @@ describe("database inspection failures preserve configuration (#487, #488)", () 
   it("revalidates the layout at the write boundary and refuses a later probe failure", async () => {
     seedEnv(CONFIGURED);
     const before = h.written.get(composePaths.env);
-    h.dbVolumes.add("openship_postgres_data");
+    h.dbVolumes.add("kovalio_postgres_data");
     let calls = 0;
     h.pgProbe = () => ++calls === 1
       ? { status: 0, stdout: "sub", stderr: "" }
@@ -1412,7 +1412,7 @@ describe("database inspection failures preserve configuration (#487, #488)", () 
 
   it("uses one layout observation for both the preview value and its verdict", () => {
     seedEnv(CONFIGURED);
-    h.dbVolumes.add("openship_postgres_data");
+    h.dbVolumes.add("kovalio_postgres_data");
     let calls = 0;
     h.pgProbe = () => {
       calls++;
@@ -1421,16 +1421,16 @@ describe("database inspection failures preserve configuration (#487, #488)", () 
     const plan = composePlan({});
     expect(calls).toBe(1);
     expect(plan.pgDataRisk).toBeNull();
-    expect(plan.settings.find((row) => row.key === "OPENSHIP_PGDATA")?.value).toBe("/var/lib/postgresql/data/pgdata");
+    expect(plan.settings.find((row) => row.key === "KOVALIO_PGDATA")?.value).toBe("/var/lib/postgresql/data/pgdata");
   });
 
   it("reports an unknown layout without claiming a path or a foreign cluster", () => {
     seedEnv(CONFIGURED);
-    h.dbVolumes.add("openship_postgres_data");
+    h.dbVolumes.add("kovalio_postgres_data");
     h.pgProbe = () => ({ status: 1, stdout: "", stderr: "image pull failed" });
     const plan = composePlan({ resetSecrets: true });
-    expect(plan.pgDataRisk).toMatchObject({ volume: "openship_postgres_data", reason: "unavailable" });
-    expect(plan.settings.find((row) => row.key === "OPENSHIP_PGDATA")?.value).toBe("<unresolved>");
+    expect(plan.pgDataRisk).toMatchObject({ volume: "kovalio_postgres_data", reason: "unavailable" });
+    expect(plan.settings.find((row) => row.key === "KOVALIO_PGDATA")?.value).toBe("<unresolved>");
     const message = renderPgDataRefusal(plan.pgDataRisk!, { dryRun: true });
     expect(message).toContain("image pull failed");
     expect(message).not.toContain("neither present");

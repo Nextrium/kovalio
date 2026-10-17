@@ -105,7 +105,7 @@ async function startApi(input: {
       VITEST: "",
       NODE_ENV: "production",
       DEPLOY_MODE: "desktop",
-      OPENSHIP_AUTH_MODE: "none",
+      KOVALIO_AUTH_MODE: "none",
       CLOUD_MODE: "false",
       DATABASE_URL: "",
       POSTGRES_HOST: "",
@@ -116,10 +116,10 @@ async function startApi(input: {
       BETTER_AUTH_SECRET: input.secret,
       INTERNAL_TOKEN: "issue-816-http-e2e-internal-token-000000000000",
       PORT: String(input.port),
-      OPENSHIP_API_HOST: "127.0.0.1",
-      OPENSHIP_ADVERTISED_ORIGIN: `http://127.0.0.1:${input.port}`,
-      OPENSHIP_JOB_RUNNER: "in-process",
-      OPENSHIP_CACHE_STORE: "memory",
+      KOVALIO_API_HOST: "127.0.0.1",
+      KOVALIO_ADVERTISED_ORIGIN: `http://127.0.0.1:${input.port}`,
+      KOVALIO_JOB_RUNNER: "in-process",
+      KOVALIO_CACHE_STORE: "memory",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -325,7 +325,7 @@ afterAll(async () => {
 });
 
 it("transfers multiple HTTP chunks atomically and resumes a file import after restart", async () => {
-  tempRoot = await mkdtemp(join(tmpdir(), "openship-data-transfer-http-e2e-"));
+  tempRoot = await mkdtemp(join(tmpdir(), "kovalio-data-transfer-http-e2e-"));
   const sourcePort = await freePort();
   let destinationPort = await freePort();
   while (destinationPort === sourcePort) destinationPort = await freePort();
@@ -521,7 +521,7 @@ it("transfers multiple HTTP chunks atomically and resumes a file import after re
         method: "PUT",
         headers: {
           "content-type": "application/octet-stream",
-          "x-openship-chunk-sha256": createHash("sha256").update(chunk).digest("hex"),
+          "x-kovalio-chunk-sha256": createHash("sha256").update(chunk).digest("hex"),
         },
         body: chunk,
       },
@@ -592,7 +592,7 @@ it("transfers multiple HTTP chunks atomically and resumes a file import after re
       }),
     });
   const scopedFile = await scopedExport();
-  expect(scopedFile.kind).toBe("openship-project-export");
+  expect(scopedFile.kind).toBe("kovalio-project-export");
   expect(scopedFile.envelopeVersion).toBe(4);
   expect(scopedFile.secrets).toMatchObject({ encoding: "plaintext" });
   expect(JSON.stringify(scopedFile)).toContain("scoped-original");
@@ -613,7 +613,7 @@ it("transfers multiple HTTP chunks atomically and resumes a file import after re
       method: "PUT",
       headers: {
         "content-type": "application/octet-stream",
-        "x-openship-chunk-sha256": createHash("sha256").update(scopedBytes).digest("hex"),
+        "x-kovalio-chunk-sha256": createHash("sha256").update(scopedBytes).digest("hex"),
       },
       body: scopedBytes,
     },

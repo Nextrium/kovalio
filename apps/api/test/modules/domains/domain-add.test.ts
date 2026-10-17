@@ -130,7 +130,7 @@ describe("addDomain retries", () => {
     expect(result.www).toEqual({ id: "dom_www.example.com", hostname: "www.example.com" });
     expect(domainRepo.create).toHaveBeenCalledWith(expect.objectContaining({ hostname: "www.example.com", redirectTo: "example.com", redirectStatus: 301, verified: false }));
     expect(result.records.mode).toBe("cloud");
-    expect(result.records.records.filter(record => record.type === "TXT").map(record => record.name)).toEqual(["_openship-challenge.example.com", "_openship-challenge.www.example.com"]);
+    expect(result.records.records.filter(record => record.type === "TXT").map(record => record.name)).toEqual(["_kovalio-challenge.example.com", "_kovalio-challenge.www.example.com"]);
   });
 
   it.each([

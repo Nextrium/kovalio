@@ -35,7 +35,7 @@ type githubRequest struct {
 }
 
 var githubOwner = regexp.MustCompile(`^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$`)
-var githubRunnerName = regexp.MustCompile(`^openship-[a-zA-Z0-9_-]{8,80}$`)
+var githubRunnerName = regexp.MustCompile(`^kovalio-[a-zA-Z0-9_-]{8,80}$`)
 var githubReleasePath = regexp.MustCompile(`^/actions/runner/releases/download/v[0-9.]+/actions-runner-(linux|osx)-(x64|arm64)-[0-9.]+\.tar\.gz$`)
 
 func validateGitHubRequest(r jobRequest) error {
@@ -218,8 +218,8 @@ func runGitHubRunner(parent context.Context, request jobRequest, events *eventWr
 		return result, fmt.Errorf("GitHub runner admission could not be installed: %w", err)
 	}
 	runnerRoot := filepath.Join(request.Directory, "runner")
-	environment := append(os.Environ(), "OPENSHIP_ACTION_WORKER_ID="+request.ID, "RUNNER_ALLOW_RUNASROOT=1")
-	dockerName := "openship-github-" + request.ID
+	environment := append(os.Environ(), "KOVALIO_ACTION_WORKER_ID="+request.ID, "RUNNER_ALLOW_RUNASROOT=1")
+	dockerName := "kovalio-github-" + request.ID
 	var proxy *dockerOwnershipProxy
 	if request.DockerSocket || g.Image != "" {
 		var err error
@@ -283,7 +283,7 @@ func runGitHubRunner(parent context.Context, request jobRequest, events *eventWr
 // own identity so a non-root SSH user can still read and clean those files.
 func githubContainerArgs(request jobRequest, runnerRoot, dockerName, proxyPath string) ([]string, error) {
 	uid, gid := os.Getuid(), os.Getgid()
-	args := []string{"run", "--detach", "--name", dockerName, "--label", "io.openship.actions.job=" + request.ID, "--cpus", fmt.Sprint(request.ContainerCPU), "--memory", fmt.Sprintf("%dm", request.ContainerRAM), "--user", fmt.Sprintf("%d:%d", uid, gid), "--workdir", runnerRoot, "--volume", request.Directory + ":" + request.Directory, "--env", "RUNNER_ALLOW_RUNASROOT=1", "--env", "OPENSHIP_ACTION_WORKER_ID=" + request.ID}
+	args := []string{"run", "--detach", "--name", dockerName, "--label", "io.kovalio.actions.job=" + request.ID, "--cpus", fmt.Sprint(request.ContainerCPU), "--memory", fmt.Sprintf("%dm", request.ContainerRAM), "--user", fmt.Sprintf("%d:%d", uid, gid), "--workdir", runnerRoot, "--volume", request.Directory + ":" + request.Directory, "--env", "RUNNER_ALLOW_RUNASROOT=1", "--env", "KOVALIO_ACTION_WORKER_ID=" + request.ID}
 	if uid != 0 {
 		// The image may have no account, or a home owned by another user, for
 		// this identity. Workflow tools need a writable HOME.

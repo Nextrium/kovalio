@@ -107,7 +107,7 @@ export function ExportPanel({
       const label = (
         projectName ?? (selection.scope === "projects" ? "projects" : "instance")
       ).replace(/[^a-z0-9_-]+/gi, "-");
-      const filename = `openship-${label}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+      const filename = `kovalio-${label}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
       anchor.download = filename;
       document.body.append(anchor);
       anchor.click();

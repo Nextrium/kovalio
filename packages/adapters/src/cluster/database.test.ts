@@ -9,7 +9,7 @@ const config: ClusterDatabaseConfig = {
   mode: "cluster",
   instances: 3,
   storageGiB: 20,
-  storageClass: "openship-local",
+  storageClass: "kovalio-local",
   cpuMillis: 500,
   memoryMiB: 512,
   databaseName: "app",
@@ -106,9 +106,9 @@ describe("operator database manifests", () => {
           metadata: {
             name: "namespace",
             labels: {
-              "openship.io/database": "db",
-              "openship.io/runtime": "runtime",
-              "openship.io/project": "project",
+              "nextrium.org/database": "db",
+              "nextrium.org/runtime": "runtime",
+              "nextrium.org/project": "project",
             },
           },
         } as any;
@@ -119,9 +119,9 @@ describe("operator database manifests", () => {
   );
   it("grants and revokes only explicit private consumers while preserving database ownership", async () => {
     const labels = {
-      "openship.io/database": "db",
-      "openship.io/project": "project",
-      "openship.io/runtime": "runtime",
+      "nextrium.org/database": "db",
+      "nextrium.org/project": "project",
+      "nextrium.org/runtime": "runtime",
     };
     const namespace = adapter().namespace;
     let policy: any;
@@ -159,8 +159,8 @@ describe("operator database manifests", () => {
       projectNamespaceManifest("consumer", "runtime").metadata.name,
     );
     expect(grants[1].podSelector.matchLabels).toEqual({
-      "openship.io/project": "consumer",
-      "openship.io/runtime": "runtime",
+      "nextrium.org/project": "consumer",
+      "nextrium.org/runtime": "runtime",
     });
     expect(policy.spec.ingress[1].ports).toEqual([{ protocol: "TCP", port: 5432 }]);
     await instance.reconcileConnections([]);
@@ -175,8 +175,8 @@ describe("operator database manifests", () => {
     const projectId = "proj_database_";
     const database = adapter({}, undefined, projectId).manifest();
     const namespace = projectNamespaceManifest(projectId, "runtime");
-    const label = database.metadata.labels!["openship.io/project"]!;
-    expect(label).toBe(namespace.metadata.labels!["openship.io/project"]);
+    const label = database.metadata.labels!["nextrium.org/project"]!;
+    expect(label).toBe(namespace.metadata.labels!["nextrium.org/project"]);
     expect(label).toMatch(/^[a-z0-9](?:[-a-z0-9_.]*[a-z0-9])?$/i);
     expect(label.length).toBeLessThanOrEqual(63);
   });
@@ -190,10 +190,10 @@ describe("operator database manifests", () => {
       postgresql: { synchronous: { number: 1, dataDurability: "required" } },
       affinity: {
         podAntiAffinityType: "required",
-        nodeSelector: { "openship.io/runtime": "runtime" },
+        nodeSelector: { "nextrium.org/runtime": "runtime" },
       },
     });
-    expect(manifest.spec.storage).toEqual({ size: "20Gi", storageClass: "openship-local" });
+    expect(manifest.spec.storage).toEqual({ size: "20Gi", storageClass: "kovalio-local" });
     expect(manifest.spec.imageName).toContain("@sha256:");
     expect(manifest.spec.bootstrap.initdb.secret.name).toBe("credentials");
   });
@@ -205,14 +205,14 @@ describe("operator database manifests", () => {
       persistenceEnabled: true,
       storage: { keepAfterDelete: true, nodeConfVolume: true },
       kubernetesConfig: {
-        ignoreAnnotations: ["openship.io/generation"],
+        ignoreAnnotations: ["nextrium.org/generation"],
         persistentVolumeClaimRetentionPolicy: { whenDeleted: "Retain", whenScaled: "Retain" },
       },
     });
     expect(
       manifest.spec.redisLeader.affinity.podAntiAffinity
         .requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchLabels,
-    ).toEqual({ "openship.io/database": "db", redis_setup_type: "cluster" });
+    ).toEqual({ "nextrium.org/database": "db", redis_setup_type: "cluster" });
     expect(manifest.spec.redisFollower.affinity).toEqual(manifest.spec.redisLeader.affinity);
   });
   it("does not describe standalone Redis as a sharded cluster", () => {
@@ -254,7 +254,7 @@ describe("operator database manifests", () => {
     ],
   ])("reports the actual prerequisite blocking a database instance", async (status, message) => {
     const pod = {
-      metadata: { name: "database-1", labels: { "openship.io/database": "db" } },
+      metadata: { name: "database-1", labels: { "nextrium.org/database": "db" } },
       status,
     };
     const api = {
@@ -267,9 +267,9 @@ describe("operator database manifests", () => {
                 metadata: {
                   name: "database",
                   labels: {
-                    "openship.io/database": "db",
-                    "openship.io/runtime": "runtime",
-                    "openship.io/project": "project",
+                    "nextrium.org/database": "db",
+                    "nextrium.org/runtime": "runtime",
+                    "nextrium.org/project": "project",
                   },
                 },
                 status: {},
@@ -316,9 +316,9 @@ describe("operator database manifests", () => {
           name: "database",
           deletionTimestamp: new Date().toISOString(),
           labels: {
-            "openship.io/database": "db",
-            "openship.io/runtime": "runtime",
-            "openship.io/project": "project",
+            "nextrium.org/database": "db",
+            "nextrium.org/runtime": "runtime",
+            "nextrium.org/project": "project",
           },
         },
       };
@@ -342,8 +342,8 @@ describe("operator database manifests", () => {
       "runtime",
     );
     expect(objects[0]).toMatchObject({
-      metadata: { name: "openship-local" },
-      provisioner: "openship.io/local-path",
+      metadata: { name: "kovalio-local" },
+      provisioner: "nextrium.org/local-path",
       reclaimPolicy: "Retain",
     });
     expect(

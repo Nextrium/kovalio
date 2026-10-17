@@ -371,7 +371,7 @@ export function createDockerMigrationRunRepo(db: Database) {
           const sourceProject = { serverId: current.serverId, workspaceId: current.workspaceId, activeDeploymentId: current.activeDeploymentId, services };
           await tx.update(dockerMigrationRun).set({ recovery: { ...run.recovery, sourceProject } }).where(eq(dockerMigrationRun.id, id));
         }
-        await tx.execute(sql`select set_config('openship.migration_id', ${id}, true)`);
+        await tx.execute(sql`select set_config('kovalio.migration_id', ${id}, true)`);
         await tx.update(project).set({ serverId: target.id, workspaceId: target.workspaceId, updatedAt: new Date() }).where(eq(project.id, current.id));
       });
     },
@@ -391,7 +391,7 @@ export function createDockerMigrationRunRepo(db: Database) {
         if (saved.serverId !== run.sourceServerId || (current.serverId !== saved.serverId && current.serverId !== run.targetServerId))
           throw new Error("Migration project placement changed");
         const { services, ...binding } = saved;
-        await tx.execute(sql`select set_config('openship.migration_id', ${id}, true)`);
+        await tx.execute(sql`select set_config('kovalio.migration_id', ${id}, true)`);
         await tx.update(project).set({ ...binding, updatedAt: new Date() }).where(and(eq(project.id, run.projectId), eq(project.organizationId, organizationId)));
         for (const row of services) await tx.update(service).set({ volumes: row.volumes, namespaceVolumes: row.namespaceVolumes })
           .where(and(eq(service.id, row.id), eq(service.projectId, run.projectId)));

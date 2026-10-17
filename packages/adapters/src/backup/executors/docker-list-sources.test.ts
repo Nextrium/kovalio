@@ -135,8 +135,8 @@ describe("DockerBackupExecutor.listSources", () => {
   });
 
   it("keeps another project's prefix distinct rather than adopting it", async () => {
-    const sources = await executor.listSources(handle(["openship-other-pgdata:/data"]));
-    expect(sources.map((s) => s.source)).toEqual(["openship-clincai-openship-other-pgdata"]);
+    const sources = await executor.listSources(handle(["kovalio-other-pgdata:/data"]));
+    expect(sources.map((s) => s.source)).toEqual(["kovalio-clincai-kovalio-other-pgdata"]);
   });
 
   it("uses daemon path metadata to exclude remote files and sockets", async () => {
@@ -228,7 +228,7 @@ describe("DockerBackupExecutor.listSources", () => {
       ]),
     );
 
-    expect(sources.map((s) => s.source)).toEqual(["/remote-host/data", "openship-clincai-pgdata"]);
+    expect(sources.map((s) => s.source)).toEqual(["/remote-host/data", "kovalio-clincai-pgdata"]);
     expect(fallback.pullImage).toHaveBeenCalledOnce();
     expect(fallback.createContainer).toHaveBeenCalledTimes(4);
     for (const [spec] of fallback.createContainer.mock.calls) {
@@ -239,7 +239,7 @@ describe("DockerBackupExecutor.listSources", () => {
           Mounts: [
             {
               Type: "bind",
-              Target: "/__openship_bind_source",
+              Target: "/__kovalio_bind_source",
               ReadOnly: true,
             },
           ],

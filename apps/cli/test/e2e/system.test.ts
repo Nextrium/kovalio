@@ -16,14 +16,14 @@ import { runCommand, stubFetch, type FetchStub } from "../helpers/harness";
 
 let fetchStub: FetchStub;
 let directory: string;
-beforeEach(() => { h.caps = undefined; directory = mkdtempSync(join(tmpdir(), "openship-instance-cli-")); });
+beforeEach(() => { h.caps = undefined; directory = mkdtempSync(join(tmpdir(), "kovalio-instance-cli-")); });
 afterEach(() => { fetchStub?.restore(); setJsonMode(false); rmSync(directory, { recursive: true, force: true }); });
 
 describe("system commands through the SDK", () => {
   it("writes private exports, preserves secrets, and refuses to overwrite another file", async () => {
     setJsonMode(true);
     const file = join(directory, "export.json");
-    const archive = { kind: "openship-instance-export", envelopeVersion: 4, createdAt: "2026-10-07", sourceDriver: "pglite", dump: { tables: {} }, secrets: { encoding: "plaintext", version: 1, entries: [{ value: "fixture-secret" }] } };
+    const archive = { kind: "kovalio-instance-export", envelopeVersion: 4, createdAt: "2026-10-07", sourceDriver: "pglite", dump: { tables: {} }, secrets: { encoding: "plaintext", version: 1, entries: [{ value: "fixture-secret" }] } };
     fetchStub = stubFetch(req => ({ json: req.url.endsWith("/health/env") ? systemInfoFixture() : archive }));
     const result = await runCommand(systemCommand, ["data-transfer", "export", "--out", file]);
     expect(result.code, result.err).toBe(0);

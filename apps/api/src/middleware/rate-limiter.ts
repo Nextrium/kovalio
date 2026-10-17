@@ -64,7 +64,7 @@ async function enforce(c: Context, policyId: PolicyId): Promise<Response | null>
   if (
     !isAuthGate && policyId !== "diagnostics" &&
     !env.TRUST_PROXY &&
-    !env.OPENSHIP_PUBLIC_URL &&
+    !env.KOVALIO_PUBLIC_URL &&
     isLoopbackPeer(peerAddress(c))
   ) {
     return null;
@@ -111,7 +111,7 @@ export function rateLimiterFor(policyId: PolicyId): MiddlewareHandler {
  * per-route auth/user limits remain active in both modes.
  */
 export async function floodGuard(c: Context, next: Next): Promise<void | Response> {
-  if (env.CLOUD_MODE || env.OPENSHIP_TRUST_EDGE || c.req.path.startsWith("/api/health")) {
+  if (env.CLOUD_MODE || env.KOVALIO_TRUST_EDGE || c.req.path.startsWith("/api/health")) {
     await next();
     return;
   }

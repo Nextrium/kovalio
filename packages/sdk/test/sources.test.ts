@@ -3,11 +3,11 @@ import { mkdtemp, mkdir, readdir, writeFile, symlink, rm } from "node:fs/promise
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 
 const directories: string[] = [];
 async function directory() {
-  const dir = await mkdtemp(join(tmpdir(), "openship-sdk-test-"));
+  const dir = await mkdtemp(join(tmpdir(), "kovalio-sdk-test-"));
   directories.push(dir);
   return dir;
 }
@@ -40,7 +40,7 @@ function server(scanOverrides: Record<string, unknown> = {}) {
     throw new Error("Unexpected endpoint " + path);
   });
   return {
-    client: new OpenshipClient({ baseUrl: "https://ship.test", token: "api-credential", fetch: fetcher }),
+    client: new KovalioClient({ baseUrl: "https://ship.test", token: "api-credential", fetch: fetcher }),
     fetcher, commands, tar: () => gunzipSync(archive!).toString(),
   };
 }
@@ -72,11 +72,11 @@ describe("SDK source deployments", () => {
   it("refuses TMPDIR as a source before creating a remote upload session", async () => {
     const root = await directory();
     vi.stubEnv("TMPDIR", root);
-    await writeFile(join(root, "openship-upload-old.tar.gz"), "old artifact");
+    await writeFile(join(root, "kovalio-upload-old.tar.gz"), "old artifact");
     const s = server();
     await expect(s.client.sources.stage({ source: { type: "directory", path: root } })).rejects.toThrow(/temporary directory/);
     expect(s.fetcher).not.toHaveBeenCalled();
-    expect(await readdir(root)).toEqual(["openship-upload-old.tar.gz"]);
+    expect(await readdir(root)).toEqual(["kovalio-upload-old.tar.gz"]);
   });
 
   it.each(["session", "upload"])("cleans generated source and archives when the %s request fails", async failure => {
@@ -90,7 +90,7 @@ describe("SDK source deployments", () => {
       if (url.endsWith("/upload")) await new Response(init?.body).arrayBuffer();
       return Response.json({ error: "storage unavailable" }, { status: 503 });
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     await expect(client.sources.stage({ source: { type: "files", files: { "dist/index.html": "built site" } } })).rejects.toThrow();
     expect(await readdir(root)).toEqual([]);
   });
@@ -182,14 +182,14 @@ describe("SDK source deployments", () => {
 
   it("refuses incomplete upload responses without inventing an expiry or uploading bytes", async () => {
     const fetcher = vi.fn(async () => Response.json({ sessionId: "broken", upload: { url: "https://storage.test/upload" } }));
-    const ship = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const ship = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     await expect(ship.sources.stage({ source: { type: "files", files: { "index.html": "ok" } } })).rejects.toThrow("Invalid upload session response");
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
   it("rejects incomplete scan results and malformed service definitions", async () => {
     const fetcher = vi.fn(async () => Response.json({ name: "app", stack: "node" }));
-    const ship = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const ship = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     await expect(ship.sources.scan("session")).rejects.toThrow("Invalid source scan response");
     fetcher.mockImplementation(async () => Response.json({
       name: "app", stack: "node", projectType: "services", packageManager: "npm", installCommand: "",

@@ -30,7 +30,7 @@ describe("git credential relay helper", () => {
       server.listen(0, "127.0.0.1", resolve);
     });
 
-    const dir = await mkdtemp(join(tmpdir(), "openship-relay-test-"));
+    const dir = await mkdtemp(join(tmpdir(), "kovalio-relay-test-"));
     const script = join(dir, "credential-helper.sh");
     try {
       const port = (server.address() as AddressInfo).port;
@@ -42,7 +42,7 @@ describe("git credential relay helper", () => {
         "auth-header",
         "https",
         "github.com",
-        "oblien/openship.git",
+        "oblien/kovalio.git",
       ]);
 
       expect(stderr).toBe("");
@@ -50,7 +50,7 @@ describe("git credential relay helper", () => {
         `Authorization: Basic ${Buffer.from("x-access-token:gho_test-only").toString("base64")}`,
       );
       await expect(requestReceived).resolves.toBe(
-        "test-nonce\nprotocol=https\nhost=github.com\npath=oblien/openship.git\n\n",
+        "test-nonce\nprotocol=https\nhost=github.com\npath=oblien/kovalio.git\n\n",
       );
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));

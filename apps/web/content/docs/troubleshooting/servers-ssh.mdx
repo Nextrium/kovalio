@@ -137,10 +137,10 @@ A single success clears it.
 Select **Cloudflare Access** in the server's **Connection** field. Use the Access application hostname,
 not a URL or a raw `ProxyCommand`. Passwords, encrypted keys and agent authentication are supported.
 
-If OpenShip reports that `cloudflared` is missing, install it on the machine running the API. Windows
+If Kovalio reports that `cloudflared` is missing, install it on the machine running the API. Windows
 desktop bundles it. An operator can override the executable using the process environment variable
-`OPENSHIP_CLOUDFLARED_PATH`; quote Windows paths containing spaces when setting that variable.
-Finish Cloudflare authentication as the same OS user running OpenShip, then retry **Test Connection**.
+`KOVALIO_CLOUDFLARED_PATH`; quote Windows paths containing spaces when setting that variable.
+Finish Cloudflare authentication as the same OS user running Kovalio, then retry **Test Connection**.
 In headless or container installations, an authenticated `cloudflared` session must be available in
 that environment. Check that the Access policy permits the account and that the tunnel points to SSH.
 

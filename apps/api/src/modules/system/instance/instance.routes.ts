@@ -246,7 +246,7 @@ r.post("/connect", { tag: "settings:admin" }, admin, limited, async (c) => {
   await connectInstance(input.code);
   c.header(
     "Set-Cookie",
-    "openship.instance.session_token=connected; Path=/; HttpOnly; SameSite=Strict",
+    "kovalio.instance.session_token=connected; Path=/; HttpOnly; SameSite=Strict",
   );
   return c.json({ success: true });
 });
@@ -257,7 +257,7 @@ r.post("/connect-address", { tag: "settings:admin" }, admin, limited, async (c) 
   await connectInstanceAddress(input.origin);
   c.header(
     "Set-Cookie",
-    "openship.instance.session_token=connected; Path=/; HttpOnly; SameSite=Strict",
+    "kovalio.instance.session_token=connected; Path=/; HttpOnly; SameSite=Strict",
   );
   return c.json({ success: true });
 });
@@ -265,7 +265,7 @@ r.post("/disconnect", { tag: "settings:admin" }, admin, async (c) => {
   await disconnectInstance();
   c.header(
     "Set-Cookie",
-    "openship.instance.session_token=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
+    "kovalio.instance.session_token=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
   );
   return c.json({ success: true });
 });
@@ -340,7 +340,7 @@ r.public(
   },
   limited,
   async (c) => {
-    const expected = process.env.OPENSHIP_INSTANCE_RECEIVE_TOKEN ?? "";
+    const expected = process.env.KOVALIO_INSTANCE_RECEIVE_TOKEN ?? "";
     const presented = (c.req.header("authorization") ?? "").replace(/^Bearer /, "");
     if (
       !expected ||
@@ -353,7 +353,7 @@ r.public(
       .parse(await c.req.json());
     const state = await controllerState();
     if (
-      input.peer.id !== process.env.OPENSHIP_INSTANCE_RECEIVE_ID ||
+      input.peer.id !== process.env.KOVALIO_INSTANCE_RECEIVE_ID ||
       (state.handoffId && state.handoffId !== input.peer.id) ||
       (!state.handoffId && state.role !== "receiving")
     )

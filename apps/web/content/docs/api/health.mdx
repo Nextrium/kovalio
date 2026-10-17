@@ -21,7 +21,7 @@ Returns `200` with a fixed body as long as the process is serving requests. Use 
 load-balancer health check — it touches no database and never requires auth.
 
 ```bash
-curl "$OPENSHIP_URL/api/health"
+curl "$KOVALIO_URL/api/health"
 # → {"status":"ok","timestamp":"2026-07-19T04:29:00.000Z"}
 ```
 
@@ -46,7 +46,7 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/health/env"
+curl "$KOVALIO_URL/api/health/env"
 ```
 
 </Tab>

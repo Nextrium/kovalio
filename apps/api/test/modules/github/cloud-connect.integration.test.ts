@@ -34,7 +34,7 @@ import {
 import { eq } from "@repo/db";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { githubRoutes } from "../../../src/modules/github/github.routes";
 import { healthRoutes } from "../../../src/modules/health/health.routes";
 import { githubInstallCallback } from "../../../src/modules/cloud/cloud-saas.controller";
@@ -64,8 +64,8 @@ async function clients(actor: SeededOwner) {
   });
   return {
     native: await ship.scope({ identity: "verified", organizationId: actor.orgId }),
-    http: new OpenshipClient({
-      baseUrl: "https://api.openship.test",
+    http: new KovalioClient({
+      baseUrl: "https://api.kovalio.test",
       token: actor.token,
       organizationId: actor.orgId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
@@ -110,7 +110,7 @@ function selectInstallation(html: string, installationId: number) {
 
 function callback(state: string, setupAction = "install") {
   return app.request(
-    `https://api.openship.test/api/cloud/github/install-callback?${new URLSearchParams({
+    `https://api.kovalio.test/api/cloud/github/install-callback?${new URLSearchParams({
       state,
       installation_id: "42",
       setup_action: setupAction,
@@ -137,7 +137,7 @@ describe("Cloud GitHub installation through HTTP, shared engine, and database", 
     const actor = await seedOwner();
     const c = await startInstallLink(actor);
 
-    // GitHub already has the App, while Openship has no workspace binding.
+    // GitHub already has the App, while Kovalio has no workspace binding.
     // The old URL goes to GitHub's settings page and never returns a callback.
     const page = await app.request(c.url);
     expect(page.status).toBe(200);
@@ -153,7 +153,7 @@ describe("Cloud GitHub installation through HTTP, shared engine, and database", 
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("GitHub App installed");
     expect(await c.http.github.getStatus({ includeInstallUrl: false })).toMatchObject({
-      state: { sources: { openshipApp: { connected: true, hasInstallations: true } } },
+      state: { sources: { kovalioApp: { connected: true, hasInstallations: true } } },
       accounts: [{ login: "acme", source: "app" }],
     });
     expect(await repos.githubInstallState.find(c.state)).toBeFalsy();
@@ -268,7 +268,7 @@ describe("Cloud GitHub installation through HTTP, shared engine, and database", 
     const actor = await seedOwner();
     const c = await start(actor);
     expect(await c.http.github.getStatus({ includeInstallUrl: false })).toMatchObject({
-      state: { sources: { openshipApp: { connected: true, hasInstallations: false } } },
+      state: { sources: { kovalioApp: { connected: true, hasInstallations: false } } },
       accounts: [],
       installUrl: "",
     });
@@ -277,7 +277,7 @@ describe("Cloud GitHub installation through HTTP, shared engine, and database", 
       organizationId: actor.orgId,
     });
 
-    // GitHub returns here without Openship cookies or a bearer credential.
+    // GitHub returns here without Kovalio cookies or a bearer credential.
     const response = await callback(c.state);
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("GitHub App installed");
@@ -288,7 +288,7 @@ describe("Cloud GitHub installation through HTTP, shared engine, and database", 
 
     for (const client of [c.http, c.native]) {
       expect(await client.github.getStatus({ includeInstallUrl: false })).toMatchObject({
-        state: { sources: { openshipApp: { connected: true, hasInstallations: true } } },
+        state: { sources: { kovalioApp: { connected: true, hasInstallations: true } } },
         accounts: [{ login: "acme", source: "app" }],
         installUrl: "",
       });
@@ -315,12 +315,12 @@ describe("Cloud GitHub installation through HTTP, shared engine, and database", 
     expect(await repos.gitInstallation.listByOrganization(actor.orgId)).toEqual([]);
     expect(await repos.githubInstallState.find(c.state)).toBeTruthy();
     expect(await c.http.github.getStatus({ includeInstallUrl: false })).toMatchObject({
-      state: { sources: { openshipApp: { hasInstallations: false } } },
+      state: { sources: { kovalioApp: { hasInstallations: false } } },
     });
 
     expect((await callback(c.state)).status).toBe(200);
     expect(await c.http.github.getStatus({ includeInstallUrl: false })).toMatchObject({
-      state: { sources: { openshipApp: { hasInstallations: true } } },
+      state: { sources: { kovalioApp: { hasInstallations: true } } },
     });
   });
 
@@ -336,7 +336,7 @@ describe("Cloud GitHub installation through HTTP, shared engine, and database", 
     expect(await pending.text()).toContain("requested");
     expect(await c.http.github.getStatus({ includeInstallUrl: false })).toMatchObject({
       accounts: [],
-      state: { sources: { openshipApp: { hasInstallations: false } } },
+      state: { sources: { kovalioApp: { hasInstallations: false } } },
     });
   });
 });

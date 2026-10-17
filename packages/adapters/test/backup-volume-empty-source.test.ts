@@ -96,7 +96,7 @@ describe("a service with no backupable source fails the run", () => {
 
     const artifacts = await produce(service({ containerId: "c1" }), exec);
     expect(artifacts).toHaveLength(1);
-    expect(artifacts[0]!.name).toMatch(/^volume-openship-pgdata-[a-f0-9]{16}\.tar\.zst$/);
+    expect(artifacts[0]!.name).toMatch(/^volume-kovalio-pgdata-[a-f0-9]{16}\.tar\.zst$/);
   });
 
   it("forwards quiesce to the executor and records what the archive IS", async () => {

@@ -33,7 +33,7 @@ export const publicConnection = (c: IngressConnection): PublicConnection => ({
   credentialId: c.credentialId,
   accountId: c.accountId,
   tunnelId: c.tunnelId,
-  name: c.managedTunnel ? c.name.replace(` (Openship ${c.id})`, "") : c.name,
+  name: c.managedTunnel ? c.name.replace(` (Kovalio ${c.id})`, "") : c.name,
   connector: c.connector,
   edgePort: c.edgePort,
   managedTunnel: c.managedTunnel,
@@ -168,7 +168,7 @@ export async function connect(ctx: ExecutionContext, input: IngressConnectInput)
       credentialId: input.credentialId,
       accountId: input.accountId,
       tunnelId: input.tunnelId ?? null,
-      name: input.tunnelId ? input.name : `${input.name} (Openship ${id})`,
+      name: input.tunnelId ? input.name : `${input.name} (Kovalio ${id})`,
       managedTunnel: !input.tunnelId,
       connector: input.connector,
       edgePort: input.edgePort ?? 80,
@@ -391,7 +391,7 @@ export async function reconcileConnection(snapshot: IngressConnection): Promise<
           if (c.managedTunnel) {
             if (tunnel.name !== c.name)
               throw new AppError(
-                "This tunnel was renamed outside Openship. Review it in Cloudflare before retrying.",
+                "This tunnel was renamed outside Kovalio. Review it in Cloudflare before retrying.",
                 409,
                 "INGRESS_PROVIDER_CONFLICT",
               );

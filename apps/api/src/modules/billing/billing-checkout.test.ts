@@ -16,7 +16,7 @@ const h = vi.hoisted(() => ({
   pending: new Map<string, unknown[]>(),
   env: { CLOUD_MODE: true, BILLING_ENABLED: true, BILLING_TOPUPS_ENABLED: true },
 }));
-vi.mock("@repo/platform/engine/config/env", () => ({ env: h.env, runtimeTarget: { dashboard: "https://app.openship.io" } }));
+vi.mock("@repo/platform/engine/config/env", () => ({ env: h.env, runtimeTarget: { dashboard: "https://kovalio.nextrium.org" } }));
 vi.mock("@repo/db", () => {
   const workspace = (organizationId: string) => ({
     id: `workspace-${organizationId}`, organizationId, namespace: `ns-${organizationId}`,
@@ -47,7 +47,7 @@ vi.mock("@repo/platform/engine/lib/oblien-client", () => ({
     assertMonthlyCapacitySupport: h.monthlySupport,
   }),
 }));
-vi.mock("@repo/platform/engine/lib/openship-cloud", () => ({ ensureNamespace: h.namespace }));
+vi.mock("@repo/platform/engine/lib/kovalio-cloud", () => ({ ensureNamespace: h.namespace }));
 vi.mock("@repo/platform/engine/modules/billing/billing-oblien-quota", () => ({
   syncOblienEntitlement: h.sync,
   withCloudBillingLock: async (orgId: string, work: (sync: (options: unknown) => Promise<unknown>) => Promise<unknown>) =>
@@ -104,7 +104,7 @@ describe("Cloud customer checkout", () => {
     ]);
     expect(presentCloudPlans().annual.enabled).toBe(false);
   });
-  it("starts an Openship offer bound to the authenticated organization", async () => {
+  it("starts an Kovalio offer bound to the authenticated organization", async () => {
     await createCheckoutSession(ctx(), "starter", "monthly", "attempt-00000001");
     const input = h.checkout.mock.calls[0]![0];
     expect(input).toMatchObject({
@@ -112,23 +112,23 @@ describe("Cloud customer checkout", () => {
       kind: "subscription",
       billingInterval: "monthly",
       offer: {
-        reference: "openship:starter:v11",
+        reference: "kovalio:starter:v11",
         unitAmount: 2000,
         credits: 0, billingMode: "monthly",
         capacity: { vcpus: 2, memoryMb: 8192, diskGb: 128, workspaces: 1 },
         resourceLimits: { max_workspaces: 1, max_disk_gb: 128, max_total_vcpus: 2, max_total_ram_mb: 8192, max_total_disk_gb: 128 },
       },
       metadata: {
-        openship_plan: "starter",
-        openship_organization: "org-a",
-        openship_namespace: "ns-org-a",
+        kovalio_plan: "starter",
+        kovalio_organization: "org-a",
+        kovalio_namespace: "ns-org-a",
       },
     });
     expect(input.successUrl).toContain("session_id={CHECKOUT_SESSION_ID}");
     expect(input.offer).not.toHaveProperty("policy");
     expect(input).not.toHaveProperty("planTierId");
     expect(input).not.toHaveProperty("customer");
-    expect(JSON.parse(input.metadata.openship_limits)).toMatchObject({
+    expect(JSON.parse(input.metadata.kovalio_limits)).toMatchObject({
       runningServices: 15,
       maxProjects: 10,
       concurrentBuilds: 4,
@@ -140,7 +140,7 @@ describe("Cloud customer checkout", () => {
     expect(h.checkout).toHaveBeenCalledWith(expect.objectContaining({
       namespace: "ns-org-a",
       offer: expect.objectContaining({
-        reference: "openship:hobby:v11", unitAmount: 500, credits: 0, billingMode: "monthly",
+        reference: "kovalio:hobby:v11", unitAmount: 500, credits: 0, billingMode: "monthly",
         resourceLimits: { max_workspaces: 1, max_vcpus: 1, max_ram_mb: 2048, max_disk_gb: 40,
           max_total_vcpus: 1, max_total_ram_mb: 2048, max_total_disk_gb: 40 },
       }),
@@ -148,7 +148,7 @@ describe("Cloud customer checkout", () => {
     expect(h.checkout.mock.calls[0]![0]).not.toHaveProperty("planTierId");
     expect(h.quota).not.toHaveBeenCalled();
   });
-  it("keeps an old provider Hobby subscription mapped to its original Openship Starter tier", () => {
+  it("keeps an old provider Hobby subscription mapped to its original Kovalio Starter tier", () => {
     expect(subscriptionPlan(subscription, "org-a", "ns-org-a").tier).toBe("starter");
   });
   it("does not invent yearly prices or grants while annual checkout is disabled", async () => {
@@ -166,7 +166,7 @@ describe("Cloud customer checkout", () => {
       capacity: { vcpus: 8, memoryMb: 32768, diskGb: 600, workspaces: 1 },
       resourceLimits: { max_workspaces: 1, max_vcpus: 8, max_ram_mb: 32768, max_disk_gb: 600, max_total_vcpus: 8, max_total_ram_mb: 32768, max_total_disk_gb: 600 },
     });
-    expect(JSON.parse(input.metadata.openship_limits).runningServices).toBe(100);
+    expect(JSON.parse(input.metadata.kovalio_limits).runningServices).toBe(100);
     expect(h.quota).not.toHaveBeenCalled();
   });
   it("passes a reseller's explicitly chosen VM restrictions unchanged", async () => {
@@ -278,7 +278,7 @@ describe("Cloud customer checkout", () => {
     );
     expect(h.checkout).not.toHaveBeenCalled();
   });
-  it("purchases reseller credit packs from Openship pricing", async () => {
+  it("purchases reseller credit packs from Kovalio pricing", async () => {
     h.subscription.mockImplementation(async (namespace) => ({
       success: true,
       namespace,
@@ -344,7 +344,7 @@ describe("Cloud customer checkout", () => {
   it("opens a separate customer portal for each trusted organization", async () => {
     for (const org of ["org-a", "org-b"]) {
       expect(await createPortalSession(org)).toEqual({ portalUrl: "https://billing.stripe.com/p/session/test" });
-      expect(h.portal).toHaveBeenLastCalledWith({ namespace: `ns-${org}`, returnUrl: "https://app.openship.io/billing/overview" });
+      expect(h.portal).toHaveBeenLastCalledWith({ namespace: `ns-${org}`, returnUrl: "https://kovalio.nextrium.org/billing/overview" });
     }
   });
   it("stops renewal at the paid period end and can resume without granting credits", async () => {

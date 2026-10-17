@@ -37,7 +37,7 @@ for (const path of ["/", "/login", "/accept-invite/:id"]) {
           <head>
             <meta charset="utf-8" />
             <meta name="viewport" content="width=device-width,initial-scale=1" />
-            <title>Open in Openship Desktop</title>
+            <title>Open in Kovalio Desktop</title>
             <style>
               :root {
                 color-scheme: light dark;
@@ -135,12 +135,12 @@ for (const path of ["/", "/login", "/accept-invite/:id"]) {
           </head>
           <body>
             <main>
-              <small>Openship</small>
+              <small>Kovalio</small>
               <h1>${id ? "Join your team in Desktop" : "Your instance is online"}</h1>
               <p>
                 Open this instance in Desktop, then sign in${id ? " or create your invited account. Review the workspace and role before joining" : " with your account"}.
               </p>
-              ${desktopLink ? html`<a href="${desktopLink}" rel="noreferrer">Open in Openship Desktop</a>` : ""}
+              ${desktopLink ? html`<a href="${desktopLink}" rel="noreferrer">Open in Kovalio Desktop</a>` : ""}
               <p>
                 Desktop didn't open? Copy the address below. In
                 <strong>Settings → Instance</strong>, open More instance options and choose
@@ -149,9 +149,9 @@ for (const path of ["/", "/login", "/accept-invite/:id"]) {
               <label for="address">${id ? "Invitation address" : "Instance address"}</label
               ><input id="address" type="text" readonly value="${address}" /><a
                 class="download"
-                href="https://openship.io/download"
+                href="https://nextrium.org/download"
                 rel="noreferrer"
-                >Get Openship Desktop</a
+                >Get Kovalio Desktop</a
               >
             </main>
           </body>

@@ -9,9 +9,9 @@ both the call and the final deployment outcome.
 ## Operation errors
 
 ```ts title="operation-errors.mts"
-import { OperationError, type OpenshipClient, type ScopedShip } from "openship";
+import { OperationError, type KovalioClient, type ScopedShip } from "kovalio";
 
-export async function readProject(ship: OpenshipClient | ScopedShip, projectId: string) {
+export async function readProject(ship: KovalioClient | ScopedShip, projectId: string) {
   try {
     return await ship.projects.get(projectId);
   } catch (error) {
@@ -52,10 +52,10 @@ the offered action IDs. See [deployment decisions](/docs/api/deployments#wait-de
 Stream methods return async iterables. Pass an abort signal or stop iteration to release a stream:
 
 ```ts title="stream-logs.mts"
-import { consumeDeploymentEvents, type OpenshipClient, type ScopedShip } from "openship";
+import { consumeDeploymentEvents, type KovalioClient, type ScopedShip } from "kovalio";
 
 export async function watchLogs(
-  ship: OpenshipClient | ScopedShip,
+  ship: KovalioClient | ScopedShip,
   deploymentId: string,
   signal: AbortSignal,
 ) {
@@ -71,9 +71,9 @@ Aborting a stream or wait does not cancel the underlying workload. Request that 
 ## Pagination
 
 ```ts title="all-projects.mts"
-import { iteratePages, type OpenshipClient, type ScopedShip } from "openship";
+import { iteratePages, type KovalioClient, type ScopedShip } from "kovalio";
 
-export async function allProjects(ship: OpenshipClient | ScopedShip, signal?: AbortSignal) {
+export async function allProjects(ship: KovalioClient | ScopedShip, signal?: AbortSignal) {
   const ids: string[] = [];
   for await (const project of iteratePages((page) => ship.projects.list(page), {
     perPage: 50,

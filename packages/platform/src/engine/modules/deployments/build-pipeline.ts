@@ -1521,7 +1521,7 @@ async function executeBuildAndDeploy(
       return;
     }
     const message = err instanceof Error ? err.message : "Unknown error";
-    if (process.env.OPENSHIP_DEBUG_PIPELINE) errorDiagnostics.error("platform/engine/modules/deployments/build-pipeline", "[pipeline]", err);
+    if (process.env.KOVALIO_DEBUG_PIPELINE) errorDiagnostics.error("platform/engine/modules/deployments/build-pipeline", "[pipeline]", err);
     // Only an UNSETTLED error is a deploy failure. An error thrown after the
     // outcome was recorded is bookkeeping: reporting it as a failure would
     // invert a working deploy and tear its containers down.
@@ -1981,8 +1981,8 @@ async function executeServerDeploy(phase: DeployPhaseInputs, deployConfig: Deplo
         ? runtime
         : new BareRuntime({
             workDir:
-              process.env.OPENSHIP_NATIVE === "true" && phase.effectiveTarget === "local"
-                ? `${process.env.OPENSHIP_DATA_DIR}/workloads/static`
+              process.env.KOVALIO_NATIVE === "true" && phase.effectiveTarget === "local"
+                ? `${process.env.KOVALIO_DATA_DIR}/workloads/static`
                 : STATIC_RELEASE_BASE,
             executor: phase.staticExecutor ?? undefined,
           })
@@ -2473,7 +2473,7 @@ async function executeServerDeploy(phase: DeployPhaseInputs, deployConfig: Deplo
   // Runtime roles (#935): start this deployment's worker and scheduler containers
   // before the web container, beside the previous ones (see role-rollout.ts).
   // Runs when this deploy declares roles OR the previous one ran some, so roles
-  // removed from openship.json are retired too.
+  // removed from kovalio.json are retired too.
   let roleRollout: RoleRollout | undefined;
   let roleFailure: DeployPipelineResult | undefined;
   if (snapshot.roles?.length || prevDep?.roleContainers?.length) {

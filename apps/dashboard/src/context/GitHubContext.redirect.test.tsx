@@ -28,7 +28,7 @@ vi.mock("@/lib/api", () => ({
   githubApi: h,
   settingsApi: { get: async () => ({}) },
   getApiErrorMessage: (error: Error) => error.message,
-  GITHUB_SOURCES_CHANGED_EVENT: "openship:github-sources-changed",
+  GITHUB_SOURCES_CHANGED_EVENT: "kovalio:github-sources-changed",
 }));
 vi.mock("@/utils/authWindow", () => ({ openAuthWindow: h.openWindow }));
 vi.mock("@/context/ToastContext", () => ({ useToast: () => ({ showToast: h.showToast }) }));
@@ -41,12 +41,12 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const disconnected: GitHubConnectionState = {
   primary: null,
-  sources: { openshipApp: { connected: false }, ghCli: { available: false } },
+  sources: { kovalioApp: { connected: false }, ghCli: { available: false } },
 };
 const oauthOnly: GitHubConnectionState = {
-  primary: "openship-app",
+  primary: "kovalio-app",
   sources: {
-    openshipApp: { connected: true, login: "installer", hasInstallations: false },
+    kovalioApp: { connected: true, login: "installer", hasInstallations: false },
     ghCli: { available: false },
   },
 };
@@ -54,13 +54,13 @@ const installed: GitHubConnectionState = {
   ...oauthOnly,
   sources: {
     ...oauthOnly.sources,
-    openshipApp: { ...oauthOnly.sources.openshipApp, hasInstallations: true },
+    kovalioApp: { ...oauthOnly.sources.kovalioApp, hasInstallations: true },
   },
 };
 const cliOnly: GitHubConnectionState = {
   primary: "gh-cli",
   sources: {
-    openshipApp: { connected: false },
+    kovalioApp: { connected: false },
     ghCli: { available: true, login: "operator", method: "host-cli" },
   },
 };
@@ -91,7 +91,7 @@ function Probe() {
         Disconnect
       </button>
       <output data-testid="app-state">
-        {state.sources.openshipApp.hasInstallations ? "installed" : "unavailable"}
+        {state.sources.kovalioApp.hasInstallations ? "installed" : "unavailable"}
       </output>
     </>
   );
@@ -125,7 +125,7 @@ beforeEach(() => {
     connected: false,
     flow: "redirect",
     step: "install",
-    url: "https://github.com/apps/openship-io/installations/new?state=test-state",
+    url: "https://github.com/apps/kovalio-io/installations/new?state=test-state",
     state: "test-state",
   });
   h.disconnect.mockResolvedValue({ success: true });
@@ -133,8 +133,8 @@ beforeEach(() => {
   h.claimInstallation.mockResolvedValue({ ok: true, installation: { id: 42, login: "connected-team" } });
   const status = async () => ({
     state: serverState,
-    accounts: serverState.sources.openshipApp.hasInstallations ? installedAccounts : [],
-    installUrl: "https://github.com/apps/openship-io/installations/new?state=expired-page-link",
+    accounts: serverState.sources.kovalioApp.hasInstallations ? installedAccounts : [],
+    installUrl: "https://github.com/apps/kovalio-io/installations/new?state=expired-page-link",
   });
   h.getStatus.mockImplementation(status);
   h.getStatusDeduped.mockImplementation(status);
@@ -309,7 +309,7 @@ describe("GitHub redirect completion", () => {
 
     expect(h.connect).toHaveBeenCalledWith("oauth");
     expect(handle.navigate).toHaveBeenCalledWith(
-      "https://github.com/apps/openship-io/installations/new?state=test-state",
+      "https://github.com/apps/kovalio-io/installations/new?state=test-state",
     );
     expect(h.getStatusDeduped).toHaveBeenCalledTimes(reads);
     serverState = installed;
@@ -403,7 +403,7 @@ describe("GitHub redirect completion", () => {
           resolveOldStatus = resolve;
         }),
     );
-    await act(async () => window.dispatchEvent(new Event("openship:github-sources-changed")));
+    await act(async () => window.dispatchEvent(new Event("kovalio:github-sources-changed")));
     serverState = installed;
     await advance();
     expect(container.textContent).toContain("connected-team");
@@ -555,7 +555,7 @@ describe("GitHub redirect completion", () => {
 
     expect(connectButton().disabled).toBe(false);
     expect(h.showToast).toHaveBeenCalledWith(
-      expect.stringContaining("already linked to a different Openship user"),
+      expect.stringContaining("already linked to a different Kovalio user"),
       "error",
       "GitHub",
     );
@@ -566,7 +566,7 @@ describe("GitHub redirect completion", () => {
       connected: false,
       flow: "redirect",
       step: "oauth",
-      url: "https://api.openship.io/api/cloud/github/oauth-bridge?token=test",
+      url: "https://api.nextrium.org/api/cloud/github/oauth-bridge?token=test",
     });
     await start();
     serverState = oauthOnly;

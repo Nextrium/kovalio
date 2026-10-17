@@ -469,7 +469,7 @@ const DeployTargetStep: React.FC<DeployTargetStepProps> = ({ serverSelection, ru
         <h1 className="text-2xl font-medium">Deploy to server cluster</h1>
         {backButton}
       </header>
-      <p className="text-sm leading-relaxed text-muted-foreground">This project uses the cluster and instance count saved in its Scale controls. OpenShip builds or reuses the application image, starts the instances, and checks their health before switching traffic.</p>
+      <p className="text-sm leading-relaxed text-muted-foreground">This project uses the cluster and instance count saved in its Scale controls. Kovalio builds or reuses the application image, starts the instances, and checks their health before switching traffic.</p>
       <Button onClick={onContinue}>Continue</Button>
     </div>
   );

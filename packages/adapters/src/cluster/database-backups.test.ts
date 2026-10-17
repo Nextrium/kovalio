@@ -5,7 +5,7 @@ import { ClusterDatabaseAdapter } from "./database";
 const signal = new AbortController().signal;
 const storage = {
   destinationId: "s3",
-  destinationPath: "s3://archives/openship/databases",
+  destinationPath: "s3://archives/kovalio/databases",
   endpoint: "https://objects.example.com",
   region: "auto",
   accessKeyId: "s3-access-test-value",
@@ -26,7 +26,7 @@ function archive(objects: KubernetesObject[]) {
     archive: new PostgresArchive(
       api,
       "namespace",
-      { "openship.io/database": "database" },
+      { "nextrium.org/database": "database" },
       signal,
       vi.fn(),
       declare,
@@ -38,7 +38,7 @@ function archive(objects: KubernetesObject[]) {
 const backup = (phase: string, extra: Record<string, unknown> = {}): KubernetesObject => ({
   metadata: {
     name: "saved-backup",
-    labels: { "openship.io/database": "database", "openship.io/backup-request": "request" },
+    labels: { "nextrium.org/database": "database", "nextrium.org/backup-request": "request" },
   },
   spec: { cluster: { name: "database" } },
   status: {
@@ -85,7 +85,7 @@ describe("operator archive recovery", () => {
           mode: "standalone",
           instances: 1,
           storageGiB: 20,
-          storageClass: "openship-local",
+          storageClass: "kovalio-local",
           cpuMillis: 500,
           memoryMiB: 512,
           databaseName: "app",

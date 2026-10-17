@@ -124,7 +124,7 @@ type JobContext struct { Status string \`json:"status"\`; Container ContainerCon
 `,
   );
   writeFileSync(
-    join(patched, "pkg/runner/openship_context.go"),
+    join(patched, "pkg/runner/kovalio_context.go"),
     `package runner
 import ("context"; "github.com/nektos/act/pkg/common"; "github.com/nektos/act/pkg/container"; "github.com/nektos/act/pkg/model")
 func (rc *RunContext) loadContainerContext() common.Executor {
@@ -145,7 +145,7 @@ func (rc *RunContext) loadContainerContext() common.Executor {
 `,
   );
   writeFileSync(
-    join(patched, "pkg/container/openship_context.go"),
+    join(patched, "pkg/container/kovalio_context.go"),
     `package container
 import ("context"; "fmt"; "github.com/moby/moby/client")
 func ExecutionDetails(ctx context.Context, environment ExecutionsEnvironment) (string, string, string, map[string]string, error) {
@@ -173,7 +173,7 @@ func ExecutionDetails(ctx context.Context, environment ExecutionsEnvironment) (s
   replace("Strategy:  strategy,", "Strategy:  rc.runtimeStrategy(strategy),");
   replace("Strategy: strategy,", "Strategy: rc.runtimeStrategy(strategy),");
   source += `
-// OpenShip schedules the matrix; preserve its concrete strategy context.
+// Kovalio schedules the matrix; preserve its concrete strategy context.
 func (rc *RunContext) runtimeStrategy(value map[string]interface{}) map[string]interface{} {
   for key, item := range rc.RuntimeStrategy { value[key] = item }
   return value
@@ -203,7 +203,7 @@ func (rc *RunContext) runtimeStrategy(value map[string]interface{}) map[string]i
     "func RunnerArch(ctx context.Context) string {\n\tif arch, ok := ctx.Value(executionPlatformKey{}).(string); ok { return arch }\n",
   );
   writeFileSync(
-    join(patched, "pkg/container/openship_platform.go"),
+    join(patched, "pkg/container/kovalio_platform.go"),
     `package container
 import "context"
 type executionPlatformKey struct{}
@@ -230,11 +230,11 @@ func WithExecutionPlatform(ctx context.Context, platform string) context.Context
   chmodSync(networkPath, 0o644);
   writeFileSync(networkPath, source);
   writeFileSync(
-    join(patched, "pkg/container/openship_owner.go"),
+    join(patched, "pkg/container/kovalio_owner.go"),
     `package container
 import ("context"; "crypto/sha256"; "fmt")
 type executionOwnerKey struct{}
-const ExecutionOwnerLabel = "io.openship.actions.job"
+const ExecutionOwnerLabel = "io.kovalio.actions.job"
 func WithExecutionOwner(ctx context.Context, id string) context.Context { return context.WithValue(ctx, executionOwnerKey{}, id) }
 func ExecutionLabels(ctx context.Context, labels map[string]string) map[string]string {
   if id, ok := ctx.Value(executionOwnerKey{}).(string); ok && id != "" {
@@ -243,7 +243,7 @@ func ExecutionLabels(ctx context.Context, labels map[string]string) map[string]s
   }
   return labels
 }
-func ExecutionResourcePrefix(id string) string { sum := sha256.Sum256([]byte(id)); return fmt.Sprintf("openship-actions-%x", sum[:16]) }
+func ExecutionResourcePrefix(id string) string { sum := sha256.Sum256([]byte(id)); return fmt.Sprintf("kovalio-actions-%x", sum[:16]) }
 `,
   );
   const modfile = join(output, "runner.mod");

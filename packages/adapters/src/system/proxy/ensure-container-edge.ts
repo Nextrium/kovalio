@@ -266,7 +266,7 @@ async function startEdgeContainer(
 export type EdgeContainerMount = Readonly<{ host: string; container: string }>;
 
 /** Marks the start of each mount's output in the batched resolve exec below. */
-const MOUNT_RESOLVE_MARKER = "__OPENSHIP_MOUNT__";
+const MOUNT_RESOLVE_MARKER = "__KOVALIO_MOUNT__";
 
 /**
  * Resolve bind sources on the machine that owns the Docker daemon.

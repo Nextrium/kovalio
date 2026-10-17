@@ -1,6 +1,6 @@
 {
   "title": "Monitoring",
-  "subtitle": "Alles, was Openship in deinen Projekten, Servern und Domains gefunden hat.",
+  "subtitle": "Alles, was Kovalio in deinen Projekten, Servern und Domains gefunden hat.",
   "tabs": {
     "open": "Übersicht",
     "health": "Gesundheit",
@@ -105,12 +105,12 @@
     "offlineHint": "Der angezeigte Status ist möglicherweise veraltet. Stelle die Verbindung wieder her, um ihn zu aktualisieren.",
     "retryStatus": "Status erneut laden",
     "recheck": "Erneut prüfen",
-    "unknownHealth": "Der Zustand der Container ist unbekannt, bis Openship diesen Server erreicht.",
-    "monitoringHint": "Openship kann die betroffenen Server nicht erreichen. Ihr aktueller Zustand ist unbekannt.",
+    "unknownHealth": "Der Zustand der Container ist unbekannt, bis Kovalio diesen Server erreicht.",
+    "monitoringHint": "Kovalio kann die betroffenen Server nicht erreichen. Ihr aktueller Zustand ist unbekannt.",
     "details": "Technische Details",
     "mailTitle": "Mailstatus nicht verfügbar",
-    "mailHint": "Openship konnte diesen Mailserver nicht prüfen. Er läuft möglicherweise weiterhin. Prüfe die Verbindung und versuche es erneut.",
-    "apiTitle": "Openship nicht erreichbar",
+    "mailHint": "Kovalio konnte diesen Mailserver nicht prüfen. Er läuft möglicherweise weiterhin. Prüfe die Verbindung und versuche es erneut.",
+    "apiTitle": "Kovalio nicht erreichbar",
     "apiHint": "Statusaktualisierungen können verzögert sein."
   },
   "actionLabels": {
@@ -153,7 +153,7 @@
     "requestTimeout": "Zeitüberschreitung der Anforderung. Der Server hat zu lange für eine Antwort gebraucht.",
     "requestCancelled": "Anforderung abgebrochen.",
     "requestFailed": "Anforderung fehlgeschlagen.",
-    "networkUnreachable": "Openship kann nicht erreicht werden. Überprüfen Sie Verbindung und Serververfügbarkeit.",
+    "networkUnreachable": "Kovalio kann nicht erreicht werden. Überprüfen Sie Verbindung und Serververfügbarkeit.",
     "hostUnreachable": "Host nicht erreichbar",
     "sshConnectionRefused": "SSH-Verbindung verweigert"
   },
@@ -169,7 +169,7 @@
       "descCannotManage": "Ein Instanz-Administrator kann automatische Prüfungen aktivieren.",
       "scheduleEveryMinute": "Jede Minute",
       "scheduleCustom": "Benutzerdefinierter Zeitplan",
-      "runsWhileOpen": "Openship geöffnet lassen",
+      "runsWhileOpen": "Kovalio geöffnet lassen",
       "runsInBackground": "Läuft im Hintergrund",
       "saving": "Wird gespeichert…",
       "disable": "Überwachung deaktivieren",

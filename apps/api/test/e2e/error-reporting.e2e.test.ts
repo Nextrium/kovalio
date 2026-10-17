@@ -42,13 +42,13 @@ async function reported(requestId: string | null, kind = "http") {
 }
 
 beforeAll(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openship-diagnostics-e2e-"));
+  directory = await mkdtemp(join(tmpdir(), "kovalio-diagnostics-e2e-"));
   api = await startApi({
     dbDir: directory,
     port: await freePort(),
     authMode: "local",
     cloudMode: true,
-    environment: { OPENSHIP_REQUIRE_REDIS: "false" },
+    environment: { KOVALIO_REQUIRE_REDIS: "false" },
     secret: "diagnostics-e2e-local-secret-not-a-customer-secret",
   });
 });
@@ -206,7 +206,7 @@ describe("real Cloud API diagnostics without provider or host access", () => {
 it.each(["local", "none"] as const)(
   "leaves diagnostics disabled on a non-Cloud API (auth: %s)",
   async (authMode) => {
-    const dbDir = await mkdtemp(join(tmpdir(), "openship-private-diagnostics-e2e-"));
+    const dbDir = await mkdtemp(join(tmpdir(), "kovalio-private-diagnostics-e2e-"));
     let local: RunningApi | undefined;
     try {
       local = await startApi({

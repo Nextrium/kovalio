@@ -38,7 +38,7 @@ export function CloudPlanIllustration({
       />
       <path d="M144 76h18a10 10 0 0 0 10-10v-9" stroke="var(--th-on-20)" strokeWidth="1.25" strokeDasharray="3 4" strokeLinecap="round" />
 
-      {/* Layered app preview, with a small Openship ring and muted content lines. */}
+      {/* Layered app preview, with a small Kovalio ring and muted content lines. */}
       <rect x="52" y="32" width="98" height="58" rx="11" fill="var(--th-sf-03)" stroke="var(--th-on-08)" />
       <rect x="43" y="40" width="98" height="58" rx="11" fill="var(--th-card-bg)" stroke="var(--th-on-16)" />
       <path d="M44 54h96" stroke="var(--th-on-08)" />

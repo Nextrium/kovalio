@@ -82,9 +82,9 @@ kovalio project git webhook-domain <project-id> --clear
 
 You don't have to think about this, but here's what happens under the hood so nothing feels like magic. Kovalio picks the simplest delivery route that works for your setup:
 
-- **Public Openship** — if your Openship API has a public web address, turning on Auto Deploy registers a webhook on your repo that points at `…/api/webhooks/github`. GitHub calls it on every push.
-- **Verified domain** — if you set a Webhook Endpoint, GitHub delivers instead to `https://<your-domain>/_openship/hooks/github`, which routes to Openship. This is the option for private or laptop installs.
-- **GitHub App** — on Openship Cloud or with your own self-hosted App, push events arrive through the App automatically; there's no duplicate per-repo webhook to manage.
+- **Public Kovalio** — if your Kovalio API has a public web address, turning on Auto Deploy registers a webhook on your repo that points at `…/api/webhooks/github`. GitHub calls it on every push.
+- **Verified domain** — if you set a Webhook Endpoint, GitHub delivers instead to `https://<your-domain>/_kovalio/hooks/github`, which routes to Kovalio. This is the option for private or laptop installs.
+- **GitHub App** — on Kovalio Cloud or with your own self-hosted App, push events arrive through the App automatically; there's no duplicate per-repo webhook to manage.
 
 In every case, Kovalio starts a fresh build from the commit you just pushed — the same build you'd get by clicking Deploy.
 
@@ -103,12 +103,12 @@ This means Kovalio couldn't add the webhook to your repository — usually becau
 </Callout>
 
 <Callout title="I pushed, but nothing deployed" type="warn">
-Check the **Webhook** status card on the Source tab. If it says **Inactive**, delivery isn't reaching Openship — revisit the webhook endpoint above. Also confirm you pushed to the project's **deploy branch**; pushes to other branches are ignored.
+Check the **Webhook** status card on the Source tab. If it says **Inactive**, delivery isn't reaching Kovalio — revisit the webhook endpoint above. Also confirm you pushed to the project's **deploy branch**; pushes to other branches are ignored.
 
 If another deployment is running, the new push is reported as a **failed** delivery,
 with the reason in the project's webhook events. Wait for the running deployment
 to finish or cancel it, then **Redeliver** the failed event from GitHub's webhook
-delivery history. GitHub does not automatically redeliver failures. Openship
+delivery history. GitHub does not automatically redeliver failures. Kovalio
 accepts a retry of the same failed delivery ID and remembers projects already
 handled by that delivery, so only the remaining projects are retried. It also skips
 a commit that is already building or live. A successful delivery remains deduplicated.

@@ -117,7 +117,7 @@ async function fetchChangelog(tag: string): Promise<string | null> {
   if (!tag) return null;
   try {
     const res = await net.fetch(changelogMarkdownUrl(tag), {
-      headers: { Accept: "text/markdown", "User-Agent": "Openship-Desktop" },
+      headers: { Accept: "text/markdown", "User-Agent": "Kovalio-Desktop" },
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return null;
@@ -160,12 +160,12 @@ export async function downloadUpdate(
   // The release feed comes from the pinned repo, but the asset URL inside it was
   // previously followed wherever it pointed — so a tampered feed could source the
   // installer from any host. Pin it to GitHub's own release hosts.
-  const expectedUrl = `https://github.com/oblien/openship/releases/download/v${encodeURIComponent(version)}/${encodeURIComponent(asset.name)}`;
+  const expectedUrl = `https://github.com/Nextrium/kovalio/releases/download/v${encodeURIComponent(version)}/${encodeURIComponent(asset.name)}`;
   if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(asset.name) || asset.url !== expectedUrl || !isAllowedUpdateAssetUrl(asset.url)) {
     throw new Error(`Refusing to download update from untrusted URL: ${asset.url}`);
   }
 
-  const dir = mkdtempSync(join(app.getPath("temp"), "openship-update-"));
+  const dir = mkdtempSync(join(app.getPath("temp"), "kovalio-update-"));
   const dest = join(dir, asset.name);
   try {
     await downloadVerifiedInstaller(asset, version, onProgress, dest);

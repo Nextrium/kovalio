@@ -1254,8 +1254,8 @@ async function deleteLiveService(project: Project, svc: Service): Promise<void> 
           // repos.service.remove() below erases the imageRef record, so a later
           // teardown could never enumerate it. Best-effort; images:gc is the backstop.
           //
-          // Two shapes, and the `openship/` tag guard answers for only one: a
-          // STATIC sub-app's imageRef is a host DIRECTORY (`/opt/openship/static/…`),
+          // Two shapes, and the `kovalio/` tag guard answers for only one: a
+          // STATIC sub-app's imageRef is a host DIRECTORY (`/opt/kovalio/static/…`),
           // which fails that prefix test, so deleting a static service used to leak
           // its doc-root with nothing left in the DB to find it by (issue #640's
           // third door). The tag guard stays for the image case: a base/third-party
@@ -1326,7 +1326,7 @@ async function deleteLiveService(project: Project, svc: Service): Promise<void> 
 
 export async function deleteService(ctx: RequestContext, projectId: string, serviceId: string) {
   const { project } = await assertServiceAccess(ctx, projectId, serviceId);
-  // The self-app project's services ARE the Openship stack (api, dashboard, edge,
+  // The self-app project's services ARE the Kovalio stack (api, dashboard, edge,
   // postgres, redis), linked so the dashboard can show their state, logs and shell.
   assertNotControlPlane(project);
 

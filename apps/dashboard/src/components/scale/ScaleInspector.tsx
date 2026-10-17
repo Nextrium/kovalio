@@ -74,7 +74,7 @@ function ApplicationSettings({
       </Section>
       <Section
         title="Horizontal scaling"
-        description="Each instance is a separate node on the canvas. OpenShip Edge balances traffic directly across them."
+        description="Each instance is a separate node on the canvas. Kovalio Edge balances traffic directly across them."
       >
         <NumberField
           label={service.autoscale ? "Initial instances" : "Instances"}
@@ -257,7 +257,7 @@ function Configuration({
       )}
       {resource.kind === "edge" && (
         <Section
-          title="OpenShip Edge"
+          title="Kovalio Edge"
           description="Ingress, TLS, API routing, and load balancing for your applications."
         >
           <ToggleField
@@ -289,7 +289,7 @@ function Configuration({
             onChange={(healthInterval) => onUpdate({ ...resource, healthInterval })}
           />
           <Note>
-            Connect this gateway directly to application instances or another OpenShip Edge. There
+            Connect this gateway directly to application instances or another Kovalio Edge. There
             is no separate load balancer to provision.
           </Note>
         </Section>

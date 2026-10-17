@@ -79,7 +79,7 @@ export function setHostControlOverride(disabled: boolean | null): void {
 /** Host control explicitly switched off — by the operator's Settings toggle
  *  (runtime override) or, absent that, by `--no-host-control` at install. */
 export function hostControlDisabled(): boolean {
-  if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION !== "true") return true;
+  if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION !== "true") return true;
   return (
     hostControlOverride ??
     process.env.KOVALIO_HOST_CONTROL?.trim().toLowerCase() === "false"

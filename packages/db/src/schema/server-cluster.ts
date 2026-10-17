@@ -79,7 +79,7 @@ export const clusterNetwork = pgTable(
     cidrs: jsonb("cidrs").$type<string[]>().notNull(),
     mtu: integer("mtu").notNull(),
     probePort: integer("probe_port").notNull(),
-    ownership: text("ownership").$type<"external" | "openship">().notNull().default("external"),
+    ownership: text("ownership").$type<"external" | "kovalio">().notNull().default("external"),
     managedId: text("managed_id"),
     interfaceName: text("interface_name"),
   },

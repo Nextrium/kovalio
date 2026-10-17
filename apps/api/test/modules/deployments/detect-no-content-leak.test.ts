@@ -23,7 +23,7 @@ import {
 
 const SENTINELS = {
   rootEnv: "ROOT_ENV_SECRET_a1b2c3",
-  openshipEnv: "OPENSHIP_ENV_SECRET_j1k2l3",
+  kovalioEnv: "KOVALIO_ENV_SECRET_j1k2l3",
   serviceEnv: "SERVICE_ENV_SECRET_d4e5f6",
   secondService: "SECOND_SERVICE_SECRET_g7h8i9",
 };
@@ -51,11 +51,11 @@ function infoWithSecrets() {
     productionPaths: ["dist"],
     port: 3000,
     rootEnv: { DATABASE_URL: SENTINELS.rootEnv, PUBLIC_NAME: "fine" },
-    openshipEnv: {
+    kovalioEnv: {
       DATABASE_URL: SENTINELS.rootEnv,
-      DECLARED_TOKEN: { value: SENTINELS.openshipEnv, secret: true },
+      DECLARED_TOKEN: { value: SENTINELS.kovalioEnv, secret: true },
     },
-    // #641: what the openship.json parse refused. These are field paths and enum
+    // #641: what the kovalio.json parse refused. These are field paths and enum
     // lists, never file values — but the whole payload is scanned above, so a
     // future change that started quoting the file back would fail here.
     configDiagnostics: {
@@ -99,7 +99,7 @@ describe("detect cannot leak file content through env values", () => {
     expect(out.services?.[0]?.environment.STRIPE_SECRET).toBe(SENTINELS.serviceEnv);
     expect(out.services?.[1]?.environment.POSTGRES_PASSWORD).toBe(SENTINELS.secondService);
     expect(out.services?.[0]?.environmentMeta?.STRIPE_SECRET?.resolvedValue).toBe(SENTINELS.serviceEnv);
-    expect(out).not.toHaveProperty("openshipEnv");
+    expect(out).not.toHaveProperty("kovalioEnv");
     expect(JSON.stringify(out)).not.toContain("private-template");
     out.services![0]!.environment.STRIPE_SECRET = "edited";
     expect(service.environment.STRIPE_SECRET).toBe(SENTINELS.serviceEnv);
@@ -121,8 +121,8 @@ describe("detect cannot leak file content through env values", () => {
     const out = projectInfoToPublicResponse(infoWithSecrets());
     const serialised = JSON.stringify(out);
 
-    expect(out).not.toHaveProperty("openshipEnv");
-    expect(out.openshipEnvKeys).toEqual(["DATABASE_URL", "DECLARED_TOKEN"]);
+    expect(out).not.toHaveProperty("kovalioEnv");
+    expect(out.kovalioEnvKeys).toEqual(["DATABASE_URL", "DECLARED_TOKEN"]);
     for (const secret of Object.values(SENTINELS)) {
       expect(serialised).not.toContain(secret);
     }

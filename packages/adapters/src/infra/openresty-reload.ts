@@ -53,7 +53,7 @@ async function processStartTime(executor: CommandExecutor, pid: number): Promise
  * Prove this is the exact nginx/OpenResty installation (and config, when -c is
  * explicit) whose configuration we just validated. A process name or unit name
  * alone is insufficient: a box may run a foreign system nginx beside the legacy
- * Openship OpenResty installation.
+ * Kovalio OpenResty installation.
  */
 async function verifyNginxProcessIdentity(
   executor: CommandExecutor,

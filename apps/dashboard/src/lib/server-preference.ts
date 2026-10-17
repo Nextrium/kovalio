@@ -4,7 +4,7 @@ import { createPersistedValue } from "./persisted-value";
  * whether it can be selected. Keep hints separate for each account and org. */
 export function serverPreference(contextKey: string) {
   return createPersistedValue<string>(
-    `openship.deploy-server:${contextKey}`,
+    `kovalio.deploy-server:${contextKey}`,
     (value): value is string => typeof value === "string" && value.length > 0,
   );
 }

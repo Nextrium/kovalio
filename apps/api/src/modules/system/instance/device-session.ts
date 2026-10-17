@@ -3,7 +3,7 @@ import { z } from "zod";
 import { instanceOrigin, type InstanceConnection } from "@repo/core";
 import { auth } from "@repo/platform/engine/lib/auth";
 
-export const deviceCookieName = /^(?:__Secure-)?openship(?:[-_][a-z0-9-]+)?\.[A-Za-z0-9_.-]+$/;
+export const deviceCookieName = /^(?:__Secure-)?kovalio(?:[-_][a-z0-9-]+)?\.[A-Za-z0-9_.-]+$/;
 export const connectionSchema = z.object({
   origin: z.string().transform(instanceOrigin),
   installationId: z.string().uuid(),

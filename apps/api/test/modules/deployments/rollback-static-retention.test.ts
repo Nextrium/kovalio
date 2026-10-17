@@ -21,7 +21,7 @@ let paths: string[];
 const exists = (path: string) => access(path).then(() => true, () => false);
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), "openship-static-retention-"));
+  root = await mkdtemp(join(tmpdir(), "kovalio-static-retention-"));
   h.runtime = new BareRuntime({ workDir: root, executor: new LocalExecutor() });
   const org = await seedOrg();
   project = await seedProject(org.organizationId, { rollbackWindow: 5, workloadType: "static", hasServer: false });

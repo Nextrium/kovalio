@@ -75,7 +75,7 @@ vi.mock("@repo/adapters", async (original) => ({
     ready: async () => ({ ready: true, clusterUid: "fixture-cluster" }),
     nodes: async (_executor: unknown, context: K3sHostContext) => ({
       items: context.plan.hosts.map((host) => ({
-        metadata: { name: host.nodeName, labels: { "openship.io/runtime": context.id } },
+        metadata: { name: host.nodeName, labels: { "nextrium.org/runtime": context.id } },
         status: {
           nodeInfo: { kubeletVersion: context.plan.version },
           addresses: [{ type: "InternalIP", address: host.privateIp }],
@@ -103,7 +103,7 @@ const app = new Hono()
   .route("/api/system", serverManagementRoutes)
   .route("/api/mcp", mcpRoutes);
 beforeAll(() => {
-  vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory");
+  vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory");
   h.fetch.mockImplementation((request: Request) => app.fetch(request));
   h.inspect.mockResolvedValue({
     interfaceName: "eth1",

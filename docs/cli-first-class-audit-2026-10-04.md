@@ -1,4 +1,4 @@
-# Openship CLI review and fixes — 2026-10-04
+# Kovalio CLI review and fixes — 2026-10-04
 
 The six defects reproduced in the original review are fixed in the current worktree. The CLI now exposes additional everyday management workflows through the shared SDK and contracts. This does **not** establish complete parity with every dashboard feature or live-provider readiness; the remaining limits are listed below.
 
@@ -75,4 +75,4 @@ The CLI is substantially more capable, but full platform parity is still unfinis
 
 Further CLI coverage should call the existing typed SDK operations. Operations missing from the shared surface should first be migrated there with authorization and parity tests, rather than adding provider logic to command handlers. Internal callbacks and provider webhooks do not need user-facing CLI verbs.
 
-Local verification artifacts are under `/tmp/openship-cli-fix-*` and `/tmp/openship-sdk-fix-tests.*`. Original before-fix probes are under `/tmp/openship-cli-review-*`; they reproduce the old bad behavior and are not acceptance tests for the fix.
+Local verification artifacts are under `/tmp/kovalio-cli-fix-*` and `/tmp/kovalio-sdk-fix-tests.*`. Original before-fix probes are under `/tmp/kovalio-cli-review-*`; they reproduce the old bad behavior and are not acceptance tests for the fix.

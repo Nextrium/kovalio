@@ -112,7 +112,7 @@ async function deliver(root: DeploymentCheck, lease: string): Promise<{ done: bo
   for (const target of targets) {
     const outcome = disabled ? { status: "completed" as const, conclusion: "neutral" as const, title: "GitHub deployment reporting disabled" } : target.outcome;
     const update: GitHubCheckUpdate = {
-      name: target.check.name, externalId: `openship-deployment:${dep.id}:${target.check.id}`, headSha: dep.commitSha,
+      name: target.check.name, externalId: `kovalio-deployment:${dep.id}:${target.check.id}`, headSha: dep.commitSha,
       status: outcome.status, ...(outcome.status === "completed" && { conclusion: outcome.conclusion }),
       detailsUrl, startedAt: dep.createdAt.toISOString(),
       ...(outcome.status === "completed" && { completedAt: dep.updatedAt.toISOString() }),

@@ -57,7 +57,7 @@ function phpBinaryVersionCheck(config: BuildConfig): string[] {
       : undefined);
   if (!version) return [];
   return [
-    `RUN php -r 'if (PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION !== "${version}") { fwrite(STDERR, "Openship requires PHP ${version}; image provides " . PHP_VERSION . "\\n"); exit(1); }'`,
+    `RUN php -r 'if (PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION !== "${version}") { fwrite(STDERR, "Kovalio requires PHP ${version}; image provides " . PHP_VERSION . "\\n"); exit(1); }'`,
   ];
 }
 
@@ -130,7 +130,7 @@ export function generatePhpDockerfile(config: BuildConfig): string {
     `FROM ${config.runtimeImage} AS runtime`,
     ...(config.runtimeImageOverride
       ? [
-          "RUN command -v frankenphp >/dev/null && command -v install-php-extensions >/dev/null && id www-data >/dev/null || { printf 'Openship runtime image must provide FrankenPHP, install-php-extensions and www-data\\n' >&2; exit 1; }",
+          "RUN command -v frankenphp >/dev/null && command -v install-php-extensions >/dev/null && id www-data >/dev/null || { printf 'Kovalio runtime image must provide FrankenPHP, install-php-extensions and www-data\\n' >&2; exit 1; }",
         ]
       : []),
     ...phpBinaryVersionCheck(config),
@@ -151,8 +151,8 @@ export function generatePhpDockerfile(config: BuildConfig): string {
   lines.push(`WORKDIR /app`);
   if (config.runtimeVersion || config.runtimeImageOverride) {
     lines.push(
-      `COPY --from=builder /usr/bin/composer /tmp/openship-composer`,
-      phpPlatformCheck("php /tmp/openship-composer") + ` && rm -f /tmp/openship-composer`,
+      `COPY --from=builder /usr/bin/composer /tmp/kovalio-composer`,
+      phpPlatformCheck("php /tmp/kovalio-composer") + ` && rm -f /tmp/kovalio-composer`,
     );
   }
   lines.push(

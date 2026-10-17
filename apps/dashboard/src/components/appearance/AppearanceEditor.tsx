@@ -132,7 +132,7 @@ function Editor() {
       for (const byte of bytes) binary += String.fromCharCode(byte);
       const data = btoa(binary);
       if (!isThemeFontData(data)) throw new Error(c.fontHint);
-      const face = new FontFace("OpenshipUploadPreview", bytes.buffer);
+      const face = new FontFace("KovalioUploadPreview", bytes.buffer);
       await face.load();
       edit((theme) => ({
         ...theme,
@@ -176,7 +176,7 @@ function Editor() {
                     `theme-${crypto.randomUUID()}`,
                     t.settings.appearance.themes[base],
                   ),
-                "openship-theme.json",
+                "kovalio-theme.json",
               )
             }
           >
@@ -521,7 +521,7 @@ function Editor() {
                 </Button>
                 <Button
                   variant="ghost"
-                  onClick={() => downloadTheme(draft, "openship-appearance.json")}
+                  onClick={() => downloadTheme(draft, "kovalio-appearance.json")}
                 >
                   {c.exportAll}
                 </Button>
@@ -640,7 +640,7 @@ function ThemePreview({ theme, base }: { theme?: ThemeDocument; base: ThemeMode 
       <div className="space-y-3 rounded-xl bg-card p-4">
         <div className="flex items-center gap-2">
           <span className="size-2 rounded-full bg-success-solid" />
-          <span className="text-sm font-medium">openship</span>
+          <span className="text-sm font-medium">kovalio</span>
         </div>
         <p className="text-sm text-muted-foreground">{c.personal}</p>
         <div className="flex flex-wrap gap-1.5">

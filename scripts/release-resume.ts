@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { appendFileSync, readFileSync } from "node:fs";
 
 /** A resumed tag records actual workflow runs, never a list of checks to bypass. */
-export const RESUME_TRAILER = "OpenShip-Resume-Runs:";
+export const RESUME_TRAILER = "Kovalio-Resume-Runs:";
 export const RESUME_GUARD = "steps.resume.outputs.reused != 'true'";
 const workflows = new Set([
   ".github/workflows/release.yml",

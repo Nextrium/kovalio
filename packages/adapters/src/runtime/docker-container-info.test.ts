@@ -3,7 +3,7 @@ import { containerInfoFromDockerSummary, dockerPublishedPortInfo } from "./docke
 import type { DockerContainerSummary } from "./types";
 
 describe("Docker container information normalization", () => {
-  it("prefers Openship's loopback publish and preserves one mapping per container port", () => {
+  it("prefers Kovalio's loopback publish and preserves one mapping per container port", () => {
     expect(
       dockerPublishedPortInfo([
         { privatePort: 3000, publicPort: 80, type: "tcp", ip: "0.0.0.0" },
@@ -39,7 +39,7 @@ describe("Docker container information normalization", () => {
   ] as const)("maps Docker state %s to runtime state %s", (state, status) => {
     const summary: DockerContainerSummary = {
       id: "container-id",
-      names: ["openship-app-api"],
+      names: ["kovalio-app-api"],
       image: "api:latest",
       imageId: "sha256:api",
       state,

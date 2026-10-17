@@ -308,7 +308,7 @@ it.skipIf(!pythonAvailable)(
         family: "inet",
         table: "filter",
         chain,
-        comment: `openship-network-${identity}-${index ? "O" : "I"}`,
+        comment: `kovalio-network-${identity}-${index ? "O" : "I"}`,
         handle: index + 1,
         expr: [{ jump: { target: prefix + (index ? "O" : "I") } }],
       },
@@ -371,7 +371,7 @@ it.skipIf(!pythonAvailable)(
     }).snapshot!;
     const args = shellSplitWords(command);
     const snapshot = (bypass: boolean) => {
-      const prelude = `import json, subprocess, types\ndef fixture(args, **kwargs):\n chain = args[-1]\n parents = {'INPUT':'I', 'OUTPUT':'O', 'FORWARD':'F'}\n if chain in parents:\n  output = '-P ' + chain + ' ACCEPT\\n'\n  if ${bypass ? "True" : "False"}: output += '-A ' + chain + ' -m conntrack --ctstate ESTABLISHED -j ACCEPT\\n'\n  output += '-A ' + chain + ' -m comment --comment openship-network-${identity} -j ${prefix}' + parents[chain] + '\\n'\n else: output = '-N ' + chain + '\\n-A ' + chain + ' -i ${iface} -j DROP\\n'\n return types.SimpleNamespace(returncode=0, stdout=output, stderr='')\nsubprocess.run = fixture\n`;
+      const prelude = `import json, subprocess, types\ndef fixture(args, **kwargs):\n chain = args[-1]\n parents = {'INPUT':'I', 'OUTPUT':'O', 'FORWARD':'F'}\n if chain in parents:\n  output = '-P ' + chain + ' ACCEPT\\n'\n  if ${bypass ? "True" : "False"}: output += '-A ' + chain + ' -m conntrack --ctstate ESTABLISHED -j ACCEPT\\n'\n  output += '-A ' + chain + ' -m comment --comment kovalio-network-${identity} -j ${prefix}' + parents[chain] + '\\n'\n else: output = '-N ' + chain + '\\n-A ' + chain + ' -i ${iface} -j DROP\\n'\n return types.SimpleNamespace(returncode=0, stdout=output, stderr='')\nsubprocess.run = fixture\n`;
       return execFileSync("python3", ["-c", prelude + args[2], ...args.slice(3)], {
         encoding: "utf8",
         timeout: 10_000,

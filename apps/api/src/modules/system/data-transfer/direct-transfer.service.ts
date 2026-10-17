@@ -70,7 +70,7 @@ import type {
 const DIRECT_RECEIVE_PATH = "system/data-transfer/direct/receive";
 const DIRECT_CHUNK_INIT_PATH = "system/data-transfer/direct/chunk/init";
 const DIRECT_CHUNK_FINALIZE_STREAM_SUFFIX = "finalize/stream";
-const KEY_CONTEXT = Buffer.from("openship-direct-transfer-v1", "utf8");
+const KEY_CONTEXT = Buffer.from("kovalio-direct-transfer-v1", "utf8");
 const DIRECT_RUNTIME_ID = randomUUID();
 const HEARTBEAT_INTERVAL_MS = 60_000;
 const REQUEST_TIMEOUT_MS = 2 * 60_000;
@@ -490,8 +490,8 @@ async function uploadDestinationChunk(input: {
         method: "PUT",
         headers: {
           "content-type": "application/octet-stream",
-          "x-openship-chunk-sha256": digest,
-          "x-openship-transfer-signature": sign(input.sender.key, message),
+          "x-kovalio-chunk-sha256": digest,
+          "x-kovalio-transfer-signature": sign(input.sender.key, message),
         },
         body: input.ciphertext,
       });

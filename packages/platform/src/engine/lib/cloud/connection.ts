@@ -22,15 +22,15 @@ export async function fetchCloudConnection(path: string, init?: RequestInit): Pr
       errorDiagnostics.warn("platform/engine/lib/cloud/connection", `[cloud-connect] ${path} failed: ${cause}`, error);
     throw new AppError(
       timeout.aborted
-        ? "Openship Cloud did not respond in time. Start a new connection attempt."
-        : "Could not reach Openship Cloud. Check your connection and start a new connection attempt.",
+        ? "Kovalio Cloud did not respond in time. Start a new connection attempt."
+        : "Could not reach Kovalio Cloud. Check your connection and start a new connection attempt.",
       503,
       timeout.aborted ? "CLOUD_CONNECTION_TIMEOUT" : "CLOUD_CONNECTION_UNAVAILABLE",
     );
   }
   if (response.status >= 500 || response.status === 429)
     throw new AppError(
-      "Openship Cloud is temporarily unavailable. Start a new connection attempt shortly.",
+      "Kovalio Cloud is temporarily unavailable. Start a new connection attempt shortly.",
       503,
       "CLOUD_CONNECTION_UNAVAILABLE",
     );

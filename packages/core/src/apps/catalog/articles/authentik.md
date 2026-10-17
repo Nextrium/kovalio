@@ -4,7 +4,7 @@ This stack follows Authentik's server, worker, and PostgreSQL composition. The s
 
 ## Set up your applications
 
-Create providers and applications in Authentik, then configure each application's redirect URIs and credentials. Installing an identity provider does not automatically connect Openship's own login or your other applications to it. Configure SMTP in Authentik for invitations and password resets.
+Create providers and applications in Authentik, then configure each application's redirect URIs and credentials. Installing an identity provider does not automatically connect Kovalio's own login or your other applications to it. Configure SMTP in Authentik for invitations and password resets.
 
 ## Outposts and storage
 

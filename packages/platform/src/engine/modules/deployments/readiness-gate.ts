@@ -23,10 +23,10 @@ export interface ResolvedReadinessGate {
     enabled: boolean;
     windowMs: number;
     /** Startup failures are independent of custom probe failures. */
-    onFailure: OpenshipReadinessFailureAction;
+    onFailure: KovalioReadinessFailureAction;
   };
   /** Failure policy for the optional TCP/HTTP probe. */
-  onFailure: OpenshipReadinessFailureAction;
+  onFailure: KovalioReadinessFailureAction;
   /** True when at least one check is enabled — i.e. the pipeline needs a gate at all. */
   active: boolean;
 }
@@ -40,7 +40,7 @@ function secondsToMs(seconds: number | undefined, fallbackMs: number): number {
 
 /** Resolve optional probes and the target's minimum startup verification. */
 export function resolveReadinessGate(
-  config: OpenshipReadiness | null | undefined,
+  config: KovalioReadiness | null | undefined,
   options: { managedCloud?: boolean } = {},
 ): ResolvedReadinessGate {
   const probeEnabled = config?.enabled === true;

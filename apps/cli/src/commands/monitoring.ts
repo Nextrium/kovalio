@@ -34,7 +34,7 @@ for (const [name, enabled] of [["enable", true], ["disable", false]] as const) {
       const client = getShipClient();
       const { watcher } = await client.issues.health();
       if (!watcher.available || !watcher.canManage)
-        throw new Error("This connection cannot manage continuous monitoring. Check openship monitoring health for its capabilities.");
+        throw new Error("This connection cannot manage continuous monitoring. Check kovalio monitoring health for its capabilities.");
       return client.jobs.update(watcher.key, { enabled });
     }));
 }

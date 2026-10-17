@@ -55,7 +55,7 @@ vi.mock("@/lib/auth-client", () => ({
 }));
 vi.mock("@/context/CloudResourceContext", () => ({ useCloudResourceKey: () => "local" }));
 vi.mock("@/context/PlatformContext", () => ({
-  usePlatform: () => ({ selfHosted: true, cloudAuthUrl: "https://app.openship.io" }),
+  usePlatform: () => ({ selfHosted: true, cloudAuthUrl: "https://kovalio.nextrium.org" }),
 }));
 vi.mock("@/components/servers/add-server-modal", () => ({ useAddServerModal: () => vi.fn() }));
 vi.mock("@/components/github/RepositoryPicker", () => ({ RepositoryPicker: () => null }));
@@ -187,12 +187,12 @@ beforeEach(() => {
   vi.useFakeTimers();
   const workflow = {
     id: "ci",
-    controller: "openship",
+    controller: "kovalio",
     name: "CI",
     owner: "acme",
     repo: "app",
     ref: "main",
-    path: ".openship/workflows/ci.yml",
+    path: ".kovalio/workflows/ci.yml",
     source: null,
     plan,
     runnerIds: ["linux"],
@@ -533,7 +533,7 @@ describe("shared workflow setup", () => {
   }
 
   it("keeps each file's automatic or reviewed update policy while importing together", async () => {
-    const files = await selectFiles(".openship/workflows");
+    const files = await selectFiles(".kovalio/workflows");
     await click("Review first");
     await click("test.yml");
     await preview();
@@ -549,7 +549,7 @@ describe("shared workflow setup", () => {
     expect(h.write).not.toHaveBeenCalled();
   });
 
-  it.each([".github/workflows", ".openship/workflows"])(
+  it.each([".github/workflows", ".kovalio/workflows"])(
     "keeps manual, main-only push and PR triggers separate while editing a batch from Run settings (%s)",
     async (directory) => {
       const files = ["manual", "push", "pr"].map((name) => ({
@@ -604,7 +604,7 @@ describe("shared workflow setup", () => {
       await click("Continue");
       await click("Continue");
       await click("Save 3 workflows");
-      await click(directory === ".github/workflows" ? "Commit and save" : "Save Openship copy");
+      await click(directory === ".github/workflows" ? "Commit and save" : "Save Kovalio copy");
       const inputs = h.importWorkflows.mock.calls[0]![0];
       expect(inputs.map((input: { path: string }) => input.path)).toEqual(
         files.map((file) => file.path),
@@ -814,7 +814,7 @@ describe("shared workflow setup", () => {
     );
     await preview();
     await click("Save workflow");
-    await click("Save Openship copy");
+    await click("Save Kovalio copy");
     const yaml = parse(h.save.mock.calls[0]![0].source);
     expect(yaml.on.push).toEqual({ "branches-ignore": ["feature/{a,b}/**"], tags: ["v*"] });
     expect(yaml.jobs).toEqual(parse(source).jobs);
@@ -895,7 +895,7 @@ describe("shared workflow setup", () => {
     );
     expect(h.write).not.toHaveBeenCalled();
     expect(h.save).not.toHaveBeenCalled();
-    await click("Save Openship copy");
+    await click("Save Kovalio copy");
     expect(h.write).not.toHaveBeenCalled();
     const [saved, id] = h.save.mock.calls[0]!;
     expect(id).toBe("ci");
@@ -908,7 +908,7 @@ describe("shared workflow setup", () => {
   it("requires a repository commit for GitHub-owned workflows and never saves an override", async () => {
     await repositoryWorkflow();
     await editTrigger();
-    expect(button("Save Openship copy")).toBeUndefined();
+    expect(button("Save Kovalio copy")).toBeUndefined();
     expect(h.save).not.toHaveBeenCalled();
     await click("Commit and save");
     expect(h.write).toHaveBeenCalledWith(
@@ -933,7 +933,7 @@ describe("shared workflow setup", () => {
     await fill("Repository", "acme/app");
     await preview();
     expect(button("GitHub Actions")).toBeUndefined();
-    expect(button("Openship Actions")).toBeUndefined();
+    expect(button("Kovalio Actions")).toBeUndefined();
     await click("Continue");
     await selectRunner();
     await click("Continue");
@@ -990,7 +990,7 @@ describe("shared workflow setup", () => {
     ]);
   });
   it("discovers reusable repository workflows even when the saved controller was independent", async () => {
-    await repositoryWorkflow("openship");
+    await repositoryWorkflow("kovalio");
     const reusable =
       "name: CI\non: [push, workflow_dispatch]\njobs:\n  gate:\n    uses: ./.github/workflows/shared.yml\n    secrets: inherit\n";
     h.source.mockResolvedValue({ source: reusable, sha: "original-file-sha", plan, error: null });
@@ -1020,7 +1020,7 @@ describe("shared workflow setup", () => {
     await preview();
     await click("Standalone");
     await preview();
-    expect(h.preview.mock.calls.at(-1)![1]).toBe(".openship/workflows/automation.yml");
+    expect(h.preview.mock.calls.at(-1)![1]).toBe(".kovalio/workflows/automation.yml");
     await click("Repository");
     await preview();
     expect(h.preview).toHaveBeenLastCalledWith(source, ".github/workflows/ci.yml");
@@ -1105,7 +1105,7 @@ describe("shared workflow setup", () => {
     await preview();
     await click("Save workflow");
     expect(h.write).not.toHaveBeenCalled();
-    await click("Save Openship copy");
+    await click("Save Kovalio copy");
     expect(parse(h.save.mock.calls[0]![0].source).jobs.test.name).toBe("Unit checks");
   });
 
@@ -1290,13 +1290,13 @@ describe("shared workflow setup", () => {
     await render("ci");
     expect(h.source).not.toHaveBeenCalled();
     expect(h.discover).not.toHaveBeenCalled();
-    expect(h.preview).toHaveBeenLastCalledWith(standalone, ".openship/workflows/automation.yml");
+    expect(h.preview).toHaveBeenLastCalledWith(standalone, ".kovalio/workflows/automation.yml");
     await click("Save workflow");
     expect(h.save).toHaveBeenCalledWith(
       expect.objectContaining({
         source: standalone,
         owner: null,
-        path: ".openship/workflows/automation.yml",
+        path: ".kovalio/workflows/automation.yml",
       }),
       "ci",
     );

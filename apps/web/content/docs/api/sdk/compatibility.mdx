@@ -5,8 +5,8 @@ description: Check package availability, API protocol support, provider requirem
 
 ## Package availability
 
-Ship SDK is published in **`openship` 0.8.0 and later**. Install it with `npm install openship`;
-upgrade an older CLI-only dependency with `npm install openship@latest`. Node.js 22 or later is
+Ship SDK is published in **`kovalio` 0.8.0 and later**. Install it with `npm install kovalio`;
+upgrade an older CLI-only dependency with `npm install kovalio@latest`. Node.js 22 or later is
 required. See [installation](/docs/api/sdk/installation) for the public import paths and local builds.
 
 ## Fixed organization scopes
@@ -18,7 +18,7 @@ application request:
 { "sdk": { "protocol": 1, "fixedOrganizationScope": true } }
 ```
 
-The client sends `X-Organization-Id` and `X-Openship-Scope: fixed`. The API authenticates the caller,
+The client sends `X-Organization-Id` and `X-Kovalio-Scope: fixed`. The API authenticates the caller,
 checks current membership and grants, and keeps access inside that organization. Request headers cannot
 override the client's configured scope.
 

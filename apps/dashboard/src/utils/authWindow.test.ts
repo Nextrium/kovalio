@@ -59,10 +59,10 @@ describe("openAuthWindow", () => {
     });
 
     const handle = openAuthWindow();
-    handle.navigate("https://api.openship.io/api/github/connect/redirect");
+    handle.navigate("https://api.nextrium.org/api/github/connect/redirect");
 
     expect(handle.blocked).toBe(false);
-    expect(popup.location.href).toBe("https://api.openship.io/api/github/connect/redirect");
+    expect(popup.location.href).toBe("https://api.nextrium.org/api/github/connect/redirect");
     expect(popup.focus).toHaveBeenCalledOnce();
   });
 });

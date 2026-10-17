@@ -7,21 +7,21 @@ import "./features.css";
 
 const PAGE_TITLE = "Features";
 const PAGE_DESCRIPTION =
-  "Explore Openship's deployment, CI, runners, apps, backups, migration, networking, monitoring, and team access features, with detailed guides and availability.";
+  "Explore Kovalio's deployment, CI, runners, apps, backups, migration, networking, monitoring, and team access features, with detailed guides and availability.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,
   description: PAGE_DESCRIPTION,
   alternates: { canonical: "/features" },
   openGraph: {
-    title: `${PAGE_TITLE} — Openship`,
+    title: `${PAGE_TITLE} — Kovalio`,
     description: PAGE_DESCRIPTION,
     url: "/features",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${PAGE_TITLE} — Openship`,
+    title: `${PAGE_TITLE} — Kovalio`,
     description: PAGE_DESCRIPTION,
   },
 };
@@ -125,7 +125,7 @@ export default function FeaturesPage() {
             className="mx-auto mt-5 max-w-md text-[16px] leading-[1.6]"
             style={{ color: "var(--th-text-body)" }}
           >
-            Self-hosted and free, or managed on Openship Cloud. Same workflow either way.
+            Self-hosted and free, or managed on Kovalio Cloud. Same workflow either way.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3.5">
             <Link

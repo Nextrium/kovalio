@@ -42,7 +42,7 @@ import { watchArtifactConsumer } from "../common/artifact-stream";
 import { CAPTURE_IDLE_TIMEOUT_MS, CAPTURE_TIMEOUT_MS } from "../common/command-stream";
 
 const HELPER_IMAGE = "alpine:3";
-const BIND_PROBE_TARGET = "/__openship_bind_source";
+const BIND_PROBE_TARGET = "/__kovalio_bind_source";
 
 /** Docker's archive stat header encodes Go's os.FileMode; its top bit is ModeDir. */
 const DOCKER_MODE_DIRECTORY = 2 ** 31;
@@ -601,7 +601,7 @@ export class DockerBackupExecutor implements BackupExecutor {
             // the operator has `payloadConfig.sourceIds` to narrow the policy. Silence
             // is the only outcome that cannot be recovered from.
             `SRC=${shellQuote(sourceId)}`,
-            opts?.allowEmpty ? "true" : `[ -n "$(ls -A /mnt 2>/dev/null)" ] || { echo "openship: backup source $SRC is ` +
+            opts?.allowEmpty ? "true" : `[ -n "$(ls -A /mnt 2>/dev/null)" ] || { echo "kovalio: backup source $SRC is ` +
               `empty or missing on this host, so this archive would contain nothing. ` +
               `Refusing to record it as a backup. If it is a mount, check that it is ` +
               `mounted; if it is empty on purpose, narrow the policy's sourceIds." >&2; ` +

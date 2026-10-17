@@ -7,13 +7,13 @@ and [the pricing catalog](../packages/core/src/pricing/README.md).
 ## Allocation authority
 
 Oblien owns effective namespace/account limits, current reservations, atomic
-admission, applied workspace resources, deletion and metering. Openship reads
+admission, applied workspace resources, deletion and metering. Kovalio reads
 `effective_resource_limits` and `allocated_resource_usage`; it does not infer
 free capacity from service counts, observed CPU activity or credit balance.
 Stopped workspaces and pending updates remain allocated until Oblien reports
 that they have been released.
 
-Runtime and builds use **one shared pool**. Before a source build, Openship reads
+Runtime and builds use **one shared pool**. Before a source build, Kovalio reads
 the remaining CPU/RAM and selects a build allocation within it and Oblien's
 current per-workspace limits. A saved build setting is an optional upper limit;
 clearing it restores automatic sizing. There is no fixed default Cloud build
@@ -79,7 +79,7 @@ checkout offers** in this PR:
 | Scale (`team`) |           $99 |   8 vCPU |       32 GB |       256 GB |
 
 Activating larger pools, different project/service allowances or changing from
-consumption credits to included monthly hosting is Openship billing work, using
+consumption credits to included monthly hosting is Kovalio billing work, using
 Oblien's existing generic billing and namespace APIs. It is not a prerequisite
 for automatic build sizing. Do not bypass current subscription suspension or
 rewrite historical paid terms. Publish prices and limits through the single

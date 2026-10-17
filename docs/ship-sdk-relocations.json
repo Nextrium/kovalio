@@ -445,23 +445,23 @@
     "hadBaseline": true
   },
   {
-    "from": "apps/api/src/lib/openship-cloud.ts",
-    "to": "packages/platform/src/engine/lib/openship-cloud.ts",
+    "from": "apps/api/src/lib/kovalio-cloud.ts",
+    "to": "packages/platform/src/engine/lib/kovalio-cloud.ts",
     "hadBaseline": true
   },
   {
-    "from": "apps/api/src/lib/openship-manifest-sync.ts",
-    "to": "packages/platform/src/engine/lib/openship-manifest-sync.ts",
+    "from": "apps/api/src/lib/kovalio-manifest-sync.ts",
+    "to": "packages/platform/src/engine/lib/kovalio-manifest-sync.ts",
     "hadBaseline": true
   },
   {
-    "from": "apps/api/src/lib/openship-manifest.ts",
-    "to": "packages/platform/src/engine/lib/openship-manifest.ts",
+    "from": "apps/api/src/lib/kovalio-manifest.ts",
+    "to": "packages/platform/src/engine/lib/kovalio-manifest.ts",
     "hadBaseline": true
   },
   {
-    "from": "apps/api/src/lib/openship-server-store.ts",
-    "to": "packages/platform/src/engine/lib/openship-server-store.ts",
+    "from": "apps/api/src/lib/kovalio-server-store.ts",
+    "to": "packages/platform/src/engine/lib/kovalio-server-store.ts",
     "hadBaseline": true
   },
   {

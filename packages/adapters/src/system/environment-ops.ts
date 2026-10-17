@@ -46,7 +46,7 @@ import {
 /** Shell commands to run in order, or the reason there are none. Never empty when supported. */
 export type Op = Answer<readonly string[]>;
 
-/** Commands for OpenShip's owned network unit and persistent rollback timer. */
+/** Commands for Kovalio's owned network unit and persistent rollback timer. */
 export interface ManagedNetworkServices {
   reload: string;
   enable: string;
@@ -624,8 +624,8 @@ function hostCommands(profile: EnvironmentProfile): HostCommands {
           "Managed networking requires Linux with a running systemd, so rollback can survive a controller disconnect or host reboot.",
         );
       if (!/^[a-f0-9]{32}$/.test(identity)) return refused("Invalid managed network identity.");
-      const network = unit(`openship-network-${identity}.service`);
-      const timer = unit(`openship-network-${identity}-rollback.timer`);
+      const network = unit(`kovalio-network-${identity}.service`);
+      const timer = unit(`kovalio-network-${identity}-rollback.timer`);
       return answered({
         reload: "systemctl daemon-reload",
         // Applying the interface happens under a host lock. Starting the unit here

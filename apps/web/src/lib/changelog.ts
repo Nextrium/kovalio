@@ -13,7 +13,7 @@ import { marked } from "marked";
  * reliable signal.
  */
 
-const REPO = "oblien/openship";
+const REPO = "oblien/kovalio";
 const RAW_URL = `https://raw.githubusercontent.com/${REPO}/main/CHANGELOG.md`;
 const TAGS_URL = `https://api.github.com/repos/${REPO}/tags?per_page=100`;
 const commitUrl = (ref: string) => `https://api.github.com/repos/${REPO}/commits/${ref}`;
@@ -63,7 +63,7 @@ marked.setOptions({ gfm: true });
 function ghHeaders(): Record<string, string> {
   const h: Record<string, string> = {
     Accept: "application/vnd.github+json",
-    "User-Agent": "openship-web",
+    "User-Agent": "kovalio-web",
   };
   // Optional — lifts the 60/hr unauth limit; not required given the short cache.
   if (process.env.GITHUB_TOKEN) h.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;

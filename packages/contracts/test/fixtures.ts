@@ -142,7 +142,7 @@ export function serverContainerFixture(serverId = "server-a", organizationId = "
 export function systemInfoFixture(): SystemInfo {
   return { selfHosted: true, deployMode: "docker", isServerHost: true, hostControlEnabled: true, version: "0.7.2", authMode: "local",
     productMode: "platform", teamMode: "single_user", migrationTargetUrl: null, migrationInProgress: false,
-    cloudAuthUrl: "https://openship.test", cloudApiUrl: "https://api.openship.test" };
+    cloudAuthUrl: "https://kovalio.test", cloudApiUrl: "https://api.kovalio.test" };
 }
 
 export function instanceSettingsFixture(): Awaited<ReturnType<SystemOperations["getSettings"]>> {

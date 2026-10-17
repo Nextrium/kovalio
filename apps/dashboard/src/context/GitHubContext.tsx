@@ -146,7 +146,7 @@ const EMPTY_STATE: GitHubConnectionState = {
 function primaryLogin(state: GitHubConnectionState): string {
   if (state.primary === "personal-token") return state.sources.personalToken?.login ?? "";
   if (state.primary === "gh-cli") return state.sources.ghCli.login ?? "";
-  return state.sources.openshipApp.login ?? "";
+  return state.sources.kovalioApp.login ?? "";
 }
 
 function availableOwner(current: string, login: string, accounts: GitHubAccount[], repos: GitHubRepo[]): string {
@@ -386,7 +386,7 @@ export function GitHubProvider({ children, initialData }: GitHubProviderProps) {
 
             // A backend URL may be absolute (github.com / cloud handoff) or an
             // API-root path. Resolve the latter against the real API mount, not
-            // window.location — app.openship.io/api/... is a dashboard 404.
+            // window.location — kovalio.nextrium.org/api/... is a dashboard 404.
             const redirectUrl = resolveApiNavigationUrl(
               typeof res.url === "string" ? res.url : endpoints.github.connectRedirect,
             );
@@ -416,7 +416,7 @@ export function GitHubProvider({ children, initialData }: GitHubProviderProps) {
                 const status = await githubApi.getStatus({ includeInstallUrl: false });
                 if (!active) return;
                 lastError = null;
-                const app = status?.state?.sources?.openshipApp;
+                const app = status?.state?.sources?.kovalioApp;
                 // OAuth identity alone is not installed repository access. The
                 // engine declares whether this redirect ends at OAuth or after
                 // installation; a local CLI identity satisfies neither step.
@@ -542,7 +542,7 @@ export function GitHubProvider({ children, initialData }: GitHubProviderProps) {
         // Always refresh — the canonical state on the backend is now the
         // source of truth, and a per-source disconnect may still leave
         // the other source connected (e.g. cli logged out but the
-        // Openship App still installed).
+        // Kovalio App still installed).
         await refresh(true);
       } catch (err) {
         if (isAbortError(err) || isNetworkError(err)) return;

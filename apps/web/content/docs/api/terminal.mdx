@@ -35,8 +35,8 @@ POST /api/terminal/ticket
 />
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/terminal/ticket" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/terminal/ticket" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"serverId":"srv_123"}'
 ```
@@ -73,7 +73,7 @@ const { token } = await fetch("/api/terminal/ticket", {
 }).then((r) => r.json());
 
 const ws = new WebSocket(`wss://your-host/api/terminal/ws/${serverId}`, [
-  `openship.terminal.v1+${token}`,
+  `kovalio.terminal.v1+${token}`,
 ]);
 ```
 
@@ -149,11 +149,11 @@ before opening another. Resumes don't count against the cap.
 The remote SDK opens the existing ticket and WebSocket workflow:
 
 ```ts
-import { OpenshipClient } from "openship";
+import { KovalioClient } from "kovalio";
 
-const client = new OpenshipClient({
+const client = new KovalioClient({
   baseUrl: "https://ship.example.com",
-  token: process.env.OPENSHIP_TOKEN,
+  token: process.env.KOVALIO_TOKEN,
 });
 const session = await client.terminal.openServer("srv_123", {
   origin: "https://ship.example.com", // Trusted dashboard origin for Node callers.
@@ -169,7 +169,7 @@ The API token is sent only to the HTTP ticket endpoint. The WebSocket uses a one
 subprotocol; credentials are never added to its URL. An explicit resume does not open a replacement
 shell if resumption fails. Browser callers use their browser's own Origin header.
 
-Use `openship server ssh <id>` or `openship server terminal <id>` interactively. The CLI uses the saved
+Use `kovalio server ssh <id>` or `kovalio server terminal <id>` interactively. The CLI uses the saved
 dashboard origin; override it with `--origin` when necessary. Use `server exec` for noninteractive scripts.
 
 ## Operations

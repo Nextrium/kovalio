@@ -14,7 +14,7 @@ export type {
   ProjectCompositeRoute,
   MetadataParser,
 } from "./types";
-export { openshipMetadataParser } from "./openship";
+export { kovalioMetadataParser } from "./kovalio";
 export { vercelMetadataParser, parseVercelConfig, vercelCompatibilityWarnings, extractCdTargets, type VercelConfig } from "./vercel";
 export { railwayMetadataParser } from "./railway";
 export { renderMetadataParser } from "./render";

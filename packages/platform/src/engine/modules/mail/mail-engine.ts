@@ -255,7 +255,7 @@ export async function writeMailConfigFile(
   content: string,
   opts?: { mode?: number },
 ): Promise<void> {
-  const tmp = `${path}.openship-${randomBytes(8).toString("hex")}`;
+  const tmp = `${path}.kovalio-${randomBytes(8).toString("hex")}`;
   try {
     if (opts === undefined) await writer.writeFile(tmp, content);
     else await writer.writeFile(tmp, content, opts);

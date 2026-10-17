@@ -548,8 +548,8 @@ describe("manual wildcard HTTPS lifecycle", () => {
     h.complete.mockReturnValueOnce(running.promise);
     await checkDnsChallenge(ctx, "domain", pending.id);
     await vi.waitFor(() => expect(h.complete).toHaveBeenCalledOnce());
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
     await db
       .update(schema.deployment)
       .set({ meta: { deployTarget: "local" } })

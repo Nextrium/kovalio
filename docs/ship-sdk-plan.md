@@ -6,13 +6,13 @@ Status: implementation in progress. Owned native deployments, broad shared platf
 
 The native facade and HTTP controllers now enter the same authorized operations for projects, sources, deployments, services/connections/storage, domains/DNS/TLS, credentials, server management, catalog apps, backups, jobs, analytics/issues, notifications, settings, audit, updates, incoming webhooks, tokens, permissions/invitations/memberships, GitHub/server Git configuration, notices, and billing. The coverage table below identifies remaining work within broad groups. Moving backend files is preservation work; a feature is SDK-supported only once contracts, policy, both adapters, and validation are wired.
 
-- `packages/openship` owns the public npm name and assembles compiled ESM/CommonJS, declarations, the CLI, the Node worker, migrations, and runtime assets. Imports remain passive.
-- Website SDK documentation now covers installation, native and remote/Cloud clients, verified user/namespace scopes, deployment workflows, and all current named operation groups. It is linked from the API navigation and overview. The public npm `openship@0.7.2` remains CLI-only; publishing an SDK-enabled version and deploying these website pages are separate release steps.
+- `packages/kovalio` owns the public npm name and assembles compiled ESM/CommonJS, declarations, the CLI, the Node worker, migrations, and runtime assets. Imports remain passive.
+- Website SDK documentation now covers installation, native and remote/Cloud clients, verified user/namespace scopes, deployment workflows, and all current named operation groups. It is linked from the API navigation and overview. The public npm `kovalio@0.7.2` remains CLI-only; publishing an SDK-enabled version and deploying these website pages are separate release steps.
 - Owned `createShip` accepts explicit storage, encryption, providers, and policy. It isolates the retained engine in an owned Node worker without starting an HTTP listener or making self-requests. Multiple tenant scopes share that installation; separate installations have isolated workers.
 - Native identity assertions are verified by the host adapter. Durable issuer/subject mappings, namespaces, memberships, live grants, fixed tenant scopes, and separate instance/operator authority are enforced. Incoming hooks, invitations, and Git device continuations store constrained execution authority and recheck persisted revocation. Jobs, backup schedules, and scans still need equivalent principal migration.
 - Native host execution and host Git credential discovery require explicit policy. Registered-server operations retain target authorization. Generated files and allowed directories enter the existing scan/build/deployment pipeline.
 - Legacy CLI HTTP/SSE/folder-deployment implementations are removed. Native CLI mode exists. Most commands use named SDK operations; edge, mail, and parts of system management still need adoption.
-- Public notices use a shared read operation. Installation notice management is a separate capability: `ship.operator.notices` for explicitly enabled native administration and `OpenshipOperatorClient` with an internal token remotely. An ordinary organization owner or instance-admin bearer token does not grant operator notice authority.
+- Public notices use a shared read operation. Installation notice management is a separate capability: `ship.operator.notices` for explicitly enabled native administration and `KovalioOperatorClient` with an internal token remotely. An ordinary organization owner or instance-admin bearer token does not grant operator notice authority.
 - Billing operations reuse the existing pricing, account state, subscription, checkout, top-up, portal and usage services. Stripe and Oblien signature ingress remains a transport boundary. Credit packs have one public shape; provider IDs and checkout/portal credentials are excluded from audit data. Hosted billing configuration and tenant mapping still determine availability.
 - Fixed scopes reject legacy owner-account cloud forwarding with `CLOUD_SCOPE_UNAVAILABLE` until verified local/cloud tenant mapping exists. A remote client can address the canonical cloud organization directly.
 
@@ -22,9 +22,9 @@ A focused shared-core review corrected a deployment-preparation permission misma
 
 **Remaining implementation work.** Finish organization/account lifecycle, remaining setup/self-app/edge/terminal operations, verified cloud mapping/linking/promotion, mail, migration/data transfer, and their CLI adoption. Complete constrained background principals, durable dispatch/idempotency/replay, distributed scheduler ownership, billing replay/accounting review, examples, compatibility checks, and final provider/package gates. Preserve the existing implementations and lift application policy out of transport adapters as each slice is completed.
 
-The objective is to make Openship embeddable in Node applications. A developer should be able to create and manage projects, deploy generated code, manage infrastructure, and build a deployment product on top of the same application services that power the Openship HTTP API. The CLI, HTTP API, native SDK, and remote client should share contracts and behavior.
+The objective is to make Kovalio embeddable in Node applications. A developer should be able to create and manage projects, deploy generated code, manage infrastructure, and build a deployment product on top of the same application services that power the Kovalio HTTP API. The CLI, HTTP API, native SDK, and remote client should share contracts and behavior.
 
-Native execution is a primary requirement. The SDK must invoke application operations directly when embedded; starting an HTTP server or making an HTTP request to itself is unnecessary. A remote client remains available for applications connecting to an existing Openship instance.
+Native execution is a primary requirement. The SDK must invoke application operations directly when embedded; starting an HTTP server or making an HTTP request to itself is unnecessary. A remote client remains available for applications connecting to an existing Kovalio instance.
 
 **One platform implementation will serve both native and HTTP callers.** The reusable unit is the complete application operation: input validation, authorization, tenant resolution, capability checks, orchestration, persistence, audit, and result presentation. Existing infrastructure adapters remain the implementations of Docker, bare processes, SSH, cloud resources, routing, and TLS.
 
@@ -45,13 +45,13 @@ flowchart TD
     Ops --> Providers[Docker, bare, SSH, cloud, routing, TLS]
 ```
 
-Native execution invokes the shared engine locally through an owned Node worker, or attaches to a caller-owned platform. The owned worker isolates the retained engine's process-level state without starting an HTTP listener or making self-requests. External work still uses the appropriate protocols: SSH to a server, provider APIs for cloud infrastructure, object storage requests, and Git operations. A project whose canonical control plane is another Openship instance may also require an explicit remote operation. These boundaries must be visible in configuration and capability discovery.
+Native execution invokes the shared engine locally through an owned Node worker, or attaches to a caller-owned platform. The owned worker isolates the retained engine's process-level state without starting an HTTP listener or making self-requests. External work still uses the appropriate protocols: SSH to a server, provider APIs for cloud infrastructure, object storage requests, and Git operations. A project whose canonical control plane is another Kovalio instance may also require an explicit remote operation. These boundaries must be visible in configuration and capability discovery.
 
 **The existing code provides substantial foundations, with specific extraction work remaining.**
 
 | Existing component | What it provides | Required change |
 | --- | --- | --- |
-| [CLI package](../apps/cli/package.json) | Private command implementation, assembled by `packages/openship`. | Complete the remaining named SDK resource adoption; native CLI mode is implemented. |
+| [CLI package](../apps/cli/package.json) | Private command implementation, assembled by `packages/kovalio`. | Complete the remaining named SDK resource adoption; native CLI mode is implemented. |
 | [Core package](../packages/core/src/index.ts) | Domain definitions, stack detection/configuration primitives, resource rules, shared utilities. | Keep the foundation small; reconcile public domain definitions as operations move. |
 | [Adapters](../packages/adapters/src/platform.ts) | Runtime, SSH, cloud, routing, TLS, and system implementations. | Reuse them; make configuration and resource ownership suitable for multiple platform instances. |
 | [Deployment services](../packages/platform/src/engine/modules/deployments/build.service.ts) and [pipeline](../packages/platform/src/engine/modules/deployments/build-pipeline.ts) | Configuration snapshots, preflight, builds, deployment lifecycle, and orchestration. | Shared deployment operations now enforce policy and call these retained services. Durable dispatch and recovery still need completion. |
@@ -63,7 +63,7 @@ Native execution invokes the shared engine locally through an owned Node worker,
 | [Cloud routing](../apps/api/src/lib/cloud/project-router.ts) | Local versus cloud authority and forwarding. | Extract resource authority resolution and typed forwarding from Hono request handling. |
 | [CLI SDK integration](../apps/cli/src/lib/ship-client.ts) | HTTP transport, pagination, uploads, streaming. | Transport/source workflows are shared; finish named methods for edge/mail/system commands. |
 
-The root and CLI workspaces are now private; the release workflow assembles and publishes `packages/openship`. Private workspace packages expose TypeScript to workspace consumers; public exports contain compiled JavaScript and bundled declarations.
+The root and CLI workspaces are now private; the release workflow assembles and publishes `packages/kovalio`. Private workspace packages expose TypeScript to workspace consumers; public exports contain compiled JavaScript and bundled declarations.
 
 **Package boundaries will make the shared implementation explicit.**
 
@@ -75,11 +75,11 @@ The root and CLI workspaces are now private; the release workflow assembles and 
 | `packages/db` | `@repo/db` | Persistence implementations, migrations, repositories, and database locking. |
 | `packages/adapters` | `@repo/adapters` | Infrastructure and external-provider implementations. |
 | `packages/sdk` | `@repo/sdk` | Native factory, scoped resource facade, remote client, and client-side source helpers. |
-| `packages/openship` | `openship` | Published package assembly, exports, declarations, CLI executable, and required assets. |
+| `packages/kovalio` | `kovalio` | Published package assembly, exports, declarations, CLI executable, and required assets. |
 | `apps/api` | `@repo/api` | HTTP server composition, authentication protocols, routing, request/response adaptation. |
 | `apps/cli` | `@repo/cli`, private | Commands, prompts, context files, terminal output, and installation management. |
 
-Mark the workspace root private and give it an internal name. Only the distribution package owns the public npm name. Application developers import `openship`; workspace applications import the appropriate internal SDK/platform entry.
+Mark the workspace root private and give it an internal name. Only the distribution package owns the public npm name. Application developers import `kovalio`; workspace applications import the appropriate internal SDK/platform entry.
 
 Dependency rules:
 
@@ -93,14 +93,14 @@ Dependency rules:
 
 The existing adapter `Platform` describes runtime/routing/TLS composition. Use a distinct name such as `PlatformKernel` for the application layer so those two concepts do not become confused.
 
-**Public imports will expose stable factories and resource interfaces.** The native implementation includes the application functionality needed to run Openship operations. Loading the module should only load definitions; initialization and work happen through explicit calls.
+**Public imports will expose stable factories and resource interfaces.** The native implementation includes the application functionality needed to run Kovalio operations. Loading the module should only load definitions; initialization and work happen through explicit calls.
 
 | Entry | Proposed surface | Loading behavior |
 | --- | --- | --- |
-| `openship` | `createShip`, `OpenshipClient`, public types and errors. | Passive import; native dependencies can load when `createShip` is called. |
-| `openship/native` | Native factory and supported provider/configuration interfaces. | Explicit native integration entry. |
-| `openship/client` | Remote HTTP client and public contracts. | Independent entry without database, Docker, SSH, or server bootstrap imports. |
-| `openship` executable | Existing CLI commands. | Executed only through the binary entry. |
+| `kovalio` | `createShip`, `KovalioClient`, public types and errors. | Passive import; native dependencies can load when `createShip` is called. |
+| `kovalio/native` | Native factory and supported provider/configuration interfaces. | Explicit native integration entry. |
+| `kovalio/client` | Remote HTTP client and public contracts. | Independent entry without database, Docker, SSH, or server bootstrap imports. |
+| `kovalio` executable | Existing CLI commands. | Executed only through the binary entry. |
 
 Internal repositories, raw permission overrides, migration handover flags, and private build snapshot arguments remain implementation details. Full platform functionality is exposed through authorized operations, rather than arbitrary access to every internal function.
 
@@ -109,12 +109,12 @@ The facade should present resource groups such as `projects`, `deployments`, `se
 **A native integration initializes one platform and creates scoped views for its users.** This example uses the implemented factory. `appAuth.verify` is supplied by the host and verifies a session before returning its external user ID. Trusted onboarding has already called `operator.ensureIdentity` and established membership.
 
 ```ts
-import { createShip, type OwnedShip } from "openship/native";
+import { createShip, type OwnedShip } from "kovalio/native";
 
 let ship: OwnedShip<string>;
 ship = await createShip({
   instanceId: "customer-deployments",
-  stateDirectory: "/srv/my-product/openship",
+  stateDirectory: "/srv/my-product/kovalio",
   storage: { driver: "postgres", url: process.env.SHIP_DATABASE_URL!, migrations: "verify" },
   encryptionKey: process.env.SHIP_ENCRYPTION_KEY!,
   runtime: "bare",
@@ -153,11 +153,11 @@ The encryption key is a persistent UTF-8 secret of 32–4096 bytes. The factory 
 A remote integration uses the same resource operations through an existing server:
 
 ```ts
-import { OpenshipClient } from "openship/client";
+import { KovalioClient } from "kovalio/client";
 
-const customer = new OpenshipClient({
+const customer = new KovalioClient({
   baseUrl: "https://ship.example.com",
-  token: process.env.OPENSHIP_TOKEN!,
+  token: process.env.KOVALIO_TOKEN!,
   organizationId: "org_customer_123",
 });
 const submitted = await customer.deployments.create({ projectId: "proj_123", branch: "main" });
@@ -261,7 +261,7 @@ Migration behavior must be explicit. An owned new embedded database can be initi
 
 Existing encrypted data must remain readable. Extract key configuration while preserving the legacy key derivation/format for existing installations. Key changes or rotations need a deliberate migration path, including the existing transfer/export secret handling.
 
-The SDK must not inherit or adopt an unrelated `~/.openship` installation implicitly. Storage directory and stable instance identity should be explicit or derived from a clearly documented application-specific configuration.
+The SDK must not inherit or adopt an unrelated `~/.kovalio` installation implicitly. Storage directory and stable instance identity should be explicit or derived from a clearly documented application-specific configuration.
 
 **Execution durability must match the selected worker model.** Embedded execution requires the host process to stay alive until its work completes or reaches a supported handoff. A remote client can exit after submission because the remote instance owns execution.
 
@@ -324,7 +324,7 @@ Extraction requirements:
 - Constrain native paths and archive extraction to allowed roots; validate path traversal and symlink behavior consistently.
 - Keep server-side paths distinct from paths on a remote SDK caller's machine.
 - Preserve upload-session IDs, detected services, advanced service settings, selected service IDs, diagnostics, and server-owned secret resolution. Masked values from a scan must not become literal deployed secrets.
-- Follow server-provided upload targets and their credentials. Openship API tokens stay scoped to the Openship instance.
+- Follow server-provided upload targets and their credentials. Kovalio API tokens stay scoped to the Kovalio instance.
 - Clean temporary artifacts after completion, failure, or cancellation; define expiry and ownership for registered sources.
 - Return the failed stage and any created source/project/deployment IDs so recovery is possible without deleting unrelated state.
 - Retain target validation, capacity checks, locking, port ownership, readiness, routing/TLS behavior, artifact retention, and rollback decisions.
@@ -406,11 +406,11 @@ Safe reads can use bounded retries with backoff and `Retry-After`. Distinguish c
 
 **Publishing will preserve the public npm name and executable.**
 
-The distribution package publishes compiled ESM and CommonJS entry points, matching declarations, supported subpaths, and the `openship` binary. Keep Node 22 as the initial supported floor and validate Node 22 and 24. Internal workspace packages can remain private and be bundled/staged into the artifact.
+The distribution package publishes compiled ESM and CommonJS entry points, matching declarations, supported subpaths, and the `kovalio` binary. Keep Node 22 as the initial supported floor and validate Node 22 and 24. Internal workspace packages can remain private and be bundled/staged into the artifact.
 
 ```text
-packages/openship/
-  package.json                 name: openship
+packages/kovalio/
+  package.json                 name: kovalio
   dist/sdk/                    public root/native/client entries
   dist/node-entry.js           npm executable wrapper
   dist/index.js                CLI implementation
@@ -425,7 +425,7 @@ Update [release publishing](../.github/workflows/release.yml), [version synchron
 
 Verify the packed package contains required assets and no unresolved `workspace:*` dependencies or declaration imports of unpublished packages. Preserve dynamic/native dependency handling for SSH/Docker and test it under Node, rather than assuming workspace execution under Bun proves the npm artifact works.
 
-Initially version the public package with the Openship release. Native components in a build must be internally compatible; remote clients additionally need a documented minimum supported API version and capability negotiation. Test the baseline supported server and current server. Type additions and new features should not require exact client/server version equality.
+Initially version the public package with the Kovalio release. Native components in a build must be internally compatible; remote clients additionally need a documented minimum supported API version and capability negotiation. Test the baseline supported server and current server. Type additions and new features should not require exact client/server version equality.
 
 **Implementation will proceed by complete vertical slices.** Native invocation and the shared policy boundary are established early. A remote-only wrapper is useful during migration, but it does not complete this plan.
 
@@ -434,10 +434,10 @@ Initially version the public package with the Openship release. Native component
 | 0. Inventory and contracts | Map feature operations, hidden controller checks, Hono dependencies, mutable globals, source/target semantics, and contract gaps. | Initial contracts and policy expectations are explicit; every feature has a migration status. |
 | 1. Context and operation boundary | Introduce transport-independent context, identity adapters, authorization results, scoped views, instance-admin policy, and operation validation/audit. | The same operation can be called natively and over HTTP with equivalent access decisions and results. |
 | 2. Instance composition | Add database/repository factories, configuration/secrets injection, provider ownership, lifecycle, cache/queue/event isolation. | Two constructed platforms coexist in one Node process without shared mutable configuration or accidental state access. |
-| 3. Native deployment slice | Extract project lookup/create, deployment preparation/submission, source resolution, pipeline dependencies, status/events, and required target/cloud routing. | A Node application deploys an existing project through the shared implementation without an Openship HTTP round trip. |
+| 3. Native deployment slice | Extract project lookup/create, deployment preparation/submission, source resolution, pipeline dependencies, status/events, and required target/cloud routing. | A Node application deploys an existing project through the shared implementation without an Kovalio HTTP round trip. |
 | 4. Complete deployment workflows | Native directory/generated files, remote upload, Compose/service scoping, cancellation, prompts, rollback, durable outcomes, interruption/recovery. | Native and remote workflows pass the same behavioral cases, including failures and decisions. |
 | 5. HTTP and CLI adoption | Move migrated controllers and commands onto the operation/facade interfaces, preserving wire and command compatibility. | No parallel orchestration or policy implementations remain for the migrated features. |
-| 6. Package and preview release | Assemble `packages/openship`, exports, typings, assets, build ordering, release checks, and runnable integration examples. | Clean external Node projects can import, execute, close, and use the CLI from the packed artifact. Publish only the explicitly supported native surface. |
+| 6. Package and preview release | Assemble `packages/kovalio`, exports, typings, assets, build ordering, release checks, and runnable integration examples. | Clean external Node projects can import, execute, close, and use the CLI from the packed artifact. Publish only the explicitly supported native surface. |
 | 7. Full platform extraction | Migrate the feature inventory module by module, including identity management, infrastructure, backups, mail, cloud, billing, and instance operations. | Every supported platform operation has a native implementation or an explicit transport/lifecycle boundary, plus permission and capability coverage. |
 | 8. Distributed/embedding completion | Complete durable dispatch/event requirements, host identity integrations, namespace policy where needed, mixed-version support, and optional HTTP adapters. | Supported multi-tenant deployment modes have demonstrated isolation, recovery, and documented operational ownership. |
 
@@ -491,18 +491,18 @@ Add SDK/platform typechecks and packed-artifact checks explicitly to release gat
 - Supported features reuse existing infrastructure implementations and persistence behavior.
 - Full platform coverage is tracked explicitly; a limited preview must state its supported modules and modes.
 - Node 22+ is the initial native runtime; browser clients, edge runtimes, and Bun require separate support decisions and validation.
-- The public npm package remains `openship`, with separate SDK and executable entry points.
+- The public npm package remains `kovalio`, with separate SDK and executable entry points.
 
 Implementation details to settle during their owning phase include the exact factory/handle names, external identity mapping schema, service-principal representation, nested namespace model if required, first stable feature set, distributed deployment dispatch mechanism, capability/version format, and optional HTTP adapter packaging. Record each decision in this document with its constraints and validation; none should be silently inferred from a transport-specific workaround.
 
 **Completion means the shared architecture is observable in real integrations.**
 
-- [x] A clean Node application installs the packed `openship` artifact and deploys natively without starting an Openship HTTP server.
+- [x] A clean Node application installs the packed `kovalio` artifact and deploys natively without starting an Kovalio HTTP server.
 - [x] HTTP and native scopes invoke the same authorized implementations for the migrated resource groups; full feature coverage is tracked below and remains open.
-- [ ] A remote client can target supported cloud and self-hosted Openship instances with the same resource contract.
-- [x] An embedding application maps its own authenticated users/customers to Openship identities and organizations.
+- [ ] A remote client can target supported cloud and self-hosted Kovalio instances with the same resource contract.
+- [x] An embedding application maps its own authenticated users/customers to Kovalio identities and organizations.
 - [x] Creating projects for users preserves tenant ownership, explicit access grants, and actor attribution.
-- [x] Namespace behavior is documented and enforced as a persistent mapping to an Openship organization.
+- [x] Namespace behavior is documented and enforced as a persistent mapping to an Kovalio organization.
 - [ ] Multiple users and platform instances remain isolated under concurrency, revocation, failure, and shutdown.
 - [ ] API-only checks have moved into shared operations wherever native calls require them.
 - [ ] Builds, deployments, decisions, retries, cancellation, rollback, and recovery preserve existing behavior.

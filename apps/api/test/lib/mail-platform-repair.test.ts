@@ -39,33 +39,33 @@ vi.mock("@repo/platform/engine/lib/encryption", () => ({
 }));
 
 vi.mock("@repo/platform/engine/modules/mail/admin/platform-mailbox.service", () => ({
-  ensureOpenshipPlatformMailbox: mocks.ensurePlatformMailbox,
+  ensureKovalioPlatformMailbox: mocks.ensurePlatformMailbox,
 }));
 
 describe("platform transport self-repair", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.OPENSHIP_HOST_SSH_HOST;
+    delete process.env.KOVALIO_HOST_SSH_HOST;
     mocks.listMailServers.mockResolvedValue([
       { serverId: "srv_mail", installedAt: new Date("2026-08-01") },
     ]);
     mocks.getInstanceSettings.mockResolvedValue(null);
     mocks.ensurePlatformMailbox
       .mockResolvedValueOnce({
-        email: "openship@example.com",
+        email: "kovalio@example.com",
         password: "stale-password",
         smtpHost: "mail.example.com",
         smtpPort: 465,
         secure: true,
-        from: "Openship <openship@example.com>",
+        from: "Kovalio <kovalio@example.com>",
       })
       .mockResolvedValueOnce({
-        email: "openship@example.com",
+        email: "kovalio@example.com",
         password: "repaired-password",
         smtpHost: "mail.example.com",
         smtpPort: 465,
         secure: true,
-        from: "Openship <openship@example.com>",
+        from: "Kovalio <kovalio@example.com>",
       });
     mocks.firstSend.mockRejectedValue(
       Object.assign(new Error("535 Authentication credentials invalid"), {
@@ -87,8 +87,8 @@ describe("platform transport self-repair", () => {
         to: "owner@example.net",
         subject: "Alert",
         html: "<p>Alert</p>",
-        replyTo: "support@openship.io",
-        messageId: "<support-test@openship.io>",
+        replyTo: "support@nextrium.org",
+        messageId: "<support-test@nextrium.org>",
         preferSource: "platform",
       }),
     ).resolves.toBe(true);
@@ -102,7 +102,7 @@ describe("platform transport self-repair", () => {
     expect(mocks.firstSend).toHaveBeenCalledOnce();
     expect(mocks.repairedSend).toHaveBeenCalledOnce();
     expect(mocks.repairedSend).toHaveBeenCalledWith(expect.objectContaining({
-      replyTo: "support@openship.io", messageId: "<support-test@openship.io>",
+      replyTo: "support@nextrium.org", messageId: "<support-test@nextrium.org>",
     }));
   });
 });

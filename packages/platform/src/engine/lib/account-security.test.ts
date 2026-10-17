@@ -195,8 +195,8 @@ async function enroll() {
 
 beforeAll(async () => {
   connection = await createDatabase(
-    process.env.OPENSHIP_SECURITY_TEST_PG_URL
-      ? { driver: "pg", url: process.env.OPENSHIP_SECURITY_TEST_PG_URL }
+    process.env.KOVALIO_SECURITY_TEST_PG_URL
+      ? { driver: "pg", url: process.env.KOVALIO_SECURITY_TEST_PG_URL }
       : { driver: "pglite", dataDir: "memory://" },
   );
   auth = createAuth();
@@ -215,7 +215,7 @@ describe("account security through real Better Auth HTTP endpoints", () => {
     );
     const setup = await user.browser.request("/two-factor/enable", { password: PASSWORD });
     expect(setup.status).toBe(200);
-    expect(setup.data.totpURI).toMatch(/^otpauth:\/\/totp\/Openship/);
+    expect(setup.data.totpURI).toMatch(/^otpauth:\/\/totp\/Kovalio/);
     expect(setup.data.backupCodes).toHaveLength(10);
     expect((await user.browser.request("/get-session")).data.user.twoFactorEnabled).toBe(false);
     expect(

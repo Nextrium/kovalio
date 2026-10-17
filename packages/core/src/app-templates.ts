@@ -388,7 +388,7 @@ export interface AppMarketplaceContent {
 
 /** Shared upstream artifact used by the engine and public app directory. */
 export const APP_CATALOG_URL =
-  "https://raw.githubusercontent.com/oblien/openship/main/packages/core/src/apps/catalog.json";
+  "https://raw.githubusercontent.com/oblien/kovalio/main/packages/core/src/apps/catalog.json";
 
 export interface AppTemplate {
   id: string;

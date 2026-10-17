@@ -31,8 +31,8 @@ describeDockerE2E("unchanged Compose database deployments (#986)", () => {
         await runtime.destroy(id);
       }
       await runtime.removeNetwork(project.slug);
-      await runtime.removeVolume(`openship-${project.slug}-pgdata`);
-      await runtime.removeVolume(`openship-${project.slug}-appdata`);
+      await runtime.removeVolume(`kovalio-${project.slug}-pgdata`);
+      await runtime.removeVolume(`kovalio-${project.slug}-appdata`);
     }
   });
 

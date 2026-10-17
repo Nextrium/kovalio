@@ -25,7 +25,7 @@ interface KindOption {
 const KIND_OPTIONS: KindOption[] = [
   { kind: "s3_compatible", icon: "cloud" },
   { kind: "sftp", icon: "server" },
-  { kind: "openship_server", icon: "server-settings" },
+  { kind: "kovalio_server", icon: "server-settings" },
 ];
 
 // ─── S3 providers ────────────────────────────────────────────────────────────
@@ -298,7 +298,7 @@ function KindPicker({ onPick }: { onPick: (kind: Kind) => void }) {
   const m = t.misc.backups;
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {KIND_OPTIONS.filter(opt => selfHosted || opt.kind !== "openship_server").map((opt) => {
+      {KIND_OPTIONS.filter(opt => selfHosted || opt.kind !== "kovalio_server").map((opt) => {
         const Icon = opt.icon;
         const meta = kindMeta(opt.kind, m);
         return (

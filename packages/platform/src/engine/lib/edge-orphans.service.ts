@@ -43,32 +43,32 @@ export interface EdgeOrphanScan {
 }
 
 /**
- * Resolve the edge owned by this Openship instance.
+ * Resolve the edge owned by this Kovalio instance.
  *
  * A compose install deliberately keeps the API image small: it mounts the edge's
  * sites tree and Docker socket, but does not ship the Docker CLI. The generic edge
  * probe shells out to `docker`, so using it from inside that API container reports
- * "no reverse proxy" even while `openship-edge` is serving production traffic.
+ * "no reverse proxy" even while `kovalio-edge` is serving production traffic.
  *
  * This service only ever inspects the local instance (its executor is created with
- * no SSH target). `OPENSHIP_EDGE_MODE=docker` is therefore an authoritative compose
+ * no SSH target). `KOVALIO_EDGE_MODE=docker` is therefore an authoritative compose
  * topology signal, and the bind-mounted sites tree is the authoritative inventory.
  * Remote-server callers must keep using `edgeProxy`, which probes their executor.
  */
 async function localEdgeProxy() {
   const { edgeProxy, edgeProxyFor, createExecutor } = await import("@repo/adapters");
   const executor = createExecutor();
-  if (process.env.OPENSHIP_EDGE_MODE === "docker") {
+  if (process.env.KOVALIO_EDGE_MODE === "docker") {
     return edgeProxyFor(executor, "openresty", {
       ours: true,
-      container: process.env.OPENSHIP_EDGE_CONTAINER?.trim() || null,
+      container: process.env.KOVALIO_EDGE_CONTAINER?.trim() || null,
     });
   }
   return edgeProxy(executor);
 }
 
 /**
- * Every hostname Openship believes it should be serving on this box.
+ * Every hostname Kovalio believes it should be serving on this box.
  *
  * Assembled from the SAME producers that write vhosts, so the sweep doesn't flag
  * live infrastructure:
@@ -170,7 +170,7 @@ export async function scanEdgeOrphans(): Promise<EdgeOrphanScan> {
  * (registerRoute replaces the whole file). The point is only to say so out loud.
  */
 export async function untrackedSiteFor(hostname: string): Promise<UntrackedEdgeSite | null> {
-  if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION !== "true") return null;
+  if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION !== "true") return null;
   const host = normalizeServedHostname(hostname);
   if (!host) return null;
   try {

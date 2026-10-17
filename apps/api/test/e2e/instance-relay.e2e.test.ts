@@ -10,7 +10,7 @@ import { expect, it } from "vitest";
 import { freePort, startApi, stopApi, jsonRequest } from "./fixtures/instance-api";
 
 it("relays streams and terminal frames to one authenticated peer without leaking local authority or falling back", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "openship-instance-relay-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-instance-relay-"));
   const desktop = await startApi({
     dbDir: directory,
     port: await freePort(),
@@ -29,7 +29,7 @@ it("relays streams and terminal frames to one authenticated peer without leaking
       return reply({
         origin,
         installationId,
-        cookies: { "openship.session_token": "remote-device-session" },
+        cookies: { "kovalio.session_token": "remote-device-session" },
       });
     if (request.url === "/api/events") {
       response.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-store" });
@@ -90,7 +90,7 @@ it("relays streams and terminal frames to one authenticated peer without leaking
         },
       },
     );
-    expect(echo.headers.cookie).toBe("openship.session_token=remote-device-session");
+    expect(echo.headers.cookie).toBe("kovalio.session_token=remote-device-session");
     expect(echo.headers["x-organization-id"]).toBe("selected-org");
     expect(echo.headers[INVITATION_DELIVERY_HEADER]).toBe(INVITATION_DELIVERY_LINK_ONLY);
     expect(echo.headers["x-internal-token"]).toBeUndefined();
@@ -103,13 +103,13 @@ it("relays streams and terminal frames to one authenticated peer without leaking
 
     terminal = new WebSocket(
       desktop.baseUrl.replace("http:", "ws:") + "/api/test-terminal",
-      ["openship-ticket-test"],
+      ["kovalio-ticket-test"],
       { origin: desktop.baseUrl },
     );
     const [greeting] = await once(terminal, "message");
     expect(JSON.parse(greeting.toString())).toEqual({
-      cookie: "openship.session_token=remote-device-session",
-      protocol: "openship-ticket-test",
+      cookie: "kovalio.session_token=remote-device-session",
+      protocol: "kovalio-ticket-test",
     });
     const text = once(terminal, "message");
     terminal.send("terminal text");

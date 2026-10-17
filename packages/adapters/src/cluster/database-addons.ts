@@ -83,10 +83,10 @@ export async function ensureClusterAddonObject(
   const hash = createHash("sha256").update(JSON.stringify(object)).digest("hex");
   object.metadata.labels = {
     ...object.metadata.labels,
-    "openship.io/runtime": runtimeId,
-    "openship.io/addon": addon,
+    "nextrium.org/runtime": runtimeId,
+    "nextrium.org/addon": addon,
   };
-  object.metadata.annotations = { ...object.metadata.annotations, "openship.io/addon-spec": hash };
+  object.metadata.annotations = { ...object.metadata.annotations, "nextrium.org/addon-spec": hash };
   let current = await clusterObject(api, `${path}/${object.metadata.name}`, signal);
   if (!current) {
     await fence();
@@ -100,8 +100,8 @@ export async function ensureClusterAddonObject(
   if (
     !current ||
     current.metadata.deletionTimestamp ||
-    current.metadata.labels?.["openship.io/runtime"] !== runtimeId ||
-    current.metadata.annotations?.["openship.io/addon-spec"] !== hash
+    current.metadata.labels?.["nextrium.org/runtime"] !== runtimeId ||
+    current.metadata.annotations?.["nextrium.org/addon-spec"] !== hash
   )
     throw new AppError(
       `${object.kind} ${object.metadata.name} already exists with different ownership or configuration. It was left unchanged.`,
@@ -163,14 +163,14 @@ export function prepareDatabaseAddon(
     // if a PVC is accidentally removed; explicit database deletion owns purge.
     for (const object of result) {
       if (object.kind === "StorageClass") {
-        object.metadata.name = "openship-local";
-        object.provisioner = "openship.io/local-path";
+        object.metadata.name = "kovalio-local";
+        object.provisioner = "nextrium.org/local-path";
         object.reclaimPolicy = "Retain";
       }
       if (object.kind === "Deployment") {
         object.spec.template.spec.containers[0].command.push(
           "--provisioner-name",
-          "openship.io/local-path",
+          "nextrium.org/local-path",
         );
         object.spec.template.spec.containers[0].resources = {
           requests: { cpu: "50m", memory: "64Mi" },
@@ -182,7 +182,7 @@ export function prepareDatabaseAddon(
           nodePathMap: [
             {
               node: "DEFAULT_PATH_FOR_NON_LISTED_NODES",
-              paths: ["/var/lib/openship/database-volumes"],
+              paths: ["/var/lib/kovalio/database-volumes"],
             },
           ],
         });
@@ -225,7 +225,7 @@ export function prepareDatabaseAddon(
   }
   for (const object of result) {
     if (object.kind === "Deployment")
-      object.spec.template.spec.nodeSelector = { "openship.io/runtime": runtimeId };
+      object.spec.template.spec.nodeSelector = { "nextrium.org/runtime": runtimeId };
   }
   // All namespaces and CRDs must exist before their consumers. Keep upstream
   // roles, services and webhooks in their authored order within that constraint.

@@ -2,7 +2,7 @@ import { AppError } from "@repo/contracts";
 
 /** Scheduled and detached backup work belongs to the explicitly started worker. */
 export function nativeJobsEnabled(): boolean {
-  return process.env.OPENSHIP_NATIVE !== "true" || process.env.OPENSHIP_NATIVE_JOBS === "true";
+  return process.env.KOVALIO_NATIVE !== "true" || process.env.KOVALIO_NATIVE_JOBS === "true";
 }
 
 export function assertNativeJobs(): void {
@@ -17,11 +17,11 @@ export function assertNativeHostExecution(): void {
 }
 
 export function nativeHostExecutionEnabled(): boolean {
-  return process.env.OPENSHIP_NATIVE !== "true" || process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION === "true";
+  return process.env.KOVALIO_NATIVE !== "true" || process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION === "true";
 }
 
 export function assertNativeLocalForwarding(): void {
-  if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ALLOW_LOCAL_FORWARDING !== "true")
+  if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ALLOW_LOCAL_FORWARDING !== "true")
     throw new AppError("Local port forwarding is disabled by this native installation's policy", 403, "LOCAL_FORWARDING_DISABLED");
 }
 

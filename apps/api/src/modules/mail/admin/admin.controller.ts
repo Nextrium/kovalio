@@ -40,7 +40,7 @@ import {
   updateMailbox,
 } from "@repo/platform/engine/modules/mail/admin/mailboxes.service";
 import {
-  ensureOpenshipPlatformMailbox,
+  ensureKovalioPlatformMailbox,
   PlatformMailboxError,
 } from "@repo/platform/engine/modules/mail/admin/platform-mailbox.service";
 import {
@@ -608,7 +608,7 @@ export async function updateMailboxHandler(c: Context) {
 }
 
 /**
- * Explicit repair surface for the protected Openship sender. This is the only
+ * Explicit repair surface for the protected Kovalio sender. This is the only
  * admin endpoint allowed to rotate it; ordinary mailbox CRUD rejects the same
  * address so state-file credentials and the Dovecot hash cannot drift again.
  */
@@ -627,7 +627,7 @@ export async function rotatePlatformMailboxHandler(c: Context) {
   }
 
   try {
-    const creds = await ensureOpenshipPlatformMailbox(serverId, { rotate: true });
+    const creds = await ensureKovalioPlatformMailbox(serverId, { rotate: true });
     // A prior nodemailer transport may still hold the old password for up to a
     // minute. Drop it immediately; the next send rebuilds from the new state.
     invalidatePlatformTransport(serverId);

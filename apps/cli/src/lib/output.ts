@@ -13,7 +13,7 @@ export function reportCliMessage(level: "warn" | "error", ...values: unknown[]):
   console[level](...values);
 }
 
-let jsonMode = process.env.OPENSHIP_JSON === "1" || process.env.OPENSHIP_JSON === "true";
+let jsonMode = process.env.KOVALIO_JSON === "1" || process.env.KOVALIO_JSON === "true";
 
 export function setJsonMode(on: boolean): void {
   jsonMode = on;

@@ -265,13 +265,13 @@ describe("build pages", () => {
       promptId: "port_in_use:20001",
       title: "Port In Use",
       message:
-        "Port 20001 is occupied by openship-clincai-api. Port 20002 is available. Using it keeps the existing service running and saves the new host port for future deployments.",
+        "Port 20001 is occupied by kovalio-clincai-api. Port 20002 is available. Using it keeps the existing service running and saves the new host port for future deployments.",
       actions: [
         { id: "use_port:20002", label: "Use port 20002", variant: "primary" },
-        { id: "free_port", label: "Stop Openship Container & Continue", variant: "danger" },
+        { id: "free_port", label: "Stop Kovalio Container & Continue", variant: "danger" },
         { id: "abort", label: "Cancel Deploy", variant: "secondary" },
       ],
-      details: { port: 20001, alternativePort: 20002, containerName: "openship-clincai-api" },
+      details: { port: 20001, alternativePort: 20002, containerName: "kovalio-clincai-api" },
     };
     await render(false);
     expect(mocks.respond).not.toHaveBeenCalled();
@@ -283,11 +283,11 @@ describe("build pages", () => {
       const buttons = [...dialog.querySelectorAll<HTMLButtonElement>("button")];
       expect(buttons.map((button) => button.textContent)).toEqual([
         "Use port 20002",
-        "Stop Openship Container & Continue",
+        "Stop Kovalio Container & Continue",
         "Cancel Deploy",
       ]);
       expect(document.activeElement).toBe(buttons[0]);
-      expect(dialog.textContent).toContain("openship-clincai-api");
+      expect(dialog.textContent).toContain("kovalio-clincai-api");
       await render(false);
       expect(mocks.respond).not.toHaveBeenCalled();
       await act(async () => buttons[0]!.click());

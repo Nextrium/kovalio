@@ -30,7 +30,7 @@ Services you don't name carry forward on their existing containers, untouched. S
 ## Back up before every deploy (rollback safety net)
 
 Create a **backup policy** for the stateful service and enable its **“trigger on pre-deploy”** option.
-By default, Openship **waits for every backup run to succeed before building or starting the new
+By default, Kovalio **waits for every backup run to succeed before building or starting the new
 release**, including when a previous build is reused. This keeps startup migrations from overlapping
 the dump's database locks. The existing deployment remains in place while the backup runs.
 
@@ -44,7 +44,7 @@ the dump's database locks. The existing deployment remains in place while the ba
   same dialog. The decision and backup progress remain in the deployment logs. Skipping does not
   disable the policies or turn a failed run into a restore point.
 - Without a response, the dialog times out and stops deployment (five minutes by default, configurable
-  with `OPENSHIP_PROMPT_TIMEOUT_MS`). A missing/unreadable backup or a worker still running at the
+  with `KOVALIO_PROMPT_TIMEOUT_MS`). A missing/unreadable backup or a worker still running at the
   six-hour ceiling **stops the deploy without offering a bypass**: its database locks may still be held.
 - Runs are grouped as `pre_deploy` in backup history. Project policies wait for every service's run.
 - PostgreSQL dumps must exit successfully. A dump smaller than **1% of the median of up to three recent

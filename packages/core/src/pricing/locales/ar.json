@@ -53,7 +53,7 @@
     "selfHostedUnlimited": "عمليات نشر ومشاريع وخوادم ونطاقات غير محدودة",
     "selfHostedServices": "كل الخدمات المُدارة — Postgres وRedis والبريد",
     "selfHostedClients": "CLI وواجهة ويب وتطبيق سطح مكتب — خدمة خلفية واحدة",
-    "selfHostedFreeSubdomains": "{freeSubdomains} نطاق فرعي مجاني على {freeDomainSuffix} عند الربط مع Openship Cloud",
+    "selfHostedFreeSubdomains": "{freeSubdomains} نطاق فرعي مجاني على {freeDomainSuffix} عند الربط مع Kovalio Cloud",
     "monthlyCoverage": "المعالج والذاكرة والتخزين مشمولة طوال الشهر المدفوع",
     "namespaceCapacity": "الإجمالي: {namespaceCpu} vCPU، و{namespaceRamGb} GB ذاكرة، و{namespaceDiskGb} GB تخزين"
   },

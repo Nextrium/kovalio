@@ -131,7 +131,7 @@ Revalidated against main at `4e66349c27b48df13697c1b6d4a95f7a6cf4a3d6`:
 
 - **SEC-01 is already fixed on main.** Shared token management rejects scoped
   credential delegation and enforces the caller's read-only and expiry limits.
-- **SEC-02 is fixed in [PR #892](https://github.com/oblien/openship/pull/892),
+- **SEC-02 is fixed in [PR #892](https://github.com/Nextrium/kovalio/pull/892),
   awaiting merge into main.** Local execution and Docker reads require the
   host-owning organization on a self-hosted instance. Desktop and explicitly
   permitted native execution retain their existing policies; the cloud control

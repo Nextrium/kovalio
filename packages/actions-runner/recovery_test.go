@@ -13,10 +13,10 @@ import (
 )
 
 func TestWorkerSubprocess(t *testing.T) {
-	if os.Getenv("OPENSHIP_ACTIONS_TEST_CHILD") != "yes" {
+	if os.Getenv("KOVALIO_ACTIONS_TEST_CHILD") != "yes" {
 		return
 	}
-	if err := executeFile(os.Getenv("OPENSHIP_ACTIONS_TEST_REQUEST")); err != nil {
+	if err := executeFile(os.Getenv("KOVALIO_ACTIONS_TEST_REQUEST")); err != nil {
 		os.Exit(1)
 	}
 	os.Exit(0)
@@ -43,7 +43,7 @@ jobs:
 		t.Fatal(err)
 	}
 	child := exec.Command(os.Args[0], "-test.run=^TestWorkerSubprocess$")
-	child.Env = append(os.Environ(), "OPENSHIP_ACTIONS_TEST_CHILD=yes", "OPENSHIP_ACTIONS_TEST_REQUEST="+request)
+	child.Env = append(os.Environ(), "KOVALIO_ACTIONS_TEST_CHILD=yes", "KOVALIO_ACTIONS_TEST_REQUEST="+request)
 	if err := child.Run(); err == nil {
 		t.Fatal("worker accepted an unrecorded attempt")
 	}
@@ -73,13 +73,13 @@ jobs:
 		t.Fatal(err)
 	}
 	other := exec.Command("sleep", "30")
-	other.Env = append(os.Environ(), "RUNNER_TRACKING_ID=openship-action-another-job")
+	other.Env = append(os.Environ(), "RUNNER_TRACKING_ID=kovalio-action-another-job")
 	if err := other.Start(); err != nil {
 		t.Fatal(err)
 	}
 	defer func() { other.Process.Kill(); other.Wait() }()
 	child := exec.Command(os.Args[0], "-test.run=^TestWorkerSubprocess$")
-	child.Env = append(os.Environ(), "OPENSHIP_ACTIONS_TEST_CHILD=yes", "OPENSHIP_ACTIONS_TEST_REQUEST="+request)
+	child.Env = append(os.Environ(), "KOVALIO_ACTIONS_TEST_CHILD=yes", "KOVALIO_ACTIONS_TEST_REQUEST="+request)
 	if err := child.Start(); err != nil {
 		t.Fatal(err)
 	}

@@ -17,7 +17,7 @@ import { ActionStorageProtocol } from "./storage-protocol";
 /** A configured origin, never an incoming Host header. Desktop users can run
  * jobs without storage; artifacts require a published, reachable controller. */
 export function actionRuntimeUrl(): string {
-  const value = process.env.OPENSHIP_ACTIONS_RUNTIME_URL?.trim() || env.OPENSHIP_PUBLIC_URL;
+  const value = process.env.KOVALIO_ACTIONS_RUNTIME_URL?.trim() || env.KOVALIO_PUBLIC_URL;
   if (!value)
     throw new AppError(
       "Publish this instance and configure its public URL to use workflow artifacts and caches",

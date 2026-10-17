@@ -18,7 +18,7 @@ import {
   type ProxyDirectiveSpec,
   type ProxySettings,
 } from "@repo/core";
-import { scanOpenshipEdge } from "../system/proxy/import/nginx";
+import { scanKovalioEdge } from "../system/proxy/import/nginx";
 import { makeTestCert, makeTestRenewalConf } from "../system/proxy/test-certs";
 import { compileVercelRouting } from "./vercel-routing";
 import {
@@ -188,7 +188,7 @@ function makeExecutor(
     }
     if (command === "cat /proc/321/cgroup 2>/dev/null") {
       if (opts.unreadableMasterCgroup) throw new Error("permission denied");
-      return "0::/system.slice/openship-openresty.service";
+      return "0::/system.slice/kovalio-openresty.service";
     }
     if (command.startsWith("openssl ")) {
       if (opts.noOpenssl) throw new Error("openssl: not found");
@@ -780,7 +780,7 @@ describe("NginxProvider.serveEdgeChallenge", () => {
 
 /**
  * #556 — a routed host whose app is not answering used to get OpenResty's stock 502. That
- * matters beyond looks: Openship Cloud's shared edge forwards to the box and relays the
+ * matters beyond looks: Kovalio Cloud's shared edge forwards to the box and relays the
  * box's response, so the stock page is what a visitor to the operator's OWN domain reads,
  * branded for a third party. The page only belongs in vhosts where something can 502.
  */
@@ -790,7 +790,7 @@ describe("NginxProvider upstream-down page", () => {
   test("upgrades an existing generation-2 route without changing its upstream", async () => {
     const { nginx, files, conf } = setup();
     await nginx.registerRoute({ domain: "legacy.example.com", tls: false, targetUrl: "http://127.0.0.1:3009" });
-    files.set(`${SITES}/legacy-example-com.conf`, `# openship-vhost-gen: 2
+    files.set(`${SITES}/legacy-example-com.conf`, `# kovalio-vhost-gen: 2
 server {
     listen 80;
     server_name legacy.example.com;
@@ -800,7 +800,7 @@ server {
     expect(result.repaired).toEqual(["legacy.example.com"]);
     expect(result.failed).toEqual([]);
     expect(readVhostGeneration(conf("legacy-example-com")!)).toBeGreaterThan(2);
-    expect(conf("legacy-example-com")).toContain("openship-edge-upstream-down");
+    expect(conf("legacy-example-com")).toContain("kovalio-edge-upstream-down");
     expect(conf("legacy-example-com")).toContain("proxy_pass http://127.0.0.1:3009");
   });
 
@@ -812,7 +812,7 @@ server {
     const c = conf("app-example-com")!;
     expect(handlerCount(c)).toBe(2);
     // And the body actually ships, rather than an empty handler that yields a blank 502.
-    expect(c).toContain("openship-edge-upstream-down");
+    expect(c).toContain("kovalio-edge-upstream-down");
     expect(c).toContain("Application unavailable");
   });
 
@@ -858,7 +858,7 @@ server {
     await nginx.registerRoute({
       domain: "site.example.com",
       tls: false,
-      staticRoot: "/opt/openship/static/site/dist",
+      staticRoot: "/opt/kovalio/static/site/dist",
     });
     expect(handlerCount(conf("site-example-com")!)).toBe(0);
   });
@@ -870,7 +870,7 @@ server {
     await nginx.registerRoute({
       domain: "hybrid.example.com",
       tls: false,
-      staticRoot: "/opt/openship/static/hybrid/dist",
+      staticRoot: "/opt/kovalio/static/hybrid/dist",
       proxyLocations: [{ pathPrefix: "/api/", targetUrl: "http://10.0.0.5:3000" }],
     });
     expect(handlerCount(conf("hybrid-example-com")!)).toBe(1);
@@ -988,13 +988,13 @@ describe("NginxProvider config generation", () => {
 
     const authWrite = writes.find((write) => write.path.includes("/auth.sh.tmp-"));
     const cleanupWrite = writes.find((write) => write.path.includes("/cleanup.sh.tmp-"));
-    expect(authWrite?.path).toMatch(/^\/etc\/letsencrypt\/\.openship-dns-/);
+    expect(authWrite?.path).toMatch(/^\/etc\/letsencrypt\/\.kovalio-dns-/);
     expect(authWrite?.content).toContain("echo auth");
     expect(cleanupWrite?.content).toContain("echo cleanup");
     const certbot = calls.find((call) => call.includes("certonly"));
     const authPath = authWrite!.path.replace(/\.tmp-.+$/, "");
     expect(certbot).toContain(authPath);
-    expect(certbot).toContain("OPENSHIP_DNS_RECORD_FILE=");
+    expect(certbot).toContain("KOVALIO_DNS_RECORD_FILE=");
     expect(removed).toContain(authPath.replace(/\/auth\.sh$/, ""));
   });
 
@@ -1434,11 +1434,11 @@ describe("NginxProvider config generation", () => {
       failReload: true,
       reloadListener: "foreign-nginx",
     });
-    files.set(`${SITES}/app-example-com.conf`, "# legacy Openship route");
+    files.set(`${SITES}/app-example-com.conf`, "# legacy Kovalio route");
 
     await expect(nginx.removeRoute("app.example.com")).rejects.toThrow(/foreign listener owns/);
 
-    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Openship route");
+    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Kovalio route");
     expect(calls.some((command) => command === "kill -HUP 333")).toBe(false);
     expect(calls.some((command) => command.startsWith("systemctl reload"))).toBe(false);
   });
@@ -1450,13 +1450,13 @@ describe("NginxProvider config generation", () => {
         compiledConfPath: "/etc/openresty/compiled/nginx.conf",
       },
     });
-    files.set(`${SITES}/app-example-com.conf`, "# legacy Openship route");
+    files.set(`${SITES}/app-example-com.conf`, "# legacy Kovalio route");
 
     await expect(nginx.removeRoute("app.example.com")).rejects.toThrow(
       /executable and configuration could not be verified/,
     );
 
-    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Openship route");
+    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Kovalio route");
     expect(calls.some((command) => command.includes("kill -HUP 321"))).toBe(false);
   });
 
@@ -1491,13 +1491,13 @@ describe("NginxProvider config generation", () => {
       failReload: true,
       reloadListener: "foreign-nginx-config",
     });
-    files.set(`${SITES}/app-example-com.conf`, "# legacy Openship route");
+    files.set(`${SITES}/app-example-com.conf`, "# legacy Kovalio route");
 
     await expect(nginx.removeRoute("app.example.com")).rejects.toThrow(
       /executable and configuration could not be verified/,
     );
 
-    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Openship route");
+    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Kovalio route");
     expect(calls.some((command) => command.includes("kill -HUP 334"))).toBe(false);
     expect(calls.some((command) => command.startsWith("systemctl reload"))).toBe(false);
   });
@@ -1507,11 +1507,11 @@ describe("NginxProvider config generation", () => {
       failReload: true,
       reloadListener: "container-nginx",
     });
-    files.set(`${SITES}/app-example-com.conf`, "# legacy Openship route");
+    files.set(`${SITES}/app-example-com.conf`, "# legacy Kovalio route");
 
     await expect(nginx.removeRoute("app.example.com")).rejects.toThrow(/container-backed/);
 
-    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Openship route");
+    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Kovalio route");
     expect(calls.some((command) => command.includes("kill -HUP 336"))).toBe(false);
     expect(calls.some((command) => command.startsWith("systemctl reload"))).toBe(false);
   });
@@ -1521,13 +1521,13 @@ describe("NginxProvider config generation", () => {
       failReload: true,
       unreadableMasterCgroup: true,
     });
-    files.set(`${SITES}/app-example-com.conf`, "# legacy Openship route");
+    files.set(`${SITES}/app-example-com.conf`, "# legacy Kovalio route");
 
     await expect(nginx.removeRoute("app.example.com")).rejects.toThrow(
       /host ownership could not be proven/,
     );
 
-    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Openship route");
+    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Kovalio route");
     expect(calls.some((command) => command.includes("kill -HUP 321"))).toBe(false);
   });
 
@@ -1536,13 +1536,13 @@ describe("NginxProvider config generation", () => {
       failReload: true,
       reloadListener: "unclassified",
     });
-    files.set(`${SITES}/app-example-com.conf`, "# legacy Openship route");
+    files.set(`${SITES}/app-example-com.conf`, "# legacy Kovalio route");
 
     await expect(nginx.removeRoute("app.example.com")).rejects.toThrow(
       /executable and configuration could not be verified/,
     );
 
-    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Openship route");
+    expect(files.get(`${SITES}/app-example-com.conf`)).toBe("# legacy Kovalio route");
     expect(calls.some((command) => command.includes("kill -HUP 335"))).toBe(false);
   });
 
@@ -1827,7 +1827,7 @@ describe("render → parse round-trip (the renderer and the read-back agree)", (
   /** Read our own edge back the way the live read-back and migrate both do. */
   async function scanBack(conf: string) {
     const exec = async (cmd: string) => (cmd.startsWith("sh -c ") ? conf : "");
-    const result = await scanOpenshipEdge({ exec } as unknown as CommandExecutor);
+    const result = await scanKovalioEdge({ exec } as unknown as CommandExecutor);
     return result.sites.find((s) => s.serverNames.includes("app.example.com"))!;
   }
 
@@ -1975,7 +1975,7 @@ describe("provisionCert legacy route recovery", () => {
     issue();
     await nginx.registerRoute({ ...route, tls: true });
     files.delete(statePath);
-    expect(conf(slug)).toContain("if ($openship_redirect_https)");
+    expect(conf(slug)).toContain("if ($kovalio_redirect_https)");
 
     await expect(nginx.provisionCert(domain, { force: true })).resolves.toMatchObject({
       verified: true,
@@ -2811,9 +2811,9 @@ describe("vercel.json path redirects", () => {
       ...PROXY,
       webhookProxy: "http://127.0.0.1:4000/api/webhooks/",
       proxyLocations: [
-        { pathPrefix: "/_openship/hooks/", targetUrl: "http://attacker.example" },
+        { pathPrefix: "/_kovalio/hooks/", targetUrl: "http://attacker.example" },
         {
-          pathPrefix: "/_openship/hooks/",
+          pathPrefix: "/_kovalio/hooks/",
           targetUrl: "http://exact-attacker.example",
           exact: true,
         },
@@ -3626,41 +3626,41 @@ describe("isAcmePortBindFailure", () => {
 });
 
 /**
- * The containerized edge's nginx.conf is baked, so OPENSHIP_EDGE_TRUSTED_PROXIES has to
+ * The containerized edge's nginx.conf is baked, so KOVALIO_EDGE_TRUSTED_PROXIES has to
  * reach it through sites-enabled. Behind a proxy outside Cloudflare's ranges (a tunnel
  * connector on the same host, say) every visitor otherwise shares the connector's
  * address: one rate-limit bucket, one ban target.
  */
 describe("operator-trusted proxies on a container edge", () => {
-  const INCLUDE = `${SITES}/_openship-real-ip.conf`;
+  const INCLUDE = `${SITES}/_kovalio-real-ip.conf`;
   afterEach(() => {
-    delete process.env.OPENSHIP_EDGE_TRUSTED_PROXIES;
+    delete process.env.KOVALIO_EDGE_TRUSTED_PROXIES;
   });
 
   test("are written into sites-enabled before the edge reloads", async () => {
-    process.env.OPENSHIP_EDGE_TRUSTED_PROXIES = "172.17.0.0/16";
+    process.env.KOVALIO_EDGE_TRUSTED_PROXIES = "172.17.0.0/16";
     const { nginx, files, calls } = setup({ provider: { containerEdge: true } });
     await nginx.registerRoute(PROXY);
 
     expect(files.get(INCLUDE)).toContain("set_real_ip_from 172.17.0.0/16;");
-    const written = calls.findIndex((c) => c.includes("_openship-real-ip.conf"));
+    const written = calls.findIndex((c) => c.includes("_kovalio-real-ip.conf"));
     const reloaded = calls.findIndex((c) => c.includes("-s reload"));
     expect(written).toBeGreaterThanOrEqual(0);
     expect(written).toBeLessThan(reloaded);
   });
 
   test("follow the variable on the next apply, including its removal", async () => {
-    process.env.OPENSHIP_EDGE_TRUSTED_PROXIES = "172.17.0.0/16";
+    process.env.KOVALIO_EDGE_TRUSTED_PROXIES = "172.17.0.0/16";
     const { nginx, files } = setup({ provider: { containerEdge: true } });
     await nginx.registerRoute(PROXY);
 
-    delete process.env.OPENSHIP_EDGE_TRUSTED_PROXIES;
+    delete process.env.KOVALIO_EDGE_TRUSTED_PROXIES;
     await nginx.registerRoute({ ...PROXY, domain: "other.example.com" });
     expect(files.get(INCLUDE)).not.toContain("set_real_ip_from");
   });
 
   test("are left to the bare edge's own include there", async () => {
-    process.env.OPENSHIP_EDGE_TRUSTED_PROXIES = "172.17.0.0/16";
+    process.env.KOVALIO_EDGE_TRUSTED_PROXIES = "172.17.0.0/16";
     const { nginx, files } = setup();
     await nginx.registerRoute(PROXY);
     expect(files.has(INCLUDE)).toBe(false);

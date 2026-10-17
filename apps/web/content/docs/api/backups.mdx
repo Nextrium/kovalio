@@ -39,8 +39,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects/proj_123/backup-policies" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/projects/proj_123/backup-policies" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"destinationId":"dst_abc","cronExpression":"0 3 * * *","retainCount":7}'
 ```
@@ -106,8 +106,8 @@ console.log(run);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/backup-policies/policy_123/run" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/backup-policies/policy_123/run" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -127,8 +127,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/backup-policies/bkp_abc/run" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/backup-policies/bkp_abc/run" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -206,7 +206,7 @@ POST /api/webhooks/backup
 ```
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/webhooks/backup" \
+curl -X POST "$KOVALIO_URL/api/webhooks/backup" \
   -H "Authorization: Bearer $POLICY_WEBHOOK_TOKEN"
 ```
 

@@ -18,7 +18,7 @@ beforeAll(async () => {
 afterEach(async () => { await Promise.all(temporary.splice(0).map(path => rm(path, { recursive: true, force: true }))); });
 
 async function fixture() {
-  const directory = await mkdtemp(join(tmpdir(), "openship-native-cli-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-native-cli-"));
   temporary.push(directory);
   const guard = join(directory, "no-http.mjs");
   await writeFile(guard, "globalThis.fetch = async () => { throw new Error('unexpected CLI HTTP request'); };\n");
@@ -189,7 +189,7 @@ describe("native CLI through a real Node worker and PGlite", { timeout: 120_000 
     const config = await f.config();
     const linked = await f.run(["--native-config", config, "--json", "init", "--project", "project-a", "--dir", f.directory]);
     expect(linked.code, linked.stderr).toBe(0);
-    const link = JSON.parse(await readFile(join(f.directory, ".openship/project.json"), "utf8"));
+    const link = JSON.parse(await readFile(join(f.directory, ".kovalio/project.json"), "utf8"));
     expect(link.native).toMatchObject({ instanceId: "cli-test", organizationId: expect.any(String) });
     expect(link).not.toHaveProperty("context");
   });

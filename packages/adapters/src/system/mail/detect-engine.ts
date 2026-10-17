@@ -101,9 +101,9 @@ async function probeHostUnits(
     (u) => `echo "## ${u}"; systemctl show ${u} -p LoadState -p ActiveState 2>/dev/null || true`,
   ).join("; ");
   const raw = await executor.exec(
-    `if command -v systemctl >/dev/null 2>&1; then { ${script} ; }; else echo __OPENSHIP_NO_SYSTEMCTL__; fi`,
+    `if command -v systemctl >/dev/null 2>&1; then { ${script} ; }; else echo __KOVALIO_NO_SYSTEMCTL__; fi`,
   );
-  if (raw.trim() === "__OPENSHIP_NO_SYSTEMCTL__") return { installed: false, active: false };
+  if (raw.trim() === "__KOVALIO_NO_SYSTEMCTL__") return { installed: false, active: false };
 
   const states = new Map<string, { load: string; active: string }>();
   let current: string | null = null;

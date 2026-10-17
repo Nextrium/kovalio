@@ -25,7 +25,7 @@ import { kubernetesPodIssue } from "./kubernetes-health";
 export const LONGHORN_NAMESPACE = "longhorn-system";
 export const longhornBase = `/apis/longhorn.io/v1beta2/namespaces/${LONGHORN_NAMESPACE}`;
 export const storageDiskName = (serverId: string) =>
-  `openship-${createHash("sha256").update(serverId).digest("hex").slice(0, 12)}`;
+  `kovalio-${createHash("sha256").update(serverId).digest("hex").slice(0, 12)}`;
 const GiB = 1024 ** 3;
 const conflict = (message: string) => new AppError(message, 409, "CLUSTER_STORAGE_CONFLICT");
 export function managedStorageClass(runtimeId: string, replicas: number): KubernetesObject {
@@ -34,7 +34,7 @@ export function managedStorageClass(runtimeId: string, replicas: number): Kubern
     kind: "StorageClass",
     metadata: {
       name: MANAGED_STORAGE_CLASS,
-      labels: { "openship.io/runtime": runtimeId, "openship.io/addon": "longhorn" },
+      labels: { "nextrium.org/runtime": runtimeId, "nextrium.org/addon": "longhorn" },
       annotations: { "storageclass.kubernetes.io/is-default-class": "false" },
     },
     provisioner: "driver.longhorn.io",
@@ -44,7 +44,7 @@ export function managedStorageClass(runtimeId: string, replicas: number): Kubern
     parameters: {
       numberOfReplicas: String(replicas),
       fsType: "ext4",
-      diskSelector: "openship",
+      diskSelector: "kovalio",
       dataLocality: "disabled",
       dataEngine: "v1",
       replicaSoftAntiAffinity: "disabled",
@@ -58,7 +58,7 @@ export function prepareStorageAddon(
   config: ClusterStorageConfig,
 ) {
   validateClusterStorage(config);
-  // File management stays in OpenShip. The bundled infrastructure dashboard is
+  // File management stays in Kovalio. The bundled infrastructure dashboard is
   // unnecessary and must not add another exposed management surface.
   const result = structuredClone(documents).filter(
     (object) =>
@@ -82,7 +82,7 @@ export function prepareStorageAddon(
         "replica-soft-anti-affinity": "false",
         "storage-over-provisioning-percentage": "100",
         "storage-minimal-available-percentage": "25",
-        "system-managed-components-node-selector": `openship.io/runtime:${runtimeId}`,
+        "system-managed-components-node-selector": `nextrium.org/runtime:${runtimeId}`,
         "guaranteed-instance-manager-cpu": "5",
         "node-down-pod-deletion-policy": "do-nothing",
         "upgrade-checker": "false",
@@ -92,8 +92,8 @@ export function prepareStorageAddon(
       const storage = parse(object.data["storageclass.yaml"]);
       storage.metadata.annotations["storageclass.kubernetes.io/is-default-class"] = "false";
       storage.metadata.labels = {
-        "openship.io/runtime": runtimeId,
-        "openship.io/addon": "longhorn",
+        "nextrium.org/runtime": runtimeId,
+        "nextrium.org/addon": "longhorn",
       };
       storage.reclaimPolicy = "Retain";
       object.data["storageclass.yaml"] = stringify(storage);
@@ -101,7 +101,7 @@ export function prepareStorageAddon(
     if (object.kind === "DaemonSet" || object.kind === "Deployment") {
       object.spec.template.spec.nodeSelector = {
         ...object.spec.template.spec.nodeSelector,
-        "openship.io/runtime": runtimeId,
+        "nextrium.org/runtime": runtimeId,
       };
     }
   }
@@ -137,7 +137,7 @@ export class ClusterStorageAdapter {
     );
     if (
       !namespace ||
-      namespace.metadata.labels?.["openship.io/runtime"] !== this.runtimeId ||
+      namespace.metadata.labels?.["nextrium.org/runtime"] !== this.runtimeId ||
       (!allowDeleting && namespace.metadata.deletionTimestamp)
     )
       throw conflict("The managed storage installation is unavailable or has different ownership.");
@@ -230,7 +230,7 @@ export class ClusterStorageAdapter {
                   allowScheduling: true,
                   evictionRequested: false,
                   storageReserved: disk.reservedGiB * GiB,
-                  tags: ["openship"],
+                  tags: ["kovalio"],
                 },
               },
             },
@@ -247,7 +247,7 @@ export class ClusterStorageAdapter {
     const secret = {
       apiVersion: "v1",
       kind: "Secret",
-      metadata: { name: "openship-backup-destination", namespace: LONGHORN_NAMESPACE },
+      metadata: { name: "kovalio-backup-destination", namespace: LONGHORN_NAMESPACE },
       type: "Opaque",
       data: Object.fromEntries(
         Object.entries({
@@ -267,8 +267,8 @@ export class ClusterStorageAdapter {
         secretPath,
         async (current) => {
           if (
-            current.metadata.labels?.["openship.io/runtime"] !== this.runtimeId ||
-            current.metadata.labels?.["openship.io/addon"] !== "longhorn"
+            current.metadata.labels?.["nextrium.org/runtime"] !== this.runtimeId ||
+            current.metadata.labels?.["nextrium.org/addon"] !== "longhorn"
           )
             throw conflict("The storage backup credentials have different ownership.");
           await this.fence();
@@ -286,7 +286,7 @@ export class ClusterStorageAdapter {
       this.api,
       path,
       async (current) => {
-        const owner = current.metadata.labels?.["openship.io/runtime"];
+        const owner = current.metadata.labels?.["nextrium.org/runtime"];
         if (
           (owner && owner !== this.runtimeId) ||
           (!owner && (current.spec.backupTargetURL || current.spec.credentialSecret))
@@ -296,7 +296,7 @@ export class ClusterStorageAdapter {
           );
         await this.fence();
         return {
-          metadata: { labels: { "openship.io/runtime": this.runtimeId } },
+          metadata: { labels: { "nextrium.org/runtime": this.runtimeId } },
           spec: {
             backupTargetURL: `s3://${parsed.hostname}@${storage.region}${parsed.pathname}/volumes/${this.runtimeId}`,
             credentialSecret: secret.metadata.name,
@@ -425,7 +425,7 @@ export class ClusterStorageAdapter {
       pending.items.some(
         (c) =>
           c.spec.storageClassName === MANAGED_STORAGE_CLASS ||
-          c.spec.storageClassName?.startsWith("openship-restore-"),
+          c.spec.storageClassName?.startsWith("kovalio-restore-"),
       )
     )
       throw conflict(
@@ -485,14 +485,14 @@ export class ClusterStorageAdapter {
         else {
           object.metadata.labels = {
             ...object.metadata.labels,
-            "openship.io/runtime": this.runtimeId,
+            "nextrium.org/runtime": this.runtimeId,
           };
           // Keep the pinned job's bounded retry. Its settings informer can still
           // be cold when other caches have synced, reporting the default false
           // even after confirmation was saved. Disabling native retry turns that
           // startup race into a failed removal. Cleanup still waits for the Job's
           // terminal success through runClusterJob.
-          object.spec.template.spec.nodeSelector = { "openship.io/runtime": this.runtimeId };
+          object.spec.template.spec.nodeSelector = { "nextrium.org/runtime": this.runtimeId };
           await runClusterJob(this.api, object, {
             signal: this.signal,
             fence: this.fence,
@@ -510,7 +510,7 @@ export class ClusterStorageAdapter {
     );
     const classes = await this.api.request<{ items: KubernetesObject[] }>(
       "GET",
-      `/apis/storage.k8s.io/v1/storageclasses?labelSelector=${encodeURIComponent(`openship.io/runtime=${this.runtimeId},openship.io/addon=longhorn`)}`,
+      `/apis/storage.k8s.io/v1/storageclasses?labelSelector=${encodeURIComponent(`nextrium.org/runtime=${this.runtimeId},nextrium.org/addon=longhorn`)}`,
       undefined,
       this.signal,
     );
@@ -518,7 +518,7 @@ export class ClusterStorageAdapter {
       .filter(
         (object) =>
           object.provisioner === "driver.longhorn.io" &&
-          object.metadata.labels?.["openship.io/addon"] === "longhorn",
+          object.metadata.labels?.["nextrium.org/addon"] === "longhorn",
       )
       // List entries can omit their type. This endpoint identifies them as
       // StorageClasses, so restore that identity before resolving cleanup URLs.
@@ -529,7 +529,7 @@ export class ClusterStorageAdapter {
       const path = `${addonCollection(object)}/${object.metadata.name}`;
       const current = await clusterObject(this.api, path, this.signal);
       if (!current) continue;
-      if (current.metadata.labels?.["openship.io/runtime"] !== this.runtimeId)
+      if (current.metadata.labels?.["nextrium.org/runtime"] !== this.runtimeId)
         throw conflict(
           `Storage cleanup found ${object.metadata.name} with different ownership. It was left unchanged.`,
         );
@@ -547,7 +547,7 @@ export class ClusterStorageAdapter {
       this.signal,
     );
     if (current) {
-      if (current.metadata.labels?.["openship.io/runtime"] !== this.runtimeId)
+      if (current.metadata.labels?.["nextrium.org/runtime"] !== this.runtimeId)
         throw conflict("The storage namespace changed ownership before cleanup.");
       await this.fence();
       if (!current.metadata.deletionTimestamp)

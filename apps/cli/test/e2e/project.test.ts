@@ -49,7 +49,7 @@ describe("kovalio project get", () => {
   });
 });
 
-describe("openship project rename", () => {
+describe("kovalio project rename", () => {
   it("sends only the display name through the SDK and prints the saved identity", async () => {
     fetchStub = stubFetch((req) => {
       expect(req.url).toBe("http://api.test/api/projects/project%2Fone");
@@ -87,7 +87,7 @@ describe("openship project rename", () => {
   });
 });
 
-describe("openship project create", () => {
+describe("kovalio project create", () => {
   it("routes local paths through the server-side import scanner (#751)", async () => {
     fetchStub = stubFetch((req) => {
       expect(req.url).toBe("http://api.test/api/projects/import");
@@ -262,7 +262,7 @@ describe("kovalio project release-image", () => {
 });
 
 
-describe("openship project env set (#844)", () => {
+describe("kovalio project env set (#844)", () => {
   it("prints override warnings after a successful write without printing the submitted secret", async () => {
     fetchStub = stubFetch(() => ({ json: { upserted: 1, deleted: 0, warnings: ['Service "worker" overrides project environment for: TOKEN.'] } }));
     const { err: output, code } = await runCommand(projectCommand, ["env", "set", "p1", "--set", "TOKEN=new-secret", "--secret"]);
@@ -304,13 +304,13 @@ describe("openship project env set (#844)", () => {
   });
 });
 
-describe("openship project auth errors (#1023)", () => {
-  it("points at openship login when the API answers 401", async () => {
+describe("kovalio project auth errors (#1023)", () => {
+  it("points at kovalio login when the API answers 401", async () => {
     fetchStub = stubFetch(() => ({ status: 401, json: { error: "Unauthorized" } }));
     const { err, code } = await runCommand(projectCommand, ["create", "--name", "shop"]);
     expect(code).toBe(1);
     expect(err).toContain("Unauthorized");
-    expect(err).toContain("Run `openship login` first.");
+    expect(err).toContain("Run `kovalio login` first.");
   });
 
   it("leaves other API errors without the login hint", async () => {
@@ -318,11 +318,11 @@ describe("openship project auth errors (#1023)", () => {
     const { err, code } = await runCommand(projectCommand, ["get", "p1"]);
     expect(code).toBe(1);
     expect(err).toContain("Forbidden");
-    expect(err).not.toContain("openship login");
+    expect(err).not.toContain("kovalio login");
   });
 });
 
-describe("openship project runtime roles (#1282)", () => {
+describe("kovalio project runtime roles (#1282)", () => {
   it("lists the active deployment's roles through the project API", async () => {
     fetchStub = stubFetch(() => ({
       json: {

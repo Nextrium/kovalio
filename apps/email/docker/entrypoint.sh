@@ -39,7 +39,7 @@ set -euo pipefail
 
 log() { echo "[kovalio-mail] $*"; }
 
-# db-bootstrap.sh reads OPENSHIP_MAIL_DB_HOST and OPENSHIP_MAIL_DB_PORT to wait for
+# db-bootstrap.sh reads KOVALIO_MAIL_DB_HOST and KOVALIO_MAIL_DB_PORT to wait for
 # and bootstrap the schema; step 3d reconciles that same port into daemon configs.
 FIRST_DOMAIN="${FIRST_DOMAIN:-}"
 SEED_DIR="/opt/kovalio-mail/seed"
@@ -57,7 +57,7 @@ seed dovecot /etc/dovecot
 seed amavis-confd /etc/amavis/conf.d
 
 # An older bind-mounted master.cf hides corrected image defaults (#392).
-bash /opt/openship-mail/postfix-filter-tls.sh
+bash /opt/kovalio-mail/postfix-filter-tls.sh
 mkdir -p /var/vmail /var/spool/postfix /var/lib/dkim /var/lib/clamav
 if getent passwd vmail >/dev/null 2>&1; then
   chown -R vmail:vmail /var/vmail 2>/dev/null || true
@@ -155,11 +155,11 @@ fi
 
 # 3c. /etc/ssl is in the container layer. Restore the daemon certificate links
 #     on every boot so recreating the container retains the mounted TLS identity.
-bash /opt/openship-mail/reconcile-ssl.sh "$FIRST_DOMAIN"
+bash /opt/kovalio-mail/reconcile-ssl.sh "$FIRST_DOMAIN"
 
 # 3d. Keep daemon SQL connections on the sidecar's selected host port. Only
 #     database connection fields are rewritten; mail listener ports stay intact.
-python3 /opt/openship-mail/reconcile-db-port.py "${OPENSHIP_MAIL_DB_PORT:-5432}"
+python3 /opt/kovalio-mail/reconcile-db-port.py "${KOVALIO_MAIL_DB_PORT:-5432}"
 
 
 # 4. bootstrap the mail databases (idempotent; skips if the vmail schema exists).
@@ -203,7 +203,7 @@ sed -i -E 's/port=",,/port="/g' /etc/fail2ban/jail.d/*.local 2>/dev/null || true
 #    c) configure the helper's TCP endpoint AND credentials. A .pgpass entry
 #       alone cannot select a host/port. The dedicated files are also used by
 #       cron/manual invocations that do not inherit the container environment.
-python3 /opt/openship-mail/configure-fail2ban-db.py
+python3 /opt/kovalio-mail/configure-fail2ban-db.py
 
 # 6. DKIM: reuse the key on the mount, else generate one (per domain).
 if [ -n "$FIRST_DOMAIN" ] && [ ! -s "/var/lib/dkim/${FIRST_DOMAIN}.pem" ]; then
@@ -256,7 +256,7 @@ fi
 #    files cannot refer to a living amavis. Drop them unconditionally, then
 #    recreate the directory the way Debian's tmpfiles.d rule would under
 #    systemd (supervisord has no equivalent).
-bash /opt/openship-mail/prepare-amavis-runtime.sh
+bash /opt/kovalio-mail/prepare-amavis-runtime.sh
 
 log "starting supervisord"
 exec "$@"

@@ -38,7 +38,7 @@ function isPrimarySignIn(path: string | undefined) {
  */
 export function accountSecurityPlugins(options: AccountSecurityOptions) {
   const passkeys = passkey(resolvePasskeyConfig(options.dashboardUrl));
-  const mfa = twoFactor({ issuer: "Openship" });
+  const mfa = twoFactor({ issuer: "Kovalio" });
   const challenge = mfa.hooks.after[0]!;
   const atomic = <T extends Parameters<typeof atomicSecurityEndpoint>[1]>(endpoint: T) =>
     atomicSecurityEndpoint(options.database, endpoint);

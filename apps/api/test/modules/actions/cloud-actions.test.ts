@@ -46,12 +46,12 @@ const source =
   "name: Check\non: workflow_dispatch\njobs:\n  check:\n    runs-on: linux\n    steps:\n      - run: echo ok\n";
 const workflow: ActionWorkflowView = {
   id: "cloud-workflow",
-  controller: "openship",
+  controller: "kovalio",
   githubWorkflowId: null,
   name: "Check",
   owner: null,
   repo: null,
-  path: ".openship/workflows/check.yml",
+  path: ".kovalio/workflows/check.yml",
   ref: "main",
   source,
   runnerIds: ["cloud-runner"],
@@ -97,7 +97,7 @@ const policy = {
 };
 const run = {
   id: "cloud-run",
-  controller: "openship",
+  controller: "kovalio",
   workflowId: workflow.id,
   name: "Check",
   number: 1,
@@ -173,7 +173,7 @@ async function localWorkflow(user = owner) {
   return { row, savedRunner };
 }
 beforeEach(async () => {
-  vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory");
+  vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory");
   owner = await seedOwner({ bound: false });
   h.linked.clear();
   h.linked.add(owner.orgId);

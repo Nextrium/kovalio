@@ -12,7 +12,7 @@ import { cloudFetchAsOrgOwner, readCloudJson, readCloudSession, resolveOrgCloudU
 export async function linkedCloudIdentity(organizationId: string): Promise<CloudIdentity> {
   const userId = await resolveOrgCloudUserId(organizationId);
   const session = userId ? await readCloudSession(userId) : null;
-  if (!session) throw new AppError("Sign in to the Openship Cloud account that owns this linked server", 409, "CLOUD_NOT_CONNECTED");
+  if (!session) throw new AppError("Sign in to the Kovalio Cloud account that owns this linked server", 409, "CLOUD_NOT_CONNECTED");
   return { apiUrl: session.apiUrl, userId: session.userId, organizationId: session.organizationId };
 }
 

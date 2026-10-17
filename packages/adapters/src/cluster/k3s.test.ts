@@ -131,7 +131,7 @@ with tempfile.TemporaryDirectory() as folder:
     try:
         ns['owner']()
         raise AssertionError('adopted another runtime')
-    except RuntimeError as error: assert 'different OpenShip runtime' in str(error)
+    except RuntimeError as error: assert 'different Kovalio runtime' in str(error)
 `);
   });
   it("keeps API and kubelet on private addresses and leaves Edge and storage ownership separate", () => {
@@ -203,8 +203,8 @@ with tempfile.TemporaryDirectory() as folder:
   it("allows empty owned database add-ons during runtime cleanup but refuses remaining data or foreign descendants", () => {
     python(`ns['C'] = {'id':'runtime'}
 ns['owner'] = lambda: {'id':'runtime'}
-labels = {'openship.io/runtime':'runtime','openship.io/addon':'postgres'}
-annotations = {'openship.io/addon-spec':'a'*64}
+labels = {'nextrium.org/runtime':'runtime','nextrium.org/addon':'postgres'}
+annotations = {'nextrium.org/addon-spec':'a'*64}
 deployment = {'kind':'Deployment','metadata':{'namespace':'cnpg-system','name':'cnpg-controller-manager','uid':'operator','labels':labels,'annotations':annotations}}
 replica = {'kind':'ReplicaSet','metadata':{'namespace':'cnpg-system','name':'operator-rs','uid':'replica','ownerReferences':[{'uid':'operator'}]}}
 pod = {'kind':'Pod','metadata':{'namespace':'cnpg-system','name':'operator-pod','uid':'pod','ownerReferences':[{'uid':'replica'}]}}
@@ -255,7 +255,7 @@ except RuntimeError as error: assert 'Remove cluster workloads' in str(error)
         if (command.includes("get namespaces -l")) return JSON.stringify({ items: [] });
         if (command.includes("get namespace "))
           return applied
-            ? JSON.stringify({ metadata: { labels: { "openship.io/runtime": runtime.id } } })
+            ? JSON.stringify({ metadata: { labels: { "nextrium.org/runtime": runtime.id } } })
             : "";
         if (command.includes("apply -f")) {
           applied = true;
@@ -281,13 +281,13 @@ except RuntimeError as error: assert 'Remove cluster workloads' in str(error)
         .filter((item: { kind: string }) => item.kind === "Pod")
         .map((item: { spec: { nodeName: string } }) => item.spec.nodeName),
     ).toEqual(["opsh-a", "opsh-b", "opsh-c"]);
-    expect(manifest.items[0].metadata.name).toBe("openship-check-bbbbbbbb-2");
+    expect(manifest.items[0].metadata.name).toBe("kovalio-check-bbbbbbbb-2");
     for (const [command] of executor.exec.mock.calls.filter(([command]) =>
       command.includes("exec -n"),
     )) {
       expect(command).toContain("nslookup kubernetes.default");
       for (const peer of runtime.plan.hosts)
-        expect(command).toContain(`${peer.nodeName}.openship-check-bbbbbbbb-2.svc.cluster.local`);
+        expect(command).toContain(`${peer.nodeName}.kovalio-check-bbbbbbbb-2.svc.cluster.local`);
     }
   });
   it("does not delete a newer attempt's verification namespace", async () => {
@@ -295,7 +295,7 @@ except RuntimeError as error: assert 'Remove cluster workloads' in str(error)
     const executor = {
       exec: vi.fn(async (command: string) =>
         command.includes("get namespaces -l")
-          ? JSON.stringify({ items: [{ metadata: { name: "openship-check-bbbbbbbb-3" } }] })
+          ? JSON.stringify({ items: [{ metadata: { name: "kovalio-check-bbbbbbbb-3" } }] })
           : "",
       ),
       writeFile: vi.fn(),

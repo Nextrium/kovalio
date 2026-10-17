@@ -20,9 +20,9 @@ function setup() {
   const local: KubernetesObject = {
     kind: "StorageClass",
     metadata: {
-      name: "openship-local",
+      name: "kovalio-local",
       uid: "local-class",
-      labels: { "openship.io/runtime": "runtime", "openship.io/addon": "local" },
+      labels: { "nextrium.org/runtime": "runtime", "nextrium.org/addon": "local" },
     },
     provisioner: "rancher.io/local-path",
   };
@@ -31,7 +31,7 @@ function setup() {
     metadata: {
       name: "custom-storage",
       uid: "custom-class",
-      labels: { "openship.io/runtime": "runtime" },
+      labels: { "nextrium.org/runtime": "runtime" },
     },
     provisioner: "example.test/driver",
   };
@@ -69,8 +69,8 @@ function setup() {
     {
       replicas: 2,
       disks: [
-        { serverId: "one", path: "/var/lib/openship/storage", reservedGiB: 1 },
-        { serverId: "two", path: "/var/lib/openship/storage", reservedGiB: 1 },
+        { serverId: "one", path: "/var/lib/kovalio/storage", reservedGiB: 1 },
+        { serverId: "two", path: "/var/lib/kovalio/storage", reservedGiB: 1 },
       ],
     },
     [],
@@ -103,7 +103,7 @@ describe("shared-storage cleanup boundaries", () => {
         metadata: {
           name: "longhorn-system",
           uid: "namespace",
-          labels: { "openship.io/runtime": "runtime" },
+          labels: { "nextrium.org/runtime": "runtime" },
         },
       });
       objects.set(`${longhornBase}/volumes`, { metadata: {}, items: [] });
@@ -192,7 +192,7 @@ describe("shared-storage cleanup boundaries", () => {
     const { adapter, request, objects } = setup();
     await adapter.remove(async () => {});
     expect([...objects.values()].map((object) => object.metadata.name)).toEqual([
-      "openship-local",
+      "kovalio-local",
       "custom-storage",
     ]);
     expect(request.mock.calls.filter(([method]) => method === "DELETE")).toHaveLength(1);
@@ -220,7 +220,7 @@ describe("shared-storage cleanup boundaries", () => {
     const { adapter, objects, request } = setup();
     objects.set("/api/v1/namespaces/longhorn-system", {
       kind: "Namespace",
-      metadata: { name: "longhorn-system", labels: { "openship.io/runtime": "another-runtime" } },
+      metadata: { name: "longhorn-system", labels: { "nextrium.org/runtime": "another-runtime" } },
     });
     objects.set(`${longhornBase}/volumes`, { metadata: {}, items: [] });
     await expect(adapter.remove(async () => {})).rejects.toThrow(/ownership/);

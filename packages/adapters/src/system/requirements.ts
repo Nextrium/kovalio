@@ -2,7 +2,7 @@
  * System-component prerequisite policy.
  *
  * Keep this independent from the control plane's DEPLOY_MODE. That value says
- * how Openship itself is running; it cannot describe a remote deployment box.
+ * how Kovalio itself is running; it cannot describe a remote deployment box.
  */
 
 /** Every managed remote deployment target needs these core tools. */
@@ -10,7 +10,7 @@ export const REMOTE_SERVER_REQUIRED_COMPONENTS = ["docker", "git"] as const;
 
 /** Direct runtime dependencies between installable system components. */
 const SYSTEM_COMPONENT_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = {
-  // The managed edge is always the openship-edge container. There is no
+  // The managed edge is always the kovalio-edge container. There is no
   // host-OpenResty fallback, so Docker must be ready before any edge image work.
   edge: ["docker"],
 };

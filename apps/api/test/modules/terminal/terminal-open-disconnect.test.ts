@@ -167,7 +167,7 @@ async function start(
   );
   const headers = new Headers({
     origin: trustedOrigins[0]!,
-    "sec-websocket-protocol": `openship.terminal.v1+${token}`,
+    "sec-websocket-protocol": `kovalio.terminal.v1+${token}`,
   });
   const handlers = await (kind.factory as unknown as (ctx: unknown) => Promise<Handlers>)({
     req: {
@@ -290,7 +290,7 @@ describe.each(kinds)("$name terminal session ownership", (kind) => {
     const headers = new Headers({
       origin: trustedOrigins[0]!,
       "sec-websocket-protocol":
-        `openship.terminal.v1+${token},openship.terminal.resume+${ready.resumeToken}`,
+        `kovalio.terminal.v1+${token},kovalio.terminal.resume+${ready.resumeToken}`,
     });
     const handlers = await (kind.factory as unknown as (ctx: unknown) => Promise<Handlers>)({
       req: {

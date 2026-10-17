@@ -2,7 +2,7 @@
 
 Cloud certificate metadata is checked against the namespace, project-owned Page
 and exact custom hostname. An active provider status alone is not HTTPS proof:
-Openship also opens TLS to the public hostname with its exact SNI and verifies the
+Kovalio also opens TLS to the public hostname with its exact SNI and verifies the
 trusted chain, hostname and validity dates. The connection sends no HTTP request,
 credentials or redirects. The shared outbound-target guard validates DNS once
 and pins the selected public IP, with a five-second total DNS/handshake deadline.

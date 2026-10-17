@@ -28,8 +28,8 @@ const DB_URL =
   process.env.KOVALIO_GEOIP_URL?.trim() ||
   `https://raw.githubusercontent.com/oblien/kovalio/main/apps/api/assets/geoip/${DB_FILE}`;
 
-const native = process.env.OPENSHIP_NATIVE === "true";
-const CACHE_PATH = native ? null : join(homedir(), ".openship", "cache", DB_FILE);
+const native = process.env.KOVALIO_NATIVE === "true";
+const CACHE_PATH = native ? null : join(homedir(), ".kovalio", "cache", DB_FILE);
 
 /** On-disk locations, first existing wins: an explicit override, the vendored
  *  asset (built dist or the source tree), then a prior download cache. */

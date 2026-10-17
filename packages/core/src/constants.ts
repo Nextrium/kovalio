@@ -2,13 +2,13 @@
  * Shared constants used across the monorepo.
  */
 
-export const APP_NAME = "Openship";
-export const SUPPORT_EMAIL = "support@openship.io";
+export const APP_NAME = "Kovalio";
+export const SUPPORT_EMAIL = "support@nextrium.org";
 
 /** Authenticated organization admins may intentionally create a shareable
  * invitation without asking the server to deliver email. Shared by the
  * dashboard request and the API callback so this protocol cannot drift. */
-export const INVITATION_DELIVERY_HEADER = "x-openship-invitation-delivery";
+export const INVITATION_DELIVERY_HEADER = "x-kovalio-invitation-delivery";
 export const INVITATION_DELIVERY_LINK_ONLY = "link-only";
 
 /** Whether an invitation claim may create its recipient's account. */

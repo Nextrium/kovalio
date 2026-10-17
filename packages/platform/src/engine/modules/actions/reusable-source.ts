@@ -8,9 +8,9 @@ import type { ReusableSourceReader } from "./reusable";
 /** Repository APIs provide content; no URL from YAML is fetched directly. */
 export function reusableSourceReader(ctx: ExecutionContext): ReusableSourceReader {
   return async (reference, caller) => {
-    const local = /^\.\/(\.(?:github|openship)\/workflows\/[^/@]+\.ya?ml)$/.exec(reference);
+    const local = /^\.\/(\.(?:github|kovalio)\/workflows\/[^/@]+\.ya?ml)$/.exec(reference);
     const remote =
-      /^([\w.-]+)\/([\w.-]+)\/(\.(?:github|openship)\/workflows\/[^/@]+\.ya?ml)@([^\s]+)$/.exec(
+      /^([\w.-]+)\/([\w.-]+)\/(\.(?:github|kovalio)\/workflows\/[^/@]+\.ya?ml)@([^\s]+)$/.exec(
         reference,
       );
     if (!local && !remote)

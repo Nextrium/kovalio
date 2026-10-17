@@ -55,7 +55,7 @@ export type LiveMatchKind = "label" | "name" | "trackedId" | "compose";
 const OWNED_CONTAINER_TIERS = ["label", "name", "trackedId"] as const;
 
 /** Compose labels are a recovery key only for an explicitly adopted stack.
- * Compose project names and Openship slugs are different namespaces; using a
+ * Compose project names and Kovalio slugs are different namespaces; using a
  * slug match for normal deployments lets an unrelated same-named stack claim
  * the service. */
 export function liveMatchTiersForDeployment(

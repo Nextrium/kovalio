@@ -11,7 +11,7 @@ const probes: Record<DockerRuntimeProbe, string> = {
   dotnet: `command -v dotnet >/dev/null && dotnet --list-runtimes | awk '$1 == "Microsoft.NETCore.App" { split($2, v, "."); print v[1] "." v[2]; found=1; exit } END { if (!found) exit 1 }'`,
   elixir: `elixir -e 'IO.puts(System.version()); IO.puts(System.otp_release())'`,
 };
-const requirementsPath = "/tmp/openship-runtime.requirements";
+const requirementsPath = "/tmp/kovalio-runtime.requirements";
 
 function fingerprint(config: BuildConfig): string | undefined {
   if (!config.runtimeImageOverride) return undefined;
@@ -34,6 +34,6 @@ export function runtimeCompatibilityLines(config: BuildConfig): string[] {
   if (!command) return [];
   return [
     `COPY --from=builder ${requirementsPath} ${requirementsPath}`,
-    `RUN openship_runtime_actual="$( ${command} )" && openship_runtime_expected="$(cat ${requirementsPath})" && if [ "$openship_runtime_actual" != "$openship_runtime_expected" ]; then printf 'Openship runtime image is incompatible with the builder. Expected:\\n%s\\nActual:\\n%s\\n' "$openship_runtime_expected" "$openship_runtime_actual" >&2; exit 1; fi && rm ${requirementsPath}`,
+    `RUN kovalio_runtime_actual="$( ${command} )" && kovalio_runtime_expected="$(cat ${requirementsPath})" && if [ "$kovalio_runtime_actual" != "$kovalio_runtime_expected" ]; then printf 'Kovalio runtime image is incompatible with the builder. Expected:\\n%s\\nActual:\\n%s\\n' "$kovalio_runtime_expected" "$kovalio_runtime_actual" >&2; exit 1; fi && rm ${requirementsPath}`,
   ];
 }

@@ -115,7 +115,7 @@ describe("auth middleware stale-session boundary", () => {
       });
     });
     const response = await app.request("/", {
-      headers: { "X-Openship-Scope": "fixed", "X-Organization-Id": "org-selected" },
+      headers: { "X-Kovalio-Scope": "fixed", "X-Organization-Id": "org-selected" },
     });
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
@@ -131,7 +131,7 @@ describe("auth middleware stale-session boundary", () => {
     h.findMembership.mockResolvedValue(null);
     const { app, handler } = appWithProtectedHandler();
     const response = await app.request("/", {
-      headers: { "X-Openship-Scope": "fixed", "X-Organization-Id": "org-foreign" },
+      headers: { "X-Kovalio-Scope": "fixed", "X-Organization-Id": "org-foreign" },
     });
     expect(response.status).toBe(401);
     expect(handler).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe("auth middleware stale-session boundary", () => {
     h.findMembership.mockResolvedValue({ id: "member", role: "owner" });
     const { app, handler } = appWithProtectedHandler();
     const response = await app.request("/", {
-      headers: { "X-Openship-Scope": value, "X-Organization-Id": "org_old" },
+      headers: { "X-Kovalio-Scope": value, "X-Organization-Id": "org_old" },
     });
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({ code: "VALIDATION_ERROR" });
@@ -155,7 +155,7 @@ describe("auth middleware stale-session boundary", () => {
     h.listByUser.mockResolvedValue([{ id: "member", userId: "user_old", organizationId: "org_old", role: "owner" }]);
     h.findMembership.mockResolvedValue({ id: "member", role: "owner" });
     const { app, handler } = appWithProtectedHandler();
-    const headers = new Headers({ "X-Openship-Scope": "fixed" });
+    const headers = new Headers({ "X-Kovalio-Scope": "fixed" });
     if (organizationId !== undefined) headers.set("X-Organization-Id", organizationId);
     const response = await app.request("/", { headers });
     expect(response.status).toBe(400);

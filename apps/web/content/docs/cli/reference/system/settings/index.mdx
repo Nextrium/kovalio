@@ -1,40 +1,40 @@
 ---
 title: system settings
-description: Commands, arguments, and options for openship system settings.
-cliGroup: openship system settings
+description: Commands, arguments, and options for kovalio system settings.
+cliGroup: kovalio system settings
 ---
 
 See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship system settings
+## kovalio system settings
 
 Read or update instance settings
 
 ```text
-openship system settings [options] [command]
+kovalio system settings [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`patch [options] [file]`](/docs/cli/reference/system/settings#openship-system-settings-patch) | Update any supported instance setting using its shared JSON contract |
-| [`reset [options]`](/docs/cli/reference/system/settings#openship-system-settings-reset) | Reset instance settings and return to setup |
-| [`get`](/docs/cli/reference/system/settings#openship-system-settings-get) | Show current instance settings |
-| [`set [options]`](/docs/cli/reference/system/settings#openship-system-settings-set) | Update instance-level settings |
+| [`patch [options] [file]`](/docs/cli/reference/system/settings#kovalio-system-settings-patch) | Update any supported instance setting using its shared JSON contract |
+| [`reset [options]`](/docs/cli/reference/system/settings#kovalio-system-settings-reset) | Reset instance settings and return to setup |
+| [`get`](/docs/cli/reference/system/settings#kovalio-system-settings-get) | Show current instance settings |
+| [`set [options]`](/docs/cli/reference/system/settings#kovalio-system-settings-set) | Update instance-level settings |
 
-## openship system settings get
+## kovalio system settings get
 
 Show current instance settings
 
 ```text
-openship system settings get [options]
+kovalio system settings get [options]
 ```
 
-## openship system settings patch
+## kovalio system settings patch
 
 Update any supported instance setting using its shared JSON contract
 
 ```text
-openship system settings patch [options] [file]
+kovalio system settings patch [options] [file]
 ```
 
 | Argument | Meaning |
@@ -45,24 +45,24 @@ openship system settings patch [options] [file]
 | --- | --- |
 | `--schema` | Print the accepted JSON schema without making a request |
 
-## openship system settings reset
+## kovalio system settings reset
 
 Reset instance settings and return to setup
 
 ```text
-openship system settings reset [options]
+kovalio system settings reset [options]
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `-y, --yes` | Confirm the instance reset |
 
-## openship system settings set
+## kovalio system settings set
 
 Update instance-level settings
 
 ```text
-openship system settings set [options]
+kovalio system settings set [options]
 ```
 
 | Option | Meaning |

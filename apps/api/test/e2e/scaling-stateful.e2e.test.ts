@@ -21,7 +21,7 @@ import {
   type ClusterVolume,
 } from "@repo/core";
 import type { ClusterStorage, DeploymentEvent } from "@repo/contracts";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 import { seedOrg, seedProject } from "../helpers/seed";
 import { ClusterHostLab } from "../helpers/cluster-host-lab";
@@ -33,8 +33,8 @@ vi.hoisted(() => {
     "823159e33cd862ddceade630ead029d1c7f5e8f3d31c69d1648d71116865f4ab9";
   process.env.CLOUD_MODE = "false";
   process.env.DEPLOY_MODE = "docker";
-  process.env.OPENSHIP_AUTH_MODE = "local";
-  process.env.OPENSHIP_JOB_RUNNER = "in-process";
+  process.env.KOVALIO_AUTH_MODE = "local";
+  process.env.KOVALIO_JOB_RUNNER = "in-process";
 });
 vi.mock("../../src/app", () => ({ app: { fetch: vi.fn() } }));
 
@@ -90,7 +90,7 @@ async function finalSnapshot<T extends { status: string }>(
 describeDockerE2E.sequential("stateful scaling through real Linux hosts", () => {
   const lab = new ClusterHostLab();
   let org: Awaited<ReturnType<typeof seedOrg>>;
-  let client: OpenshipClient;
+  let client: KovalioClient;
   let server: ServerType | undefined;
   let clusterId: string;
   let revision: number;
@@ -224,7 +224,7 @@ describeDockerE2E.sequential("stateful scaling through real Linux hosts", () => 
         resolve(address.port),
       );
     });
-    client = new OpenshipClient({
+    client = new KovalioClient({
       baseUrl: `http://127.0.0.1:${port}`,
       token: pat.token,
       organizationId: org.organizationId,
@@ -335,7 +335,7 @@ describeDockerE2E.sequential("stateful scaling through real Linux hosts", () => 
       replicas: 2,
       disks: lab.nodes.map((node) => ({
         serverId: node.id,
-        path: "/var/lib/openship/storage",
+        path: "/var/lib/kovalio/storage",
         reservedGiB: 1,
       })),
       backupDestinationId: destinationId,
@@ -355,7 +355,7 @@ describeDockerE2E.sequential("stateful scaling through real Linux hosts", () => 
     ).toBe(true);
     const storageClass = await api!.request(
       "GET",
-      "/apis/storage.k8s.io/v1/storageclasses/openship-replicated",
+      "/apis/storage.k8s.io/v1/storageclasses/kovalio-replicated",
     );
     expect(storageClass.parameters.numberOfReplicas).toBe("2");
     expect(storageClass.reclaimPolicy).toBe("Retain");
@@ -633,7 +633,7 @@ describeDockerE2E.sequential("stateful scaling through real Linux hosts", () => 
         metadata: {
           name: jobName,
           namespace: application!.namespace,
-          labels: { "openship.io/runtime": runtime.id },
+          labels: { "nextrium.org/runtime": runtime.id },
         },
         spec: {
           backoffLimit: 0,

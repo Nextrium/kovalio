@@ -64,7 +64,7 @@ describeDockerE2E("secret environment through the real deployment pipeline (#801
     runtime = await DockerRuntime.create({ transport: "socket" });
     await runtime.pullImage("busybox:1.37.0");
     owner = await seedOrg();
-    sourceDir = await mkdtemp(join(tmpdir(), "openship-env-801-"));
+    sourceDir = await mkdtemp(join(tmpdir(), "kovalio-env-801-"));
     await writeFile(
       join(sourceDir, "Dockerfile"),
       [

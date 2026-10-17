@@ -1,42 +1,42 @@
 ---
 title: domain
-description: Commands, arguments, and options for openship domain.
-cliGroup: openship domain
+description: Commands, arguments, and options for kovalio domain.
+cliGroup: kovalio domain
 ---
 
 See the [workflow guide](/docs/cli/projects) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship domain
+## kovalio domain
 
 Manage custom domains, DNS verification, and SSL certificates
 
 ```text
-openship domain [options] [command]
+kovalio domain [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list [options]`](/docs/cli/reference/domain#openship-domain-list) | List a project's custom domains |
-| [`add [options] <hostname>`](/docs/cli/reference/domain#openship-domain-add) | Add a custom domain and route it on the next deploy |
-| [`preview <hostname>`](/docs/cli/reference/domain#openship-domain-preview) | Preview the DNS records a hostname would need (no changes saved) |
-| [`verify [options] <id>`](/docs/cli/reference/domain#openship-domain-verify) | Run DNS verification for a domain |
-| [`primary <id>`](/docs/cli/reference/domain#openship-domain-primary) | Make a domain the project's primary hostname |
-| [`records <id>`](/docs/cli/reference/domain#openship-domain-records) | Show the DNS records for an existing domain |
-| [`renew <id>`](/docs/cli/reference/domain#openship-domain-renew) | Renew the SSL certificate for a domain |
-| [`verify-ssl <id>`](/docs/cli/reference/domain#openship-domain-verify-ssl) | Recheck that a domain's SSL certificate is issued and valid (no reissue) |
-| [`renew-all`](/docs/cli/reference/domain#openship-domain-renew-all) | Renew SSL for every near-expiry domain in your organization |
-| [`dns`](/docs/cli/reference/domain/dns#openship-domain-dns) | Plan and apply provider-managed DNS records |
-| [`get <id>`](/docs/cli/reference/domain#openship-domain-get) | Show a domain and its routing configuration |
-| [`remove\|rm [options] <id>`](/docs/cli/reference/domain#openship-domain-remove) | Remove a domain and its managed route |
-| [`upload-cert [options] <id>`](/docs/cli/reference/domain#openship-domain-upload-cert) | Install a manual certificate through the shared hostname and key validation |
-| [`verify-pending [options]`](/docs/cli/reference/domain#openship-domain-verify-pending) | Retry eligible pending domains within the selected organization |
+| [`list [options]`](/docs/cli/reference/domain#kovalio-domain-list) | List a project's custom domains |
+| [`add [options] <hostname>`](/docs/cli/reference/domain#kovalio-domain-add) | Add a custom domain and route it on the next deploy |
+| [`preview <hostname>`](/docs/cli/reference/domain#kovalio-domain-preview) | Preview the DNS records a hostname would need (no changes saved) |
+| [`verify [options] <id>`](/docs/cli/reference/domain#kovalio-domain-verify) | Run DNS verification for a domain |
+| [`primary <id>`](/docs/cli/reference/domain#kovalio-domain-primary) | Make a domain the project's primary hostname |
+| [`records <id>`](/docs/cli/reference/domain#kovalio-domain-records) | Show the DNS records for an existing domain |
+| [`renew <id>`](/docs/cli/reference/domain#kovalio-domain-renew) | Renew the SSL certificate for a domain |
+| [`verify-ssl <id>`](/docs/cli/reference/domain#kovalio-domain-verify-ssl) | Recheck that a domain's SSL certificate is issued and valid (no reissue) |
+| [`renew-all`](/docs/cli/reference/domain#kovalio-domain-renew-all) | Renew SSL for every near-expiry domain in your organization |
+| [`dns`](/docs/cli/reference/domain/dns#kovalio-domain-dns) | Plan and apply provider-managed DNS records |
+| [`get <id>`](/docs/cli/reference/domain#kovalio-domain-get) | Show a domain and its routing configuration |
+| [`remove\|rm [options] <id>`](/docs/cli/reference/domain#kovalio-domain-remove) | Remove a domain and its managed route |
+| [`upload-cert [options] <id>`](/docs/cli/reference/domain#kovalio-domain-upload-cert) | Install a manual certificate through the shared hostname and key validation |
+| [`verify-pending [options]`](/docs/cli/reference/domain#kovalio-domain-verify-pending) | Retry eligible pending domains within the selected organization |
 
-## openship domain add
+## kovalio domain add
 
 Add a custom domain and route it on the next deploy
 
 ```text
-openship domain add [options] <hostname>
+kovalio domain add [options] <hostname>
 ```
 
 | Argument | Meaning |
@@ -48,72 +48,72 @@ openship domain add [options] <hostname>
 | `-p, --project <id>` | Project ID to attach the domain to |
 | `--primary` | Mark this domain as the project's primary (default: false) |
 
-## openship domain get
+## kovalio domain get
 
 Show a domain and its routing configuration
 
 ```text
-openship domain get [options] <id>
+kovalio domain get [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Domain ID |
 
-## openship domain list
+## kovalio domain list
 
 List a project's custom domains
 
 ```text
-openship domain list [options]
+kovalio domain list [options]
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `-p, --project <id>` | Project ID to list domains for |
 
-## openship domain preview
+## kovalio domain preview
 
 Preview the DNS records a hostname would need (no changes saved)
 
 ```text
-openship domain preview [options] <hostname>
+kovalio domain preview [options] <hostname>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `hostname` | Domain hostname to preview |
 
-## openship domain primary
+## kovalio domain primary
 
 Make a domain the project's primary hostname
 
 ```text
-openship domain primary [options] <id>
+kovalio domain primary [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Domain ID |
 
-## openship domain records
+## kovalio domain records
 
 Show the DNS records for an existing domain
 
 ```text
-openship domain records [options] <id>
+kovalio domain records [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Domain ID |
 
-## openship domain remove
+## kovalio domain remove
 
 Remove a domain and its managed route
 
 ```text
-openship domain remove|rm [options] <id>
+kovalio domain remove|rm [options] <id>
 ```
 
 | Argument | Meaning |
@@ -124,32 +124,32 @@ openship domain remove|rm [options] <id>
 | --- | --- |
 | `-y, --yes` | Skip confirmation |
 
-## openship domain renew
+## kovalio domain renew
 
 Renew the SSL certificate for a domain
 
 ```text
-openship domain renew [options] <id>
+kovalio domain renew [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Domain ID |
 
-## openship domain renew-all
+## kovalio domain renew-all
 
 Renew SSL for every near-expiry domain in your organization
 
 ```text
-openship domain renew-all [options]
+kovalio domain renew-all [options]
 ```
 
-## openship domain upload-cert
+## kovalio domain upload-cert
 
 Install a manual certificate through the shared hostname and key validation
 
 ```text
-openship domain upload-cert [options] <id>
+kovalio domain upload-cert [options] <id>
 ```
 
 | Argument | Meaning |
@@ -161,12 +161,12 @@ openship domain upload-cert [options] <id>
 | `--cert <file>` | PEM certificate chain file |
 | `--key <file>` | PEM private key file |
 
-## openship domain verify
+## kovalio domain verify
 
 Run DNS verification for a domain
 
 ```text
-openship domain verify [options] <id>
+kovalio domain verify [options] <id>
 ```
 
 | Argument | Meaning |
@@ -179,12 +179,12 @@ openship domain verify [options] <id>
 | `--follow` | Stream DNS and certificate progress |
 | `--timeout <ms>` | Stop following after this deadline |
 
-## openship domain verify-pending
+## kovalio domain verify-pending
 
 Retry eligible pending domains within the selected organization
 
 ```text
-openship domain verify-pending [options]
+kovalio domain verify-pending [options]
 ```
 
 | Option | Meaning |
@@ -192,12 +192,12 @@ openship domain verify-pending [options]
 | `--limit <number>` | Maximum domains to inspect |
 | `--min-age <minutes>` | Minimum pending age in minutes |
 
-## openship domain verify-ssl
+## kovalio domain verify-ssl
 
 Recheck that a domain's SSL certificate is issued and valid (no reissue)
 
 ```text
-openship domain verify-ssl [options] <id>
+kovalio domain verify-ssl [options] <id>
 ```
 
 | Argument | Meaning |

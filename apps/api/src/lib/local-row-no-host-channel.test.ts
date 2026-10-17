@@ -154,7 +154,7 @@ describe("the demotion leaves a trace", () => {
     // Once — this sits on every deploy AND on read paths (logs, status polls), so a
     // line per resolve would bury the log it is meant to be found in.
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn.mock.calls[0]?.[1]).toContain("openship up");
+    expect(warn.mock.calls[0]?.[1]).toContain("kovalio up");
     expect(warn.mock.calls[0]?.[1]).toContain("not_configured");
     warn.mockRestore();
   });

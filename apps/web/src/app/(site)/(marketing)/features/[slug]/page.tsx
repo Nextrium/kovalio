@@ -23,14 +23,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     description: f.summary,
     alternates: { canonical: `/features/${f.slug}` },
     openGraph: {
-      title: `${f.title} — Openship`,
+      title: `${f.title} — Kovalio`,
       description: f.summary,
       url: `/features/${f.slug}`,
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${f.title} — Openship`,
+      title: `${f.title} — Kovalio`,
       description: f.summary,
     },
   };
@@ -92,7 +92,7 @@ export default async function FeatureDetailPage({ params }: { params: Params }) 
             {feature.screenshot && (
               <FeatureShot
                 src={feature.screenshot}
-                alt={`${feature.title} in Openship`}
+                alt={`${feature.title} in Kovalio`}
                 Icon={Icon}
                 priority
               />
@@ -162,7 +162,7 @@ export default async function FeatureDetailPage({ params }: { params: Params }) 
             className="mx-auto mt-5 max-w-md text-[16px] leading-[1.6]"
             style={{ color: "var(--th-text-body)" }}
           >
-            Self-hosted and free, or managed on Openship Cloud — the same workflow either way.
+            Self-hosted and free, or managed on Kovalio Cloud — the same workflow either way.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3.5">
             <Link

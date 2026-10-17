@@ -6,7 +6,7 @@ export function resolvePasskeyConfig(dashboardUrl: string) {
   }
   return {
     rpID: url.hostname,
-    rpName: "Openship",
+    rpName: "Kovalio",
     origin: url.origin,
     // The anonymous sign-in picker cannot discover a non-resident credential.
     authenticatorSelection: { residentKey: "required", userVerification: "preferred" } as const,

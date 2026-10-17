@@ -1,31 +1,31 @@
 ---
-title: Openship Actions
+title: Kovalio Actions
 description: Run GitHub-compatible workflows on connected servers and temporary Cloud runners.
 ---
 
-Actions runs repository CI and standalone automation on Openship's authorized
+Actions runs repository CI and standalone automation on Kovalio's authorized
 destinations. Workflows can be linked to projects or run independently. Jobs can
 schedule an application command or invoke a saved workflow, with the same Actions
 execution, topology and logs.
 
 ## Workflow sources
 
-Select a repository and Openship discovers its workflows. The file's location
+Select a repository and Kovalio discovers its workflows. The file's location
 selects its integration automatically; the editor, destinations, capacity limits
 and run history stay together.
 
 - **`.github/workflows/`:** GitHub coordinates the workflow and its Checks, secrets,
-  environments, artifacts and caches. Official runners on your selected Openship
+  environments, artifacts and caches. Official runners on your selected Kovalio
   destinations execute jobs routed to them. This supports reusable workflows,
   releases, tags and protected environments.
-- **`.openship/workflows/` or Standalone:** Openship schedules the YAML and runs
+- **`.kovalio/workflows/` or Standalone:** Kovalio schedules the YAML and runs
   jobs with act, using its scoped credentials and configured storage. The
   compatibility limits below apply to these independent workflows.
 
-## Run only in Openship
+## Run only in Kovalio
 
-Store the workflow in `.openship/workflows/ci.yml`. GitHub ignores this directory:
-using GitHub's YAML syntax does not start GitHub Actions. Openship discovers the
+Store the workflow in `.kovalio/workflows/ci.yml`. GitHub ignores this directory:
+using GitHub's YAML syntax does not start GitHub Actions. Kovalio discovers the
 file, schedules its declared triggers and executes jobs on your allowed runners.
 This also works when GitHub Actions is disabled for the repository.
 
@@ -39,7 +39,7 @@ This also works when GitHub Actions is disabled for the repository.
 For example, this workflow checks out a private repository and runs its Node tests
 on an allowed Linux runner with Git and Node available:
 
-```yaml title=".openship/workflows/ci.yml"
+```yaml title=".kovalio/workflows/ci.yml"
 name: CI
 on:
   push:
@@ -49,15 +49,15 @@ permissions:
   contents: read
 jobs:
   test:
-    runs-on: [self-hosted, openship, linux]
+    runs-on: [self-hosted, kovalio, linux]
     steps:
       - uses: actions/checkout@v4
       - run: node --test
 ```
 
 Private checkout uses a repository-scoped App token. Publishing results needs the
-App's **Checks: write** permission. An Openship Check on a commit is a status report;
-it does not create a GitHub Actions run. Follow execution and live logs in Openship.
+App's **Checks: write** permission. An Kovalio Check on a commit is a status report;
+it does not create a GitHub Actions run. Follow execution and live logs in Kovalio.
 The independent-workflow compatibility limits below still apply.
 
 ## Use GitHub-coordinated workflows
@@ -65,22 +65,22 @@ The independent-workflow compatibility limits below still apply.
 Files in `.github/workflows/` require runner-management access: a GitHub App with
 **Actions: write** and **Administration: write**, or a suitable repository token.
 Existing App installations may need to approve these permissions. Editing workflow
-files also needs **Contents: write** and **Workflows: write**; new Openship App
+files also needs **Contents: write** and **Workflows: write**; new Kovalio App
 manifests request them for the editor. Configure secrets and variables in
 GitHub's repository or organization settings.
 
-To route jobs to Openship, use explicit labels:
+To route jobs to Kovalio, use explicit labels:
 
 ```yaml
-runs-on: [self-hosted, openship, linux, x64]
+runs-on: [self-hosted, kovalio, linux, x64]
 ```
 
 For a connected Mac, use `macos` and its actual CPU architecture. A plain
 `ubuntu-latest` job remains on GitHub-hosted runners. Add a Cloud size label such as
-`openship-linux-2` when selecting a specific allowed profile.
+`kovalio-linux-2` when selecting a specific allowed profile.
 
 A GitHub runner registration belongs to the repository and may receive any matching
-job, including reusable-workflow jobs. Openship checks the actual assigned workflow,
+job, including reusable-workflow jobs. Kovalio checks the actual assigned workflow,
 requester and approval before starting workflow code. Configure that policy in the
 **Access** step; a matching label alone does not grant permission.
 
@@ -96,7 +96,7 @@ Open **Actions → Runners → Add runner** and choose a destination:
 - **Temporary Cloud runners:** choose a disposable VM profile using your prepaid
   Actions balance. Each executed job gets a VM, which is removed after cleanup.
 
-Openship probes the selected server's OS, architecture, Git, Node and Docker
+Kovalio probes the selected server's OS, architecture, Git, Node and Docker
 capabilities before enabling a runtime.
 
 - **Linux containers:** use a runner image with the tools your workflow needs.
@@ -140,7 +140,7 @@ jobs:
     strategy:
       matrix:
         arch: [x64, arm64]
-    runs-on: [self-hosted, openship, linux, "${{ matrix.arch }}"]
+    runs-on: [self-hosted, kovalio, linux, "${{ matrix.arch }}"]
     container: alpine:3.22
     steps:
       - shell: sh
@@ -161,8 +161,8 @@ They receive no provider credentials or access to other customers' machines.
 Open **Actions → Add workflow**, **Project → Actions**, or the Actions section in
 the deployment wizard. These entry points share the same setup:
 
-1. Select a repository and branch. Openship discovers files in `.github/workflows/`
-   and `.openship/workflows/` and previews their job dependencies as a topology.
+1. Select a repository and branch. Kovalio discovers files in `.github/workflows/`
+   and `.kovalio/workflows/` and previews their job dependencies as a topology.
    Check several files or choose **Select all** to add them together. Select a
    filename to preview it; each file keeps its own draft and undo history.
 2. The canvas stays visible while you edit. Select a job to open its settings in the
@@ -196,13 +196,13 @@ the deployment wizard. These entry points share the same setup:
    Choose required workflows in the project's **Deployment automation** tab.
 6. Save the workflow. Canvas and trigger edits preserve unrelated YAML and
    expressions. Before writing back to GitHub, review the changes and choose
-   **Commit and save**. `.openship/workflows` also offers **Save Openship copy**.
+   **Commit and save**. `.kovalio/workflows` also offers **Save Kovalio copy**.
    `.github/workflows` always runs committed YAML. A changed file on GitHub rejects
    the commit instead of overwriting someone else's changes.
 
 GitHub workflow management uses the instance's existing credential resolver: an
 authorized local CLI login, personal token, or repository-scoped GitHub App
-(including an App connected through Openship Cloud). A detected CLI login can
+(including an App connected through Kovalio Cloud). A detected CLI login can
 read repository information before you authorize it for management. Choose
 **Review access → Change method → Use gh CLI** to select it explicitly.
 Repository Actions and runner-management permissions still apply; signing into
@@ -222,7 +222,7 @@ normal automation, and are separate from the database transaction.
 
 Access policies apply on both connected servers and Cloud destinations. **Only my
 account** uses your connected GitHub identity for repository workflows and your
-Openship identity for standalone workflows. Selected GitHub users are verified by
+Kovalio identity for standalone workflows. Selected GitHub users are verified by
 account ID; the original requester and anyone retrying a run must both be eligible.
 
 With **Approve each run**, an Actions administrator with access to its destinations
@@ -232,15 +232,15 @@ not inherit the previous attempt's approval. Open the run's **Approvals** tab to
 review it; a yellow icon marks pending or blocked access. The tab explains blocked
 access and links back to workflow settings without covering the job list or logs.
 
-**Automatically allow eligible users** skips Openship's review for trusted runs.
+**Automatically allow eligible users** skips Kovalio's review for trusted runs.
 GitHub's fork and protected-environment approvals still apply; the editor links
 to repository settings. GitHub does not require approval for every collaborator
 push by default. Choose per-run approval when you need that control. Eligible
-fork runs always need Openship approval and a disposable Cloud runner.
+fork runs always need Kovalio approval and a disposable Cloud runner.
 
 Existing independent workflows keep their previous behavior until their access
 settings are saved. Existing GitHub workflows without a policy require review
-before Openship starts new runners. The official runner adapter verifies the actual
+before Kovalio starts new runners. The official runner adapter verifies the actual
 assignment through GitHub's local IPC protocol and fails closed if that protocol
 becomes incompatible; it does not fall back to unchecked execution.
 
@@ -256,17 +256,17 @@ Choose **Standalone** for YAML without a repository. It supports manual runs,
 schedules and authenticated webhooks without GitHub credentials. `actions/checkout`
 in a standalone workflow needs an explicit `with.repository`.
 
-**Repository updates** for `.openship/workflows` controls which definition future runs use.
+**Repository updates** for `.kovalio/workflows` controls which definition future runs use.
 Files in `.github/workflows` always use the definition from GitHub for that run:
 
 - **Automatic:** use the workflow from the run's repository commit. Changes in Git
   apply automatically.
-- **Review first:** keep the YAML saved in Openship. **Check repository** loads the
+- **Review first:** keep the YAML saved in Kovalio. **Check repository** loads the
   latest file without replacing your saved definition or edited draft. Review the
   differences, choose **Use repository version**, then save to approve it. Until
   then, runs continue using the previously saved YAML.
 
-Saving an Openship copy selects **Review first**. Changing the definition affects
+Saving an Kovalio copy selects **Review first**. Changing the definition affects
 future runs; existing runs retain their immutable snapshots.
 
 ```yaml
@@ -279,7 +279,7 @@ permissions:
   contents: read
 jobs:
   build:
-    runs-on: [self-hosted, openship, linux]
+    runs-on: [self-hosted, kovalio, linux]
     strategy:
       matrix:
         node: [20, 22]
@@ -292,7 +292,7 @@ jobs:
       - run: npm test
   complete:
     needs: build
-    runs-on: [self-hosted, openship, linux]
+    runs-on: [self-hosted, kovalio, linux]
     steps:
       - run: echo "All matrix jobs passed"
 ```
@@ -313,9 +313,9 @@ indicator. Opening **Approvals** preserves the current job, step and log cursor.
 
 Independent logs resume from their persisted cursor. For GitHub workflows, step
 state is synchronized from GitHub, live logs open in GitHub, and completed logs and
-artifacts are available in Openship. GitHub supplies a complete job log, so selecting
+artifacts are available in Kovalio. GitHub supplies a complete job log, so selecting
 a step keeps that full output visible with a scope label.
-GitHub owns the Check IDs and conclusions; Openship does not publish duplicate Checks.
+GitHub owns the Check IDs and conclusions; Kovalio does not publish duplicate Checks.
 
 ## Triggers and Jobs
 
@@ -323,7 +323,7 @@ GitHub owns the Check IDs and conclusions; Openship does not publish duplicate C
 push and pull-request branch/path filters, UTC Cron schedules and authenticated
 webhooks. Expand a trigger to configure it. Branches and paths use removable
 patterns: type a pattern and press **Enter** or **+** to add it. Choose **Only
-matching** or **Except matching**; Openship preserves commas inside glob patterns.
+matching** or **Except matching**; Kovalio preserves commas inside glob patterns.
 **Paths & more filters** includes tags and pull-request event types. Each Cron
 schedule has its own UTC input. Other events, including `workflow_call`, remain
 visible and open the YAML editor without changing their definitions.
@@ -337,11 +337,11 @@ the original Actions execution rather than a second copy of its logs or status.
 
 For an independent workflow's authenticated webhook, enable `repository_dispatch` and optionally restrict
 event types. The workflow details show its dispatch endpoint. Call it with an
-Openship API token authorized to run that workflow:
+Kovalio API token authorized to run that workflow:
 
 ```http
 POST /api/actions/workflows/WORKFLOW_ID/dispatch
-Authorization: Bearer YOUR_OPENSHIP_TOKEN
+Authorization: Bearer YOUR_KOVALIO_TOKEN
 Content-Type: application/json
 
 {
@@ -353,10 +353,10 @@ Content-Type: application/json
 
 The workflow receives these values in `github.event.action` and
 `github.event.client_payload`. Keep the token in the caller's secret store and
-reuse the same idempotency key when retrying one delivery. This is Openship's
+reuse the same idempotency key when retrying one delivery. This is Kovalio's
 authenticated dispatch API; it does not subscribe to GitHub App
 `repository_dispatch` deliveries. The caller must be able to reach the instance. For `.github/workflows`, send
-`repository_dispatch` events to GitHub's repository dispatch API instead. Openship's Run button and Jobs schedules use GitHub's `workflow_dispatch` endpoint.
+`repository_dispatch` events to GitHub's repository dispatch API instead. Kovalio's Run button and Jobs schedules use GitHub's `workflow_dispatch` endpoint.
 
 ## Project deployment rules
 
@@ -398,12 +398,12 @@ Independent scheduled workflows run while the controller is online, at intervals
 five minutes. Missed schedules are not replayed after downtime. For Desktop, keep
 it running or [move the control plane to a server](/docs/guides/migrate-control-plane).
 
-Schedules in `.github/workflows` are managed by GitHub. Openship must be online to provision
+Schedules in `.github/workflows` are managed by GitHub. Kovalio must be online to provision
 and register its runners. Signed `workflow_run`/`workflow_job` events request a fresh
 API read; periodic reconciliation also recovers missed events. Event payloads alone
 cannot mark a run successful.
 
-Use `.openship/workflows/` when you want scheduling independent of GitHub. If a workflow script deploys the application
+Use `.kovalio/workflows/` when you want scheduling independent of GitHub. If a workflow script deploys the application
 itself, use manual project deployment mode to avoid also requesting an automatic
 deployment after its checks pass.
 
@@ -414,7 +414,7 @@ Authorization is rechecked during execution; revoking the originating user's
 access prevents further authorized work.
 
 Fork approvals and protected-environment approvals for `.github/workflows` still
-follow GitHub repository policy. Openship also requires its own approval and a
+follow GitHub repository policy. Kovalio also requires its own approval and a
 disposable Cloud runner for eligible fork runs. Forks never run on connected
 persistent servers, including Macs. `pull_request_target` is also treated as untrusted.
 
@@ -435,21 +435,21 @@ retention defaults to seven days and can be set up to 30 days. Expired objects a
 removed by the controller's cleanup loop.
 
 Runners must be able to reach the instance's public API. Set
-`OPENSHIP_ACTIONS_RUNTIME_URL` when it differs from `OPENSHIP_PUBLIC_URL`; preserve
+`KOVALIO_ACTIONS_RUNTIME_URL` when it differs from `KOVALIO_PUBLIC_URL`; preserve
 the artifact API and `/twirp` proxy routes. Runtime URLs use short-lived tokens
 scoped to one organization, run and job.
 
 ## Independent reusable workflows
 
-Use `jobs.<job>.uses` to call a YAML file in `.openship/workflows/` or
+Use `jobs.<job>.uses` to call a YAML file in `.kovalio/workflows/` or
 `.github/workflows/`. Local calls use the caller's immutable commit. Remote calls
-use `owner/repository/path@ref`; Openship resolves the ref and saves every called
+use `owner/repository/path@ref`; Kovalio resolves the ref and saves every called
 source before approval. A later tag change cannot alter an approved attempt.
 
 ```yaml
 jobs:
   gate:
-    uses: ./.openship/workflows/test.yml
+    uses: ./.kovalio/workflows/test.yml
     with:
       enabled: false
       version: 22
@@ -466,7 +466,7 @@ Nesting is limited to 10 workflow levels, 50 called files, 2 MiB of combined sou
 and 256 total concrete jobs. Protected environment settings remain unsupported
 in independent mode.
 
-## Openship OIDC
+## Kovalio OIDC
 
 Independent jobs can request an identity with `permissions: {id-token: write}`.
 Publish the controller at a stable HTTPS origin reachable from runners and the
@@ -478,14 +478,14 @@ external service. Configure that service to trust
 The job receives the standard `ACTIONS_ID_TOKEN_REQUEST_URL` and
 `ACTIONS_ID_TOKEN_REQUEST_TOKEN` environment variables. Actions using the standard
 OIDC toolkit can request a token with their required audience. Credentials such as
-AWS or Azure trust policies must allow this Openship issuer; GitHub-specific
+AWS or Azure trust policies must allow this Kovalio issuer; GitHub-specific
 issuer policies do not grant access automatically.
 
 Restrict the provider's trust to the organization, repository, ref and workflow
 identity. A normal repository subject is
-`openship:organization:<org-id>:repo:<owner>/<repo>:ref:refs/heads/main`.
-A workflow edited in Openship includes `:source:override` in its subject and sets
-`openship_workflow_modified`, so it cannot impersonate the repository's committed
+`kovalio:organization:<org-id>:repo:<owner>/<repo>:ref:refs/heads/main`.
+A workflow edited in Kovalio includes `:source:override` in its subject and sets
+`kovalio_workflow_modified`, so it cannot impersonate the repository's committed
 workflow. Claims also identify the run, job, destination and immutable called
 workflow source (`job_workflow_ref`, `job_workflow_sha`).
 
@@ -508,9 +508,9 @@ to a 60-minute timeout and can request up to 360 minutes. Logs are bounded at
 8 MiB per job. Settled run history is retained for 30 days, with runs referenced
 by retained artifacts or retry attempts protected from early removal.
 
-Independent workflows support reusable workflows and Openship-issued OIDC.
+Independent workflows support reusable workflows and Kovalio-issued OIDC.
 Protected environments and attestations require GitHub-coordinated workflows;
-independent mode rejects those features before dispatch. Openship-managed destinations
+independent mode rejects those features before dispatch. Kovalio-managed destinations
 currently support Linux and macOS; Windows and GitHub Enterprise Server are not
 available. Official runner registrations execute one job and expire after six hours;
 idle registrations are removed after ten minutes. Choose a runner image with the
@@ -519,7 +519,7 @@ container runs as the connected server user's UID and GID; steps that need root
 require a server connected as root.
 
 GitHub dispatch and rerun POSTs have durable command receipts. If GitHub accepts a
-request but its response is lost, Openship does not send the POST twice. Refresh
+request but its response is lost, Kovalio does not send the POST twice. Refresh
 Runs or open GitHub before deliberately starting another run.
 
 ## Cloud Actions funding
@@ -537,8 +537,8 @@ in your workflow's allowed destinations.
 | 8 vCPU | 16 GiB | 160 GiB        |
 
 All sizes share two concurrent Cloud jobs per organization. You can select a size
-with `runs-on: [self-hosted, openship, linux, openship-linux-2]`, `openship-linux-4` or
-`openship-linux-8`, provided that profile is allowed for the workflow.
+with `runs-on: [self-hosted, kovalio, linux, kovalio-linux-2]`, `kovalio-linux-4` or
+`kovalio-linux-8`, provided that profile is allowed for the workflow.
 
 The page shows live provider rates and estimated VM minutes for your deposit.
 Estimates assume full CPU and memory use, before transfer or disk I/O. Actual

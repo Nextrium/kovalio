@@ -129,7 +129,7 @@ async function order(options: { saveCheckout?: boolean; net?: number } = {}) {
   const request: OblienCheckout = {
     namespace,
     kind: "topup",
-    idempotencyKey: `openship-actions:${id}`,
+    idempotencyKey: `kovalio-actions:${id}`,
     offer: {
       reference: "actions-deposit-v1-500",
       name: "Actions funds",
@@ -137,7 +137,7 @@ async function order(options: { saveCheckout?: boolean; net?: number } = {}) {
       unitAmount: 500,
       credits: 500,
     },
-    metadata: { product: "openship-actions", organizationId: actor.orgId, orderId: id },
+    metadata: { product: "kovalio-actions", organizationId: actor.orgId, orderId: id },
     successUrl: `https://app.test/actions/billing?purchase=${id}`,
     cancelUrl: `https://app.test/actions/billing?purchase=${id}&cancelled=1`,
   };
@@ -285,7 +285,7 @@ describe("signed Actions payment delivery and recurring recovery", () => {
         url: "https://checkout.stripe.com/test-secret",
       };
     });
-    // The event can arrive before Openship has saved the returned checkout ID.
+    // The event can arrive before Kovalio has saved the returned checkout ID.
     expect(
       (
         await deliver(f.namespace, {
@@ -447,7 +447,7 @@ describe("Actions namespace preparation before checkout", () => {
     const f = await order({ saveCheckout: false });
     await ensureActionsBillingNamespace(f.actor.orgId);
     expect(provider.ensureNamespace).toHaveBeenCalledExactlyOnceWith({
-      name: "Openship Actions",
+      name: "Kovalio Actions",
       slug: f.namespace,
       resource_limits: {
         max_workspaces: 0,

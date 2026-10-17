@@ -7,10 +7,10 @@ import { fileURLToPath } from "node:url";
 import { docsDirectory, filesUnder, root } from "./docs-surface.mjs";
 
 export function checkDocExamples() {
-  const declarations = join(root, "packages/openship/dist/sdk/index.d.ts");
+  const declarations = join(root, "packages/kovalio/dist/sdk/index.d.ts");
   if (!existsSync(declarations))
     throw new Error("Build the public package first: bun run build:sdk");
-  const packageRequire = createRequire(join(root, "packages/openship/package.json"));
+  const packageRequire = createRequire(join(root, "packages/kovalio/package.json"));
   const nodeTypesRoot = dirname(dirname(packageRequire.resolve("@types/node/package.json")));
   const snippets = new Map();
   for (const file of filesUnder(docsDirectory, ".mdx")) {
@@ -21,7 +21,7 @@ export function checkDocExamples() {
     )) {
       const [, language, meta, source] = match;
       const sdkExample =
-        /(?:from|import\()\s*["']openship(?:\/[^"']+)?["']/.test(source) ||
+        /(?:from|import\()\s*["']kovalio(?:\/[^"']+)?["']/.test(source) ||
         /\b(?:ship|operator)\./.test(source) ||
         meta.includes("ship-native.config");
       if (!sdkExample) continue;
@@ -41,13 +41,13 @@ export function checkDocExamples() {
         !/\b(?:const|let|var|class|function)\s+ship\b/.test(source)
       )
         prelude +=
-          'declare const ship: import("openship").OpenshipClient | import("openship").ScopedShip;\n';
+          'declare const ship: import("kovalio").KovalioClient | import("kovalio").ScopedShip;\n';
       if (
         !javascript &&
         /\boperator\./.test(source) &&
         !/\b(?:const|let|var|class|function)\s+operator\b/.test(source)
       )
-        prelude += 'declare const operator: import("openship").OpenshipOperatorClient;\n';
+        prelude += 'declare const operator: import("kovalio").KovalioOperatorClient;\n';
       snippets.set(filename, {
         source: prelude + source,
         origin: relative(root, file),
@@ -69,9 +69,9 @@ export function checkDocExamples() {
     checkJs: true,
     typeRoots: [nodeTypesRoot],
     paths: {
-      openship: [declarations],
-      "openship/client": [join(root, "packages/openship/dist/sdk/client.d.ts")],
-      "openship/native": [join(root, "packages/openship/dist/sdk/native.d.ts")],
+      kovalio: [declarations],
+      "kovalio/client": [join(root, "packages/kovalio/dist/sdk/client.d.ts")],
+      "kovalio/native": [join(root, "packages/kovalio/dist/sdk/native.d.ts")],
     },
   };
   const host = ts.createCompilerHost(options);

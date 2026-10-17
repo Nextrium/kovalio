@@ -300,8 +300,8 @@ describe("Cloud Docker project teardown", () => {
     h.serviceRows.dep_1 = [serviceRow({ containerId: null, imageRef: null })];
     const network = {
       Id: "foreign-network-id",
-      Name: `openship-${project.slug}`,
-      Labels: { "openship.project": "another-project" },
+      Name: `kovalio-${project.slug}`,
+      Labels: { "kovalio.project": "another-project" },
     };
     const removeNetwork = vi.fn(async () => {});
     const scopedRuntime = Object.assign(Object.create(CloudDockerRuntime.prototype), {
@@ -411,9 +411,9 @@ describe("Cloud Docker project teardown", () => {
     h.projectServices = [{ id: "svc_1", name: "wordpress-db", image: "mariadb:11" }];
     h.resolvedByDeployment.dep_1 = { runtime: cloudDocker };
     cloudDocker.listAllVolumes.mockResolvedValue([
-      { name: "wordpress-data", labels: { "openship.project": "p1" } },
-      { name: "wordpress-db-data", labels: { "openship.project": "p1" } },
-      { name: "another-project-data", labels: { "openship.project": "p2" } },
+      { name: "wordpress-data", labels: { "kovalio.project": "p1" } },
+      { name: "wordpress-db-data", labels: { "kovalio.project": "p1" } },
+      { name: "another-project-data", labels: { "kovalio.project": "p2" } },
       { name: "unlabelled-data", labels: {} },
     ]);
     const preview = await previewProjectDeletion(ownedProject as never);
@@ -447,7 +447,7 @@ describe("Cloud Docker project teardown", () => {
     h.projectServices = [{ id: "svc_1", name: "web", image: "test:1" }];
     h.resolvedByDeployment.dep_1 = { runtime: cloudDocker };
     cloudDocker.listAllVolumes.mockResolvedValue([
-      { name: "project-data", labels: { "openship.project": "p1" } },
+      { name: "project-data", labels: { "kovalio.project": "p1" } },
     ]);
     const preview = await previewProjectDeletion(ownedProject as never);
     expect(preview.totalVolumes).toBe(1);

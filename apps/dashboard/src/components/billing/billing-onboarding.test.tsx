@@ -578,7 +578,7 @@ describe("complimentary Cloud plans", () => {
   it("explains complimentary top-up availability without asking for another subscription", async () => {
     await render(<BillingTopups state={complimentary} />);
     expect(container.textContent).toContain(copy.complimentary.topupsUnavailable);
-    expect(container.querySelector('a[href="mailto:support@openship.io"]')).not.toBeNull();
+    expect(container.querySelector('a[href="mailto:support@nextrium.org"]')).not.toBeNull();
     expect(container.textContent).not.toContain(copy.onboarding.topupsTitle);
     expect(container.textContent).not.toContain(copy.plansRoute.changeViaSupport);
     expect(mocks.get).not.toHaveBeenCalled();

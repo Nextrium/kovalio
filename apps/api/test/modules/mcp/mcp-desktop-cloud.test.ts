@@ -70,12 +70,12 @@ let serverId: string;
 const sessions: string[] = [];
 
 beforeAll(async () => {
-  vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory");
-  vi.stubEnv("OPENSHIP_NATIVE", "false");
-  folder = await mkdtemp(join(tmpdir(), "openship-mcp-cloud-"));
+  vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory");
+  vi.stubEnv("KOVALIO_NATIVE", "false");
+  folder = await mkdtemp(join(tmpdir(), "kovalio-mcp-cloud-"));
   await writeFile(join(folder, "index.html"), "<h1>Desktop to Cloud</h1>");
   await writeFile(
-    join(folder, "openship.json"),
+    join(folder, "kovalio.json"),
     JSON.stringify({ env: { MESSAGE: "from-the-real-source" } }),
   );
   h.dispatch.mockImplementation((request) => app.fetch(request));
@@ -264,7 +264,7 @@ describe("desktop MCP Cloud workflow", () => {
           ...session.upload.headers,
           Authorization: `Bearer ${client.token}`,
           "X-Organization-Id": owner.orgId,
-          "X-Openship-Scope": "fixed",
+          "X-Kovalio-Scope": "fixed",
         },
         body: new Blob([new Uint8Array(await readFile(packed.path))]),
       });

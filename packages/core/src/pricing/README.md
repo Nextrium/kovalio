@@ -1,6 +1,6 @@
-# Openship server pricing
+# Kovalio server pricing
 
-`pricing.json` defines Openship retail prices, supported Custom sizes and application
+`pricing.json` defines Kovalio retail prices, supported Custom sizes and application
 limits. The API serves those terms through `GET /api/billing/plans`; dashboard,
 website and linked installations share the catalog. Oblien owns provider pricing,
 payment settlement, resource admission, metering and paid coverage.
@@ -42,7 +42,7 @@ must not derive customer tiers from the reseller owner's Oblien account plan.
 | 2 | $20 | 4 | 16 GiB | 128 GiB | 4 |
 | 3 | $50 | 8 | 32 GiB | 256 GiB | 8 |
 
-These are Openship pool allowances shared across servers, not monthly prices or
+These are Kovalio pool allowances shared across servers, not monthly prices or
 provider account upgrades. Unlocking is based on cumulative verified credit
 purchases, not the declining spendable balance. One server may use the whole
 pool within effective provider limits. Adding servers does not multiply it.
@@ -63,7 +63,7 @@ New purchases use the existing tracked `/billing/checkout` flow:
 - the versioned reference plus server-derived organization, namespace and limits.
 
 The subscription remains `tierId: "reseller"`; its entitlement is `tierId: "capacity"`.
-Openship checks the embedded capacity's namespace, provider, pool and paid period
+Kovalio checks the embedded capacity's namespace, provider, pool and paid period
 against the saved subscription before exposing access. Billing admission uses the
 provider's `blocking` flag. Empty legacy quotas or an empty owner wallet cannot
 cancel confirmed monthly compute; manual suspension and expiry still apply.
@@ -76,9 +76,9 @@ Fully discounted, fulfilled purchases use the same checks. Pending, refunded,
 disputed or superseded payments never show a successful new subscription.
 
 `GET /billing/capacity/catalog` advertises deployed purchase capabilities and rates.
-Openship uses `oblien@2.10.0` and the existing SDK transport. Missing monthly Stripe
+Kovalio uses `oblien@2.10.0` and the existing SDK transport. Missing monthly Stripe
 support stops new sales without hiding existing subscription management. Provider
-price admission stays at Oblien; Openship does not copy its affordability or
+price admission stays at Oblien; Kovalio does not copy its affordability or
 proration calculation into another pricing engine.
 
 The published provider tariff currently exceeds Hobby, Starter and Pro retail
@@ -106,7 +106,7 @@ Existing subscriptions use the provider's plan-change preview and confirmation,
 never another replacement checkout. The UI shows its amount due, effective date
 and affected projects. Pure funded upgrades apply after payment. Resource
 reductions and billing-model changes wait for renewal, even when retail price
-increases. Openship uses the returned direction and date without local proration.
+increases. Kovalio uses the returned direction and date without local proration.
 The durable worker applies the approved resize once. Changed project membership
 requires a fresh restart review. Disk shrinking remains unavailable.
 
@@ -131,5 +131,5 @@ and managed-proxy rates. Customer PAYG checkout remains unavailable: the deploye
 capacity confirmation spends the reseller wallet, not a customer-specific funded
 balance. No purchase button is enabled for that flow.
 
-See [the Cloud release gate](../../../../docs/openship-cloud-launch.md) for payment,
+See [the Cloud release gate](../../../../docs/kovalio-cloud-launch.md) for payment,
 renewal, isolation and deployment acceptance requirements.

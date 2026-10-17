@@ -5,11 +5,11 @@ import { promptSelfHostedUrl, runLogin } from "./login";
 
 /** First run is a choice of destination; installing a server is explicit. */
 export async function runWelcome(install: () => Promise<void>, help: () => void): Promise<void> {
-  intro("Openship");
+  intro("Kovalio");
   const active = getContext();
   if (active.apiUrl) {
     log.info(`Current connection: ${getActiveContext()} (${active.apiUrl})`);
-    log.message("Run openship project list to manage it, or choose another connection below.");
+    log.message("Run kovalio project list to manage it, or choose another connection below.");
   }
   const action = await select({
     message: "What would you like to do?",
@@ -17,17 +17,17 @@ export async function runWelcome(install: () => Promise<void>, help: () => void)
     options: [
       {
         value: "cloud",
-        label: "Connect to Openship Cloud",
+        label: "Connect to Kovalio Cloud",
         hint: "manage Cloud from this machine",
       },
       {
         value: "remote",
-        label: "Connect to self-hosted Openship",
+        label: "Connect to self-hosted Kovalio",
         hint: "use an existing installation",
       },
       {
         value: "install",
-        label: "Install Openship on this machine",
+        label: "Install Kovalio on this machine",
         hint: "interactive server setup",
       },
       { value: "help", label: "Show commands" },
@@ -44,5 +44,5 @@ export async function runWelcome(install: () => Promise<void>, help: () => void)
     const apiUrl = await promptSelfHostedUrl();
     await runLogin({ apiUrl, context: new URL(apiUrl).host });
   }
-  outro("Connected. Start with openship project list or openship --help.");
+  outro("Connected. Start with kovalio project list or kovalio --help.");
 }

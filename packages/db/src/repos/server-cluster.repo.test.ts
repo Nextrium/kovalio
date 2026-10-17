@@ -133,7 +133,7 @@ describe("managed network journal and reservations", () => {
     expect((await repo.getOperation("org-a", operation.id)).sequence).toBe(
       first.operation.sequence,
     );
-    expect((await repo.get("org-a", operation.clusterId)).network.ownership).toBe("openship");
+    expect((await repo.get("org-a", operation.clusterId)).network.ownership).toBe("kovalio");
     await expect(repo.remove("org-a", operation.clusterId, 1)).rejects.toThrow("reviewed");
     await expect(repo.update("org-a", operation.clusterId, 1, config())).rejects.toThrow(
       "reviewed",
@@ -265,10 +265,10 @@ describe("managed network journal and reservations", () => {
       expect(retry.operation.generation).toBe(2);
       expect(await repo.interruptOperation(operation.id, 1, "Old controller stopped")).toEqual([]);
       expect(await repo.operationActive(operation.id, 2)).toBe(true);
-      await repo.interruptOperation(operation.id, 2, "OpenShip stopped");
+      await repo.interruptOperation(operation.id, 2, "Kovalio stopped");
       expect(await repo.getOperation("org-a", operation.id)).toMatchObject({
         status: "interrupted",
-        error: "OpenShip stopped",
+        error: "Kovalio stopped",
       });
     },
   );
@@ -311,10 +311,10 @@ describe("managed network journal and reservations", () => {
     expect(retry.run.id).not.toBe(run.id);
     expect(await repo.interruptVerification(run.id, "Old verification")).toEqual([]);
     expect(await repo.active(retry.run.id)).toBe(true);
-    await repo.interruptVerification(retry.run.id, "OpenShip stopped");
+    await repo.interruptVerification(retry.run.id, "Kovalio stopped");
     expect((await repo.get("org-a", cluster.id)).verification).toMatchObject({
       status: "interrupted",
-      error: "OpenShip stopped",
+      error: "Kovalio stopped",
     });
   });
   it("requires every host receipt and all directed probes before committing inventory", async () => {

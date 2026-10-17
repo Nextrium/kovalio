@@ -1,7 +1,7 @@
-# Openship Actions worker
+# Kovalio Actions worker
 
 The independent controller wraps [act](https://github.com/nektos/act), pinned to **v0.2.89** (MIT).
-The Openship controller validates and schedules workflows; one worker executes one
+The Kovalio controller validates and schedules workflows; one worker executes one
 concrete job with act. The worker runs on the selected destination, never in the
 API process.
 
@@ -22,7 +22,7 @@ when upgrading GitHub's runner.
 
 ## Build and test
 
-Development needs Node 22 and Go 1.26.4. Installed Openship instances receive the
+Development needs Node 22 and Go 1.26.4. Installed Kovalio instances receive the
 compiled workers and do not need Go.
 
 ```sh
@@ -42,7 +42,7 @@ an integration fix. Keep patches small and revalidate them when updating act.
 
 ## Execution and recovery
 
-`ActionsWorker` uses Openship's authorized execution adapter for prepare, start,
+`ActionsWorker` uses Kovalio's authorized execution adapter for prepare, start,
 inspect, cancel and clean. It does not spawn user commands on the control plane.
 A job's exclusive journal prevents a retry after an uncertain start from executing
 the same commands again. The one-use request is mode `0600` and removed after it is
@@ -70,7 +70,7 @@ VM bounds the aggregate job capacity and is deleted before releasing its slot.
 
 ## Compatibility
 
-Independent Openship Actions reuses the upstream workflow parser and act executor. Supported workflows
+Independent Kovalio Actions reuses the upstream workflow parser and act executor. Supported workflows
 include shell, JavaScript and Docker actions, composite actions, service containers,
 matrices, dependencies, outputs, expressions and concurrency. Reusable workflows,
 protected environments, OIDC, attestations and Windows runners are rejected or

@@ -11,10 +11,10 @@ changing the plan; purchasing credits does not raise resource caps.
 Signed `namespace.quota.threshold`, `credits.low` and `credits.depleted` events
 refresh the provider entitlement before any notification is prepared. Delayed
 warnings after funding, old billing periods, different service quotas and stale
-namespace bindings do not notify the wrong customer. Openship queues notifications,
+namespace bindings do not notify the wrong customer. Kovalio queues notifications,
 preserves credit-exhaustion activity when recording is enabled, and writes the
 processed event checkpoint in one database transaction; a failure returns 503 for
-Oblien's durable retry. No webhook grants credits in Openship.
+Oblien's durable retry. No webhook grants credits in Kovalio.
 
 Billing recipients receive email and in-app messages through the existing
 notification system, subject to billing-read access and notification preferences.
@@ -28,9 +28,9 @@ SMTP delivery is at least once: a lost acknowledgment can cause a repeated email
 The dashboard also refreshes on focus and once a minute while visible, so email
 availability does not hide current credit state.
 
-Apply database migration `0153_durable_credit_alerts` when deploying the Openship
+Apply database migration `0153_durable_credit_alerts` when deploying the Kovalio
 API. Deploy Oblien's additive `quota.alert` response and durable metering alerts
-first, then Openship's API and dashboard together. Existing SDK 2.4.0 transport is
+first, then Kovalio's API and dashboard together. Existing SDK 2.4.0 transport is
 compatible; no unpublished SDK dependency is introduced. Customer emails use
 `/cloud-billing?organizationId=...`, which validates membership and selects that
 organization before opening billing. An inaccessible organization cannot fall back

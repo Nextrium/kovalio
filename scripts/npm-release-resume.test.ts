@@ -3,18 +3,18 @@ import { verifiedNpmRelease, type NpmReleaseEvidence } from "./npm-release-resum
 
 function evidence(): NpmReleaseEvidence {
   return {
-    repository: "oblien/openship",
+    repository: "oblien/kovalio",
     run: {
       id: 123, head_sha: "a".repeat(40), head_branch: "v0.8.0", event: "push",
-      path: ".github/workflows/release.yml", repository: { full_name: "oblien/openship" },
-      head_repository: { full_name: "oblien/openship" }, status: "completed", conclusion: "failure",
+      path: ".github/workflows/release.yml", repository: { full_name: "oblien/kovalio" },
+      head_repository: { full_name: "oblien/kovalio" }, status: "completed", conclusion: "failure",
     },
     tagCommit: "a".repeat(40),
     release: { tag_name: "v0.8.0", draft: false, published_at: "2026-09-27T00:00:00Z" },
     jobs: [
       { name: "Release gate / Scaling E2E / Scaling journey (databases)", status: "completed", conclusion: "success", html_url: "" },
       { name: "Publish GitHub release", status: "completed", conclusion: "success", html_url: "" },
-      { name: "Publish Openship to npm", status: "completed", conclusion: "failure", html_url: "" },
+      { name: "Publish Kovalio to npm", status: "completed", conclusion: "failure", html_url: "" },
     ],
   };
 }

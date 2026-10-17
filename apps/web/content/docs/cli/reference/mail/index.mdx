@@ -1,83 +1,83 @@
 ---
 title: mail
-description: Commands, arguments, and options for openship mail.
-cliGroup: openship mail
+description: Commands, arguments, and options for kovalio mail.
+cliGroup: kovalio mail
 ---
 
 See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship mail
+## kovalio mail
 
 Self-hosted mail server (iRedMail) setup and admin [self-host]
 
 ```text
-openship mail [options] [command]
+kovalio mail [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`steps`](/docs/cli/reference/mail#openship-mail-steps) | List the mail setup steps |
-| [`status [serverId]`](/docs/cli/reference/mail#openship-mail-status) | Show the setup progress for a mail server |
-| [`servers`](/docs/cli/reference/mail#openship-mail-servers) | List every server the mail stack is installed on |
-| [`scan <serverId>`](/docs/cli/reference/mail#openship-mail-scan) | Probe a server for an existing mail install (read-only) |
-| [`adopt <serverId>`](/docs/cli/reference/mail#openship-mail-adopt) | Re-adopt an existing mail install whose orchestrator state was lost |
-| [`setup [options] <serverId>`](/docs/cli/reference/mail#openship-mail-setup) | Start or resume the mail setup wizard (streams over SSE) |
-| [`cancel`](/docs/cli/reference/mail#openship-mail-cancel) | Cancel the mail setup currently running |
-| [`dns-ack <serverId>`](/docs/cli/reference/mail#openship-mail-dns-ack) | Acknowledge that DNS records are published (releases the DKIM gate) |
-| [`ptr-ack <serverId>`](/docs/cli/reference/mail#openship-mail-ptr-ack) | Acknowledge that reverse DNS (PTR) is configured |
-| [`reset [options] <serverId>`](/docs/cli/reference/mail#openship-mail-reset) | Wipe the on-server setup state file (does NOT touch installed daemons) |
-| [`forget <serverId>`](/docs/cli/reference/mail#openship-mail-forget) | Stop managing a mail server (drops the DB row; leaves the stack + state intact) |
-| [`health [options] <serverId>`](/docs/cli/reference/mail#openship-mail-health) | Show live status of every mail daemon, and whether mail is leaving the box |
-| [`logs [options] <serverId> <component>`](/docs/cli/reference/mail#openship-mail-logs) | Tail a mail component's journal (snapshot) |
-| [`postmaster`](/docs/cli/reference/mail#openship-mail-postmaster) | Manage the postmaster mailbox |
-| [`build [options]`](/docs/cli/reference/mail#openship-mail-build) | Build the openship-mail engine image locally from a source checkout [dev] |
-| [`domain`](/docs/cli/reference/mail/domain#openship-mail-domain) | Manage mail domains, their dependencies and DNS |
-| [`mailbox`](/docs/cli/reference/mail/mailbox#openship-mail-mailbox) | Manage mailbox accounts and storage limits |
-| [`alias`](/docs/cli/reference/mail/alias#openship-mail-alias) | Manage forwards and catch-all addresses |
-| [`certificate`](/docs/cli/reference/mail#openship-mail-certificate) | Inspect and renew mail TLS through Openship's shared edge |
-| [`relay`](/docs/cli/reference/mail#openship-mail-relay) | Manage outbound SMTP delivery without exposing stored passwords |
-| [`backup`](/docs/cli/reference/mail#openship-mail-backup) | Manage mail backup policy; use openship backup for runs and restores |
-| [`inbound`](/docs/cli/reference/mail/inbound#openship-mail-inbound) | Manage inbound-mail notification rules |
-| [`stats <server>`](/docs/cli/reference/mail#openship-mail-stats) | Read domain, account and storage totals |
-| [`dns-scan [options] <server>`](/docs/cli/reference/mail#openship-mail-dns-scan) | Inspect mail DNS without changing records |
-| [`test-email [options] <server>`](/docs/cli/reference/mail#openship-mail-test-email) | Send one delivery test to the specified recipient |
-| [`rotate-platform-mailbox [options] <server>`](/docs/cli/reference/mail#openship-mail-rotate-platform-mailbox) | Rotate Openship's private delivery credential; never prints its password |
-| [`component [options] <server> <key> <action>`](/docs/cli/reference/mail#openship-mail-component) | Control a managed mail component; inspect health to confirm recovery |
-| [`restart-all [options] <server>`](/docs/cli/reference/mail#openship-mail-restart-all) | Restart managed mail components; delivery may be briefly interrupted |
-| [`webmail`](/docs/cli/reference/mail#openship-mail-webmail) | Deploy webmail through the normal app deployment workflow |
+| [`steps`](/docs/cli/reference/mail#kovalio-mail-steps) | List the mail setup steps |
+| [`status [serverId]`](/docs/cli/reference/mail#kovalio-mail-status) | Show the setup progress for a mail server |
+| [`servers`](/docs/cli/reference/mail#kovalio-mail-servers) | List every server the mail stack is installed on |
+| [`scan <serverId>`](/docs/cli/reference/mail#kovalio-mail-scan) | Probe a server for an existing mail install (read-only) |
+| [`adopt <serverId>`](/docs/cli/reference/mail#kovalio-mail-adopt) | Re-adopt an existing mail install whose orchestrator state was lost |
+| [`setup [options] <serverId>`](/docs/cli/reference/mail#kovalio-mail-setup) | Start or resume the mail setup wizard (streams over SSE) |
+| [`cancel`](/docs/cli/reference/mail#kovalio-mail-cancel) | Cancel the mail setup currently running |
+| [`dns-ack <serverId>`](/docs/cli/reference/mail#kovalio-mail-dns-ack) | Acknowledge that DNS records are published (releases the DKIM gate) |
+| [`ptr-ack <serverId>`](/docs/cli/reference/mail#kovalio-mail-ptr-ack) | Acknowledge that reverse DNS (PTR) is configured |
+| [`reset [options] <serverId>`](/docs/cli/reference/mail#kovalio-mail-reset) | Wipe the on-server setup state file (does NOT touch installed daemons) |
+| [`forget <serverId>`](/docs/cli/reference/mail#kovalio-mail-forget) | Stop managing a mail server (drops the DB row; leaves the stack + state intact) |
+| [`health [options] <serverId>`](/docs/cli/reference/mail#kovalio-mail-health) | Show live status of every mail daemon, and whether mail is leaving the box |
+| [`logs [options] <serverId> <component>`](/docs/cli/reference/mail#kovalio-mail-logs) | Tail a mail component's journal (snapshot) |
+| [`postmaster`](/docs/cli/reference/mail#kovalio-mail-postmaster) | Manage the postmaster mailbox |
+| [`build [options]`](/docs/cli/reference/mail#kovalio-mail-build) | Build the kovalio-mail engine image locally from a source checkout [dev] |
+| [`domain`](/docs/cli/reference/mail/domain#kovalio-mail-domain) | Manage mail domains, their dependencies and DNS |
+| [`mailbox`](/docs/cli/reference/mail/mailbox#kovalio-mail-mailbox) | Manage mailbox accounts and storage limits |
+| [`alias`](/docs/cli/reference/mail/alias#kovalio-mail-alias) | Manage forwards and catch-all addresses |
+| [`certificate`](/docs/cli/reference/mail#kovalio-mail-certificate) | Inspect and renew mail TLS through Kovalio's shared edge |
+| [`relay`](/docs/cli/reference/mail#kovalio-mail-relay) | Manage outbound SMTP delivery without exposing stored passwords |
+| [`backup`](/docs/cli/reference/mail#kovalio-mail-backup) | Manage mail backup policy; use kovalio backup for runs and restores |
+| [`inbound`](/docs/cli/reference/mail/inbound#kovalio-mail-inbound) | Manage inbound-mail notification rules |
+| [`stats <server>`](/docs/cli/reference/mail#kovalio-mail-stats) | Read domain, account and storage totals |
+| [`dns-scan [options] <server>`](/docs/cli/reference/mail#kovalio-mail-dns-scan) | Inspect mail DNS without changing records |
+| [`test-email [options] <server>`](/docs/cli/reference/mail#kovalio-mail-test-email) | Send one delivery test to the specified recipient |
+| [`rotate-platform-mailbox [options] <server>`](/docs/cli/reference/mail#kovalio-mail-rotate-platform-mailbox) | Rotate Kovalio's private delivery credential; never prints its password |
+| [`component [options] <server> <key> <action>`](/docs/cli/reference/mail#kovalio-mail-component) | Control a managed mail component; inspect health to confirm recovery |
+| [`restart-all [options] <server>`](/docs/cli/reference/mail#kovalio-mail-restart-all) | Restart managed mail components; delivery may be briefly interrupted |
+| [`webmail`](/docs/cli/reference/mail#kovalio-mail-webmail) | Deploy webmail through the normal app deployment workflow |
 
-## openship mail adopt
+## kovalio mail adopt
 
 Re-adopt an existing mail install whose orchestrator state was lost
 
 ```text
-openship mail adopt [options] <serverId>
+kovalio mail adopt [options] <serverId>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `serverId` | Server ID to adopt |
 
-## openship mail backup
+## kovalio mail backup
 
-Manage mail backup policy; use openship backup for runs and restores
+Manage mail backup policy; use kovalio backup for runs and restores
 
 ```text
-openship mail backup [options] [command]
+kovalio mail backup [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`get <server>`](/docs/cli/reference/mail#openship-mail-backup-get) | Read the current mail backup policy |
-| [`configure [options] <id> [file]`](/docs/cli/reference/mail#openship-mail-backup-configure) | Set destination, schedule and included mail data; omitted retention is preserved |
-| [`runs <server>`](/docs/cli/reference/mail#openship-mail-backup-runs) | Read the 50 most recent mail backup runs |
+| [`get <server>`](/docs/cli/reference/mail#kovalio-mail-backup-get) | Read the current mail backup policy |
+| [`configure [options] <id> [file]`](/docs/cli/reference/mail#kovalio-mail-backup-configure) | Set destination, schedule and included mail data; omitted retention is preserved |
+| [`runs <server>`](/docs/cli/reference/mail#kovalio-mail-backup-runs) | Read the 50 most recent mail backup runs |
 
-## openship mail backup configure
+## kovalio mail backup configure
 
 Set destination, schedule and included mail data; omitted retention is preserved
 
 ```text
-openship mail backup configure [options] <id> [file]
+kovalio mail backup configure [options] <id> [file]
 ```
 
 | Argument | Meaning |
@@ -89,100 +89,100 @@ openship mail backup configure [options] <id> [file]
 | --- | --- |
 | `--schema` | Print the accepted JSON schema without making a request |
 
-## openship mail backup get
+## kovalio mail backup get
 
 Read the current mail backup policy
 
 ```text
-openship mail backup get [options] <server>
+kovalio mail backup get [options] <server>
 ```
 
-## openship mail backup runs
+## kovalio mail backup runs
 
 Read the 50 most recent mail backup runs
 
 ```text
-openship mail backup runs [options] <server>
+kovalio mail backup runs [options] <server>
 ```
 
-## openship mail build
+## kovalio mail build
 
-Build the openship-mail engine image locally from a source checkout [dev]
+Build the kovalio-mail engine image locally from a source checkout [dev]
 
 ```text
-openship mail build [options]
+kovalio mail build [options]
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `--context <dir>` | Repo root containing apps/email/Dockerfile (default: checkout or cwd) |
-| `--tag <ref>` | Image ref to tag (default: the pinned openship-mail ref) |
+| `--tag <ref>` | Image ref to tag (default: the pinned kovalio-mail ref) |
 
-## openship mail cancel
+## kovalio mail cancel
 
 Cancel the mail setup currently running
 
 ```text
-openship mail cancel [options]
+kovalio mail cancel [options]
 ```
 
-## openship mail certificate
+## kovalio mail certificate
 
-Inspect and renew mail TLS through Openship's shared edge
+Inspect and renew mail TLS through Kovalio's shared edge
 
 ```text
-openship mail certificate [options] [command]
+kovalio mail certificate [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`get <server>`](/docs/cli/reference/mail#openship-mail-certificate-get) | get mail certificate status |
-| [`check <server>`](/docs/cli/reference/mail#openship-mail-certificate-check) | check mail certificate status |
-| [`renew <server>`](/docs/cli/reference/mail#openship-mail-certificate-renew) | Renew a due certificate and reload SMTP/IMAP through the existing edge workflow |
-| [`auto-renew [options] <server>`](/docs/cli/reference/mail#openship-mail-certificate-auto-renew) | Enable or disable scheduled renewal; monitoring remains available |
+| [`get <server>`](/docs/cli/reference/mail#kovalio-mail-certificate-get) | get mail certificate status |
+| [`check <server>`](/docs/cli/reference/mail#kovalio-mail-certificate-check) | check mail certificate status |
+| [`renew <server>`](/docs/cli/reference/mail#kovalio-mail-certificate-renew) | Renew a due certificate and reload SMTP/IMAP through the existing edge workflow |
+| [`auto-renew [options] <server>`](/docs/cli/reference/mail#kovalio-mail-certificate-auto-renew) | Enable or disable scheduled renewal; monitoring remains available |
 
-## openship mail certificate auto-renew
+## kovalio mail certificate auto-renew
 
 Enable or disable scheduled renewal; monitoring remains available
 
 ```text
-openship mail certificate auto-renew [options] <server>
+kovalio mail certificate auto-renew [options] <server>
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `--state <state>` | Automatic renewal (choices: "on", "off") |
 
-## openship mail certificate check
+## kovalio mail certificate check
 
 check mail certificate status
 
 ```text
-openship mail certificate check [options] <server>
+kovalio mail certificate check [options] <server>
 ```
 
-## openship mail certificate get
+## kovalio mail certificate get
 
 get mail certificate status
 
 ```text
-openship mail certificate get [options] <server>
+kovalio mail certificate get [options] <server>
 ```
 
-## openship mail certificate renew
+## kovalio mail certificate renew
 
 Renew a due certificate and reload SMTP/IMAP through the existing edge workflow
 
 ```text
-openship mail certificate renew [options] <server>
+kovalio mail certificate renew [options] <server>
 ```
 
-## openship mail component
+## kovalio mail component
 
 Control a managed mail component; inspect health to confirm recovery
 
 ```text
-openship mail component [options] <server> <key> <action>
+kovalio mail component [options] <server> <key> <action>
 ```
 
 | Argument | Meaning |
@@ -195,48 +195,48 @@ openship mail component [options] <server> <key> <action>
 | --- | --- |
 | `-y, --yes` | Confirm component action |
 
-## openship mail dns-ack
+## kovalio mail dns-ack
 
 Acknowledge that DNS records are published (releases the DKIM gate)
 
 ```text
-openship mail dns-ack [options] <serverId>
+kovalio mail dns-ack [options] <serverId>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `serverId` | Mail server ID |
 
-## openship mail dns-scan
+## kovalio mail dns-scan
 
 Inspect mail DNS without changing records
 
 ```text
-openship mail dns-scan [options] <server>
+kovalio mail dns-scan [options] <server>
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `--domain <domain>` | Domain to inspect |
 
-## openship mail forget
+## kovalio mail forget
 
 Stop managing a mail server (drops the DB row; leaves the stack + state intact)
 
 ```text
-openship mail forget [options] <serverId>
+kovalio mail forget [options] <serverId>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `serverId` | Mail server ID |
 
-## openship mail health
+## kovalio mail health
 
 Show live status of every mail daemon, and whether mail is leaving the box
 
 ```text
-openship mail health [options] <serverId>
+kovalio mail health [options] <serverId>
 ```
 
 | Argument | Meaning |
@@ -247,12 +247,12 @@ openship mail health [options] <serverId>
 | --- | --- |
 | `--refresh-reachability` | Bypass the public reachability cache |
 
-## openship mail logs
+## kovalio mail logs
 
 Tail a mail component's journal (snapshot)
 
 ```text
-openship mail logs [options] <serverId> <component>
+kovalio mail logs [options] <serverId> <component>
 ```
 
 | Argument | Meaning |
@@ -264,24 +264,24 @@ openship mail logs [options] <serverId> <component>
 | --- | --- |
 | `-n, --lines <n>` | Number of lines (max 1000) (default: 200) |
 
-## openship mail postmaster
+## kovalio mail postmaster
 
 Manage the postmaster mailbox
 
 ```text
-openship mail postmaster [options] [command]
+kovalio mail postmaster [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`set-password [options] <serverId>`](/docs/cli/reference/mail#openship-mail-postmaster-set-password) | Rotate the postmaster password |
+| [`set-password [options] <serverId>`](/docs/cli/reference/mail#kovalio-mail-postmaster-set-password) | Rotate the postmaster password |
 
-## openship mail postmaster set-password
+## kovalio mail postmaster set-password
 
 Rotate the postmaster password
 
 ```text
-openship mail postmaster set-password [options] <serverId>
+kovalio mail postmaster set-password [options] <serverId>
 ```
 
 | Argument | Meaning |
@@ -293,38 +293,38 @@ openship mail postmaster set-password [options] <serverId>
 | `--password <password>` | New password (min 12 chars); prompted if omitted |
 | `--password-file <file>` | Password file, or - for stdin (keeps secrets out of process arguments) |
 
-## openship mail ptr-ack
+## kovalio mail ptr-ack
 
 Acknowledge that reverse DNS (PTR) is configured
 
 ```text
-openship mail ptr-ack [options] <serverId>
+kovalio mail ptr-ack [options] <serverId>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `serverId` | Mail server ID |
 
-## openship mail relay
+## kovalio mail relay
 
 Manage outbound SMTP delivery without exposing stored passwords
 
 ```text
-openship mail relay [options] [command]
+kovalio mail relay [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`get <server>`](/docs/cli/reference/mail#openship-mail-relay-get) | Read masked relay settings |
-| [`configure [options] <id> [file]`](/docs/cli/reference/mail#openship-mail-relay-configure) | Configure outbound SMTP; omit password to keep the saved one |
-| [`remove [options] <server>`](/docs/cli/reference/mail#openship-mail-relay-remove) | Disable the relay and return to direct SMTP delivery |
+| [`get <server>`](/docs/cli/reference/mail#kovalio-mail-relay-get) | Read masked relay settings |
+| [`configure [options] <id> [file]`](/docs/cli/reference/mail#kovalio-mail-relay-configure) | Configure outbound SMTP; omit password to keep the saved one |
+| [`remove [options] <server>`](/docs/cli/reference/mail#kovalio-mail-relay-remove) | Disable the relay and return to direct SMTP delivery |
 
-## openship mail relay configure
+## kovalio mail relay configure
 
 Configure outbound SMTP; omit password to keep the saved one
 
 ```text
-openship mail relay configure [options] <id> [file]
+kovalio mail relay configure [options] <id> [file]
 ```
 
 | Argument | Meaning |
@@ -337,32 +337,32 @@ openship mail relay configure [options] <id> [file]
 | `--schema` | Print the accepted JSON schema without making a request |
 | `-y, --yes` | Confirm this operation |
 
-## openship mail relay get
+## kovalio mail relay get
 
 Read masked relay settings
 
 ```text
-openship mail relay get [options] <server>
+kovalio mail relay get [options] <server>
 ```
 
-## openship mail relay remove
+## kovalio mail relay remove
 
 Disable the relay and return to direct SMTP delivery
 
 ```text
-openship mail relay remove [options] <server>
+kovalio mail relay remove [options] <server>
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `-y, --yes` | Confirm direct delivery |
 
-## openship mail reset
+## kovalio mail reset
 
 Wipe the on-server setup state file (does NOT touch installed daemons)
 
 ```text
-openship mail reset [options] <serverId>
+kovalio mail reset [options] <serverId>
 ```
 
 | Argument | Meaning |
@@ -373,56 +373,56 @@ openship mail reset [options] <serverId>
 | --- | --- |
 | `-y, --yes` | Skip the confirmation prompt |
 
-## openship mail restart-all
+## kovalio mail restart-all
 
 Restart managed mail components; delivery may be briefly interrupted
 
 ```text
-openship mail restart-all [options] <server>
+kovalio mail restart-all [options] <server>
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `-y, --yes` | Confirm restart |
 
-## openship mail rotate-platform-mailbox
+## kovalio mail rotate-platform-mailbox
 
-Rotate Openship's private delivery credential; never prints its password
+Rotate Kovalio's private delivery credential; never prints its password
 
 ```text
-openship mail rotate-platform-mailbox [options] <server>
+kovalio mail rotate-platform-mailbox [options] <server>
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `-y, --yes` | Confirm rotation |
 
-## openship mail scan
+## kovalio mail scan
 
 Probe a server for an existing mail install (read-only)
 
 ```text
-openship mail scan [options] <serverId>
+kovalio mail scan [options] <serverId>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `serverId` | Server ID to scan |
 
-## openship mail servers
+## kovalio mail servers
 
 List every server the mail stack is installed on
 
 ```text
-openship mail servers [options]
+kovalio mail servers [options]
 ```
 
-## openship mail setup
+## kovalio mail setup
 
 Start or resume the mail setup wizard (streams over SSE)
 
 ```text
-openship mail setup [options] <serverId>
+kovalio mail setup [options] <serverId>
 ```
 
 | Argument | Meaning |
@@ -436,40 +436,40 @@ openship mail setup [options] <serverId>
 | `--config <json>` | iRedMail config overrides as a JSON object |
 | `--config-file <file>` | Setup config file, or - for stdin (recommended for passwords) |
 
-## openship mail stats
+## kovalio mail stats
 
 Read domain, account and storage totals
 
 ```text
-openship mail stats [options] <server>
+kovalio mail stats [options] <server>
 ```
 
-## openship mail status
+## kovalio mail status
 
 Show the setup progress for a mail server
 
 ```text
-openship mail status [options] [serverId]
+kovalio mail status [options] [serverId]
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `serverId` | Mail server ID (omit for the empty welcome shell) |
 
-## openship mail steps
+## kovalio mail steps
 
 List the mail setup steps
 
 ```text
-openship mail steps [options]
+kovalio mail steps [options]
 ```
 
-## openship mail test-email
+## kovalio mail test-email
 
 Send one delivery test to the specified recipient
 
 ```text
-openship mail test-email [options] <server>
+kovalio mail test-email [options] <server>
 ```
 
 | Option | Meaning |
@@ -477,26 +477,26 @@ openship mail test-email [options] <server>
 | `--to <email>` | Recipient for one real test message |
 | `--from-domain <domain>` | Sender's configured mail domain |
 
-## openship mail webmail
+## kovalio mail webmail
 
 Deploy webmail through the normal app deployment workflow
 
 ```text
-openship mail webmail [options] [command]
+kovalio mail webmail [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`targets <server>`](/docs/cli/reference/mail#openship-mail-webmail-targets) | List permitted targets for this mail server |
-| [`deploy [options] [file]`](/docs/cli/reference/mail#openship-mail-webmail-deploy) | Deploy webmail and return IDs for openship deployment wait/logs |
-| [`deploy-external [options] [file]`](/docs/cli/reference/mail#openship-mail-webmail-deploy-external) | Deploy webmail for an external IMAP/SMTP provider |
+| [`targets <server>`](/docs/cli/reference/mail#kovalio-mail-webmail-targets) | List permitted targets for this mail server |
+| [`deploy [options] [file]`](/docs/cli/reference/mail#kovalio-mail-webmail-deploy) | Deploy webmail and return IDs for kovalio deployment wait/logs |
+| [`deploy-external [options] [file]`](/docs/cli/reference/mail#kovalio-mail-webmail-deploy-external) | Deploy webmail for an external IMAP/SMTP provider |
 
-## openship mail webmail deploy
+## kovalio mail webmail deploy
 
-Deploy webmail and return IDs for openship deployment wait/logs
+Deploy webmail and return IDs for kovalio deployment wait/logs
 
 ```text
-openship mail webmail deploy [options] [file]
+kovalio mail webmail deploy [options] [file]
 ```
 
 | Argument | Meaning |
@@ -508,12 +508,12 @@ openship mail webmail deploy [options] [file]
 | `--schema` | Print the accepted JSON schema without making a request |
 | `-y, --yes` | Confirm this operation |
 
-## openship mail webmail deploy-external
+## kovalio mail webmail deploy-external
 
 Deploy webmail for an external IMAP/SMTP provider
 
 ```text
-openship mail webmail deploy-external [options] [file]
+kovalio mail webmail deploy-external [options] [file]
 ```
 
 | Argument | Meaning |
@@ -524,10 +524,10 @@ openship mail webmail deploy-external [options] [file]
 | --- | --- |
 | `--schema` | Print the accepted JSON schema without making a request |
 
-## openship mail webmail targets
+## kovalio mail webmail targets
 
 List permitted targets for this mail server
 
 ```text
-openship mail webmail targets [options] <server>
+kovalio mail webmail targets [options] <server>
 ```

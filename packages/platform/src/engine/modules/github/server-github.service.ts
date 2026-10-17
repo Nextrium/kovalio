@@ -119,7 +119,7 @@ export async function ensureServerKey(ctx: RequestContext, serverId: string): Pr
   if (existing?.mode === "ssh-server-key" && existing.serverKeyPublic) {
     return { publicKey: existing.serverKeyPublic };
   }
-  const { privateKey, publicKey } = await generateEd25519(`openship-${serverId}`);
+  const { privateKey, publicKey } = await generateEd25519(`kovalio-${serverId}`);
   await cancelServerConnect(serverId);
   await repos.serverGithubAuth.upsert({
     serverId,

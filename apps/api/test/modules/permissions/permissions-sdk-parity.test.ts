@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { seedOwner, seedServer, installFakeRunner, db, schema, repos, type SeededOwner } from "../jobs/_harness";
 import { eq, and, sql } from "@repo/db";
 import { createShip, type VerifiedIdentity } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { permissionsRoutes } from "../../../src/modules/permissions/permissions.routes";
 import { authRoutes } from "../../../src/modules/auth/auth.routes";
@@ -18,7 +18,7 @@ async function clients(owner: SeededOwner, organizationId = owner.orgId, limits:
   const ship = createShip({ platform: getPlatformKernel(), identity: { resolve: async () => ({ user, sessionId: "permissions-test", ...limits }) } });
   return {
     native: (await ship.scope({ identity: "verified", organizationId })).permissions,
-    remote: new OpenshipClient({ baseUrl: "http://openship.test", token: owner.token, organizationId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch }).permissions,
+    remote: new KovalioClient({ baseUrl: "http://kovalio.test", token: owner.token, organizationId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch }).permissions,
   };
 }
 async function addMember(owner: SeededOwner, actor: SeededOwner, role = "restricted") {

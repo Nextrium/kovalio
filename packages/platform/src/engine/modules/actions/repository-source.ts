@@ -62,7 +62,7 @@ export async function updateActionRepositorySource(
       branch,
       sha: input.sha,
       content: Buffer.from(input.source).toString("base64"),
-      message: `Configure ${input.path} for Openship Actions`,
+      message: `Configure ${input.path} for Kovalio Actions`,
     },
   });
   return { sha: result.content.sha, commit: result.commit.sha };

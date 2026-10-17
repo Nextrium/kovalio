@@ -1,33 +1,33 @@
 ---
 title: server cluster runtime
-description: Commands, arguments, and options for openship server cluster runtime.
-cliGroup: openship server cluster runtime
+description: Commands, arguments, and options for kovalio server cluster runtime.
+cliGroup: kovalio server cluster runtime
 ---
 
 See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship server cluster runtime
+## kovalio server cluster runtime
 
 Install or recover the shared scaling runtime
 
 ```text
-openship server cluster runtime [options] [command]
+kovalio server cluster runtime [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`get <id>`](/docs/cli/reference/server/cluster/runtime#openship-server-cluster-runtime-get) | Read runtime status and sequence |
-| [`setup [options] [file]`](/docs/cli/reference/server/cluster/runtime#openship-server-cluster-runtime-setup) | Install the runtime using a reviewed cluster revision and request ID |
-| [`retry [options] <id>`](/docs/cli/reference/server/cluster/runtime#openship-server-cluster-runtime-retry) | retry the runtime at the reviewed sequence |
-| [`remove [options] <id>`](/docs/cli/reference/server/cluster/runtime#openship-server-cluster-runtime-remove) | remove the runtime at the reviewed sequence |
-| [`events [options] <id>`](/docs/cli/reference/server/cluster/runtime#openship-server-cluster-runtime-events) | Stream runtime progress |
+| [`get <id>`](/docs/cli/reference/server/cluster/runtime#kovalio-server-cluster-runtime-get) | Read runtime status and sequence |
+| [`setup [options] [file]`](/docs/cli/reference/server/cluster/runtime#kovalio-server-cluster-runtime-setup) | Install the runtime using a reviewed cluster revision and request ID |
+| [`retry [options] <id>`](/docs/cli/reference/server/cluster/runtime#kovalio-server-cluster-runtime-retry) | retry the runtime at the reviewed sequence |
+| [`remove [options] <id>`](/docs/cli/reference/server/cluster/runtime#kovalio-server-cluster-runtime-remove) | remove the runtime at the reviewed sequence |
+| [`events [options] <id>`](/docs/cli/reference/server/cluster/runtime#kovalio-server-cluster-runtime-events) | Stream runtime progress |
 
-## openship server cluster runtime events
+## kovalio server cluster runtime events
 
 Stream runtime progress
 
 ```text
-openship server cluster runtime events [options] <id>
+kovalio server cluster runtime events [options] <id>
 ```
 
 | Argument | Meaning |
@@ -38,24 +38,24 @@ openship server cluster runtime events [options] <id>
 | --- | --- |
 | `--timeout <ms>` | Stop after this deadline |
 
-## openship server cluster runtime get
+## kovalio server cluster runtime get
 
 Read runtime status and sequence
 
 ```text
-openship server cluster runtime get [options] <id>
+kovalio server cluster runtime get [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Compute cluster ID |
 
-## openship server cluster runtime remove
+## kovalio server cluster runtime remove
 
 remove the runtime at the reviewed sequence
 
 ```text
-openship server cluster runtime remove [options] <id>
+kovalio server cluster runtime remove [options] <id>
 ```
 
 | Argument | Meaning |
@@ -67,12 +67,12 @@ openship server cluster runtime remove [options] <id>
 | `--sequence <number>` | Current sequence from runtime get |
 | `-y, --yes` | Confirm host changes |
 
-## openship server cluster runtime retry
+## kovalio server cluster runtime retry
 
 retry the runtime at the reviewed sequence
 
 ```text
-openship server cluster runtime retry [options] <id>
+kovalio server cluster runtime retry [options] <id>
 ```
 
 | Argument | Meaning |
@@ -84,12 +84,12 @@ openship server cluster runtime retry [options] <id>
 | `--sequence <number>` | Current sequence from runtime get |
 | `-y, --yes` | Confirm host changes |
 
-## openship server cluster runtime setup
+## kovalio server cluster runtime setup
 
 Install the runtime using a reviewed cluster revision and request ID
 
 ```text
-openship server cluster runtime setup [options] [file]
+kovalio server cluster runtime setup [options] [file]
 ```
 
 | Argument | Meaning |

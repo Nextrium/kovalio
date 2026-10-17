@@ -3,7 +3,7 @@ import { endpoints } from "./endpoints";
 
 /** Cross-card refresh signal for Settings → Git. Source management and the
  * generic credential card intentionally own different API calls. */
-export const GITHUB_SOURCES_CHANGED_EVENT = "openship:github-sources-changed";
+export const GITHUB_SOURCES_CHANGED_EVENT = "kovalio:github-sources-changed";
 
 /** Query for the server-paginated repo list (all optional). */
 export interface RepoListQuery {

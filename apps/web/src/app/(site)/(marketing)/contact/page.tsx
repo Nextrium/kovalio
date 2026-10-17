@@ -37,7 +37,7 @@ export default function ContactPage() {
               <span className="legal-title-soft">Send us a message.</span>
             </h1>
             <p className="legal-meta">
-              Send a request to the Openship team. We&rsquo;ll save it and reply by email.
+              Send a request to the Kovalio team. We&rsquo;ll save it and reply by email.
             </p>
           </div>
         </section>

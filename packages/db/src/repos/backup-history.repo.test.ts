@@ -129,12 +129,12 @@ it("scopes destination pages and cursors without depending on a current policy",
 
 it("resolves the actual service and destination of saved runs after their policy is removed", async () => {
   await db.insert(schema.organization).values({ id: "org", name: "Org", slug: "org" });
-  await db.insert(schema.project).values({ id: "project", groupId: "group", organizationId: "org", name: "Openship", slug: "openship" });
+  await db.insert(schema.project).values({ id: "project", groupId: "group", organizationId: "org", name: "Kovalio", slug: "kovalio" });
   await db.insert(schema.service).values({ id: "service", projectId: "project", name: "PostgreSQL" });
   await db.insert(schema.backupDestination).values({ id: "store", organizationId: "org", name: "Production storage", kind: "local" });
   await create("saved", { destinationId: "store", policyId: null });
   expect(await runs.listWithSources("org", { destinationId: "store" })).toMatchObject([{
-    id: "saved", projectName: "Openship", serviceName: "PostgreSQL", destinationName: "Production storage", mailServerName: null,
+    id: "saved", projectName: "Kovalio", serviceName: "PostgreSQL", destinationName: "Production storage", mailServerName: null,
   }]);
   // A forged foreign project id must never disclose its name through a join.
   await db.update(schema.project).set({ organizationId: "foreign" }).where(eq(schema.project.id, "project"));

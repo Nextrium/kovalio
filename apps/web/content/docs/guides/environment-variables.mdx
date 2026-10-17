@@ -13,9 +13,9 @@ read them over your shoulder.
 
 <Callout title="What you need first">
 
-- A project you've already created in Openship (if not, start with [Deploy from GitHub](/docs/guides/deploy-from-github)).
+- A project you've already created in Kovalio (if not, start with [Deploy from GitHub](/docs/guides/deploy-from-github)).
 - The names and values you want to set — for example `DATABASE_URL` and its connection string.
-- Nothing else. Openship encrypts and stores the values for you.
+- Nothing else. Kovalio encrypts and stores the values for you.
 
 </Callout>
 
@@ -53,7 +53,7 @@ row to **mark it as secret**. A secret's value is stored the same way, but from 
 (`••••••••`) instead of plain text, so it stays hidden whenever you reopen the editor.
 
 <Callout title="Environment values are encrypted at rest" type="info">
-  Whether or not you mark a variable secret, Openship **encrypts every value before saving it**.
+  Whether or not you mark a variable secret, Kovalio **encrypts every value before saving it**.
   Marking a value secret adds the on-screen masking on top — it controls what *you* can see later,
   not whether it's protected on disk.
 </Callout>
@@ -85,7 +85,7 @@ never re-typed it, so it's never re-sent.
 
 <Callout title="Saving isn't the same as applying" type="warn">
   A saved change is stored right away, but the **running app keeps its old values until the next
-  deploy**. If something is already live, Openship offers a shortcut to push the change out
+  deploy**. If something is already live, Kovalio offers a shortcut to push the change out
   immediately — see [Apply without a full rebuild](#apply-without-a-full-rebuild) below. Otherwise
   the new values take effect the next time you deploy.
 </Callout>
@@ -109,7 +109,7 @@ RUN npm run build
 
 The project environment is the shared build/runtime layer. A multi-service project's `services[].env`
 is different: it belongs only to that service at runtime and is never leaked into an image build. In
-`openship.json`, add `services[].buildArgs` when an image needs an explicit build-only value or when you
+`kovalio.json`, add `services[].buildArgs` when an image needs an explicit build-only value or when you
 want to document which shared key it inherits:
 
 ```json
@@ -126,20 +126,20 @@ want to document which shared key it inherits:
 ```
 
 Here `null` means “inherit the same-named project variable”; a string is a per-image override. Values
-declared in top-level `openship.json.env` become active project defaults automatically. A generic `.env`
+declared in top-level `kovalio.json.env` become active project defaults automatically. A generic `.env`
 file is only used after you choose **Import .env**.
 
 <Callout title="Docker build arguments are not secret storage" type="warn">
   Build arguments can remain visible in image metadata or build cache. Prefer runtime environment
   variables for credentials. If a build genuinely needs a secret, use a dedicated BuildKit secret
-  flow rather than committing it to `openship.json` or baking it into the image.
+  flow rather than committing it to `kovalio.json` or baking it into the image.
 </Callout>
 
 ## Service overrides and credential rotation
 
 Open **Services → select a service → Environment** to see its effective saved
 variables. The list includes Compose values, shared project variables and explicit
-service overrides, with a source label on each row. Openship stores these values;
+service overrides, with a source label on each row. Kovalio stores these values;
 the list remains available when the deployment server is offline.
 
 Editing an inherited value creates an override for that service. Saving changes
@@ -151,14 +151,14 @@ another session are rejected before anything is saved.
 On a normal service deployment, the highest-priority value wins in this order:
 
 1. A service-scoped variable from its environment editor.
-2. A literal in that service's Compose `environment` or `openship.json` `env` map.
+2. A literal in that service's Compose `environment` or `kovalio.json` `env` map.
 3. The project's environment, captured when the deployment starts.
 
 Compose expressions such as `TOKEN: ${TOKEN}` resolve against the configured values;
 they do not pin a previous scan's value. A rollback instead replays its captured
 project values, including their precedence over present-day service overrides.
 
-`openship project env set` warns when a changed or deleted key still has a service
+`kovalio project env set` warns when a changed or deleted key still has a service
 override. The API and SDK return the same `warnings` array, and deployment logs name
 keys whose service values win. These messages contain names only. Saving the project
 value succeeds, but it cannot replace a service-owned credential. Update the service
@@ -209,7 +209,7 @@ Press it and Kovalio recreates the running container from the image it already b
 injected. No git clone, no build — just a quick restart. It's the fastest way to roll out a changed key or a
 rotated secret.
 
-From the terminal, `openship deploy --refresh` (shown below) applies environment
+From the terminal, `kovalio deploy --refresh` (shown below) applies environment
 changes through a deployment without rebuilding.
 
 For one service, open its **Environment** tab, press **Save**, then
@@ -219,26 +219,26 @@ and shows completion after the service starts. This is a dedicated service actio
 (`POST /api/projects/:id/services/:serviceId/apply-env`); it creates no deployment or
 build session. Docker gets a graceful stop, and the replacement retains the existing
 ports, project network address, volumes, commands, and resource limits. If startup
-fails, Openship restores the previous container and leaves the changes pending.
+fails, Kovalio restores the previous container and leaves the changes pending.
 The toolbar offers Apply only when a comparison with the deployed container finds
 saved changes, including removed variables. **Check running service** refreshes
 that comparison. An unavailable server is reported as an unknown state, while the
 saved variables remain editable.
 
 For an older or migrated service, Docker may still hold variables that were never
-saved in Openship. **Recover from running service** reads those missing values
+saved in Kovalio. **Recover from running service** reads those missing values
 from that service's container, excluding image defaults, and adds them to the
-editor for review. Press **Save** to store them encrypted in Openship. Recovery
+editor for review. Press **Save** to store them encrypted in Kovalio. Recovery
 never overwrites an already saved value. Before applying, recover these values or
 explicitly choose to remove them from the running service.
 
-This action supports Docker services on a server or an Openship Cloud Docker
+This action supports Docker services on a server or an Kovalio Cloud Docker
 workspace. Legacy cloud workspaces and adopted containers on Docker's default bridge
 require **Redeploy**. Namespace-sharing services must be refreshed together through
 a deployment.
 
 A normal **Restart** keeps the container's existing variables. When saved changes are
-pending, Openship opens the service's **Environment** panel so you can apply them there.
+pending, Kovalio opens the service's **Environment** panel so you can apply them there.
 Variables used during a build still require a rebuild.
 
 ## CLI
@@ -305,18 +305,18 @@ kovalio service env set web -p my-stack -e preview API_URL=https://staging.examp
 
 <Callout title="I saved a variable but my app still doesn't see it" type="warn">
   Saving stores the value; the **running app** only picks it up on a deploy. Use **Apply (restart,
-  no rebuild)** (or `openship deploy --refresh`) to push it out now, or just redeploy.
+  no rebuild)** (or `kovalio deploy --refresh`) to push it out now, or just redeploy.
 </Callout>
 
 <Callout title="A secret shows as dots and I can't read it back" type="info">
-  That's on purpose — Openship never reveals a stored secret's value again, in the dashboard or the
+  That's on purpose — Kovalio never reveals a stored secret's value again, in the dashboard or the
   CLI. If you need to change it, type a new value over the dots. If you've lost the original, set a
   fresh one.
 </Callout>
 
 <Callout title="The build failed with a missing-variable error" type="error">
   Your app expected a variable that isn't set yet. Add it in the **Configuration** tab (or with
-  `openship project env set`), make sure the name matches exactly — env names are case-sensitive —
+  `kovalio project env set`), make sure the name matches exactly — env names are case-sensitive —
   then deploy again. See [Troubleshooting → Deployments](/docs/troubleshooting/deployments) for
   more.
 </Callout>

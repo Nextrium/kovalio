@@ -39,8 +39,8 @@ import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 import { seedOrg, seedProject, seedDeployment, setActive } from "../helpers/seed";
 
 const BASE_IMAGE = "busybox:latest";
-const TAG_V1 = "openship/e2e-cycle:bld_v1";
-const TAG_V2 = "openship/e2e-cycle:bld_v2";
+const TAG_V1 = "kovalio/e2e-cycle:bld_v1";
+const TAG_V2 = "kovalio/e2e-cycle:bld_v2";
 const APP_PORT = 80;
 
 async function freePort(): Promise<number> {

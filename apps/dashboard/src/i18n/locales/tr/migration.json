@@ -107,8 +107,8 @@
       "deployActionPull": "Çekilecek"
     },
     "flatDocker": "Düz liste",
-    "flatDockerHint": "Openship etiketlerini yoksay — her şeyi (Openship tarafından yönetilen kapsayıcılar dahil) düz Docker olarak dahil et.",
-    "flatDockerShort": "Openship tarafından yönetilen kapsayıcıları da dahil et."
+    "flatDockerHint": "Kovalio etiketlerini yoksay — her şeyi (Kovalio tarafından yönetilen kapsayıcılar dahil) düz Docker olarak dahil et.",
+    "flatDockerShort": "Kovalio tarafından yönetilen kapsayıcıları da dahil et."
   },
   "run": {
     "title": "Teknoloji yığınınız taşınıyor",
@@ -179,7 +179,7 @@
     "envFromImage": "{n} değişken imajdan geliyor",
     "envFromImageHint": "Yapılandırma olarak içe aktarılmadı — imaj bunları çalışma zamanında sağlıyor. Kaynaktan yeniden derlemeden önce değerleri sabitlemek için içe aktarın.",
     "envFromImageImport": "Yine de içe aktar",
-    "alreadyManaged": "Openship tarafından zaten yönetilen {count} konteyner atlandı.",
+    "alreadyManaged": "Kovalio tarafından zaten yönetilen {count} konteyner atlandı.",
     "chooseProject": "İçe aktarılacakları seçin",
     "chooseHint": "Bir Compose projesi veya ayrı hizmetler seçin.",
     "topology": "Topoloji",
@@ -208,7 +208,7 @@
     "failed": "Tekrar içe aktarma başarısız oldu",
     "review": "Projeyi kurtar",
     "reviewNamed": "{name} projesini kurtar",
-    "groupLabel": "Openship projesi",
+    "groupLabel": "Kovalio projesi",
     "recoverHint": "Ayarları geri yükleyin ve çalışan kapsayıcıları yeniden bağlayın.",
     "configuration": "Yapılandırma",
     "snapshot": "Kayıtlı anlık görüntü",
@@ -283,7 +283,7 @@
     "disconnect": "Kaynak bağlantısını kes",
     "empty": "İçe aktarmak istediğiniz sunucuyu bağlayın.",
     "hint": "Yalnızca taşıma için. İşiniz bittiğinde bağlantıyı kaldırabilirsiniz.",
-    "importHint": "Uygulamaları ve verileri yönetilen bir Openship sunucusuna kopyalayın. Geçişi onaylayana kadar kaynak korunur."
+    "importHint": "Uygulamaları ve verileri yönetilen bir Kovalio sunucusuna kopyalayın. Geçişi onaylayana kadar kaynak korunur."
   },
   "review": {
     "progress": "İçe aktarma ilerlemesi",

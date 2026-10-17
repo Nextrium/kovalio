@@ -9,13 +9,13 @@ const run = promisify(execFile);
 /** Build the exact shipped task image and load it into every disposable node.
  * This avoids needing a previously published release to test a new release. */
 export async function scalingTaskImage(lab: ScalingLab) {
-  const image = `openship-e2e:${lab.id}-database-tasks`;
-  const directory = await mkdtemp(join(tmpdir(), "openship-task-image-"));
+  const image = `kovalio-e2e:${lab.id}-database-tasks`;
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-task-image-"));
   const archive = join(directory, "tasks.tar");
   const dispose = async () => {
     try {
       const current = await lab.docker.getImage(image).inspect();
-      if (current.Config.Labels?.["openship.e2e"] !== lab.id)
+      if (current.Config.Labels?.["kovalio.e2e"] !== lab.id)
         throw new Error("Refusing to remove an image outside this scaling fixture.");
       await lab.docker.getImage(image).remove({ force: true, noprune: true });
     } catch (error) {
@@ -29,7 +29,7 @@ export async function scalingTaskImage(lab: ScalingLab) {
       [
         "build",
         "--label",
-        `openship.e2e=${lab.id}`,
+        `kovalio.e2e=${lab.id}`,
         "-t",
         image,
         "-f",
@@ -50,7 +50,7 @@ export async function scalingTaskImage(lab: ScalingLab) {
     await building;
     await run("docker", ["save", "--output", archive, image], { timeout: 180000 });
     for (const [index, node] of lab.nodes.entries()) {
-      await run("docker", ["cp", archive, `${node.container.id}:/tmp/openship-tasks.tar`], {
+      await run("docker", ["cp", archive, `${node.container.id}:/tmp/kovalio-tasks.tar`], {
         timeout: 180000,
       });
       // The K3s image dispatches tools by executable name. Invoke ctr directly
@@ -65,11 +65,11 @@ export async function scalingTaskImage(lab: ScalingLab) {
           "k8s.io",
           "images",
           "import",
-          "/tmp/openship-tasks.tar",
+          "/tmp/kovalio-tasks.tar",
         ],
         180,
       );
-      await lab.nodeExec(index, ["rm", "/tmp/openship-tasks.tar"]);
+      await lab.nodeExec(index, ["rm", "/tmp/kovalio-tasks.tar"]);
       console.info(`[database-e2e] Recovery image loaded on ${node.name}.`);
     }
     return { image, dispose };

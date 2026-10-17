@@ -420,7 +420,7 @@ describe("Support on a Cloud-connected self-hosted installation", () => {
     h.account = null;
     await render(true);
     expect(host.textContent).toContain(copy.teamConnectionDescription);
-    expect(host.querySelector('a[href="https://app.openship.io/support"]')?.textContent).toBe(
+    expect(host.querySelector('a[href="https://kovalio.nextrium.org/support"]')?.textContent).toBe(
       copy.openCloud,
     );
     expect(host.querySelector("form")).toBeNull();
@@ -523,6 +523,6 @@ describe("Support on a Cloud-connected self-hosted installation", () => {
     expect(host.textContent).not.toContain(ticket().subject);
     expect(host.textContent).toContain(copy.connectDescription);
     expect(host.querySelector('a[href="/settings"]')).not.toBeNull();
-    expect(host.querySelector('a[href="https://app.openship.io/support"]')).not.toBeNull();
+    expect(host.querySelector('a[href="https://kovalio.nextrium.org/support"]')).not.toBeNull();
   });
 });

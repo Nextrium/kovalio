@@ -1,29 +1,29 @@
 ---
 title: Server-to-server migration
-description: Import Docker applications into Openship Cloud or move them between connected and managed servers, with data transfer, progress and explicit cutover.
+description: Import Docker applications into Kovalio Cloud or move them between connected and managed servers, with data transfer, progress and explicit cutover.
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-Openship migrates Docker applications, their images and their data through one workflow. You can import
-an external server into **Openship Cloud**, move an existing project between managed servers, or move
+Kovalio migrates Docker applications, their images and their data through one workflow. You can import
+an external server into **Kovalio Cloud**, move an existing project between managed servers, or move
 between your own connected servers and managed servers from a self-hosted installation.
 
 <Callout title="One migration engine">
 [Platform imports](/docs/guides/migrate-from-coolify-dokploy-dokku) and project moves use the same
 transfer, deployment, verification and recovery steps. Managed destinations use the existing Docker
-runtime; their connection and public routing are supplied by Openship Cloud.
+runtime; their connection and public routing are supplied by Kovalio Cloud.
 </Callout>
 
 ## Before you start
 
 - The source must run **Docker**. This flow does not move bare applications or Kubernetes workloads.
 - You need write access to both servers and, for an existing project, the project itself.
-- An external Cloud source needs a public SSH address and a password or uploaded private key. Openship
+- An external Cloud source needs a public SSH address and a password or uploaded private key. Kovalio
   verifies SSH, pins the host key and encrypts the saved credentials. Private network addresses, SSH
   agents, local key paths and jump hosts are unavailable for Cloud migration sources.
 - The managed destination needs an active subscription and enough free disk for the images and data.
-  Openship checks and prepares it before stopping the source workloads.
+  Kovalio checks and prepares it before stopping the source workloads.
 - Plan a maintenance window and take an application backup. Source containers stop while data is copied
   and the target is deployed. Downtime depends on data size, transfer speed and application startup.
 
@@ -33,7 +33,7 @@ in advance and allow existing caches to expire. A low TTL reduces the DNS delay;
 the data-transfer downtime or guarantee when every resolver updates. Managed domains use Cloud routing.
 </Callout>
 
-## Import into Openship Cloud
+## Import into Kovalio Cloud
 
 <Steps>
 <Step>
@@ -42,7 +42,7 @@ the data-transfer downtime or guarantee when every resolver updates. Managed dom
 Open **New project → Import existing project** and connect the external server. This is a
 **migration-only connection**: it appears in the import picker, not in deployment destinations,
 terminals or general server management. You can reuse it for another import and disconnect it afterward.
-Disconnecting removes Openship's saved connection; it does not delete your external server or its data.
+Disconnecting removes Kovalio's saved connection; it does not delete your external server or its data.
 </Step>
 
 <Step>
@@ -68,7 +68,7 @@ file bind mounts.
 <Step>
 ### Transfer and deploy
 
-Openship prepares the destination, records the source's running state, stops the selected workloads,
+Kovalio prepares the destination, records the source's running state, stops the selected workloads,
 transfers their data and starts the normal deployment flow. Locally built Docker images can move too;
 the image is saved on the source and loaded on the destination without a registry push or rebuild.
 
@@ -85,7 +85,7 @@ plane's existing adapters.
 Inspect the target application, data, health and domain routing before confirming cutover. Removing
 the original containers leaves their volumes on the source server. For an external cross-server
 import, **Keep originals** restarts only the previously running source containers; their data is now
-an independent copy. Same-server imports and moves of an existing Openship project leave the
+an independent copy. Same-server imports and moves of an existing Kovalio project leave the
 originals stopped. Keep the old server until you have verified the application and its backups.
 
 A failed or cancelled transfer before cutover restores the original placement and running state.

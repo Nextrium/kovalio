@@ -8,26 +8,26 @@ import {
   resolveMailDbPort,
 } from "./mail-container";
 
-const originalEnv = process.env.OPENSHIP_MAIL_DB_PORT;
+const originalEnv = process.env.KOVALIO_MAIL_DB_PORT;
 
 afterEach(() => {
   if (originalEnv === undefined) {
-    delete process.env.OPENSHIP_MAIL_DB_PORT;
+    delete process.env.KOVALIO_MAIL_DB_PORT;
   } else {
-    process.env.OPENSHIP_MAIL_DB_PORT = originalEnv;
+    process.env.KOVALIO_MAIL_DB_PORT = originalEnv;
   }
 });
 
 describe("resolveMailDbPort", () => {
   it("defaults to 5432 when no argument or env var is present", () => {
-    delete process.env.OPENSHIP_MAIL_DB_PORT;
+    delete process.env.KOVALIO_MAIL_DB_PORT;
     expect(resolveMailDbPort()).toBe(5432);
     expect(resolveMailDbPort(undefined)).toBe(5432);
     expect(resolveMailDbPort("")).toBe(5432);
   });
 
-  it("reads from OPENSHIP_MAIL_DB_PORT environment variable", () => {
-    process.env.OPENSHIP_MAIL_DB_PORT = "5433";
+  it("reads from KOVALIO_MAIL_DB_PORT environment variable", () => {
+    process.env.KOVALIO_MAIL_DB_PORT = "5433";
     expect(resolveMailDbPort()).toBe(5433);
   });
 

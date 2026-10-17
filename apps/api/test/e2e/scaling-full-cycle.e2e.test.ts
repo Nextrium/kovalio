@@ -1,6 +1,6 @@
 /**
  * The application scaling journey through real HTTP, persistence, deployment
- * admission/pipeline, an authenticated registry, K3s and OpenShip Edge.
+ * admission/pipeline, an authenticated registry, K3s and Kovalio Edge.
  *
  * Only infrastructure LOCATION is substituted: disposable containers replace
  * already-prepared remote hosts. The production adapters and their observations
@@ -28,7 +28,7 @@ import type {
   DeploymentMeta,
   ResolvedDeploymentPlatform,
 } from "@repo/platform/engine/lib/deployment-runtime";
-import { OpenshipClient, consumeDeploymentEvents } from "@repo/sdk/client";
+import { KovalioClient, consumeDeploymentEvents } from "@repo/sdk/client";
 import type { ProjectCluster } from "@repo/contracts";
 import { mcpTestClient } from "../helpers/mcp-client";
 import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
@@ -48,8 +48,8 @@ vi.hoisted(() => {
     "6aef2d670b7ce8eead4ba6de7f4f3b3d54a3d71b0bffb251f07f3d56a394d270";
   process.env.CLOUD_MODE = "false";
   process.env.DEPLOY_MODE = "docker";
-  process.env.OPENSHIP_AUTH_MODE = "local";
-  process.env.OPENSHIP_JOB_RUNNER = "in-process";
+  process.env.KOVALIO_AUTH_MODE = "local";
+  process.env.KOVALIO_JOB_RUNNER = "in-process";
 });
 
 // MCP re-enters the same real routers, without app.ts's unrelated boot jobs.
@@ -61,7 +61,7 @@ describeDockerE2E.sequential("application scaling through the complete deploymen
   let project: Project;
   let clusterId = "";
   let source = "";
-  let client: OpenshipClient;
+  let client: KovalioClient;
   let mcp: ReturnType<typeof mcpTestClient>;
   let httpServer: ServerType | undefined;
   let baseRuntime: DockerRuntime | undefined;
@@ -109,7 +109,7 @@ describeDockerE2E.sequential("application scaling through the complete deploymen
     try {
       await lab.start();
       org = await seedOrg();
-      source = await mkdtemp(join(tmpdir(), "openship-scaling-source-"));
+      source = await mkdtemp(join(tmpdir(), "kovalio-scaling-source-"));
       const hosts: ClusterRuntimePlan["hosts"] = [];
       for (const [index, node] of lab.nodes.entries()) {
         const serverId = randomUUID();
@@ -353,7 +353,7 @@ describeDockerE2E.sequential("application scaling through the complete deploymen
           resolve(address.port),
         );
       });
-      client = new OpenshipClient({
+      client = new KovalioClient({
         baseUrl: `http://127.0.0.1:${address}`,
         token: pat.token,
         organizationId: org.organizationId,
@@ -364,7 +364,7 @@ describeDockerE2E.sequential("application scaling through the complete deploymen
         organizationId: org.organizationId,
       });
       project = await seedProject(org.organizationId, {
-        // A valid OpenShip ID that Kubernetes cannot use directly as a label.
+        // A valid Kovalio ID that Kubernetes cannot use directly as a label.
         id: `proj_${lab.id}_`,
         name: "Scaling acceptance API",
         slug: lab.id,
@@ -491,7 +491,7 @@ describeDockerE2E.sequential("application scaling through the complete deploymen
     const replies: ScalingReply[] = [];
     const errors: string[] = [];
     await eventually(
-      "each ready instance to serve through OpenShip Edge",
+      "each ready instance to serve through Kovalio Edge",
       async () => {
         try {
           const answer = await lab.request(hostname);
@@ -548,7 +548,7 @@ describeDockerE2E.sequential("application scaling through the complete deploymen
       await mcp.call<{ data: ProjectCluster }>("get_projects_by_id_cluster", { id: project.id })
     ).data;
   }
-  async function scale(input: Parameters<OpenshipClient["projects"]["scaleClusterWorkload"]>[1]) {
+  async function scale(input: Parameters<KovalioClient["projects"]["scaleClusterWorkload"]>[1]) {
     return (
       await mcp.call<{ data: { deploymentId: string } }>("post_projects_by_id_cluster_scale", {
         id: project.id,
@@ -727,7 +727,7 @@ describeDockerE2E.sequential("application scaling through the complete deploymen
         if (stopped(state.deploymentStatus)) return { state, workload: undefined };
         const list = await lab.api.request<{ items: KubernetesObject[] }>(
           "GET",
-          `/apis/apps/v1/namespaces/${namespace}/deployments?labelSelector=${encodeURIComponent(`openship.io/deployment=${kubernetesIdLabel(id)}`)}`,
+          `/apis/apps/v1/namespaces/${namespace}/deployments?labelSelector=${encodeURIComponent(`nextrium.org/deployment=${kubernetesIdLabel(id)}`)}`,
         );
         return { state, workload: list.items[0] };
       },
@@ -802,11 +802,11 @@ describeDockerE2E.sequential("application scaling through the complete deploymen
     const namespace = kubernetesProjectNamespace(project.id);
     const services = await lab.api.request<{ items: KubernetesObject[] }>(
       "GET",
-      `/api/v1/namespaces/${namespace}/services?labelSelector=${encodeURIComponent(`openship.io/deployment=${kubernetesIdLabel(scaled.deploymentId)}`)}`,
+      `/api/v1/namespaces/${namespace}/services?labelSelector=${encodeURIComponent(`nextrium.org/deployment=${kubernetesIdLabel(scaled.deploymentId)}`)}`,
     );
     const serviceName = services.items.find(
       (service) =>
-        service.spec.selector?.["openship.io/deployment"] ===
+        service.spec.selector?.["nextrium.org/deployment"] ===
         kubernetesIdLabel(scaled.deploymentId),
     )?.metadata.name;
     expect(serviceName).toBeTruthy();
@@ -898,8 +898,8 @@ describeDockerE2E.sequential("application scaling through the complete deploymen
     const namespace = kubernetesProjectNamespace(project.id);
     const name = "project-deletion-storage-guard";
     const labels = {
-      "openship.io/project": kubernetesIdLabel(project.id),
-      "openship.io/runtime": lab.runtimeId,
+      "nextrium.org/project": kubernetesIdLabel(project.id),
+      "nextrium.org/runtime": lab.runtimeId,
     };
     for (const [collection, resource] of [
       [
@@ -921,7 +921,7 @@ describeDockerE2E.sequential("application scaling through the complete deploymen
         {
           apiVersion: "v1",
           kind: "ConfigMap",
-          metadata: { name, labels: { ...labels, "openship.io/volume-deletion": "true" } },
+          metadata: { name, labels: { ...labels, "nextrium.org/volume-deletion": "true" } },
         },
       ],
     ] as const) {
@@ -961,7 +961,7 @@ describeDockerE2E.sequential("application scaling through the complete deploymen
   }, 180_000);
 
   it("removes the application, its owned namespace and public route through normal project cleanup", async () => {
-    const removed = await mcp.call<Awaited<ReturnType<OpenshipClient["projects"]["remove"]>>>(
+    const removed = await mcp.call<Awaited<ReturnType<KovalioClient["projects"]["remove"]>>>(
       "delete_projects_by_id",
       { id: project.id },
     );

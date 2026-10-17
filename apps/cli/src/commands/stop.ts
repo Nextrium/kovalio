@@ -11,7 +11,7 @@ export const stopCommand = new Command("stop")
     // Compose install → tear down the stack; else stop the bare process service.
     if (readInstallMethod() === "compose") {
       const ok = composeDown();
-      if (ok) console.log(chalk.green("\n  ✔ Openship stopped (docker compose down).\n"));
+      if (ok) console.log(chalk.green("\n  ✔ Kovalio stopped (docker compose down).\n"));
       else reportCliMessage("error", chalk.red("\n  docker compose down failed (or no stack found).\n"));
       process.exit(ok ? 0 : 1);
     }

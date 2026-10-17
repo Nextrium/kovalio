@@ -35,7 +35,7 @@ describeDockerE2E.each([
       "--cpus",
       "1",
       "--label",
-      "openship.test=exec-watchdog",
+      "kovalio.test=exec-watchdog",
       ...(postgres
         ? [
             "--tmpfs",
@@ -74,7 +74,7 @@ describeDockerE2E.each([
           "sh",
           "-c",
           'i=0; while [ "$i" -lt 2000 ]; do "$@" || exit; i=$((i+1)); done',
-          "openship-watchdog-batch",
+          "kovalio-watchdog-batch",
           ...buildInContainerExecCmd(":", 30_000),
         ],
         20_000,

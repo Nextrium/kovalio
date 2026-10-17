@@ -16,7 +16,7 @@ const servers: Server[] = [];
 const clients: KubernetesApi[] = [];
 
 beforeAll(() => {
-  directory = mkdtempSync(join(tmpdir(), "openship-kubernetes-tls-"));
+  directory = mkdtempSync(join(tmpdir(), "kovalio-kubernetes-tls-"));
   writeFileSync(
     join(directory, "openssl.cnf"),
     "[req]\ndistinguished_name=dn\nx509_extensions=ext\nprompt=no\n[dn]\nCN=private-api\n[ext]\nsubjectAltName=IP:127.0.0.1\nbasicConstraints=critical,CA:TRUE\n",

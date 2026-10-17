@@ -28,7 +28,7 @@ export async function assertProjectStorageEmpty(
       );
     const deletions = await connection.api.request<{ items: KubernetesObject[] }>(
       "GET",
-      `/api/v1/namespaces/${kubernetesProjectNamespace(projectId)}/configmaps?labelSelector=openship.io%2Fvolume-deletion%3Dtrue`,
+      `/api/v1/namespaces/${kubernetesProjectNamespace(projectId)}/configmaps?labelSelector=nextrium.org%2Fvolume-deletion%3Dtrue`,
       undefined,
       AbortSignal.timeout(30_000),
     );

@@ -5,7 +5,7 @@ description: Read and change self-hosted installation settings and setup.
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-Installation settings control a self-hosted Openship instance. Resource operations below use the shared
+Installation settings control a self-hosted Kovalio instance. Resource operations below use the shared
 SDK/HTTP interface where available; onboarding, recovery, and remaining setup endpoints are HTTP-only.
 
 See [Servers](/docs/api/servers) for hosts and component installation, [Edge administration](/docs/api/edge)
@@ -66,8 +66,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X PATCH "$OPENSHIP_URL/api/system/settings" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PATCH "$KOVALIO_URL/api/system/settings" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"defaultBuildMode":"docker"}'
 ```
@@ -152,7 +152,7 @@ paths return **400**, missing paths **404**.
 | Create an account from an eligible self-hosted invitation. | HTTP only | `POST /api/system/invite-signup`<br />`Handler authentication` · Self-hosted |
 | Test a connection during initial onboarding. | HTTP only | `POST /api/system/onboarding/test-connection`<br />`Handler authentication` · Self-hosted |
 | Reset the administrator password through the local recovery boundary. | HTTP only | `POST /api/system/reset-admin-password`<br />`Internal operator` · Self-hosted |
-| Register the Openship installation as a managed application. | HTTP only | `POST /api/system/self-register`<br />`Internal operator` · Self-hosted |
+| Register the Kovalio installation as a managed application. | HTTP only | `POST /api/system/self-register`<br />`Internal operator` · Self-hosted |
 | Stream installation registration progress. | HTTP only | `GET /api/system/self-register/stream`<br />`Internal operator` · Self-hosted |
 | Read instance config for the desktop app. | HTTP only | `GET /api/system/setup`<br />`Internal operator` · Self-hosted |
 | Push instance config from the desktop app. | HTTP only | `POST /api/system/setup`<br />`Internal operator` · Self-hosted |

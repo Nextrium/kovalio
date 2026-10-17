@@ -27,14 +27,14 @@ export async function generateMetadata({
     description: app.description,
     alternates: { canonical: `/apps/${app.id}` },
     openGraph: {
-      title: `${app.name} — Openship`,
+      title: `${app.name} — Kovalio`,
       description: app.description,
       url: `/apps/${app.id}`,
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${app.name} — Openship`,
+      title: `${app.name} — Kovalio`,
       description: app.description,
     },
   };
@@ -58,7 +58,7 @@ export default async function AppPage({ params }: { params: Promise<{ id: string
     "@type": "SoftwareApplication",
     name: app.name,
     description: app.description,
-    url: `https://openship.io/apps/${app.id}`,
+    url: `https://nextrium.org/apps/${app.id}`,
     applicationCategory: APP_CATEGORY_LABELS[app.category],
     operatingSystem: "Linux",
   };
@@ -117,8 +117,8 @@ export default async function AppPage({ params }: { params: Promise<{ id: string
               <h2>Make {app.name} part of your stack</h2>
               <p>
                 {app.available
-                  ? "The catalog template provides the service configuration so you can focus on using the app. Review its settings, choose an appropriate destination, and deploy through Openship."
-                  : "This app is listed for discovery. Its Openship template is not ready to install yet."}
+                  ? "The catalog template provides the service configuration so you can focus on using the app. Review its settings, choose an appropriate destination, and deploy through Kovalio."
+                  : "This app is listed for discovery. Its Kovalio template is not ready to install yet."}
               </p>
               {app.repository && (
                 <p>
@@ -192,8 +192,8 @@ export default async function AppPage({ params }: { params: Promise<{ id: string
             <p className="mt-3 text-sm leading-relaxed th-text-secondary">
               {app.available
                 ? cloud
-                  ? "Choose an Openship Cloud server or use your own infrastructure. Configuration and deployment stay in the same app flow."
-                  : "Set up and manage this app through Openship on your own server."
+                  ? "Choose an Kovalio Cloud server or use your own infrastructure. Configuration and deployment stay in the same app flow."
+                  : "Set up and manage this app through Kovalio on your own server."
                 : "This template is being prepared. Explore the app now; installation will become available when the catalog marks it ready."}
             </p>
             {app.experimental && (
@@ -205,7 +205,7 @@ export default async function AppPage({ params }: { params: Promise<{ id: string
             {app.available && (
               <div className="mt-6 space-y-2">
                 <Link href={installUrl} className="marketplace-primary">
-                  {cloud ? "Deploy on Openship Cloud" : "Set up on your server"}
+                  {cloud ? "Deploy on Kovalio Cloud" : "Set up on your server"}
                   <ArrowRight size={16} />
                 </Link>
                 {cloud && (
@@ -231,7 +231,7 @@ export default async function AppPage({ params }: { params: Promise<{ id: string
                 )}
                 {app.minEngine && (
                   <div>
-                    <dt>Openship version</dt>
+                    <dt>Kovalio version</dt>
                     <dd>{app.minEngine} or newer</dd>
                   </div>
                 )}

@@ -111,8 +111,8 @@ async function mkdirKovalio(e: CommandExecutor): Promise<void> {
  */
 function unreadable<T>(name: string, err: unknown, fallback: T): T {
   const reason = err instanceof Error ? err.message : String(err);
-  errorDiagnostics.warn("platform/engine/lib/openship-server-store",
-    `[openship-server-store] cannot read ${OPENSHIP_DIR}/${name} — reporting it as absent: ${reason}`,
+  errorDiagnostics.warn("platform/engine/lib/kovalio-server-store",
+    `[kovalio-server-store] cannot read ${KOVALIO_DIR}/${name} — reporting it as absent: ${reason}`,
   );
   return fallback;
 }
@@ -137,8 +137,8 @@ export async function ensureKovalioDir(exec: CommandExecutor): Promise<void> {
  * Observation callers use `strict` to preserve failed reads as errors, so a
  * connection or permission failure cannot be interpreted as a missing install.
  */
-export async function readOpenshipFile(exec: CommandExecutor, name: string, options: { strict?: boolean } = {}): Promise<string> {
-  const path = `${OPENSHIP_DIR}/${name}`;
+export async function readKovalioFile(exec: CommandExecutor, name: string, options: { strict?: boolean } = {}): Promise<string> {
+  const path = `${KOVALIO_DIR}/${name}`;
   try {
     const p = await storeExecutor(exec, "Reading Kovalio server state");
     const blocked = cannotAttemptRead(p);
@@ -201,7 +201,7 @@ export async function kovalioFileExists(exec: CommandExecutor, name: string): Pr
     if (blocked) return unreadable(name, blocked, false);
     return (await p.executor.exec(`test -f ${sq(path)} && echo yes || echo no`)).trim() === "yes";
   } catch (err) {
-    observeCaughtError(err, "platform/engine/lib/openship-server-store");
+    observeCaughtError(err, "platform/engine/lib/kovalio-server-store");
     return unreadable(name, err, false);
   }
 }

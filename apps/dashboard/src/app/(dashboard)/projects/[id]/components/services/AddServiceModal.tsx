@@ -1033,7 +1033,7 @@ function ModeBadge({ mode }: { mode: "cloud" | "local" }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
       <UiIcon name={Icon} className="size-3" />
-      {mode === "cloud" ? t.projectDetail.services.addModal.openshipCloud : t.projectDetail.services.addModal.localDocker}
+      {mode === "cloud" ? t.projectDetail.services.addModal.kovalioCloud : t.projectDetail.services.addModal.localDocker}
     </span>
   );
 }

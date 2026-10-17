@@ -20,8 +20,8 @@ console.log(result.issues, result.counts);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/issues?status=open" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/issues?status=open" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -39,7 +39,7 @@ removes resolved incidents in the current organization, including history beyond
 limit. Active incidents, later recoveries, other organizations, audit logs and notifications
 remain. The list response exposes `canClearHistory` for the current caller; read-only and
 restricted credentials cannot use this operation. The dashboard requires confirmation,
-and `openship monitoring clear-history --yes` exposes the same operation from the CLI.
+and `kovalio monitoring clear-history --yes` exposes the same operation from the CLI.
 
 ## Inspect workload health
 
@@ -55,8 +55,8 @@ console.log(health.workloads, health.currentScan);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/issues/health" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/issues/health" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>

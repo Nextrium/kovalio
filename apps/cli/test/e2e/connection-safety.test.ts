@@ -26,11 +26,11 @@ interface Request {
 }
 
 async function fixture() {
-  const directory = await mkdtemp(join(tmpdir(), "openship-cli-connection-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-cli-connection-"));
   const state = join(directory, "state");
   const project = join(directory, "project");
   await mkdir(state);
-  await mkdir(join(project, ".openship"), { recursive: true });
+  await mkdir(join(project, ".kovalio"), { recursive: true });
   await writeFile(join(project, "index.html"), "fixture");
   const servers: Server[] = [];
   const requests: Request[] = [];
@@ -94,15 +94,15 @@ async function fixture() {
     config.contexts[target] = { apiUrl, dashboardUrl: apiUrl, token: `opsh_pat_${target}_fixture_only` };
   }
   await save();
-  const link = (patch: Record<string, unknown> = {}) => writeFile(join(project, ".openship/project.json"), JSON.stringify({
+  const link = (patch: Record<string, unknown> = {}) => writeFile(join(project, ".kovalio/project.json"), JSON.stringify({
     projectId: "proj_fixture", context: "first", apiUrl: config.contexts.first.apiUrl + "/api",
     defaults: { environment: "preview" }, ...patch,
   }));
   const run = (args: string[], environment: NodeJS.ProcessEnv = {}) => new Promise<{ code: number; out: string; err: string }>(done => {
     execFile(process.execPath, ["--import", loader, "--import", inject, join(root, "src/index.ts"), "--json", ...args], {
-      cwd: project, env: { ...process.env, OPENSHIP_HOME: state, OPENSHIP_JSON: "1",
-        OPENSHIP_CONTEXT: undefined, OPENSHIP_API_URL: undefined, OPENSHIP_TOKEN: undefined,
-        OPENSHIP_ORGANIZATION_ID: undefined, ...environment },
+      cwd: project, env: { ...process.env, KOVALIO_HOME: state, KOVALIO_JSON: "1",
+        KOVALIO_CONTEXT: undefined, KOVALIO_API_URL: undefined, KOVALIO_TOKEN: undefined,
+        KOVALIO_ORGANIZATION_ID: undefined, ...environment },
       timeout: 15_000, maxBuffer: 2 * 1024 * 1024,
     }, (error, out, err) => done({ code: error ? typeof error.code === "number" ? error.code : 1 : 0, out, err }));
   });
@@ -113,7 +113,7 @@ async function fixture() {
 describe("assembled CLI connection and input safety", { timeout: 30_000 }, () => {
   it("removes only the stored token and reports an active environment token honestly", async () => {
     const f = await fixture();
-    const result = await f.run(["logout"], { OPENSHIP_TOKEN: "opsh_pat_environment_fixture" });
+    const result = await f.run(["logout"], { KOVALIO_TOKEN: "opsh_pat_environment_fixture" });
     expect(result.code, result.err).toBe(0);
     expect(JSON.parse(result.out)).toEqual({ authenticated: true, context: "first", removed: true, credentialSource: "environment" });
     const saved = JSON.parse(await readFile(join(f.directory, "state/config.json"), "utf8"));
@@ -163,9 +163,9 @@ describe("assembled CLI connection and input safety", { timeout: 30_000 }, () =>
   it("lets an explicit context override the entire ambient CI connection", async () => {
     const f = await fixture();
     const result = await f.run(["--context", "second", "project", "list"], {
-      OPENSHIP_API_URL: f.config.contexts.first.apiUrl,
-      OPENSHIP_TOKEN: "opsh_pat_ambient_fixture",
-      OPENSHIP_ORGANIZATION_ID: "org-ambient",
+      KOVALIO_API_URL: f.config.contexts.first.apiUrl,
+      KOVALIO_TOKEN: "opsh_pat_ambient_fixture",
+      KOVALIO_ORGANIZATION_ID: "org-ambient",
     });
     expect(result.code, result.err).toBe(0);
     expect(f.requests).toHaveLength(2);
@@ -175,9 +175,9 @@ describe("assembled CLI connection and input safety", { timeout: 30_000 }, () =>
   it("uses an ephemeral CI connection and tenant without storing the token", async () => {
     const f = await fixture();
     const result = await f.run(["project", "list"], {
-      OPENSHIP_API_URL: f.config.contexts.second.apiUrl,
-      OPENSHIP_TOKEN: "opsh_pat_ephemeral_fixture",
-      OPENSHIP_ORGANIZATION_ID: "org-ci",
+      KOVALIO_API_URL: f.config.contexts.second.apiUrl,
+      KOVALIO_TOKEN: "opsh_pat_ephemeral_fixture",
+      KOVALIO_ORGANIZATION_ID: "org-ci",
     });
     expect(result.code, result.err).toBe(0);
     const calls = f.requests.filter(req => req.url.pathname === "/api/projects");
@@ -190,7 +190,7 @@ describe("assembled CLI connection and input safety", { timeout: 30_000 }, () =>
 
   it("never reuses a saved token when only the invocation API is retargeted", async () => {
     const f = await fixture();
-    const result = await f.run(["project", "list"], { OPENSHIP_API_URL: f.config.contexts.second.apiUrl });
+    const result = await f.run(["project", "list"], { KOVALIO_API_URL: f.config.contexts.second.apiUrl });
     expect(result.code, result.err).toBe(0);
     expect(f.requests).toHaveLength(2);
     expect(f.requests.every(req => req.target === "second" && req.authorization === undefined)).toBe(true);
@@ -305,7 +305,7 @@ describe("assembled CLI connection and input safety", { timeout: 30_000 }, () =>
 
   it("rejects import typos without requests, and preserves merge/wipe confirmation semantics", async () => {
     const f = await fixture();
-    const file = join(f.directory, "export.json"); await writeFile(file, JSON.stringify({ kind: "openship-instance-export", envelopeVersion: 4, createdAt: "2026-10-07", sourceDriver: "pglite", dump: { tables: {} }, secrets: null }));
+    const file = join(f.directory, "export.json"); await writeFile(file, JSON.stringify({ kind: "kovalio-instance-export", envelopeVersion: 4, createdAt: "2026-10-07", sourceDriver: "pglite", dump: { tables: {} }, secrets: null }));
     const args = ["system", "data-transfer", "import", "--file", file];
     expect((await f.run([...args, "--mode", "merg", "--yes"])).code).toBe(1);
     expect(f.requests).toEqual([]);
@@ -323,7 +323,7 @@ describe("assembled CLI connection and input safety", { timeout: 30_000 }, () =>
     expect((await f.run(["init"])).code).toBe(1);
     expect(f.requests).toEqual([]);
     expect((await f.run(["init", "--project", "proj_fixture", "--environment", "preview"])).code).toBe(0);
-    expect(JSON.parse(await readFile(join(f.project, ".openship/project.json"), "utf8"))).toMatchObject({
+    expect(JSON.parse(await readFile(join(f.project, ".kovalio/project.json"), "utf8"))).toMatchObject({
       context: "first", apiUrl: f.config.contexts.first.apiUrl + "/api", defaults: { environment: "preview" },
     });
   });

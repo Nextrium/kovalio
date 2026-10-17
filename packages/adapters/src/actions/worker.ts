@@ -98,7 +98,7 @@ export class ActionsWorker {
       manifest = JSON.parse(await readFile(join(this.assetsDirectory, "manifest.json"), "utf8"));
     } catch (cause) {
       const error = new AppError(
-        "The Actions runner is missing from this Openship installation. Install a release containing the Actions runner assets.",
+        "The Actions runner is missing from this Kovalio installation. Install a release containing the Actions runner assets.",
         503,
         "ACTIONS_RUNNER_ASSET_MISSING",
       );
@@ -110,7 +110,7 @@ export class ActionsWorker {
       manifest.protocol !== ACTIONS_PROTOCOL_VERSION ||
       manifest.engine !== `act/${ACTIONS_ENGINE_VERSION}` ||
       !file ||
-      !/^openship-actions-(linux|darwin)-(amd64|arm64)$/.test(file.name) ||
+      !/^kovalio-actions-(linux|darwin)-(amd64|arm64)$/.test(file.name) ||
       !/^[a-f0-9]{64}$/.test(file.sha256)
     )
       throw new AppError(
@@ -128,7 +128,7 @@ export class ActionsWorker {
     const home = (await this.executor.exec('printf "%s" "$HOME"')).trim();
     if (!home.startsWith("/") || home.includes("\n") || home === "/")
       throw new Error("The runner requires a valid home directory");
-    const root = `${home}/.local/share/openship/actions`;
+    const root = `${home}/.local/share/kovalio/actions`;
     const directory = `${root}/bin/${file.sha256}`;
     const binary = `${directory}/${file.name}`;
     const hash = `if command -v sha256sum >/dev/null 2>&1; then sha256sum ${q(binary)}; else shasum -a 256 ${q(binary)}; fi`;
@@ -155,7 +155,7 @@ export class ActionsWorker {
       );
       if (
         (await this.executor.exec(`${q(binary)} version`)).trim() !==
-        `openship-actions/1 act/${ACTIONS_ENGINE_VERSION}`
+        `kovalio-actions/1 act/${ACTIONS_ENGINE_VERSION}`
       )
         throw new Error("Actions runner protocol mismatch");
     } finally {

@@ -34,7 +34,7 @@ const headers = () => ({ ...owner.auth, "X-Organization-Id": owner.orgId, "conte
 const request = (path: string, method = "GET", body?: unknown) => app.request(path, { method, headers: headers(), ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
 
 beforeEach(async () => {
-  vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory");
+  vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory");
   h.fetch.mockReset(); h.linked.clear();
   owner = await seedOwner({ bound: false }); h.linked.add(owner.orgId);
   h.fetch.mockImplementation(async () => Response.json({ forwarded: true }));

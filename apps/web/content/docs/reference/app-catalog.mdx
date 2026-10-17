@@ -140,7 +140,7 @@ name, never an IP or a localhost address.
     shmSize: { type: 'number', description: 'Private container /dev/shm size in bytes (1 byte–1 TiB). No host IPC or privileged mode. Requires schemaVersion 2.' },
     replacesBuilds: { type: 'string[]', description: 'SHA-256 fingerprints of exact retired inline recipes eligible for explicit operator-reviewed conversion to this image. The repair tool requires the same official base and preserves custom recipes.' },
     resources: { type: '{ cpuCores, memoryMb, diskMb }', description: 'Advisory sizing recommendation: CPU at least 0.25, whole MB of RAM at least 128, and whole MB of disk at least 64. All three fields are required when supplied. Never copied into installed container limits.' },
-    build: { type: 'ServiceBuild', description: 'Inline Docker build context — for a service Openship must BUILD rather than pull. Mutually exclusive with image. See Building an image.' },
+    build: { type: 'ServiceBuild', description: 'Inline Docker build context — for a service Kovalio must BUILD rather than pull. Mutually exclusive with image. See Building an image.' },
     ports: { type: 'string[]', description: 'Compose-style port strings, e.g. ["2368:2368"].' },
     exposedPort: { type: 'number', description: 'The container port that receives the public route.' },
     exposed: { type: 'boolean', description: 'Marks this service as the one that gets a public route.' },
@@ -183,11 +183,11 @@ starts, so the customer does not need an image build. Initial account creation m
 before exposing a public installer, and redeployment must preserve existing accounts and data.
 
 Use `build` when the image actually needs additional software or compiled assets, as with
-PocketBase's binary installation. It is an inline Docker build context that Openship
+PocketBase's binary installation. It is an inline Docker build context that Kovalio
 materializes at deploy time and builds on the deploy host through the normal compose build pipeline.
 Use `entrypointArgv` with a read-only startup file when a published image has an executable
 entrypoint that cannot invoke the helper. Keep its native initialization behavior and gate
-the template to Openship 0.9.2 or newer. A build can also set its own `ENTRYPOINT`.
+the template to Kovalio 0.9.2 or newer. A build can also set its own `ENTRYPOINT`.
 
 Set **exactly one** of `image` or `build` per service. Neither (nothing to run) and both (ambiguous)
 are rejected — `service "<name>" must set exactly one of image|build`.
@@ -440,7 +440,7 @@ pre-run database initialization use [`files`](#files) to write into
 ## Endpoints
 
 What the install wizard asks you about — how to reach each port. Omit `endpoints` entirely and
-Openship derives one public `http` endpoint per declared route of each exposed service.
+Kovalio derives one public `http` endpoint per declared route of each exposed service.
 
 Defaults follow the app's intended use on every deployment target:
 

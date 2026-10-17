@@ -17,7 +17,7 @@ import {
 import { entitlementQuota, syncOblienEntitlement, fromOblienCredits } from "./billing-oblien-quota";
 import { cloudPlan, complimentaryCloudPlan } from "./billing-catalog";
 import { canStartCloudSubscription, canChangeCloudSubscription, canTopUpCloudSubscription, hasPendingSubscriptionChange, presentCloudSubscription } from "./billing-subscription";
-import { ensureNamespace } from "../../lib/openship-cloud";
+import { ensureNamespace } from "../../lib/kovalio-cloud";
 import { getBuildMinuteUsage, getFreeSubdomainUsage } from "@repo/platform/engine/lib/plan-guard";
 import { env } from "@repo/platform/engine/config/env";
 import { readCloudCapacity } from "../../lib/cloud-resource-limits";
@@ -136,7 +136,7 @@ export async function getCreditAlerts(orgId: string) {
 
 // ─── getBillingState ─────────────────────────────────────────────────────────
 
-/** Mirror fresh provider entitlement and add Openship application usage. */
+/** Mirror fresh provider entitlement and add Kovalio application usage. */
 export async function getBillingState(orgId: string, workspaceId?: CloudWorkspaceScope): Promise<BillingState> {
   await ensureNamespace(orgId, workspaceId);
   const { owner, entitlement, tier, limits: planLimitsForTier, subscription: providerSubscription, grant, managed, state } = await readBillingCreditState(orgId, workspaceId);

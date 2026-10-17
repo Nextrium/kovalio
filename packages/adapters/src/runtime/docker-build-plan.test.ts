@@ -40,7 +40,7 @@ describe("generateDockerfile — PHP branch", () => {
     expect(selected.match(/RUN php -r/g)).toHaveLength(2);
     expect(selected.match(/check-platform-reqs --no-dev/g)).toHaveLength(2);
     expect(selected).toContain("env -u COMPOSER_IGNORE_PLATFORM_REQ -u COMPOSER_IGNORE_PLATFORM_REQS");
-    expect(selected).toContain("rm -f /tmp/openship-composer");
+    expect(selected).toContain("rm -f /tmp/kovalio-composer");
     expect(generateDockerfile(phpConfig())).not.toContain("check-platform-reqs");
   });
   it("refuses a mismatched builder or a recipe that cannot honor the version", () => {
@@ -499,7 +499,7 @@ describe("stack-selected recipes and custom runtime bases", () => {
     const df = generateDockerfile(config({ runtimeImageOverride: true }));
     expect(df).toContain("AS builder");
     expect(df).toContain("AS runtime");
-    expect(df).toContain("rm /tmp/openship-runtime.requirements");
+    expect(df).toContain("rm /tmp/kovalio-runtime.requirements");
   });
   it("refuses custom runtime settings for a Dockerfile or static extraction", () => {
     expect(() =>

@@ -13,7 +13,7 @@ export const logoutCommand = new Command("logout")
     const environmentToken = usesEnvironmentToken(name);
     if (isJsonMode()) printJson({ authenticated: environmentToken, context: name, removed,
       ...(environmentToken ? { credentialSource: "environment" } : {}) });
-    else if (environmentToken) info(`Stored token removed for "${name}". OPENSHIP_TOKEN is still active; unset it in your shell to sign out.`);
+    else if (environmentToken) info(`Stored token removed for "${name}". KOVALIO_TOKEN is still active; unset it in your shell to sign out.`);
     else if (removed) ok(`Logged out (context "${name}").`);
     else info(`Not logged in (context "${name}").`);
   });

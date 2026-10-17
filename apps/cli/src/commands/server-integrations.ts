@@ -48,7 +48,7 @@ serverGitHubCommand
   );
 
 export const tunnelCommand = new Command("tunnel").description(
-  "Manage tunnels opened on the selected Openship instance (not this CLI machine)",
+  "Manage tunnels opened on the selected Kovalio instance (not this CLI machine)",
 );
 tunnelCommand
   .command("list")

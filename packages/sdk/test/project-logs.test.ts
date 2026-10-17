@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 import { createShip } from "../src/native";
 import { createAuthorization, createPlatform, type ProjectDependencies, type VerifiedIdentity } from "@repo/platform";
 import { alice, authorizationFixture } from "../../platform/test/fixtures";
@@ -19,7 +19,7 @@ describe("project log facades", () => {
           })
         : Response.json({ data: [] });
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch });
     const selector = { role: "queue", replica: 2, deploymentId: "dep_active", tail: 5 };
     expect(await client.projects.runtimeLogs("project-a", selector)).toEqual([]);
     const events = [];
@@ -46,7 +46,7 @@ describe("project log facades", () => {
       expect(path.searchParams.get("limit")).toBe("20");
       return Response.json({ logs: [{ path: "/café" }] });
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch });
     expect(await client.projects.getHome()).toEqual(home);
     expect(await client.projects.getServerLogStreamToken("project/a", { domain: "app.example.com" })).toEqual({ kind: "unavailable" });
     expect(await client.projects.recentServerLogs("project/a", { domain: "app.example.com", limit: 20 })).toEqual({ logs: [{ path: "/café" }] });
@@ -58,7 +58,7 @@ describe("project log facades", () => {
     const stream = new ReadableStream<Uint8Array>({
       start(controller) { controller.enqueue(new TextEncoder().encode('event: log\ndata: {"message":"日本語"}\n\n')); }, cancel,
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: async url => String(url).endsWith("/stream-token")
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: async url => String(url).endsWith("/stream-token")
       ? Response.json({ kind: "self-hosted" })
       : new Response(stream, { headers: { "content-type": "text/event-stream" } }) });
     for await (const event of client.projects[method]("project-a")) {
@@ -88,7 +88,7 @@ describe("project log facades", () => {
         start(controller) { controller.enqueue(new TextEncoder().encode('event: request\ndata: {"path":"/"}\n\n')); }, cancel,
       }), { headers: { "content-type": "text/event-stream" } });
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", token: "instance-secret", fetch });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", token: "instance-secret", fetch });
     for await (const event of client.projects.streamServerLogs("project-a")) {
       expect(event).toEqual({ event: "request", data: '{"path":"/"}' });
       break;
@@ -99,14 +99,14 @@ describe("project log facades", () => {
 
   it("fails explicitly for unavailable Cloud streaming without opening a self-hosted stream", async () => {
     const fetch = vi.fn(async () => Response.json({ kind: "unavailable" }));
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch });
     await expect(client.projects.streamServerLogs("project-a")[Symbol.asyncIterator]().next()).rejects.toMatchObject({ code: "SERVER_LOG_STREAM_UNAVAILABLE" });
     expect(fetch).toHaveBeenCalledOnce();
   });
 
   it.each(["not-a-url", "file:///tmp/logs", "https://user:password@edge.test/logs", "https://edge.test/logs#fragment"])("rejects an unsafe stream URL %s before forwarding a token", async url => {
     const fetch = vi.fn(async () => Response.json({ kind: "cloud", url, token: "scoped-token" }));
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch });
     await expect(client.projects.streamServerLogs("project-a")[Symbol.asyncIterator]().next()).rejects.toThrow("Invalid request-log stream URL");
     expect(fetch).toHaveBeenCalledOnce();
   });
@@ -121,7 +121,7 @@ describe("project log facades", () => {
       return new Response(new ReadableStream({ start(controller) { controller.error(new Error(`Read failed: ${url}`)); } }),
         { headers: { "content-type": "text/event-stream" } });
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch });
     const error = await client.projects.streamServerLogs("project-a")[Symbol.asyncIterator]().next().catch(error => error);
     expect(error).toMatchObject({ status: 502, body: null });
     expect(String(error)).not.toContain("scoped-secret");
@@ -133,7 +133,7 @@ describe("project log facades", () => {
 
   it("preserves caller cancellation when the Cloud transport rejects", async () => {
     const controller = new AbortController();
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: async input => {
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: async input => {
       if (String(input).startsWith("https://ship.test/"))
         return Response.json({ kind: "cloud", url: "https://edge.test/logs", token: "scoped-secret" });
       controller.abort();

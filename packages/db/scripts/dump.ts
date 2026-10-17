@@ -59,7 +59,7 @@ async function main() {
   const scope = parseScope(args);
 
   // Source-only command: use this installed PGlite package's own assets.
-  delete process.env.OPENSHIP_PGLITE_ASSETS_DIR;
+  delete process.env.KOVALIO_PGLITE_ASSETS_DIR;
   const { dumpSubgraph } = await import("../src/dump");
   const dump = await dumpSubgraph(scope, { stripEncrypted });
   const payload = JSON.stringify(dump, null, 2);

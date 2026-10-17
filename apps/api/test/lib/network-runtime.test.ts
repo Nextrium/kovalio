@@ -17,7 +17,7 @@ let server: https.Server | undefined;
 let port: number;
 
 beforeAll(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openship-network-runtime-"));
+  directory = await mkdtemp(join(tmpdir(), "kovalio-network-runtime-"));
   await writeFile(
     join(directory, "ca.cnf"),
     `[req]
@@ -25,7 +25,7 @@ distinguished_name=dn
 x509_extensions=ca
 prompt=no
 [dn]
-CN=Openship runtime test CA
+CN=Kovalio runtime test CA
 [ca]
 basicConstraints=critical,CA:TRUE
 keyUsage=critical,keyCertSign,cRLSign
@@ -140,7 +140,7 @@ describe.each(["node", "bun"])("API network transport under %s", (runtime) => {
     const env = {
       ...process.env,
       NODE_ENV: "test",
-      OPENSHIP_TARGET: "local",
+      KOVALIO_TARGET: "local",
       INTERNAL_TOKEN: "test-network-runtime-internal-token",
       NODE_EXTRA_CA_CERTS: mode === "untrusted-ca" ? undefined : join(directory, "ca.pem"),
       NODE_TLS_REJECT_UNAUTHORIZED: undefined,

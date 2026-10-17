@@ -2,7 +2,7 @@ import { blogSource, type BlogFrontmatter } from "@/lib/source";
 
 export const dynamic = "force-static";
 export const revalidate = 3600;
-const SITE_URL = "https://openship.io";
+const SITE_URL = "https://nextrium.org";
 
 function escapeXml(value: string): string {
   return value.replace(
@@ -30,7 +30,7 @@ export function GET() {
     })
     .join("\n");
   return new Response(
-    `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Openship Blog</title><link>${SITE_URL}/blog</link><description>Engineering, product updates, and guides from Openship.</description><language>en</language><atom:link href="${SITE_URL}/blog/rss.xml" rel="self" type="application/rss+xml"/>${items}</channel></rss>`,
+    `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Kovalio Blog</title><link>${SITE_URL}/blog</link><description>Engineering, product updates, and guides from Kovalio.</description><language>en</language><atom:link href="${SITE_URL}/blog/rss.xml" rel="self" type="application/rss+xml"/>${items}</channel></rss>`,
     {
       headers: {
         "Content-Type": "application/rss+xml; charset=utf-8",

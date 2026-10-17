@@ -82,10 +82,10 @@ vi.mock("@repo/platform/engine/modules/deployments/build-pipeline", async origin
   kickoffBuild: provider.kickoff,
 }));
 import { db, schema, repos, seedOwner as seedBaseOwner, type SeededOwner } from "../jobs/_harness";
-import { ensureNamespace } from "@repo/platform/engine/lib/openship-cloud";
+import { ensureNamespace } from "@repo/platform/engine/lib/kovalio-cloud";
 import { AppError, CREDIT_PACKS, FREE_DOMAIN_SUFFIX, getAppTemplate } from "@repo/core";
 import { createShip, type VerifiedIdentity } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { billingPlansRoutes, billingSaasRoutes } from "../../../src/modules/billing/billing.routes";
 import { billingLocalRoutes } from "../../../src/modules/billing/billing-local.routes";
@@ -120,7 +120,7 @@ async function clients(actor: SeededOwner, organizationId = actor.orgId, limits:
   const ship = createShip({ platform: getPlatformKernel(), identity: { resolve: async () => ({ user, sessionId: "billing", ...limits }) } });
   return {
     native: (await ship.scope({ identity: "verified", organizationId })).billing,
-    remote: new OpenshipClient({ baseUrl: "http://openship.test", token: actor.token, organizationId, fetch: fetcher }).billing,
+    remote: new KovalioClient({ baseUrl: "http://kovalio.test", token: actor.token, organizationId, fetch: fetcher }).billing,
   };
 }
 beforeEach(() => {
@@ -160,7 +160,7 @@ beforeEach(() => {
   }
   provider.catalog.mockResolvedValue({
     success: true,
-    // Deliberately stale provider prices: customer offers come from Openship.
+    // Deliberately stale provider prices: customer offers come from Kovalio.
     plans: [
       { tierId: "hobby", name: "Hobby", priceMonthly: 10, priceYearly: 100, currency: "usd", creditsPerCycle: 1200, yearlyCreditsPerCycle: 14400, features: [] },
       { tierId: "pro", name: "Pro", priceMonthly: 29, priceYearly: 290, currency: "usd", creditsPerCycle: 3000, yearlyCreditsPerCycle: 36000, features: [] },
@@ -395,7 +395,7 @@ describe("billing through the same SDK and HTTP application operations", () => {
       expect.objectContaining({ credentials: "omit", redirect: "error" }),
     );
     expect(publicFetch.mock.calls[0]![0].toString()).toBe(
-      "https://api.openship.io/api/billing/plans?locale=de",
+      "https://api.nextrium.org/api/billing/plans?locale=de",
     );
     expect(publicFetch.mock.calls[0]![1]).not.toHaveProperty("headers");
     publicFetch.mockResolvedValue(Response.json({ data: { plans: [] } }));
@@ -419,7 +419,7 @@ describe("billing through the same SDK and HTTP application operations", () => {
     expect(provider.resources).toHaveBeenCalledTimes(2);
     expect(provider.resources).toHaveBeenLastCalledWith(owner.orgId, undefined);
     await expect(clients(stranger, owner.orgId)).rejects.toMatchObject({ statusCode: 404 });
-    const forbidden = new OpenshipClient({ baseUrl: "http://openship.test", token: stranger.token, organizationId: owner.orgId, fetch: fetcher });
+    const forbidden = new KovalioClient({ baseUrl: "http://kovalio.test", token: stranger.token, organizationId: owner.orgId, fetch: fetcher });
     // HTTP rejects the foreign organization at the PAT's organization binding;
     // native scope resolution rejects it at the membership boundary above.
     await expect(forbidden.billing.getResources()).rejects.toMatchObject({ statusCode: 403 });
@@ -457,16 +457,16 @@ describe("billing through the same SDK and HTTP application operations", () => {
       const owner = await seedOwner(), c = await clients(owner);
       await c.native.getState();
       const namespace = (await billingWorkspace(owner)).namespace!;
-      const metadata: Record<string, string> = { ...subscriptionMetadata("starter", owner.orgId, namespace), openship_offer_version: version };
+      const metadata: Record<string, string> = { ...subscriptionMetadata("starter", owner.orgId, namespace), kovalio_offer_version: version };
       if (version === "3") {
-        const limits = JSON.parse(metadata.openship_limits!);
+        const limits = JSON.parse(metadata.kovalio_limits!);
         delete limits.maxServiceResources;
-        metadata.openship_limits = JSON.stringify(limits);
+        metadata.kovalio_limits = JSON.stringify(limits);
       }
       const saved: NonNullable<OblienSubscription> = {
         tierId: "reseller", status: "active", billingInterval: "monthly", cancelAtPeriodEnd: false, canceledAt: null,
         periodStart: "2026-09-01T00:00:00Z", periodEnd: "2026-10-01T00:00:00Z",
-        offer: { ...subscriptionOffer("starter", "monthly"), reference: `openship:starter:v${version}` }, metadata,
+        offer: { ...subscriptionOffer("starter", "monthly"), reference: `kovalio:starter:v${version}` }, metadata,
       };
       const before = structuredClone(saved);
       provider.subscriptions.set(namespace, saved);
@@ -474,7 +474,7 @@ describe("billing through the same SDK and HTTP application operations", () => {
       for (const client of [c.native, c.remote]) {
         const state = await client.getState();
         expect(state.maxServiceMachine).toEqual({ tier: machineTier, cpuCores, memoryMb });
-        expect(state.plan?.limits).toEqual(JSON.parse(metadata.openship_limits!));
+        expect(state.plan?.limits).toEqual(JSON.parse(metadata.kovalio_limits!));
         expect(state.plan?.price.monthly).toBe(saved.offer!.unitAmount);
         expect(state.plan?.monthlyCredits).toBe(saved.offer!.credits * 1000);
       }
@@ -626,7 +626,7 @@ describe("billing through the same SDK and HTTP application operations", () => {
 
   it("keeps localized plan discovery public and preserves monetary units and catalog secrecy", async () => {
     const c = await clients(await seedOwner());
-    const remote = new OpenshipClient({ baseUrl: "http://openship.test", fetch: fetcher });
+    const remote = new KovalioClient({ baseUrl: "http://kovalio.test", fetch: fetcher });
     const native = await c.native.listPlans({ locale: "ar" });
     expect(await remote.billing.listPlans({ locale: "ar" })).toEqual(native);
     expect(native.locale).toBe("ar");
@@ -668,9 +668,9 @@ describe("billing through the same SDK and HTTP application operations", () => {
       expect(input).toMatchObject({
         namespace: managed.namespace,
         kind: "subscription",
-        offer: { reference: `openship:${tier}:v11`, unitAmount, credits, billingMode: "monthly" },
+        offer: { reference: `kovalio:${tier}:v11`, unitAmount, credits, billingMode: "monthly" },
         billingInterval: "monthly",
-        metadata: { openship_organization: owner.orgId, openship_namespace: managed.namespace, openship_offer_version: "11" },
+        metadata: { kovalio_organization: owner.orgId, kovalio_namespace: managed.namespace, kovalio_offer_version: "11" },
       });
       expect(input).not.toHaveProperty("customer");
       expect(input).not.toHaveProperty("line_items");
@@ -754,7 +754,7 @@ describe("billing through the same SDK and HTTP application operations", () => {
     expect(provider.resume).not.toHaveBeenCalled();
   });
 
-  it("uses Openship credit packs instead of legacy database prices and enforces the independent top-up switch", async () => {
+  it("uses Kovalio credit packs instead of legacy database prices and enforces the independent top-up switch", async () => {
     const owner = await seedOwner(), c = await clients(owner), pack = CREDIT_PACKS[0]!;
     await c.native.getState();
     provider.subscriptions.set((await billingWorkspace(owner)).namespace!, {
@@ -778,8 +778,8 @@ describe("billing through the same SDK and HTTP application operations", () => {
           namespace: (await billingWorkspace(owner)).namespace,
           kind: "topup",
           offer: {
-            reference: `openship:${expectedPack.id}:v3`,
-            name: "Openship compute credits",
+            reference: `kovalio:${expectedPack.id}:v3`,
+            name: "Kovalio compute credits",
             description: expect.any(String),
             unitAmount: expectedPack.price_cents,
             currency: "usd",
@@ -945,7 +945,7 @@ describe("billing from a Cloud-connected self-hosted installation", () => {
     vi.stubGlobal("fetch", external);
     const pair = async (user = actor) => [
       (await clients(user, actor.orgId)).native,
-      new OpenshipClient({ baseUrl: "http://local.test", token: user.token, organizationId: actor.orgId, fetch: localFetcher }).billing,
+      new KovalioClient({ baseUrl: "http://local.test", token: user.token, organizationId: actor.orgId, fetch: localFetcher }).billing,
     ];
     return { actor, session, linked, server, project, external, pair };
   }

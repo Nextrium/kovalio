@@ -85,8 +85,8 @@ describe("local image provenance", () => {
     expect(
       isPreparedLocalImage(
         service,
-        "openship/api:bld_current",
-        new Map([[service.id, "openship/api:bld_current"]]),
+        "kovalio/api:bld_current",
+        new Map([[service.id, "kovalio/api:bld_current"]]),
       ),
     ).toBe(true);
   });
@@ -95,20 +95,20 @@ describe("local image provenance", () => {
     // With no current build/pin evidence, Docker must inspect/pull this ref
     // before it removes the live container. A prior success row alone cannot
     // prove that a locally-built image has not since been pruned.
-    expect(isPreparedLocalImage(service, "openship/api:bld_previous", undefined)).toBe(false);
+    expect(isPreparedLocalImage(service, "kovalio/api:bld_previous", undefined)).toBe(false);
   });
 
   it("rejects cross-service and mismatched current preparation evidence", () => {
-    const ref = "openship/api:bld_current";
+    const ref = "kovalio/api:bld_current";
     expect(isPreparedLocalImage(service, ref, new Map([["another-service", ref]]))).toBe(false);
     expect(
-      isPreparedLocalImage(service, ref, new Map([[service.id, "openship/api:bld_other"]])),
+      isPreparedLocalImage(service, ref, new Map([[service.id, "kovalio/api:bld_other"]])),
     ).toBe(false);
   });
 });
 
 describe("static host artifact trust", () => {
-  const artifact = "/opt/openship/static/.builds/bld_1-svc_web";
+  const artifact = "/opt/kovalio/static/.builds/bld_1-svc_web";
 
   it("accepts only an exact build-provenance pair under the managed static root", () => {
     expect(
@@ -122,7 +122,7 @@ describe("static host artifact trust", () => {
   });
 
   it("accepts a prior trusted static release for an env-only refresh", () => {
-    const release = "/opt/openship/static/releases/dep_1-svc-web";
+    const release = "/opt/kovalio/static/releases/dep_1-svc-web";
     expect(
       isStaticHostArtifact("svc-web", release, new Set(["svc-web"]), new Map(), {
         deploymentId: "dep_1",
@@ -134,7 +134,7 @@ describe("static host artifact trust", () => {
   });
 
   it("rejects a failed prior row even when its attempted ref matches", () => {
-    const attempted = "/opt/openship/static/releases/dep_bad-svc-web";
+    const attempted = "/opt/kovalio/static/releases/dep_bad-svc-web";
     expect(
       isStaticHostArtifact("svc-web", attempted, new Set(["svc-web"]), new Map(), {
         deploymentId: "dep_bad",
@@ -146,7 +146,7 @@ describe("static host artifact trust", () => {
   });
 
   it("rejects a successful row whose path is not its canonical promoted release", () => {
-    const configured = "/opt/openship/static/operator-content";
+    const configured = "/opt/kovalio/static/operator-content";
     expect(
       isStaticHostArtifact("svc-web", configured, new Set(["svc-web"]), new Map(), {
         deploymentId: "dep_1",
@@ -166,9 +166,9 @@ describe("static host artifact trust", () => {
     expect(
       isStaticHostArtifact(
         "svc-web",
-        "/opt/openship/static/../secrets",
+        "/opt/kovalio/static/../secrets",
         staticIds,
-        new Map([["svc-web", "/opt/openship/static/../secrets"]]),
+        new Map([["svc-web", "/opt/kovalio/static/../secrets"]]),
       ),
     ).toBe(false);
   });

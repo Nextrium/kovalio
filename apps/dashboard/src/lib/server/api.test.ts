@@ -44,7 +44,7 @@ beforeEach(() => {
   const response = new ResponseCookies(browserHeaders);
   h.set.mockImplementation((...args: Parameters<ResponseCookies["set"]>) => response.set(...args));
   vi.stubEnv(
-    "OPENSHIP_LOCAL_API_URL",
+    "KOVALIO_LOCAL_API_URL",
     `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
   );
 });
@@ -56,7 +56,7 @@ function incoming(raw: string) {
 
 it("forwards decoded cookies safely over HTTP without changing session or unrelated values", async () => {
   const values = {
-    "openship.session_token": "session+/=signed%value",
+    "kovalio.session_token": "session+/=signed%value",
     other_app: "的",
     latin: "é",
     punctuation: "value; forged=admin\r\nextra: header",
@@ -75,14 +75,14 @@ it("forwards decoded cookies safely over HTTP without changing session or unrela
 it("round-trips refreshed session cookies through Next without double encoding", async () => {
   incoming("theme=dark");
   responseCookies = [
-    "openship.session_token=s%3Aabc%2B%2F%3D%252F; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=3600",
+    "kovalio.session_token=s%3Aabc%2B%2F%3D%252F; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=3600",
     "display=%E7%9A%84; Path=/",
   ];
   await serverApi.get("test");
   const session = browserHeaders
     .getSetCookie()
-    .find((value) => value.startsWith("openship.session_token="))!;
-  expect(session.split(";")[0]).toBe("openship.session_token=s%3Aabc%2B%2F%3D%252F");
+    .find((value) => value.startsWith("kovalio.session_token="))!;
+  expect(session.split(";")[0]).toBe("kovalio.session_token=s%3Aabc%2B%2F%3D%252F");
   expect(session).toContain("HttpOnly");
   expect(session).toContain("Secure");
   expect(session).toContain("SameSite=lax");
@@ -95,12 +95,12 @@ it("round-trips refreshed session cookies through Next without double encoding",
   );
   responseCookies = [];
   const result = await serverApi.get<{ values: Record<string, string> }>("test");
-  expect(result.values).toEqual({ "openship.session_token": "s:abc+/=%2F", display: "的" });
+  expect(result.values).toEqual({ "kovalio.session_token": "s:abc+/=%2F", display: "的" });
 });
 
 it("skips a malformed encoded response cookie without losing a later valid session cookie", async () => {
   incoming("");
-  responseCookies = ["bad=%E0%A4%A; Path=/", "openship.session_token=valid%2Bsignature; Path=/"];
+  responseCookies = ["bad=%E0%A4%A; Path=/", "kovalio.session_token=valid%2Bsignature; Path=/"];
   await serverApi.get("test");
   const jar = new RequestCookies(
     new Headers({
@@ -110,6 +110,6 @@ it("skips a malformed encoded response cookie without losing a later valid sessi
         .join("; "),
     }),
   );
-  expect(jar.get("openship.session_token")?.value).toBe("valid+signature");
+  expect(jar.get("kovalio.session_token")?.value).toBe("valid+signature");
   expect(jar.get("bad")).toBeUndefined();
 });

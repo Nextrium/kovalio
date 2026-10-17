@@ -1,22 +1,22 @@
 ---
 title: Connect to an API
-description: Configure a remote SDK client for a self-hosted or Cloud Openship API.
+description: Configure a remote SDK client for a self-hosted or Cloud Kovalio API.
 ---
 
-Use `OpenshipClient` when the installation already exists. It needs an API URL, a bearer token, and the
+Use `KovalioClient` when the installation already exists. It needs an API URL, a bearer token, and the
 organization your integration should operate in. [Install the SDK](/docs/api/sdk/installation) first.
 
 ## Connect
 
 ```ts title="client.mts"
-import { OpenshipClient } from "openship/client";
+import { KovalioClient } from "kovalio/client";
 
-const token = process.env.OPENSHIP_TOKEN;
-const organizationId = process.env.OPENSHIP_ORGANIZATION_ID;
+const token = process.env.KOVALIO_TOKEN;
+const organizationId = process.env.KOVALIO_ORGANIZATION_ID;
 if (!token || !organizationId)
-  throw new Error("Set OPENSHIP_TOKEN and OPENSHIP_ORGANIZATION_ID");
+  throw new Error("Set KOVALIO_TOKEN and KOVALIO_ORGANIZATION_ID");
 
-export const ship = new OpenshipClient({
+export const ship = new KovalioClient({
   baseUrl: "https://ship.example.com",
   token,
   organizationId,
@@ -51,9 +51,9 @@ already have access to that organization. A token bound to one organization cann
 An explicit organization requires a compatible server. See [fixed scopes](/docs/api/sdk/compatibility#fixed-organization-scopes).
 Omitting it uses the API's default/resource-derived scope; it does not provide the same tenant pinning.
 
-## Openship Cloud
+## Kovalio Cloud
 
-Use `https://api.openship.io` as `baseUrl`, your Cloud token, and the Cloud organization's ID.
+Use `https://api.nextrium.org` as `baseUrl`, your Cloud token, and the Cloud organization's ID.
 The deployed Cloud API must support the SDK protocol. A self-hosted Cloud account link does not
 currently map a fixed local scope into a Cloud scope; see [Cloud compatibility](/docs/api/sdk/compatibility#cloud).
 

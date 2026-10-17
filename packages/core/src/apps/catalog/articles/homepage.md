@@ -4,9 +4,9 @@ Homepage organizes links, bookmarks, and optional integration widgets. This temp
 
 ## Protected access
 
-Choose a dashboard username. Openship generates and encrypts a password, shown in **Connection**. The browser asks for these credentials before any page or API response is served. Only the proxy receives a public route; Homepage stays on the private project network with a specific host allowlist. No Docker socket, host filesystem, or Kubernetes credentials are mounted.
+Choose a dashboard username. Kovalio generates and encrypts a password, shown in **Connection**. The browser asks for these credentials before any page or API response is served. Only the proxy receives a public route; Homepage stays on the private project network with a specific host allowlist. No Docker socket, host filesystem, or Kubernetes credentials are mounted.
 
-Manage the access username and password through Openship configuration. These are proxy credentials, not a Homepage administrator account.
+Manage the access username and password through Kovalio configuration. These are proxy credentials, not a Homepage administrator account.
 
 ## Configure the dashboard
 

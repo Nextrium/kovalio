@@ -32,8 +32,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/deployments" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/deployments" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"projectId":"proj_123","branch":"main"}'
 ```
@@ -100,8 +100,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/deployments/build/access" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/deployments/build/access" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"projectId":"proj_123","branch":"main","buildStrategy":"server"}'
 ```
@@ -156,8 +156,8 @@ if (!outcome.success) throw new Error(outcome.message ?? outcome.status);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/deployments/dep_123/build" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/deployments/dep_123/build" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -172,7 +172,7 @@ cancellation, partial failure, and rejection explicitly.
 decision is pending. To connect your own decision UI:
 
 ```ts
-import type { PromptPayload } from "openship";
+import type { PromptPayload } from "kovalio";
 
 export async function waitWithDecisions(
   deploymentId: string,
@@ -209,8 +209,8 @@ for await (const event of ship.deployments.events("dep_123", {
 <Tab value="REST API">
 
 ```bash
-curl -N "$OPENSHIP_URL/api/deployments/dep_123/stream" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -N "$KOVALIO_URL/api/deployments/dep_123/stream" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -235,8 +235,8 @@ console.log(submitted.deployment_id);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/deployments/dep_123/redeploy" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/deployments/dep_123/redeploy" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"useExistingCommit":true}'
 ```
@@ -272,8 +272,8 @@ console.log(cancellation);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/deployments/dep_123/cancel" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/deployments/dep_123/cancel" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -316,8 +316,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/deployments/ssl/status" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/deployments/ssl/status" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"domain":"app.example.com"}'
 ```

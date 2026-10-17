@@ -16,7 +16,7 @@ import (
 
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "version" {
-		fmt.Println("openship-actions/1 act/0.2.89")
+		fmt.Println("kovalio-actions/1 act/0.2.89")
 		return
 	}
 	if handled, err := controlCommand(os.Args); handled {
@@ -29,7 +29,7 @@ func main() {
 		return
 	}
 	if len(os.Args) != 3 || os.Args[1] != "run" {
-		fmt.Fprintln(os.Stderr, "usage: openship-actions run <request.json>")
+		fmt.Fprintln(os.Stderr, "usage: kovalio-actions run <request.json>")
 		os.Exit(2)
 	}
 	if err := executeFile(os.Args[2]); err != nil {

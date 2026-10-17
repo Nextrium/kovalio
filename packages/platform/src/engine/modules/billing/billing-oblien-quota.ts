@@ -1,6 +1,6 @@
 /**
  * Oblien Mode B owns charges, grants, renewals, quotas and suspension.
- * Openship mirrors that authority. Explicit complimentary plans use Mode A.
+ * Kovalio mirrors that authority. Explicit complimentary plans use Mode A.
  */
 import { diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import { AppError, safeErrorMessage, type PlanTierId, type PlanLimits, type OblienLimits } from "@repo/core";

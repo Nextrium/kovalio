@@ -148,7 +148,7 @@ describe("writeAppConfigFile", () => {
     await expect(
       writeAppConfigFile(
         writer,
-        "/var/lib/openship/app-config/p/kong/kong.yml",
+        "/var/lib/kovalio/app-config/p/kong/kong.yml",
         "x",
         "kong",
         "/kong.yml",
@@ -180,7 +180,7 @@ describe("writeAppConfigFile", () => {
       "/kong.yml",
     );
     expect(writes).toHaveLength(1);
-    expect(writes[0]?.[0]).toMatch(/^\/host\/kong\.yml\.openship-[\w-]+\.tmp$/);
+    expect(writes[0]?.[0]).toMatch(/^\/host\/kong\.yml\.kovalio-[\w-]+\.tmp$/);
     expect(writes[0]?.slice(1)).toEqual(["_format_version: '3.0'", { mode: 0o644 }]);
     expect(mkdir).toHaveBeenCalledWith("/host");
     expect(exec).toHaveBeenCalledWith("chmod 0700 -- '/host'");

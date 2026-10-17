@@ -154,23 +154,23 @@ describe("project PHP settings across configuration surfaces", () => {
     expect(await repos.projectGroup.listByOrganization(owner.organizationId)).toEqual(before);
   });
   it("carries repository selection into public scans and rejects invalid declarations", async () => {
-    const path = await mkdtemp(join(tmpdir(), "openship-php-scan-"));
+    const path = await mkdtemp(join(tmpdir(), "kovalio-php-scan-"));
     directories.push(path);
     await writeFile(join(path, "artisan"), "<?php");
     await writeFile(
       join(path, "composer.json"),
       JSON.stringify({ require: { "laravel/framework": "^12.0" } }),
     );
-    await writeFile(join(path, "openship.json"), JSON.stringify({ runtimeVersion: "8.3" }));
+    await writeFile(join(path, "kovalio.json"), JSON.stringify({ runtimeVersion: "8.3" }));
     const info = await resolveProjectInfo({ source: "local", path });
     expect(projectInfoToScanResponse(info)).toMatchObject({
       runtimeVersion: "8.3",
       buildImage: "php:8.3-cli-bookworm",
     });
-    await writeFile(join(path, "openship.json"), JSON.stringify({ runtimeVersion: "8.5" }));
+    await writeFile(join(path, "kovalio.json"), JSON.stringify({ runtimeVersion: "8.5" }));
     await expect(resolveProjectInfo({ source: "local", path })).rejects.toThrow(/runtimeVersion/);
     await writeFile(
-      join(path, "openship.json"),
+      join(path, "kovalio.json"),
       JSON.stringify({ runtimeVersion: "8.3", runtime: "bare" }),
     );
     await expect(resolveProjectInfo({ source: "local", path })).rejects.toThrow(

@@ -19,23 +19,23 @@ export class VolumeBackups {
 
   labelsFor(name: string) {
     return {
-      "openship-project": this.labels["openship.io/project"],
-      "openship-runtime": this.labels["openship.io/runtime"],
-      "openship-volume": name,
+      "kovalio-project": this.labels["nextrium.org/project"],
+      "kovalio-runtime": this.labels["nextrium.org/runtime"],
+      "kovalio-volume": name,
     };
   }
 
   present(backup: KubernetesObject): ClusterVolumeBackup | null {
     const labels = { ...backup.spec?.labels, ...backup.status?.labels };
     if (
-      labels["openship-project"] !== this.labels["openship.io/project"] ||
-      labels["openship-runtime"] !== this.labels["openship.io/runtime"] ||
-      !labels["openship-volume"]
+      labels["kovalio-project"] !== this.labels["nextrium.org/project"] ||
+      labels["kovalio-runtime"] !== this.labels["nextrium.org/runtime"] ||
+      !labels["kovalio-volume"]
     )
       return null;
     return {
       name: backup.metadata.name!,
-      volumeName: labels["openship-volume"],
+      volumeName: labels["kovalio-volume"],
       sizeGiB: Number(backup.status?.volumeSize ?? 0) / GiB,
       state: backup.metadata.deletionTimestamp ? "Deleting" : backup.status?.state || "Pending",
       progress: backup.status?.progress ?? 0,

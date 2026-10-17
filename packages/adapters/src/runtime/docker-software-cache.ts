@@ -60,7 +60,7 @@ export function softwareImageCandidates(raw: string): Array<SoftwareImage & { re
 }
 
 export function readSoftwareCacheCommand(dockerfile: string): string {
-  return `python3 - ${sq(dockerfile)} <<'OPENSHIP_CACHE_PY'
+  return `python3 - ${sq(dockerfile)} <<'KOVALIO_CACHE_PY'
 import json, os, subprocess, sys
 root = '${SOFTWARE_CACHE_ROOT}'
 mount = subprocess.run(['findmnt', '-rn', '--mountpoint', root, '-o', 'OPTIONS'], capture_output=True, text=True)
@@ -88,7 +88,7 @@ if mount.returncode == 0 and 'ro' in mount.stdout.strip().split(','):
     machine = os.uname().machine
     platform = {'x86_64':'linux/amd64', 'aarch64':'linux/arm64'}.get(machine)
     print(json.dumps({'pack':pack, 'platform':platform, 'dockerfile':bounded(sys.argv[1], 1048576)}))
-OPENSHIP_CACHE_PY`;
+KOVALIO_CACHE_PY`;
 }
 
 /** Revalidate mutable tags against their current registry digest. Missing packs,

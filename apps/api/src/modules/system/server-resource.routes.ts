@@ -60,7 +60,7 @@ r.get(
     tag: "server:read",
     mcp: {
       description:
-        "Probe whether the Openship controller can reach this server now. A controller connection failure is not evidence that deployed applications are down.",
+        "Probe whether the Kovalio controller can reach this server now. A controller connection failure is not evidence that deployed applications are down.",
     },
   },
   serversCtrl.probeReachability,
@@ -267,7 +267,7 @@ r.patch(
     body: ServerResourceSchemas.updateNetworkSettings.input,
     mcp: {
       description:
-        "Change outbound internet access and optional egress host allowlist on a managed Docker server after reviewing current settings. Egress changes also require expectedRevision from the network read. Disabling it affects downloads, external APIs and builds for every project. Send expectedInternetAccess and confirm:true. Ingress, private links and edge routing remain managed by Openship and Oblien.",
+        "Change outbound internet access and optional egress host allowlist on a managed Docker server after reviewing current settings. Egress changes also require expectedRevision from the network read. Disabling it affects downloads, external APIs and builds for every project. Send expectedInternetAccess and confirm:true. Ingress, private links and edge routing remain managed by Kovalio and Oblien.",
     },
   },
   serversCtrl.updateServerNetworkSettings,
@@ -431,7 +431,7 @@ r.post(
     body: ServerResourceSchemas.enableManagedRuntime.input,
     mcp: {
       description:
-        "Enable the Runtime API used by Openship for deployments and server management. Requires server admin and active server entitlement.",
+        "Enable the Runtime API used by Kovalio for deployments and server management. Requires server admin and active server entitlement.",
     },
   },
   managedCtrl.enableManagedRuntime,

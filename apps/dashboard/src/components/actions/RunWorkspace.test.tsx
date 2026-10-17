@@ -55,7 +55,7 @@ function job(id: string, name: string, overrides: Partial<ActionJobView> = {}): 
 function run(jobs = [job("build", "Build"), job("docs", "Docs")]): ActionRunView {
   return {
     id: "run",
-    controller: "openship",
+    controller: "kovalio",
     workflowId: "ci",
     name: "CI",
     number: 1,

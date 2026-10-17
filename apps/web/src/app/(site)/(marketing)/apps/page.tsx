@@ -3,13 +3,13 @@ import { getMarketplaceApps } from "@/lib/app-catalog";
 import { AppDirectory } from "@/components/apps/app-directory";
 
 const description =
-  "Find your next backend, database, CMS, or developer tool. Explore ready-to-deploy app templates for Openship Cloud and your own infrastructure.";
+  "Find your next backend, database, CMS, or developer tool. Explore ready-to-deploy app templates for Kovalio Cloud and your own infrastructure.";
 export const metadata: Metadata = {
   title: "Apps",
   description,
   alternates: { canonical: "/apps" },
-  openGraph: { title: "Apps — Openship", description, url: "/apps", type: "website" },
-  twitter: { card: "summary_large_image", title: "Apps — Openship", description },
+  openGraph: { title: "Apps — Kovalio", description, url: "/apps", type: "website" },
+  twitter: { card: "summary_large_image", title: "Apps — Kovalio", description },
 };
 
 export default async function AppsPage({

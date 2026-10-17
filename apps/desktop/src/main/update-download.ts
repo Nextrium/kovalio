@@ -55,7 +55,7 @@ export async function fetchUpdateAsset(url: string, signal: AbortSignal): Promis
         stop(error as Error);
       }
     });
-    request.setHeader("User-Agent", "Openship-Desktop");
+    request.setHeader("User-Agent", "Kovalio-Desktop");
     request.end();
   });
 }

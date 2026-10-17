@@ -191,7 +191,7 @@ describe("DNS-01 ACME challenge support in domain-ssl", () => {
   });
 
   it("the generated ACME shell hook sends quoted TXT content as valid JSON", () => {
-    const dir = mkdtempSync(join(tmpdir(), "openship-dns-hook-"));
+    const dir = mkdtempSync(join(tmpdir(), "kovalio-dns-hook-"));
     try {
       const hooks = createDnsHookScripts(h.dnsManagerResult.manager as never);
       const auth = join(dir, "auth.sh");
@@ -210,7 +210,7 @@ else:
       execFileSync("/bin/sh", [auth], { timeout: 5000, env: {
         ...process.env, PATH: `${dir}:/usr/bin:/bin`, CAPTURE_PAYLOAD: payload,
         CERTBOT_DOMAIN: "app.example.com", CERTBOT_VALIDATION: "test_validation",
-        OPENSHIP_DNS_RECORD_FILE: join(dir, "record-id"),
+        KOVALIO_DNS_RECORD_FILE: join(dir, "record-id"),
       } });
       expect(JSON.parse(readFileSync(payload, "utf8"))).toMatchObject({
         type: "TXT", name: "_acme-challenge.app.example.com", content: '"test_validation"',
@@ -350,7 +350,7 @@ else:
     expect(hooks.authHookScript).toContain("secret_cf_token");
     expect(hooks.authHookScript).toContain('"success":true');
     expect(hooks.authHookScript).toContain("cloudflare-dns.com/dns-query");
-    expect(hooks.authHookScript).toContain("OPENSHIP_DNS_RECORD_FILE");
+    expect(hooks.authHookScript).toContain("KOVALIO_DNS_RECORD_FILE");
     expect(hooks.cleanupHookScript).toContain("zone_cf_123");
     expect(hooks.cleanupHookScript).toContain("secret_cf_token");
   });

@@ -67,7 +67,7 @@ describe("local CLI administrator session", () => {
       purpose: "local-cli",
       userId: "founder",
       activeOrganizationId: "org-founder",
-      userAgent: "openship-cli/local",
+      userAgent: "kovalio-cli/local",
       ttlSeconds: 86400,
     });
     expect(await response.json()).toEqual({
@@ -91,7 +91,7 @@ describe("local CLI administrator session", () => {
   it("does not accept a browser cookie or tenant PAT as installation authority", async () => {
     const response = await request({
       Authorization: "Bearer opsh_pat_admin",
-      Cookie: "openship.session_token=session",
+      Cookie: "kovalio.session_token=session",
     });
     expect(response.status).toBe(401);
     expect(h.mint).not.toHaveBeenCalled();

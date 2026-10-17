@@ -128,8 +128,8 @@ describe("compareCommits", () => {
     const base = "1111111111111111111111111111111111111111";
     const head = "2222222222222222222222222222222222222222";
 
-    const first = await compareCommits(ctx, "oblien", "openship", base, head);
-    const second = await compareCommits(ctx, "oblien", "openship", base, head);
+    const first = await compareCommits(ctx, "oblien", "kovalio", base, head);
+    const second = await compareCommits(ctx, "oblien", "kovalio", base, head);
 
     expect(first).toEqual({
       files: ["services/client/new.ts", "services/backend/old.ts"],
@@ -147,7 +147,7 @@ describe("compareCommits", () => {
     const result = await compareCommits(
       ctx,
       "oblien",
-      "openship",
+      "kovalio",
       "3333333333333333333333333333333333333333",
       "4444444444444444444444444444444444444444",
     );
@@ -166,8 +166,8 @@ describe("compareCommits", () => {
     const base = "5555555555555555555555555555555555555555";
     const head = "6666666666666666666666666666666666666666";
 
-    const first = compareCommits(ctx, "oblien", "openship", base, head);
-    const second = compareCommits(ctx, "oblien", "openship", base, head);
+    const first = compareCommits(ctx, "oblien", "kovalio", base, head);
+    const second = compareCommits(ctx, "oblien", "kovalio", base, head);
     await vi.waitFor(() => expect(githubFetch).toHaveBeenCalledTimes(1));
     release({ files: [{ filename: "services/backend/index.ts" }] });
 

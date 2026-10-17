@@ -15,7 +15,7 @@ vi.mock("@clack/prompts", () => ({
 }));
 vi.mock("../../src/lib/config", () => ({
   getActiveContext: () => "cloud",
-  getContext: () => ({ apiUrl: "https://api.openship.io" }),
+  getContext: () => ({ apiUrl: "https://api.nextrium.org" }),
 }));
 vi.mock("../../src/commands/login", () => ({
   runLogin: h.login,

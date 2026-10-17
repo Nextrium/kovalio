@@ -31,15 +31,15 @@ describe("control-plane installation through the shared engine", () => {
         [],
       );
       const api = specifications.find((service) => service.name === "api")!;
-      expect(api.image).toBe("ghcr.io/oblien/openship-api:1.2.3");
+      expect(api.image).toBe("ghcr.io/oblien/kovalio-api:1.2.3");
       expect(api.volumes).toEqual(["instance-data:/data"]);
       expect(api.environment).toMatchObject({
         PGLITE_DATA_DIR: "/data",
-        OPENSHIP_AUTH_MODE: "local",
-        OPENSHIP_REQUIRE_AUTH: "true",
-        OPENSHIP_ALLOW_ZERO_AUTH: "false",
-        OPENSHIP_HOST_CONTROL: "false",
-        OPENSHIP_INSTANCE_PROJECT_ID: "controller-project",
+        KOVALIO_AUTH_MODE: "local",
+        KOVALIO_REQUIRE_AUTH: "true",
+        KOVALIO_ALLOW_ZERO_AUTH: "false",
+        KOVALIO_HOST_CONTROL: "false",
+        KOVALIO_INSTANCE_PROJECT_ID: "controller-project",
       });
       expect(JSON.stringify(specifications)).not.toContain("private-");
       expect(setEnvVars).toHaveBeenCalledWith(
@@ -49,7 +49,7 @@ describe("control-plane installation through the shared engine", () => {
         expect.objectContaining({
           vars: expect.arrayContaining([
             { key: "BETTER_AUTH_SECRET", value: "private-encryption", isSecret: true },
-            { key: "OPENSHIP_INSTANCE_RECEIVE_TOKEN", value: "private-bootstrap", isSecret: true },
+            { key: "KOVALIO_INSTANCE_RECEIVE_TOKEN", value: "private-bootstrap", isSecret: true },
           ]),
         }),
       );

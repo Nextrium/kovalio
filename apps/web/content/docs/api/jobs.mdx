@@ -37,8 +37,8 @@ console.log(job.key);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/jobs" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/jobs" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"label":"Check Node version","serverId":"srv_123","command":"node --version","scheduleType":"manual","timeoutMs":10000}'
 ```
@@ -78,8 +78,8 @@ console.log(submitted.runId, submitted.summary);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/jobs/job_key/run" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/jobs/job_key/run" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -101,8 +101,8 @@ for await (const event of ship.jobs.streamRun("run_123")) {
 <Tab value="REST API">
 
 ```bash
-curl -N "$OPENSHIP_URL/api/jobs/runs/run_123/stream" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -N "$KOVALIO_URL/api/jobs/runs/run_123/stream" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>

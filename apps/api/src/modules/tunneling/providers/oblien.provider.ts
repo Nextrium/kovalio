@@ -14,7 +14,7 @@
 
 import { reportCaughtError as observeCaughtError, diagnostics as errorDiagnostics } from "@repo/core/diagnostics";
 import { env } from "@repo/platform/engine/config/env";
-import { getOblienClient, ensureNamespaceWithQuota } from "@repo/platform/engine/lib/openship-cloud";
+import { getOblienClient, ensureNamespaceWithQuota } from "@repo/platform/engine/lib/kovalio-cloud";
 import type {
   TunnelAgent,
   TunnelProvider,

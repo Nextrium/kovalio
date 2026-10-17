@@ -1,33 +1,33 @@
 ---
 title: project routing
-description: Commands, arguments, and options for openship project routing.
-cliGroup: openship project routing
+description: Commands, arguments, and options for kovalio project routing.
+cliGroup: kovalio project routing
 ---
 
 See the [workflow guide](/docs/cli/projects) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship project routing
+## kovalio project routing
 
 Manage project routing rules and retry route synchronization
 
 ```text
-openship project routing [options] [command]
+kovalio project routing [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list <id>`](/docs/cli/reference/project/routing#openship-project-routing-list) | Read saved routing rules |
-| [`create [options] <id> [file]`](/docs/cli/reference/project/routing#openship-project-routing-create) | Create a project or domain routing rule |
-| [`update [options] <id> [file]`](/docs/cli/reference/project/routing#openship-project-routing-update) | Update a named routing rule through the shared edge sanitizer |
-| [`remove [options] <id> <rule>`](/docs/cli/reference/project/routing#openship-project-routing-remove) | Remove one routing rule |
-| [`retry [options] <id>`](/docs/cli/reference/project/routing#openship-project-routing-retry) | Retry the existing project routing workflow |
+| [`list <id>`](/docs/cli/reference/project/routing#kovalio-project-routing-list) | Read saved routing rules |
+| [`create [options] <id> [file]`](/docs/cli/reference/project/routing#kovalio-project-routing-create) | Create a project or domain routing rule |
+| [`update [options] <id> [file]`](/docs/cli/reference/project/routing#kovalio-project-routing-update) | Update a named routing rule through the shared edge sanitizer |
+| [`remove [options] <id> <rule>`](/docs/cli/reference/project/routing#kovalio-project-routing-remove) | Remove one routing rule |
+| [`retry [options] <id>`](/docs/cli/reference/project/routing#kovalio-project-routing-retry) | Retry the existing project routing workflow |
 
-## openship project routing create
+## kovalio project routing create
 
 Create a project or domain routing rule
 
 ```text
-openship project routing create [options] <id> [file]
+kovalio project routing create [options] <id> [file]
 ```
 
 | Argument | Meaning |
@@ -39,24 +39,24 @@ openship project routing create [options] <id> [file]
 | --- | --- |
 | `--schema` | Print the accepted JSON schema without making a request |
 
-## openship project routing list
+## kovalio project routing list
 
 Read saved routing rules
 
 ```text
-openship project routing list [options] <id>
+kovalio project routing list [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project routing remove
+## kovalio project routing remove
 
 Remove one routing rule
 
 ```text
-openship project routing remove [options] <id> <rule>
+kovalio project routing remove [options] <id> <rule>
 ```
 
 | Argument | Meaning |
@@ -68,12 +68,12 @@ openship project routing remove [options] <id> <rule>
 | --- | --- |
 | `-y, --yes` | Confirm rule removal |
 
-## openship project routing retry
+## kovalio project routing retry
 
 Retry the existing project routing workflow
 
 ```text
-openship project routing retry [options] <id>
+kovalio project routing retry [options] <id>
 ```
 
 | Argument | Meaning |
@@ -85,12 +85,12 @@ openship project routing retry [options] <id>
 | `--follow` | Stream route and certificate progress |
 | `--timeout <ms>` | Stop following after this deadline |
 
-## openship project routing update
+## kovalio project routing update
 
 Update a named routing rule through the shared edge sanitizer
 
 ```text
-openship project routing update [options] <id> [file]
+kovalio project routing update [options] <id> [file]
 ```
 
 | Argument | Meaning |

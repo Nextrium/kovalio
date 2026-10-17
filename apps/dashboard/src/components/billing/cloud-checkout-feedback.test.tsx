@@ -163,7 +163,7 @@ describe("checkout availability feedback", () => {
     await render(<PlatformProvider selfHosted cloudApiUrl="https://cloud.example.test">
       <CloudCheckoutFeedback failure={failure} plans={[plan]} onClose={h.close} onRetry={h.retry} />
     </PlatformProvider>);
-    const contact = dialog()?.querySelector<HTMLAnchorElement>('a[href^="mailto:support@openship.io"]');
+    const contact = dialog()?.querySelector<HTMLAnchorElement>('a[href^="mailto:support@nextrium.org"]');
     expect(contact?.textContent).toBe(baseDictionary.billing.checkout.support);
     expect(decodeURIComponent(contact!.href)).toContain("Server reference: cws-selected");
     expect(dialog()?.querySelector("form")).toBeNull();

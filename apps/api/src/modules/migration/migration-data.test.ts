@@ -67,7 +67,7 @@ const plan = (overrides: Partial<Parameters<typeof planMigrationData>[0]> = {}) 
 describe("shared migration data planning", () => {
   it.each([false, true])("mounts the same anonymous and explicit copies the transfer writes (managed=%s)", async managed => {
     h.services.mockResolvedValue([service("db"), service("attached")]);
-    const mounts = ["anonymous-012345", "openship-app-data"].map(source => ({
+    const mounts = ["anonymous-012345", "kovalio-app-data"].map(source => ({
       type: "volume" as const, source, target: `/${source}`, rw: true,
     }));
     a.mounts.set("original", mounts.map(mount => sourceVolume(mount.source, mount.target)));
@@ -78,7 +78,7 @@ describe("shared migration data planning", () => {
       volumes: result.items.map(item => `${item.dest}:/${item.source}`), namespaceVolumes: managed,
     });
     expect(result.items.map(item => item.dest)).toEqual([
-      "openship-app-anonymous-012345", "openship-app-openship-app-data",
+      "kovalio-app-anonymous-012345", "kovalio-app-kovalio-app-data",
     ]);
   });
 
@@ -99,8 +99,8 @@ describe("shared migration data planning", () => {
     a.mounts.set("original", [sourceVolume("012345abcdef"),
       { id: "/srv/app/config.conf", source: "/srv/app/config.conf", target: "/config.conf", type: "bind", isDirectory: false }]);
     const result = await plan();
-    expect(result.createdVolumes).toEqual(["openship-app-012345abcdef"]);
-    expect(result.items[0]).toMatchObject({ source: "012345abcdef", dest: "openship-app-012345abcdef" });
+    expect(result.createdVolumes).toEqual(["kovalio-app-012345abcdef"]);
+    expect(result.items[0]).toMatchObject({ source: "012345abcdef", dest: "kovalio-app-012345abcdef" });
     expect(result.items[1]).toMatchObject({ source: "/srv/app/config.conf",
       dest: migrationTargetPath("project", "/srv/app/config.conf", true), src: { isFile: true } });
   });
@@ -114,9 +114,9 @@ describe("shared migration data planning", () => {
   });
 
   it.each(["keep", "override", "clone"] as const)("refuses a sibling's volume even with %s consent", async action => {
-    a.mounts.set("original", [sourceVolume("openship-app-staging-data")]);
-    b.volumes.set("openship-app-staging-data", { Labels: { "openship.project": "sibling" }, empty: false });
-    await expect(plan({ conflictResolution: { "openship-app-staging-data": action } })).rejects.toMatchObject({ code: "CLOUD_VOLUME_CONFLICT" });
+    a.mounts.set("original", [sourceVolume("kovalio-app-staging-data")]);
+    b.volumes.set("kovalio-app-staging-data", { Labels: { "kovalio.project": "sibling" }, empty: false });
+    await expect(plan({ conflictResolution: { "kovalio-app-staging-data": action } })).rejects.toMatchObject({ code: "CLOUD_VOLUME_CONFLICT" });
     expect(b.docker.createVolume).not.toHaveBeenCalled();
   });
 
@@ -126,19 +126,19 @@ describe("shared migration data planning", () => {
   });
 
   it("checks the clone destination instead of assuming a scoped name is empty", async () => {
-    b.volumes.set("openship-app-pgdata", { Labels: { "openship.project": "project" }, empty: false });
+    b.volumes.set("kovalio-app-pgdata", { Labels: { "kovalio.project": "project" }, empty: false });
     await expect(plan({ managedTarget: false, conflictResolution: { pgdata: "clone" } })).rejects.toThrow(/already contains data/);
   });
 
   it("requires the exact project label AND no users before reusing unfinished data", async () => {
-    b.volumes.set("openship-app-pgdata", { Labels: { "openship.project": "project" }, empty: false });
+    b.volumes.set("kovalio-app-pgdata", { Labels: { "kovalio.project": "project" }, empty: false });
     expect((await plan()).items).toHaveLength(1);
     b.docker.listContainers.mockResolvedValue([{ Id: "stopped-sibling" }]);
     await expect(plan()).rejects.toThrow(/already contains data/);
   });
 
   it("keeps existing data without copying or adding it to rollback cleanup", async () => {
-    b.volumes.set("openship-app-pgdata", { Labels: { "openship.project": "project" }, empty: false });
+    b.volumes.set("kovalio-app-pgdata", { Labels: { "kovalio.project": "project" }, empty: false });
     expect(await plan({ conflictResolution: { pgdata: "keep" } })).toMatchObject({ items: [], createdVolumes: [] });
     b.volumes.clear();
     await expect(plan({ conflictResolution: { pgdata: "keep" } })).rejects.toThrow(/no longer exists/);
@@ -152,17 +152,17 @@ describe("shared migration data planning", () => {
   });
 
   it("fails closed when the target volume cannot be inspected", async () => {
-    b.volumes.set("openship-app-pgdata", { Labels: { "openship.project": "project" }, empty: false });
+    b.volumes.set("kovalio-app-pgdata", { Labels: { "kovalio.project": "project" }, empty: false });
     b.backup.probeVolume.mockRejectedValue(new Error("connection lost"));
     await expect(plan()).rejects.toThrow(/could not be verified/);
   });
 
   it("rechecks persisted ownership if another operation creates the volume after planning", async () => {
     const result = await plan();
-    b.volumes.set(result.createdVolumes[0]!, { Labels: { "openship.project": "sibling" }, empty: true });
+    b.volumes.set(result.createdVolumes[0]!, { Labels: { "kovalio.project": "sibling" }, empty: true });
     await expect(prepareMigrationVolumes({ runtime: b as unknown as DockerRuntime, projectId: "project",
       runId: "run", managed: true, plan: result })).rejects.toThrow(/another operation/);
-    expect(b.volumes.get(result.createdVolumes[0]!)?.Labels["openship.project"]).toBe("sibling");
+    expect(b.volumes.get(result.createdVolumes[0]!)?.Labels["kovalio.project"]).toBe("sibling");
   });
 
   it("refuses two different sources or overlapping directories writing one target path", async () => {
@@ -176,7 +176,7 @@ describe("shared migration data planning", () => {
     a.mounts.set("original", [sourceVolume("actual-anonymous-volume")]);
     const result = await plan({ sameServer: true, managedTarget: false, targetRuntime: a as unknown as DockerRuntime,
       volumeStrategies: { db: "copy" } });
-    expect(result.items[0]).toMatchObject({ source: "actual-anonymous-volume", dest: "openship-app-actual-anonymous-volume" });
+    expect(result.items[0]).toMatchObject({ source: "actual-anonymous-volume", dest: "kovalio-app-actual-anonymous-volume" });
     expect(result.items[0]!.src.exec).toBe(result.items[0]!.dst.exec);
   });
 });

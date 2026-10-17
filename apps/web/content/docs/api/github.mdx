@@ -12,7 +12,7 @@ In the dashboard this is the **GitHub** connection card in Settings and the repo
 
 <Callout title="Both cloud and self-hosted" type="info">
 This module is mounted on every instance. The local identity routes and every `/api/github/sources` route
-are self-hosted only and return 404 on Openship Cloud. Source management additionally requires the active
+are self-hosted only and return 404 on Kovalio Cloud. Source management additionally requires the active
 workspace's `owner` role.
 </Callout>
 
@@ -22,7 +22,7 @@ workspace's `owner` role.
 round trip, filtered to the accounts and repos your member role is allowed to see.
 `GET /api/github/status` is narrower — the Settings card's data source — returning `{ state, accounts,
 installUrl, cloudUnreachable, customSourcesConfigured }`. The last field tells clients that App lifecycle
-controls belong to the workspace source manager rather than the legacy Openship App connection.
+controls belong to the workspace source manager rather than the legacy Kovalio App connection.
 
 <Tabs items={['SDK', 'REST API']} groupId="api-transport" persist>
 <Tab value="SDK">
@@ -36,8 +36,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/github/home" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/github/home" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -59,8 +59,8 @@ The optional body field `source` (`"oauth"` | `"cli"`) forces a specific path wh
 the "Connect Kovalio App" and "Use gh CLI" buttons; omit it to let the server pick based on the instance's
 auth mode.
 
-On Openship Cloud, repository authorization is separate from the GitHub identity used to sign in.
-The same GitHub user can authorize repository access for multiple Openship accounts. This never moves
+On Kovalio Cloud, repository authorization is separate from the GitHub identity used to sign in.
+The same GitHub user can authorize repository access for multiple Kovalio accounts. This never moves
 or disconnects another account's sign-in link. Existing installations are discovered through that user's
 GitHub authorization and verified again when selected.
 
@@ -85,8 +85,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/github/connect" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/github/connect" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"source":"oauth"}'
 ```
@@ -186,8 +186,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/github/repos" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/github/repos" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"my-app","private":true,"owner":"acme"}'
 ```
@@ -235,8 +235,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/github/repos/acme/my-app/file?file=package.json&branch=main" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/github/repos/acme/my-app/file?file=package.json&branch=main" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>

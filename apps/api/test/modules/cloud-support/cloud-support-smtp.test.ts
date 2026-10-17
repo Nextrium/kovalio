@@ -22,7 +22,7 @@ const state = vi.hoisted(() => ({
     SMTP_PORT: 0,
     SMTP_USER: "test",
     SMTP_PASS: "test",
-    SMTP_FROM: "Openship Support <support@openship.io>",
+    SMTP_FROM: "Kovalio Support <support@nextrium.org>",
   },
   service: null as CloudSupportService | null,
   localMail: vi.fn(),
@@ -73,11 +73,11 @@ const payload = () => ({
 });
 const submit = (body: unknown) =>
   post(
-    new Request("https://openship.io/api/contact", {
+    new Request("https://nextrium.org/api/contact", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Origin: "https://openship.io",
+        Origin: "https://nextrium.org",
         Cookie: "private-cookie",
         "X-Internal-Token": "never-forward-this",
         "X-Real-IP": "untrusted",
@@ -197,10 +197,10 @@ it("saves a website submission through HTTP and delivers both emails through the
   expect(await state.service!.flush()).toEqual({ delivered: 2, failed: 0 });
   expect(delivered).toHaveLength(2);
   const acknowledgement = delivered.find((m) => m.recipient === body.email)!;
-  expect(acknowledgement.message).toContain("Reply-To: support@openship.io");
-  expect(acknowledgement.message).toContain("From: Openship Support <support@openship.io>");
+  expect(acknowledgement.message).toContain("Reply-To: support@nextrium.org");
+  expect(acknowledgement.message).toContain("From: Kovalio Support <support@nextrium.org>");
   expect(acknowledgement.message).toContain(receipt.id);
-  expect(delivered.find((m) => m.recipient === "support@openship.io")!.message).toContain(
+  expect(delivered.find((m) => m.recipient === "support@nextrium.org")!.message).toContain(
     `Reply-To: ${body.email}`,
   );
   expect(state.localMail).not.toHaveBeenCalled();
@@ -230,7 +230,7 @@ it.each(["unavailable", "invalid-receipt"])(
     apiMode = mode;
     const response = await submit(payload());
     expect(response.status).toBe(503);
-    expect((await response.json()).error).toContain("support@openship.io");
+    expect((await response.json()).error).toContain("support@nextrium.org");
     expect(await repo.list({ limit: 10 })).toHaveLength(0);
   },
 );

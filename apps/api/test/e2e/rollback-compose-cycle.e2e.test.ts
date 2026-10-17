@@ -47,9 +47,9 @@ import {
 } from "../helpers/seed";
 
 const BASE_IMAGE = "busybox:1.37.0";
-const WEB_V1 = "openship/e2e-compose-web:bld_v1";
-const WEB_V2 = "openship/e2e-compose-web:bld_v2";
-const API_V1 = "openship/e2e-compose-api:bld_v1";
+const WEB_V1 = "kovalio/e2e-compose-web:bld_v1";
+const WEB_V2 = "kovalio/e2e-compose-web:bld_v2";
+const API_V1 = "kovalio/e2e-compose-api:bld_v1";
 const SVC_PORT = 80;
 
 async function freePort(): Promise<number> {
@@ -351,7 +351,7 @@ describeDockerE2E("compose rollback cycle through the real entry point", () => {
     const live = await runtime.docker.getContainer(webRow.containerId!).inspect();
     expect(live.Config.Env).toContain("ROLLBACK_SECRET=original-844");
     const stored = await db.query.deployment.findFirst({ where: eq(schema.deployment.id, restore.id) });
-    expect((stored!.meta as Record<string, unknown>).composeServices).toEqual(expect.stringMatching(/^openship:config:v1:/));
+    expect((stored!.meta as Record<string, unknown>).composeServices).toEqual(expect.stringMatching(/^kovalio:config:v1:/));
     expect(JSON.stringify(stored!.meta)).not.toContain("original-844");
   }, 600_000);
 
@@ -403,7 +403,7 @@ describeDockerE2E("compose rollback cycle through the real entry point", () => {
       ensureFeature: vi.fn(async () => {
         if (!injectLostCallback) return;
         injectLostCallback = false;
-        await executor.readFile("/var/lib/openship/setup-state.json");
+        await executor.readFile("/var/lib/kovalio/setup-state.json");
       }),
     };
     const logger = new BuildLogger(() => {});

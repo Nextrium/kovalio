@@ -49,7 +49,7 @@ const capacityResponse = z.object({ success: z.literal(true), data: z.object({
     ram_mb: z.number().nonnegative(), disk_gb: z.number().nonnegative(), pending_updates: z.number().int().nonnegative() }).optional(),
 }) });
 
-/** Read actual reserved capacity from Oblien. Openship never reconstructs this
+/** Read actual reserved capacity from Oblien. Kovalio never reconstructs this
  * from service counts, cached VM rows or the customer's credit balance. */
 async function readNamespaceCapacity(namespace: string) {
   const parsed = capacityResponse.safeParse(await getOblienClient().namespaces.get(namespace));

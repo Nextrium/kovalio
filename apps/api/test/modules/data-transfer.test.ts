@@ -94,7 +94,7 @@ function spec(
   } as SecretColumn;
 }
 
-const DIRECT_KEY_CONTEXT = Buffer.from("openship-direct-transfer-v1", "utf8");
+const DIRECT_KEY_CONTEXT = Buffer.from("kovalio-direct-transfer-v1", "utf8");
 
 function testSender(connection: DirectTransferConnection) {
   const recipientPublicKey = createPublicKey({
@@ -519,7 +519,7 @@ describe("one-time direct instance transfer", () => {
 
   it("retains an authenticated file upload when finalization can be retried", async () => {
     await clearDirectReceiveSessionsForTest();
-    const bytes = Buffer.from(JSON.stringify({ kind: "not-an-openship-export" }), "utf8");
+    const bytes = Buffer.from(JSON.stringify({ kind: "not-an-kovalio-export" }), "utf8");
     const upload = await createFileUpload({ ownerUserId: "user_1", size: bytes.byteLength });
     await uploadFileChunk({
       uploadId: upload.uploadId,
@@ -620,7 +620,7 @@ describe("two-factor account transfer", () => {
     "refuses an incomplete factor before changing the destination",
     async (secrets) => {
       const file: DataTransferFile = {
-        kind: "openship-instance-export", envelopeVersion: 4, createdAt: new Date().toISOString(),
+        kind: "kovalio-instance-export", envelopeVersion: 4, createdAt: new Date().toISOString(),
         sourceDriver: "pglite", secrets: null,
         dump: {
           formatVersion: 1, exportedAt: new Date().toISOString(), sourceDriver: "pglite", scope: { kind: "instance" },

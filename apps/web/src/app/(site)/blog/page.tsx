@@ -51,8 +51,8 @@ export async function generateMetadata({
 
   const pageTitle =
     category && category !== "all"
-      ? `${category.charAt(0).toUpperCase() + category.slice(1)} – Openship Blog`
-      : "Blog – Openship";
+      ? `${category.charAt(0).toUpperCase() + category.slice(1)} – Kovalio Blog`
+      : "Blog – Kovalio";
 
   const pageDescription =
     category && category !== "all"
@@ -66,7 +66,7 @@ export async function generateMetadata({
       title: pageTitle,
       description: pageDescription,
       url: `${SITE_URL}/blog${category && category !== "all" ? `?category=${encodeURIComponent(category)}` : ""}`,
-      siteName: "Openship",
+      siteName: "Kovalio",
       type: "website",
     },
     twitter: {
@@ -103,8 +103,8 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
   const blogStructuredData = {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "Openship Blog",
-    description: "Engineering deep-dives, product updates, and guides from the Openship team",
+    name: "Kovalio Blog",
+    description: "Engineering deep-dives, product updates, and guides from the Kovalio team",
     url: `${SITE_URL}/blog`,
     publisher: {
       "@type": "Organization",
@@ -129,10 +129,10 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
 
       <main className="res-main">
         <section className="res-hero">
-          <span className="res-eyebrow">The Openship blog</span>
+          <span className="res-eyebrow">The Kovalio blog</span>
           <h1 className="res-title">Notes from the build.</h1>
           <p className="res-sub">
-            Engineering deep-dives, product updates, and guides from the Openship team - straight
+            Engineering deep-dives, product updates, and guides from the Kovalio team - straight
             from the source.
           </p>
           <Link href="/blog/rss.xml" className="res-feed">
@@ -171,7 +171,7 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
               <div className="res-avatar" aria-hidden="true">
                 {(featured.data.author || "O")[0].toUpperCase()}
               </div>
-              <span className="res-meta-name">{featured.data.author || "Openship Team"}</span>
+              <span className="res-meta-name">{featured.data.author || "Kovalio Team"}</span>
               {featured.data.date && (
                 <>
                   <span className="res-meta-dot" aria-hidden="true" />

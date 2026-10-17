@@ -23,8 +23,8 @@ vi.mock("@repo/platform/engine/modules/mail/mail-state", () => ({
 }));
 
 vi.mock("@repo/platform/engine/modules/mail/admin/platform-mailbox.service", () => ({
-  ensureOpenshipPlatformMailbox: vi.fn(async () => ({
-    email: "openship@example.com",
+  ensureKovalioPlatformMailbox: vi.fn(async () => ({
+    email: "kovalio@example.com",
     password: "secret",
     smtpHost: "mail.example.com",
     smtpPort: 465,
@@ -33,7 +33,7 @@ vi.mock("@repo/platform/engine/modules/mail/admin/platform-mailbox.service", () 
 }));
 
 vi.mock("../../../src/modules/mail/admin/test-mailbox.service", () => ({
-  ensureOpenshipTestMailbox: vi.fn(),
+  ensureKovalioTestMailbox: vi.fn(),
 }));
 
 vi.mock("@repo/platform/engine/modules/mail/mail-port-reachability.service", async (importOriginal) => ({

@@ -19,7 +19,7 @@ export const MAX_DOCKER_BUILD_IDLE_TIMEOUT_MS = 24 * 60 * 60_000;
  * accidentally disabling the guard or turning a typo into an immediate abort.
  */
 export function getDockerBuildIdleTimeoutMs(
-  raw = process.env.OPENSHIP_BUILD_IDLE_TIMEOUT_MS,
+  raw = process.env.KOVALIO_BUILD_IDLE_TIMEOUT_MS,
 ): number {
   if (raw == null || raw.trim() === "") return DEFAULT_DOCKER_BUILD_IDLE_TIMEOUT_MS;
   const value = Number(raw);
@@ -31,7 +31,7 @@ export function getDockerBuildIdleTimeoutMs(
 }
 
 export interface DockerBuildDiagnosticContext {
-  /** The limit selected in OpenShip, when one was selected. */
+  /** The limit selected in Kovalio, when one was selected. */
   configuredMemoryMb?: number;
   /** True only when this particular builder actually received that limit. */
   memoryLimitApplied?: boolean;
@@ -42,7 +42,7 @@ function memoryGuidance(context: DockerBuildDiagnosticContext): string {
   if (context.memoryLimitApplied && memoryMb && memoryMb > 0) {
     return `The classic Docker builder was capped at ${memoryMb} MB RAM; raise Build Memory in Project Settings → Resources if this build needs more.`;
   }
-  return "This build path was not under an OpenShip-enforced memory cap; check available RAM/swap and the host or Docker daemon OOM logs.";
+  return "This build path was not under an Kovalio-enforced memory cap; check available RAM/swap and the host or Docker daemon OOM logs.";
 }
 
 function findNonZeroExitCode(output: string): number | null {

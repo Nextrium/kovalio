@@ -23,6 +23,6 @@ describe("service launch actions", () => {
   });
 
   it("can start an existing image of a source service without rebuilding it", () => {
-    expect(serviceCanStartWithoutBuild({ build: ".", image: "openship/app:built" })).toBe(true);
+    expect(serviceCanStartWithoutBuild({ build: ".", image: "kovalio/app:built" })).toBe(true);
   });
 });

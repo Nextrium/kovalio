@@ -1,6 +1,6 @@
 # Client icons
 
-The dashboard, Openship Cloud UI, and desktop chrome use the same icon catalog
+The dashboard, Kovalio Cloud UI, and desktop chrome use the same icon catalog
 from `@repo/ui/icons`. The default theme is `outline-modern`, with 198 bundled
 PNGs in `apps/dashboard/public/icons` (about 456 KB total). Source files retain
 their original square dimensions.
@@ -75,7 +75,7 @@ the icon picker also uses it for previews of user-selected artwork URLs.
 
 ## Local assets and CDN configuration
 
-Openship Cloud loads icons from `https://cdn.oblien.com/static/png-icons` first.
+Kovalio Cloud loads icons from `https://cdn.oblien.com/static/png-icons` first.
 The root layout selects this host before rendering, including authentication
 screens. Self-hosted and desktop installations default to the bundled `/icons`
 files, including desktop instances connected to Cloud.
@@ -85,7 +85,7 @@ To use a custom asset host on a self-hosted installation, mirror
 dashboard environment before starting it:
 
 ```env
-OPENSHIP_ICON_BASE_URL=https://cdn.oblien.com/static/png-icons
+KOVALIO_ICON_BASE_URL=https://cdn.oblien.com/static/png-icons
 ```
 
 The dashboard root layout passes the resolved host to `IconProvider`. Cloud
@@ -154,7 +154,7 @@ Flow controls use catalog glyphs while React Flow continues to own viewport
 operations and zoom limits.
 
 Charts, progress geometry, topology edges, decorative illustrations, and the
-Openship wordmark remain vectors. Dynamic application/framework/provider logos,
+Kovalio wordmark remain vectors. Dynamic application/framework/provider logos,
 favicons, flags, and user artwork retain their existing content sources. The
 separate marketing site and `apps/email/client` are outside this pass.
 

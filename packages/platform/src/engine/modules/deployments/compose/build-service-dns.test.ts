@@ -156,12 +156,12 @@ describe("service DNS failures during Docker builds", () => {
     async (status) => {
       const { result, entries } = await buildWithLogs({
         messages: ["getaddrinfo ENOTFOUND db"],
-        adminResult: { status, imageRef: "openship/example-admin:built" },
+        adminResult: { status, imageRef: "kovalio/example-admin:built" },
       });
       expect(result.buildFailures.has("admin")).toBe(false);
       expect(entries.some((entry) => entry.message.includes("dependsOn"))).toBe(false);
       if (status === "deploying") {
-        expect(result.imageRefs.get("admin")).toBe("openship/example-admin:built");
+        expect(result.imageRefs.get("admin")).toBe("kovalio/example-admin:built");
       } else {
         expect(result.cancelled).toBe(true);
       }

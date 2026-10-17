@@ -460,8 +460,8 @@ export function registerSelfAdoptReconcile(): void {
     run: async () => {
       // A provisioned controller already has normal deployment/service records
       // on its connected server. CLI adoption would replace that ownership
-      // with local host ports and the old reserved openship project.
-      if (process.env.OPENSHIP_INSTANCE_PROJECT_ID) return;
+      // with local host ports and the old reserved kovalio project.
+      if (process.env.KOVALIO_INSTANCE_PROJECT_ID) return;
       const project = await findSelfAppProject();
       if (!project) return;
 

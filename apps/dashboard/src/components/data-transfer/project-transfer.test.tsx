@@ -31,7 +31,7 @@ const manifest: TransferManifest = {
   warnings: [],
 };
 const fileReply: DataTransferFile = {
-  kind: "openship-project-export", envelopeVersion: 4, manifest,
+  kind: "kovalio-project-export", envelopeVersion: 4, manifest,
   secrets: { encoding: "plaintext", version: 1, entries: [{ value: "exported-env-value" }] },
 };
 const history = { analytics: 0, activity: 0, backups: 0, incidents: 0, migrations: 0 };
@@ -88,7 +88,7 @@ async function renderExport() {
 async function chooseImportFile() {
   await act(async () => root.render(<ImportModal open onClose={() => undefined} />));
   const input = host.querySelector<HTMLInputElement>('input[type="file"]')!;
-  const file = new File(["{}"], "openship-web.json", { type: "application/json" });
+  const file = new File(["{}"], "kovalio-web.json", { type: "application/json" });
   Object.defineProperty(input, "files", { configurable: true, value: [file] });
   await act(async () => { input.dispatchEvent(new Event("change", { bubbles: true })); });
   return file;
@@ -135,7 +135,7 @@ describe("project file transfer", () => {
   });
 
   it("downloads an entire instance with credentials and all history without a password", async () => {
-    h.export.mockResolvedValue({ ...fileReply, kind: "openship-instance-export" });
+    h.export.mockResolvedValue({ ...fileReply, kind: "kovalio-instance-export" });
     await act(async () => root.render(<ExportPanel />));
     await act(async () => vi.advanceTimersByTimeAsync(300));
     expect(host.querySelector('input[type="password"]')).toBeNull();

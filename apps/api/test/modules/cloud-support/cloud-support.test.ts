@@ -193,7 +193,7 @@ describe("Cloud support tickets", () => {
     expect(send.mock.calls[0]![0]).toMatchObject({
       to: "customer@example.com",
       replyTo: SUPPORT_EMAIL,
-      messageId: expect.stringMatching(/^<support-.*@openship.io>$/),
+      messageId: expect.stringMatching(/^<support-.*@nextrium.org>$/),
     });
     expect(send.mock.calls[0]![0].text).toContain(receipt.id);
     expect((await repo.messages(receipt.id)).every((m) => m.deliveredAt)).toBe(true);

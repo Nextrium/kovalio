@@ -124,7 +124,7 @@ describe("migration placement and server lifecycle", () => {
       { id: "subject", serverId: a.id, workspaceId: source.id, organizationId: "org-b" },
     ]) {
       await expect(db.transaction(async tx => {
-        await tx.execute(sql`select set_config('openship.migration_id', 'move', true)`);
+        await tx.execute(sql`select set_config('kovalio.migration_id', 'move', true)`);
         await tx.update(schema.project).set(patch).where(eq(schema.project.id, patch.id));
       })).rejects.toThrow();
     }

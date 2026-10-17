@@ -29,10 +29,10 @@ export { freePort } from "./free-port";
 const REPO = join(import.meta.dirname, "../../../..");
 export const SCALING_K3S_IMAGE = "rancher/k3s:v1.36.4-k3s1";
 export const SCALING_APP_IMAGE = "node:22-alpine";
-export const REGISTRY_USER = "openship-e2e";
+export const REGISTRY_USER = "kovalio-e2e";
 export const REGISTRY_PASSWORD = "scaling-registry-test-password";
 // Public fixture credential. bcrypt is required by the distribution registry.
-const HTPASSWD = "openship-e2e:$2y$05$mzY7ng06oTJrMnt171U4Z.WDLE4qtkUSSP8WyNPTHeCS/SK079p.y\n";
+const HTPASSWD = "kovalio-e2e:$2y$05$mzY7ng06oTJrMnt171U4Z.WDLE4qtkUSSP8WyNPTHeCS/SK079p.y\n";
 const REGISTRY_IMAGE = "registry:2.8.3";
 const sq = (value: string) => "'" + value.replaceAll("'", "'\\''") + "'";
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -171,7 +171,7 @@ export class ScalingLab {
     return this.dockerRuntime!.docker;
   }
   get repository() {
-    return `127.0.0.1:${this.registryPort}/openship/scaling-app`;
+    return `127.0.0.1:${this.registryPort}/kovalio/scaling-app`;
   }
   get registry() {
     return `127.0.0.1:${this.registryPort}`;
@@ -188,7 +188,7 @@ export class ScalingLab {
     }
     const container = await this.docker.createContainer({
       ...options,
-      Labels: { ...options.Labels, "openship.e2e": this.id },
+      Labels: { ...options.Labels, "kovalio.e2e": this.id },
       HostConfig: { NetworkMode: this.id, ...options.HostConfig },
     });
     this.containers.push(container);
@@ -237,7 +237,7 @@ export class ScalingLab {
     }
     this.network = await this.docker.createNetwork({
       Name: this.id,
-      Labels: { "openship.e2e": this.id },
+      Labels: { "kovalio.e2e": this.id },
     });
     const network = await this.network.inspect();
     this.networkCidrs = (network.IPAM?.Config ?? [])
@@ -308,7 +308,7 @@ export class ScalingLab {
           : ["agent", `--server=https://${this.nodes[0].name}:6443`];
       args.push(
         `--node-name=${name}`,
-        `--node-label=openship.io/runtime=${this.runtimeId}`,
+        `--node-label=nextrium.org/runtime=${this.runtimeId}`,
         "--flannel-iface=eth0",
       );
       const node = await this.container({
@@ -395,8 +395,8 @@ export class ScalingLab {
     if (options.edge === false) return;
     // Build the actual shipped Edge image/config/Lua; only the external ACME
     // service is out of scope (the fixture domain deliberately uses HTTP).
-    console.info("[scaling-e2e] Nodes are ready. Building the shipped OpenShip Edge image.");
-    this.edgeImage = `openship-e2e:${this.id}-edge`;
+    console.info("[scaling-e2e] Nodes are ready. Building the shipped Kovalio Edge image.");
+    this.edgeImage = `kovalio-e2e:${this.id}-edge`;
     const build = await this.docker.buildImage(
       {
         context: REPO,
@@ -431,7 +431,7 @@ export class ScalingLab {
       pinPaths: true,
     });
     await eventually(
-      "OpenShip Edge",
+      "Kovalio Edge",
       () => this.executor.exec("openresty -t"),
       () => true,
     );
@@ -484,7 +484,7 @@ export class ScalingLab {
           response.once("end", () => resolve({ status: response.statusCode!, body }));
         },
       );
-      req.setTimeout(5000, () => req.destroy(new Error("OpenShip Edge request timed out")));
+      req.setTimeout(5000, () => req.destroy(new Error("Kovalio Edge request timed out")));
       req.once("error", reject);
       req.end();
     });
@@ -533,7 +533,7 @@ export class ScalingLab {
     for (const container of [...this.containers].reverse()) {
       try {
         const info = await container.inspect();
-        if (info.Config.Labels?.["openship.e2e"] !== this.id)
+        if (info.Config.Labels?.["kovalio.e2e"] !== this.id)
           throw new Error("Refusing to remove a container with different ownership.");
         if (info.State.Paused) await container.unpause();
         await container.remove({ force: true, v: true });

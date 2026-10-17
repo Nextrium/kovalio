@@ -174,7 +174,7 @@ describe("DNS and Access ownership", () => {
       type: "CNAME",
       content: "tunnel.cfargotunnel.com",
       proxied: true,
-      comment: "Managed by Openship (host)",
+      comment: "Managed by Kovalio (host)",
     });
     expect(state.value.dnsId).toBe(records[0].id);
   });
@@ -202,7 +202,7 @@ describe("DNS and Access ownership", () => {
         type: "CNAME",
         content: "manual.example.test",
         proxied: true,
-        comment: "Managed by Openship (host)",
+        comment: "Managed by Kovalio (host)",
       },
     ];
     const state = ledger({ zoneId: "zone", dnsId: "ours" });
@@ -306,8 +306,8 @@ describe("named tunnel recovery", () => {
       }),
     );
     const api = new CloudflareIngress("secret", "account");
-    await expect(api.createTunnel("Openship unique-setup")).rejects.toThrow();
-    const recovered = await api.createTunnel("Openship unique-setup");
+    await expect(api.createTunnel("Kovalio unique-setup")).rejects.toThrow();
+    const recovered = await api.createTunnel("Kovalio unique-setup");
     expect(creates).toBe(1);
     await api.initializeTunnel(recovered.id);
     expect(tunnelConfig).toEqual({ ingress: [terminal] });
@@ -316,7 +316,7 @@ describe("named tunnel recovery", () => {
       service: "http://elsewhere",
     });
     await expect(api.deleteTunnel(recovered.id, recovered.name)).rejects.toThrow(
-      /outside Openship/,
+      /outside Kovalio/,
     );
     expect(saved).not.toBeNull();
     tunnelConfig!.ingress.shift();
@@ -366,7 +366,7 @@ describe("interrupted protection and DNS changes", () => {
     await api.removeAccess(h, state.value, state.save);
     expect(apps).toHaveLength(0);
   });
-  it("retains a DNS record renamed outside Openship instead of forgetting its ownership", async () => {
+  it("retains a DNS record renamed outside Kovalio instead of forgetting its ownership", async () => {
     const state = ledger({ zoneId: "zone" }),
       api = new CloudflareIngress("secret", "account");
     await api.dns(h, c, state.value, state.save);

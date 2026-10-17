@@ -36,7 +36,7 @@ const defaults = (engine: ClusterDatabaseConfig["engine"]): ClusterDatabaseConfi
   mode: "standalone",
   instances: 1,
   storageGiB: engine === "postgres" ? 20 : 5,
-  storageClass: "openship-local",
+  storageClass: "kovalio-local",
   cpuMillis: 500,
   memoryMiB: 512,
   databaseName: "app",
@@ -101,7 +101,7 @@ export function ClusterDatabasePanel({
   const [sharedStorage, setSharedStorage] = useState(false);
   const [storageLoading, setStorageLoading] = useState(!!clusterId && !database);
   const [customStorage, setCustomStorage] = useState(
-    !!database && !["openship-local", MANAGED_STORAGE_CLASS].includes(database.config.storageClass),
+    !!database && !["kovalio-local", MANAGED_STORAGE_CLASS].includes(database.config.storageClass),
   );
   useEffect(() => {
     if (clusterId || database) return;
@@ -327,7 +327,7 @@ export function ClusterDatabasePanel({
                   onChange={(value) => {
                     setSelectedCluster(value);
                     setCustomStorage(false);
-                    change("storageClass", "openship-local");
+                    change("storageClass", "kovalio-local");
                   }}
                 />
                 {!clustersLoading && !clusters.length && (
@@ -474,7 +474,7 @@ export function ClusterDatabasePanel({
                 disabled={
                   locked ||
                   (!!database &&
-                    (config.storageClass === "openship-local" || config.engine === "redis"))
+                    (config.storageClass === "kovalio-local" || config.engine === "redis"))
                 }
                 onChange={(event) => change("storageGiB", Number(event.target.value))}
               />
@@ -503,7 +503,7 @@ export function ClusterDatabasePanel({
                       ]
                     : []),
                   {
-                    value: "openship-local",
+                    value: "kovalio-local",
                     label: "Each server's local disk",
                     description: "Database replicas keep separate copies of the data.",
                   },
@@ -522,7 +522,7 @@ export function ClusterDatabasePanel({
                 Each database instance keeps its own disk. Database replicas never share a writable
                 data folder.
               </p>
-              {config.storageClass === "openship-local" && (
+              {config.storageClass === "kovalio-local" && (
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   Local disk sizes are reservations. If a server is lost, recovery uses another
                   database replica or a backup.
@@ -588,7 +588,7 @@ export function ClusterDatabasePanel({
               <div className="space-y-3 rounded-xl bg-warning/5 p-3 text-sm">
                 <p>
                   Redis will move data between {database.config.instances} and {config.instances}{" "}
-                  partitions. OpenShip verifies a backup first; requests may be slower while data
+                  partitions. Kovalio verifies a backup first; requests may be slower while data
                   moves.
                 </p>
                 {!database.config.backup ? (

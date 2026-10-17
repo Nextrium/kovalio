@@ -91,7 +91,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
     types: {
-      "application/rss+xml": [{ url: "/blog/rss.xml", title: "Openship Blog" }],
+      "application/rss+xml": [{ url: "/blog/rss.xml", title: "Kovalio Blog" }],
     },
   },
   // verification: {

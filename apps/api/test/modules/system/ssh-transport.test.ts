@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { repos } from "@repo/db";
 import { connOk } from "@repo/core";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { seedOwner } from "../jobs/_harness";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { buildSshConfig, sshManager } from "@repo/platform/engine/lib/ssh-manager";
@@ -20,7 +20,7 @@ async function clients() {
   const user = (await repos.user.findById(owner.userId))!;
   const ship = createShip({ platform: getPlatformKernel(), identity: { resolve: async () => ({ user: { id: user.id, email: user.email, name: user.name }, sessionId: "ssh-transport-test" }) } });
   const native = (await ship.scope({ identity: "verified", organizationId: owner.orgId })).servers;
-  const remote = new OpenshipClient({ baseUrl: "http://openship.test", token: owner.token, organizationId: owner.orgId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch }).servers;
+  const remote = new KovalioClient({ baseUrl: "http://kovalio.test", token: owner.token, organizationId: owner.orgId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch }).servers;
   return { native, remote, owner };
 }
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
@@ -78,8 +78,8 @@ describe("saved Cloudflare SSH through HTTP and native SDK", () => {
 
   it("requires the native host-execution capability for the Cloudflare client", async () => {
     const { native } = await clients();
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
     await expect(native.create({ sshHost: "ssh.example.test", sshTransport: "cloudflare", sshAuthMethod: "password", sshPassword: "password" })).rejects.toMatchObject({ code: "HOST_EXECUTION_DISABLED" });
   });
 

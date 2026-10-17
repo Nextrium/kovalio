@@ -152,8 +152,8 @@ const last = () => h.configs[h.configs.length - 1] as Record<string, unknown>;
 
 const dashboardProject = {
   id: "dashboard",
-  slug: "openship",
-  appTemplateId: "openship",
+  slug: "kovalio",
+  appTemplateId: "kovalio",
   port: 3001,
   workspaceId: null,
   activeDeploymentId: "dashboard-adopt",
@@ -260,12 +260,12 @@ describe("local host authorization", () => {
   });
 
   it("applies the native host-execution policy to read-only Docker access too", async () => {
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "false");
     await expect(resolveDeploymentRuntimeForRead({ meta: {}, organizationId: "native-org" }))
       .rejects.toMatchObject({ code: "HOST_EXECUTION_DISABLED" });
     expect(h.docker).not.toHaveBeenCalled();
-    vi.stubEnv("OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION", "true");
+    vi.stubEnv("KOVALIO_NATIVE_ALLOW_HOST_EXECUTION", "true");
     await resolveDeploymentRuntimeForRead({ meta: {}, organizationId: "native-org" });
     expect(h.docker).toHaveBeenCalledTimes(1);
     expect(h.owningOrg).not.toHaveBeenCalled();
@@ -273,7 +273,7 @@ describe("local host authorization", () => {
 });
 
 beforeEach(() => {
-  vi.stubEnv("OPENSHIP_NATIVE", "false");
+  vi.stubEnv("KOVALIO_NATIVE", "false");
   h.target = "selfhosted";
   h.owningOrg.mockReset().mockResolvedValue("org1");
   h.docker.mockClear();

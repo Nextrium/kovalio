@@ -15,7 +15,7 @@
 
 import { Oblien } from "@repo/adapters";
 import { env } from "@repo/platform/engine/config/env";
-import { getOblienClient } from "@repo/platform/engine/lib/openship-cloud";
+import { getOblienClient } from "@repo/platform/engine/lib/kovalio-cloud";
 import { getOrgCloudToken } from "@repo/platform/engine/lib/cloud/client";
 import { cacheStore } from "@repo/platform/engine/lib/cache-store/index";
 

@@ -77,7 +77,7 @@
     },
     "runtimeVersionLabel": "运行时版本",
     "runtimeVersionDefault": "默认",
-    "runtimeVersionDesc": "使用与所选版本匹配的构建和运行镜像。需要由 Openship 生成的 Docker 构建。",
+    "runtimeVersionDesc": "使用与所选版本匹配的构建和运行镜像。需要由 Kovalio 生成的 Docker 构建。",
     "buildImageLabel": "构建镜像",
     "buildImageDesc": "用于云端或服务器构建的构建容器镜像。当检测到的基础镜像有误时可覆盖此项。",
     "productionPathsLabel": "生产路径",
@@ -222,7 +222,7 @@
       "statefulWarnBold": "不会被保留",
       "statefulWarnPart2": "。替换工作区之前，请明确执行数据备份和恢复。",
       "volumeHint": "命名卷或主机路径 → 容器路径。",
-      "volumeCloudNote": "Openship Cloud 不支持持久卷挂载。需要卷的工作负载请选择服务器。",
+      "volumeCloudNote": "Kovalio Cloud 不支持持久卷挂载。需要卷的工作负载请选择服务器。",
       "sourcePlaceholder": "来源",
       "containerPathPlaceholder": "容器路径",
       "readOnlyMount": "只读挂载",
@@ -464,8 +464,8 @@
   "configDiagnostics": {
     "title": "部分仓库部署设置未应用",
     "description": "部署前请检查以下跳过的设置。",
-    "titleWholeFile": "已忽略此仓库的 openship.json",
-    "descriptionWholeFile": "文件中没有任何内容生效。本次部署将使用 Openship 自动检测到的设置继续。",
+    "titleWholeFile": "已忽略此仓库的 kovalio.json",
+    "descriptionWholeFile": "文件中没有任何内容生效。本次部署将使用 Kovalio 自动检测到的设置继续。",
     "refused": "已拒绝",
     "unrecognized": "无法识别",
     "hint": "下次部署前，请检查指定的配置文件并更新不受支持的设置。"

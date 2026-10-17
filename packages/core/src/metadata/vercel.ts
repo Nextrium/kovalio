@@ -171,7 +171,7 @@ export function vercelCompatibilityWarnings(raw: string): string[] {
   ] as const) {
     if (!(key in parsed)) continue;
     warnings.push(
-      `vercel.json ${key} is not implemented by Openship; configure its equivalent explicitly before deploying.`,
+      `vercel.json ${key} is not implemented by Kovalio; configure its equivalent explicitly before deploying.`,
     );
   }
   for (const key of ["rewrites", "redirects", "headers"] as const) {
@@ -207,7 +207,7 @@ export function vercelCompatibilityWarnings(raw: string): string[] {
     "fluid",
   ]);
   if (Object.keys(parsed).some((key) => !recognized.has(key)))
-    warnings.push("vercel.json contains additional directives that Openship does not implement.");
+    warnings.push("vercel.json contains additional directives that Kovalio does not implement.");
   return warnings;
 }
 

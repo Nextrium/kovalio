@@ -77,7 +77,7 @@
     },
     "runtimeVersionLabel": "إصدار بيئة التشغيل",
     "runtimeVersionDefault": "الافتراضي",
-    "runtimeVersionDesc": "يستخدم صور بناء وتشغيل متوافقة مع الإصدار المحدد. يتطلب بناء Docker يُنشئه Openship.",
+    "runtimeVersionDesc": "يستخدم صور بناء وتشغيل متوافقة مع الإصدار المحدد. يتطلب بناء Docker يُنشئه Kovalio.",
     "buildImageLabel": "صورة البناء",
     "buildImageDesc": "صورة حاوية البناء للبناء السحابي أو على الخادم. تجاوزها عندما تكون الصورة الأساسية المكتشفة خاطئة.",
     "productionPathsLabel": "مسارات الإنتاج",
@@ -222,7 +222,7 @@
       "statefulWarnBold": "لا تُنقل عبر عمليات إعادة البناء",
       "statefulWarnPart2": ". انسخ البيانات احتياطيًا واستعدها بشكل صريح قبل استبدال مساحة العمل.",
       "volumeHint": "وحدة تخزين مسماة أو مسار مضيف → مسار الحاوية.",
-      "volumeCloudNote": "تركيبات وحدات التخزين الدائمة غير مدعومة في Openship Cloud. اختر خادماً لأحمال العمل التي تتطلبها.",
+      "volumeCloudNote": "تركيبات وحدات التخزين الدائمة غير مدعومة في Kovalio Cloud. اختر خادماً لأحمال العمل التي تتطلبها.",
       "sourcePlaceholder": "المصدر",
       "containerPathPlaceholder": "مسار الحاوية",
       "readOnlyMount": "تحميل للقراءة فقط",
@@ -464,8 +464,8 @@
   "configDiagnostics": {
     "title": "لم يتم تطبيق بعض إعدادات النشر في المستودع",
     "description": "راجع الإعدادات التي تم تخطيها أدناه قبل النشر.",
-    "titleWholeFile": "تم تجاهل ملف openship.json في هذا المستودع",
-    "descriptionWholeFile": "لم يُطبَّق أي جزء منه. سيستمر النشر باستخدام الإعدادات التي اكتشفها Openship.",
+    "titleWholeFile": "تم تجاهل ملف kovalio.json في هذا المستودع",
+    "descriptionWholeFile": "لم يُطبَّق أي جزء منه. سيستمر النشر باستخدام الإعدادات التي اكتشفها Kovalio.",
     "refused": "مرفوض",
     "unrecognized": "غير معروف",
     "hint": "تحقق من ملفات الإعدادات المذكورة وحدّث الإعدادات غير المدعومة قبل النشر التالي."

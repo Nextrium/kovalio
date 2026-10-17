@@ -28,7 +28,7 @@ it("adds notification settings to an existing workflow without changing its sour
     await migrate(db, { migrationsFolder: prefix });
     await client.exec(`INSERT INTO organization (id, name) VALUES ('org', 'Owner');
       INSERT INTO action_workflow (id, organization_id, name, path, ref, source, definition, runner_ids, authority, secrets)
-      VALUES ('workflow', 'org', 'CI', '.openship/workflows/ci.yml', 'main', 'reviewed source', '{}', '[]', '{}', '{"TOKEN":"encrypted"}');`);
+      VALUES ('workflow', 'org', 'CI', '.kovalio/workflows/ci.yml', 'main', 'reviewed source', '{}', '[]', '{}', '{"TOKEN":"encrypted"}');`);
     await migrate(db, { migrationsFolder: migrations });
     await migrate(db, { migrationsFolder: migrations });
     expect(

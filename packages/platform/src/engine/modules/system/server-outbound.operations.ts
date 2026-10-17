@@ -100,7 +100,7 @@ async function applyProxy(work: () => Promise<unknown>) {
     const code = typeof rawCode === "string" ? rawCode.toLowerCase() : null;
     if (code === "plan_required")
       throw new AppError(
-        "Custom outbound proxies are not enabled on the Cloud provider account. Contact Openship support.",
+        "Custom outbound proxies are not enabled on the Cloud provider account. Contact Kovalio support.",
         402,
         "MANAGED_PROXY_UNAVAILABLE",
       );

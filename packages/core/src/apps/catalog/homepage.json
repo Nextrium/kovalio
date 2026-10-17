@@ -1,5 +1,5 @@
 {
-  "$schema": "https://openship.io/app.schema.json",
+  "$schema": "https://nextrium.org/app.schema.json",
   "available": true,
   "verified": false,
   "minEngine": "0.9.0",
@@ -21,7 +21,7 @@
         "HOSTNAME": "0.0.0.0"
       },
       "volumes": ["homepage_config:/app/config"],
-      "commandArgv": ["node", "/etc/openship/homepage-start.cjs"],
+      "commandArgv": ["node", "/etc/kovalio/homepage-start.cjs"],
       "healthcheck": {
         "test": ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/healthcheck"],
         "interval": "10s",
@@ -40,8 +40,8 @@
       "image": "caddy:2.11.7-alpine",
       "restart": "unless-stopped",
       "dependsOn": ["homepage"],
-      "secretEnv": ["OPENSHIP_ADMIN_PASSWORD"],
-      "commandArgv": ["sh", "/etc/openship/homepage-access.sh"],
+      "secretEnv": ["KOVALIO_ADMIN_PASSWORD"],
+      "commandArgv": ["sh", "/etc/kovalio/homepage-access.sh"],
       "healthcheck": {
         "test": [
           "CMD-SHELL",
@@ -99,14 +99,14 @@
   "configFields": [
     {
       "service": "homepage-access",
-      "key": "OPENSHIP_ADMIN_PASSWORD",
+      "key": "KOVALIO_ADMIN_PASSWORD",
       "label": "Dashboard password",
       "generate": "secret",
       "secret": true
     },
     {
       "service": "homepage-access",
-      "key": "OPENSHIP_ADMIN_USER",
+      "key": "KOVALIO_ADMIN_USER",
       "label": "Dashboard username",
       "default": "admin",
       "required": true
@@ -120,14 +120,14 @@
       "fields": [
         {
           "service": "homepage-access",
-          "key": "OPENSHIP_ADMIN_USER",
+          "key": "KOVALIO_ADMIN_USER",
           "label": "Dashboard username",
           "type": "text",
           "default": "admin",
           "required": true,
           "installStep": true,
           "pattern": "^[a-zA-Z0-9_.-]+$",
-          "help": "Username for the authentication proxy. Change access credentials in Openship configuration."
+          "help": "Username for the authentication proxy. Change access credentials in Kovalio configuration."
         }
       ]
     }
@@ -149,13 +149,13 @@
       {
         "id": "username",
         "label": "Username",
-        "source": "env:homepage-access:OPENSHIP_ADMIN_USER",
+        "source": "env:homepage-access:KOVALIO_ADMIN_USER",
         "width": "half"
       },
       {
         "id": "password",
         "label": "Initial password",
-        "source": "env:homepage-access:OPENSHIP_ADMIN_PASSWORD",
+        "source": "env:homepage-access:KOVALIO_ADMIN_PASSWORD",
         "secret": true,
         "width": "half"
       }
@@ -164,24 +164,24 @@
       "defaultMode": "public"
     },
     "firstLogin": {
-      "note": "Homepage has no built-in login. Openship adds password protection to every public request. Change these credentials in Openship configuration."
+      "note": "Homepage has no built-in login. Kovalio adds password protection to every public request. Change these credentials in Kovalio configuration."
     }
   },
   "files": [
     {
       "service": "homepage",
-      "path": "/etc/openship/homepage-start.cjs",
+      "path": "/etc/kovalio/homepage-start.cjs",
       "content": "const { existsSync, writeFileSync } = require('node:fs');\nfor (const [file, content] of Object.entries({ 'settings.yaml': 'title: My services\\n', 'services.yaml': '[]\\n', 'bookmarks.yaml': '[]\\n', 'widgets.yaml': '[]\\n', 'docker.yaml': '{}\\n', 'kubernetes.yaml': '{}\\n' })) {\n  const path = '/app/config/' + file;\n  if (!existsSync(path)) writeFileSync(path, content, { mode: 0o600 });\n}\nrequire('/app/server.js');\n"
     },
     {
       "service": "homepage-access",
-      "path": "/etc/openship/homepage-access.sh",
-      "content": "#!/bin/sh\nset -eu\nexport OPENSHIP_PASSWORD_HASH=\"$(caddy hash-password --plaintext \"$OPENSHIP_ADMIN_PASSWORD\")\"\nunset OPENSHIP_ADMIN_PASSWORD\nexec caddy run --config /etc/openship/homepage.Caddyfile --adapter caddyfile\n"
+      "path": "/etc/kovalio/homepage-access.sh",
+      "content": "#!/bin/sh\nset -eu\nexport KOVALIO_PASSWORD_HASH=\"$(caddy hash-password --plaintext \"$KOVALIO_ADMIN_PASSWORD\")\"\nunset KOVALIO_ADMIN_PASSWORD\nexec caddy run --config /etc/kovalio/homepage.Caddyfile --adapter caddyfile\n"
     },
     {
       "service": "homepage-access",
-      "path": "/etc/openship/homepage.Caddyfile",
-      "content": "{\n  auto_https off\n  admin off\n}\n:8080 {\n  basic_auth {\n    {$OPENSHIP_ADMIN_USER} {$OPENSHIP_PASSWORD_HASH}\n  }\n  reverse_proxy homepage:3000 {\n    header_up Host homepage:3000\n  }\n}\n"
+      "path": "/etc/kovalio/homepage.Caddyfile",
+      "content": "{\n  auto_https off\n  admin off\n}\n:8080 {\n  basic_auth {\n    {$KOVALIO_ADMIN_USER} {$KOVALIO_PASSWORD_HASH}\n  }\n  reverse_proxy homepage:3000 {\n    header_up Host homepage:3000\n  }\n}\n"
     }
   ]
 }

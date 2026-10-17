@@ -4,5 +4,5 @@
  * This narrows scope; authentication and resource authorization still apply.
  * Omitting it preserves the HTTP API's legacy resource-derived scope.
  */
-export const SDK_SCOPE_HEADER = "X-Openship-Scope";
+export const SDK_SCOPE_HEADER = "X-Kovalio-Scope";
 export const SDK_CAPABILITIES = Object.freeze({ protocol: 1, fixedOrganizationScope: true });

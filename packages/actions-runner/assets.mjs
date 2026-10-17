@@ -34,7 +34,7 @@ export function verifyRunnerAssets() {
   for (const [os, arch] of RUNNER_TARGETS) {
     const file = manifest.files[`${os}/${arch}`];
     if (
-      file?.name !== `openship-actions-${os}-${arch}` ||
+      file?.name !== `kovalio-actions-${os}-${arch}` ||
       createHash("sha256")
         .update(readFileSync(join(output, file.name)))
         .digest("hex") !== file.sha256
@@ -57,7 +57,7 @@ export function ensureRunnerAssets() {
   });
   if (result.status !== 0)
     throw new Error(
-      "Actions runner build failed. Building Openship requires the Go toolchain declared in packages/actions-runner/go.mod.",
+      "Actions runner build failed. Building Kovalio requires the Go toolchain declared in packages/actions-runner/go.mod.",
     );
   return verifyRunnerAssets();
 }

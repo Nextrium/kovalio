@@ -16,7 +16,7 @@ export async function streamDeploymentLogs(deploymentId: string, timeoutMs = 600
       process.stdout.write(event.log);
     } else if (event.event === "prompt") {
       info(`\n${String(event.payload.title ?? "Deployment needs a decision")}: ${String(event.payload.message ?? "")}`);
-      info(`Inspect it with openship deployment pending ${deploymentId}, then respond with openship deployment respond ${deploymentId} --action <action>.`);
+      info(`Inspect it with kovalio deployment pending ${deploymentId}, then respond with kovalio deployment respond ${deploymentId} --action <action>.`);
     }
   }, { stopOnPrompt: true });
 
@@ -32,7 +32,7 @@ export async function streamDeploymentLogs(deploymentId: string, timeoutMs = 600
     const names = result.failedServices.map((service) => service.name).join(", ");
     const ids = result.failedServices.map((service) => service.id).join(",");
     err(`\n⚠ ${result.failedServices.length} of ${result.serviceCount} service(s) failed: ${names}\n` +
-      `Retry the failed services with openship deploy --service-ids ${ids}\n`);
+      `Retry the failed services with kovalio deploy --service-ids ${ids}\n`);
   } else if (outcome.prompt) {
     info(`\n${outcome.prompt.title}: ${outcome.prompt.message}`);
   } else if (result.success) {

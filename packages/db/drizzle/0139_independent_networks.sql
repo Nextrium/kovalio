@@ -72,12 +72,12 @@ INSERT INTO "compute_cluster_member" ("id", "cluster_id", "network_id", "server_
 SELECT m."id", m."network_id", m."network_id", m."server_id"
 FROM "network_member" m JOIN "compute_cluster" c ON c."id" = m."network_id";
 --> statement-breakpoint
-CREATE OR REPLACE FUNCTION "openship_has_managed_network_state"(org_id text)
+CREATE OR REPLACE FUNCTION "kovalio_has_managed_network_state"(org_id text)
 RETURNS boolean LANGUAGE sql STABLE AS $$
   SELECT EXISTS (
     SELECT 1 FROM "private_network" n
     JOIN "private_network_config" c ON c."network_id" = n."id"
-    WHERE n."organization_id" = org_id AND c."ownership" = 'openship'
+    WHERE n."organization_id" = org_id AND c."ownership" = 'kovalio'
   ) OR EXISTS (
     SELECT 1 FROM "managed_network_claim" WHERE "organization_id" = org_id
   );

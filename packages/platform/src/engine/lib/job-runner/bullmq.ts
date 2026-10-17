@@ -62,7 +62,7 @@ export class BullMQJobRunner implements JobRunner {
     this.started = true;
 
     const conn = this.connectionOpts();
-    const namespace = process.env.OPENSHIP_INSTANCE_NAMESPACE;
+    const namespace = process.env.KOVALIO_INSTANCE_NAMESPACE;
     // Omit an absent prefix so BullMQ retains its existing queue and client defaults.
     const queueScope = namespace ? { prefix: namespace } : {};
 

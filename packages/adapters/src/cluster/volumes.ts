@@ -46,9 +46,9 @@ export class ClusterVolumeAdapter {
   ) {
     this.namespace = kubernetesProjectNamespace(projectId);
     this.labels = {
-      "app.kubernetes.io/managed-by": "openship",
-      "openship.io/project": kubernetesIdLabel(projectId),
-      "openship.io/runtime": runtimeId,
+      "app.kubernetes.io/managed-by": "kovalio",
+      "nextrium.org/project": kubernetesIdLabel(projectId),
+      "nextrium.org/runtime": runtimeId,
     };
     this.archive = new VolumeBackups(api, this.labels, signal, fence);
   }
@@ -64,7 +64,7 @@ export class ClusterVolumeAdapter {
   private owned(object: KubernetesObject, name?: string) {
     if (
       Object.entries(this.labels).some(([key, value]) => object.metadata.labels?.[key] !== value) ||
-      (name && object.metadata.labels?.["openship.io/volume"] !== name)
+      (name && object.metadata.labels?.["nextrium.org/volume"] !== name)
     )
       throw conflict(
         "This volume belongs to a different project or cluster. It was left unchanged.",
@@ -127,8 +127,8 @@ export class ClusterVolumeAdapter {
     this.owned(current);
     if (
       current.metadata.deletionTimestamp ||
-      current.metadata.annotations?.["openship.io/request"] !==
-        object.metadata.annotations?.["openship.io/request"]
+      current.metadata.annotations?.["nextrium.org/request"] !==
+        object.metadata.annotations?.["nextrium.org/request"]
     )
       throw conflict(
         "This volume operation already exists with a different request. Refresh its status before continuing.",
@@ -246,7 +246,7 @@ export class ClusterVolumeAdapter {
         .filter(Boolean)
         .join("; ") || null;
     return {
-      name: claim.metadata.labels!["openship.io/volume"],
+      name: claim.metadata.labels!["nextrium.org/volume"],
       resourceVersion: claim.metadata.resourceVersion!,
       sizeGiB: parseInt(claim.spec.resources.requests.storage, 10),
       phase: claim.metadata.deletionTimestamp ? "Deleting" : (claim.status?.phase ?? "Pending"),
@@ -257,10 +257,10 @@ export class ClusterVolumeAdapter {
       copies,
       desiredCopies: backing?.volume.spec.numberOfReplicas ?? 0,
       backupSchedule: JSON.parse(
-        claim.metadata.annotations?.["openship.io/backup-schedule"] ??
+        claim.metadata.annotations?.["nextrium.org/backup-schedule"] ??
           JSON.stringify(defaultSchedule),
       ),
-      backups: backups.filter((b) => b.volumeName === claim.metadata.labels!["openship.io/volume"]),
+      backups: backups.filter((b) => b.volumeName === claim.metadata.labels!["nextrium.org/volume"]),
     };
   }
   async list(savedBackups?: ClusterVolumeBackup[]) {
@@ -273,13 +273,13 @@ export class ClusterVolumeAdapter {
     this.owned(namespace);
     const result = await this.api.request<{ items: KubernetesObject[] }>(
       "GET",
-      `${this.claims}?labelSelector=${encodeURIComponent(`openship.io/project=${this.labels["openship.io/project"]},openship.io/volume`)}`,
+      `${this.claims}?labelSelector=${encodeURIComponent(`nextrium.org/project=${this.labels["nextrium.org/project"]},nextrium.org/volume`)}`,
       undefined,
       this.signal,
     );
     const records = await this.api.request<{ items: KubernetesObject[] }>(
       "GET",
-      `${this.records}?labelSelector=${encodeURIComponent(`openship.io/project=${this.labels["openship.io/project"]},openship.io/volume-deletion=true`)}`,
+      `${this.records}?labelSelector=${encodeURIComponent(`nextrium.org/project=${this.labels["nextrium.org/project"]},nextrium.org/volume-deletion=true`)}`,
       undefined,
       this.signal,
     );
@@ -332,7 +332,7 @@ export class ClusterVolumeAdapter {
       this.signal,
     );
     if (
-      standard.metadata.labels?.["openship.io/runtime"] !== this.runtimeId ||
+      standard.metadata.labels?.["nextrium.org/runtime"] !== this.runtimeId ||
       standard.provisioner !== "driver.longhorn.io"
     )
       throw conflict("Enable shared storage on this cluster before adding a volume.");
@@ -340,8 +340,8 @@ export class ClusterVolumeAdapter {
     const metadata = {
       name: clusterVolumeClaim(input.name),
       namespace: this.namespace,
-      labels: { ...this.labels, "openship.io/volume": input.name },
-      annotations: { "openship.io/request": intent },
+      labels: { ...this.labels, "nextrium.org/volume": input.name },
+      annotations: { "nextrium.org/request": intent },
     };
     let storageClassName = MANAGED_STORAGE_CLASS;
     if (input.restoreFrom) {
@@ -350,14 +350,14 @@ export class ClusterVolumeAdapter {
         input.restoreFrom.backupName,
         input.sizeGiB,
       );
-      storageClassName = `openship-restore-${intent.slice(0, 24)}`;
+      storageClassName = `kovalio-restore-${intent.slice(0, 24)}`;
       await this.createOnce("/apis/storage.k8s.io/v1/storageclasses", {
         ...standard,
         metadata: {
           name: storageClassName,
           labels: this.labels,
           annotations: {
-            "openship.io/request": intent,
+            "nextrium.org/request": intent,
             "storageclass.kubernetes.io/is-default-class": "false",
           },
         },
@@ -449,14 +449,14 @@ export class ClusterVolumeAdapter {
       this.signal,
     );
     if (
-      target.metadata.labels?.["openship.io/runtime"] !== this.runtimeId ||
+      target.metadata.labels?.["nextrium.org/runtime"] !== this.runtimeId ||
       !target.spec.backupTargetURL
     )
       throw conflict("Choose a backup destination in the cluster's storage settings first.");
     const operation = `backup-${hash(`${claim.metadata.uid}:${requestId}`).slice(0, 24)}`;
     const labels = {
       ...this.labels,
-      "openship.io/volume": name,
+      "nextrium.org/volume": name,
       "backup-volume": backing.volume.metadata.name!,
       "backup-target": "default",
       longhornvolume: backing.volume.metadata.name!,
@@ -465,7 +465,7 @@ export class ClusterVolumeAdapter {
       name: operation,
       namespace: LONGHORN_NAMESPACE,
       labels,
-      annotations: { "openship.io/request": requestId },
+      annotations: { "nextrium.org/request": requestId },
     };
     await this.createOnce(`${longhornBase}/snapshots`, {
       apiVersion: "longhorn.io/v1beta2",
@@ -496,7 +496,7 @@ export class ClusterVolumeAdapter {
         this.signal,
       );
       if (
-        target.metadata.labels?.["openship.io/runtime"] !== this.runtimeId ||
+        target.metadata.labels?.["nextrium.org/runtime"] !== this.runtimeId ||
         !target.spec.backupTargetURL
       )
         throw conflict("Choose a backup destination in cluster storage first.");
@@ -516,7 +516,7 @@ export class ClusterVolumeAdapter {
           throw conflict("The volume was replaced while saving its schedule.");
         await this.fence();
         return {
-          metadata: { annotations: { "openship.io/backup-schedule": JSON.stringify(schedule) } },
+          metadata: { annotations: { "nextrium.org/backup-schedule": JSON.stringify(schedule) } },
         };
       },
       this.signal,
@@ -584,10 +584,10 @@ export class ClusterVolumeAdapter {
           namespace: this.namespace,
           labels: {
             ...this.labels,
-            "openship.io/volume": name,
-            "openship.io/volume-deletion": "true",
+            "nextrium.org/volume": name,
+            "nextrium.org/volume-deletion": "true",
           },
-          annotations: { "openship.io/request": plan.claimUid },
+          annotations: { "nextrium.org/request": plan.claimUid },
         },
         data: { plan: JSON.stringify(plan) },
       });
@@ -685,7 +685,7 @@ export class ClusterVolumeAdapter {
         "volume and data-copy deletion",
         60_000,
       );
-    if (plan.storageClassName.startsWith("openship-restore-")) {
+    if (plan.storageClassName.startsWith("kovalio-restore-")) {
       const path = `/apis/storage.k8s.io/v1/storageclasses/${plan.storageClassName}`;
       const storageClass = await clusterObject(this.api, path, this.signal);
       if (storageClass) {

@@ -382,7 +382,7 @@ export function createAuthorization(deps: AuthorizationDependencies) {
       credential: identity.credential,
       scopeMode: "fixed",
       clientIp: null,
-      userAgent: "openship-sdk/native",
+      userAgent: "kovalio-sdk/native",
       traceId: randomUUID(),
       source: "api",
     });

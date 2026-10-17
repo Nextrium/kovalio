@@ -45,13 +45,13 @@ runs:
         artifact-ids: ${{ steps.check.outputs.artifact-id }}
         run-id: ${{ steps.check.outputs.run-id }}
         github-token: ${{ github.token }}
-        path: ${{ runner.temp }}/openship-resume-artifact
+        path: ${{ runner.temp }}/kovalio-resume-artifact
         merge-multiple: true
     - uses: actions/upload-artifact@v7
       if: steps.check.outputs.reused == 'true' && inputs.artifact != ''
       with:
         name: ${{ inputs.artifact }}
-        path: ${{ runner.temp }}/openship-resume-artifact
+        path: ${{ runner.temp }}/kovalio-resume-artifact
         include-hidden-files: true
         if-no-files-found: error
         retention-days: 7

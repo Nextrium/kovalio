@@ -115,7 +115,7 @@ export function GitHubSources() {
   if (isOwner !== true) return null;
 
   const beginManifest = async () => {
-    const target = `openship-github-app-${Date.now()}`;
+    const target = `kovalio-github-app-${Date.now()}`;
     const popup = openPendingWindow(target);
     setBusy("manifest");
     try {
@@ -144,7 +144,7 @@ export function GitHubSources() {
   };
 
   const install = async (source: GitHubSource) => {
-    const popup = openPendingWindow(`openship-github-install-${source.id}`);
+    const popup = openPendingWindow(`kovalio-github-install-${source.id}`);
     setBusy(source.id);
     try {
       const result = await githubApi.createSourceInstallUrl(source.id);
@@ -532,7 +532,7 @@ function SourceForm({
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
-    const popup = source ? null : openPendingWindow(`openship-github-install-${Date.now()}`);
+    const popup = source ? null : openPendingWindow(`kovalio-github-install-${Date.now()}`);
     setSaving(true);
     try {
       if (source) {

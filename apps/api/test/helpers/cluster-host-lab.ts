@@ -56,12 +56,12 @@ export class ClusterHostLab {
       throw new Error(
         "The stateful scaling journey needs at least 8 GiB of Docker memory for three independent Linux VMs.",
       );
-    this.directory = await mkdtemp(join(tmpdir(), "openship-cluster-hosts-"));
+    this.directory = await mkdtemp(join(tmpdir(), "kovalio-cluster-hosts-"));
     const key = join(this.directory, "id_ed25519");
     await run("ssh-keygen", ["-t", "ed25519", "-N", "", "-f", key]);
     this.privateKey = await readFile(key, "utf8");
     const publicKey = await readFile(key + ".pub", "utf8");
-    this.image = `openship-e2e:${this.id}-host`;
+    this.image = `kovalio-e2e:${this.id}-host`;
     console.info("[stateful-e2e] Building isolated Linux VMs with systemd and SSH.");
     const build = await this.docker.buildImage(
       { context: fixture, src: ["Dockerfile", "boot.py"] },
@@ -78,7 +78,7 @@ export class ClusterHostLab {
     );
     this.network = await this.docker.createNetwork({
       Name: this.id,
-      Labels: { "openship.e2e": this.id },
+      Labels: { "kovalio.e2e": this.id },
     });
     this.networkCidrs = ((await this.network.inspect()).IPAM?.Config ?? [])
       .map((config) => config.Subnet)
@@ -87,25 +87,25 @@ export class ClusterHostLab {
       const id = randomUUID();
       const name = `${this.id}-server-${index + 1}`;
       const volumeName = `${name}-data`;
-      await this.docker.createVolume({ Name: volumeName, Labels: { "openship.e2e": this.id } });
+      await this.docker.createVolume({ Name: volumeName, Labels: { "kovalio.e2e": this.id } });
       this.volumes.push(this.docker.getVolume(volumeName));
       // Separate guest OS/runtime and storage disks. Both are sparse files on
       // labelled fixture volumes and are removed only by this lab's teardown.
       const runtimeVolumeName = `${name}-runtime`;
       await this.docker.createVolume({
         Name: runtimeVolumeName,
-        Labels: { "openship.e2e": this.id },
+        Labels: { "kovalio.e2e": this.id },
       });
       this.volumes.push(this.docker.getVolume(runtimeVolumeName));
       const container = await this.docker.createContainer({
         name,
         Hostname: name,
         Image: this.image,
-        Labels: { "openship.e2e": this.id },
+        Labels: { "kovalio.e2e": this.id },
         ExposedPorts: { "22/tcp": {} },
         Env: [
-          `OPENSHIP_E2E_NAME=${name}`,
-          `OPENSHIP_E2E_PUBLIC_KEY=${Buffer.from(publicKey).toString("base64")}`,
+          `KOVALIO_E2E_NAME=${name}`,
+          `KOVALIO_E2E_PUBLIC_KEY=${Buffer.from(publicKey).toString("base64")}`,
         ],
         HostConfig: {
           Privileged: true,
@@ -114,7 +114,7 @@ export class ClusterHostLab {
           Tmpfs: { "/run": "", "/run/lock": "", "/tmp": "" },
           Binds: ["/dev/kvm:/dev/kvm"],
           Mounts: [
-            { Type: "volume", Source: volumeName, Target: "/var/lib/openship" },
+            { Type: "volume", Source: volumeName, Target: "/var/lib/kovalio" },
             { Type: "volume", Source: runtimeVolumeName, Target: "/var/lib/rancher" },
           ],
           PortBindings: { "22/tcp": [{ HostIp: "127.0.0.1", HostPort: await freePort() }] },
@@ -138,7 +138,7 @@ export class ClusterHostLab {
             [
               "sh",
               "-ec",
-              "test -f /var/lib/cloud/instance/boot-finished; mountpoint -q /var/lib/openship; systemctl is-active ssh",
+              "test -f /var/lib/cloud/instance/boot-finished; mountpoint -q /var/lib/kovalio; systemctl is-active ssh",
             ],
             10,
           ),
@@ -164,7 +164,7 @@ export class ClusterHostLab {
     }
     const container = await this.docker.createContainer({
       ...options,
-      Labels: { ...options.Labels, "openship.e2e": this.id },
+      Labels: { ...options.Labels, "kovalio.e2e": this.id },
       HostConfig: { ...options.HostConfig, NetworkMode: this.id },
     });
     this.extra.push(container);
@@ -291,7 +291,7 @@ export class ClusterHostLab {
     for (const container of [...this.extra].reverse()) {
       try {
         const info = await container.inspect();
-        if (info.Config.Labels?.["openship.e2e"] !== this.id)
+        if (info.Config.Labels?.["kovalio.e2e"] !== this.id)
           throw new Error("Refusing to remove a foreign fixture container.");
         if (info.State.Paused) await container.unpause();
         if (info.State.Running && this.nodes.some((node) => node.container.id === container.id)) {
@@ -317,7 +317,7 @@ export class ClusterHostLab {
     }
     for (const volume of this.volumes) {
       try {
-        if ((await volume.inspect()).Labels?.["openship.e2e"] !== this.id)
+        if ((await volume.inspect()).Labels?.["kovalio.e2e"] !== this.id)
           throw new Error("Refusing to remove a foreign data disk.");
         await volume.remove();
       } catch (error) {

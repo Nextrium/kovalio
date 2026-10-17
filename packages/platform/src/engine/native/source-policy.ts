@@ -13,7 +13,7 @@ export function defaultNativeSourceRoot(): string {
 
 export async function assertNativeSourcePath(path: string): Promise<string> {
   const canonical = await realpath(path);
-  if (process.env.OPENSHIP_NATIVE !== "true") return canonical;
+  if (process.env.KOVALIO_NATIVE !== "true") return canonical;
   const allowed = sourceRoots.some(root => {
     const part = relative(root, canonical);
     return !isAbsolute(part) && part !== ".." && !part.startsWith("../") && !part.startsWith("..\\");

@@ -31,7 +31,7 @@ function AuthErrorContent() {
       </div>
 
       <Button asChild className="mt-6 w-full">
-        <Link href="/">Return to OpenShip</Link>
+        <Link href="/">Return to Kovalio</Link>
       </Button>
     </AuthShell>
   );

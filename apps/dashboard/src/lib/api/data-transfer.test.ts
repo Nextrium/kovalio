@@ -17,7 +17,7 @@ function captureRequest() {
         { status: 200, headers: { "content-type": "text/event-stream" } },
       );
     }
-    return new Response(JSON.stringify({ kind: "openship-instance-export" }), {
+    return new Response(JSON.stringify({ kind: "kovalio-instance-export" }), {
       status: 200,
       headers: { "content-type": "application/json" },
     });

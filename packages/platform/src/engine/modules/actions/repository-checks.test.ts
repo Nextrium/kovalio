@@ -26,7 +26,7 @@ const connection: GitHubConnectionStatus = {
   state: {
     primary: "gh-cli",
     sources: {
-      openshipApp: { connected: false },
+      kovalioApp: { connected: false },
       ghCli: {
         available: true,
         login: "octocat",
@@ -75,7 +75,7 @@ describe("repository Checks setup", () => {
     h.status.mockResolvedValue({
       state: {
         primary: null,
-        sources: { openshipApp: { connected: false }, ghCli: { available: false } },
+        sources: { kovalioApp: { connected: false }, ghCli: { available: false } },
       },
       accounts: [],
     });
@@ -108,14 +108,14 @@ describe("repository Checks setup", () => {
     expect(await actionRepositoryChecks(ctx, input)).toMatchObject({ status });
   });
   it("requires an App for independent reporting even when a personal account is connected", async () => {
-    expect(await actionRepositoryChecks(ctx, { ...input, controller: "openship" })).toMatchObject({
+    expect(await actionRepositoryChecks(ctx, { ...input, controller: "kovalio" })).toMatchObject({
       status: "app_required",
     });
     expect(h.fetch).not.toHaveBeenCalled();
   });
   it("verifies exact repository Checks permission and never returns its token", async () => {
     h.mint.mockResolvedValue("installation-secret");
-    const result = await actionRepositoryChecks(ctx, { ...input, controller: "openship" });
+    const result = await actionRepositoryChecks(ctx, { ...input, controller: "kovalio" });
     expect(h.mint).toHaveBeenCalledWith(ctx, "acme", undefined, {
       repositories: ["app"],
       permissions: { checks: "write" },
@@ -131,7 +131,7 @@ describe("repository Checks setup", () => {
     h.mint.mockRejectedValue(
       new GitHubAppApiError(422, "Permissions requested are not granted", new Headers()),
     );
-    expect(await actionRepositoryChecks(ctx, { ...input, controller: "openship" })).toMatchObject({
+    expect(await actionRepositoryChecks(ctx, { ...input, controller: "kovalio" })).toMatchObject({
       status: "access_required",
     });
   });
@@ -140,7 +140,7 @@ describe("repository Checks setup", () => {
       state: {
         ...connection.state,
         primary: null,
-        sources: { openshipApp: { connected: false }, ghCli: { available: false } },
+        sources: { kovalioApp: { connected: false }, ghCli: { available: false } },
       },
       accounts: [{ login: "acme", source: "app", avatar_url: "private-avatar" }],
     });

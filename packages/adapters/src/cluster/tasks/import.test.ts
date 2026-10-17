@@ -42,7 +42,7 @@ const config = (): DatabaseTaskConfig => ({
 let directory: string;
 beforeEach(async () => {
   vi.resetAllMocks();
-  directory = await mkdtemp(join(tmpdir(), "openship-import-check-"));
+  directory = await mkdtemp(join(tmpdir(), "kovalio-import-check-"));
 });
 afterEach(async () => {
   await rm(directory, { recursive: true, force: true });

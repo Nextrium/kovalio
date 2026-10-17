@@ -177,7 +177,7 @@ export function MailboxesTab({
       customContent: (
         <RotatePlatformMailboxConfirm
           serverId={serverId}
-          email={`openship@${primaryDomain}`}
+          email={`kovalio@${primaryDomain}`}
           onCancel={() => hideModal(id)}
           onRotated={() => {
             hideModal(id);

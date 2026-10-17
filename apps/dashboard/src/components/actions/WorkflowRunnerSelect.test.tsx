@@ -39,7 +39,7 @@ const runner: ActionRunnerView = {
     maxParallel: 2,
     allowDockerSocket: false,
   },
-  labels: ["self-hosted", "openship", "linux", "x64", "ubuntu-22.04"],
+  labels: ["self-hosted", "kovalio", "linux", "x64", "ubuntu-22.04"],
 };
 const onChange = vi.fn();
 const refresh = vi.fn();

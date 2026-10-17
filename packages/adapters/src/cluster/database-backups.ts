@@ -94,7 +94,7 @@ export class PostgresArchive {
       this.signal,
     );
     if (!schedule) return;
-    if (schedule.metadata.labels?.["openship.io/database"] !== this.labels["openship.io/database"])
+    if (schedule.metadata.labels?.["nextrium.org/database"] !== this.labels["nextrium.org/database"])
       throw new Error("The database backup schedule has different ownership.");
     await this.fence();
     await this.api.request(
@@ -115,14 +115,14 @@ export class PostgresArchive {
       clusterObject(this.api, `${this.base}/scheduledbackups/archives`, this.signal),
     ]);
     const scheduleUid =
-      schedule?.metadata.labels?.["openship.io/database"] === this.labels["openship.io/database"]
+      schedule?.metadata.labels?.["nextrium.org/database"] === this.labels["nextrium.org/database"]
         ? schedule.metadata.uid
         : undefined;
     return list.items.filter(
       (backup) =>
         !backup.metadata.deletionTimestamp &&
         backup.spec?.cluster?.name === "database" &&
-        (backup.metadata.labels?.["openship.io/database"] === this.labels["openship.io/database"] ||
+        (backup.metadata.labels?.["nextrium.org/database"] === this.labels["nextrium.org/database"] ||
           (scheduleUid &&
             backup.metadata.ownerReferences?.some((owner) => owner.uid === scheduleUid))),
     );
@@ -169,13 +169,13 @@ export class PostgresArchive {
       endpoint: backup.status.endpointURL ?? null,
     };
   }
-  /** The operator continues an accepted backup even if OpenShip disconnects.
+  /** The operator continues an accepted backup even if Kovalio disconnects.
    * A retry adopts that same request, starting a new attempt only after failure. */
   async run(requestId: string, generation: number, log: (message: string) => Promise<void>) {
     if (!/^[a-z0-9-]{1,48}$/.test(requestId))
       throw new Error("Invalid saved backup request identity.");
     const previous = (await this.objects()).filter(
-      (object) => object.metadata.labels?.["openship.io/backup-request"] === requestId,
+      (object) => object.metadata.labels?.["nextrium.org/backup-request"] === requestId,
     );
     if (previous.some((object) => object.status?.phase === "completed")) {
       await log("The saved backup already completed. Reusing its verified archive.");
@@ -189,7 +189,7 @@ export class PostgresArchive {
         kind: "Backup",
         metadata: {
           ...this.metadata(name),
-          labels: { ...this.labels, "openship.io/backup-request": requestId },
+          labels: { ...this.labels, "nextrium.org/backup-request": requestId },
         },
         spec: {
           cluster: { name: "database" },

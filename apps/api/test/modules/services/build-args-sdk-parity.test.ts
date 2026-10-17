@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { eq } from "@repo/db";
 import { ENV_MASK } from "@repo/core";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { flushAudit } from "@repo/platform/engine/lib/audit-emitter";
 import { mintPatToken } from "@repo/platform/engine/lib/pat";
@@ -44,8 +44,8 @@ async function setup() {
     },
   });
   const remote = (token = owner.token) =>
-    new OpenshipClient({
-      baseUrl: "http://openship.test",
+    new KovalioClient({
+      baseUrl: "http://kovalio.test",
       token,
       organizationId: owner.orgId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,

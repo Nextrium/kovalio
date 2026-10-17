@@ -5,10 +5,10 @@ import { projectBuildKitWorker } from "./docker-buildkit-worker";
 import { sq } from "./build-pipeline";
 
 export const DEFAULT_BUILD_CACHE_KEEP_BYTES = 5 * 1024 ** 3;
-const CACHE_LABEL = "openship.build-cache";
-const PROJECT_LABEL = "openship.build-cache.project";
+const CACHE_LABEL = "kovalio.build-cache";
+const PROJECT_LABEL = "kovalio.build-cache.project";
 const CACHE_AGE_MS = 7 * 24 * 60 * 60_000;
-const STAMPS = "/var/lib/openship/build-cache";
+const STAMPS = "/var/lib/kovalio/build-cache";
 
 export interface BuildStorage {
   totalBytes: number;
@@ -20,14 +20,14 @@ export interface BuildStorage {
 export const DOCKER_BUILD_STORAGE_COMMAND =
   'root="$(docker info --format "{{.DockerRootDir}}")"; ' +
   '[ -d "$root" ] || exit 1; ' +
-  'df -Pk "$root" | awk \'NR==2{print "OPENSHIP_STORAGE",$2,$4}\'; ' +
-  'df -Pi "$root" 2>/dev/null | awk \'NR==2{print "OPENSHIP_INODES",$2,$4}\'';
+  'df -Pk "$root" | awk \'NR==2{print "KOVALIO_STORAGE",$2,$4}\'; ' +
+  'df -Pi "$root" 2>/dev/null | awk \'NR==2{print "KOVALIO_INODES",$2,$4}\'';
 
 export function parseBuildStorage(raw: string): BuildStorage {
   const lines = raw.trim().split(/\r?\n/);
-  const marked = lines.find((line) => line.startsWith("OPENSHIP_STORAGE "));
+  const marked = lines.find((line) => line.startsWith("KOVALIO_STORAGE "));
   const values = marked
-    ? `${marked.slice("OPENSHIP_STORAGE ".length)} ${lines.find((line) => line.startsWith("OPENSHIP_INODES "))?.slice("OPENSHIP_INODES ".length) ?? ""}`
+    ? `${marked.slice("KOVALIO_STORAGE ".length)} ${lines.find((line) => line.startsWith("KOVALIO_INODES "))?.slice("KOVALIO_INODES ".length) ?? ""}`
     : raw.trim();
   const [totalKb, freeKb, totalInodes, freeInodes] = values.trim().split(/\s+/).map(Number);
   if (
@@ -90,7 +90,7 @@ function cacheOwner(volume: {
   if (
     !projectId ||
     volume.Labels?.[CACHE_LABEL] !== "1" ||
-    volume.Labels?.["openship.project"] !== undefined ||
+    volume.Labels?.["kovalio.project"] !== undefined ||
     (volume.Driver && volume.Driver !== "local") ||
     volume.Name !== projectBuildCacheVolume(projectId)
   )

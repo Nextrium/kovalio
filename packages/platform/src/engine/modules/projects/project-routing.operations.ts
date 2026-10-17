@@ -27,7 +27,7 @@ async function ownedDomain(projectId: string, domainId?: string | null) {
     throw new AppError("domainId does not belong to this project", 400, "INVALID_DOMAIN");
 }
 async function repush(projectId: string) {
-  if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ROUTING === "none") return;
+  if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ROUTING === "none") return;
   await pushProjectRulesResolved(projectId).catch(error =>
     errorDiagnostics.warn("platform/engine/modules/projects/project-routing.operations", `[route-rules] push failed: ${safeErrorMessage(error)}`, error));
 }

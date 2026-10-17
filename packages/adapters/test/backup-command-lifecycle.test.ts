@@ -101,7 +101,7 @@ const service: ServiceHandle = {
 
 describe("bare capture and restore keep the source bytes and status", () => {
   it("reports a real tar failure even when the compressor succeeds", async () => {
-    const bin = await mkdtemp(join(tmpdir(), "openship-backup-pipeline-"));
+    const bin = await mkdtemp(join(tmpdir(), "kovalio-backup-pipeline-"));
     try {
       await symlink("/usr/bin/tar", join(bin, "tar"));
       await symlink("/bin/sh", join(bin, "sh"));

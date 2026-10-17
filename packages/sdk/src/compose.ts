@@ -13,7 +13,7 @@ export function normalizeComposeServices(
   if (!services.length) throw new ValidationError("No services found in the compose file");
   if (errors.length)
     throw new ValidationError(
-      "This compose file declares options Openship cannot deploy faithfully",
+      "This compose file declares options Kovalio cannot deploy faithfully",
       { services: errors },
     );
   return services as TSyncServicesBody["services"];

@@ -30,7 +30,7 @@ describe("service sync source handling", () => {
   it.each([200, 503])(
     "sends only service configuration and creates no archive (HTTP %s)",
     async (status) => {
-      root = await mkdtemp(join(tmpdir(), "openship-service-sync-test-"));
+      root = await mkdtemp(join(tmpdir(), "kovalio-service-sync-test-"));
       const scratch = join(root, "tmp");
       const source = join(root, "source");
       await mkdir(scratch);

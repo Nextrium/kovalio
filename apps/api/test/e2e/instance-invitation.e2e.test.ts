@@ -8,7 +8,7 @@ import { freePort, startApi, stopApi, jsonRequest, type RunningApi } from "./fix
 /** Isolated real API processes and disposable databases; no Docker, SSH,
  * developer environment files, live accounts or outbound email. */
 it("joins a remote team through Desktop with the recipient's own account and permissions", async () => {
-  const root = await mkdtemp(join(tmpdir(), "openship-instance-invitation-"));
+  const root = await mkdtemp(join(tmpdir(), "kovalio-instance-invitation-"));
   let remote: RunningApi | undefined, desktop: RunningApi | undefined;
   const remoteConfig = {
     dbDir: join(root, "remote"),
@@ -77,7 +77,7 @@ it("joins a remote team through Desktop with the recipient's own account and per
     const landing = await fetch(`${remote.baseUrl}/accept-invite/${invite.data.id}`);
     expect(landing.headers.get("referrer-policy")).toBe("no-referrer");
     const html = await landing.text();
-    const desktopLink = html.match(/href="(openship:[^"]+)"/)?.[1];
+    const desktopLink = html.match(/href="(kovalio:[^"]+)"/)?.[1];
     expect(desktopLink).toBeDefined();
     expect(parseDesktopInstanceLink(desktopLink!)).toBe(`${remote.baseUrl}/accept-invite/${invite.data.id}`);
     expect(html).toContain("Connect to an existing instance");

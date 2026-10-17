@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { makeApp, seedOwner, seedServer, resetJobs, installFakeRunner, db, schema, repos, type SeededOwner } from "./_harness";
 import { eq } from "@repo/db";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { flushAudit } from "@repo/platform/engine/lib/audit-emitter";
 import { jobRunBus } from "@repo/platform/engine/modules/jobs/job-run.sse";
@@ -18,7 +18,7 @@ async function clients(owner: SeededOwner) {
     credential: owner.auth && user.role !== "admin" ? { organizationId: owner.orgId, readOnly: false } : null,
   }) } });
   const native = await ship.scope({ identity: "verified", organizationId: owner.orgId });
-  const remote = new OpenshipClient({ baseUrl: "http://openship.test", token: owner.token, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = new KovalioClient({ baseUrl: "http://kovalio.test", token: owner.token, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   return { native: native.jobs, remote: remote.jobs };
 }
 

@@ -66,8 +66,8 @@ describe("LocalGitHubSource with an operator-owned App", () => {
     h.appRepos = [repo("shared", "app"), repo("app-only", "app")];
     h.appHome = {
       state: {
-        sources: { openshipApp: { connected: true }, ghCli: { available: false } },
-        primary: "openship-app",
+        sources: { kovalioApp: { connected: true }, ghCli: { available: false } },
+        primary: "kovalio-app",
       },
       accounts: [{ login: "acme", id: 1, avatar_url: "", type: "Organization", source: "app" }],
       repos: h.appRepos,

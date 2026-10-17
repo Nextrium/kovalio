@@ -142,7 +142,7 @@ export function InstanceConnectDialog({
                 variant="filled"
                 className="bg-muted/40 dark:bg-background dim:bg-background"
                 inputMode="url"
-                placeholder="https://openship.example.com"
+                placeholder="https://kovalio.example.com"
                 autoComplete="url"
                 autoCapitalize="none"
                 spellCheck={false}

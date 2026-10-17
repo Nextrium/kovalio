@@ -276,7 +276,7 @@ export function parseTraefikLabels(containers: TraefikContainer[]): ProxyScanRes
     // was missed. Distinct wording from a real loss.
     warnings.push(
       d.redirectOnly
-        ? `traefik: ${d.hosts.join(", ")} router "${d.router}" is an http→https redirect — Openship's edge does that itself (nothing to migrate)`
+        ? `traefik: ${d.hosts.join(", ")} router "${d.router}" is an http→https redirect — Kovalio's edge does that itself (nothing to migrate)`
         : `traefik: ${d.hosts.join(", ")} router "${d.router}" duplicates the same hostname/path — the preferred router was retained`,
     );
   }

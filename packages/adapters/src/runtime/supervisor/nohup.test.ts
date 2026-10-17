@@ -20,7 +20,7 @@ describe.skipIf(process.platform === "win32")("nohup process lifecycle", () => {
     { detached: false, ignoreTerm: true },
     { detached: true, ignoreTerm: true },
   ])("stops children and frees ports (isolated group: $detached, ignores TERM: $ignoreTerm)", async ({ detached, ignoreTerm }) => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-nohup-test-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-nohup-test-"));
     const release = join(directory, "release");
     await mkdir(release);
     const executor = new WithoutSetsid();

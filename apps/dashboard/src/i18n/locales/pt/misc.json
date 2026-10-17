@@ -113,7 +113,7 @@
     "needsLoginPre": "Junte-se a ",
     "needsLoginMid": " no Kovalio. Entre ou crie uma conta com ",
     "needsLoginPost": " para aceitar.",
-    "signInToAccept": "Junte-se a {org} no Openship. Entre com {email} para aceitar.",
+    "signInToAccept": "Junte-se a {org} no Kovalio. Entre com {email} para aceitar.",
     "accountCreationDisabled": "Um administrador da instância deve criar sua conta antes que você possa aceitar este convite.",
     "signIn": "Entrar",
     "createAccount": "Criar conta",
@@ -157,8 +157,8 @@
     "authorizeError": "Não foi possível autorizar esta conexão.",
     "invalidTitle": "Solicitação de autorização inválida",
     "title": "Autorizar dispositivo",
-    "instancePre": "Uma instância Openship em ",
-    "instancePost": " quer conectar-se à sua conta Openship Cloud.",
+    "instancePre": "Uma instância Kovalio em ",
+    "instancePost": " quer conectar-se à sua conta Kovalio Cloud.",
     "organization": "Organização",
     "switch": "Trocar",
     "switchAccount": "Trocar conta",
@@ -176,7 +176,7 @@
     "authorizing": "Autorizando…",
     "authorize": "Autorizar",
     "cancel": "Cancelar",
-    "deviceDoneTitle": "Conectado à Openship Cloud",
+    "deviceDoneTitle": "Conectado à Kovalio Cloud",
     "deviceDoneBody": "Você pode fechar esta aba e retornar ao seu terminal — a configuração continuará automaticamente."
   },
   "cloudConnect": {

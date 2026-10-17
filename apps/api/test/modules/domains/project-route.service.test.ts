@@ -340,7 +340,7 @@ describe("reapplyProjectLiveRoutes static (path-targeted) routes", () => {
   const deployment = (meta: Record<string, unknown>) => ({
     id: "dep-1",
     projectId: staticProject.id,
-    containerId: "/var/lib/openship/releases/site-42",
+    containerId: "/var/lib/kovalio/releases/site-42",
     meta,
     organizationId: "org-1",
   });
@@ -521,7 +521,7 @@ describe("reapplyProjectLiveRoutes static (path-targeted) routes", () => {
     },
   );
 
-  it("syncs the free domain of a static project on Openship Cloud's edge", async () => {
+  it("syncs the free domain of a static project on Kovalio Cloud's edge", async () => {
     // The other half of the same bug: the edge route is `<slug>.opsh.io` → this
     // server's :80. What the vhost then does with the request is a local matter,
     // so excluding path targets here left static free domains with no edge route.

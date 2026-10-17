@@ -11,7 +11,7 @@ export interface ArchiveFile {
   sha256: string;
 }
 export interface RedisArchiveManifest {
-  format: "openship-redis-rdb-v1";
+  format: "kovalio-redis-rdb-v1";
   databaseId: string;
   runtimeId: string;
   mode: "standalone" | "cluster";
@@ -20,7 +20,7 @@ export interface RedisArchiveManifest {
   files: Array<ArchiveFile & { primaryId: string }>;
 }
 export interface PostgresArchiveManifest {
-  format: "openship-postgres-dump-v1";
+  format: "kovalio-postgres-dump-v1";
   databaseId: string;
   runtimeId: string;
   createdAt: string;

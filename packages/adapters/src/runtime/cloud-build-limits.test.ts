@@ -13,7 +13,7 @@ const config = {
 function fixture(transport = "cloud", buildKit = true, resources = config.resources) {
   const executor = {
     exec: vi.fn(async (command: string): Promise<string> =>
-      command.includes("buildx version") ? (buildKit ? "OPENSHIP_BUILDKIT_OK\n" : "") :
+      command.includes("buildx version") ? (buildKit ? "KOVALIO_BUILDKIT_OK\n" : "") :
       command.includes("df -Pk") ? "104857600 52428800\n200000 100000\n" : "",
     ),
     writeFile: vi.fn(async () => {}),
@@ -30,7 +30,7 @@ function fixture(transport = "cloud", buildKit = true, resources = config.resour
       listVolumes: vi.fn(async () => ({ Volumes: [] })),
       listContainers: vi.fn(async () => []),
       getVolume: () => ({ inspect: async () => ({ Name: projectBuildCacheVolume(config.projectId),
-        Labels: { "openship.build-cache": "1", "openship.build-cache.project": config.projectId } }) }),
+        Labels: { "kovalio.build-cache": "1", "kovalio.build-cache.project": config.projectId } }) }),
     },
   });
   return {
@@ -42,7 +42,7 @@ function fixture(transport = "cloud", buildKit = true, resources = config.resour
         { ...config, resources },
         "/tmp/build dir",
         "Dockerfile",
-        "openship/test:build",
+        "kovalio/test:build",
         new BuildLogger(onLog),
         { signal },
       ),
@@ -93,7 +93,7 @@ describe("Cloud Docker build execution limits", () => {
   it("refuses a foreign cache before executing source commands", async () => {
     const h = fixture();
     h.runtime._docker.getVolume = () => ({ inspect: async () => ({ Name: projectBuildCacheVolume(config.projectId),
-      Labels: { "openship.build-cache": "1", "openship.build-cache.project": "foreign" } }) });
+      Labels: { "kovalio.build-cache": "1", "kovalio.build-cache.project": "foreign" } }) });
     await expect(h.run()).rejects.toMatchObject({ code: "BUILD_CACHE_OWNER_MISMATCH" });
     expect(h.executor.streamExec).not.toHaveBeenCalled();
     expect(h.commands()).not.toContain("docker volume rm");
@@ -118,7 +118,7 @@ describe("Cloud Docker build execution limits", () => {
       const exec = h.executor.exec.getMockImplementation()!;
       h.executor.exec.mockImplementation((command) =>
         command.includes("df -Pk")
-          ? Promise.resolve("OPENSHIP_STORAGE 524288000 301989888\nOPENSHIP_INODES 0 0\n")
+          ? Promise.resolve("KOVALIO_STORAGE 524288000 301989888\nKOVALIO_INODES 0 0\n")
           : exec(command),
       );
       await expect(h.run()).resolves.toBeUndefined();
@@ -132,7 +132,7 @@ describe("Cloud Docker build execution limits", () => {
       const exec = h.executor.exec.getMockImplementation()!;
       h.executor.exec.mockImplementation((command) =>
         command.includes("df -Pk")
-          ? Promise.resolve("OPENSHIP_STORAGE 524288000 301989888\nOPENSHIP_INODES 1000 0\n")
+          ? Promise.resolve("KOVALIO_STORAGE 524288000 301989888\nKOVALIO_INODES 1000 0\n")
           : exec(command),
       );
       await expect(h.run()).rejects.toMatchObject({ code: "BUILD_STORAGE_LOW" });
@@ -186,7 +186,7 @@ describe("Cloud Docker build execution limits", () => {
     expect(command).toContain("cd '/tmp/build dir'");
     expect(command).not.toContain("--use");
     expect(command).toContain("trap ");
-    expect(h.commands()).toContain("buildx rm --force --keep-state 'openship-");
+    expect(h.commands()).toContain("buildx rm --force --keep-state 'kovalio-");
     expect(command).toContain("--keep-state");
     expect(h.commands()).toContain("--keep-state");
   });
@@ -196,7 +196,7 @@ describe("Cloud Docker build execution limits", () => {
       const h = fixture();
       h.executor.streamExec.mockResolvedValue({ code, output: "" });
       await expect(h.run()).rejects.toThrow(`docker build exited with code ${code}`);
-      expect(h.commands()).toContain("buildx rm --force --keep-state 'openship-");
+      expect(h.commands()).toContain("buildx rm --force --keep-state 'kovalio-");
       expect(h.commands()).toContain("--keep-state");
       expect(h.commands()).not.toContain("prune");
     },
@@ -209,7 +209,7 @@ describe("Cloud Docker build execution limits", () => {
       return { code: 0, output: "" };
     });
     await expect(h.run(controller.signal)).rejects.toMatchObject({ name: "BuildCancelledError" });
-    expect(h.commands()).toContain("buildx rm --force --keep-state 'openship-");
+    expect(h.commands()).toContain("buildx rm --force --keep-state 'kovalio-");
     expect(h.commands()).toContain("--keep-state");
   });
   it("applies the same budget to the legacy Cloud Docker builder", async () => {

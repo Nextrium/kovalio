@@ -492,7 +492,7 @@ describe("cancelling mid-write says so, and leaves the service down", () => {
     // wiped-and-replaced, the second was never touched. Reporting this as a clean
     // cancel would be a straightforward lie.
     h.running = true;
-    h.artifacts = [volumeArtifact("openship-shop-pgdata"), volumeArtifact("openship-shop-uploads")];
+    h.artifacts = [volumeArtifact("kovalio-shop-pgdata"), volumeArtifact("kovalio-shop-uploads")];
 
     const { last } = await cancelAtGate("receive-end", { abortThrows: false });
 

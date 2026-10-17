@@ -37,7 +37,7 @@ export async function runInboundWatch(): Promise<InboundWatchResult> {
   // The addresses this instance sends its OWN mail from. Passed into the loop guard so a
   // notification email that lands back inside a watched domain is recognised as ours and
   // cannot feed itself.
-  const openshipSenders = await getInstanceSmtpSenders().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/mail/inbound/watch"); return []; });
+  const kovalioSenders = await getInstanceSmtpSenders().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/mail/inbound/watch"); return []; });
 
   const byServer = new Map<string, string>();
   for (const rule of rules) byServer.set(rule.serverId, rule.organizationId);

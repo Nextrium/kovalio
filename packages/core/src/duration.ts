@@ -3,7 +3,7 @@
  * numbers of seconds ("30"), the forms compose's `stop_grace_period` and
  * healthcheck timings take.
  *
- * ONE grammar for every reader. The openship.json parser rejects a value that
+ * ONE grammar for every reader. The kovalio.json parser rejects a value that
  * doesn't match it, the compose parser warns about one, and the runtime treats
  * one as unset (Docker keeps its default). The match is anchored on purpose: a
  * scan for unit groups reads "1m30" as one minute and drops the 30, and "abc5s"

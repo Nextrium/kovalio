@@ -8,9 +8,9 @@ example and is checked against the public package declarations before capture.
 - `ship-sdk.html`: standalone artwork with embedded brand fonts.
 - `deploy-app.mts`: the exact code shown in the image.
 
-The example requires OpenShip 0.8.0+, an API URL, a token, an organization ID,
+The example requires Kovalio 0.8.0+, an API URL, a token, an organization ID,
 an application directory, and a configured deployment target. See the
-[SDK guide](https://openship.io/docs/api/sdk) for setup and supported operations.
+[SDK guide](https://nextrium.org/docs/api/sdk) for setup and supported operations.
 The capture renders code; it does not execute the deployment.
 
 To regenerate, use the existing Playwright installation and Chromium executable:

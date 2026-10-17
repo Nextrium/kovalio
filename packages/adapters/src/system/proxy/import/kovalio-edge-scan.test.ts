@@ -37,7 +37,7 @@ function containerEdgeHost(): CommandExecutor {
 describe("scanKovalioEdge", () => {
   it("reads vhosts from the host when they're there, without touching Docker", async () => {
     const exec = vi.fn(async (cmd: string) => (cmd.startsWith("sh -c ") ? VHOST : ""));
-    const result = await scanOpenshipEdge({ exec } as unknown as CommandExecutor);
+    const result = await scanKovalioEdge({ exec } as unknown as CommandExecutor);
 
     expect(result.sites).toHaveLength(1);
     expect(result.sites[0]!.serverNames).toEqual(["app.example.com"]);
@@ -49,7 +49,7 @@ describe("scanKovalioEdge", () => {
     await scanKovalioEdge({ exec } as unknown as CommandExecutor);
 
     const cat = exec.mock.calls.map(([cmd]) => cmd).find((cmd) => cmd.startsWith("sh -c "))!;
-    expect(cat).toContain("/var/lib/openship/edge/sites-enabled/*.conf");
+    expect(cat).toContain("/var/lib/kovalio/edge/sites-enabled/*.conf");
     expect(cat).toContain("/usr/local/openresty/nginx/conf/sites-enabled/*.conf");
     expect(cat).toContain("/etc/openresty/sites-enabled/*.conf");
   });

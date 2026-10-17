@@ -707,7 +707,7 @@ export async function resolveServiceDockerfile(
       // Never follow a repository symlink to read or overwrite a host file.
       if (!info || info.isFile()) {
         const contents = info ? await readFile(ignoreFile, "utf8") : "";
-        const temporary = join(contextDir, `.openship-dockerignore-${randomUUID()}`);
+        const temporary = join(contextDir, `.kovalio-dockerignore-${randomUUID()}`);
         try {
           await writeFile(temporary, generatedBuildIgnore(contents));
           await rename(temporary, ignoreFile);
@@ -734,7 +734,7 @@ export async function resolveServiceDockerfile(
   // walking — the seed `entries` list is queued unconditionally — so the top level
   // has to be filtered here or a `.dockerignore`d root directory would still ship.
   const contextEntries = (await readdir(buildContextDir)).filter(
-    (entry) => !/^\.openship-dockerignore-[a-f0-9-]{36}$/.test(entry) && !ignoreContextPath?.(entry),
+    (entry) => !/^\.kovalio-dockerignore-[a-f0-9-]{36}$/.test(entry) && !ignoreContextPath?.(entry),
   );
 
   return {

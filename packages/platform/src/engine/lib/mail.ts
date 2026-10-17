@@ -194,10 +194,10 @@ async function getPlatformTransport(options?: { rotate?: boolean }): Promise<{
   }
 
   try {
-    const { ensureOpenshipPlatformMailbox } =
+    const { ensureKovalioPlatformMailbox } =
       await import("../modules/mail/admin/platform-mailbox.service");
     const creds = await withTimeout(
-      ensureOpenshipPlatformMailbox(installed.serverId, {
+      ensureKovalioPlatformMailbox(installed.serverId, {
         rotate: options?.rotate === true,
       }),
       PLATFORM_ENSURE_TIMEOUT_MS,

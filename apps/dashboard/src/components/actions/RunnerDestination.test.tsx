@@ -7,7 +7,7 @@ import { RunnerDestination } from "./RunnerDestination";
 
 const h = vi.hoisted(() => ({ selfHosted: false, add: vi.fn(), runners: vi.fn(), saved: vi.fn() }));
 vi.mock("@/context/PlatformContext", () => ({
-  usePlatform: () => ({ selfHosted: h.selfHosted, cloudAuthUrl: "https://app.openship.io" }),
+  usePlatform: () => ({ selfHosted: h.selfHosted, cloudAuthUrl: "https://kovalio.nextrium.org" }),
 }));
 vi.mock("@/context/CloudResourceContext", () => ({ useCloudResourceKey: () => "cloud" }));
 vi.mock("@/lib/auth-client", () => ({

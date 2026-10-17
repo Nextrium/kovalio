@@ -37,7 +37,7 @@ r.get(
   { tag: "github:read", authorizationHandledByOperation: true, auditHandledByOperation: true, mcp: { description: "GitHub connection status for the org." }, query: GitHubCollectionSchemas.getStatus.input },
   ctrl.getStatus,
 );
-r.get("/local-status", { tag: "github:read", authorizationHandledByOperation: true, auditHandledByOperation: true, localOnly: true, mcp: { description: "Read this self-hosted controller’s GitHub identity status and any connection problem. Local here means the Openship controller, not the MCP client." } }, ctrl.getLocalStatus);
+r.get("/local-status", { tag: "github:read", authorizationHandledByOperation: true, auditHandledByOperation: true, localOnly: true, mcp: { description: "Read this self-hosted controller’s GitHub identity status and any connection problem. Local here means the Kovalio controller, not the MCP client." } }, ctrl.getLocalStatus);
 r.get("/connect/poll", { tag: "github:read", authorizationHandledByOperation: true, auditHandledByOperation: true, query: GitHubCollectionSchemas.pollConnect.input, mcp: { description: "Read a GitHub connection attempt using its returned state, or self-hosted device authorization without a state. Completion means the requested connection committed; polling never grants access." } }, ctrl.pollConnect);
 r.get(
   "/home",
@@ -48,7 +48,7 @@ r.get(
   },
   ctrl.getHome,
 );
-r.post("/connect", { tag: "github:write", authorizationHandledByOperation: true, auditHandledByOperation: true, mcp: { description: "Start GitHub connection and return a redirect, installation selection, device code, or token instructions. Let the user complete approval in Openship or GitHub. For redirects with completion=attempt, poll using the returned state; existing connection status does not confirm a new installation." }, body: GitHubCollectionSchemas.connect.input, bodyValidatedByOperation: true }, ctrl.connect);
+r.post("/connect", { tag: "github:write", authorizationHandledByOperation: true, auditHandledByOperation: true, mcp: { description: "Start GitHub connection and return a redirect, installation selection, device code, or token instructions. Let the user complete approval in Kovalio or GitHub. For redirects with completion=attempt, poll using the returned state; existing connection status does not confirm a new installation." }, body: GitHubCollectionSchemas.connect.input, bodyValidatedByOperation: true }, ctrl.connect);
 r.post(
   "/installations/claim",
   { tag: "github:write", authorizationHandledByOperation: true, auditHandledByOperation: true, mcpExcluded: "The browser completes GitHub authorization and selects an installation. Use connect/status to start and inspect the connection." },
@@ -128,13 +128,13 @@ r.get(
   { tag: "github:list", authorizationHandledByOperation: true, auditHandledByOperation: true, mcp: { description: "List the connected account's GitHub repositories." }, query: GitHubRepoListInput },
   ctrl.listRepos,
 );
-r.post("/repos", { tag: "github:write", authorizationHandledByOperation: true, auditHandledByOperation: true, mcpExcluded: "GitHub repository creation is outside deployment management. Create repositories through GitHub, then deploy with Openship." }, ctrl.createRepo);
+r.post("/repos", { tag: "github:write", authorizationHandledByOperation: true, auditHandledByOperation: true, mcpExcluded: "GitHub repository creation is outside deployment management. Create repositories through GitHub, then deploy with Kovalio." }, ctrl.createRepo);
 r.get(
   "/repos/:owner/:repo",
   { tag: "github:read", authorizationHandledByOperation: true, auditHandledByOperation: true, mcp: { description: "Get a GitHub repository's metadata." }, query: Type.Omit(GitHubCollectionSchemas.getRepo.input, ["owner", "repo"]) },
   ctrl.getRepo,
 );
-r.delete("/repos/:owner/:repo", { tag: "github:admin", authorizationHandledByOperation: true, auditHandledByOperation: true, mcpExcluded: "Deleting the upstream GitHub repository is outside deployment management. Openship project removal does not delete source repositories." }, ctrl.deleteRepo);
+r.delete("/repos/:owner/:repo", { tag: "github:admin", authorizationHandledByOperation: true, auditHandledByOperation: true, mcpExcluded: "Deleting the upstream GitHub repository is outside deployment management. Kovalio project removal does not delete source repositories." }, ctrl.deleteRepo);
 
 /* ─── Branches ─────────────────────────────────────────────────────────── */
 r.get(
@@ -216,7 +216,7 @@ r.get(
   },
   ctrl.listWebhooks,
 );
-r.post("/repos/:owner/:repo/webhooks", { tag: "github:write", authorizationHandledByOperation: true, auditHandledByOperation: true, mcp: { description: "Register Openship’s deployment webhook for this repository. Prefer the project auto-deploy tool when configuring an existing project; it chooses the correct delivery strategy." } }, ctrl.registerWebhook);
+r.post("/repos/:owner/:repo/webhooks", { tag: "github:write", authorizationHandledByOperation: true, auditHandledByOperation: true, mcp: { description: "Register Kovalio’s deployment webhook for this repository. Prefer the project auto-deploy tool when configuring an existing project; it chooses the correct delivery strategy." } }, ctrl.registerWebhook);
 r.delete("/repos/:owner/:repo/webhooks", { tag: "github:admin", authorizationHandledByOperation: true, auditHandledByOperation: true, mcp: { description: "Delete a repository webhook identified by body.hookId. Read the repository webhook list first; removing it can stop automatic deployments." }, body: WebhookDeleteBody }, ctrl.deleteWebhook);
 
 export const githubRoutes = r.hono;

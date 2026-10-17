@@ -3,14 +3,14 @@ import { OBLIEN_WEBHOOK_EVENTS, oblienWebhookUrl } from "@repo/platform/engine/l
 
 describe("Oblien callback configuration", () => {
   it("targets the public API instead of the dashboard origin", () => {
-    expect(oblienWebhookUrl(undefined, "https://api.openship.io/"))
-      .toBe("https://api.openship.io/api/billing/oblien-webhook");
+    expect(oblienWebhookUrl(undefined, "https://api.nextrium.org/"))
+      .toBe("https://api.nextrium.org/api/billing/oblien-webhook");
     expect(oblienWebhookUrl("https://staging.example/api/proxy/api/billing/oblien-webhook", "http://localhost:4000"))
       .toBe("https://staging.example/api/proxy/api/billing/oblien-webhook");
   });
   it("requires a public HTTPS callback and keeps credentials out of callback URLs", () => {
     for (const url of ["http://localhost:4000/hook", "https://user:password@example.com/hook", "https://example.com/hook?token=secret"]) {
-      expect(() => oblienWebhookUrl(url, "https://api.openship.io")).toThrow("public HTTPS");
+      expect(() => oblienWebhookUrl(url, "https://api.nextrium.org")).toThrow("public HTTPS");
     }
   });
   it("subscribes to payment, renewal, suspension and restoration events", () => {

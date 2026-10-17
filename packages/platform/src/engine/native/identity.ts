@@ -88,7 +88,7 @@ export const setNativeMembership: NativeOperator["setMembership"] = async input 
 };
 
 export async function bindInstallation(instanceId: string, encryptionKey: string): Promise<void> {
-  const keyFingerprint = createHash("sha256").update("openship:installation-key:v1\0").update(encryptionKey).digest("hex");
+  const keyFingerprint = createHash("sha256").update("kovalio:installation-key:v1\0").update(encryptionKey).digest("hex");
   await db.insert(schema.platformInstance).values({ id: "primary", instanceId, keyFingerprint }).onConflictDoNothing();
   const [current] = await db.select().from(schema.platformInstance).where(eq(schema.platformInstance.id, "primary"));
   if (current?.instanceId !== instanceId || current.keyFingerprint !== keyFingerprint)

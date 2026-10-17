@@ -1,8 +1,8 @@
 import { Type, type Static } from "@sinclair/typebox";
 
 /** Shared by the browser, SDK and terminal controllers. Credentials never belong in URLs. */
-export const TERMINAL_SUBPROTOCOL_PREFIX = "openship.terminal.v1+";
-export const TERMINAL_RESUME_SUBPROTOCOL_PREFIX = "openship.terminal.resume+";
+export const TERMINAL_SUBPROTOCOL_PREFIX = "kovalio.terminal.v1+";
+export const TERMINAL_RESUME_SUBPROTOCOL_PREFIX = "kovalio.terminal.resume+";
 export const TERMINAL_COLS_MAX = 1000;
 export const TERMINAL_ROWS_MAX = 500;
 

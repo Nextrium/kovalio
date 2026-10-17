@@ -11,9 +11,9 @@ export {
   type NativeOperator,
   type NativeCloseOptions,
 } from "./native";
-export { OpenshipClient, ApiError, type OpenshipClientOptions } from "./client";
+export { KovalioClient, ApiError, type KovalioClientOptions } from "./client";
 export type { TerminalOperations, TerminalOptions, TerminalSession, TerminalSocket } from "./terminal-client";
-export { OpenshipOperatorClient, type OpenshipOperatorClientOptions } from "./operator-client";
+export { KovalioOperatorClient, type KovalioOperatorClientOptions } from "./operator-client";
 export { normalizeComposeServices } from "./compose";
 export { iteratePages, type Page, type PageRequest, type PageIteratorOptions } from "./pagination";
 export { createDeploymentHandle, waitForDeployment, consumeDeploymentEvents, type DeploymentHandle, type DeploymentOutcome, type WaitForDeploymentOptions, type DecodedDeploymentEvent, type DeploymentStreamResult } from "./deployment-handle";

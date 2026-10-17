@@ -27,7 +27,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: h.push }) }));
 
 const disconnected: GitHubConnectionState = {
   primary: null,
-  sources: { openshipApp: { connected: false }, ghCli: { available: false } },
+  sources: { kovalioApp: { connected: false }, ghCli: { available: false } },
 };
 let credential: { hasToken: boolean; asDefault: boolean; setAt: string | null };
 let login: string;
@@ -245,7 +245,7 @@ describe("Cloud personal-token onboarding", () => {
     expect(container.querySelector('[data-testid="repos"]')?.textContent).toBe("alice-repo");
     expect(container.textContent).toContain("@alice");
     expect(container.textContent).not.toContain("Other connection methods");
-    expect(container.textContent).not.toContain("Connected via Openship GitHub App");
+    expect(container.textContent).not.toContain("Connected via Kovalio GitHub App");
   });
 
   it("switches the selected owner and repository list on replacement and removes access on clear", async () => {

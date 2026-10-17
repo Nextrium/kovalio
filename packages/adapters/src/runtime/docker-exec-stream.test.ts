@@ -242,7 +242,7 @@ describe("BuildKit session upgrade (#745)", () => {
       startBuildKitSessionStream(
         { host: "127.0.0.1", port: 1 },
         "valid\r\nInjected: yes",
-        "openship",
+        "kovalio",
       ),
     ).rejects.toThrow("Invalid Docker BuildKit session identity");
   });

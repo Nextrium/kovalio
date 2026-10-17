@@ -45,7 +45,7 @@ export function LibrarySidebar({
   return (
     <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
       {/* ── Connection status ─────────────────────────────────────
-          SaaS mode (!selfHosted) → single card: Openship GitHub App.
+          SaaS mode (!selfHosted) → single card: Kovalio GitHub App.
           Self-hosted/desktop → local identity and the connected App. */}
       {selfHosted ? (
         <SelfHostedConnectionCard
@@ -125,14 +125,14 @@ function SaasConnectionCard({
 }) {
   const { t } = useI18n();
   const personal = state.primary === "personal-token";
-  const identity = personal ? state.sources.personalToken : state.sources.openshipApp;
+  const identity = personal ? state.sources.personalToken : state.sources.kovalioApp;
   const connected = identity?.connected ?? false;
   return (
     <div className="bg-card rounded-2xl border border-border/50 p-5">
       <h3 className="mb-4 font-semibold text-foreground text-sm">{t.library.sidebar.connection}</h3>
       <SourceRow
         icon={personal ? "key" : "github"}
-        label={personal ? t.settings.github.methodToken : t.library.sidebar.openshipGithubApp}
+        label={personal ? t.settings.github.methodToken : t.library.sidebar.kovalioGithubApp}
         sublabel={
           connected
             ? identity?.login ?? selectedOwner ?? t.library.sidebar.connected
@@ -193,7 +193,7 @@ function SelfHostedConnectionCard({
   const [appStatus, setAppStatus] = useState<{ connected: boolean; login?: string | null } | null>(null);
 
   useEffect(() => {
-    const knownApp = state.sources.openshipApp;
+    const knownApp = state.sources.kovalioApp;
     if (knownApp.connected) {
       setAppStatus({ connected: true, login: knownApp.login });
       return;
@@ -215,7 +215,7 @@ function SelfHostedConnectionCard({
     return () => {
       cancelled = true;
     };
-  }, [state.sources.openshipApp.connected, state.sources.openshipApp.login]);
+  }, [state.sources.kovalioApp.connected, state.sources.kovalioApp.login]);
 
   const appSublabel =
     appStatus === null
@@ -232,7 +232,7 @@ function SelfHostedConnectionCard({
   const appRow = appStatus?.connected ? (
     <SourceRow key="app" icon="cloud" label={t.settings.github.methodApp}
       sublabel={appSublabel} connected
-      tone={state.primary === "openship-app" ? "primary" : "secondary"} />
+      tone={state.primary === "kovalio-app" ? "primary" : "secondary"} />
   ) : null;
   const personal = state.sources.personalToken;
   const tokenRow = personal?.connected ? (
@@ -247,7 +247,7 @@ function SelfHostedConnectionCard({
 
       <div className="space-y-2.5">
         {tokenRow}
-        {state.primary === "openship-app" ? [appRow, cliRow] : [cliConnected || !tokenRow ? cliRow : null, appRow]}
+        {state.primary === "kovalio-app" ? [appRow, cliRow] : [cliConnected || !tokenRow ? cliRow : null, appRow]}
       </div>
 
       {/* Connection management includes the active App and stored-token repair. */}

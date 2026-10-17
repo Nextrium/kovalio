@@ -725,7 +725,7 @@ function refusalReason(port: number, occupant: PortOccupant, why: PortRefusal): 
  *
  * `outgoingDeploymentId` names the deployment this deploy replaces. When that is what
  * holds the port, the caller stops it before the new release binds, so there is nothing
- * to ask; any other owner, another Openship deployment included, is still prompted for.
+ * to ask; any other owner, another Kovalio deployment included, is still prompted for.
  */
 export async function ensurePortAvailable(
   executor: CommandExecutor,
@@ -756,7 +756,7 @@ export async function ensurePortAvailable(
   const message =
     reason ??
     (occupant.isManagedDeployment
-      ? `Port ${port} is occupied by ${occupant.command}, which Openship deployed.`
+      ? `Port ${port} is occupied by ${occupant.command}, which Kovalio deployed.`
       : `Port ${port} is occupied by ${occupant.command}. This may not be a previous deployment.`);
   logger.log(`${message} Waiting for user decision...\n`, "warn");
 

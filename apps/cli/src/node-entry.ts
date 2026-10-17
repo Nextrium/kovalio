@@ -1,7 +1,7 @@
 // node-entry.ts — thin wrapper with a #!/usr/bin/env node shebang.
 //
 // npm reads the shebang of the `bin` file to generate the Windows launchers
-// (openship.cmd / openship.ps1). dist/index.js uses a sh/JS polyglot launcher
+// (kovalio.cmd / kovalio.ps1). dist/index.js uses a sh/JS polyglot launcher
 // for direct Unix execution. On Windows, npm would turn its `sh` shebang into
 // `sh.exe` calls, which don't exist on a standard install (#460).
 //
@@ -9,7 +9,7 @@
 // the `bin` target: npm then emits correct launchers that call node.exe. On
 // Unix it's equally valid — node runs the wrapper, which loads the fully
 // bundled CLI. The official curl/tarball installer also runs the CLI on Node:
-// it selects a supported system runtime or vendors one under ~/.openship/runtime.
+// it selects a supported system runtime or vendors one under ~/.kovalio/runtime.
 //
 // ── It is also the Node-version gate, and that is why the import is dynamic ──
 //

@@ -34,7 +34,7 @@ describe("advanced.gpus through mergeAdvanced", () => {
 
 it("carries inspected GPU selectors through discovery, adoption and the next container create", async () => {
   const creates: Record<string, any>[] = [];
-  const runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/openship-no-daemon.sock" });
+  const runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/kovalio-no-daemon.sock" });
   const raw = {
     Id: "c".repeat(64),
     Name: "/app",
@@ -153,7 +153,7 @@ it("does not apply a stale repository GPU request to a container that was runnin
 
 
 it("keeps inspection usable for an unsupported GPU configuration and blocks its adoption", async () => {
-  const runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/openship-no-daemon.sock" });
+  const runtime = await DockerRuntime.create({ dockerSocketPath: "/tmp/kovalio-no-daemon.sock" });
   (runtime as any)._docker = {
     getContainer: () => ({
       inspect: async () => ({

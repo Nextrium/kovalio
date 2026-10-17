@@ -1,5 +1,5 @@
 {
-  "$schema": "https://openship.io/app.schema.json",
+  "$schema": "https://nextrium.org/app.schema.json",
   "available": true,
   "verified": true,
   "minEngine": "0.9.0",
@@ -20,7 +20,7 @@
         "POSTGRES_DB": "authentik"
       },
       "volumes": ["authentik_db_data:/var/lib/postgresql/data"],
-      "secretEnv": ["POSTGRES_PASSWORD", "OPENSHIP_APP_PASSWORD"],
+      "secretEnv": ["POSTGRES_PASSWORD", "KOVALIO_APP_PASSWORD"],
       "healthcheck": {
         "test": ["CMD-SHELL", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""],
         "interval": "10s",
@@ -160,7 +160,7 @@
     },
     {
       "service": "authentik-db",
-      "key": "OPENSHIP_APP_PASSWORD",
+      "key": "KOVALIO_APP_PASSWORD",
       "label": "Application database password",
       "generate": "secret",
       "secret": true,
@@ -271,8 +271,8 @@
   "files": [
     {
       "service": "authentik-db",
-      "path": "/docker-entrypoint-initdb.d/openship-role.sh",
-      "content": "#!/bin/sh\nset -eu\npsql -v ON_ERROR_STOP=1 --username \"$POSTGRES_USER\" --dbname \"$POSTGRES_DB\" --set app_password=\"$OPENSHIP_APP_PASSWORD\" <<'SQL'\nCREATE ROLE authentik WITH LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB PASSWORD :'app_password';\nALTER DATABASE authentik OWNER TO authentik;\nGRANT USAGE, CREATE ON SCHEMA public TO authentik;\nSQL\n"
+      "path": "/docker-entrypoint-initdb.d/kovalio-role.sh",
+      "content": "#!/bin/sh\nset -eu\npsql -v ON_ERROR_STOP=1 --username \"$POSTGRES_USER\" --dbname \"$POSTGRES_DB\" --set app_password=\"$KOVALIO_APP_PASSWORD\" <<'SQL'\nCREATE ROLE authentik WITH LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB PASSWORD :'app_password';\nALTER DATABASE authentik OWNER TO authentik;\nGRANT USAGE, CREATE ON SCHEMA public TO authentik;\nSQL\n"
     }
   ],
   "tags": ["sso", "identity", "oauth", "oidc", "saml"]

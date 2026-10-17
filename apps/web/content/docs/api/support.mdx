@@ -3,10 +3,10 @@ title: Cloud support
 description: Submit Cloud support requests, follow private account tickets, and manage the operator queue.
 ---
 
-`https://openship.io/support` and `/contact` use the same ticket intake. The
+`https://nextrium.org/support` and `/contact` use the same ticket intake. The
 website forwards to `POST /api/cloud/support` on the Cloud API; its default is
-`https://api.openship.io`. A development website can select a different Cloud API
-with `OPENSHIP_CLOUD_API_URL`. The website needs no SMTP credentials or operator
+`https://api.nextrium.org`. A development website can select a different Cloud API
+with `KOVALIO_CLOUD_API_URL`. The website needs no SMTP credentials or operator
 token, and never forwards browser cookies or claimed client IPs.
 
 The Cloud API stores support tickets and starts the delivery worker only when
@@ -17,7 +17,7 @@ excluded from customer, project, and self-hosted instance exports.
 
 ## Signed-in ticket center
 
-`https://app.openship.io/support` lists the signed-in customer's tickets, with
+`https://kovalio.nextrium.org/support` lists the signed-in customer's tickets, with
 topic, Open/Resolved status, subject/reference search, pagination and conversation
 history. Support is the final sidebar entry on Cloud and Cloud-connected self-hosted
 or desktop installations. It also remains visible for existing Cloud projects when
@@ -56,13 +56,13 @@ they are not automatically imported into the ticket conversation.
 ### Connected self-hosted and desktop installations
 
 The local inbox uses the signed-in person's own verified Cloud link. Tickets stay
-in Cloud, with the same history and email delivery as `app.openship.io/support`.
+in Cloud, with the same history and email delivery as `kovalio.nextrium.org/support`.
 The shared organization connection does not give teammates access to its owner's
 private tickets. A teammate without a personal link can open Support in Cloud and
 sign in there. Disconnected installations offer Settings and Cloud Support links.
 
 The local client reads `/session` first, then sends the returned `account.key` in
-`X-Openship-Support-Account` on every ticket request. This value identifies the
+`X-Kovalio-Support-Account` on every ticket request. This value identifies the
 connection and is not a credential. The relay rejects old or missing bindings with
 `409 SUPPORT_ACCOUNT_CHANGED` and discards responses from a replaced connection.
 The UI clears private state when the account changes and keeps drafts after transient
@@ -76,16 +76,16 @@ updating connected installations so the session and customer endpoints are avail
 
 ## Delivery and mailbox configuration
 
-Provision `support@openship.io` to receive mail. Configure the Cloud API's existing
+Provision `support@nextrium.org` to receive mail. Configure the Cloud API's existing
 `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` with a working
 sender. For example, after that mailbox is provisioned:
 
 ```dotenv
 SMTP_HOST=mail.oblien.com
 SMTP_PORT=587
-SMTP_USER=support@openship.io
+SMTP_USER=support@nextrium.org
 SMTP_PASS=<mailbox-password>
-SMTP_FROM=Openship Support <support@openship.io>
+SMTP_FROM=Kovalio Support <support@nextrium.org>
 ```
 
 Use credentials appropriate to the actual mail server; keep them in deployment
@@ -94,8 +94,8 @@ for the website. Creating a ticket does not depend on SMTP being available.
 
 Each submission atomically saves a `cloud_support_ticket` and two
 `cloud_support_message` deliveries: a receipt for the customer, and a notification
-to `support@openship.io`. The customer receipt contains a stable reference, no
-reflected message text, and `Reply-To: support@openship.io`. The team notification
+to `support@nextrium.org`. The customer receipt contains a stable reference, no
+reflected message text, and `Reply-To: support@nextrium.org`. The team notification
 includes the report and sets Reply-To to the requester. Ordinary inbound email
 and email replies arrive in the support mailbox; this API does not ingest IMAP.
 
@@ -130,8 +130,8 @@ insufficient. Responses are not cached. Do not put this token in client code.
 Example listing:
 
 ```sh
-curl --fail-with-body 'https://api.openship.io/api/cloud/support/tickets?status=open&limit=25' \
-  -H "X-Internal-Token: $OPENSHIP_INTERNAL_TOKEN"
+curl --fail-with-body 'https://api.nextrium.org/api/cloud/support/tickets?status=open&limit=25' \
+  -H "X-Internal-Token: $KOVALIO_INTERNAL_TOKEN"
 ```
 
 For replies, send JSON with a fresh UUID in `requestId`, the reply in `message`,

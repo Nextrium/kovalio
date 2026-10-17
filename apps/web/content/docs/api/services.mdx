@@ -86,8 +86,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects/proj_123/services" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/projects/proj_123/services" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"db","kind":"compose","image":"postgres:16","ports":["5432:5432"]}'
 ```
@@ -180,8 +180,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X PATCH "$OPENSHIP_URL/api/projects/proj_123/services/svc_456" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PATCH "$KOVALIO_URL/api/projects/proj_123/services/svc_456" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"restart":"unless-stopped","enabled":true}'
 ```
@@ -224,8 +224,8 @@ await ship.services.restart("proj_123", "svc_123");
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects/proj_123/services/svc_123/restart" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/projects/proj_123/services/svc_123/restart" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -240,7 +240,7 @@ POST /api/projects/:id/services/:serviceId/stop
 POST /api/projects/:id/services/:serviceId/restart
 ```
 
-Use `GET /api/projects/:id/services/containers` (`openship service containers -p my-stack`) to list the
+Use `GET /api/projects/:id/services/containers` (`kovalio service containers -p my-stack`) to list the
 running containers across the whole stack.
 
 ## Environment variables
@@ -309,8 +309,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X PUT "$OPENSHIP_URL/api/projects/proj_123/services/svc_456/env" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PUT "$KOVALIO_URL/api/projects/proj_123/services/svc_456/env" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"environment":"production","vars":[{"key":"DATABASE_URL","value":"postgres://…","isSecret":true}]}'
 ```
@@ -335,7 +335,7 @@ Use `PATCH .../env` when changing individual values so unrelated overrides remai
 Add `source: "effective"` to reveal named values from the complete saved view.
 For recovery, use `source: "runtime"` with the `containerId` returned by runtime
 inspection and names from `recoverableKeys`. Recovery excludes image defaults
-and keys already saved in Openship. It returns values without persisting them;
+and keys already saved in Kovalio. It returns values without persisting them;
 save the selected recovered values with `mergeEnvVars`. A changed container
 returns `ENVIRONMENT_RUNTIME_CHANGED`.
 
@@ -360,8 +360,8 @@ const environment = await ship.services.revealEnv("proj_123", "svc_456", {
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects/proj_123/services/svc_456/env-reveal" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/projects/proj_123/services/svc_456/env-reveal" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"keys":["POSTGRES_PASSWORD"]}'
 ```

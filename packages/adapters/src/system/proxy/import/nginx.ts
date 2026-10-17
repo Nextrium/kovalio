@@ -181,7 +181,7 @@ function strictLoopbackUpstreamPorts(config: string): Set<number> {
     if (!raw) continue;
     const resolved = resolveProxyTarget(raw, upstreams, { allowVariablesAfterAuthority: true });
     if ("reason" in resolved && !resolved.unixSocket) {
-      throw new Error(`Cannot inventory Openship edge routes: ${resolved.reason}`);
+      throw new Error(`Cannot inventory Kovalio edge routes: ${resolved.reason}`);
     }
 
     // The migration parser intentionally selects the first member of a named
@@ -206,7 +206,7 @@ function strictLoopbackUpstreamPorts(config: string): Set<number> {
         url = new URL(target);
       } catch (diagnosticFailure) {
         observeCaughtError(diagnosticFailure, "adapters/system/proxy/import/nginx");
-        throw new Error(`Cannot inventory Openship edge routes: invalid proxy_pass "${raw}"`);
+        throw new Error(`Cannot inventory Kovalio edge routes: invalid proxy_pass "${raw}"`);
       }
       if (!isLoopbackHost(url.hostname)) continue;
       const port = url.port ? Number(url.port) : url.protocol === "https:" ? 443 : 80;
@@ -632,14 +632,14 @@ export async function scanForeignOpenResty(executor: CommandExecutor): Promise<P
   return scanKovalioEdge(executor);
 }
 
-export async function scanOpenshipEdge(executor: CommandExecutor): Promise<ProxyScanResult> {
+export async function scanKovalioEdge(executor: CommandExecutor): Promise<ProxyScanResult> {
   // Only one layout normally exists (Compose mounts just the container path).
   // A single cat over all globs exits nonzero for the missing layouts, losing
   // valid stdout through tryExec. Skip unmatched globs, but still fail the whole
   // read if an existing file cannot be read; partial inventory is not all-clear.
   const cat = `sh -c ${shellQuote(
-    `for openship_site in ${OUR_EDGE_SITE_GLOBS.join(" ")}; do ` +
-    `if [ -f "$openship_site" ]; then cat "$openship_site" || exit 1; printf '\\n'; fi; done`,
+    `for kovalio_site in ${OUR_EDGE_SITE_GLOBS.join(" ")}; do ` +
+    `if [ -f "$kovalio_site" ]; then cat "$kovalio_site" || exit 1; printf '\\n'; fi; done`,
   )}`;
   const raw = await tryExec(executor, cat);
   if (raw?.trim()) return parseNginxConfig(raw);

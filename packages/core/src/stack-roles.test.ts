@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { phpLanguageDetector } from "./languages/php";
-import { parseOpenshipConfig } from "./openship-config/parse";
+import { parseKovalioConfig } from "./kovalio-config/parse";
 import { resolveStackRoles, resolveWebCommand } from "./stack-roles";
 import { STACKS, type StackRole } from "./stacks";
 
@@ -126,7 +126,7 @@ describe("STACKS.rails.defaultRoles (issue #935)", () => {
     const roles: readonly StackRole[] = STACKS.rails.defaultRoles ?? [];
     expect(roles.map((r) => r.stopGracePeriod)).toEqual(["10s", "45s"]);
     // Presets bypass the parser, so run each value through it here.
-    const { config, errors } = parseOpenshipConfig({
+    const { config, errors } = parseKovalioConfig({
       roles: roles.map(({ name, kind, command, stopGracePeriod }) => ({
         name,
         kind,
@@ -166,12 +166,12 @@ describe("STACKS.laravel.defaultRoles", () => {
     expect(scheduler?.singleton).toBe(true);
   });
 
-  it("preserves worker and scheduler shutdown settings through the openship.json parser", () => {
+  it("preserves worker and scheduler shutdown settings through the kovalio.json parser", () => {
     const roles: readonly StackRole[] = STACKS.laravel.defaultRoles ?? [];
     expect(roles.map((r) => r.stopGracePeriod)).toEqual(["90s", "90s", "10s"]);
     expect(roles.find((r) => r.name === "scheduler")?.stopSignal).toBe("SIGTERM");
     // Presets bypass the parser, so run each value through it here.
-    const { config, errors } = parseOpenshipConfig({
+    const { config, errors } = parseKovalioConfig({
       roles: roles.map(({ name, kind, command, singleton, stopSignal, stopGracePeriod }) => ({
         name,
         kind,

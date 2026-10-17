@@ -37,9 +37,9 @@ module.exports = {
     executableName: "kovalio",
     // Stable, owned bundle identifier — used by the code signature, notarization,
     // Keychain, and LaunchServices. Without it packager defaults to the generic
-    // `com.electron.openship`, which collides with other Electron apps.
-    appBundleId: "com.oblien.openship",
-    protocols: [{ name: "Openship instance", schemes: ["openship"] }],
+    // `com.electron.kovalio`, which collides with other Electron apps.
+    appBundleId: "com.oblien.kovalio",
+    protocols: [{ name: "Kovalio instance", schemes: ["kovalio"] }],
     icon: ICON_BASE,
     asar: true,
     // The main/preload are bundled (build/bundle.mjs) into self-contained files,
@@ -200,10 +200,10 @@ module.exports = {
     {
       name: "@reforged/maker-appimage",
       config: { options: {
-        name: "openship",
-        bin: "openship",
+        name: "kovalio",
+        bin: "kovalio",
         icon: `${ICON_BASE}.png`,
-        desktopFile: path.join(__dirname, "assets/openship.desktop"),
+        desktopFile: path.join(__dirname, "assets/kovalio.desktop"),
       } },
       platforms: ["linux"],
     },
@@ -216,7 +216,7 @@ module.exports = {
           bin: "kovalio",
           icon: `${ICON_BASE}.png`,
           categories: ["Development", "Utilities"],
-          mimeType: ["x-scheme-handler/openship"],
+          mimeType: ["x-scheme-handler/kovalio"],
           maintainer: "Oblien",
           homepage: "https://nextrium.org",
           license: "Apache-2.0",
@@ -233,8 +233,8 @@ module.exports = {
           bin: "kovalio",
           icon: `${ICON_BASE}.png`,
           categories: ["Development", "Utilities"],
-          mimeType: ["x-scheme-handler/openship"],
-          homepage: "https://openship.io",
+          mimeType: ["x-scheme-handler/kovalio"],
+          homepage: "https://nextrium.org",
           // Required by electron-installer-redhat (the RPM spec's `License:`).
           // Also set on package.json; kept here so the maker never depends on it.
           license: "Apache-2.0",

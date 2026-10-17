@@ -13,7 +13,7 @@ const owner = Type.String({ minLength: 1, maxLength: 100, pattern: "^[A-Za-z0-9_
 const repo = Type.String({ minLength: 1, maxLength: 100, pattern: "^[A-Za-z0-9_.-]+$" });
 const path = Type.String({
   maxLength: 200,
-  pattern: "^\\.(github|openship)/workflows/[A-Za-z0-9_.-]+\\.ya?ml$",
+  pattern: "^\\.(github|kovalio)/workflows/[A-Za-z0-9_.-]+\\.ya?ml$",
 });
 const ref = Type.String({ minLength: 1, maxLength: 256, pattern: "^[A-Za-z0-9_./-]+$" });
 const strings = Type.Record(
@@ -22,7 +22,7 @@ const strings = Type.Record(
   { maxProperties: 100 },
 );
 export const ActionControllerSchema = Type.Union([
-  Type.Literal("openship"),
+  Type.Literal("kovalio"),
   Type.Literal("github"),
 ]);
 export const ActionStatusSchema = Type.Union(
@@ -111,7 +111,7 @@ const ActionAccessAudience = Type.Union([
 const ActionAccessApproval = Type.Union([Type.Literal("required"), Type.Literal("automatic")]);
 const ActionAccessForks = Type.Union([Type.Literal("deny"), Type.Literal("review")]);
 const ActionActorIdentitySchema = Type.Object({
-  provider: Type.Union([Type.Literal("github"), Type.Literal("openship")]),
+  provider: Type.Union([Type.Literal("github"), Type.Literal("kovalio")]),
   id: Type.String(),
   login: Type.String(),
 });

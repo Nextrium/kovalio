@@ -100,17 +100,17 @@ export const MAIL_DB_INTERNAL_PORT = 5432;
 
 /**
  * Resolve the host port the mail database listens on.
- * Reads `OPENSHIP_MAIL_DB_PORT` at setup time. An invalid explicit setting must
+ * Reads `KOVALIO_MAIL_DB_PORT` at setup time. An invalid explicit setting must
  * fail instead of silently connecting the mail engine to a different database.
  */
 export function resolveMailDbPort(
-  raw: string | number | undefined = process.env.OPENSHIP_MAIL_DB_PORT,
+  raw: string | number | undefined = process.env.KOVALIO_MAIL_DB_PORT,
 ): number {
   if (raw === undefined || raw === "") return MAIL_DB_DEFAULT_PORT;
   const value = String(raw).trim();
   const n = Number(value);
   if (!/^[0-9]+$/.test(value) || !Number.isInteger(n) || n < 1 || n > 65535) {
-    throw new Error("OPENSHIP_MAIL_DB_PORT must be a decimal port between 1 and 65535.");
+    throw new Error("KOVALIO_MAIL_DB_PORT must be a decimal port between 1 and 65535.");
   }
   return n;
 }

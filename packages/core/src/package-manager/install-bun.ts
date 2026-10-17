@@ -19,9 +19,9 @@ export function installBunBinary(version: string): void {
     arch +
     (musl ? "-musl" : "") +
     (arch === "x64" ? "-baseline" : "");
-  const temp = fs.mkdtempSync(path.join(tmpdir(), "openship-bun-toolchain-"));
+  const temp = fs.mkdtempSync(path.join(tmpdir(), "kovalio-bun-toolchain-"));
   const destination = fs.realpathSync(process.execPath),
-    staging = destination + ".openship-" + process.pid;
+    staging = destination + ".kovalio-" + process.pid;
   try {
     fs.writeFileSync(path.join(temp, "package.json"), "{}");
     if (!run("bun", ["add", "--cwd", temp, "--ignore-scripts", name + "@" + version]))

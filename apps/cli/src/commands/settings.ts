@@ -6,7 +6,7 @@ import { readJsonInput, readSecret } from "../lib/command-input";
 import { printResult } from "../lib/cmd-helpers";
 
 export const settingsCommand = new Command("settings").description(
-  "Manage user preferences on the selected Openship instance",
+  "Manage user preferences on the selected Kovalio instance",
 );
 settingsCommand
   .command("get")

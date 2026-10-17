@@ -58,7 +58,7 @@ const {
   provisionRecords,
   releaseRecords,
 } = await import("@repo/platform/engine/modules/dns/dns-credential.service");
-const { DnsApiError, OPENSHIP_RECORD_COMMENT } = await import("@repo/platform/engine/modules/dns/types");
+const { DnsApiError, KOVALIO_RECORD_COMMENT } = await import("@repo/platform/engine/modules/dns/types");
 
 const row = (over: Record<string, unknown> = {}) => ({
   id: "dns_1",
@@ -188,10 +188,10 @@ describe("planRecords", () => {
     "plans Cloudflare's TXT formatting consistently for %s", async (content, action) => {
       provider.formatContent.mockImplementation((type, value) => type === "TXT" ? `"${value}"` : value);
       provider.listRecords.mockResolvedValue([rec({
-        type: "TXT", name: "_openship-challenge.app.example.com", content,
+        type: "TXT", name: "_kovalio-challenge.app.example.com", content,
       })]);
       const plan = await planRecords("org_1", "app.example.com", [{
-        type: "TXT", name: "_openship-challenge.app.example.com", content: "token",
+        type: "TXT", name: "_kovalio-challenge.app.example.com", content: "token",
       }]);
       expect(plan.records[0]?.action).toBe(action);
     },

@@ -170,7 +170,7 @@ export function validateClusterDatabase(config: ClusterDatabaseConfig): void {
     config.version !== undefined &&
     (config.engine !== "postgres" || !["17", "18"].includes(config.version))
   )
-    invalid("Choose PostgreSQL 17 or 18. Redis uses the supported version supplied by OpenShip.");
+    invalid("Choose PostgreSQL 17 or 18. Redis uses the supported version supplied by Kovalio.");
   if (!["standalone", "cluster"].includes(config.mode)) invalid("Choose standalone or cluster.");
   if (
     !Number.isInteger(config.instances) ||
@@ -242,7 +242,7 @@ export function validateClusterDatabaseUpdate(
     );
   if (after.storageGiB < before.storageGiB)
     throw new AppError("Database volumes cannot be shrunk.", 422, "CLUSTER_DATABASE_IMMUTABLE");
-  if (after.storageClass === "openship-local" && after.storageGiB !== before.storageGiB)
+  if (after.storageClass === "kovalio-local" && after.storageGiB !== before.storageGiB)
     throw new AppError(
       "Local storage reservations cannot be resized. For resizable PostgreSQL volumes, select an expandable storage class when creating the database.",
       422,
@@ -263,7 +263,7 @@ export function validateClusterDatabaseUpdate(
       );
     if (!before.backup || !after.backup)
       throw new AppError(
-        "Save a backup destination before changing Redis data partitions. OpenShip will verify a backup before moving data.",
+        "Save a backup destination before changing Redis data partitions. Kovalio will verify a backup before moving data.",
         422,
         "CLUSTER_DATABASE_BACKUP_REQUIRED",
       );

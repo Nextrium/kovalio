@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 
 describe("project cluster SDK", () => {
   it("shares target and replica preconditions with the HTTP lifecycle", async () => {
@@ -24,7 +24,7 @@ describe("project cluster SDK", () => {
         data: String(url).endsWith("/scale") ? { deploymentId: "scale-release" } : view,
       });
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     expect(await client.projects.getClusterWorkload("project/a")).toEqual(view);
     const target = {
       clusterId: "cluster",

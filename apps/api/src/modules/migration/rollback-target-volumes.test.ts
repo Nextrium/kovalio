@@ -150,9 +150,9 @@ describe("migration rollback and cleanup", () => {
   });
   it("removes only exact run-owned volumes on the target", async () => {
     run.targetVolumes = ["owned", "sibling", "older", "gone"];
-    volumes.set("owned", { Labels: { "openship.project": "project", "openship.migration": "run" } });
-    volumes.set("sibling", { Labels: { "openship.project": "another", "openship.migration": "run" } });
-    volumes.set("older", { Labels: { "openship.project": "project", "openship.migration": "old-run" } });
+    volumes.set("owned", { Labels: { "kovalio.project": "project", "kovalio.migration": "run" } });
+    volumes.set("sibling", { Labels: { "kovalio.project": "another", "kovalio.migration": "run" } });
+    volumes.set("older", { Labels: { "kovalio.project": "project", "kovalio.migration": "old-run" } });
     expect(await migrationOrchestrator.cleanupTargetData("run", "org")).toEqual({ ok: true, removed: 1 });
     expect(removed).toEqual(["owned"]);
     expect([...volumes.keys()]).toEqual(["sibling", "older"]);
@@ -161,7 +161,7 @@ describe("migration rollback and cleanup", () => {
   });
   it("uses the recorded draft identity after its project row has been deleted", async () => {
     run.projectId = null; run.recovery.createdProjectId = "project"; run.targetVolumes = ["copy"];
-    volumes.set("copy", { Labels: { "openship.project": "project", "openship.migration": "run" } });
+    volumes.set("copy", { Labels: { "kovalio.project": "project", "kovalio.migration": "run" } });
     expect(await migrationOrchestrator.cleanupTargetData("run", "org")).toEqual({ ok: true, removed: 1 });
   });
   it.each(["succeeded", "partial", "awaiting_cutover", "moving_data"])("refuses manual cleanup of %s", async status => {

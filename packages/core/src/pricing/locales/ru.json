@@ -2,7 +2,7 @@
   "plans": {
     "free": {
       "name": "Free",
-      "tagline": "Развёртывание статических сайтов в Openship Cloud бесплатно."
+      "tagline": "Развёртывание статических сайтов в Kovalio Cloud бесплатно."
     },
     "starter": {
       "name": "Starter",

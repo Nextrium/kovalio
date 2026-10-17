@@ -10,8 +10,8 @@ vi.mock("@/lib/api", () => ({
   requestServiceTerminalTicket: ticket,
   buildTerminalWsUrl: wsUrl,
   buildServiceTerminalWsUrl: wsUrl,
-  TERMINAL_SUBPROTOCOL_PREFIX: "openship.terminal.v1+",
-  TERMINAL_RESUME_SUBPROTOCOL_PREFIX: "openship.terminal.resume+",
+  TERMINAL_SUBPROTOCOL_PREFIX: "kovalio.terminal.v1+",
+  TERMINAL_RESUME_SUBPROTOCOL_PREFIX: "kovalio.terminal.resume+",
 }));
 
 class Socket {
@@ -125,7 +125,7 @@ describe("terminal connection ownership (#668)", () => {
     expect(connection.isConnecting).toBe(false);
     await act(async () => connection.reconnect());
     expect(Socket.instances).toHaveLength(1);
-    expect(Socket.instances[0].protocols).not.toContain("openship.terminal.v1+cancelled-ticket");
+    expect(Socket.instances[0].protocols).not.toContain("kovalio.terminal.v1+cancelled-ticket");
     await act(async () => Socket.instances[0].ready());
     expect(connection.isConnected).toBe(true);
   });

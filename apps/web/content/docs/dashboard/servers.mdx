@@ -1,24 +1,24 @@
 ---
 title: Servers
-description: Manage your deployment servers, with automatic setup on Openship Cloud and SSH connections for your own machines.
+description: Manage your deployment servers, with automatic setup on Kovalio Cloud and SSH connections for your own machines.
 ---
 
-The **Servers** section shows where your projects run. On **Openship Cloud**, choose a plan and deploy:
-Openship prepares a managed server automatically. You can open Servers later to inspect usage or change
-supported settings. On **self-hosted Openship**, connect a machine you own over SSH and Openship installs
+The **Servers** section shows where your projects run. On **Kovalio Cloud**, choose a plan and deploy:
+Kovalio prepares a managed server automatically. You can open Servers later to inspect usage or change
+supported settings. On **self-hosted Kovalio**, connect a machine you own over SSH and Kovalio installs
 and checks the software your deployments need.
 
-Connecting a Cloud account from self-hosted Openship also lists that account's managed servers here,
+Connecting a Cloud account from self-hosted Kovalio also lists that account's managed servers here,
 alongside your own machines. Existing execution links appear once. Cloud server settings, terminal
 sessions and billing use their Cloud operations; browsing the list does not create another server.
 
 <Callout title="Where this lives">
 The list is at **`/servers`**, adding a server is **`/servers/new`**, and each server's detail screen is
-**`/servers/<serverId>`**. Every project uses the same server destination, whether Openship manages the
+**`/servers/<serverId>`**. Every project uses the same server destination, whether Kovalio manages the
 host or you connect it yourself.
 </Callout>
 
-## Managed servers on Openship Cloud
+## Managed servers on Kovalio Cloud
 
 Your first subscription prepares a **Production** server. Repository deployments, uploaded source, and
 catalog apps automatically use that server when it is the only compatible destination. You do not need
@@ -48,11 +48,11 @@ The list shows each server's state, placement, and project count. Open one for:
   stopped manual background process and explicitly start it. Project and system processes link to their
   owning controls; they cannot be deleted or stopped from this view. Docker containers remain in projects.
 - **Settings → Runtime API** — reveal a server-only automation token or rotate it with confirmation. This API
-  remains enabled because Openship uses it for deployments and terminals. Rotation invalidates older
+  remains enabled because Kovalio uses it for deployments and terminals. Rotation invalidates older
   tokens and connections; let active work finish first.
 - **Settings** — inspect the managed image, operating system, persistent lifecycle and allocated
   resources, read recent boot logs, and open the existing capacity-change review. Application images
-  belong to project deployment settings; the shared server image is maintained by Openship.
+  belong to project deployment settings; the shared server image is maintained by Kovalio.
 
 Only supported tabs appear. These are the shared server overview, health, listener and terminal
 components, with provider controls and the plan card for managed servers. Host package installation
@@ -68,11 +68,11 @@ external services that allowlist the server's outgoing address; it does not chan
 
 Custom proxies require a **public IPv4 address**, port and HTTP or HTTPS protocol. Hostnames and
 private addresses are rejected. Enter both username and password if authentication is enabled;
-credentials are never returned by Openship or included in its audit events. Re-enter them when
+credentials are never returned by Kovalio or included in its audit events. Re-enter them when
 replacing an authenticated proxy. The provider performs its own connection preflight and enforces
 proxy availability on the underlying Cloud account.
 
-Openship applies one outbound change under the existing server activity lock, then reads the result
+Kovalio applies one outbound change under the existing server activity lock, then reads the result
 before confirming success. It does not combine that change with internet-policy or routing writes.
 If a response is lost, **Refresh status** reads the current settings; it does not repeat the mutation.
 A changed provider revision rejects an outdated proxy form, including a password-only replacement.
@@ -81,9 +81,9 @@ The same controls are available through `ship.servers.managedOutbound(id)`,
 `ship.servers.managedOutboundOptions(id)` and `ship.servers.setManagedOutbound(id, input)`, or the CLI:
 
 ```bash
-openship server managed outbound get srv_production
-openship server managed outbound options srv_production
-openship server managed outbound set srv_production reviewed-outbound.json
+kovalio server managed outbound get srv_production
+kovalio server managed outbound options srv_production
+kovalio server managed outbound set srv_production reviewed-outbound.json
 ```
 
 The JSON contains `mode`, the `expectedRevision` from the read, and `confirm: true`. For managed mode,
@@ -110,9 +110,9 @@ subscription, followed by explicit confirmation.
 See the [managed Cloud server guide](/docs/guides/cloud-workspaces) for lifecycle details and the
 [Servers API and SDK](/docs/api/servers) for automation.
 
-## Connected servers on self-hosted Openship
+## Connected servers on self-hosted Kovalio
 
-The remaining setup and infrastructure controls apply to machines you connect yourself. Give Openship
+The remaining setup and infrastructure controls apply to machines you connect yourself. Give Kovalio
 SSH access to a VPS, bare-metal server, or VM, then select it in the
 [deploy flow](/docs/guides/deploy-from-github). See [Deploy to your own server](/docs/guides/custom-servers)
 for a walkthrough.
@@ -172,8 +172,8 @@ Under **Advanced** you can add a **Jump Host** (e.g. `user@bastion.example.com`)
 For an existing Cloudflare Access SSH application, choose **Cloudflare Access** and enter its hostname,
 such as `ssh.example.com`. Password, encrypted private key, and agent authentication are supported.
 The SSH origin port is configured in Cloudflare Tunnel. Complete Cloudflare sign-in on the machine
-running OpenShip before testing the connection. Windows desktop bundles the verified `cloudflared`
-client; other installations need it on their PATH or configured through `OPENSHIP_CLOUDFLARED_PATH`.
+running Kovalio before testing the connection. Windows desktop bundles the verified `cloudflared`
+client; other installations need it on their PATH or configured through `KOVALIO_CLOUDFLARED_PATH`.
 The saved connection is reused for setup, deployments, health checks, Docker, source transfers, terminals,
 and port forwarding. The server's **Open Cloudflare Access** link opens its Access application;
 a browser terminal is available there only if you enabled it in Cloudflare.

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { AppError, type IngressConnection } from "@repo/contracts";
 import { createAuthorization, createPlatform } from "@repo/platform";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 import { createShip } from "../src/native";
 import { alice, authorizationFixture } from "../../platform/test/fixtures";
 const connection: IngressConnection = {
@@ -43,7 +43,7 @@ describe("managed ingress SDK transports", () => {
       if (init.method === "GET") return Response.json([connection]);
       return Response.json(connection);
     });
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "https://ship.test",
       fetch: fetcher as typeof fetch,
     });
@@ -87,7 +87,7 @@ describe("managed ingress SDK transports", () => {
     const fetcher = vi.fn(async () =>
       Response.json({ ...connection, token: "must-not-leave-the-boundary" }),
     );
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "https://ship.test",
       fetch: fetcher as typeof fetch,
     });

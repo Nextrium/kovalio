@@ -91,7 +91,7 @@ export async function prepareSourceDirectory(source: CodeSource, options: { temp
   if (entries) {
     const root = options.temporaryRoot ?? tmpdir();
     await mkdir(root, { recursive: true, mode: 0o700 });
-    directory = await mkdtemp(join(root, "openship-source-"));
+    directory = await mkdtemp(join(root, "kovalio-source-"));
     temporary = true;
   } else {
     directory = resolve((source as { path: string }).path);
@@ -116,7 +116,7 @@ export async function archiveSourceDirectory(directory: string, options: { tempo
   const canonical = await validateSourceDirectory(staging.directory, options.signal);
   const root = staging.root;
   await mkdir(root, { recursive: true, mode: 0o700 });
-  const temporary = await mkdtemp(join(root, "openship-upload-")), path = join(temporary, "source.tar.gz");
+  const temporary = await mkdtemp(join(root, "kovalio-upload-")), path = join(temporary, "source.tar.gz");
   const dispose = () => rm(temporary, { recursive: true, force: true });
   try {
     const archive = createTar({

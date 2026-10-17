@@ -113,7 +113,7 @@
     "needsLoginPre": "加入 ",
     "needsLoginMid": " 的 Kovalio。请登录或使用 ",
     "needsLoginPost": " 创建账户以接受邀请。",
-    "signInToAccept": "加入 Openship 上的 {org}。请使用 {email} 登录以接受邀请。",
+    "signInToAccept": "加入 Kovalio 上的 {org}。请使用 {email} 登录以接受邀请。",
     "accountCreationDisabled": "你必须先由实例管理员创建账户，才能接受此邀请。",
     "signIn": "登录",
     "createAccount": "创建账户",
@@ -158,7 +158,7 @@
     "invalidTitle": "无效的授权请求",
     "title": "授权设备",
     "instancePre": "位于 ",
-    "instancePost": " 的 Openship 实例希望连接到你的 Openship Cloud 账户。",
+    "instancePost": " 的 Kovalio 实例希望连接到你的 Kovalio Cloud 账户。",
     "organization": "组织",
     "switch": "切换",
     "switchAccount": "切换账号",
@@ -176,7 +176,7 @@
     "authorizing": "正在授权……",
     "authorize": "授权",
     "cancel": "取消",
-    "deviceDoneTitle": "已连接到 Openship Cloud",
+    "deviceDoneTitle": "已连接到 Kovalio Cloud",
     "deviceDoneBody": "您可以关闭此标签页并返回终端 — 设置将自动继续。"
   },
   "cloudConnect": {

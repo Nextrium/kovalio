@@ -178,7 +178,7 @@ export function sshKeyPathProblem(raw: string): string | null {
     accessSync(resolved, constants.R_OK);
   } catch (diagnosticFailure) {
     observeCaughtError(diagnosticFailure, "platform/engine/lib/ssh-key-path");
-    return `sshKeyPath is not readable by Openship — no such file, or no permission: ${resolved}`;
+    return `sshKeyPath is not readable by Kovalio — no such file, or no permission: ${resolved}`;
   }
 
   // A directory passes the readability probe but blows up in readFileSync later,

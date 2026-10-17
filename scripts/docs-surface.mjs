@@ -55,9 +55,9 @@ export function sdkSurface() {
   }
   const remoteSource = program.getSourceFile(join(root, "packages/sdk/src/client.ts"));
   const remote = remoteSource?.statements.find(
-    (node) => ts.isClassDeclaration(node) && node.name?.text === "OpenshipClient",
+    (node) => ts.isClassDeclaration(node) && node.name?.text === "KovalioClient",
   );
-  if (!remote) throw new Error("Cannot find the public OpenshipClient class");
+  if (!remote) throw new Error("Cannot find the public KovalioClient class");
   const groups = new Map();
   for (const [surface, location] of [["native", declaration], ["remote", remote]]) {
     for (const property of checker.getTypeAtLocation(location).getProperties()) {
@@ -93,7 +93,7 @@ function helpRows(lines) {
 }
 
 export async function cliSurface() {
-  const binary = join(root, "packages/openship/dist/node-entry.js");
+  const binary = join(root, "packages/kovalio/dist/node-entry.js");
   const catalog = [];
   async function visit(parts) {
     const { stdout } = await execute(process.execPath, [binary, ...parts, "--help"], {
@@ -103,8 +103,8 @@ export async function cliSurface() {
     });
     // Working-directory defaults are not part of the public command contract.
     const help = stdout.replaceAll(root, ".");
-    if (!help.startsWith("Usage: openship"))
-      throw new Error(`Unexpected help for openship ${parts.join(" ")}`);
+    if (!help.startsWith("Usage: kovalio"))
+      throw new Error(`Unexpected help for kovalio ${parts.join(" ")}`);
     const sections = { introduction: [] };
     let section = "introduction";
     for (const line of help.split("\n")) {
@@ -117,7 +117,7 @@ export async function cliSurface() {
       (row) => !row.syntax.startsWith("help "),
     );
     catalog.push({
-      command: ["openship", ...parts].join(" "),
+      command: ["kovalio", ...parts].join(" "),
       usage: help.split("\n")[0].replace(/^Usage: /, ""),
       description: sections.introduction.slice(1).join(" ").trim(),
       arguments: helpRows(sections.Arguments ?? []),

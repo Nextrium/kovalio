@@ -17,7 +17,7 @@ type AttachRuntime = Pick<RuntimeAdapter, "attachToExternalNetworks"> & Partial<
 
 /** Docker network name for a project slug — the source app's private network. */
 export function linkedNetworkName(slug: string): string {
-  return `openship-${slug}`;
+  return `kovalio-${slug}`;
 }
 
 export async function attachLinkedNetworks(
@@ -59,7 +59,7 @@ export async function attachLinkedNetworks(
       /**
        * Name this project's containers EXPLICITLY as well as by label.
        *
-       * `attachToExternalNetworks` filters on `openship.project=<id>`, and an ADOPTED
+       * `attachToExternalNetworks` filters on `kovalio.project=<id>`, and an ADOPTED
        * (in-place migrated) container keeps its ORIGINAL labels — labels are immutable, which
        * is why the migration has its own id-keyed joiner at all. So for a migrated consumer
        * the label match found nothing: the alias (`db:5432`) went into the env and the
@@ -82,7 +82,7 @@ export async function attachLinkedNetworks(
         await runtime.attachToExternalNetworks(projectId, networks, stored, {
           // A user-named project such as "shared-tools" can have this prefix too.
           // Always keep its own project network while removing revoked links.
-          prunePrefix: "openship-shared-", retain: [...ownNetworks, ...(project?.slug ? [linkedNetworkName(project.slug)] : [])],
+          prunePrefix: "kovalio-shared-", retain: [...ownNetworks, ...(project?.slug ? [linkedNetworkName(project.slug)] : [])],
           strict: hasServiceLinks || !!onlyContainerIds,
           ...(onlyContainerIds ? { onlyContainerIds } : {}),
         });

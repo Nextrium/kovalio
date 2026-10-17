@@ -29,7 +29,7 @@ describe("raw Docker build output observers", () => {
     async (builder) => {
       const runtime = Object.create(DockerRuntime.prototype) as DockerRuntime;
       Object.assign(runtime, {
-        _docker: new Dockerode({ socketPath: "/tmp/openship-test-absent.sock" }),
+        _docker: new Dockerode({ socketPath: "/tmp/kovalio-test-absent.sock" }),
       });
       const chunks = ["getaddrinfo ENO", "TFOUND db", ".example.com\n", "\n"];
       const outputStream = builder === "buildkit stderr" ? 2 : 1;
@@ -111,7 +111,7 @@ describe("raw Docker build output observers", () => {
         config,
         "/tmp/observer-build",
         "Dockerfile",
-        "openship/example:build",
+        "kovalio/example:build",
         new BuildLogger((entry) => entries.push(entry), onOutput),
       ),
     ).resolves.toBeUndefined();

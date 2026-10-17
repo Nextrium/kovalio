@@ -218,7 +218,7 @@ jobs:
     {
       owner: "acme",
       repo: "app",
-      path: ".openship/workflows/ci.yml",
+      path: ".kovalio/workflows/ci.yml",
       source,
       sha: f.run.revision,
       ref: f.run.ref,
@@ -314,7 +314,7 @@ describe("durable Actions controller", () => {
     const policy = {
       version: 1 as const,
       audience: "owner" as const,
-      owner: { provider: "openship" as const, id: "actor", login: "actor" },
+      owner: { provider: "kovalio" as const, id: "actor", login: "actor" },
       users: [],
       approval: "required" as const,
       forks: "deny" as const,

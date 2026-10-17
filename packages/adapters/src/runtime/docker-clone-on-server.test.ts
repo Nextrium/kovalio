@@ -12,8 +12,8 @@ function config(): BuildConfig {
   return {
     sessionId: "bld-clone-test",
     projectId: "project-1",
-    slug: "openship",
-    repoUrl: "https://github.com/oblien/openship.git",
+    slug: "kovalio",
+    repoUrl: "https://github.com/Nextrium/kovalio.git",
     branch: "main",
     commitSha: COMMIT,
     gitCredentialHelperPath: "/tmp/relay-helper.sh",
@@ -59,7 +59,7 @@ describe("DockerRuntime clone-on-server pinned commit", () => {
       } as unknown as CommandExecutor;
       await harness(executor).cloneSourceOnRemote(
         { ...config(), gitCredentialHelperPath: undefined },
-        "/tmp/openship-build-test",
+        "/tmp/kovalio-build-test",
         new BuildLogger(),
       );
       expect(tarball.downloadTarballOnRemote).toHaveBeenCalledOnce();
@@ -80,7 +80,7 @@ describe("DockerRuntime clone-on-server pinned commit", () => {
     await expect(
       harness(executor).cloneSourceOnRemote(
         config(),
-        "/tmp/openship-build-test",
+        "/tmp/kovalio-build-test",
         new BuildLogger(),
       ),
     ).rejects.toThrow("git clone on server exited with code 128");
@@ -102,7 +102,7 @@ describe("DockerRuntime clone-on-server pinned commit", () => {
 
     await harness(executor).cloneSourceOnRemote(
       config(),
-      "/tmp/openship-build-test",
+      "/tmp/kovalio-build-test",
       new BuildLogger(),
     );
 

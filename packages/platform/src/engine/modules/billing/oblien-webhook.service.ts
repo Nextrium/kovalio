@@ -83,7 +83,7 @@ function parseDate(v: unknown): Date | null {
 
 /**
  * Refresh the org's usage snapshot. Credit fields are converted Oblien-credit
- * → milli (the openship internal unit) via the quota wrapper's single boundary
+ * → milli (the kovalio internal unit) via the quota wrapper's single boundary
  * so the dashboard's balance surface stays in one unit. Per-resource fields
  * are raw physical units.
  */

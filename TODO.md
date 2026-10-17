@@ -418,7 +418,7 @@ deploy on error.
 
 **Implemented (v1).** Optional ordered `releaseCommands` are stored on the project,
 frozen on deployment snapshots, and run by the shared engine after the candidate build
-and before activation. Configure them in the existing build wizard, `openship.json`, or
+and before activation. Configure them in the existing build wizard, `kovalio.json`, or
 API/SDK. Nothing is injected per framework.
 
 Docker uses temporary containers with the candidate image, shared runtime env/mount helpers,

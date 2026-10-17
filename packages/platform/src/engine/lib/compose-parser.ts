@@ -805,7 +805,7 @@ function collectUnsupported(
         service: serviceName,
         field: "deploy",
         reason:
-          `deploy.${rest.join("/")} is not modeled — Openship runs one container per ` +
+          `deploy.${rest.join("/")} is not modeled — Kovalio runs one container per ` +
           `service (only deploy.resources.limits and the GPU in deploy.resources.reservations.devices are honored).`,
       });
     }

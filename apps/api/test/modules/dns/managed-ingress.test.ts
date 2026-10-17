@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Hono } from "hono";
 import { db, repos, schema } from "@repo/db";
 import { eq } from "drizzle-orm";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { seedOwner, seedServer } from "../jobs/_harness";
 import { seedProject } from "../../helpers/seed";
 import { dnsRoutes } from "../../../src/modules/dns/dns.routes";
@@ -13,8 +13,8 @@ const app = new Hono()
   .route("/api/dns", dnsRoutes)
   .route("/api/health", healthRoutes);
 function client(owner: Awaited<ReturnType<typeof seedOwner>>) {
-  return new OpenshipClient({
-    baseUrl: "http://openship.test",
+  return new KovalioClient({
+    baseUrl: "http://kovalio.test",
     token: owner.token,
     organizationId: owner.orgId,
     fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,

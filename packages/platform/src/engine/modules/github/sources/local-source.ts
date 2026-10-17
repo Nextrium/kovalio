@@ -157,11 +157,11 @@ export class LocalGitHubSource implements GitHubSource {
         return {
           state: {
             sources: {
-              openshipApp: appHome.state.sources.openshipApp,
+              kovalioApp: appHome.state.sources.kovalioApp,
               ghCli: ghCliState(ghStatus),
             },
-            primary: appHome.state.sources.openshipApp.connected
-              ? "openship-app"
+            primary: appHome.state.sources.kovalioApp.connected
+              ? "kovalio-app"
               : ghStatus.available
                 ? "gh-cli"
                 : null,
@@ -181,7 +181,7 @@ export class LocalGitHubSource implements GitHubSource {
       const [repos, accounts] = await Promise.all([this.gh.listAllRepos(), this.gh.listOwners()]);
       const state: GitHubConnectionState = {
         sources: {
-          openshipApp: { connected: false },
+          kovalioApp: { connected: false },
           ghCli: ghCliState(ghStatus),
         },
         primary: "gh-cli",
@@ -204,7 +204,7 @@ export class LocalGitHubSource implements GitHubSource {
     const state = await getGitHubConnectionState(this.ctx);
     if (this.gh) {
       state.sources.ghCli = ghCliState(ghStatus);
-      state.primary = state.sources.openshipApp.connected ? "openship-app" : null;
+      state.primary = state.sources.kovalioApp.connected ? "kovalio-app" : null;
     }
     if (state.primary === null) return { state, accounts: [], repos: [] };
     const repos = await listUserOwnedRepos(this.ctx);

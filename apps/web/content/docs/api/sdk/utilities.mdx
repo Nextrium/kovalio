@@ -7,11 +7,11 @@ These utilities support the resource operations documented under [API](/docs/api
 
 ## Typed inputs and results
 
-Method inputs and results are exported by `openship`. Derive a specific operation's types when writing
+Method inputs and results are exported by `kovalio`. Derive a specific operation's types when writing
 a reusable integration:
 
 ```ts
-import type { ProjectOperations } from "openship";
+import type { ProjectOperations } from "kovalio";
 
 type CreateProjectInput = Parameters<ProjectOperations["create"]>[0];
 type Project = Awaited<ReturnType<ProjectOperations["get"]>>;
@@ -29,7 +29,7 @@ and SDK errors. `?` in an operation table marks an optional argument.
 `iteratePages()` works with named list methods that return `{ data, total?, page?, perPage? }`:
 
 ```ts
-import { iteratePages } from "openship";
+import { iteratePages } from "kovalio";
 
 for await (const project of iteratePages((page) => ship.projects.list(page), { perPage: 50 })) {
   console.log(project.id, project.name);
@@ -44,7 +44,7 @@ checked by the underlying list operation on every page.
 Use `ship.deployment(id)` for a handle, or pass an operations object directly:
 
 ```ts
-import { createDeploymentHandle, waitForDeployment, consumeDeploymentEvents } from "openship";
+import { createDeploymentHandle, waitForDeployment, consumeDeploymentEvents } from "kovalio";
 
 const handle = createDeploymentHandle(ship.deployments, "dep_123");
 const status = await handle.status();
@@ -70,7 +70,7 @@ export async function printBuildLogs(deploymentId: string, signal: AbortSignal) 
 `docker compose config --format json`, into the input expected by `services.sync()`.
 
 ```ts
-import { normalizeComposeServices } from "openship";
+import { normalizeComposeServices } from "kovalio";
 
 const services = normalizeComposeServices(
   {
@@ -87,12 +87,12 @@ interpolation before calling this helper. See [services](/docs/api/services#sync
 
 ## HTTP transport
 
-Only a remote `OpenshipClient` exposes `http`. Use it for documented endpoints without a named SDK method:
+Only a remote `KovalioClient` exposes `http`. Use it for documented endpoints without a named SDK method:
 
 ```ts
-import type { OpenshipClient } from "openship";
+import type { KovalioClient } from "kovalio";
 
-export async function readImageCatalog(client: OpenshipClient) {
+export async function readImageCatalog(client: KovalioClient) {
   return client.http.request("/images");
 }
 ```

@@ -1564,12 +1564,12 @@ describe("Ruby runtime version detection", () => {
   it("keeps the pin when metadata changes the detected framework", () => {
     expect(detectStack(railsFiles, undefined, {
       Gemfile: 'gem "rails"', ".ruby-version": "3.4.1",
-      "openship.json": JSON.stringify({ framework: "sinatra" }),
+      "kovalio.json": JSON.stringify({ framework: "sinatra" }),
     })).toMatchObject({ stack: "sinatra", buildImage: "ruby:3.4.1-slim" });
   });
   it("applies the pin when metadata first identifies the Ruby framework", () => {
-    expect(detectStack(files("openship.json", ".ruby-version"), undefined, {
-      ".ruby-version": "3.4.1", "openship.json": JSON.stringify({ framework: "rails" }),
+    expect(detectStack(files("kovalio.json", ".ruby-version"), undefined, {
+      ".ruby-version": "3.4.1", "kovalio.json": JSON.stringify({ framework: "rails" }),
     })).toMatchObject({ stack: "rails", buildImage: "ruby:3.4.1-slim" });
   });
   it("does not pin a Dockerfile-owned image", () => {
@@ -1595,12 +1595,12 @@ describe("repository Node engine compatibility", () => {
 describe("explicit deployment command precedence", () => {
   it("preserves native configuration over imported Vercel commands", () => {
     const result = detectStack(
-      files("package.json", "openship.json", "vercel.json"),
+      files("package.json", "kovalio.json", "vercel.json"),
       {
         scripts: { start: "node server.mjs", build: "echo default" },
       },
       {
-        "openship.json": JSON.stringify({ buildCommand: "echo native" }),
+        "kovalio.json": JSON.stringify({ buildCommand: "echo native" }),
         "vercel.json": JSON.stringify({ buildCommand: "echo imported" }),
       },
     );

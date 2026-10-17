@@ -1,32 +1,32 @@
 ---
 title: context
-description: Commands, arguments, and options for openship context.
-cliGroup: openship context
+description: Commands, arguments, and options for kovalio context.
+cliGroup: kovalio context
 ---
 
 See the [workflow guide](/docs/cli/access) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship context
+## kovalio context
 
 Manage connection contexts (list/use/add/rm)
 
 ```text
-openship context|ctx [options] [command]
+kovalio context|ctx [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list\|ls`](/docs/cli/reference/context#openship-context-list) | List configured contexts |
-| [`use <name>`](/docs/cli/reference/context#openship-context-use) | Switch the active context |
-| [`add [options] <name>`](/docs/cli/reference/context#openship-context-add) | Create or update a context's endpoints/token |
-| [`rm\|remove <name>`](/docs/cli/reference/context#openship-context-rm) | Remove a context (cannot remove the active one) |
+| [`list\|ls`](/docs/cli/reference/context#kovalio-context-list) | List configured contexts |
+| [`use <name>`](/docs/cli/reference/context#kovalio-context-use) | Switch the active context |
+| [`add [options] <name>`](/docs/cli/reference/context#kovalio-context-add) | Create or update a context's endpoints/token |
+| [`rm\|remove <name>`](/docs/cli/reference/context#kovalio-context-rm) | Remove a context (cannot remove the active one) |
 
-## openship context add
+## kovalio context add
 
 Create or update a context's endpoints/token
 
 ```text
-openship context add [options] <name>
+kovalio context add [options] <name>
 ```
 
 | Argument | Meaning |
@@ -41,32 +41,32 @@ openship context add [options] <name>
 | `--organization <id>` | Pin this context to a Cloud or self-hosted organization |
 | `--use` | Switch to this context after adding |
 
-## openship context list
+## kovalio context list
 
 List configured contexts
 
 ```text
-openship context list|ls [options]
+kovalio context list|ls [options]
 ```
 
-## openship context rm
+## kovalio context rm
 
 Remove a context (cannot remove the active one)
 
 ```text
-openship context rm|remove [options] <name>
+kovalio context rm|remove [options] <name>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `name` | Context name |
 
-## openship context use
+## kovalio context use
 
 Switch the active context
 
 ```text
-openship context use [options] <name>
+kovalio context use [options] <name>
 ```
 
 | Argument | Meaning |

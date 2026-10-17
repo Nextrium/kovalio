@@ -65,7 +65,7 @@ export interface PlaintextSecrets extends SecretBundle {
 export type TransferSecrets = SealedSecrets | PlaintextSecrets;
 
 export interface DataTransferFile {
-  kind: "openship-instance-export" | "openship-project-export";
+  kind: "kovalio-instance-export" | "kovalio-project-export";
   envelopeVersion: 1 | 2 | 3 | 4;
   createdAt: string;
   sourceDriver: "pg" | "pglite";

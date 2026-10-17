@@ -10,7 +10,7 @@ import { generateId, actionRunnerAdmissionKey } from "@repo/core";
 import { parseActionWorkflow } from "./workflow";
 let connection: DatabaseConnection;
 let repo: ReturnType<typeof createRepositories>["actions"];
-const source = `name: Native\non: [push, workflow_dispatch]\njobs:\n  call:\n    uses: ./.github/workflows/shared.yml\n    secrets: inherit\n  release:\n    needs: call\n    runs-on: [self-hosted, openship, linux]\n    environment: production\n    permissions:\n      contents: write\n      id-token: write\n    steps:\n      - run: echo ok\n`;
+const source = `name: Native\non: [push, workflow_dispatch]\njobs:\n  call:\n    uses: ./.github/workflows/shared.yml\n    secrets: inherit\n  release:\n    needs: call\n    runs-on: [self-hosted, kovalio, linux]\n    environment: production\n    permissions:\n      contents: write\n      id-token: write\n    steps:\n      - run: echo ok\n`;
 beforeAll(async () => {
   connection = await createDatabase({ driver: "pglite", dataDir: "memory://" });
   repo = createRepositories(connection.db, { encrypt: (v) => v, decrypt: (v) => v }).actions;
@@ -136,7 +136,7 @@ async function fixture() {
       name: "release",
       matrix: {},
       strategy: {},
-      labels: ["self-hosted", "openship", "linux"],
+      labels: ["self-hosted", "kovalio", "linux"],
       needs: {},
       timeoutSeconds: 60,
       continueOnError: false,
@@ -155,7 +155,7 @@ async function fixture() {
     demandJobId: job.id,
     repoOwner: "test",
     repoName: "private",
-    runnerName: `openship-${generateId("runner")}`,
+    runnerName: `kovalio-${generateId("runner")}`,
     spec: job.spec,
   };
   return { org, runner, workflow, run, job, session };
@@ -343,7 +343,7 @@ describe("GitHub-owned workflows", () => {
       repo.reserveRunnerSession({
         ...f.session,
         id: generateId("session"),
-        runnerName: `openship-${generateId("runner")}`,
+        runnerName: `kovalio-${generateId("runner")}`,
       }),
     ]);
     expect(results.filter(Boolean)).toHaveLength(1);
@@ -416,17 +416,17 @@ describe("GitHub-owned workflows", () => {
     const independent = await repo.saveWorkflow({
       ...f.workflow,
       id: generateId("wf"),
-      controller: "openship",
+      controller: "kovalio",
       githubWorkflowId: null,
       accessPolicy: null,
-      path: ".openship/workflows/ci.yml",
+      path: ".kovalio/workflows/ci.yml",
       source,
     });
     const run = await repo.createRun({
       ...f.run,
       id: generateId("run"),
       workflowId: independent.id,
-      controller: "openship",
+      controller: "kovalio",
       github: null,
       idempotencyKey: "independent",
     });

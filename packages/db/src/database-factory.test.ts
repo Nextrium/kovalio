@@ -37,7 +37,7 @@ describe("instance-owned database composition", () => {
   });
 
   it("gives each connection its own PGlite lock without installing process hooks", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openship-owned-locks-"));
+    const directory = await mkdtemp(join(tmpdir(), "kovalio-owned-locks-"));
     const a = createPgliteLock();
     const b = createPgliteLock();
     const collision = createPgliteLock();

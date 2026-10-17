@@ -134,7 +134,7 @@ describe("network setup controller lifecycle", () => {
     expect(interrupt).toHaveBeenCalledWith(worker);
     await queue[0]!();
     expect(hostWork).not.toHaveBeenCalled();
-    expect(() => lifecycle.assertAcceptingWork()).toThrow("OpenShip is stopping");
+    expect(() => lifecycle.assertAcceptingWork()).toThrow("Kovalio is stopping");
   });
   it("fences running work before aborting it and does not revisit completed work", async () => {
     const started = deferred();
@@ -265,7 +265,7 @@ describe("network setup controller lifecycle", () => {
     expect(h.interruptPreparation).toHaveBeenCalledWith(
       "prep-a",
       3,
-      expect.stringContaining("OpenShip stopped"),
+      expect.stringContaining("Kovalio stopped"),
     );
     expect(h.interruptOperation).toHaveBeenCalledWith(
       "operation-a",
@@ -279,17 +279,17 @@ describe("network setup controller lifecycle", () => {
     expect(h.interruptRuntime).toHaveBeenCalledWith(
       "runtime-a",
       2,
-      expect.stringContaining("OpenShip stopped"),
+      expect.stringContaining("Kovalio stopped"),
     );
     expect(h.interruptStorage).toHaveBeenCalledWith(
       "storage-a",
       5,
-      expect.stringContaining("OpenShip stopped"),
+      expect.stringContaining("Kovalio stopped"),
     );
     expect(h.interruptDatabase).toHaveBeenCalledWith(
       "database-a",
       6,
-      expect.stringContaining("OpenShip stopped"),
+      expect.stringContaining("Kovalio stopped"),
     );
     expect(h.notify.mock.calls).toEqual([
       ["org-a", "preparation", "prep-a"],

@@ -6,7 +6,7 @@ const configured = {
   OBLIEN_CLIENT_ID: "provider-client", OBLIEN_CLIENT_SECRET: "provider-secret",
   OBLIEN_WEBHOOK_SECRET: "signing-secret",
 };
-const origin = "https://api.openship.io";
+const origin = "https://api.nextrium.org";
 
 describe("production Cloud billing configuration", () => {
   it.each(["OBLIEN_CLIENT_ID", "OBLIEN_CLIENT_SECRET", "OBLIEN_WEBHOOK_SECRET"] as const)(

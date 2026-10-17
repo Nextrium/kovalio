@@ -5,7 +5,7 @@ import { Icon } from "@repo/ui/icons";
 import { useI18n } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { dockerMigrationApi, getApiErrorMessage, type OpenshipProjectGroup } from "@/lib/api";
+import { dockerMigrationApi, getApiErrorMessage, type KovalioProjectGroup } from "@/lib/api";
 import { invalidateProjectCaches } from "@/hooks/useProjectEndpoints";
 
 export interface RecoveryResult {
@@ -24,7 +24,7 @@ export function RecoveredProjectReview({
   isCurrent,
 }: {
   serverId: string;
-  project: OpenshipProjectGroup;
+  project: KovalioProjectGroup;
   onBack: () => void;
   onOpen: (id: string) => void;
   result?: RecoveryResult;

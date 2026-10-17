@@ -150,7 +150,7 @@ function TwoFactorControls({ account }: { account: ReturnType<typeof authClient.
     );
     const link = document.createElement("a");
     link.href = url;
-    link.download = "openship-recovery-codes.txt";
+    link.download = "kovalio-recovery-codes.txt";
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }

@@ -55,7 +55,7 @@ For an account with 2FA enabled, a primary sign-in returns `{ "twoFactorRedirect
 a usable session. Preserve the signed challenge cookie and submit an authenticator or recovery code;
 only successful verification issues the session. Social callbacks redirect to the dashboard's
 `/two-factor` page and resume their validated destination after verification. Account security endpoints
-are available only where local accounts are hosted, including Openship Cloud's account service and
+are available only where local accounts are hosted, including Kovalio Cloud's account service and
 self-hosted VPS installations. See [Auth & sessions](/docs/security/auth#two-factor-authentication).
 
 ## Get the current session
@@ -70,8 +70,8 @@ user, mints a session, sets the cookie on the response, and returns it — so th
 succeeds instead of looping to `/login`.
 
 ```bash
-curl "$OPENSHIP_URL/api/auth/get-session" \
-  -H "Cookie: openship.session_token=<session>"
+curl "$KOVALIO_URL/api/auth/get-session" \
+  -H "Cookie: kovalio.session_token=<session>"
 ```
 
 ## Desktop session bootstrap

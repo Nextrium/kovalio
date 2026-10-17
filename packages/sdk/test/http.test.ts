@@ -29,11 +29,11 @@ describe("shared HTTP transport", () => {
   it("does not let request headers replace a fixed tenant and never follows redirects", async () => {
     const fetcher = vi.fn(async (url: string, _init?: RequestInit) => Response.json(url.endsWith("/health") ? { sdk: SDK_CAPABILITIES } : { data: [] }));
     const client = new HttpClient({ baseUrl: "https://ship.test/prefix", organizationId: "org-a", fetch: fetcher });
-    await client.raw("/projects", { headers: { "X-Organization-Id": "org-b", "X-Openship-Scope": "resource" }, redirect: "follow" });
+    await client.raw("/projects", { headers: { "X-Organization-Id": "org-b", "X-Kovalio-Scope": "resource" }, redirect: "follow" });
     const [url, init] = fetcher.mock.calls[1]!;
     expect(url).toBe("https://ship.test/prefix/api/projects");
     expect(new Headers(init!.headers).get("X-Organization-Id")).toBe("org-a");
-    expect(new Headers(init!.headers).get("X-Openship-Scope")).toBe("fixed");
+    expect(new Headers(init!.headers).get("X-Kovalio-Scope")).toBe("fixed");
     expect(init!.redirect).toBe("error");
   });
 

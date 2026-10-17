@@ -64,7 +64,7 @@ export { iteratePages, type Page, type PageRequest, type PageIteratorOptions } f
 export { OperationError } from "@repo/contracts";
 export type * from "@repo/contracts";
 
-/** Installed by the host, which must verify the assertion before returning an Openship identity. */
+/** Installed by the host, which must verify the assertion before returning an Kovalio identity. */
 export interface IdentityAdapter<Assertion> {
   resolve(assertion: Assertion): Promise<VerifiedIdentity | null>;
 }

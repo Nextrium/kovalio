@@ -330,7 +330,7 @@ export function createComputeClusterRepo(db: Database) {
           .where(eq(clusterRuntime.clusterId, id));
         if (runtime && runtime.status !== "removed")
           throw new AppError(
-            "Remove the cluster runtime first so OpenShip can clean up its installation on every server.",
+            "Remove the cluster runtime first so Kovalio can clean up its installation on every server.",
             409,
             "CLUSTER_RUNTIME_IN_USE",
           );

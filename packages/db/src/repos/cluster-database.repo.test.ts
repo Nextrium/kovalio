@@ -27,7 +27,7 @@ const config: ClusterDatabaseConfig = {
   mode: "standalone",
   instances: 1,
   storageGiB: 10,
-  storageClass: "openship-local",
+  storageClass: "kovalio-local",
   cpuMillis: 500,
   memoryMiB: 512,
   databaseName: "app",
@@ -356,7 +356,7 @@ describe("durable shared storage", () => {
       replicas: 2,
       disks: ["a", "b", "c"].map((serverId) => ({
         serverId,
-        path: "/var/lib/openship/storage",
+        path: "/var/lib/kovalio/storage",
         reservedGiB: 5,
       })),
     },
@@ -421,7 +421,7 @@ describe("durable shared storage", () => {
   });
   it("protects runtime removal and admits replicated databases only after storage is ready", async () => {
     await expect(
-      databases.start({ ...input(), config: { ...config, storageClass: "openship-replicated" } }),
+      databases.start({ ...input(), config: { ...config, storageClass: "kovalio-replicated" } }),
     ).rejects.toThrow(/shared storage/);
     const row = await ready();
     const runtime = await runtimes.get("org", clusterId);
@@ -430,7 +430,7 @@ describe("durable shared storage", () => {
     );
     await databases.start({
       ...input(),
-      config: { ...config, storageClass: "openship-replicated" },
+      config: { ...config, storageClass: "kovalio-replicated" },
     });
     await expect(storage.change("org", clusterId, row.sequence, "remove")).rejects.toThrow(
       /database still uses/,

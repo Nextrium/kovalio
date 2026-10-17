@@ -163,7 +163,7 @@ async function runEnsure(
       {
         status,
         sites: scan.sites,
-        acmeEmail: env.OPENSHIP_ACME_EMAIL,
+        acmeEmail: env.KOVALIO_ACME_EMAIL,
         nginx: edgeProviderOptions(),
         extraRoutes: [],
         // Pin the edge the takeover installs. `setDefaultEdgeImage` at boot already

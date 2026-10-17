@@ -11,8 +11,8 @@ import { getDomain } from "./domain.service";
 /** Reused at operation admission and before detached work mutates the target. */
 export async function domainExecution(ctx: ExecutionContext, id: string, verifying = false) {
   if (
-    process.env.OPENSHIP_NATIVE !== "true" ||
-    process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION === "true"
+    process.env.KOVALIO_NATIVE !== "true" ||
+    process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION === "true"
   )
     return;
   const domain = await getDomain(ctx, id);

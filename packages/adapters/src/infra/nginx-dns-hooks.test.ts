@@ -12,14 +12,14 @@ import { OPENRESTY_DEFAULT_PATHS } from "./openresty-lua";
 const execute = promisify(execFile);
 const authScript = `#!/bin/sh
 set -eu
-printf '%s\\n' "$OPENSHIP_DNS_RECORD_FILE" >> "$HOOK_LOG"
-printf '%s\\n' "$CERTBOT_DOMAIN:$CERTBOT_VALIDATION" > "$OPENSHIP_DNS_RECORD_FILE"
+printf '%s\\n' "$KOVALIO_DNS_RECORD_FILE" >> "$HOOK_LOG"
+printf '%s\\n' "$CERTBOT_DOMAIN:$CERTBOT_VALIDATION" > "$KOVALIO_DNS_RECORD_FILE"
 `;
 const cleanupScript = `#!/bin/sh
 set -eu
-printf '%s\\n' "$OPENSHIP_DNS_RECORD_FILE" >> "$HOOK_LOG"
-test "$(cat "$OPENSHIP_DNS_RECORD_FILE")" = "$CERTBOT_DOMAIN:$CERTBOT_VALIDATION"
-rm "$OPENSHIP_DNS_RECORD_FILE"
+printf '%s\\n' "$KOVALIO_DNS_RECORD_FILE" >> "$HOOK_LOG"
+test "$(cat "$KOVALIO_DNS_RECORD_FILE")" = "$CERTBOT_DOMAIN:$CERTBOT_VALIDATION"
+rm "$KOVALIO_DNS_RECORD_FILE"
 `;
 
 test.each([
@@ -34,7 +34,7 @@ test.each([
 ] as const)(
   "$method validates and executes DNS hooks in $directory",
   async ({ method, directory, cleanup }) => {
-    const scratch = await mkdtemp(join(tmpdir(), "openship-dns-hooks-"));
+    const scratch = await mkdtemp(join(tmpdir(), "kovalio-dns-hooks-"));
     const root = join(scratch, directory);
     const log = join(scratch, "hooks.log");
     const calls: string[][] = [];

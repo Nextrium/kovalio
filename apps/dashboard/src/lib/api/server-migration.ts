@@ -4,8 +4,8 @@ import { endpoints } from "./endpoints";
 import type { MigrationServiceRoutes, MigrationSourceInput, ServerDetail } from "@repo/contracts";
 
 // Public migration result types are shared with the CLI and SDK.
-import type { DiscoveredVolumeMount, DiscoveredService, ComposeRepoService, DiscoveredGroup, OpenshipProjectGroup, DiscoveredStack, ReimportResult, AdoptResult, MigrationPreviewService, SizedItem, CustomPath, MigrationPreview, ConflictAction, MigrationStatus, PendingItem, MigrationRun, TransferProgress } from "@repo/contracts";
-export type { DiscoveredVolumeMount, DiscoveredService, ComposeRepoService, DiscoveredGroup, OpenshipProjectGroup, DiscoveredStack, ReimportResult, AdoptResult, MigrationPreviewService, SizedItem, CustomPath, MigrationPreview, ConflictAction, MigrationStatus, PendingItem, MigrationRun, TransferProgress } from "@repo/contracts";
+import type { DiscoveredVolumeMount, DiscoveredService, ComposeRepoService, DiscoveredGroup, KovalioProjectGroup, DiscoveredStack, ReimportResult, AdoptResult, MigrationPreviewService, SizedItem, CustomPath, MigrationPreview, ConflictAction, MigrationStatus, PendingItem, MigrationRun, TransferProgress } from "@repo/contracts";
+export type { DiscoveredVolumeMount, DiscoveredService, ComposeRepoService, DiscoveredGroup, KovalioProjectGroup, DiscoveredStack, ReimportResult, AdoptResult, MigrationPreviewService, SizedItem, CustomPath, MigrationPreview, ConflictAction, MigrationStatus, PendingItem, MigrationRun, TransferProgress } from "@repo/contracts";
 
 /**
  * GH-570: an intermediary that buffers `text/event-stream` answers 200 and then

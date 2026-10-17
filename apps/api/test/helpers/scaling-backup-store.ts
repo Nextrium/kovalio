@@ -7,7 +7,7 @@ export async function scalingBackupStore(
   create: (options: Dockerode.ContainerCreateOptions) => Promise<Dockerode.Container>,
   network: string,
 ) {
-  const accessKeyId = "openship-scaling-test";
+  const accessKeyId = "kovalio-scaling-test";
   const secretAccessKey = "disposable-scaling-backup-test-secret";
   const port = await freePort();
   const container = await create({

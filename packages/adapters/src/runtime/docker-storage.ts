@@ -26,7 +26,7 @@ export function dockerProjectStorage(
     );
   };
   for (const container of snapshot.Containers ?? []) {
-    const id = container.Labels?.["openship.project"];
+    const id = container.Labels?.["kovalio.project"];
     if (!id || !bytes.has(id)) continue;
     // Engines using an omitempty integer omit SizeRw for an empty writable
     // layer. /system/df still measured it; negative sizes remain unavailable.
@@ -42,7 +42,7 @@ export function dockerProjectStorage(
     const attached = owners.get(volume.Name);
     // If users explicitly share a volume, account for it with shared storage.
     if (attached && attached.size > 1) continue;
-    const id = attached?.values().next().value ?? volume.Labels?.["openship.project"];
+    const id = attached?.values().next().value ?? volume.Labels?.["kovalio.project"];
     if (id) add(id, volume.UsageData?.Size);
   }
   return projects.map((project) => ({ id: project.id, bytes: bytes.get(project.id) ?? null }));

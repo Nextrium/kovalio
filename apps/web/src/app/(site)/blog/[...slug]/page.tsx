@@ -47,8 +47,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   if (!rawPage) return {};
   const page = rawPage as unknown as RPage;
 
-  const title = `${page.data.title} – Openship Blog`;
-  const description = page.data.description ?? "An article from the Openship team.";
+  const title = `${page.data.title} – Kovalio Blog`;
+  const description = page.data.description ?? "An article from the Kovalio team.";
 
   return {
     title,
@@ -176,7 +176,7 @@ export default async function BlogPostPage({ params }: { params: Params }) {
                   {(page.data.author || "O")[0].toUpperCase()}
                 </div>
                 <div className="rp-meta-text">
-                  <span className="rp-author-name">{page.data.author || "Openship Team"}</span>
+                  <span className="rp-author-name">{page.data.author || "Kovalio Team"}</span>
                   <span className="rp-meta-row">
                     {page.data.date && (
                       <time dateTime={page.data.date}>{formatDate(page.data.date)}</time>

@@ -65,7 +65,7 @@ export const uninstallCommand = new Command("uninstall")
     // never completed, put it back. Best-effort and a no-op when there's no
     // unfinished journal (a COMPLETED takeover cleared it — see the hint below).
     const restored = await rollbackHostEdge().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "cli/commands/uninstall"); return false; });
-    if (restored) console.log(chalk.green("  Restored the proxy that was running before Openship."));
+    if (restored) console.log(chalk.green("  Restored the proxy that was running before Kovalio."));
 
     if (method === "compose") {
       const { ok, removedImages } = composeUninstall({ removeImages: !opts.keepImages });

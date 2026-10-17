@@ -162,7 +162,7 @@ export const k3sTools = {
   async install(executor: CommandExecutor, ctx: K3sHostContext, joinToken?: string) {
     await action(executor, ctx, "claim");
     const privileged = await root(executor);
-    await privileged.writeFile("/var/lib/openship/k3s/firewall.sh", k3sFirewallScript(ctx), {
+    await privileged.writeFile("/var/lib/kovalio/k3s/firewall.sh", k3sFirewallScript(ctx), {
       mode: 0o700,
     });
     if (joinToken) {
@@ -170,7 +170,7 @@ export const k3sTools = {
         throw failure("The control server returned an invalid secure join token.");
       try {
         await privileged.writeFile(
-          `/var/lib/openship/k3s/join-${ctx.generation}.token`,
+          `/var/lib/kovalio/k3s/join-${ctx.generation}.token`,
           joinToken,
           { mode: 0o600 },
         );
@@ -212,7 +212,7 @@ export const k3sTools = {
   /** Real cross-node pods, service routing and DNS. No workloads are reported ready on node status alone. */
   async verifyNetworking(executor: CommandExecutor, ctx: K3sHostContext) {
     const privileged = await root(executor);
-    const namespace = `openship-check-${ctx.id.slice(0, 8)}-${ctx.generation}`;
+    const namespace = `kovalio-check-${ctx.id.slice(0, 8)}-${ctx.generation}`;
     const prefix = `/usr/local/bin/k3s kubectl --kubeconfig=/etc/rancher/k3s/k3s.yaml --server=${sq(`https://${ctx.host.privateIp}:6443`)} --request-timeout=30s`;
     const kubectl = (args: string, timeout = 45_000) =>
       privileged.exec(`${prefix} ${args}`, { timeout });
@@ -221,13 +221,13 @@ export const k3sTools = {
     try {
       const leftovers = JSON.parse(
         await kubectl(
-          `get namespaces -l ${sq(`openship.io/runtime=${ctx.id},openship.io/purpose=runtime-check`)} -o json`,
+          `get namespaces -l ${sq(`nextrium.org/runtime=${ctx.id},nextrium.org/purpose=runtime-check`)} -o json`,
         ),
       ) as { items: { metadata: { name: string } }[] };
       const previousNames: string[] = [];
       for (const entry of leftovers.items) {
         const name = entry.metadata.name;
-        const match = new RegExp(`^openship-check-${ctx.id.slice(0, 8)}-(\\d+)$`).exec(name);
+        const match = new RegExp(`^kovalio-check-${ctx.id.slice(0, 8)}-(\\d+)$`).exec(name);
         if (!match || Number(match[1]) > ctx.generation)
           throw failure(
             "Another verification attempt owns the cluster test namespace. Reload its saved progress.",
@@ -242,7 +242,7 @@ export const k3sTools = {
       const previous = (
         await kubectl(`get namespace ${sq(namespace)} --ignore-not-found -o json`)
       ).trim();
-      if (previous && JSON.parse(previous).metadata?.labels?.["openship.io/runtime"] !== ctx.id)
+      if (previous && JSON.parse(previous).metadata?.labels?.["nextrium.org/runtime"] !== ctx.id)
         throw failure("The runtime test namespace is already owned by another workload.");
       if (previous)
         await kubectl(`delete namespace ${sq(namespace)} --wait=true --timeout=90s`, 105_000);
@@ -252,7 +252,7 @@ export const k3sTools = {
           kind: "Namespace",
           metadata: {
             name: namespace,
-            labels: { "openship.io/runtime": ctx.id, "openship.io/purpose": "runtime-check" },
+            labels: { "nextrium.org/runtime": ctx.id, "nextrium.org/purpose": "runtime-check" },
           },
         },
       ];
@@ -262,7 +262,7 @@ export const k3sTools = {
           {
             apiVersion: "v1",
             kind: "Pod",
-            metadata: { name, namespace, labels: { "openship.io/check": name } },
+            metadata: { name, namespace, labels: { "nextrium.org/check": name } },
             spec: {
               nodeName: name,
               terminationGracePeriodSeconds: 1,
@@ -275,7 +275,7 @@ export const k3sTools = {
                   command: [
                     "sh",
                     "-c",
-                    "mkdir -p /tmp/site; printf openship-ready > /tmp/site/index.html; exec httpd -f -p 8080 -h /tmp/site",
+                    "mkdir -p /tmp/site; printf kovalio-ready > /tmp/site/index.html; exec httpd -f -p 8080 -h /tmp/site",
                   ],
                   resources: {
                     requests: { cpu: "10m", memory: "8Mi" },
@@ -295,13 +295,13 @@ export const k3sTools = {
             kind: "Service",
             metadata: { name, namespace },
             spec: {
-              selector: { "openship.io/check": name },
+              selector: { "nextrium.org/check": name },
               ports: [{ port: 8080, targetPort: 8080 }],
             },
           },
         );
       }
-      const path = `/var/lib/openship/k3s/check-${ctx.generation}.json`;
+      const path = `/var/lib/kovalio/k3s/check-${ctx.generation}.json`;
       await privileged.writeFile(
         path,
         JSON.stringify({ apiVersion: "v1", kind: "List", items: resources }),
@@ -319,7 +319,7 @@ export const k3sTools = {
           "nslookup kubernetes.default.svc.cluster.local >/dev/null",
           ...ctx.plan.hosts.map(
             (peer) =>
-              `[ "$(wget -T 5 -qO- http://${peer.nodeName}.${namespace}.svc.cluster.local:8080/)" = openship-ready ]`,
+              `[ "$(wget -T 5 -qO- http://${peer.nodeName}.${namespace}.svc.cluster.local:8080/)" = kovalio-ready ]`,
           ),
         ];
         await kubectl(
@@ -345,7 +345,7 @@ export const k3sTools = {
           const current = (
             await kubectl(`get namespace ${sq(namespace)} --ignore-not-found -o json`)
           ).trim();
-          if (current && JSON.parse(current).metadata?.labels?.["openship.io/runtime"] === ctx.id)
+          if (current && JSON.parse(current).metadata?.labels?.["nextrium.org/runtime"] === ctx.id)
             await kubectl(`delete namespace ${sq(namespace)} --wait=true --timeout=90s`, 105_000);
         } catch (error) {
           observeCaughtError(error, "adapters/cluster/k3s");

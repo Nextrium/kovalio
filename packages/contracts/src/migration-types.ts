@@ -36,9 +36,9 @@ export interface DiscoveredService {
   command?: string;
   restart?: string;
   /** Set when this container IS the edge proxy (80/443) — dropped from import;
-   *  Openship's OpenResty replaces it. */
+   *  Kovalio's OpenResty replaces it. */
   proxyKind?: "nginx" | "caddy" | "apache" | "traefik" | "haproxy" | "openresty";
-  /** Host edge ports (80/443) it publishes — reserved for Openship's edge. */
+  /** Host edge ports (80/443) it publishes — reserved for Kovalio's edge. */
   edgePorts?: number[];
   /** Routes the server's existing (foreign) reverse proxy already serves for this
    *  container, matched by published host port. ONE ENTRY PER (port,path,match mode): a
@@ -77,8 +77,8 @@ export interface DiscoveredGroup {
   services: DiscoveredService[];
 }
 
-/** An Openship project recovered from the server (see api docker-reconcile.ts). */
-export interface OpenshipProjectGroup {
+/** An Kovalio project recovered from the server (see api docker-reconcile.ts). */
+export interface KovalioProjectGroup {
   projectId: string;
   suggestedName: string;
   slug?: string;
@@ -116,8 +116,8 @@ export interface DiscoveredStack {
   adoptable: boolean;
   /** Live containers already managed by a project in this instance's DB (count). */
   alreadyManaged: number;
-  /** Openship projects found on the server; `knownHere: false` are re-importable. */
-  openshipProjects: OpenshipProjectGroup[];
+  /** Kovalio projects found on the server; `knownHere: false` are re-importable. */
+  kovalioProjects: KovalioProjectGroup[];
   /** Every route the foreign proxy serves, flattened (one per port+path) — for
    *  the route review. Unmatched ones (no adopted service on that port) also
    *  appear in `warnings`. */
@@ -196,7 +196,7 @@ export interface MigrationPreview {
   volumesToMove: string[];
   hasBlocked: boolean;
   downtimeWarning: boolean;
-  /** Reverse proxies that won't be imported (Openship's edge replaces them). */
+  /** Reverse proxies that won't be imported (Kovalio's edge replaces them). */
   droppedProxies: string[];
   warnings: string[];
   /** Cross-server transfer plan (payload sizes). Absent for same-server.

@@ -29,7 +29,7 @@ function inputFile(value: unknown) {
   return path;
 }
 beforeEach(() => {
-  directory = mkdtempSync(join(tmpdir(), "openship-platform-cli-"));
+  directory = mkdtempSync(join(tmpdir(), "kovalio-platform-cli-"));
   setJsonMode(true);
 });
 afterEach(() => {

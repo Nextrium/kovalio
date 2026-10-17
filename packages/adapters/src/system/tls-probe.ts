@@ -29,7 +29,7 @@ export async function probePublicTlsCertificate(
     expiresAt: "",
     issuer: "",
     reason: "read_error",
-    detail: "HTTPS could not be checked from Openship. Check the connection and retry.",
+    detail: "HTTPS could not be checked from Kovalio. Check the connection and retry.",
   };
   // A wildcard is a certificate pattern, not an address that can be dialled.
   if (!domain || domain.includes("*") || /[\s/:@\\]/.test(domain)) return unknown;

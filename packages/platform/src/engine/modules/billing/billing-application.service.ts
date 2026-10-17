@@ -28,7 +28,7 @@ export { getActionsBudget, getActionsPurchase, createActionsCheckout, resumeActi
 /* ---------- Plans (public) ---------- */
 
 /** Public on every installation: a linked local dashboard must show Cloud's
- * actual prices too. Outside SaaS, read Openship's public catalog without credentials. */
+ * actual prices too. Outside SaaS, read Kovalio's public catalog without credentials. */
 export async function listPlans(input: NonNullable<Parameters<BillingOperations["listPlans"]>[0]>) {
   if (env.CLOUD_MODE) return presentCloudPlans(input.locale, await getOblienBillingApi().assertMonthlyCapacitySupport());
   const url = new URL("/api/billing/plans", cloudRuntimeTarget.api);
@@ -45,7 +45,7 @@ export async function listPlans(input: NonNullable<Parameters<BillingOperations[
   } catch (diagnosticFailure) {
     observeCaughtError(diagnosticFailure, "platform/engine/modules/billing/billing-application.service");
     throw new AppError(
-      "Openship Cloud prices are temporarily unavailable. Please retry.",
+      "Kovalio Cloud prices are temporarily unavailable. Please retry.",
       503,
       "BILLING_CATALOG_UNAVAILABLE",
     );
@@ -118,7 +118,7 @@ export async function createTopup(ctx: ExecutionContext, input: NonNullable<Para
   return { checkoutUrl };
 }
 
-/** Openship's credit packs; prices and credits come from the same server catalog. */
+/** Kovalio's credit packs; prices and credits come from the same server catalog. */
 export async function listTopupPacks(_ctx: ExecutionContext) {
   return normalizeBillingCreditPacks(await billingService.listActiveCreditPacks());
 }
@@ -132,7 +132,7 @@ export async function listTopupPacks(_ctx: ExecutionContext) {
  * The capacity meters answer "how much of my quota is gone"; this answers "gone
  * WHERE", which is the only version a user can do anything about. Before this
  * there was no way to find out: the dashboard's domains page is a stub,
- * `GET /api/domains` requires a `projectId`, and `openship domain list` requires
+ * `GET /api/domains` requires a `projectId`, and `kovalio domain list` requires
  * `--project` — so a free subdomain created by a CLI deploy into a since-forgotten
  * project silently consumed a slot with nothing to enumerate it.
  *

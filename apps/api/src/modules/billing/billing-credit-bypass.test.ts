@@ -43,7 +43,7 @@ vi.mock("@repo/platform/engine/lib/cloud-resource-limits", () => ({
   initialCloudNamespaceLimits: async () => ({ max_workspaces: 2, max_vcpus: 4, max_ram_mb: 8192, max_disk_gb: 32 }),
 }));
 
-import { ensureNamespace, ensureNamespaceWithQuota, issueNamespaceToken } from "@repo/platform/engine/lib/openship-cloud";
+import { ensureNamespace, ensureNamespaceWithQuota, issueNamespaceToken } from "@repo/platform/engine/lib/kovalio-cloud";
 
 beforeEach(() => {
   vi.resetAllMocks();

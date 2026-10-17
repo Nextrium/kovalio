@@ -44,7 +44,7 @@ export const planLimitsSchema = z.object({
   runningServices: limitNumber,
   /** Active deployment build slots. Absent on existing paid offers. */
   concurrentBuilds: limitNumber.optional(),
-  /** Projects (project groups). Oblien has no project concept — Openship gates it. */
+  /** Projects (project groups). Oblien has no project concept — Kovalio gates it. */
   maxProjects: limitNumber,
   /** Preset ceiling for saved offers without explicit service resources. */
   maxResourceTier: z.enum(RESOURCE_TIER_ORDER).nullable(),
@@ -195,7 +195,7 @@ export const customPricingSchema = z.object({
   }).strict(),
 }).strict();
 
-/** Openship resource access tiers, independent of monthly offers and usage rates.
+/** Kovalio resource access tiers, independent of monthly offers and usage rates.
  * Funding thresholds refer to verified credit purchases, never remaining balance. */
 const paygPricingSchema = z.object({
   version: z.number().int().positive(),

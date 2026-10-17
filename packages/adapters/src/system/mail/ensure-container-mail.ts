@@ -105,7 +105,7 @@ export interface ContainerMailOptions {
   container?: string;
   dbContainer?: string;
   /**
-   * Host port for the PostgreSQL sidecar. Defaults to `OPENSHIP_MAIL_DB_PORT`
+   * Host port for the PostgreSQL sidecar. Defaults to `KOVALIO_MAIL_DB_PORT`
    * if set in the environment, otherwise 5432.
    */
   dbPort?: number;
@@ -404,7 +404,7 @@ export async function retainedDbPort(
     .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/mail/ensure-container-mail"); return false; });
   if (!initialised) return null;
 
-  const retained = await readEnvFileValue(executor, ENGINE_ENV_FILE, "OPENSHIP_MAIL_DB_PORT");
+  const retained = await readEnvFileValue(executor, ENGINE_ENV_FILE, "KOVALIO_MAIL_DB_PORT");
   if (!retained) return null;
   const n = resolveMailDbPort(retained);
 
@@ -445,7 +445,7 @@ export async function findAvailableMailDbPort(
   // If the user explicitly configured this port, do not auto-switch ports
   if (isExplicit) {
     throw new Error(
-      `Configured mail database port ${preferredPort} is already in use. Choose a free OPENSHIP_MAIL_DB_PORT.`,
+      `Configured mail database port ${preferredPort} is already in use. Choose a free KOVALIO_MAIL_DB_PORT.`,
     );
   }
 
@@ -457,7 +457,7 @@ export async function findAvailableMailDbPort(
         log(
           `Default PostgreSQL port ${preferredPort} is in use on this host. ` +
             `Automatically selected available port ${port} for the mail database ` +
-            `(can be overridden via OPENSHIP_MAIL_DB_PORT).`,
+            `(can be overridden via KOVALIO_MAIL_DB_PORT).`,
           "warn",
         ),
       );
@@ -466,7 +466,7 @@ export async function findAvailableMailDbPort(
   }
 
   throw new Error(
-    `No free mail database port was found in ${preferredPort}, ${MAIL_DB_FALLBACK_PORT}-${MAIL_DB_PORT_RANGE_MAX}. Set OPENSHIP_MAIL_DB_PORT to a free port.`,
+    `No free mail database port was found in ${preferredPort}, ${MAIL_DB_FALLBACK_PORT}-${MAIL_DB_PORT_RANGE_MAX}. Set KOVALIO_MAIL_DB_PORT to a free port.`,
   );
 }
 
@@ -749,7 +749,7 @@ export async function ensureContainerMail(
   const dbRootPassword =
     retainedRoot ?? opts.secrets.PGSQL_ROOT_PASSWD ?? opts.secrets.VMAIL_DB_ADMIN_PASSWD ?? "";
   const isExplicitPort =
-    opts.dbPort !== undefined || Boolean(process.env.OPENSHIP_MAIL_DB_PORT?.trim());
+    opts.dbPort !== undefined || Boolean(process.env.KOVALIO_MAIL_DB_PORT?.trim());
   const preferredPort = resolveMailDbPort(opts.dbPort);
   const retainedPort =
     (await retainedDbPort(hostState, onLog)) ?? (await containerDbPort(executor, dbContainer));
@@ -764,10 +764,10 @@ export async function ensureContainerMail(
   await writeEnvFile(hostState, ENGINE_ENV_FILE, {
     ...opts.secrets,
     FIRST_DOMAIN: opts.domain,
-    OPENSHIP_MAIL_DB_HOST: MAIL_DB_HOST_BIND,
-    OPENSHIP_MAIL_DB_PORT: String(dbPort),
-    OPENSHIP_MAIL_DB_NAME: MAIL_DB_NAME,
-    OPENSHIP_MAIL_DB_USER: MAIL_DB_USER,
+    KOVALIO_MAIL_DB_HOST: MAIL_DB_HOST_BIND,
+    KOVALIO_MAIL_DB_PORT: String(dbPort),
+    KOVALIO_MAIL_DB_NAME: MAIL_DB_NAME,
+    KOVALIO_MAIL_DB_USER: MAIL_DB_USER,
     // Spread LAST so the retained value wins: the engine's first-boot bootstrap connects
     // as the superuser, and it has to use the password the cluster actually has, not the
     // one this deploy generated.

@@ -21,7 +21,7 @@ const targets = process.argv.includes("--native")
 const files = {};
 const modfile = prepareRunnerModule();
 for (const [os, arch] of targets) {
-  const name = `openship-actions-${os}-${arch}`;
+  const name = `kovalio-actions-${os}-${arch}`;
   const result = spawnSync(
     "go",
     [

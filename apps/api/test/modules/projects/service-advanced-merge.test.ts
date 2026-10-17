@@ -69,7 +69,7 @@ describe("mergeAdvanced", () => {
   });
 
   it("converts an inline build to runtime files without discarding resource or readiness settings", () => {
-    const files = [{ path: "/etc/openship/start.sh", content: "exec application" }];
+    const files = [{ path: "/etc/kovalio/start.sh", content: "exec application" }];
     const next = mergeAdvanced(
       { ...stored, build: { dockerfile: "FROM application:v1" } },
       {

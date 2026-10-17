@@ -9,7 +9,7 @@ vi.mock("../github/github.service", () => ({ getFileContent: h.file }));
 const caller = {
   owner: "acme",
   repo: "app",
-  path: ".openship/workflows/ci.yml",
+  path: ".kovalio/workflows/ci.yml",
   source: "",
   sha: "a".repeat(40),
   ref: "refs/heads/main",
@@ -21,9 +21,9 @@ beforeEach(() => {
 });
 
 it("fetches local calls at the caller's immutable commit", async () => {
-  const value = await reusableSourceReader(ctx)("./.openship/workflows/build.yml", caller);
+  const value = await reusableSourceReader(ctx)("./.kovalio/workflows/build.yml", caller);
   expect(value.sha).toBe(caller.sha);
-  expect(h.file).toHaveBeenCalledWith(ctx, "acme", "app", ".openship/workflows/build.yml", {
+  expect(h.file).toHaveBeenCalledWith(ctx, "acme", "app", ".kovalio/workflows/build.yml", {
     branch: caller.sha,
   });
   expect(h.fetch).not.toHaveBeenCalled();

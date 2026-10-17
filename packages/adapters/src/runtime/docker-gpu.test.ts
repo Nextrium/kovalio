@@ -13,7 +13,7 @@ import { getAppTemplate, appServiceGpuConfig } from "@repo/core";
  * `DeviceRequests`, and `NVIDIA_VISIBLE_DEVICES` alone does nothing under the default runtime.
  */
 
-const GROUP: MultiServiceGroupHandle = { id: "net-openship-demo" } as MultiServiceGroupHandle;
+const GROUP: MultiServiceGroupHandle = { id: "net-kovalio-demo" } as MultiServiceGroupHandle;
 
 function baseConfig(overrides: Partial<MultiServiceDeployConfig> = {}): MultiServiceDeployConfig {
   return {
@@ -46,7 +46,7 @@ async function createWith(config: MultiServiceDeployConfig) {
     getImage: () => ({ inspect: async () => ({ RepoDigests: [] }) }),
   };
   const runtime = await DockerRuntime.create({
-    dockerSocketPath: "/tmp/openship-test-absent.sock",
+    dockerSocketPath: "/tmp/kovalio-test-absent.sock",
   });
   (runtime as unknown as { _docker: unknown })._docker = docker;
   await runtime.deployServiceWorkload(GROUP, config);

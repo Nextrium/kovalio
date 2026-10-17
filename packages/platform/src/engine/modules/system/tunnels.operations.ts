@@ -34,7 +34,7 @@ import {
  */
 async function guardServer(ctx: ExecutionContext, serverId: string) {
   const server = await requireSelfHostedServer(ctx, serverId);
-  if (process.env.OPENSHIP_NATIVE !== "true" && resolvePlatformConfig().target !== "desktop")
+  if (process.env.KOVALIO_NATIVE !== "true" && resolvePlatformConfig().target !== "desktop")
     throw new OperationError("Not available in this mode", 404, "CAPABILITY_UNAVAILABLE");
   return { serverId, server };
 }

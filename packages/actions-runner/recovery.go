@@ -134,7 +134,7 @@ func cleanOwnedDocker(ctx context.Context, id string) error {
 }
 
 func cleanNativeProcesses(ctx context.Context, id string) error {
-	marker := "RUNNER_TRACKING_ID=openship-action-" + id
+	marker := "RUNNER_TRACKING_ID=kovalio-action-" + id
 	for pass := 0; pass < 10; pass++ {
 		all, err := process.ProcessesWithContext(ctx)
 		if err != nil {
@@ -146,7 +146,7 @@ func cleanNativeProcesses(ctx context.Context, id string) error {
 				continue
 			}
 			values, err := processEnvironment(ctx, p)
-			if err != nil || (!slices.Contains(values, marker) && !slices.Contains(values, "OPENSHIP_ACTION_WORKER_ID="+id)) {
+			if err != nil || (!slices.Contains(values, marker) && !slices.Contains(values, "KOVALIO_ACTION_WORKER_ID="+id)) {
 				continue
 			}
 			born, err := p.CreateTimeWithContext(ctx)

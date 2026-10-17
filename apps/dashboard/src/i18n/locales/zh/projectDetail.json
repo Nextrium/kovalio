@@ -97,11 +97,11 @@
       "serviceCountOne": "{count} 个服务",
       "serviceCountOther": "{count} 个服务",
       "searchPlaceholder": "按名称、镜像或标签搜索……",
-      "cloudConnectHint": "连接 Openship Cloud 以浏览云服务目录。您仍可手动添加任意镜像。",
+      "cloudConnectHint": "连接 Kovalio Cloud 以浏览云服务目录。您仍可手动添加任意镜像。",
       "noMatchesTitle": "无匹配项",
       "noMatchesBody": "请尝试其他类别或搜索词，或从侧栏选择“自定义镜像”。",
       "localImages": "本地镜像",
-      "openshipCloud": "Openship Cloud",
+      "kovalioCloud": "Kovalio Cloud",
       "localDocker": "本地 Docker",
       "customEntryName": "自定义镜像",
       "customEntryDescription": "按标签拉取任意公共或私有 Docker 镜像。",
@@ -134,7 +134,7 @@
         "other": "其他"
       },
       "cloudConnectTitle": "需要托管数据库或对象存储吗？",
-      "cloudConnectBody": "连接 Openship Cloud，在此项目旁配置无服务器 Postgres、Redis 和兼容 S3 的存储桶。",
+      "cloudConnectBody": "连接 Kovalio Cloud，在此项目旁配置无服务器 Postgres、Redis 和兼容 S3 的存储桶。",
       "cloudConnectButton": "浏览 Cloud 附加组件"
     },
     "detail": {
@@ -174,7 +174,7 @@
       "saveEnvironment": "保存环境",
       "environmentState": {
         "helpTitle": "环境变量的工作方式",
-        "description": "已保存在 Openship 中。服务覆盖值优先于 Compose 和项目共享值。编辑继承的值会为此服务创建覆盖值。",
+        "description": "已保存在 Kovalio 中。服务覆盖值优先于 Compose 和项目共享值。编辑继承的值会为此服务创建覆盖值。",
         "sources": {
           "service": "服务覆盖值",
           "compose": "Compose",
@@ -197,11 +197,11 @@
           "not-deployed": "这些变量将在此服务部署时使用。",
           "unsupported": "请重新部署此服务以应用已保存的环境变量。"
         },
-        "recoveryHint": "运行中的容器包含尚未保存在 Openship 中的变量。如果希望保留它们，请在应用前恢复：",
+        "recoveryHint": "运行中的容器包含尚未保存在 Kovalio 中的变量。如果希望保留它们，请在应用前恢复：",
         "recover": "从运行中的服务恢复",
         "removeRuntime": "不恢复这些变量并直接应用；从运行中的服务中删除它们。",
         "recovered": "已从运行中的服务恢复 — 尚未保存",
-        "recoveredHint": "恢复的值已准备好供你检查。请保存以将其保留在 Openship 中。",
+        "recoveredHint": "恢复的值已准备好供你检查。请保存以将其保留在 Kovalio 中。",
         "recoveryFailed": "无法从运行中的服务恢复变量。已保存的变量未被更改。"
       },
       "environmentApply": {
@@ -383,7 +383,7 @@
     "connection": {
       "terminal": "终端",
       "statusTitle": "无法获取服务状态",
-      "statusHint": "Openship 无法确认当前状态。您的服务可能仍在运行。",
+      "statusHint": "Kovalio 无法确认当前状态。您的服务可能仍在运行。",
       "checkingTitle": "正在检查服务",
       "checkingHint": "正在等待服务器响应。您也可以立即尝试打开终端。",
       "startingTitle": "正在等待服务",
@@ -408,7 +408,7 @@
       "errorTitle": "终端不可用",
       "errors": {
         "auth": "无法验证您的访问权限。请重新登录或检查权限。",
-        "connect": "Openship 无法连接到服务的 Shell。请在服务器恢复连接后重试。",
+        "connect": "Kovalio 无法连接到服务的 Shell。请在服务器恢复连接后重试。",
         "notFound": "此服务不可用，或您没有访问权限。",
         "notDeployed": "没有可连接的运行中容器。请检查服务状态后重试。",
         "notSupported": "此服务的运行环境不支持交互式终端。",

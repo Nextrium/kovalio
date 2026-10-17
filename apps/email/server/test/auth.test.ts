@@ -15,7 +15,7 @@ describe("webmail sign-in", () => {
     "rate-limit",
   ]) {
     it(scenario, async () => {
-      const dir = await mkdtemp(join(tmpdir(), "openship-webmail-auth-"));
+      const dir = await mkdtemp(join(tmpdir(), "kovalio-webmail-auth-"));
       try {
         const child = Bun.spawn(
           [process.execPath, join(import.meta.dir, "fixtures/auth-case.ts"), scenario],

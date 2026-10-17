@@ -10,11 +10,11 @@ import {
   profileFixture,
 } from "../../../../packages/adapters/src/system/environment.fixtures";
 import {
-  OPENSHIP_DIR,
-  openshipFileExists,
-  readOpenshipFile,
-  writeOpenshipFile,
-} from "@repo/platform/engine/lib/openship-server-store";
+  KOVALIO_DIR,
+  kovalioFileExists,
+  readKovalioFile,
+  writeKovalioFile,
+} from "@repo/platform/engine/lib/kovalio-server-store";
 
 /**
  * Privilege for the server state store.
@@ -116,7 +116,7 @@ describe("kovalio-server-store privilege", () => {
     // the unmeasurable box, `isRoot`/`canSudo` here are facts — /root is 0700, the read
     // cannot work, and the shell cannot say so: `cat … || echo ""` exits 0 either way, so
     // "forbidden" came back as a successful empty answer and `scan` read it as a server
-    // with no Openship projects. The distinction is only visible before the command is sent.
+    // with no Kovalio projects. The distinction is only visible before the command is sent.
     const warn = vi.spyOn(errorDiagnostics, "warn").mockImplementation(() => {});
     try {
       const { executor, stored } = fakeHost(
@@ -155,7 +155,7 @@ describe("kovalio-server-store privilege", () => {
   it("reports a refused read instead of silently calling it absent", async () => {
     // The compromise the line above makes is that the VALUE is ambiguous. The log
     // must not be: a host that merely denies elevation otherwise reads as a host
-    // with no Openship state, and `scan` re-imports our own projects off that.
+    // with no Kovalio state, and `scan` re-imports our own projects off that.
     const warn = vi.spyOn(errorDiagnostics, "warn").mockImplementation(() => {});
     try {
       const read = fakeHost(NON_ROOT_NO_SUDO);

@@ -96,7 +96,7 @@ for (const [name, schema, method, description, confirmation] of [
     "reimport",
     input.reimport,
     "reimport",
-    "Recover a scanned orphaned Openship project with its original ID",
+    "Recover a scanned orphaned Kovalio project with its original ID",
     "Re-register the scanned project?",
   ],
   [

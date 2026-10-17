@@ -416,8 +416,8 @@ export async function receiveDirectChunkHandler(c: Context) {
       );
     }
     const index = Number(c.req.param("index"));
-    const sha256 = c.req.header("x-openship-chunk-sha256") ?? "";
-    const signature = c.req.header("x-openship-transfer-signature") ?? "";
+    const sha256 = c.req.header("x-kovalio-chunk-sha256") ?? "";
+    const signature = c.req.header("x-kovalio-transfer-signature") ?? "";
     await receiveDirectChunk({
       sessionId,
       index,
@@ -599,7 +599,7 @@ export async function uploadFileChunkHandler(c: Context) {
       uploadId,
       ownerUserId: ctx.userId,
       index: Number(c.req.param("index")),
-      sha256: c.req.header("x-openship-chunk-sha256") ?? "",
+      sha256: c.req.header("x-kovalio-chunk-sha256") ?? "",
       readBytes: async () => new Uint8Array(await c.req.arrayBuffer()),
     });
     return c.json({ ok: true });

@@ -139,7 +139,7 @@ projectCloneCommand.command("set").argument("<id>", "Project ID").argument("<fil
 projectCloneCommand.command("clear").argument("<id>", "Project ID").description("Remove this project's explicit clone token")
   .action((id: string) => printResult(() => getShipClient().projects.updateCloneToken(id, { token: null })));
 
-export const projectLocalCommand = new Command("local").description("Manage folders on the Openship instance; use deploy --folder for this machine's files");
+export const projectLocalCommand = new Command("local").description("Manage folders on the Kovalio instance; use deploy --folder for this machine's files");
 projectLocalCommand.command("list").description("List projects linked to folders on the controller")
   .action(() => printResult(() => getShipClient().projects.listLocal()));
 projectLocalCommand.command("scan").argument("<path>", "Absolute path on the controller")

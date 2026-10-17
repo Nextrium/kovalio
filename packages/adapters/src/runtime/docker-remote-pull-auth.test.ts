@@ -93,7 +93,7 @@ describe("remote image preparation progress", () => {
   });
 });
 
-describe("remote pull — no Openship credential", () => {
+describe("remote pull — no Kovalio credential", () => {
   it("pulls exactly as before, writing no config", async () => {
     await (await (await runtimeWith(undefined))).pullImage("ghcr.io/o/img:1", { force: true });
     expect(h.execs).toEqual(["docker pull 'ghcr.io/o/img:1'"]);

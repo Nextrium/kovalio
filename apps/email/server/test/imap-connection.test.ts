@@ -11,7 +11,7 @@ import { classifyImapFailure } from "../src/lib/imap-errors";
 let dir: string;
 let cert: Buffer;
 beforeAll(() => {
-  dir = mkdtempSync(join(tmpdir(), "openship-test-imap-"));
+  dir = mkdtempSync(join(tmpdir(), "kovalio-test-imap-"));
   writeFileSync(
     join(dir, "openssl.cnf"),
     "[req]\nprompt=no\ndistinguished_name=dn\nx509_extensions=cert\n[dn]\nCN=localhost\n[cert]\nsubjectAltName=DNS:localhost,IP:127.0.0.1\nbasicConstraints=critical,CA:TRUE\n",

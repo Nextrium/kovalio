@@ -7,7 +7,7 @@ in a distribution.
 
 | Component | Recorded license and provenance |
 | --- | --- |
-| Openship-authored root, API, dashboard, CLI and desktop code | [Apache License 2.0](../LICENSE); their package metadata also declares Apache-2.0. Third-party code and dependencies retain their own terms. |
+| Kovalio-authored root, API, dashboard, CLI and desktop code | [Apache License 2.0](../LICENSE); their package metadata also declares Apache-2.0. Third-party code and dependencies retain their own terms. |
 | `apps/email/engine` | Vendored iRedMail, with its [GPL v3 license text](../apps/email/engine/LICENSE), [upstream README](../apps/email/engine/README.md), and file-level notices. For example, [iRedMail.sh](../apps/email/engine/iRedMail.sh) grants GPL version 3 or any later version. Preserve the applicable file notices. |
 | `apps/email/client` and `apps/email/server` | The [email package](../apps/email/package.json) identifies these as Zero Email. This checkout has no separate license file or `license` field for those subpackages. Their upstream revision and required notices still need a provenance review; this inventory does not assign them the root license. |
 | Package dependencies, base images and installed mail daemons | Their upstream licenses apply independently. This table is a repository-component inventory, not a complete inventory of transitive dependencies or OS packages. |
@@ -39,7 +39,7 @@ client/server, not the iRedMail engine. Those are different artifacts from the
 API and mail Docker images above.
 
 Excluding the engine does not change the declared Apache-2.0 license of
-Openship-authored code. It also does not change the licenses of other included
+Kovalio-authored code. It also does not change the licenses of other included
 third-party code. Preserve the engine's source, license text and notices when
 packaging it, and assess a pinned artifact using what it actually contains.
 
@@ -47,6 +47,6 @@ packaging it, and assess a pinned artifact using what it actually contains.
 
 The Zero Email provenance and missing component notices are not resolved by
 documenting the iRedMail boundary. Track that review in
-[#610](https://github.com/oblien/openship/issues/610). A complete distribution
+[#610](https://github.com/Nextrium/kovalio/issues/610). A complete distribution
 inventory also needs the versions and licenses of its dependency and OS-package
 closure; the root Apache-2.0 badge alone cannot supply that information.

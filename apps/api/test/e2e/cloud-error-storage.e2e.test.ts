@@ -8,7 +8,7 @@ import { createCloudErrorSink } from "../../src/lib/cloud-error-destination";
 import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 
 const exec = promisify(execFile);
-const container = `openship-e2e-cloud-errors-${process.pid}`;
+const container = `kovalio-e2e-cloud-errors-${process.pid}`;
 let connection: DatabaseConnection;
 let event: ErrorEvent;
 

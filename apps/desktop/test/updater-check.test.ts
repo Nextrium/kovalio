@@ -9,14 +9,14 @@ vi.mock("electron", () => ({
 const release = {
   tag_name: "v99.0.0",
   assets: [
-    "Openship-arm64.dmg",
-    "Openship-x64.dmg",
-    "Openship-win32-x64.zip",
-    "Openship.AppImage",
-    "Openship-arm64.AppImage",
+    "Kovalio-arm64.dmg",
+    "Kovalio-x64.dmg",
+    "Kovalio-win32-x64.zip",
+    "Kovalio.AppImage",
+    "Kovalio-arm64.AppImage",
   ].map((name) => ({
     name,
-    browser_download_url: `https://github.com/oblien/openship/releases/download/v99.0.0/${name}`,
+    browser_download_url: `https://github.com/Nextrium/kovalio/releases/download/v99.0.0/${name}`,
     size: 20,
   })),
 };

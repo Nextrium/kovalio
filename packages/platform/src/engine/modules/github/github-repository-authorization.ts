@@ -1,5 +1,5 @@
-/** Repository grants are independent of Openship sign-in identities. One GitHub
- * user may authorize several Openship accounts without transferring a login. */
+/** Repository grants are independent of Kovalio sign-in identities. One GitHub
+ * user may authorize several Kovalio accounts without transferring a login. */
 import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { repos } from "@repo/db";
@@ -20,7 +20,7 @@ const digest = (value: string) => createHash("sha256").update(value).digest("hex
 const grantLock = (userId: string) =>
   createProvisionLock(`github:repository-authorization:${userId}`);
 export const repositoryOAuthCookieName = (state: string) =>
-  `openship.github-repository.${digest(state).slice(0, 24)}`;
+  `kovalio.github-repository.${digest(state).slice(0, 24)}`;
 export function repositoryOAuthStateCookie(state: string, nonce: string): string {
   return `${repositoryOAuthCookieName(state)}=${nonce}; Path=${REPOSITORY_OAUTH_CALLBACK_PATH}; Max-Age=600; HttpOnly; SameSite=Lax${resolveAuthBaseUrl().startsWith("https:") ? "; Secure" : ""}`;
 }
@@ -202,7 +202,7 @@ export async function assertRepositoryConnectionActor(
     );
   if (!member)
     throw new AppError(
-      "You no longer have access to the Openship workspace that started this install.",
+      "You no longer have access to the Kovalio workspace that started this install.",
       403,
       "GITHUB_WORKSPACE_ACCESS_CHANGED",
     );

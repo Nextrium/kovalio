@@ -16,7 +16,7 @@
  *
  * Works for server-backed (docker) AND cloud deployments: cloud drift shows up
  * as a `missing` from `getContainerInfo` when the workspace was deleted on
- * Openship Cloud. Uncertain artifacts stay protected until verification settles
+ * Kovalio Cloud. Uncertain artifacts stay protected until verification settles
  * the outcome. Successful releases enter the normal retention lifecycle; a
  * failure never advances the project pointer.
  */

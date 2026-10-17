@@ -13,7 +13,7 @@ afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true })));
 });
 async function file(value: unknown) {
-  const directory = await mkdtemp(join(tmpdir(), "openship-app-command-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-app-command-"));
   directories.push(directory);
   const path = join(directory, "input.json");
   await writeFile(path, JSON.stringify(value));

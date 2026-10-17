@@ -67,7 +67,7 @@ type DatabaseTarget = {
   restoreStorage?: ClusterDatabaseBackupStorage;
   consumerProjectIds?: () => Promise<readonly string[]>;
 };
-const managed = "openship.io/database";
+const managed = "nextrium.org/database";
 const conflict = (message: string) =>
   new AppError(message, 409, "CLUSTER_DATABASE_RESOURCE_CONFLICT");
 
@@ -87,8 +87,8 @@ export class ClusterDatabaseAdapter {
     this.namespace = clusterDatabaseNamespace(target.id);
     this.labels = {
       [managed]: target.id,
-      "openship.io/project": kubernetesIdLabel(target.projectId),
-      "openship.io/runtime": target.runtimeId,
+      "nextrium.org/project": kubernetesIdLabel(target.projectId),
+      "nextrium.org/runtime": target.runtimeId,
     };
     this.dataTasks = new DatabaseArchiveTasks(
       api,
@@ -126,9 +126,9 @@ export class ClusterDatabaseAdapter {
   private assertOwned(object: KubernetesObject) {
     if (
       object.metadata.labels?.[managed] !== this.target.id ||
-      object.metadata.labels?.["openship.io/project"] !==
+      object.metadata.labels?.["nextrium.org/project"] !==
         kubernetesIdLabel(this.target.projectId) ||
-      object.metadata.labels?.["openship.io/runtime"] !== this.target.runtimeId ||
+      object.metadata.labels?.["nextrium.org/runtime"] !== this.target.runtimeId ||
       object.metadata.deletionTimestamp
     )
       throw conflict(
@@ -148,7 +148,7 @@ export class ClusterDatabaseAdapter {
           this.assertOwned(current);
           if (
             current.metadata.uid !== existing.metadata.uid ||
-            Number(current.metadata.annotations?.["openship.io/generation"] ?? 0) >
+            Number(current.metadata.annotations?.["nextrium.org/generation"] ?? 0) >
               this.target.generation
           )
             throw conflict("A newer database operation has already updated this resource.");
@@ -159,7 +159,7 @@ export class ClusterDatabaseAdapter {
               ...object.metadata,
               annotations: {
                 ...object.metadata.annotations,
-                "openship.io/generation": String(this.target.generation),
+                "nextrium.org/generation": String(this.target.generation),
               },
             },
           };
@@ -177,7 +177,7 @@ export class ClusterDatabaseAdapter {
           ...object.metadata,
           annotations: {
             ...object.metadata.annotations,
-            "openship.io/generation": String(this.target.generation),
+            "nextrium.org/generation": String(this.target.generation),
           },
         },
       },
@@ -198,7 +198,7 @@ export class ClusterDatabaseAdapter {
       );
     const nodes = await this.api.request<{ items: KubernetesObject[] }>(
       "GET",
-      `/api/v1/nodes?labelSelector=${encodeURIComponent(`openship.io/runtime=${this.target.runtimeId}`)}`,
+      `/api/v1/nodes?labelSelector=${encodeURIComponent(`nextrium.org/runtime=${this.target.runtimeId}`)}`,
       undefined,
       this.signal,
     );
@@ -229,7 +229,7 @@ export class ClusterDatabaseAdapter {
   }
   async storage(log: (message: string) => Promise<void>) {
     const config = this.target.config;
-    if (config.storageClass === "openship-local")
+    if (config.storageClass === "kovalio-local")
       await installDatabaseAddon(
         this.api,
         "local",
@@ -248,10 +248,10 @@ export class ClusterDatabaseAdapter {
         `Storage class ${config.storageClass} does not exist. Choose an installed storage class.`,
       );
     if (
-      config.storageClass === "openship-local" &&
-      (storage.provisioner !== "openship.io/local-path" || storage.reclaimPolicy !== "Retain")
+      config.storageClass === "kovalio-local" &&
+      (storage.provisioner !== "nextrium.org/local-path" || storage.reclaimPolicy !== "Retain")
     )
-      throw conflict("The OpenShip storage class configuration changed.");
+      throw conflict("The Kovalio storage class configuration changed.");
   }
 
   manifest(): KubernetesObject {
@@ -260,7 +260,7 @@ export class ClusterDatabaseAdapter {
       requests: { cpu: `${c.cpuMillis}m`, memory: `${c.memoryMiB}Mi` },
       limits: { cpu: `${c.cpuMillis}m`, memory: `${c.memoryMiB}Mi` },
     };
-    const selector = { "openship.io/runtime": this.target.runtimeId };
+    const selector = { "nextrium.org/runtime": this.target.runtimeId };
     if (c.engine === "postgres")
       return {
         apiVersion: "postgresql.cnpg.io/v1",
@@ -348,7 +348,7 @@ export class ClusterDatabaseAdapter {
           nodeSelectorTerms: [
             {
               matchExpressions: [
-                { key: "openship.io/runtime", operator: "In", values: [this.target.runtimeId] },
+                { key: "nextrium.org/runtime", operator: "In", values: [this.target.runtimeId] },
               ],
             },
           ],
@@ -387,9 +387,9 @@ export class ClusterDatabaseAdapter {
           image: DATABASE_IMAGES.redis,
           imagePullPolicy: "IfNotPresent",
           // The operator copies CR annotations into its pod templates. Keep
-          // OpenShip's stale-operation fence on the CR without rolling every
+          // Kovalio's stale-operation fence on the CR without rolling every
           // existing data pod while a partition resize is in progress.
-          ignoreAnnotations: ["openship.io/generation"],
+          ignoreAnnotations: ["nextrium.org/generation"],
           resources,
           redisSecret: { name: "credentials", key: "password" },
           persistentVolumeClaimRetentionPolicy: { whenDeleted: "Retain", whenScaled: "Retain" },
@@ -452,8 +452,8 @@ export class ClusterDatabaseAdapter {
                     ...fromNamespace(kubernetesProjectNamespace(projectId)),
                     podSelector: {
                       matchLabels: {
-                        "openship.io/project": kubernetesIdLabel(projectId),
-                        "openship.io/runtime": this.target.runtimeId,
+                        "nextrium.org/project": kubernetesIdLabel(projectId),
+                        "nextrium.org/runtime": this.target.runtimeId,
                       },
                     },
                   })),
@@ -502,7 +502,7 @@ export class ClusterDatabaseAdapter {
     });
     if (existing.data?.password !== secret.password)
       throw conflict(
-        "The database credentials changed outside OpenShip. Restore the saved credential before retrying.",
+        "The database credentials changed outside Kovalio. Restore the saved credential before retrying.",
       );
     if (this.target.backupStorage)
       await this.archive.secret("backup-destination", this.target.backupStorage);
@@ -625,7 +625,7 @@ export class ClusterDatabaseAdapter {
       (pod) =>
         !pod.metadata.deletionTimestamp &&
         pod.metadata.labels?.[managed] === this.target.id &&
-        !pod.metadata.labels?.["openship.io/database-probe"],
+        !pod.metadata.labels?.["nextrium.org/database-probe"],
     );
     const dataPods = ownedPods.filter(
       (pod) => !pod.metadata.ownerReferences?.some((owner) => owner.kind === "Job"),
@@ -792,8 +792,8 @@ export class ClusterDatabaseAdapter {
     const name = `db-${this.namespace.slice(6)}-verify-${this.target.generation}-${purpose}`;
     const labels = {
       ...this.labels,
-      "app.kubernetes.io/managed-by": "openship",
-      "openship.io/database-probe": "true",
+      "app.kubernetes.io/managed-by": "kovalio",
+      "nextrium.org/database-probe": "true",
     };
     const metadata = { name, namespace: appNamespace, labels };
     const credentials = await this.api.request(
@@ -847,7 +847,7 @@ export class ClusterDatabaseAdapter {
           spec: {
             restartPolicy: "Never",
             automountServiceAccountToken: false,
-            nodeSelector: { "openship.io/runtime": this.target.runtimeId },
+            nodeSelector: { "nextrium.org/runtime": this.target.runtimeId },
             containers: [
               {
                 name: "check",
@@ -1133,7 +1133,7 @@ export class ClusterDatabaseAdapter {
     // A disconnected consumer can still have an old running release. Inspect
     // managed application namespaces on this runtime, not only current links.
     const selector = encodeURIComponent(
-      `app.kubernetes.io/managed-by=openship,openship.io/runtime=${this.target.runtimeId}`,
+      `app.kubernetes.io/managed-by=kovalio,nextrium.org/runtime=${this.target.runtimeId}`,
     );
     const namespaces = await this.api.request<{ items: KubernetesObject[] }>(
       "GET",
@@ -1147,9 +1147,9 @@ export class ClusterDatabaseAdapter {
       .filter(
         (namespace) =>
           /^os-[a-f0-9]{24}$/.test(namespace.metadata.name ?? "") &&
-          namespace.metadata.labels?.["app.kubernetes.io/managed-by"] === "openship" &&
-          namespace.metadata.labels?.["openship.io/runtime"] === this.target.runtimeId &&
-          !!namespace.metadata.labels?.["openship.io/project"],
+          namespace.metadata.labels?.["app.kubernetes.io/managed-by"] === "kovalio" &&
+          namespace.metadata.labels?.["nextrium.org/runtime"] === this.target.runtimeId &&
+          !!namespace.metadata.labels?.["nextrium.org/project"],
       )
       .map((namespace) => namespace.metadata.name!);
     for (const appNamespace of names) {
@@ -1224,7 +1224,7 @@ export class ClusterDatabaseAdapter {
           if (!namespace) return true;
           if (
             namespace.metadata.labels?.[managed] !== this.target.id ||
-            namespace.metadata.labels?.["openship.io/runtime"] !== this.target.runtimeId
+            namespace.metadata.labels?.["nextrium.org/runtime"] !== this.target.runtimeId
           )
             throw conflict("The database namespace changed ownership during cleanup.");
           const next = (namespace.status?.conditions ?? [])
@@ -1251,7 +1251,7 @@ export class ClusterDatabaseAdapter {
     const namespace = kubernetesProjectNamespace(this.target.projectId);
     if (!(await clusterObject(this.api, `/api/v1/namespaces/${namespace}`, this.signal))) return;
     const selector = encodeURIComponent(
-      `${managed}=${this.target.id},openship.io/database-probe=true`,
+      `${managed}=${this.target.id},nextrium.org/database-probe=true`,
     );
     for (const path of [
       `/apis/batch/v1/namespaces/${namespace}/jobs`,
@@ -1273,7 +1273,7 @@ export class ClusterDatabaseAdapter {
         if (
           current.metadata.uid !== object.metadata.uid ||
           current.metadata.labels?.[managed] !== this.target.id ||
-          current.metadata.labels?.["openship.io/runtime"] !== this.target.runtimeId
+          current.metadata.labels?.["nextrium.org/runtime"] !== this.target.runtimeId
         )
           throw conflict("A database connection check changed ownership during cleanup.");
         if (!current.metadata.deletionTimestamp) {

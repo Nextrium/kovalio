@@ -152,7 +152,7 @@ export const deployment = pgTable(
      * containerName, containerImage, ownerProjectId, serviceName, dockerPublished,
      * ambiguousOwners, stopTarget }`. Process/port metadata only; never secrets.
      *
-     * Two load-bearing keys. `isManagedDeployment` separates "a stale Openship
+     * Two load-bearing keys. `isManagedDeployment` separates "a stale Kovalio
      * deployment is holding the port, safe to free" from "something else on this box
      * owns it, ask a human" — and stays THREE-valued, `undefined` meaning ownership was
      * never established. `stopTarget` says what a redeploy would actually offer to stop;

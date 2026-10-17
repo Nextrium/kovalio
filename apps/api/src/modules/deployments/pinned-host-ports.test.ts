@@ -1106,7 +1106,7 @@ describe("pinnedHostPortsToAvoid", () => {
           projectId: "project-b", serviceId: null, containerPort: 3000, port: 20010,
         })]
       : []);
-    const scan = vi.fn(async () => { throw new Error("no Openship edge installed"); });
+    const scan = vi.fn(async () => { throw new Error("no Kovalio edge installed"); });
 
     await expect(convergeTargetHostPortClaims({
       target: remoteTarget,

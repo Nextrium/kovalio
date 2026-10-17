@@ -11,7 +11,7 @@ import { saveCloudActionRunner } from "./cloud-runner";
 export async function ensureActionsBillingNamespace(organizationId: string): Promise<void> {
   if (!env.CLOUD_MODE)
     throw new AppError(
-      "Actions funding is managed by Openship Cloud",
+      "Actions funding is managed by Kovalio Cloud",
       409,
       "ACTIONS_BILLING_CLOUD_ONLY",
     );
@@ -25,7 +25,7 @@ export async function ensureActionsBillingNamespace(organizationId: string): Pro
     );
 
   await ensureCloudNamespace({
-    name: "Openship Actions",
+    name: "Kovalio Actions",
     slug: namespace,
     // Preparing checkout must not permit compute before paid runner setup.
     // These initial caps do not replace an existing namespace's limits.
@@ -123,7 +123,7 @@ export async function ensureFundedActionRunners(organizationId: string): Promise
         diskGb: runner.diskGb,
         maxParallel,
         image: "catthehacker/ubuntu:act-22.04",
-        labels: ["ubuntu-latest", "ubuntu-22.04", `openship-${runner.id.replace("_", "-")}`],
+        labels: ["ubuntu-latest", "ubuntu-22.04", `kovalio-${runner.id.replace("_", "-")}`],
       },
       runner.id,
     );

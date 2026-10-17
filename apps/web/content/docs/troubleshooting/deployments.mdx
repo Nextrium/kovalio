@@ -76,13 +76,13 @@ contains framework configuration, package scripts, or lockfiles. The default por
 `EXPOSE`; a package script that the image does not run does not determine the port.
 
 Leave **Start command** empty to use the image's default command. An explicit start command in
-project settings or `openship.json` overrides `CMD` and must exist in the final runtime image.
+project settings or `kovalio.json` overrides `CMD` and must exist in the final runtime image.
 This also applies to Dockerfile apps inside monorepos. An empty override does not make an image
 static: the image still runs its own process.
 
 Existing saved commands and previous deployment snapshots are preserved. If an older import saved
 an inferred package-manager command, clear that override or set the intended command, then deploy
-again. Updating Openship does not recreate existing containers.
+again. Updating Kovalio does not recreate existing containers.
 
 ## The static build succeeds, but the output directory is missing
 
@@ -138,7 +138,7 @@ The build finishes, then an enabled readiness check reports that the app never a
 published address within the configured timeout.
 </Callout>
 
-**What it means** — when `readiness.enabled` is `true`, Openship waits for your app to accept a TCP
+**What it means** — when `readiness.enabled` is `true`, Kovalio waits for your app to accept a TCP
 connection, or return an HTTP status below 500 at the configured `path`. The default timeout is 45
 seconds. If nothing answers, the app may have crashed, still be starting, or be listening on a
 different port. For single-app deployments, checks run on **Local** and **Server** targets using the
@@ -179,7 +179,7 @@ On a Local or Server deploy, if another workload already holds the port, the dep
 existing workload running and continues with the built image. The app's internal port stays the same;
 the selected host port is saved after a successful deployment for future redeploys.
 
-Openship checks both live listeners and saved port reservations, then checks the exact suggestion again
+Kovalio checks both live listeners and saved port reservations, then checks the exact suggestion again
 when you choose it. If it is no longer available, the dialog asks again. It never substitutes another
 port without your choice. If availability cannot be verified, the alternative is not offered.
 
@@ -192,8 +192,8 @@ if needed. Cancelling preserves the current port.
 ## The deployment is running, but the app only listens inside its container
 
 An exposed Docker app listening only on `127.0.0.1` or `::1` cannot receive traffic through
-its published port. Openship shows **Action required** in the deployment's existing port review
-and in Monitoring. This applies to Docker deployments on your servers and Openship Cloud.
+its published port. Kovalio shows **Action required** in the deployment's existing port review
+and in Monitoring. This applies to Docker deployments on your servers and Kovalio Cloud.
 The deployment keeps running; this warning does not hold the release or trigger a rollback.
 
 Use **Open settings** to review the app's start command or configuration. If it should receive

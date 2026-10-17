@@ -201,7 +201,7 @@ export function resolveDashboardPublicUrl(): string {
  */
 export function resolveApiPublicUrl(): string {
   const pub = publicUrl();
-  return pub ? `${pub}${process.env.OPENSHIP_API_ONLY === "true" ? "" : SAME_ORIGIN_PROXY_PREFIX}` : runtimeTarget.api;
+  return pub ? `${pub}${process.env.KOVALIO_API_ONLY === "true" ? "" : SAME_ORIGIN_PROXY_PREFIX}` : runtimeTarget.api;
 }
 
 /**

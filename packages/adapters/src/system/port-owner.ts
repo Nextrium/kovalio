@@ -30,13 +30,13 @@ import type { ExecOnly } from "../types";
 import type { ProxyKind } from "./types";
 import { tryExec } from "./probe-exec";
 
-/** Labels Openship stamps on what it creates: `DockerRuntime.labels()`, plus `role` from `deployRole`. */
-export const OPENSHIP_LABEL = {
-  project: "openship.project",
-  deployment: "openship.deployment",
-  service: "openship.service",
-  build: "openship.build",
-  role: "openship.role",
+/** Labels Kovalio stamps on what it creates: `DockerRuntime.labels()`, plus `role` from `deployRole`. */
+export const KOVALIO_LABEL = {
+  project: "kovalio.project",
+  deployment: "kovalio.deployment",
+  service: "kovalio.service",
+  build: "kovalio.build",
+  role: "kovalio.role",
 } as const;
 
 /** A container publishing a host port, with the labels that decide ownership. */

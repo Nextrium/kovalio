@@ -48,7 +48,7 @@ export interface CloudDockerOptions {
   /** Organization-validated subscription owner of the managed server. */
   ownerWorkspaceId: string;
   namespace: string;
-  /** Provider-authorized domain; production uses Openship's configured domain. */
+  /** Provider-authorized domain; production uses Kovalio's configured domain. */
   publicDomain?: string;
   beforeProvision?: () => Promise<void>;
   /** Explicit opt-in for a desktop/self-hosted source transfer; SaaS denies it. */
@@ -134,7 +134,7 @@ export class CloudDockerRuntime extends DockerRuntime {
       if (notFound(error)) return null;
       throw error;
     }
-    if (container.Config?.Labels?.["openship.project"] !== this.projectId) {
+    if (container.Config?.Labels?.["kovalio.project"] !== this.projectId) {
       throw new AppError("Container does not belong to this project", 404, "CONTAINER_NOT_FOUND");
     }
     return container;
@@ -143,10 +143,10 @@ export class CloudDockerRuntime extends DockerRuntime {
     await this.inspectOwnedContainer(containerId);
   }
   protected override networkLabels(slug: string): Record<string, string> {
-    return { ...super.networkLabels(slug), ...{ "openship.project": this.projectId } };
+    return { ...super.networkLabels(slug), ...{ "kovalio.project": this.projectId } };
   }
   protected override containerLabelFilters() {
-    return [`openship.project=${this.projectId}`];
+    return [`kovalio.project=${this.projectId}`];
   }
   override async assertBackupAccess(
     projectId: string,
@@ -177,7 +177,7 @@ export class CloudDockerRuntime extends DockerRuntime {
           );
       } else {
         const volume = await this.docker.getVolume(source).inspect();
-        if (volume.Labels?.["openship.project"] !== this.projectId)
+        if (volume.Labels?.["kovalio.project"] !== this.projectId)
           throw new AppError(
             "Backup volume does not belong to this project",
             403,
@@ -189,7 +189,7 @@ export class CloudDockerRuntime extends DockerRuntime {
   override async ensureNetwork(slug: string, signal?: AbortSignal) {
     const id = await super.ensureNetwork(slug, signal);
     const info = await this.docker.getNetwork(id).inspect();
-    if (info.Labels?.["openship.project"] !== this.projectId)
+    if (info.Labels?.["kovalio.project"] !== this.projectId)
       throw new AppError("Network belongs to another project", 409, "CLOUD_NETWORK_CONFLICT");
     return id;
   }
@@ -207,8 +207,8 @@ export class CloudDockerRuntime extends DockerRuntime {
   ): Promise<void> {
     return this.options.provisionLock.run(async () => {
       try {
-        const network = await this.docker.getNetwork(`openship-${slug}`).inspect();
-        const owner = network.Labels?.["openship.project"];
+        const network = await this.docker.getNetwork(`kovalio-${slug}`).inspect();
+        const owner = network.Labels?.["kovalio.project"];
         if (owner !== this.projectId) {
           if (
             mode === "project-cleanup" &&
@@ -253,7 +253,7 @@ export class CloudDockerRuntime extends DockerRuntime {
   }
   private async accessibleImage(ref: string) {
     const image = await this.docker.getImage(ref).inspect();
-    const owner = image.Config?.Labels?.["openship.project"];
+    const owner = image.Config?.Labels?.["kovalio.project"];
     if (owner && owner !== this.projectId)
       throw new AppError("Image belongs to another project", 404, "IMAGE_NOT_FOUND");
     return image;
@@ -263,7 +263,7 @@ export class CloudDockerRuntime extends DockerRuntime {
   }
   override async removeImage(ref: string) {
     try {
-      if ((await this.accessibleImage(ref)).Config?.Labels?.["openship.project"] !== this.projectId)
+      if ((await this.accessibleImage(ref)).Config?.Labels?.["kovalio.project"] !== this.projectId)
         return;
     } catch (error) {
       if (notFound(error)) return;
@@ -322,16 +322,16 @@ export class CloudDockerRuntime extends DockerRuntime {
   }
   override async listAllVolumes() {
     const volumes = await super.listAllVolumes();
-    return volumes.filter((volume) => volume.labels["openship.project"] === this.projectId);
+    return volumes.filter((volume) => volume.labels["kovalio.project"] === this.projectId);
   }
   override async listAllNetworks() {
     const networks = await super.listAllNetworks();
-    return networks.filter((network) => network.labels["openship.project"] === this.projectId);
+    return networks.filter((network) => network.labels["kovalio.project"] === this.projectId);
   }
   override async removeVolume(name: string) {
     try {
       const volume = await this.docker.getVolume(name).inspect();
-      if (volume.Labels?.["openship.project"] !== this.projectId)
+      if (volume.Labels?.["kovalio.project"] !== this.projectId)
         throw new AppError("Volume belongs to another project", 409, "CLOUD_VOLUME_CONFLICT");
     } catch (error) {
       if (notFound(error)) return;
@@ -383,7 +383,7 @@ export class CloudDockerRuntime extends DockerRuntime {
       return;
     return (this.sourcePromise ??= (async () => {
       await this.canSpend();
-      const source = `/tmp/openship-cloud-source-${createHash("sha256").update(config.sessionId).digest("hex").slice(0, 24)}`;
+      const source = `/tmp/kovalio-cloud-source-${createHash("sha256").update(config.sessionId).digest("hex").slice(0, 24)}`;
       await this.executor.mkdir(source);
       try {
         if (await prepareManagedSource(this.connection, config, source, logger)) {
@@ -608,7 +608,7 @@ export class CloudDockerRuntime extends DockerRuntime {
   ): Promise<MultiServiceDeployResult> {
     this.assertProject(config.projectId);
     const network = await this.docker.getNetwork(group.id).inspect();
-    if (network.Labels?.["openship.project"] !== this.projectId)
+    if (network.Labels?.["kovalio.project"] !== this.projectId)
       throw new AppError("Network belongs to another project", 409, "CLOUD_NETWORK_CONFLICT");
     for (const mode of [config.namespaces?.network, config.namespaces?.pid]) {
       if (!mode || mode === "none") continue;
@@ -644,9 +644,9 @@ export class CloudDockerRuntime extends DockerRuntime {
       const used = await this.occupiedHostPorts();
       const previous = reserved.find(
         (container) =>
-          container.Labels["openship.project"] === this.projectId &&
-          container.Labels["openship.service"] === config.serviceName &&
-          container.Names.includes(`/openship-${config.slug}-${config.serviceName}`),
+          container.Labels["kovalio.project"] === this.projectId &&
+          container.Labels["kovalio.service"] === config.serviceName &&
+          container.Names.includes(`/kovalio-${config.slug}-${config.serviceName}`),
       );
       const published = new Map<number, number>();
       for (const port of ports) {
@@ -779,7 +779,7 @@ export class CloudDockerRuntime extends DockerRuntime {
         const targetPort = Number(target.port || 80);
         if (["127.0.0.1", "localhost"].includes(target.hostname)) {
           const containers = await this.publishedContainers(true);
-          const owned = containers.some(item => item.Labels["openship.project"] === this.projectId &&
+          const owned = containers.some(item => item.Labels["kovalio.project"] === this.projectId &&
             item.Ports.some(port => port.Type === "tcp" && port.PublicPort === targetPort));
           if (!owned) throw new Error("Published routing port does not belong to this project");
           return targetPort;
@@ -796,7 +796,7 @@ export class CloudDockerRuntime extends DockerRuntime {
     assertCloudWorkspaceRunning(workspace);
     const containers = await super.listAllContainers();
     return containers.filter(
-      (container) => container.labels["openship.project"] === this.projectId,
+      (container) => container.labels["kovalio.project"] === this.projectId,
     );
   }
   override async getContainerInfo(containerId: string): Promise<ContainerInfo> {

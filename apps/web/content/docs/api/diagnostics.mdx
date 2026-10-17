@@ -3,12 +3,12 @@ title: Error reporting
 description: Correlate API failures and understand Cloud-only diagnostic collection.
 ---
 
-Openship API responses include an `X-Request-ID`. Include this reference when reporting a failure. The
+Kovalio API responses include an `X-Request-ID`. Include this reference when reporting a failure. The
 Cloud diagnostic event associates it with the error category, operation, stack and authorized
 resource identifiers where available. An incoming request ID is only a parent reference; each API
 request receives a new server-generated ID.
 
-Automatic error collection is enabled only in Openship Cloud. The SaaS API stores redacted events
+Automatic error collection is enabled only in Kovalio Cloud. The SaaS API stores redacted events
 in an automatically created diagnostics table in its existing database and keeps its local JSON logs.
 Self-hosted and Desktop installations do not collect or upload diagnostic events, including recovered
 catches. Connecting a local installation to Cloud does not enable uploads. Intentional local warnings

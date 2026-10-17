@@ -883,8 +883,8 @@ async function edgePanel(): Promise<void> {
     // absent (API down) or restricted (real auth needed).
     if (!apiLive) {
       note(
-        `The Openship API isn't answering at ${getRemoteClient().http.apiUrl}.\n` +
-          "Domains, traffic & analytics need it — start the stack with `openship up`.",
+        `The Kovalio API isn't answering at ${getRemoteClient().http.apiUrl}.\n` +
+          "Domains, traffic & analytics need it — start the stack with `kovalio up`.",
         "API offline",
       );
     } else if (needsAuth) {
@@ -1023,7 +1023,7 @@ const rulesCommand = new Command("rules")
 
 // ─── Control-plane: domains (register a host on a port, verify SSL, remove) ──
 
-/** Render a DNS-records result: mode line + type/host/value table (mirrors `openship domain`). */
+/** Render a DNS-records result: mode line + type/host/value table (mirrors `kovalio domain`). */
 function printRecords(result: DomainRecords): void {
   if (isJsonMode()) {
     printJson(result);

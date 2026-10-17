@@ -77,7 +77,7 @@ describe("explicit retired catalog image repair", () => {
         advanced: {
           build: null,
           files: expect.arrayContaining([
-            expect.objectContaining({ path: expect.stringMatching(/^\/etc\/openship\//) }),
+            expect.objectContaining({ path: expect.stringMatching(/^\/etc\/kovalio\//) }),
           ]),
         },
       });

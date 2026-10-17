@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { repos, seedOwner } from "../jobs/_harness";
 import { seedProject } from "../../helpers/seed";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { domainRoutes } from "../../../src/modules/domains/domain.routes";
 import { healthRoutes } from "../../../src/modules/health/health.routes";
@@ -44,8 +44,8 @@ describe("self-hosted external ingress (#706)", () => {
       },
     });
     const native = await ship.scope({ identity: "verified", organizationId: owner.orgId });
-    const remote = new OpenshipClient({
-      baseUrl: "http://openship.test",
+    const remote = new KovalioClient({
+      baseUrl: "http://kovalio.test",
       token: owner.token,
       organizationId: owner.orgId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,

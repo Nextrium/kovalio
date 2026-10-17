@@ -116,7 +116,7 @@ function scan(
       private: true,
       default_branch: "main",
       selected_branch: branch,
-      branches: ["main", "openship", "empty"].map((name) => ({ name })),
+      branches: ["main", "kovalio", "empty"].map((name) => ({ name })),
     },
     stack: "node",
     projectType: "app",
@@ -220,7 +220,7 @@ beforeEach(async () => {
   api.setOptions.mockResolvedValue({});
   api.setBranch.mockResolvedValue({ success: true });
   api.getBranchPage.mockResolvedValue({
-    data: ["main", "openship", "empty"].map((name) => ({ name })),
+    data: ["main", "kovalio", "empty"].map((name) => ({ name })),
     pagination: { page: 1, perPage: 100, hasMore: false },
   });
   api.ensure.mockResolvedValue({ success: true, project_id: "project-1" });
@@ -233,7 +233,7 @@ beforeEach(async () => {
   await act(async () => {
     await current.initializeFromProject("project-1");
   });
-  await act(async () => current.updateConfig({ branches: ["main", "openship", "empty"] }));
+  await act(async () => current.updateConfig({ branches: ["main", "kovalio", "empty"] }));
 });
 
 afterEach(async () => {
@@ -250,8 +250,8 @@ describe("deploy branch detection", () => {
     api.getInfo.mockResolvedValue({ data: { project: { ...response.data.project, githubChecks } } });
     await act(async () => { await current.initializeFromProject("project-1"); });
     expect(current.config.githubChecks).toEqual(githubChecks);
-    await act(async () => current.updateConfig({ branches: ["main", "openship"] }));
-    await selectBranch("openship");
+    await act(async () => current.updateConfig({ branches: ["main", "kovalio"] }));
+    await selectBranch("kovalio");
     expect(current.config.githubChecks).toEqual(githubChecks);
     await act(async () => button(baseDictionary.deploy.sidebar.saveChanges).click());
     expect(api.setOptions).toHaveBeenCalledWith("project-1", expect.objectContaining({ githubChecks }));
@@ -271,8 +271,8 @@ describe("deploy branch detection", () => {
     "preserves explicit release settings through rescan, save and deploy: $commands",
     async ({ commands }) => {
       await act(async () => current.updateConfig({ releaseCommands: commands }));
-      api.prepare.mockResolvedValueOnce(scan("openship", { releaseCommands: ["upstream migration"] }));
-      await selectBranch("openship");
+      api.prepare.mockResolvedValueOnce(scan("kovalio", { releaseCommands: ["upstream migration"] }));
+      await selectBranch("kovalio");
       expect(current.config.releaseCommands).toEqual(commands);
       await act(async () => button(baseDictionary.deploy.sidebar.saveChanges).click());
       expect(api.setOptions).toHaveBeenCalledWith("project-1", expect.objectContaining({ releaseCommands: commands }));
@@ -306,8 +306,8 @@ describe("deploy branch detection", () => {
     "preserves a saved roles setting through rescan, save and deploy: $roles",
     async ({ roles }) => {
       await act(async () => current.updateConfig({ roles: roles as never }));
-      api.prepare.mockResolvedValueOnce(scan("openship", { roles: [{ name: "upstream", kind: "worker", command: "x" }] }));
-      await selectBranch("openship");
+      api.prepare.mockResolvedValueOnce(scan("kovalio", { roles: [{ name: "upstream", kind: "worker", command: "x" }] }));
+      await selectBranch("kovalio");
       expect(current.config.roles).toEqual(roles);
       await act(async () => button(baseDictionary.deploy.sidebar.saveChanges).click());
       expect(api.setOptions).toHaveBeenCalledWith("project-1", expect.objectContaining({ roles }));
@@ -347,7 +347,7 @@ describe("deploy branch detection", () => {
     expect(api.buildAccess).toHaveBeenCalledWith(expect.objectContaining({ deployTarget: "cloud", serverId: "managed-server" }));
   });
 
-  it("seeds a new project from openship.json and lets the operator remove a command", async () => {
+  it("seeds a new project from kovalio.json and lets the operator remove a command", async () => {
     api.prepare.mockResolvedValueOnce(scan("main", { releaseCommands: ["node migrate.js"] }));
     await act(async () => { await current.initializeFromRepo("example", "fresh"); });
     expect(current.config.releaseCommands).toEqual(["node migrate.js"]);
@@ -365,8 +365,8 @@ describe("deploy branch detection", () => {
 
   it("seeds commands found on another branch of a new, unedited project", async () => {
     await act(async () => { await current.initializeFromRepo("example", "fresh"); });
-    api.prepare.mockResolvedValueOnce(scan("openship", { releaseCommands: ["node migrate.js"] }));
-    await selectBranch("openship");
+    api.prepare.mockResolvedValueOnce(scan("kovalio", { releaseCommands: ["node migrate.js"] }));
+    await selectBranch("kovalio");
     expect(current.config.releaseCommands).toEqual(["node migrate.js"]);
   });
 
@@ -405,19 +405,19 @@ describe("deploy branch detection", () => {
     expect(current.config.services).toHaveLength(3);
     expect(api.prepare).not.toHaveBeenCalled();
 
-    await selectBranch("openship");
+    await selectBranch("kovalio");
 
     expect(api.prepare).toHaveBeenCalledWith({
       owner: "example",
       repo: "demo",
-      branch: "openship",
+      branch: "kovalio",
       env: { APP_MODE: "preview" },
       includeEnv: true,
     });
     expect(current.config).toMatchObject({
       projectId: "project-1",
       projectName: "Unsaved name",
-      branch: "openship",
+      branch: "kovalio",
       projectType: "app",
       framework: "node",
       detectedFramework: "node",
@@ -511,7 +511,7 @@ describe("deploy branch detection", () => {
         options: { ...current.config.options, hasServer: true, productionPort: "3000" },
       }),
     );
-    await selectBranch("openship");
+    await selectBranch("kovalio");
     expect(current.config.publicEndpoints[0]).toMatchObject({
       customDomain: "app.example.test",
       domainType: "custom",
@@ -529,7 +529,7 @@ describe("deploy branch detection", () => {
       }),
     );
     const previous = current.config;
-    await selectBranch("openship");
+    await selectBranch("kovalio");
     expect(current.isRescanning).toBe(true);
     expect(current.config).toBe(previous);
     expect(button(baseDictionary.deploy.sidebar.saveChanges).disabled).toBe(true);
@@ -546,8 +546,8 @@ describe("deploy branch detection", () => {
     expect(container.querySelector('[role="alert"]')?.textContent).toBe("Branch is unavailable");
     expect(button(baseDictionary.deploy.sidebar.saveChanges).disabled).toBe(false);
 
-    await selectBranch("openship");
-    expect(current.config.branch).toBe("openship");
+    await selectBranch("kovalio");
+    expect(current.config.branch).toBe("kovalio");
     expect(container.querySelector('[role="alert"]')).toBeNull();
   });
 
@@ -555,10 +555,10 @@ describe("deploy branch detection", () => {
     await act(async () => {
       await current.initializeFromRepo("example", "demo", undefined, {
         projectId: "project-1",
-        branch: "openship",
+        branch: "kovalio",
       });
     });
-    expect(current.config.branch).toBe("openship");
+    expect(current.config.branch).toBe("kovalio");
     expect(current.config.framework).toBe("node");
     expect(current.config.detectedFramework).toBe("node");
     expect(current.config.composePath).toBeUndefined();
@@ -566,7 +566,7 @@ describe("deploy branch detection", () => {
   });
 
   it("keeps Dockerfile defaults as a running service when rescanning single and monorepo apps", async () => {
-    const docker = scan("openship", {
+    const docker = scan("kovalio", {
       stack: "docker",
       projectType: "docker",
       category: "docker",
@@ -576,7 +576,7 @@ describe("deploy branch detection", () => {
       port: 20128,
     });
     api.prepare.mockResolvedValueOnce(docker);
-    await selectBranch("openship");
+    await selectBranch("kovalio");
     expect(current.config).toMatchObject({
       framework: "docker",
       projectType: "docker",
@@ -605,15 +605,15 @@ describe("deploy branch detection", () => {
   });
 
   it("replaces monorepo apps, workspace defaults, and mode snapshots when returning to a plain branch", async () => {
-    const app = scan("openship");
+    const app = scan("kovalio");
     api.prepare.mockResolvedValueOnce(
-      scan("openship", {
+      scan("kovalio", {
         projectType: "monorepo",
         monorepoApps: [{ ...app, id: "web", name: "web", rootDirectory: "apps/web" }],
         monorepoWorkspace: { packageManager: "pnpm", prepareCommand: "pnpm install" },
       }),
     );
-    await selectBranch("openship");
+    await selectBranch("kovalio");
     expect(current.config.monorepoApps).toHaveLength(1);
     expect(current.config.modeSnapshots).toBeDefined();
     await selectBranch("main");
@@ -628,13 +628,13 @@ describe("deploy branch detection", () => {
   });
 
   it("saves the scanned branch with its new build settings and clears the old compose path", async () => {
-    await selectBranch("openship");
+    await selectBranch("kovalio");
     await act(async () => button(baseDictionary.deploy.sidebar.saveChanges).click());
     expect(api.setOptions).toHaveBeenCalledWith(
       "project-1",
       expect.objectContaining({
         framework: "node",
-        gitBranch: "openship",
+        gitBranch: "kovalio",
         composePath: "",
         buildCommand: "npm run build",
         productionPort: 8080,
@@ -646,7 +646,7 @@ describe("deploy branch detection", () => {
   });
 
   it("sends the detected single-app mode to deploy even when the project previously had services", async () => {
-    await selectBranch("openship");
+    await selectBranch("kovalio");
     let deploymentId: string | null = null;
     await act(async () => {
       deploymentId = await build.startDeployment();
@@ -654,14 +654,14 @@ describe("deploy branch detection", () => {
     expect(deploymentId).toBe("deployment-1");
     expect(api.ensure).toHaveBeenCalledWith(
       expect.objectContaining({
-        gitBranch: "openship",
+        gitBranch: "kovalio",
         framework: "node",
         composePath: "",
       }),
     );
     expect(api.buildAccess).toHaveBeenCalledWith(
       expect.objectContaining({
-        branch: "openship",
+        branch: "kovalio",
         serviceDeploymentMode: "single",
         services: undefined,
       }),
@@ -675,9 +675,9 @@ describe("deploy branch detection", () => {
         resolve = done;
       }),
     );
-    await selectBranch("openship");
+    await selectBranch("kovalio");
     await act(async () => current.updateConfig({ projectId: "project-2", repo: "different" }));
-    await act(async () => resolve(scan("openship")));
+    await act(async () => resolve(scan("kovalio")));
     expect(current.config.projectId).toBe("project-2");
     expect(current.config.repo).toBe("different");
     expect(current.config.branch).toBe("main");
@@ -687,7 +687,7 @@ describe("deploy branch detection", () => {
 
 describe("Cloud pricing is offered only at deployment time", () => {
   async function configureCloud() {
-    await selectBranch("openship");
+    await selectBranch("kovalio");
     api.selfHosted = false;
     api.query = "";
     await act(async () => current.updateConfig({ deployTarget: "cloud", serverId: "managed-server", workspaceId: "workspace", noPublicRoute: true }));

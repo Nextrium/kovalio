@@ -1,46 +1,46 @@
 ---
 title: job
-description: Commands, arguments, and options for openship job.
-cliGroup: openship job
+description: Commands, arguments, and options for kovalio job.
+cliGroup: kovalio job
 ---
 
 See the [workflow guide](/docs/guides/jobs) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship job
+## kovalio job
 
 Manage self-hosted jobs, schedules, and run logs
 
 ```text
-openship job|jobs [options] [command]
+kovalio job|jobs [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list`](/docs/cli/reference/job#openship-job-list) | List system and custom jobs |
-| [`get <key>`](/docs/cli/reference/job#openship-job-get) | Show a job's configuration and recent runs |
-| [`create [options]`](/docs/cli/reference/job#openship-job-create) | Create a scheduled command or saved workflow job |
-| [`update [options] <key>`](/docs/cli/reference/job#openship-job-update) | Update a job; built-ins accept schedule and enabled changes |
-| [`delete\|rm [options] <key>`](/docs/cli/reference/job#openship-job-delete) | Delete a custom job (system jobs cannot be deleted) |
-| [`run [options] <key>`](/docs/cli/reference/job#openship-job-run) | Run a job now; custom jobs return a run ID |
-| [`runs [options] <key>`](/docs/cli/reference/job#openship-job-runs) | List a job's run history |
-| [`logs [options] <runId>`](/docs/cli/reference/job#openship-job-logs) | Show stored run output, or the full run in JSON mode |
-| [`events`](/docs/cli/reference/job#openship-job-events) | List event types available as job triggers |
-| [`backup-schedules`](/docs/cli/reference/job#openship-job-backup-schedules) | List scheduled backups with their next and last runs |
+| [`list`](/docs/cli/reference/job#kovalio-job-list) | List system and custom jobs |
+| [`get <key>`](/docs/cli/reference/job#kovalio-job-get) | Show a job's configuration and recent runs |
+| [`create [options]`](/docs/cli/reference/job#kovalio-job-create) | Create a scheduled command or saved workflow job |
+| [`update [options] <key>`](/docs/cli/reference/job#kovalio-job-update) | Update a job; built-ins accept schedule and enabled changes |
+| [`delete\|rm [options] <key>`](/docs/cli/reference/job#kovalio-job-delete) | Delete a custom job (system jobs cannot be deleted) |
+| [`run [options] <key>`](/docs/cli/reference/job#kovalio-job-run) | Run a job now; custom jobs return a run ID |
+| [`runs [options] <key>`](/docs/cli/reference/job#kovalio-job-runs) | List a job's run history |
+| [`logs [options] <runId>`](/docs/cli/reference/job#kovalio-job-logs) | Show stored run output, or the full run in JSON mode |
+| [`events`](/docs/cli/reference/job#kovalio-job-events) | List event types available as job triggers |
+| [`backup-schedules`](/docs/cli/reference/job#kovalio-job-backup-schedules) | List scheduled backups with their next and last runs |
 
-## openship job backup-schedules
+## kovalio job backup-schedules
 
 List scheduled backups with their next and last runs
 
 ```text
-openship job backup-schedules [options]
+kovalio job backup-schedules [options]
 ```
 
-## openship job create
+## kovalio job create
 
 Create a scheduled command or saved workflow job
 
 ```text
-openship job create [options]
+kovalio job create [options]
 ```
 
 | Option | Meaning |
@@ -53,84 +53,84 @@ openship job create [options]
 | `--at <iso>` | Run time for a once schedule |
 | `--file <path>` | JSON API body (workflowId/inputs or command settings); flags override file values |
 
-## openship job delete
+## kovalio job delete
 
 Delete a custom job (system jobs cannot be deleted)
 
 ```text
-openship job delete|rm [options] <key>
+kovalio job delete|rm [options] <key>
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `-y, --yes` | Confirm deletion |
 
-## openship job events
+## kovalio job events
 
 List event types available as job triggers
 
 ```text
-openship job events [options]
+kovalio job events [options]
 ```
 
-## openship job get
+## kovalio job get
 
 Show a job's configuration and recent runs
 
 ```text
-openship job get [options] <key>
+kovalio job get [options] <key>
 ```
 
-## openship job list
+## kovalio job list
 
 List system and custom jobs
 
 ```text
-openship job list [options]
+kovalio job list [options]
 ```
 
-## openship job logs
+## kovalio job logs
 
 Show stored run output, or the full run in JSON mode
 
 ```text
-openship job logs [options] <runId>
+kovalio job logs [options] <runId>
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `-f, --follow` | Stream output until completion; exit nonzero on failure |
 
-## openship job run
+## kovalio job run
 
 Run a job now; custom jobs return a run ID
 
 ```text
-openship job run [options] <key>
+kovalio job run [options] <key>
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `-f, --follow` | Stream the custom run until completion |
 
-## openship job runs
+## kovalio job runs
 
 List a job's run history
 
 ```text
-openship job runs [options] <key>
+kovalio job runs [options] <key>
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `--limit <n>` | Maximum number of runs (default 50) |
 
-## openship job update
+## kovalio job update
 
 Update a job; built-ins accept schedule and enabled changes
 
 ```text
-openship job update [options] <key>
+kovalio job update [options] <key>
 ```
 
 | Option | Meaning |

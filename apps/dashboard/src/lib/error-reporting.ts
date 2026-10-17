@@ -76,8 +76,8 @@ export function installClientErrorReporting(): void {
   installed = true;
   errorReporter.setEnabled(
     () =>
-      (window as Window & { __OPENSHIP_ERROR_REPORTING__?: boolean })
-        .__OPENSHIP_ERROR_REPORTING__ === true,
+      (window as Window & { __KOVALIO_ERROR_REPORTING__?: boolean })
+        .__KOVALIO_ERROR_REPORTING__ === true,
   );
   errorReporter.setContextProvider(() => ({
     source: "dashboard",

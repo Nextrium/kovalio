@@ -1,4 +1,4 @@
--- GitHub App installations belong to an Openship workspace, not to whichever
+-- GitHub App installations belong to an Kovalio workspace, not to whichever
 -- user happened to connect them. Keep the most recently reconciled legacy row
 -- for each workspace/owner before installing the new uniqueness boundary.
 ALTER TABLE "git_installation" ADD COLUMN IF NOT EXISTS "suspended_at" timestamp;

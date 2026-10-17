@@ -97,14 +97,14 @@
       "serviceCountOne": "{count} service",
       "serviceCountOther": "{count} services",
       "searchPlaceholder": "Search by name, image, or tag…",
-      "cloudConnectHint": "Connect Openship Cloud to browse the cloud service catalog. You can still add any image manually.",
-      "cloudConnectTitle": "Connect Openship Cloud",
-      "cloudConnectBody": "Link this instance to Openship Cloud to browse and add managed cloud images. You can still add any image manually from Local images.",
-      "cloudConnectButton": "Connect to Openship Cloud",
+      "cloudConnectHint": "Connect Kovalio Cloud to browse the cloud service catalog. You can still add any image manually.",
+      "cloudConnectTitle": "Connect Kovalio Cloud",
+      "cloudConnectBody": "Link this instance to Kovalio Cloud to browse and add managed cloud images. You can still add any image manually from Local images.",
+      "cloudConnectButton": "Connect to Kovalio Cloud",
       "noMatchesTitle": "No matches",
       "noMatchesBody": "Try a different category or search term - or pick Custom image from the rail.",
       "localImages": "Local images",
-      "openshipCloud": "Openship Cloud",
+      "kovalioCloud": "Kovalio Cloud",
       "localDocker": "Local Docker",
       "customEntryName": "Custom image",
       "customEntryDescription": "Pull any public or private Docker image by tag.",
@@ -178,7 +178,7 @@
       "saveEnvironment": "Save environment",
       "environmentState": {
         "helpTitle": "How environment variables work",
-        "description": "Saved in Openship. Service overrides take precedence over Compose and shared project values. Editing an inherited value creates an override for this service.",
+        "description": "Saved in Kovalio. Service overrides take precedence over Compose and shared project values. Editing an inherited value creates an override for this service.",
         "sources": {
           "service": "Service override",
           "compose": "Compose",
@@ -201,11 +201,11 @@
           "not-deployed": "These variables will be used when this service is deployed.",
           "unsupported": "Redeploy this service to apply its saved environment."
         },
-        "recoveryHint": "The running container has variables that are not saved in Openship. Recover them before applying if you want to keep them:",
+        "recoveryHint": "The running container has variables that are not saved in Kovalio. Recover them before applying if you want to keep them:",
         "recover": "Recover from running service",
         "removeRuntime": "Apply without recovering these variables; remove them from the running service.",
         "recovered": "Recovered from running service — not saved yet",
-        "recoveredHint": "Recovered values are ready for review. Save to keep them in Openship.",
+        "recoveredHint": "Recovered values are ready for review. Save to keep them in Kovalio.",
         "recoveryFailed": "Could not recover variables from the running service. Saved variables have not been changed."
       },
       "environmentApply": {
@@ -383,7 +383,7 @@
     "connection": {
       "terminal": "Terminal",
       "statusTitle": "Service status unavailable",
-      "statusHint": "Openship couldn’t confirm the current status. Your service may still be running.",
+      "statusHint": "Kovalio couldn’t confirm the current status. Your service may still be running.",
       "checkingTitle": "Checking this service",
       "checkingHint": "Waiting for a response from the server. You can try opening the terminal now.",
       "startingTitle": "Waiting for the service",
@@ -408,7 +408,7 @@
       "errorTitle": "Terminal unavailable",
       "errors": {
         "auth": "Your access couldn’t be verified. Sign in again or check your permissions.",
-        "connect": "Openship couldn’t reach the service’s shell. Retry after the server reconnects.",
+        "connect": "Kovalio couldn’t reach the service’s shell. Retry after the server reconnects.",
         "notFound": "This service is unavailable or you don’t have access.",
         "notDeployed": "There is no running container to connect to. Check the service’s status and try again.",
         "notSupported": "This service’s runtime doesn’t support an interactive terminal.",

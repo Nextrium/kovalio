@@ -3,9 +3,9 @@ import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics"
 import { ghSend } from "./github.http";
 
 /**
- * OAuth scopes that strictly exceed Openship's needs and should warn a
+ * OAuth scopes that strictly exceed Kovalio's needs and should warn a
  * user when present on a saved PAT. These are the broad, account- or
- * org-administrative scopes; possessing them does not break Openship,
+ * org-administrative scopes; possessing them does not break Kovalio,
  * but the dashboard's PAT save handler should surface a clear warning
  * so the user understands they handed us more access than necessary.
  *

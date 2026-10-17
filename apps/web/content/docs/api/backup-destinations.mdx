@@ -35,8 +35,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/backup-destinations" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/backup-destinations" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"prod-s3","kind":"s3_compatible","bucket":"my-backups","region":"us-east-1","accessKeyId":"AKIA...","secretAccessKey":"..."}'
 ```
@@ -92,8 +92,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X PATCH "$OPENSHIP_URL/api/backup-destinations/bkd_123" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PATCH "$KOVALIO_URL/api/backup-destinations/bkd_123" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"pathPrefix":"nightly/","isDefault":true}'
 ```
@@ -137,8 +137,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/backup-destinations/bkd_123/preflight" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/backup-destinations/bkd_123/preflight" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>

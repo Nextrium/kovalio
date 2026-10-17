@@ -10,7 +10,7 @@ export function actionRunAdmitted(
   if (!workflow?.enabled || run.cancelRequestedAt || run.finishedAt) return false;
   // Independent workflows saved before access policies retain their original
   // fork approval rule. Every newly saved workflow has an explicit policy.
-  if (run.controller === "openship" && !workflow.accessPolicy)
+  if (run.controller === "kovalio" && !workflow.accessPolicy)
     return !run.untrusted || !!run.approvedAt;
   return (
     run.admission?.state === "allowed" &&
@@ -29,7 +29,7 @@ export function actionRunnerAdmitted(
     workflow!.runnerIds.includes(runner.id) &&
     (!run.untrusted || !!runner.cloudPoolId) &&
     (run.controller === "github" || run.configuration.runnerIds.includes(runner.id)) &&
-    ((run.controller === "openship" && !workflow!.accessPolicy) ||
+    ((run.controller === "kovalio" && !workflow!.accessPolicy) ||
       run.admission?.runnerKeys?.[runner.id] === actionRunnerAdmissionKey(runner))
   );
 }

@@ -240,7 +240,7 @@ export type DockerConnectionOptions = DockerTransportOptions & {
 
 /**
  * Docker Engine build-cache prune options. These intentionally mirror the
- * small, stable subset of POST /build/prune that OpenShip needs instead of
+ * small, stable subset of POST /build/prune that Kovalio needs instead of
  * dockerode's PruneBuilderOptions: dockerode 4.0.9 accepts an options object but
  * drops every pruning option before making the request.
  */
@@ -288,7 +288,7 @@ function newBuildOwnershipHost(): string {
   // ExtraHosts is transient container configuration: it neither persists in
   // the image nor changes classic-builder cache keys. The random hostname is a
   // proof that an intermediate container belongs to this exact build request.
-  return `openship-build-${randomUUID()}.invalid`;
+  return `kovalio-build-${randomUUID()}.invalid`;
 }
 
 async function boundedBuildContainerCleanup(
@@ -1610,8 +1610,8 @@ export class DockerRuntime implements RuntimeAdapter {
   private engineCacheProbe: Promise<boolean> | null = null;
 
   private async cachedBuildConfig(config: BuildConfig): Promise<BuildConfig> {
-    if (config.buildCache === false || process.env.OPENSHIP_BUILD_CACHE_MOUNTS === "false" ||
-        config.envVars?.OPENSHIP_BUILD_CACHE_MOUNTS === "false")
+    if (config.buildCache === false || process.env.KOVALIO_BUILD_CACHE_MOUNTS === "false" ||
+        config.envVars?.KOVALIO_BUILD_CACHE_MOUNTS === "false")
       return { ...config, buildCache: false };
     if (this.connectionOptions?.executor && (this.transport.kind === "ssh" || this.transport.kind === "cloud"))
       return { ...config, buildCache: await this.remoteBuildKitAvailable() };
@@ -1687,8 +1687,8 @@ export class DockerRuntime implements RuntimeAdapter {
       // banner, or a `docker` wrapper's help text, must not read as "buildx".
       // `|| true` keeps a missing plugin off the error path — docker exits non-zero
       // for an unknown subcommand and an SshExecutor rejects on that.
-      .exec("docker buildx version >/dev/null 2>&1 && echo OPENSHIP_BUILDKIT_OK || true")
-      .then((out) => out.split(/\r?\n/).some((line) => line.trim() === "OPENSHIP_BUILDKIT_OK"))
+      .exec("docker buildx version >/dev/null 2>&1 && echo KOVALIO_BUILDKIT_OK || true")
+      .then((out) => out.split(/\r?\n/).some((line) => line.trim() === "KOVALIO_BUILDKIT_OK"))
       .catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/runtime/docker"); return false; }));
 
     const available = await probe;
@@ -1804,7 +1804,7 @@ export class DockerRuntime implements RuntimeAdapter {
         const storage = parseBuildStorage(await executor.exec(DOCKER_BUILD_STORAGE_COMMAND));
         assertBuildStorage(storage);
         const reused = await ensureProjectBuildCache(this.docker, config.projectId);
-        const configPath = `/tmp/openship-buildkit-${randomUUID()}.toml`;
+        const configPath = `/tmp/kovalio-buildkit-${randomUUID()}.toml`;
         try {
           await executor.writeFile(configPath, buildKitCacheConfig(storage));
           await executor.exec(`docker buildx create --name ${sq(builderName!)} --node ${sq(buildWorker!.nodeName)} --driver docker-container${driverOptions ? ` ${driverOptions}` : ""} --buildkitd-config ${sq(configPath)} --bootstrap`, { timeout: 120_000 });
@@ -2226,10 +2226,10 @@ export class DockerRuntime implements RuntimeAdapter {
     await executor.writeFile(`${remoteContextDir}/${generatedName}`, generateDockerfile(config));
     if (config.buildCache) {
       const ignoreFile = `${remoteContextDir}/.dockerignore`;
-      const marker = "OPENSHIP_IGNORE\n";
-      const raw = await executor.exec(`if [ ! -L ${sq(ignoreFile)} ] && [ ! -d ${sq(ignoreFile)} ]; then printf 'OPENSHIP_IGNORE\\n'; if [ -f ${sq(ignoreFile)} ]; then cat ${sq(ignoreFile)}; fi; fi`);
+      const marker = "KOVALIO_IGNORE\n";
+      const raw = await executor.exec(`if [ ! -L ${sq(ignoreFile)} ] && [ ! -d ${sq(ignoreFile)} ]; then printf 'KOVALIO_IGNORE\\n'; if [ -f ${sq(ignoreFile)} ]; then cat ${sq(ignoreFile)}; fi; fi`);
       if (raw.startsWith(marker)) {
-        const temporary = `${remoteContextDir}/.openship-dockerignore-${randomUUID()}`;
+        const temporary = `${remoteContextDir}/.kovalio-dockerignore-${randomUUID()}`;
         try {
           await executor.writeFile(temporary, generatedBuildIgnore(raw.slice(marker.length)));
           await executor.exec(`mv -f -- ${sq(temporary)} ${sq(ignoreFile)}`);
@@ -2367,7 +2367,7 @@ export class DockerRuntime implements RuntimeAdapter {
           await executor.exec(`docker container kill --signal KILL ${sq(id)} >/dev/null`);
         },
       },
-      // The native CLI path intentionally applies no OpenShip memory flag.
+      // The native CLI path intentionally applies no Kovalio memory flag.
       undefined,
       ownershipHost,
     );
@@ -2543,7 +2543,7 @@ export class DockerRuntime implements RuntimeAdapter {
             // Start exact-container cleanup before closing the response. The
             // Engine API does not reliably stop a legacy build when its client
             // disconnects, so stream destruction alone can leave the compiler
-            // consuming the host after OpenShip has already reported failure.
+            // consuming the host after Kovalio has already reported failure.
             inactivityTimedOut = true;
             if (buildContainerTracker) {
               void buildContainerTracker.terminateActive();
@@ -3778,7 +3778,7 @@ export class DockerRuntime implements RuntimeAdapter {
       // Runtime containers inherit the image's build label. The deployment
       // worker owns their teardown (and may be preserving them for a record-only
       // delete), so interrupting a build must never remove a deployed workload.
-      if (c.Labels?.[OPENSHIP_LABEL.deployment]) continue;
+      if (c.Labels?.[KOVALIO_LABEL.deployment]) continue;
       try {
         await this.docker.getContainer(c.Id).remove({ force: true });
       } catch (diagnosticFailure) {
@@ -3833,7 +3833,7 @@ export class DockerRuntime implements RuntimeAdapter {
   }
 
   protected networkLabels(slug: string): Record<string, string> {
-    return { "openship.network": slug };
+    return { "kovalio.network": slug };
   }
 
   /** Scope inventory and events at the daemon, before transferring results. */
@@ -4008,7 +4008,7 @@ export class DockerRuntime implements RuntimeAdapter {
    * Deliberately NOT mirrored: any port (no PORT env, nothing exposed or
    * published, whatever `config.port` says: a role listens on nothing the edge
    * could route to) and the network identity (no alias, no hostname, no
-   * `openship.service` label), so a role never answers to the web app's DNS
+   * `kovalio.service` label), so a role never answers to the web app's DNS
    * name and `reconcileNetworkMembership` never re-aliases it as the app. The
    * role's stop signal and grace period are set on the container itself so
    * Docker's own stop and remove honor them.
@@ -4030,7 +4030,7 @@ export class DockerRuntime implements RuntimeAdapter {
     }
 
     const containerName =
-      `openship-${config.runtimeName || config.projectId}-${config.deploymentId}-${role.name}-${replica}`;
+      `kovalio-${config.runtimeName || config.projectId}-${config.deploymentId}-${role.name}-${replica}`;
 
     // The web container's env, minus PORT: a role binds no port. `portless` only
     // omits the generated value, so a project-set PORT is filtered here too, and
@@ -4096,7 +4096,7 @@ export class DockerRuntime implements RuntimeAdapter {
         Env: env,
         Labels: {
           ...this.labels({ deploymentId: config.deploymentId, projectId: config.projectId }),
-          [OPENSHIP_LABEL.role]: role.name,
+          [KOVALIO_LABEL.role]: role.name,
         },
         ...toStopConfig({ stopSignal: role.stopSignal, stopGracePeriod: role.stopGracePeriod }),
         HostConfig: {
@@ -4156,7 +4156,7 @@ export class DockerRuntime implements RuntimeAdapter {
       throw new Error("Release commands require an imageRef (built image tag)");
     }
     const deadline = releaseCommandDeadline(opts);
-    const name = `openship-release-${config.deploymentId}-${randomUUID()}`;
+    const name = `kovalio-release-${config.deploymentId}-${randomUUID()}`;
     let container: Dockerode.Container | undefined;
     let creating = false;
     let finished = false;
@@ -4447,7 +4447,7 @@ export class DockerRuntime implements RuntimeAdapter {
    * Reclaim BuildKit/classic-builder cache through Docker Engine's native API.
    *
    * Build cache belongs to the DAEMON, not to a project: intermediate records
-   * do not reliably retain OpenShip's final-image labels. Callers therefore own
+   * do not reliably retain Kovalio's final-image labels. Callers therefore own
    * the host-wide policy (bounded automatic retention vs an explicit full
    * clear). Docker itself excludes records leased by an active build.
    *
@@ -4538,7 +4538,7 @@ export class DockerRuntime implements RuntimeAdapter {
     return containers.map((c) => ({
       containerId: c.Id,
       status: dockerContainerStatus(c.State ?? "", { statusLine: c.Status }),
-      serviceName: c.Labels?.[OPENSHIP_LABEL.service],
+      serviceName: c.Labels?.[KOVALIO_LABEL.service],
     }));
   }
 
@@ -4955,7 +4955,7 @@ export class DockerRuntime implements RuntimeAdapter {
     const executor = this.connectionOptions!.executor!;
     const auth = await this.connectionOptions?.resolveRegistryAuth?.(ref);
     const config = auth ? dockerConfigJsonFor(auth) : null;
-    const dir = `/tmp/openship-${action}-${randomUUID()}`;
+    const dir = `/tmp/kovalio-${action}-${randomUUID()}`;
     let ownsDirectory = false;
     const bounded = AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(10 * 60_000)]);
     const execute = async (command: string) => {
@@ -5655,7 +5655,7 @@ export class DockerRuntime implements RuntimeAdapter {
    * reach each other by service name as hostname.
    */
   async ensureNetwork(slug: string, signal?: AbortSignal): Promise<string> {
-    const networkName = `openship-${slug}`;
+    const networkName = `kovalio-${slug}`;
     // list-then-create is check-then-act: two concurrent deploys for the same
     // slug would both miss and both create, yielding two networks with the same
     // name (Docker allows it) and ambiguous name lookups. Serialize per server.
@@ -5740,7 +5740,7 @@ export class DockerRuntime implements RuntimeAdapter {
   }
 
   async leaveServiceGroupContainers(slug: string, containerIds: string[]): Promise<void> {
-    const network = this.docker.getNetwork(`openship-${slug}`);
+    const network = this.docker.getNetwork(`kovalio-${slug}`);
     let info: Awaited<ReturnType<typeof network.inspect>>;
     try { info = await network.inspect(); }
     catch (error) {
@@ -5947,7 +5947,7 @@ export class DockerRuntime implements RuntimeAdapter {
       for (const container of containers) {
         for (const name of Object.keys(container.NetworkSettings?.Networks ?? {})) {
           if (name.startsWith(options.prunePrefix) && !retain.has(name)) {
-            await this.leaveServiceGroupContainers(name.slice("openship-".length), [container.Id]);
+            await this.leaveServiceGroupContainers(name.slice("kovalio-".length), [container.Id]);
           }
         }
       }

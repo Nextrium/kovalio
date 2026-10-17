@@ -30,7 +30,7 @@ export function WorkflowRepositoryChecks({
         actionsApi.repositoryChecks({
           owner: owner!,
           repo: repo!,
-          controller: github ? "github" : "openship",
+          controller: github ? "github" : "kovalio",
         }),
       [owner, repo, github],
     ),

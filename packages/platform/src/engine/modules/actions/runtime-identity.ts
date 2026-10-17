@@ -35,15 +35,15 @@ export type ActionRuntimeIdentity = z.infer<typeof identity>;
 export class ActionRuntimeTokens {
   private readonly key: Uint8Array;
   constructor(secret: string) {
-    this.key = createHmac("sha256", secret).update("openship/actions/runtime/v1").digest();
+    this.key = createHmac("sha256", secret).update("kovalio/actions/runtime/v1").digest();
   }
   async issue(input: Omit<ActionRuntimeIdentity, "exp">, seconds: number): Promise<string> {
     if (!Number.isFinite(seconds) || seconds < 1 || seconds > 6 * 3600 + 600)
       throw new Error("Invalid Actions token lifetime");
     return new SignJWT({ ...input, scp: `Actions.Results:${input.runId}:${input.jobId}` })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setIssuer("openship-actions")
-      .setAudience("openship-actions-runtime")
+      .setIssuer("kovalio-actions")
+      .setAudience("kovalio-actions-runtime")
       .setSubject(input.jobId)
       .setIssuedAt()
       .setExpirationTime(Math.floor(Date.now() / 1000) + seconds)
@@ -62,8 +62,8 @@ export class ActionRuntimeTokens {
     try {
       const { payload } = await jwtVerify(token, this.key, {
         algorithms: ["HS256"],
-        issuer: "openship-actions",
-        audience: "openship-actions-runtime",
+        issuer: "kovalio-actions",
+        audience: "kovalio-actions-runtime",
         requiredClaims: ["exp", "iat", "sub"],
       });
       const result = identity.parse(payload);

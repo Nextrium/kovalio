@@ -129,7 +129,7 @@ export async function recoverProjectRouteCleanup(input: {
         for (const containerId of containerIds) {
           if (!containerId) continue;
           const container = await runtime.inspectContainer(containerId);
-          if (container?.networks.includes(`openship-${current.slug}`)) {
+          if (container?.networks.includes(`kovalio-${current.slug}`)) {
             networkConfirmed = true;
             break;
           }

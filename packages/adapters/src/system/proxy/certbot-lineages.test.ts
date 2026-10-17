@@ -17,7 +17,7 @@ describe("certificate lineage discovery", () => {
   ];
 
   test("local stores return only this hostname's canonical and numbered lineages", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "openship-lineage-list-"));
+    const dir = await mkdtemp(join(tmpdir(), "kovalio-lineage-list-"));
     try {
       await Promise.all(names.map((name) => mkdir(join(dir, name))));
       expect(await certbotLineageDirs(null, "example.com", dir)).toEqual([

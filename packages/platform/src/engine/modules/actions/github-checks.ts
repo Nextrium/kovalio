@@ -12,8 +12,8 @@ export async function syncActionCheck(run: ActionRun, job: ActionJob) {
   const { owner, repo } = run.configuration;
   if (!owner || !repo) return { id: null, error: null, unavailable: true };
   const jobName = actionJobName(run.plan, job);
-  const name = `Openship / ${run.plan.name} / ${jobName}`.slice(0, 255);
-  const externalId = `openship-action:${run.id}:${job.id}`;
+  const name = `Kovalio / ${run.plan.name} / ${jobName}`.slice(0, 255);
+  const externalId = `kovalio-action:${run.id}:${job.id}`;
   const id = job.checkRunId;
   try {
     const ctx = await resolveExecutionAuthority(run.authority, `actions-check:${run.id}`);
@@ -24,7 +24,7 @@ export async function syncActionCheck(run: ActionRun, job: ActionJob) {
         ? "in_progress"
         : "queued";
     const conclusion = job.status as GitHubCheckUpdate["conclusion"];
-    const base = (process.env.OPENSHIP_PUBLIC_URL || localDashboardUrl)?.replace(/\/$/, "");
+    const base = (process.env.KOVALIO_PUBLIC_URL || localDashboardUrl)?.replace(/\/$/, "");
     const update: GitHubCheckUpdate = {
       name,
       externalId,
@@ -35,7 +35,7 @@ export async function syncActionCheck(run: ActionRun, job: ActionJob) {
       ...(finished && { conclusion, completedAt: (job.finishedAt ?? new Date()).toISOString() }),
       output: {
         title: `${run.plan.name} · ${jobName}`.slice(0, 255),
-        summary: job.error?.slice(0, 4096) || `Openship Actions: ${job.status}.`,
+        summary: job.error?.slice(0, 4096) || `Kovalio Actions: ${job.status}.`,
       },
     };
     return await syncGitHubCheck(ctx, owner, repo, id, update);

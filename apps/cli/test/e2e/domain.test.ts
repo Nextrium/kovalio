@@ -116,8 +116,8 @@ describe("kovalio domain add", () => {
 
 // ─── preview (no changes saved) ──────────────────────────────────────────────
 
-describe("openship domain preview", () => {
-  const PREVIEW = { data: { mode: "cloud", records: [{ type: "TXT", host: "_openship", name: "_openship.example.com", value: "verify=abc" }] } };
+describe("kovalio domain preview", () => {
+  const PREVIEW = { data: { mode: "cloud", records: [{ type: "TXT", host: "_kovalio", name: "_kovalio.example.com", value: "verify=abc" }] } };
 
   it("POSTs the hostname to /domains/preview and prints the record table", async () => {
     fetchStub = stubFetch(() => ({ json: PREVIEW }));
@@ -178,7 +178,7 @@ describe("kovalio domain verify", () => {
 
 // ─── primary ─────────────────────────────────────────────────────────────────
 
-describe("openship domain primary", () => {
+describe("kovalio domain primary", () => {
   const PRIMARY = { data: { ...domainFixture("d1"), isPrimary: true } };
 
   it("POSTs /domains/:id/primary", async () => {
@@ -199,7 +199,7 @@ describe("openship domain primary", () => {
 
 // ─── records ─────────────────────────────────────────────────────────────────
 
-describe("openship domain records", () => {
+describe("kovalio domain records", () => {
   const RECORDS = { data: { mode: "selfhosted", records: [{ type: "A", host: "@", name: "example.com", value: "203.0.113.5" }] } };
 
   it("GETs the existing DNS records for a domain", async () => {

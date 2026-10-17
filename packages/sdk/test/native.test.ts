@@ -44,13 +44,13 @@ beforeEach(() => {
 
 describe("native SDK", () => {
   it("snapshots trusted caller attribution without changing authorization", async () => {
-    const caller = { source: "cli" as "cli" | "api", userAgent: "openship-cli/test" };
+    const caller = { source: "cli" as "cli" | "api", userAgent: "kovalio-cli/test" };
     const ship = createShip({ platform: env.platform, identity: { resolve: env.resolve }, caller });
     caller.source = "api";
     caller.userAgent = "mutated";
     const scope = await ship.scope({ identity: "verified", organizationId: "org-a" });
     await scope.deployments.create({ projectId: "project-a" });
-    expect(env.trigger.mock.calls[0]![0]).toMatchObject({ source: "cli", userAgent: "openship-cli/test", sessionKind: "native", role: "owner" });
+    expect(env.trigger.mock.calls[0]![0]).toMatchObject({ source: "cli", userAgent: "kovalio-cli/test", sessionKind: "native", role: "owner" });
     expect(env.audit.mock.calls[0]![0]).toBe(env.trigger.mock.calls[0]![0]);
   });
 

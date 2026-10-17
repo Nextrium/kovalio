@@ -75,7 +75,7 @@ const SYNCED_PKGS = [
   join(ROOT, "apps/web/package.json"),
   join(ROOT, "apps/email/package.json"),
   join(ROOT, "apps/cli/package.json"),
-  join(ROOT, "packages/openship/package.json"),
+  join(ROOT, "packages/kovalio/package.json"),
   join(ROOT, "packages/platform/package.json"),
 ];
 
@@ -520,9 +520,9 @@ async function continueRelease(): Promise<void> {
   if (releaseResult.status !== 0 && !releaseResult.stderr.includes("HTTP 404"))
     throw new Error("Could not verify whether this GitHub release is already published.");
   const version = targetTag.slice(1);
-  const npm = spawnSync("npm", ["view", `openship@${version}`, "version", "--json"], { encoding: "utf8", cwd: ROOT });
+  const npm = spawnSync("npm", ["view", `kovalio@${version}`, "version", "--json"], { encoding: "utf8", cwd: ROOT });
   if (npm.status === 0)
-    throw new Error(`openship@${version} is already on npm. Release a new version instead.`);
+    throw new Error(`kovalio@${version} is already on npm. Release a new version instead.`);
   if (!npm.stderr.includes("E404")) throw new Error("Could not verify whether this version is already on npm.");
 
   const previous = await unpublishedReleaseRuns(repo, targetTag);

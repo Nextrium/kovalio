@@ -52,7 +52,7 @@ You can do it from any of three surfaces:
 | Surface | How |
 |---|---|
 | **Dashboard** | **Settings → Instance**, the **Export** and **Import** cards (self-hosted, instance administrator only) |
-| **CLI** | `openship system data-transfer export` and `openship system data-transfer import` |
+| **CLI** | `kovalio system data-transfer export` and `kovalio system data-transfer import` |
 | **API** | `POST /api/system/data-transfer/export` and `POST /api/system/data-transfer/import` |
 
 ### What's in the file
@@ -60,7 +60,7 @@ You can do it from any of three surfaces:
 The export contains the instance or selected projects and their chosen dependencies. Secrets such as
 environment values, access tokens, SSH credentials and backup keys are encrypted in the database.
 Current downloads include selected secrets as **plaintext JSON**, preserving empty values. On import,
-Openship encrypts those values with the destination's key.
+Kovalio encrypts those values with the destination's key.
 
 <Callout title="Keep export files private" type="warn">
 Anyone who can read a current export can read its included credentials. The CLI creates the output
@@ -86,10 +86,10 @@ When you import, you choose how it merges with whatever is already there:
 
 ### Export from the old install
 
-Open **Settings → Instance**, review the export selection, then download the file. Your browser saves an `openship-export-…json` file. From the terminal it's:
+Open **Settings → Instance**, review the export selection, then download the file. Your browser saves an `kovalio-export-…json` file. From the terminal it's:
 
 ```bash
-openship system data-transfer export --out openship-export.json
+kovalio system data-transfer export --out kovalio-export.json
 ```
 
 </Step>
@@ -98,12 +98,12 @@ openship system data-transfer export --out openship-export.json
 
 ### Import on the new install
 
-Install Openship on the new machine, sign in as the instance administrator, then go to **Settings → Instance** and press
+Install Kovalio on the new machine, sign in as the instance administrator, then go to **Settings → Instance** and press
 **Import from file…**. Pick the file and choose **Replace everything** for a clean
 move, and confirm. Or from the CLI:
 
 ```bash
-openship system data-transfer import --file openship-export.json --mode wipe --yes
+kovalio system data-transfer import --file kovalio-export.json --mode wipe --yes
 ```
 
 </Step>

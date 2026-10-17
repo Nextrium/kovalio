@@ -149,7 +149,7 @@ describe("DockerRuntime.stop: confirmed shutdown", () => {
             typeof code === "number" ? { statusCode: code } : { code });
       const c = fakeContainer({ stopError: error });
       const runtime = await DockerRuntime.create({
-        dockerSocketPath: "/tmp/openship-test-absent.sock",
+        dockerSocketPath: "/tmp/kovalio-test-absent.sock",
       });
       (runtime as unknown as { _docker: unknown })._docker = {
         getContainer: vi.fn(() => c.container),

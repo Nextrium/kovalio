@@ -130,7 +130,7 @@ export async function ensureKovalioPlatformMailbox(
 
     // Fast path: cached creds match target identity, no rotation was requested,
     // and both vmail rows required by Dovecot/Postfix still exist and are active.
-    // A mailbox can be removed outside Openship (or by an older UI), so trusting
+    // A mailbox can be removed outside Kovalio (or by an older UI), so trusting
     // only mail-state.json permanently strands outbound SMTP with a stale secret.
     // The stored password is an encrypted blob (see slow-path comment below).
     // Backward-compat: if decrypt() throws, the cached value is legacy
@@ -150,7 +150,7 @@ export async function ensureKovalioPlatformMailbox(
         plaintext = decrypt(cached.password);
       } catch {
         errorDiagnostics.warn("platform/engine/modules/mail/admin/platform-mailbox.service",
-          `[ensureOpenshipPlatformMailbox] state.platformMailbox.password failed to decrypt — treating as legacy plaintext. It will be re-encrypted on next rotation.`,
+          `[ensureKovalioPlatformMailbox] state.platformMailbox.password failed to decrypt — treating as legacy plaintext. It will be re-encrypted on next rotation.`,
         );
         plaintext = cached.password;
       }
@@ -170,7 +170,7 @@ export async function ensureKovalioPlatformMailbox(
       cached.password
     ) {
       errorDiagnostics.warn("platform/engine/modules/mail/admin/platform-mailbox.service",
-        `[ensureOpenshipPlatformMailbox] cached mailbox ${email} is missing or inactive in vmail; recreating it and rotating the stale credential.`,
+        `[ensureKovalioPlatformMailbox] cached mailbox ${email} is missing or inactive in vmail; recreating it and rotating the stale credential.`,
       );
     }
 
@@ -187,7 +187,7 @@ export async function ensureKovalioPlatformMailbox(
 }
 
 /**
- * Return whether the two live rows needed by an Openship-managed sender are
+ * Return whether the two live rows needed by an Kovalio-managed sender are
  * present and active. Both predicates use indexed equality lookups and are
  * intentionally shared with per-domain test mailboxes so cached-credential
  * validation has one implementation.

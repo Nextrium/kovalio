@@ -10,7 +10,7 @@ afterEach(() => {
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 function fixtures(os: string, pageSize = 16384) {
-  const dir = mkdtempSync(join(tmpdir(), "openship-stats-"));
+  const dir = mkdtempSync(join(tmpdir(), "kovalio-stats-"));
   dirs.push(dir);
   const command = (name: string, body: string) =>
     writeFileSync(join(dir, name), `#!/bin/sh\n${body}\n`, { mode: 0o755 });

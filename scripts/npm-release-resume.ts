@@ -28,9 +28,9 @@ export function verifiedNpmRelease(evidence: NpmReleaseEvidence) {
     !gate.length ||
     gate.some(job => job.status !== "completed" || job.conclusion !== "success") ||
     !successfulJob(jobs, "Publish GitHub release") ||
-    jobs.filter(job => job.name === "Publish Openship to npm").length !== 1 ||
+    jobs.filter(job => job.name === "Publish Kovalio to npm").length !== 1 ||
     jobs.some(job => job.status !== "completed" || (
-      job.name !== "Publish Openship to npm" &&
+      job.name !== "Publish Kovalio to npm" &&
       job.conclusion !== "success" && job.conclusion !== "skipped"
     ))
   ) throw new Error("The original release must have passed every gate and completed all other publishing work.");
@@ -39,7 +39,7 @@ export function verifiedNpmRelease(evidence: NpmReleaseEvidence) {
 
 async function main() {
   const repository = process.env.GITHUB_REPOSITORY ?? "";
-  const runId = process.env.OPENSHIP_NPM_RELEASE_RUN ?? "";
+  const runId = process.env.KOVALIO_NPM_RELEASE_RUN ?? "";
   if (!/^[\w.-]+\/[\w.-]+$/.test(repository) || !/^[1-9]\d{0,15}$/.test(runId))
     throw new Error("Provide a valid repository and original Release run ID.");
   const token = process.env.GITHUB_TOKEN;
@@ -70,7 +70,7 @@ async function main() {
   if (object.type !== "commit") throw new Error("The release tag does not resolve to a commit.");
   const release = await get<NpmReleaseEvidence["release"]>(`releases/tags/${encodeURIComponent(run.head_branch)}`);
   const source = verifiedNpmRelease({ repository, run, jobs, tagCommit: object.sha, release });
-  if (process.env.OPENSHIP_NPM_EXPECTED_SHA && process.env.OPENSHIP_NPM_EXPECTED_SHA !== source.sha)
+  if (process.env.KOVALIO_NPM_EXPECTED_SHA && process.env.KOVALIO_NPM_EXPECTED_SHA !== source.sha)
     throw new Error("The verified npm release source changed during publication.");
   if (process.env.GITHUB_OUTPUT)
     appendFileSync(process.env.GITHUB_OUTPUT, `sha=${source.sha}\ntag=${source.tag}\nversion=${source.version}\n`);

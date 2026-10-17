@@ -8,7 +8,7 @@ operations require the selected organization and `job` permissions. Workflow
 access also checks the originating user's repository, runner and storage access.
 Configuring a runner requires administration access to its server.
 
-See [Openship Actions](/docs/guides/actions) for supported syntax, destination
+See [Kovalio Actions](/docs/guides/actions) for supported syntax, destination
 requirements, fork restrictions and compatibility limits.
 
 ## Configure and dispatch
@@ -18,12 +18,12 @@ does not execute it; dispatch resolves a commit and saves an immutable snapshot.
 
 ```ts
 const workflow = await ship.actions.create({
-  controller: "openship",
+  controller: "kovalio",
   name: "CI",
   owner: "your-organization",
   repo: "your-app",
   ref: "main",
-  path: ".openship/workflows/ci.yml",
+  path: ".kovalio/workflows/ci.yml",
   runnerIds: ["runner_123"],
 });
 
@@ -37,7 +37,7 @@ requests a new run. `rerun(runId, { idempotencyKey })` uses the saved revision,
 definition and configuration as a new attempt.
 
 `create` and `update` accept the same complete workflow configuration. Optional
-`source` contains inline YAML; otherwise Openship reads the repository file.
+`source` contains inline YAML; otherwise Kovalio reads the repository file.
 `variables` are plain environment values. `secrets` adds or replaces only the
 provided encrypted entries; `removeSecrets` explicitly removes named entries.
 `storageDestinationId` selects an authorized backup destination for artifacts and
@@ -84,10 +84,10 @@ Use `controller: "github"`, `source: null` and a committed `.github/workflows/*.
 file. Configure `accessPolicy` to control which matching jobs may execute on its
 destinations. The old `repositoryRunnerConsent` field is accepted for compatibility
 but grants no permission. GitHub manages secrets, variables, artifacts and
-Checks; omit Openship secrets, variables and storage settings in this mode.
+Checks; omit Kovalio secrets, variables and storage settings in this mode.
 
 `preview`, `repositorySource` and `updateRepositorySource` infer the controller from
-the file path: `.github/workflows/` uses GitHub, while `.openship/workflows/` and
+the file path: `.github/workflows/` uses GitHub, while `.kovalio/workflows/` and
 standalone YAML use the independent controller. API callers may also provide an
 explicit `controller`.
 
@@ -99,7 +99,7 @@ command whose run is not visible yet will appear through reconciliation. Send
 
 Run and job views include `externalUrl`. GitHub live logs open at that URL;
 `jobEvents` provides the completed log preview with the same cursor contract.
-`settledAt` also waits for Openship's runner cleanup. Native GitHub Check IDs and
+`settledAt` also waits for Kovalio's runner cleanup. Native GitHub Check IDs and
 conclusions are preserved without creating duplicate Checks.
 
 ## Observe and cancel
@@ -210,7 +210,7 @@ Preserve both paths when configuring an external reverse proxy.
 | Reserve a cache upload. Requires a purpose-bound job capability. | HTTP only | `POST /twirp/github.actions.results.api.v1.CacheService/CreateCacheEntry`<br />`Handler authentication` |
 | Finalize a cache upload. Requires a purpose-bound job capability. | HTTP only | `POST /twirp/github.actions.results.api.v1.CacheService/FinalizeCacheEntryUpload`<br />`Handler authentication` |
 | Resolve a compatible cache entry. Requires a purpose-bound job capability. | HTTP only | `POST /twirp/github.actions.results.api.v1.CacheService/GetCacheEntryDownloadURL`<br />`Handler authentication` |
-| Discover the configured Openship identity issuer. Public HTTPS metadata contains no credentials. | HTTP only | `GET /api/actions/oidc/.well-known/openid-configuration`<br />`Handler authentication` |
+| Discover the configured Kovalio identity issuer. Public HTTPS metadata contains no credentials. | HTTP only | `GET /api/actions/oidc/.well-known/openid-configuration`<br />`Handler authentication` |
 | Read the issuer's RSA verification keys. Only public parameters are returned. | HTTP only | `GET /api/actions/oidc/jwks`<br />`Handler authentication` |
 | Request a five-minute identity for an approved running job with id-token: write. Requires a job-bound OIDC capability and rechecks authority, destination and cancellation. | HTTP only | `GET /api/actions/oidc/token`<br />`Handler authentication` |
 

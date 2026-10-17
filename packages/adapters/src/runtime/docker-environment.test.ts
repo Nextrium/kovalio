@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { applyDockerEnvironment } from "./docker-environment";
 
 const IMAGE_ID = `sha256:${"a".repeat(64)}`;
-const BUILD_TAG = "openship/openship-api:bld_previous-svc_api";
+const BUILD_TAG = "kovalio/kovalio-api:bld_previous-svc_api";
 
 function setup() {
   const order: string[] = [];
@@ -24,7 +24,7 @@ function setup() {
   };
   const before = {
     Id: "old-container",
-    Name: "/openship-demo-api",
+    Name: "/kovalio-demo-api",
     Image: IMAGE_ID,
     Config: {
       Image: BUILD_TAG,
@@ -34,7 +34,7 @@ function setup() {
       Entrypoint: ["entrypoint.sh"],
       WorkingDir: "/app",
       User: "node",
-      Labels: { "openship.project": "project-1", "openship.service": "api" },
+      Labels: { "kovalio.project": "project-1", "kovalio.service": "api" },
       Volumes: { "/data": {} },
       StopSignal: "SIGINT",
       StopTimeout: 30,
@@ -53,7 +53,7 @@ function setup() {
     Mounts: [{ Type: "volume", Name: "existing-anonymous-volume", Destination: "/data", RW: true }],
     NetworkSettings: {
       Networks: {
-        "openship-demo": {
+        "kovalio-demo": {
           NetworkID: "network-1",
           IPAddress: "172.22.0.8",
           GlobalIPv6Address: "",
@@ -154,7 +154,7 @@ describe("runtime-only environment apply", () => {
     const create = h.docker.createContainer.mock
       .calls[0]![0] as unknown as Dockerode.ContainerCreateOptions;
     expect(create).toMatchObject({
-      name: expect.stringMatching(/^openship-demo-api-env-next-/),
+      name: expect.stringMatching(/^kovalio-demo-api-env-next-/),
       Image: IMAGE_ID,
       Env: ["FLAG=new", "PORT=3000"],
       Hostname: "api",
@@ -173,15 +173,15 @@ describe("runtime-only environment apply", () => {
       },
       NetworkingConfig: {
         EndpointsConfig: {
-          "openship-demo": {
+          "kovalio-demo": {
             Aliases: ["api", "custom-alias"],
           },
         },
       },
     });
-    expect(create.NetworkingConfig?.EndpointsConfig?.["openship-demo"]?.IPAMConfig).toBeUndefined();
+    expect(create.NetworkingConfig?.EndpointsConfig?.["kovalio-demo"]?.IPAMConfig).toBeUndefined();
     expect(h.original.stop).toHaveBeenCalledWith();
-    expect(h.replacement.rename).toHaveBeenCalledExactlyOnceWith({ name: "openship-demo-api" });
+    expect(h.replacement.rename).toHaveBeenCalledExactlyOnceWith({ name: "kovalio-demo-api" });
     expect(h.original.remove).toHaveBeenCalledWith();
     expect(h.order).toEqual([
       "verify image",
@@ -203,11 +203,11 @@ describe("runtime-only environment apply", () => {
       IPv6Address: "fd00::8",
       LinkLocalIPs: ["169.254.1.8"],
     };
-    h.before.NetworkSettings.Networks["openship-demo"].IPAMConfig = ipam;
+    h.before.NetworkSettings.Networks["kovalio-demo"].IPAMConfig = ipam;
     await h.apply();
     expect(
       h.docker.createContainer.mock.calls[0]![0].NetworkingConfig?.EndpointsConfig?.[
-        "openship-demo"
+        "kovalio-demo"
       ]?.IPAMConfig,
     ).toEqual(ipam);
     expect(h.order.indexOf("disconnect original")).toBeLessThan(
@@ -217,11 +217,11 @@ describe("runtime-only environment apply", () => {
 
   it("does not turn a dynamically assigned IPv6 address into a static assignment", async () => {
     const h = setup();
-    h.before.NetworkSettings.Networks["openship-demo"].GlobalIPv6Address = "fd00::8";
+    h.before.NetworkSettings.Networks["kovalio-demo"].GlobalIPv6Address = "fd00::8";
     await h.apply();
     expect(
       h.docker.createContainer.mock.calls[0]![0].NetworkingConfig?.EndpointsConfig?.[
-        "openship-demo"
+        "kovalio-demo"
       ]?.IPAMConfig,
     ).toBeUndefined();
   });
@@ -267,13 +267,13 @@ describe("runtime-only environment apply", () => {
     "restores the original container and routes if %s fails",
     async (stage) => {
       const h = setup();
-      h.before.NetworkSettings.Networks["openship-demo"].IPAMConfig = { IPv4Address: "172.22.0.8" };
+      h.before.NetworkSettings.Networks["kovalio-demo"].IPAMConfig = { IPv4Address: "172.22.0.8" };
       if (stage === "rename") h.replacement.rename.mockRejectedValue(new Error("rename failed"));
       if (stage === "start") h.replacement.start.mockRejectedValue(new Error("start failed"));
       if (stage === "persist") h.options.onReplaced.mockRejectedValue(new Error("persist failed"));
       await expect(h.apply()).rejects.toMatchObject({ code: "SERVICE_ENVIRONMENT_APPLY_FAILED" });
       expect(h.original.remove).not.toHaveBeenCalled();
-      expect(h.original.rename).toHaveBeenLastCalledWith({ name: "openship-demo-api" });
+      expect(h.original.rename).toHaveBeenLastCalledWith({ name: "kovalio-demo-api" });
       expect(h.network.connect).toHaveBeenCalledWith({
         Container: "old-container",
         EndpointConfig: expect.objectContaining({ IPAMConfig: { IPv4Address: "172.22.0.8" } }),
@@ -291,8 +291,8 @@ describe("runtime-only environment apply", () => {
       ...h.before,
       NetworkSettings: {
         Networks: {
-          "openship-demo": {
-            ...h.before.NetworkSettings.Networks["openship-demo"],
+          "kovalio-demo": {
+            ...h.before.NetworkSettings.Networks["kovalio-demo"],
             IPAddress: "172.22.0.12",
           },
         },

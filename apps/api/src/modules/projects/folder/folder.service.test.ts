@@ -23,7 +23,7 @@ describe("scanFolderSession", () => {
   beforeEach(async () => {
     resolveFromLocalMock.mockReset();
     resolveSourceEnvFromLocalMock.mockReset();
-    stagingDir = await mkdtemp(join(tmpdir(), "openship-folder-scan-"));
+    stagingDir = await mkdtemp(join(tmpdir(), "kovalio-folder-scan-"));
   });
 
   afterEach(async () => {
@@ -78,11 +78,11 @@ describe("scanFolderSession", () => {
   it("reads source env without running the full project scanner", async () => {
     const upload = session(undefined);
     resolveSourceEnvFromLocalMock.mockResolvedValue({
-      openshipEnv: { NEXT_PUBLIC_API_URL: "https://api.example.com" },
+      kovalioEnv: { NEXT_PUBLIC_API_URL: "https://api.example.com" },
     });
 
     await expect(resolveFolderSessionSourceEnv(upload, "apps/web")).resolves.toEqual({
-      openshipEnv: { NEXT_PUBLIC_API_URL: "https://api.example.com" },
+      kovalioEnv: { NEXT_PUBLIC_API_URL: "https://api.example.com" },
     });
 
     expect(resolveSourceEnvFromLocalMock).toHaveBeenCalledWith(stagingDir, "apps/web");

@@ -5,7 +5,7 @@ import { sq } from "../build-pipeline";
 import { cachedRunPrefix } from "./cache";
 import { normalizeDockerRootDirectory } from "../docker-paths";
 
-const DOCKER_BUILD_EVENT_PREFIX = "[openship-build]";
+const DOCKER_BUILD_EVENT_PREFIX = "[kovalio-build]";
 /**
  * Project env vars that must never reach the inline `export` prefix on a RUN line.
  *
@@ -83,7 +83,7 @@ export function needsMultiStage(config: BuildConfig): boolean {
 
 /**
  * `ENV PATH` for one stage, so a command naming a locally-installed binary
- * (`next build`, `next start`) resolves — the failure in openship#623, where a
+ * (`next build`, `next start`) resolves — the failure in kovalio#623, where a
  * detected `next build` reached `/bin/sh` with nothing on PATH and exited 127.
  *
  * ENV rather than an inline `export` inside the RUN line, because the same PATH is

@@ -29,7 +29,7 @@ export async function actionRepositoryChecks(
       ? state.sources.personalToken
       : state.primary === "gh-cli"
         ? state.sources.ghCli
-        : state.sources.openshipApp;
+        : state.sources.kovalioApp;
   const installation = accounts.find(
     (account) => account.login.toLowerCase() === owner.toLowerCase() && account.source === "app",
   );
@@ -45,7 +45,7 @@ export async function actionRepositoryChecks(
   });
   try {
     await authorizeActionRepository(ctx, owner, repo);
-    if (controller === "openship") {
+    if (controller === "kovalio") {
       // A login or installation on another repository cannot prove Checks write
       // access. The existing mint verifies the exact repository and permissions.
       const token = await getInstallationToken(ctx, owner, undefined, {

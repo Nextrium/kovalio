@@ -35,7 +35,7 @@ describe("Vercel compatibility diagnostics", () => {
       JSON.stringify({ "private-unknown-key": "secret-value" }),
     );
     expect(warnings).toEqual([
-      "vercel.json contains additional directives that Openship does not implement.",
+      "vercel.json contains additional directives that Kovalio does not implement.",
     ]);
   });
   it.each(["null", "[]", "{bad-json"])("reports an invalid configuration: %s", (raw) =>

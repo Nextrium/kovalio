@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 import { serviceFixture } from "../../contracts/test/fixtures";
 import type { ServiceOperations } from "@repo/contracts";
 
@@ -163,7 +163,7 @@ describe("remote service facade", () => {
       else expect(init?.body).toBeUndefined();
       return Response.json(test.response ?? test.result);
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     const operation = client.services[test.name] as (...args: unknown[]) => Promise<unknown>;
     expect(
       await operation(
@@ -176,7 +176,7 @@ describe("remote service facade", () => {
   });
   it("rejects invalid secret and exec requests before sending them", async () => {
     const fetcher = vi.fn();
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     await expect(
       client.services.revealEnv("project", "service", { keys: [] }),
     ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
@@ -193,7 +193,7 @@ describe("remote service facade", () => {
       staleEnvKeys: ["TOKEN"],
       serviceName: "web",
     };
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "https://ship.test",
       fetch: async () => Response.json(failure, { status: 409 }),
     });
@@ -210,7 +210,7 @@ describe("remote service facade", () => {
   });
   it("passes the viewed deployment identity to the runtime stream", async () => {
     const fetcher = vi.fn(async (_url: string | URL | Request) => new Response('event: end\ndata: {}\n\n', { headers: { "content-type": "text/event-stream" } }));
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     for await (const _event of client.services.streamLogs("project", "service", { tail: 100, deploymentId: "dep/viewed" })) { /* drain */ }
     const url = new URL(String(fetcher.mock.calls[0]![0]));
     expect(url.searchParams.get("deploymentId")).toBe("dep/viewed");

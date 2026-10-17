@@ -103,7 +103,7 @@ export async function writeAppConfigFile(
   containerPath: string,
   opts?: { mode?: number; privateDirectory?: string },
 ): Promise<void> {
-  const stagedPath = `${hostPath}.openship-${randomUUID()}.tmp`;
+  const stagedPath = `${hostPath}.kovalio-${randomUUID()}.tmp`;
   try {
     if (!writer.rename) {
       throw new Error("target file channel does not support atomic rename");

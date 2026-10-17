@@ -43,7 +43,7 @@ export const statusCommand = new Command("status")
       const result = { mode: "native", instanceId: session.ship.instanceId, organizationId: session.client.organizationId, env };
       if (isJsonMode()) printJson(result);
       else {
-        console.log(chalk.bold("\n  Openship status\n"));
+        console.log(chalk.bold("\n  Kovalio status\n"));
         console.log(`  Instance       ${result.instanceId}`);
         console.log(`  Organization   ${result.organizationId}`);
         console.log(`  Connection     native SDK`);

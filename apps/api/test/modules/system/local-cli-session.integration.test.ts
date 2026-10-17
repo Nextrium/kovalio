@@ -17,7 +17,7 @@ let url: string;
 let diagnostics = "";
 
 beforeAll(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openship-local-auth-integration-"));
+  directory = await mkdtemp(join(tmpdir(), "kovalio-local-auth-integration-"));
   child = spawn(
     process.execPath,
     ["--import", loader, join(apiRoot, "test/fixtures/local-cli-server.ts")],
@@ -27,13 +27,13 @@ beforeAll(async () => {
         PATH: process.env.PATH,
         NODE_ENV: "test",
         PGLITE_DATA_DIR: "memory://",
-        OPENSHIP_HOME: directory,
-        OPENSHIP_TARGET: "local",
+        KOVALIO_HOME: directory,
+        KOVALIO_TARGET: "local",
         CLOUD_MODE: "false",
         DEPLOY_MODE: "bare",
-        OPENSHIP_AUTH_MODE: "local",
-        OPENSHIP_REQUIRE_AUTH: "true",
-        OPENSHIP_HOST_CONTROL: "false",
+        KOVALIO_AUTH_MODE: "local",
+        KOVALIO_REQUIRE_AUTH: "true",
+        KOVALIO_HOST_CONTROL: "false",
         INTERNAL_TOKEN: internal,
         BETTER_AUTH_SECRET: "local-cli-integration-encryption-key-32-bytes",
       },
@@ -97,7 +97,7 @@ function run(args: string[]) {
       {
         cwd: directory,
         timeout: 20000,
-        env: { PATH: process.env.PATH, OPENSHIP_HOME: directory },
+        env: { PATH: process.env.PATH, KOVALIO_HOME: directory },
       },
       (error, out, err) =>
         done({ code: error ? (typeof error.code === "number" ? error.code : 1) : 0, out, err }),

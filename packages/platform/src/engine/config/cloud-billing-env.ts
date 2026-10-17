@@ -24,6 +24,6 @@ export function assertCloudBillingEnvironment(config: CloudBillingEnvironment, a
   }
 
   // Uses the same callback rules as registration, including the HTTPS default
-  // derived from OPENSHIP_TARGET / OPENSHIP_CLOUD_API_URL.
+  // derived from KOVALIO_TARGET / KOVALIO_CLOUD_API_URL.
   oblienWebhookUrl(config.OBLIEN_WEBHOOK_URL, apiOrigin);
 }

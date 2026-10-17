@@ -16,7 +16,7 @@ import { getClusterTopology } from "@/components/scale/clusterTopology";
 // This fixture is copied into a temporary development route by capture.mjs.
 // It never reads projects or provisions resources. All state stays in this
 // capture browser's localStorage; the application's editor is reused unchanged.
-const storageKey = "openship:screenshot:commerce-scaling";
+const storageKey = "kovalio:screenshot:commerce-scaling";
 const servers = [
   { name: "production-eu-01", ip: "10.44.0.11" },
   { name: "production-eu-02", ip: "10.44.0.12" },
@@ -53,7 +53,7 @@ const draft: ScaleDraft = {
   services: [{ ...createService("api", "commerce-api"), cpu: 2, memory: 2048, port: 3000 }],
   nodes: [
     {
-      id: "edge", name: "OpenShip Edge", kind: "edge", region: "eu-west-1",
+      id: "edge", name: "Kovalio Edge", kind: "edge", region: "eu-west-1",
       position: { x: 0, y: 235 }, tls: true, algorithm: "round-robin",
       healthPath: "/health", healthInterval: 10,
     },

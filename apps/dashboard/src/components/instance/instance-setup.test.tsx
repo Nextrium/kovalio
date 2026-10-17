@@ -533,14 +533,14 @@ describe("feature prerequisites share the instance move", () => {
           url: null,
           source: null,
           selfAppInstalled: true,
-          selfAppProjectId: "openship",
+          selfAppProjectId: "kovalio",
           selfAppHasDomain: false,
           selfAppHasVerifiedDomain: false,
         }}
       />,
     );
     expect(document.querySelectorAll(`a[href="${INSTANCE_MOVE_HREF}"]`)).toHaveLength(1);
-    expect(document.querySelector('a[href="/projects/openship/domains"]')).not.toBeNull();
+    expect(document.querySelector('a[href="/projects/kovalio/domains"]')).not.toBeNull();
     expect(h.post).not.toHaveBeenCalled();
     expectNoMove();
   });

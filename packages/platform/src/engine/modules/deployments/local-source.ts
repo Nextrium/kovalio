@@ -81,7 +81,7 @@ function createLocalReader(dirPath: string): ProjectReader {
   };
 }
 
-/** Read only openship.json + the selected root's .env, without detecting or
+/** Read only kovalio.json + the selected root's .env, without detecting or
  * parsing a Compose topology. */
 export async function resolveSourceEnvFromLocal(
   dirPath: string,

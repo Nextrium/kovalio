@@ -296,7 +296,7 @@ export async function cloudCallback(c: Context) {
       // best-effort
     }
     errorDiagnostics.error("api/modules/auth/auth.controller", "[cloud-callback] error:", err);
-    return c.html(desktopResultPage("Authentication failed", "Something went wrong. Please return to Openship and try again."));
+    return c.html(desktopResultPage("Authentication failed", "Something went wrong. Please return to Kovalio and try again."));
   }
 }
 

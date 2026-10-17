@@ -239,7 +239,7 @@ export function assembleGitClone(auth: GitCloneAuth): GitCloneInvocation {
     headerUrl.password = "";
     headerUrl.search = "";
     headerUrl.hash = "";
-    const headerVar = "OPENSHIP_GIT_AUTH_HEADER";
+    const headerVar = "KOVALIO_GIT_AUTH_HEADER";
     const headerCommand =
       `${sq(auth.gitCredentialHelperPath)} auth-header ` +
       `${sq(protocol)} ${sq(url.hostname)} ${sq(path)}`;

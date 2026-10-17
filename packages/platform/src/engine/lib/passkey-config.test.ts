@@ -3,14 +3,14 @@ import { resolvePasskeyConfig } from "./passkey-config";
 
 describe("passkey relying party", () => {
   it.each([
-    ["https://app.openship.io", "app.openship.io", "https://app.openship.io"],
+    ["https://kovalio.nextrium.org", "kovalio.nextrium.org", "https://kovalio.nextrium.org"],
     ["https://ops.example.com/", "ops.example.com", "https://ops.example.com"],
     ["http://localhost:3100", "localhost", "http://localhost:3100"],
   ])("binds browser verification to %s", (url, rpID, origin) => {
     expect(resolvePasskeyConfig(url)).toMatchObject({
       rpID,
       origin,
-      rpName: "Openship",
+      rpName: "Kovalio",
       authenticatorSelection: { residentKey: "required" },
     });
   });

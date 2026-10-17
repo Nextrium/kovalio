@@ -138,7 +138,7 @@ describe("managed transport validation", () => {
     expect(result.supported).toBe(true);
     if (!result.supported) return;
     const commands = [...result.value.up, ...result.value.down].join("\n");
-    expect(commands).toContain("--comment openship-network-");
+    expect(commands).toContain("--comment kovalio-network-");
     expect(commands).toContain("-s 192.0.2.2/32 -p udp --dport 51820");
     expect(commands).toContain("-i oswgabcdef0123 -s 10.244.0.2/32");
     expect(commands).not.toMatch(

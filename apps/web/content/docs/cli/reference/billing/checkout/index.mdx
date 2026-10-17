@@ -1,32 +1,32 @@
 ---
 title: billing checkout
-description: Commands, arguments, and options for openship billing checkout.
-cliGroup: openship billing checkout
+description: Commands, arguments, and options for kovalio billing checkout.
+cliGroup: kovalio billing checkout
 ---
 
 See the [workflow guide](/docs/cli/cloud) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship billing checkout
+## kovalio billing checkout
 
 Recover existing payment checkouts without creating another purchase
 
 ```text
-openship billing checkout [options] [command]
+kovalio billing checkout [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list [options]`](/docs/cli/reference/billing/checkout#openship-billing-checkout-list) | List open and recoverable checkouts |
-| [`get [options] <id>`](/docs/cli/reference/billing/checkout#openship-billing-checkout-get) | Read payment and provisioning status |
-| [`resume [options] <id>`](/docs/cli/reference/billing/checkout#openship-billing-checkout-resume) | Resume this existing checkout |
-| [`cancel [options] <id>`](/docs/cli/reference/billing/checkout#openship-billing-checkout-cancel) | Cancel this unpaid checkout |
+| [`list [options]`](/docs/cli/reference/billing/checkout#kovalio-billing-checkout-list) | List open and recoverable checkouts |
+| [`get [options] <id>`](/docs/cli/reference/billing/checkout#kovalio-billing-checkout-get) | Read payment and provisioning status |
+| [`resume [options] <id>`](/docs/cli/reference/billing/checkout#kovalio-billing-checkout-resume) | Resume this existing checkout |
+| [`cancel [options] <id>`](/docs/cli/reference/billing/checkout#kovalio-billing-checkout-cancel) | Cancel this unpaid checkout |
 
-## openship billing checkout cancel
+## kovalio billing checkout cancel
 
 Cancel this unpaid checkout
 
 ```text
-openship billing checkout cancel [options] <id>
+kovalio billing checkout cancel [options] <id>
 ```
 
 | Argument | Meaning |
@@ -39,12 +39,12 @@ openship billing checkout cancel [options] <id>
 | `--workspace <id>` | Billing workspace ID, including retained subscriptions |
 | `-y, --yes` | Confirm cancellation |
 
-## openship billing checkout get
+## kovalio billing checkout get
 
 Read payment and provisioning status
 
 ```text
-openship billing checkout get [options] <id>
+kovalio billing checkout get [options] <id>
 ```
 
 | Argument | Meaning |
@@ -56,12 +56,12 @@ openship billing checkout get [options] <id>
 | `--server <id>` | Use this managed server's billing workspace |
 | `--workspace <id>` | Billing workspace ID, including retained subscriptions |
 
-## openship billing checkout list
+## kovalio billing checkout list
 
 List open and recoverable checkouts
 
 ```text
-openship billing checkout list [options]
+kovalio billing checkout list [options]
 ```
 
 | Option | Meaning |
@@ -69,12 +69,12 @@ openship billing checkout list [options]
 | `--server <id>` | Use this managed server's billing workspace |
 | `--workspace <id>` | Billing workspace ID, including retained subscriptions |
 
-## openship billing checkout resume
+## kovalio billing checkout resume
 
 Resume this existing checkout
 
 ```text
-openship billing checkout resume [options] <id>
+kovalio billing checkout resume [options] <id>
 ```
 
 | Argument | Meaning |

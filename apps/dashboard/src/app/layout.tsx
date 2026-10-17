@@ -36,7 +36,7 @@ async function resolveRequestLocale(): Promise<Locale> {
   // empty in the SSR render. Fall back to cookies() (works in dev), then
   // Accept-Language, then the default.
   const cookieStore = await cookies();
-  const fromCookie = hdrs.get("x-openship-locale") ?? cookieStore.get(LOCALE_COOKIE)?.value;
+  const fromCookie = hdrs.get("x-kovalio-locale") ?? cookieStore.get(LOCALE_COOKIE)?.value;
   if (fromCookie && (locales as readonly string[]).includes(fromCookie)) {
     return fromCookie as Locale;
   }
@@ -96,7 +96,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // KOVALIO_LOCAL_API_URL into the browser so the client bundle's API base
   // (a module-load constant that can't read a runtime env) targets it. Read
   // per-request thanks to `force-dynamic` above.
-  const localApiOrigin = process.env.OPENSHIP_LOCAL_API_URL;
+  const localApiOrigin = process.env.KOVALIO_LOCAL_API_URL;
   const deploymentInfo = await getDeploymentInfoOrNull();
   // Resolve the asset host before SSR, including auth and API-unavailable pages.
   // Cloud-connected desktop instances still use their bundled icons.
@@ -123,7 +123,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             Cloud-connected self-hosted and Desktop instances remain disabled. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.__OPENSHIP_ERROR_REPORTING__=${!localApiOrigin && deploymentInfo?.selfHosted === false && deploymentInfo.deployMode !== "desktop"};`,
+            __html: `window.__KOVALIO_ERROR_REPORTING__=${!localApiOrigin && deploymentInfo?.selfHosted === false && deploymentInfo.deployMode !== "desktop"};`,
           }}
         />
         {/* Set <html lang/dir> from the locale cookie BEFORE paint, so a reload
@@ -144,7 +144,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <IconProvider
-          baseUrl={cloudIcons ? CLOUD_ICON_BASE_URL : process.env.OPENSHIP_ICON_BASE_URL}
+          baseUrl={cloudIcons ? CLOUD_ICON_BASE_URL : process.env.KOVALIO_ICON_BASE_URL}
           fallbackBaseUrl={LOCAL_ICON_BASE_URL}
         >
           <AuthProvider>

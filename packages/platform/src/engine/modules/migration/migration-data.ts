@@ -156,7 +156,7 @@ export async function planMigrationData(input: {
       let existing;
       try { existing = await input.targetRuntime.docker.getVolume(item.dest).inspect(); }
       catch (error) { if ((error as { statusCode?: number }).statusCode !== 404) throw error; }
-      if (existing && input.managedTarget && existing.Labels?.["openship.project"] !== project.id)
+      if (existing && input.managedTarget && existing.Labels?.["kovalio.project"] !== project.id)
         throw new AppError("A target volume belongs to another project", 409, "CLOUD_VOLUME_CONFLICT");
       if (action === "keep") {
         if (!existing) throw new Error(`Cannot keep ${item.dest}: the target volume no longer exists`);
@@ -169,7 +169,7 @@ export async function planMigrationData(input: {
       // different volume or infer ownership from a slug prefix.
       const conflict = existing ? await probeOneVolume(targetExecutor, item.dst.handle, item.dst.sourceId, input.log) : null;
       if (conflict && action !== "override") {
-        const users = existing?.Labels?.["openship.project"] === project.id && action !== "clone"
+        const users = existing?.Labels?.["kovalio.project"] === project.id && action !== "clone"
           ? await input.targetRuntime.docker.listContainers({ all: true, filters: { volume: [item.dest] } }) : null;
         if (!users || users.length || conflict === "unknown")
           throw new Error(`Target volume ${item.dest} ${conflict === "unknown" ? "could not be verified" : "already contains data"}. Review its conflict choice before importing.`);
@@ -195,11 +195,11 @@ export async function prepareMigrationVolumes(input: {
 }) {
   for (const name of input.plan.createdVolumes) {
     await input.runtime.docker.createVolume({ Name: name, Labels: {
-      "openship.project": input.projectId, ...(input.runId ? { "openship.migration": input.runId } : {}),
+      "kovalio.project": input.projectId, ...(input.runId ? { "kovalio.migration": input.runId } : {}),
     } });
     const volume = await input.runtime.docker.getVolume(name).inspect();
-    if (volume.Labels?.["openship.project"] !== input.projectId ||
-        (input.runId && volume.Labels?.["openship.migration"] !== input.runId))
+    if (volume.Labels?.["kovalio.project"] !== input.projectId ||
+        (input.runId && volume.Labels?.["kovalio.migration"] !== input.runId))
       throw new Error(`Target volume ${name} was created by another operation`);
   }
   if (input.managed) for (const item of input.plan.items.filter(item => item.kind === "volume"))

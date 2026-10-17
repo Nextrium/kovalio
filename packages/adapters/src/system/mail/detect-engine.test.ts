@@ -3,7 +3,7 @@ import type { CommandExecutor } from "../../types";
 import { containerState } from "../managed-image";
 import { detectMailEngine } from "./detect-engine";
 
-const missing = () => new Error("Error: No such object: openship-mail");
+const missing = () => new Error("Error: No such object: kovalio-mail");
 const host = (load = "loaded", active = "active") =>
   ["postfix", "dovecot"]
     .map((unit) => `## ${unit}\nLoadState=${load}\nActiveState=${active}`)
@@ -73,7 +73,7 @@ describe("mail topology requires a completed observation", () => {
     ).toMatchObject({ flavor: "host", running: false, exists: true });
   });
 
-  it.each([host("not-found", "inactive"), "__OPENSHIP_NO_SYSTEMCTL__"])(
+  it.each([host("not-found", "inactive"), "__KOVALIO_NO_SYSTEMCTL__"])(
     "reports no engine only after both topologies are ruled out",
     async (units) => {
       expect(await detectMailEngine(executor(missing(), units).target)).toEqual({
@@ -102,8 +102,8 @@ describe("mail topology requires a completed observation", () => {
 
   it("preserves the existing best-effort contract for other managed-image callers", async () => {
     const e = executor(new Error("connect ENETUNREACH 192.0.2.1:22"));
-    expect(await containerState(e.target, "openship-edge")).toBeNull();
-    await expect(containerState(e.target, "openship-mail", { strict: true })).rejects.toThrow(
+    expect(await containerState(e.target, "kovalio-edge")).toBeNull();
+    await expect(containerState(e.target, "kovalio-mail", { strict: true })).rejects.toThrow(
       "ENETUNREACH",
     );
   });

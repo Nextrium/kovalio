@@ -9,7 +9,7 @@ import { extractSourceArchive } from "../src/source-archive";
 
 const owned: string[] = [];
 async function directory() {
-  const path = await mkdtemp(join(tmpdir(), "openship-archive-test-"));
+  const path = await mkdtemp(join(tmpdir(), "kovalio-archive-test-"));
   owned.push(path);
   return path;
 }
@@ -32,7 +32,7 @@ describe("owned source archives", () => {
     async kind => {
       const sandbox = await directory(), staging = join(sandbox, "tmp");
       await mkdir(staging);
-      await writeFile(join(staging, "openship-upload-old.tar.gz"), "operator-owned leftover");
+      await writeFile(join(staging, "kovalio-upload-old.tar.gz"), "operator-owned leftover");
       const alias = join(sandbox, "tmp-link");
       await symlink(staging, alias);
       const source = kind === "ancestor" ? sandbox : kind === "symlink" ? alias : staging;
@@ -41,8 +41,8 @@ describe("owned source archives", () => {
         await expect(archiveSourceDirectory(source, { temporaryRoot: staging, signal: AbortSignal.timeout(500) }).then(value => { packed = value; return value; }))
           .rejects.toThrow(/temporary directory/);
       } finally { await packed?.dispose(); }
-      expect(await readdir(staging)).toEqual(["openship-upload-old.tar.gz"]);
-      expect(await readFile(join(staging, "openship-upload-old.tar.gz"), "utf8")).toBe("operator-owned leftover");
+      expect(await readdir(staging)).toEqual(["kovalio-upload-old.tar.gz"]);
+      expect(await readFile(join(staging, "kovalio-upload-old.tar.gz"), "utf8")).toBe("operator-owned leftover");
     },
   );
 

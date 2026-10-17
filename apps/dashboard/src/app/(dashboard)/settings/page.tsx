@@ -173,7 +173,7 @@ function SettingsPageInner() {
             </>
           )}
 
-          {/* Tokens is INBOUND only — somebody authenticating TO Openship. The clone PAT
+          {/* Tokens is INBOUND only — somebody authenticating TO Kovalio. The clone PAT
               moved to Credentials, which is everything pointing the other way. */}
           {activeTab === "tokens" && <PersonalAccessTokens />}
 

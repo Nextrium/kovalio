@@ -11,12 +11,12 @@ import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 const exec = promisify(execFile);
 const email = resolve(import.meta.dirname, "../../../email");
 const suffix = randomUUID().slice(0, 12);
-const db = `openship-fail2ban-db-${suffix}`;
-const custom = `openship-fail2ban-custom-${suffix}`;
-const runner = `openship-fail2ban-client-${suffix}`;
+const db = `kovalio-fail2ban-db-${suffix}`;
+const custom = `kovalio-fail2ban-custom-${suffix}`;
+const runner = `kovalio-fail2ban-client-${suffix}`;
 const password = "e2e:back\\slash'quote";
 const rootPassword = "e2e-sidecar-root-password";
-const config = "/etc/fail2ban/openship-postgresql.conf";
+const config = "/etc/fail2ban/kovalio-postgresql.conf";
 const helper = "/usr/local/bin/fail2ban_banned_db";
 let directory: string;
 
@@ -62,10 +62,10 @@ async function configure(port: number, secret = password) {
     "--env",
     `VMAIL_DB_BIND_PASSWD=${secret}`,
     "--env",
-    `OPENSHIP_MAIL_DB_PORT=${port}`,
+    `KOVALIO_MAIL_DB_PORT=${port}`,
     runner,
     "python3",
-    "/opt/openship-mail/configure-fail2ban-db.py",
+    "/opt/kovalio-mail/configure-fail2ban-db.py",
   ]);
 }
 async function action(...args: string[]) {
@@ -90,7 +90,7 @@ async function action(...args: string[]) {
 describeDockerE2E("fail2ban PostgreSQL sidecar actions", () => {
   beforeAll(async () => {
     await requireDocker();
-    directory = await mkdtemp(join(tmpdir(), "openship-fail2ban-e2e-"));
+    directory = await mkdtemp(join(tmpdir(), "kovalio-fail2ban-e2e-"));
     await docker([
       "run",
       "-d",
@@ -153,11 +153,11 @@ describeDockerE2E("fail2ban PostgreSQL sidecar actions", () => {
       "-c",
       "apt-get update -qq && apt-get install -y --no-install-recommends python3 >/dev/null",
     ]);
-    await docker(["exec", runner, "mkdir", "-p", "/etc/fail2ban", "/opt/openship-mail"]);
+    await docker(["exec", runner, "mkdir", "-p", "/etc/fail2ban", "/opt/kovalio-mail"]);
     await docker([
       "cp",
       join(email, "docker/configure-fail2ban-db.py"),
-      `${runner}:/opt/openship-mail/configure-fail2ban-db.py`,
+      `${runner}:/opt/kovalio-mail/configure-fail2ban-db.py`,
     ]);
     await docker([
       "cp",
@@ -353,7 +353,7 @@ describeDockerE2E("fail2ban PostgreSQL sidecar actions", () => {
         "exec",
         runner,
         "cp",
-        "/etc/fail2ban/openship-postgresql.pgpass",
+        "/etc/fail2ban/kovalio-postgresql.pgpass",
         "/var/lib/postgresql/.pgpass",
       ]);
       const result = await docker(

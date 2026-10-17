@@ -21,7 +21,7 @@ export interface AnalyticsActor {
 
 /** Stable, opaque IDs: raw checkout/payment IDs never go to PostHog. */
 export function analyticsId(key: string): string {
-  const hex = createHash("sha256").update(`openship-cloud:${key}`).digest("hex").slice(0, 32);
+  const hex = createHash("sha256").update(`kovalio-cloud:${key}`).digest("hex").slice(0, 32);
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20)}`;
 }
 
@@ -95,7 +95,7 @@ export class CloudAnalytics {
         $geoip_disable: true,
         $process_person_profile: !!actor.userId,
         environment: "production",
-        product: "openship_cloud",
+        product: "kovalio_cloud",
         source: actor.source ?? (actor.userId ? "api" : "system"),
         ...(actor.organizationId
           ? { workspace_id: actor.organizationId, $groups: { workspace: actor.organizationId } }

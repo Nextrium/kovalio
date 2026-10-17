@@ -29,7 +29,7 @@ const tokens = new ActionRuntimeTokens("isolated-actions-protocol-test-secret");
 const report = vi.fn();
 const errors: string[] = [];
 beforeAll(async () => {
-  root = await mkdtemp(join(tmpdir(), "openship-actions-storage-"));
+  root = await mkdtemp(join(tmpdir(), "kovalio-actions-storage-"));
   connection = await createDatabase({ driver: "pglite", dataDir: "memory://" });
   repositories = createRepositories(connection.db, { encrypt: (v) => v, decrypt: (v) => v });
   protocol = new ActionStorageProtocol({

@@ -18,7 +18,7 @@ import { remoteServerConnection } from "./cloud/server-connection";
 import { requireLinkedCloudServer } from "./cloud/server-link";
 import type { CloudWorkspaceUsage } from "@repo/contracts";
 import { requireCloudWorkspace } from "./cloud-workspace-scope";
-import { getNamespaceClient } from "./openship-cloud";
+import { getNamespaceClient } from "./kovalio-cloud";
 import { readCloudWorkspaceAllocation } from "./cloud-capacity";
 import { createProvisionLock } from "./provision-lock";
 import { cacheStore } from "./cache-store/index";

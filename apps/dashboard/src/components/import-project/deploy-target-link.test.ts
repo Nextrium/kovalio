@@ -22,7 +22,7 @@ describe("deployment target links", () => {
   });
 
   it.each([
-    ["cloud", baseDictionary.importProject.deploymentProcessing.targetOpenshipCloud],
+    ["cloud", baseDictionary.importProject.deploymentProcessing.targetKovalioCloud],
     ["local", baseDictionary.importProject.deploymentProcessing.targetLocal],
   ])(
     "does not link a %s target even if an old server id remains in the configuration",

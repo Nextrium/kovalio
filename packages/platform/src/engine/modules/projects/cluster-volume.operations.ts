@@ -194,7 +194,7 @@ export function createClusterVolumeOperations(
   };
 }
 
-/** Native storage controllers keep reconciling while OpenShip is offline. SSE
+/** Native storage controllers keep reconciling while Kovalio is offline. SSE
  * reconnects observe their current state and never repeat a storage mutation. */
 export async function* clusterVolumeEvents(
   ctx: ExecutionContext,

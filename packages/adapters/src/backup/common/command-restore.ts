@@ -95,14 +95,14 @@ export async function pipeRestoreCommand(
     const command = backupShellCommand(cmd, opts);
     if (transport.input) return transport.input(command, body, controller.signal);
 
-    localDir = await fs.mkdtemp(join(tmpdir(), "openship-restore-"));
+    localDir = await fs.mkdtemp(join(tmpdir(), "kovalio-restore-"));
     controller.signal.throwIfAborted();
     const localFile = join(localDir, "artifact.bin");
     await pipeline(body, createWriteStream(localFile, { mode: 0o600 }), {
       signal: controller.signal,
     });
     const size = (await fs.stat(localFile)).size;
-    remoteDir = `/tmp/openship-restore-${randomUUID()}`;
+    remoteDir = `/tmp/kovalio-restore-${randomUUID()}`;
     const setup = await run(`umask 077; mkdir -m 700 ${shellQuote(remoteDir)}`);
     if (setup.code !== 0) throw new Error(`Could not stage restore: ${setup.stderr}`);
     await transport.stage(localDir, remoteDir, controller.signal);
@@ -185,7 +185,7 @@ export async function receiveCommandArchive(
   const quoted = shellQuote(target);
   const prelude = [
     tool
-      ? `command -v ${tool} >/dev/null 2>&1 || { echo "openship: '${tool}' is not installed on this host; your data is untouched." >&2; exit 90; }`
+      ? `command -v ${tool} >/dev/null 2>&1 || { echo "kovalio: '${tool}' is not installed on this host; your data is untouched." >&2; exit 90; }`
       : "",
     `command -v tar >/dev/null 2>&1 || exit 90`,
     `mkdir -p ${quoted} || exit 91`,

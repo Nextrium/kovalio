@@ -99,7 +99,7 @@ export function cacheStore<T>(
     const backend = await resolveBackend();
     const store: CacheStore<T> =
       backend === "redis"
-        ? new RedisCacheStore<T>(getSharedRedis(), process.env.OPENSHIP_INSTANCE_NAMESPACE ? `${process.env.OPENSHIP_INSTANCE_NAMESPACE}:${namespace}` : namespace)
+        ? new RedisCacheStore<T>(getSharedRedis(), process.env.KOVALIO_INSTANCE_NAMESPACE ? `${process.env.KOVALIO_INSTANCE_NAMESPACE}:${namespace}` : namespace)
         : new MemoryCacheStore<T>(opts);
     trackedStores.add(store as CacheStore<unknown>);
     return store;

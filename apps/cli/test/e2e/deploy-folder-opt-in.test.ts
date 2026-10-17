@@ -39,7 +39,7 @@ describe("deploy requires folder upload opt-in (#853)", () => {
     { flags: ["--folder"], inRepo: true },
     { flags: ["--name", "local-app"], inRepo: false },
   ])("uploads source with explicit opt-in: $flags", async ({ flags, inRepo }) => {
-    const sourceDir = mkdtempSync(join(tmpdir(), "openship-folder-command-"));
+    const sourceDir = mkdtempSync(join(tmpdir(), "kovalio-folder-command-"));
     writeFileSync(join(sourceDir, "index.html"), "site");
     vi.spyOn(process, "cwd").mockReturnValue(sourceDir);
     gitState.inRepo = inRepo;

@@ -60,10 +60,10 @@ export async function resolveProductMode(): Promise<ProductMode> {
   try {
     const { repos } = await import("@repo/db");
     const stored = (await repos.instanceSettings.get())?.productMode;
-    resolved = isProductMode(stored) ? stored : env.OPENSHIP_PRODUCT;
+    resolved = isProductMode(stored) ? stored : env.KOVALIO_PRODUCT;
   } catch (diagnosticFailure) {
     observeCaughtError(diagnosticFailure, "platform/engine/lib/product-mode");
-    resolved = env.OPENSHIP_PRODUCT;
+    resolved = env.KOVALIO_PRODUCT;
   }
 
   if (generation === cacheGeneration) cached = resolved;

@@ -1,7 +1,7 @@
 {
   "name": "@repo/cli",
   "version": "0.9.2",
-  "description": "Openship CLI - deploy, manage, and open your Openship platform from the terminal",
+  "description": "Kovalio CLI - deploy, manage, and open your Kovalio platform from the terminal",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -32,7 +32,7 @@
   ],
   "scripts": {
     "build": "tsup && bun run build/stage-server.ts",
-    "build:payload": "bun run --cwd ../../packages/openship build && bun run build/stage-cli-payload.ts",
+    "build:payload": "bun run --cwd ../../packages/kovalio build && bun run build/stage-cli-payload.ts",
     "cli": "bun dist/index.js",
     "dev": "bun run build && bun run build/stage-dashboard.ts && KOVALIO_DASHBOARD_DIR=\"$(cd ../dashboard/.next/standalone && pwd)\" bun dist/index.js",
     "lint": "tsc --noEmit",

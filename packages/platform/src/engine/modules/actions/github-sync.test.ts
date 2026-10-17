@@ -42,7 +42,7 @@ async function fixture() {
   const org = generateId("org");
   await connection.db.insert(schema.organization).values({ id: org, name: org });
   const source =
-    "name: CI\non: workflow_dispatch\njobs:\n  build:\n    runs-on: [self-hosted, openship, macos]\n    steps:\n      - if: runner.os == 'Linux'\n        uses: docker://alpine:3.22\n      - run: echo test\n";
+    "name: CI\non: workflow_dispatch\njobs:\n  build:\n    runs-on: [self-hosted, kovalio, macos]\n    steps:\n      - if: runner.os == 'Linux'\n        uses: docker://alpine:3.22\n      - run: echo test\n";
   h.source.mockResolvedValue({ content: source });
   const workflow = await h.repo.saveWorkflow({
     id: generateId("wf"),
@@ -99,8 +99,8 @@ async function fixture() {
       started_at: now,
       completed_at: now,
       runner_id: 40,
-      runner_name: "openship-worker",
-      labels: ["self-hosted", "openship", "macos"],
+      runner_name: "kovalio-worker",
+      labels: ["self-hosted", "kovalio", "macos"],
       steps: [
         {
           number: 1,

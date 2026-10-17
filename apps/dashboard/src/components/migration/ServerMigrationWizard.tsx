@@ -179,7 +179,7 @@ interface RepoLink {
 }
 
 /**
- * One Openship project to create from the scan. Services may come from multiple
+ * One Kovalio project to create from the scan. Services may come from multiple
  * groups; `bound` only supplies the initial project name (null until the first pick).
  */
 interface ImportProject {
@@ -323,8 +323,8 @@ export function ServerMigrationWizard({
   const [targetId, setTargetId] = useState<string | null>(selfHosted ? (serverId ?? null) : null);
   const [serverName, setServerName] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
-  // "Flat Docker" scan mode: ignore openship.* labels so managed workloads adopt
-  // as plain compose/standalone (no re-import). Off = Openship-aware (default).
+  // "Flat Docker" scan mode: ignore kovalio.* labels so managed workloads adopt
+  // as plain compose/standalone (no re-import). Off = Kovalio-aware (default).
   const [flatDocker, setFlatDocker] = useState(!selfHosted);
   const [scanStatus, setScanStatus] = useState<string>("");
   const [stack, setStack] = useState<DiscoveredStack | null>(null);
@@ -627,7 +627,7 @@ export function ServerMigrationWizard({
         });
       if (stale()) return;
       setStack(scanned);
-      if (!scanned.adoptable && !scanned.openshipProjects?.some((project) => !project.knownHere)) {
+      if (!scanned.adoptable && !scanned.kovalioProjects?.some((project) => !project.knownHere)) {
         setError(m.discover.nothing);
         return;
       }
@@ -872,13 +872,13 @@ export function ServerMigrationWizard({
     stack?.adoptable &&
     stack.groups.some((group) => group.services.some((service) => !isExcluded(service))),
   );
-  // Openship projects on the server that this instance doesn't know → re-importable.
-  const orphanedOpenship = useMemo(
-    () => stack?.openshipProjects?.filter((p) => !p.knownHere) ?? [],
+  // Kovalio projects on the server that this instance doesn't know → re-importable.
+  const orphanedKovalio = useMemo(
+    () => stack?.kovalioProjects?.filter((p) => !p.knownHere) ?? [],
     [stack],
   );
-  const hasReimport = orphanedOpenship.length > 0;
-  const recoveredProject = orphanedOpenship.find((project) => project.projectId === recoveryId);
+  const hasReimport = orphanedKovalio.length > 0;
+  const recoveredProject = orphanedKovalio.find((project) => project.projectId === recoveryId);
   const sameServer = selectedId === targetId;
   // Cross-server now MOVES locally-built images as data (docker save|load) — no
   // registry, no rebuild. Surface an info note up front (the image stream can be
@@ -940,7 +940,7 @@ export function ServerMigrationWizard({
       groups={stack.groups.filter((group) =>
         group.services.some((service) => !isExcluded(service)),
       )}
-      recovered={orphanedOpenship}
+      recovered={orphanedKovalio}
       recoveryId={recoveryId}
       onSelectRecovery={setRecoveryId}
       activeProject={active ?? EMPTY_SELECTION}

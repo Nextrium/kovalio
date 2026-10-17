@@ -471,7 +471,7 @@ export default function ScaleEditor({ storageKey }: { storageKey: string }) {
     );
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "openship-scaling-draft.json";
+    anchor.download = "kovalio-scaling-draft.json";
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, [draft]);

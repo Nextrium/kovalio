@@ -57,7 +57,7 @@ def reconcile(path, transform, port, root):
     if before == after:
         return False
     metadata = path.stat()
-    fd, temporary = tempfile.mkstemp(prefix=".openship-db-port-", dir=path.parent)
+    fd, temporary = tempfile.mkstemp(prefix=".kovalio-db-port-", dir=path.parent)
     try:
         with os.fdopen(fd, "w") as output:
             owned = os.fstat(output.fileno())
@@ -73,9 +73,9 @@ def reconcile(path, transform, port, root):
 
 
 def main():
-    raw = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("OPENSHIP_MAIL_DB_PORT", "5432")
+    raw = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("KOVALIO_MAIL_DB_PORT", "5432")
     if not re.fullmatch(r"[0-9]+", raw.strip()) or not 1 <= int(raw) <= 65535:
-        raise ValueError("OPENSHIP_MAIL_DB_PORT must be a decimal port between 1 and 65535")
+        raise ValueError("KOVALIO_MAIL_DB_PORT must be a decimal port between 1 and 65535")
     port = str(int(raw))
     # The optional root lets tests run the same script against actual iRedMail
     # sample configs without touching the developer's system configuration.
@@ -93,12 +93,12 @@ def main():
         for cached in [settings.with_suffix(".pyc"), *(settings.parent / "__pycache__").glob("settings.*.pyc")]:
             if cached.resolve().is_relative_to(root):
                 cached.unlink(missing_ok=True)
-    print(f"[openship-mail] reconciled daemon SQL connections to port {port}")
+    print(f"[kovalio-mail] reconciled daemon SQL connections to port {port}")
 
 
 if __name__ == "__main__":
     try:
         main()
     except (OSError, ValueError) as error:
-        print(f"[openship-mail] FATAL: database port reconciliation failed: {error}", file=sys.stderr)
+        print(f"[kovalio-mail] FATAL: database port reconciliation failed: {error}", file=sys.stderr)
         sys.exit(1)

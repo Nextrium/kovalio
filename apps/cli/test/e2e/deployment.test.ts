@@ -46,7 +46,7 @@ describe("kovalio deployment rollback", () => {
   });
 });
 
-describe("openship deployment cancel", () => {
+describe("kovalio deployment cancel", () => {
   it("reports success only after the worker lease is released", async () => {
     fetchStub = stubFetch(() => ({
       json: { success: true, pending: false, status: "cancelled", message: "Deployment cancelled" },

@@ -28,7 +28,7 @@ function containerMailExecutor() {
   const exec = {
     exec: async (command: string) => {
       if (command.includes('echo "opsh_begin=1"')) return NON_ROOT_SUDO_PROFILE;
-      if (command.includes("docker inspect")) return "true\topenship/mail:test";
+      if (command.includes("docker inspect")) return "true\tkovalio/mail:test";
       commands.push(command);
       if (command.includes("command -v") && command.includes("bin=$b")) return "bin=amavisd\n";
       if (command.includes("sudo -n sh -c") && command.includes("cat ")) {
@@ -58,17 +58,17 @@ describe("root-owned mail configuration", () => {
     await expect(provisionDomainDkim(exec, "new.example.com")).resolves.toBe("v=DKIM1;p=abc123");
 
     const dockerCommands = commands.filter((command) =>
-      command.includes("docker exec openship-mail"),
+      command.includes("docker exec kovalio-mail"),
     );
     expect(dockerCommands.length).toBeGreaterThan(0);
-    expect(dockerCommands.every((command) => command.startsWith("docker exec openship-mail"))).toBe(
+    expect(dockerCommands.every((command) => command.startsWith("docker exec kovalio-mail"))).toBe(
       true,
     );
     expect(commands.some((command) => command.startsWith("sudo -n sh -c"))).toBe(true);
 
     expect(writes).toHaveLength(1);
     expect(writes[0]).toMatchObject({
-      path: expect.stringMatching(/^\/tmp\/\.openship-elev-[0-9a-f]{24}\/payload$/),
+      path: expect.stringMatching(/^\/tmp\/\.kovalio-elev-[0-9a-f]{24}\/payload$/),
       content: expect.stringContaining("dkim_key('new.example.com'"),
       mode: 0o644,
     });

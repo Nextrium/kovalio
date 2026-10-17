@@ -120,7 +120,7 @@ export async function createNativePlatform(value: NativePlatformOptions): Promis
     throw new ValidationError("Exclusive recovery requires an owned file-backed PGlite database");
   if (options.runtime === "cloud" && (!options.cloud?.clientId || !options.cloud.clientSecret)) throw new ValidationError("Cloud runtime credentials are required");
   if (options.cloud?.hosted && (!options.cloud.redisUrl || options.storage.driver !== "postgres")) throw new ValidationError("Hosted cloud mode requires PostgreSQL and Redis");
-  const reserved = /^(?:HOME|USERPROFILE|NODE_OPTIONS|NODE_ENV|DATABASE_URL|PGLITE_DATA_DIR|POSTGRES_|PG[A-Z]|BETTER_AUTH_SECRET|INTERNAL_TOKEN|CLOUD_MODE|DEPLOY_MODE|REDIS_URL|OPENSHIP_(?:NATIVE|DB_|INSTANCE_|DATA_DIR|MIGRATIONS_DIR|PGLITE_ASSETS_DIR|CACHE_STORE|JOB_RUNNER|REQUIRE_REDIS|DEV_LOCK_TAKEOVER|HOST_CONTROL))/;
+  const reserved = /^(?:HOME|USERPROFILE|NODE_OPTIONS|NODE_ENV|DATABASE_URL|PGLITE_DATA_DIR|POSTGRES_|PG[A-Z]|BETTER_AUTH_SECRET|INTERNAL_TOKEN|CLOUD_MODE|DEPLOY_MODE|REDIS_URL|KOVALIO_(?:NATIVE|DB_|INSTANCE_|DATA_DIR|MIGRATIONS_DIR|PGLITE_ASSETS_DIR|CACHE_STORE|JOB_RUNNER|REQUIRE_REDIS|DEV_LOCK_TAKEOVER|HOST_CONTROL))/;
   for (const [key, val] of Object.entries(options.environment ?? {})) {
     if (reserved.test(key) || !/^[A-Z][A-Z0-9_]*$/.test(key) || typeof val !== "string") throw new ValidationError(`Reserved or invalid native environment option: ${key}`);
   }
@@ -142,28 +142,28 @@ export async function createNativePlatform(value: NativePlatformOptions): Promis
     if (process.env[key]) environment[key] = process.env[key]!;
   }
   Object.assign(environment, options.environment, {
-    NODE_ENV: "production", OPENSHIP_NATIVE: "true", OPENSHIP_INSTANCE_ID: options.instanceId,
-    OPENSHIP_NATIVE_JOBS: String(options.jobs === true),
-    OPENSHIP_INSTANCE_NAMESPACE: `openship:${options.instanceId}`, OPENSHIP_DATA_DIR: state,
-    OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION: String(options.policy?.allowHostExecution === true),
-    OPENSHIP_NATIVE_ALLOW_LOCAL_FORWARDING: String(options.policy?.allowLocalForwarding === true),
-    OPENSHIP_NATIVE_ROUTING: options.routing ?? "managed", OPENSHIP_HOST_CONTROL: String(options.policy?.allowHostExecution === true),
-    OPENSHIP_AUTH_MODE: "local", OPENSHIP_REQUIRE_AUTH: "true", OPENSHIP_DEV_LOCK_TAKEOVER: "false",
-    OPENSHIP_DB_LOCK_OWNER: ownerId, OPENSHIP_DB_MIGRATIONS: options.storage.migrations ?? (options.storage.driver === "postgres" ? "verify" : "apply"),
+    NODE_ENV: "production", KOVALIO_NATIVE: "true", KOVALIO_INSTANCE_ID: options.instanceId,
+    KOVALIO_NATIVE_JOBS: String(options.jobs === true),
+    KOVALIO_INSTANCE_NAMESPACE: `kovalio:${options.instanceId}`, KOVALIO_DATA_DIR: state,
+    KOVALIO_NATIVE_ALLOW_HOST_EXECUTION: String(options.policy?.allowHostExecution === true),
+    KOVALIO_NATIVE_ALLOW_LOCAL_FORWARDING: String(options.policy?.allowLocalForwarding === true),
+    KOVALIO_NATIVE_ROUTING: options.routing ?? "managed", KOVALIO_HOST_CONTROL: String(options.policy?.allowHostExecution === true),
+    KOVALIO_AUTH_MODE: "local", KOVALIO_REQUIRE_AUTH: "true", KOVALIO_DEV_LOCK_TAKEOVER: "false",
+    KOVALIO_DB_LOCK_OWNER: ownerId, KOVALIO_DB_MIGRATIONS: options.storage.migrations ?? (options.storage.driver === "postgres" ? "verify" : "apply"),
     PGLITE_DATA_DIR: options.storage.driver === "pglite" ? options.storage.dataDir : "",
     DATABASE_URL: options.storage.driver === "postgres" ? options.storage.url : "",
     BETTER_AUTH_SECRET: options.encryptionKey, INTERNAL_TOKEN: randomUUID() + randomUUID(),
     DEPLOY_MODE: options.runtime, CLOUD_MODE: String(options.cloud?.hosted === true),
     OBLIEN_CLIENT_ID: options.cloud?.clientId ?? "", OBLIEN_CLIENT_SECRET: options.cloud?.clientSecret ?? "",
-    OPENSHIP_MIGRATIONS_DIR: join(assets, "migrations"), OPENSHIP_PGLITE_ASSETS_DIR: join(assets, "pglite"),
+    KOVALIO_MIGRATIONS_DIR: join(assets, "migrations"), KOVALIO_PGLITE_ASSETS_DIR: join(assets, "pglite"),
     MAIL_SERVER_ENGINE_DIR: join(assets, "engine"),
-    OPENSHIP_GEOIP_DB: options.environment?.OPENSHIP_GEOIP_DB ?? join(assets, "assets/geoip/GeoLite2-Country.mmdb"),
-    OPENSHIP_CACHE_STORE: options.cloud?.redisUrl ? "redis" : "memory",
-    OPENSHIP_JOB_RUNNER: options.cloud?.redisUrl ? "bullmq" : "in-process",
-    OPENSHIP_REQUIRE_REDIS: String(!!options.cloud?.redisUrl), REDIS_URL: options.cloud?.redisUrl ?? "redis://127.0.0.1:6379",
+    KOVALIO_GEOIP_DB: options.environment?.KOVALIO_GEOIP_DB ?? join(assets, "assets/geoip/GeoLite2-Country.mmdb"),
+    KOVALIO_CACHE_STORE: options.cloud?.redisUrl ? "redis" : "memory",
+    KOVALIO_JOB_RUNNER: options.cloud?.redisUrl ? "bullmq" : "in-process",
+    KOVALIO_REQUIRE_REDIS: String(!!options.cloud?.redisUrl), REDIS_URL: options.cloud?.redisUrl ?? "redis://127.0.0.1:6379",
     GITHUB_AUTH_MODE: options.environment?.GITHUB_AUTH_MODE ?? "auto",
   });
-  const worker = new Worker(pathToFileURL(entry), { workerData: { options }, env: environment, execArgv: [], name: `openship-${options.instanceId}`, stdout: true, stderr: true });
+  const worker = new Worker(pathToFileURL(entry), { workerData: { options }, env: environment, execArgv: [], name: `kovalio-${options.instanceId}`, stdout: true, stderr: true });
   if (options.diagnostics === "silent") { worker.stdout.resume(); worker.stderr.resume(); }
   else {
     worker.stdout.pipe(options.diagnostics === "stderr" ? process.stderr : process.stdout, { end: false });

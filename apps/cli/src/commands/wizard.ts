@@ -718,8 +718,8 @@ export async function runWizard(): Promise<void> {
       dl.stop("Kovalio dist ready.");
     } catch (e) {
       observeCaughtError(e, "cli/commands/wizard");
-      dl.stop(`Couldn't pull the Openship dist: ${(e as Error).message}`, 1);
-      log.info("Check your network / that this release published its dashboard asset, then re-run `openship`.");
+      dl.stop(`Couldn't pull the Kovalio dist: ${(e as Error).message}`, 1);
+      log.info("Check your network / that this release published its dashboard asset, then re-run `kovalio`.");
       process.exit(1);
     }
   }

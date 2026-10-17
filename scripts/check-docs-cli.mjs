@@ -49,7 +49,7 @@ function flags(entry) {
 
 export function checkCliExamples(catalog) {
   const entries = new Map(catalog.map((entry) => [entry.command, entry]));
-  const globalFlags = flags(entries.get("openship"));
+  const globalFlags = flags(entries.get("kovalio"));
   const errors = [];
   let count = 0;
   for (const file of filesUnder(docsDirectory, ".mdx")) {
@@ -58,9 +58,9 @@ export function checkCliExamples(catalog) {
     for (const block of source.matchAll(/^```(?:bash|sh|shell)\b[^\n]*\n([\s\S]*?)^```/gm)) {
       for (const line of block[1].replace(/\\\n\s*/g, " ").split("\n")) {
         const command = line.trim().replace(/^npx\s+/, "");
-        if (!command.startsWith("openship ")) continue;
+        if (!command.startsWith("kovalio ")) continue;
         const parts = tokens(command).slice(1);
-        let entry = entries.get("openship");
+        let entry = entries.get("kovalio");
         count++;
         for (let index = 0; index < parts.length; index++) {
           const part = parts[index];

@@ -21,8 +21,8 @@ if not Path("/dev/kvm").exists():
 with open("/dev/kvm", "rb+"):
     pass
 
-name = os.environ["OPENSHIP_E2E_NAME"]
-key = base64.b64decode(os.environ["OPENSHIP_E2E_PUBLIC_KEY"]).decode().strip()
+name = os.environ["KOVALIO_E2E_NAME"]
+key = base64.b64decode(os.environ["KOVALIO_E2E_PUBLIC_KEY"]).decode().strip()
 route = next(r for r in json.loads(run("ip", "-j", "route")) if r["dst"] == "default")
 interface = route["dev"]
 link = json.loads(run("ip", "-j", "addr", "show", "dev", interface))[0]
@@ -36,8 +36,8 @@ userdata = {
     "package_update": False,
     "package_upgrade": False,
     "disk_setup": {"/dev/vdb": {"table_type": "gpt", "layout": True, "overwrite": False}},
-    "fs_setup": [{"device": "/dev/vdb1", "filesystem": "ext4", "label": "openship-data"}],
-    "mounts": [["LABEL=openship-data", "/var/lib/openship", "ext4", "defaults", "0", "2"]],
+    "fs_setup": [{"device": "/dev/vdb1", "filesystem": "ext4", "label": "kovalio-data"}],
+    "mounts": [["LABEL=kovalio-data", "/var/lib/kovalio", "ext4", "defaults", "0", "2"]],
     "runcmd": [
         ["systemctl", "disable", "--now", "apt-daily.timer", "apt-daily-upgrade.timer"],
         ["systemctl", "stop", "unattended-upgrades"],
@@ -55,8 +55,8 @@ Path("/tmp/network-config").write_text(json.dumps(network))
 run("cloud-localds", "--network-config=/tmp/network-config", "/tmp/seed.img", "/tmp/user-data", "/tmp/meta-data")
 if not Path("/var/lib/rancher/host.qcow2").exists():
     run("qemu-img", "create", "-f", "qcow2", "-F", "qcow2", "-b", "/image/noble-server-cloudimg-amd64.img", "/var/lib/rancher/host.qcow2", "24G")
-if not Path("/var/lib/openship/storage.img").exists():
-    run("qemu-img", "create", "-f", "raw", "/var/lib/openship/storage.img", "12G")
+if not Path("/var/lib/kovalio/storage.img").exists():
+    run("qemu-img", "create", "-f", "raw", "/var/lib/kovalio/storage.img", "12G")
 
 # Avoid the bridge treating frames for the guest MAC as its own local traffic.
 parts = mac.split(":")
@@ -78,7 +78,7 @@ run("ip", "link", "set", "tap0", "up")
 args = ["qemu-system-x86_64", "-enable-kvm", "-cpu", "host", "-smp", "2", "-m", "2048",
         "-display", "none", "-serial", "stdio", "-monitor", "none", "-no-reboot",
         "-drive", "file=/var/lib/rancher/host.qcow2,if=virtio,format=qcow2,cache=none",
-        "-drive", "file=/var/lib/openship/storage.img,if=virtio,format=raw,cache=none",
+        "-drive", "file=/var/lib/kovalio/storage.img,if=virtio,format=raw,cache=none",
         "-drive", "file=/tmp/seed.img,if=virtio,format=raw,readonly=on",
         "-netdev", "tap,id=net0,ifname=tap0,script=no,downscript=no",
         "-device", f"virtio-net-pci,netdev=net0,mac={mac}"]

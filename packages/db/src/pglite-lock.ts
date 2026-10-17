@@ -312,7 +312,7 @@ export function createPgliteLock(options: { registerExitHook?: boolean; ownerId?
         holder.machineId !== current.id
       ) {
         throw new Error(
-          `The Openship database at ${dataDir} is locked by a process on a different machine ` +
+          `The Kovalio database at ${dataDir} is locked by a process on a different machine ` +
             `(${holder.host}, pid ${holder.pid}). PGlite data directories cannot be shared ` +
             `across machines. If that machine no longer uses it, remove the lock file: ${lockPath}`,
         );
@@ -362,10 +362,10 @@ export function createPgliteLock(options: { registerExitHook?: boolean; ownerId?
 
       if (Date.now() >= deadline) {
         throw new Error(
-          `Another Openship instance is already using the database at ${dataDir} ` +
+          `Another Kovalio instance is already using the database at ${dataDir} ` +
             `(pid ${holder.pid}). PGlite allows only one process per data directory; opening a ` +
             `second would corrupt it. Stop the other instance (e.g. quit the desktop app) and ` +
-            `retry. If you are certain no Openship process is running, remove: ${lockPath}`,
+            `retry. If you are certain no Kovalio process is running, remove: ${lockPath}`,
         );
       }
 

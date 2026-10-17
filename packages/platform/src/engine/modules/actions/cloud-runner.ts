@@ -108,7 +108,7 @@ export async function saveCloudActionRunner(
 export async function ensureConfiguredActionPools(): Promise<void> {
   if (!env.CLOUD_MODE) return;
   const configured = poolsSchema.parse(
-    JSON.parse(process.env.OPENSHIP_ACTIONS_CLOUD_POOLS || "[]"),
+    JSON.parse(process.env.KOVALIO_ACTIONS_CLOUD_POOLS || "[]"),
   );
   if (new Set(configured.map((pool) => pool.namespace)).size !== configured.length)
     throw new Error(
@@ -174,7 +174,7 @@ async function clientFor(run: Pick<ActionRun, "organizationId">, runner: ActionR
 
 function workspaceInput(job: ActionWorkerAllocation, runner: ActionRunner) {
   return {
-    name: `Openship Actions ${job.id}`,
+    name: `Kovalio Actions ${job.id}`,
     // Job IDs are case-sensitive and can end in URL-safe punctuation. A hash
     // preserves their identity while satisfying the provider's hostname rules.
     slug: `actions-${createHash("sha256").update(job.id).digest("hex").slice(0, 32)}`,
@@ -182,7 +182,7 @@ function workspaceInput(job: ActionWorkerAllocation, runner: ActionRunner) {
     image: CLOUD_DOCKER_IMAGE,
     mode: "temporary" as const,
     wait_ready: false,
-    idempotency_key: `openship-actions-${job.id}`,
+    idempotency_key: `kovalio-actions-${job.id}`,
     cpus: runner.config.cpu,
     memory_mb: runner.config.memoryMb,
     disk_size_mb: (runner.config.cloudDiskGb ?? 32) * 1024,

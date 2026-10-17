@@ -7,7 +7,7 @@ vi.mock("@repo/platform/engine/config/env", () => ({
     CLOUD_MODE: true,
     GITHUB_AUTH_MODE: "oauth",
     GITHUB_APP_ID: "123",
-    GITHUB_APP_SLUG: "openship-io",
+    GITHUB_APP_SLUG: "kovalio-io",
   },
   localGitHubAppConfiguration: { configured: false, intended: false, missing: [] },
 }));
@@ -30,7 +30,7 @@ vi.mock("@repo/platform/engine/modules/github/github.http", () => ({
 import { getGitHubAuthMode, resolveGitHubAuthMode } from "@repo/platform/engine/modules/github/github.auth";
 
 describe("Cloud GitHub auth mode", () => {
-  it("cannot be switched away from the canonical Openship App", async () => {
+  it("cannot be switched away from the canonical Kovalio App", async () => {
     expect(getGitHubAuthMode()).toBe("app");
     await expect(resolveGitHubAuthMode({
       userId: "user_1",

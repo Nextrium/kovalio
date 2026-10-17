@@ -320,7 +320,7 @@ function makeApi(
   // One scan per instance backs sites / by-port / siteFor / certFor.
   let scan: Promise<ProxyScanResult> | null = null;
   const listSites = () => {
-    scan ??= (ours ? scanOpenshipEdge(exec) : scanImportableSites(exec, kind)).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/proxy/api"); return ({
+    scan ??= (ours ? scanKovalioEdge(exec) : scanImportableSites(exec, kind)).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/system/proxy/api"); return ({
       proxy: kind,
       sites: [],
       readable: false,

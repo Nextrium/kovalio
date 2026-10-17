@@ -93,11 +93,11 @@ in-place** strategy is genuinely zero-downtime for the workload — the containe
 <Step>
 ### Take over the domains + edge
 
-When the migration includes domains, Openship prepares the target edge during migration. It shows which
+When the migration includes domains, Kovalio prepares the target edge during migration. It shows which
 existing sites belong to the selected project and services, then asks for confirmation before replacing
 the proxy. Choosing **Migrate sites & take over** journals the old configuration, installs OpenResty on
 `:80/:443`, and imports the existing sites and certificates, including sites outside the selected project.
-If takeover fails, Openship attempts to restore the previous proxy and reports the recovery outcome.
+If takeover fails, Kovalio attempts to restore the previous proxy and reports the recovery outcome.
 
 Selected domains are attached to their migrated services and re-applied from the live containers. Existing
 certificates are reused and pending verification is retried immediately. Routes that cannot be reproduced

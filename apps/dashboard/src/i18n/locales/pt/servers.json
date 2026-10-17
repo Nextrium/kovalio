@@ -10,7 +10,7 @@
     "managePlan": "Gerenciar plano",
     "projects": "Projetos",
     "emptyTitle": "Seus aplicativos começam aqui",
-    "emptyDescription": "Escolha a capacidade e implante aplicativos e projetos no Openship Cloud.",
+    "emptyDescription": "Escolha a capacidade e implante aplicativos e projetos no Kovalio Cloud.",
     "usageHint": "Uso atual de CPU, memória e armazenamento.",
     "noProjects": "Ainda não há projetos aqui.",
     "spaces": "Espaços Cloud",
@@ -225,7 +225,7 @@
     "keyModePaste": "Colar / Enviar",
     "keyModePath": "Caminho do host",
     "keyPathBrowse": "Procurar…",
-    "keyPathHelp": "Caminho absoluto para a chave privada na máquina que executa o Openship.",
+    "keyPathHelp": "Caminho absoluto para a chave privada na máquina que executa o Kovalio.",
     "keyPaste": "Chave privada",
     "keyPastePlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----\n…",
     "keyPasteHelp": "As chaves coladas são criptografadas em repouso e nunca saem do servidor.",
@@ -325,7 +325,7 @@
     "sshPort": "Porta SSH: {port}",
     "port": "Porta",
     "reinstallDockerTitle": "Reinstalar o Docker neste servidor?",
-    "reinstallDockerMessage": "Isso executa o instalador oficial do Docker, que baixa a versão atual do motor — em um servidor atualizado isso representa uma grande atualização. Instalar ou atualizar o Docker reinicia o daemon, o que reinicia todos os contêineres neste servidor, incluindo qualquer coisa que o Openship esteja executando aqui. Nenhuma outra etapa instalará o Docker para você: as outras etapas o ignoram enquanto ele estiver funcionando."
+    "reinstallDockerMessage": "Isso executa o instalador oficial do Docker, que baixa a versão atual do motor — em um servidor atualizado isso representa uma grande atualização. Instalar ou atualizar o Docker reinicia o daemon, o que reinicia todos os contêineres neste servidor, incluindo qualquer coisa que o Kovalio esteja executando aqui. Nenhuma outra etapa instalará o Docker para você: as outras etapas o ignoram enquanto ele estiver funcionando."
   },
   "banner": {
     "unreachableTitle": "Não foi possível acessar {host}",
@@ -344,16 +344,16 @@
     "editCredentials": "Editar credenciais",
     "editServer": "Editar servidor",
     "showRawError": "Mostrar erro bruto",
-    "hostChannelTitle": "O Openship não consegue alcançar o host desta máquina",
-    "hostChannelBody": "O Openship é executado em um contêiner aqui e se comunica com o host via SSH em {target}. Nada respondeu lá, então ele não pode executar operações em nível de host nesta máquina.",
-    "hostChannelImpact": "Deploys normais nesta máquina ainda funcionam — eles passam pelo socket do Docker. Bloqueado até que o canal funcione: o terminal do host, as informações do sistema do host e o escaneamento de portas do host; assumir o controle das portas :80/:443 de um proxy que não foi iniciado pelo Openship; instalar ou atualizar o motor de e-mail; fazer deploy de um aplicativo do catálogo que precise de um arquivo de configuração gerado no host (como o kong.yml do Supabase). Esta máquina também será exibida como \"Offline\" na lista de servidores do painel enquanto o canal estiver inativo.",
+    "hostChannelTitle": "O Kovalio não consegue alcançar o host desta máquina",
+    "hostChannelBody": "O Kovalio é executado em um contêiner aqui e se comunica com o host via SSH em {target}. Nada respondeu lá, então ele não pode executar operações em nível de host nesta máquina.",
+    "hostChannelImpact": "Deploys normais nesta máquina ainda funcionam — eles passam pelo socket do Docker. Bloqueado até que o canal funcione: o terminal do host, as informações do sistema do host e o escaneamento de portas do host; assumir o controle das portas :80/:443 de um proxy que não foi iniciado pelo Kovalio; instalar ou atualizar o motor de e-mail; fazer deploy de um aplicativo do catálogo que precise de um arquivo de configuração gerado no host (como o kong.yml do Supabase). Esta máquina também será exibida como \"Offline\" na lista de servidores do painel enquanto o canal estiver inativo.",
     "hostChannelFix": "Execute isto no host e tente novamente:",
-    "hostChannelMissingTitle": "O Openship não possui um canal para o host desta máquina",
-    "hostChannelMissingBody": "O Openship é executado em um contêiner aqui, e o canal SSH usado para alcançar o host nunca foi provisionado. Não havia endereço para contato, então nada aqui está fora do ar — as operações em nível de host simplesmente não têm onde rodar.",
+    "hostChannelMissingTitle": "O Kovalio não possui um canal para o host desta máquina",
+    "hostChannelMissingBody": "O Kovalio é executado em um contêiner aqui, e o canal SSH usado para alcançar o host nunca foi provisionado. Não havia endereço para contato, então nada aqui está fora do ar — as operações em nível de host simplesmente não têm onde rodar.",
     "hostChannelWouldUse": "Uma vez provisionado, o canal alcançará o host em {target}. Nada contatou esse endereço ainda.",
     "hostChannelProvisionFix": "Execute isto no host para provisionar o canal e tente novamente:",
-    "hostChannelAuthTitle": "O host recusou a chave do Openship",
-    "hostChannelAuthBody": "O Openship é executado em um contêiner aqui e alcança o host via SSH em {target}. O host respondeu e depois rejeitou a chave, portanto operações em nível de host não podem ser executadas. Ou a chave não está mais autorizada para essa conta, ou o sshd não permite o login dessa conta. As credenciais SSH armazenadas neste servidor não são usadas para esta conexão — o canal possui sua própria chave.",
+    "hostChannelAuthTitle": "O host recusou a chave do Kovalio",
+    "hostChannelAuthBody": "O Kovalio é executado em um contêiner aqui e alcança o host via SSH em {target}. O host respondeu e depois rejeitou a chave, portanto operações em nível de host não podem ser executadas. Ou a chave não está mais autorizada para essa conta, ou o sshd não permite o login dessa conta. As credenciais SSH armazenadas neste servidor não são usadas para esta conexão — o canal possui sua própria chave.",
     "hostChannelReauthorizeFix": "Execute isto no host para autorizar novamente a chave do canal e tente de novo:"
   },
   "overview": {
@@ -620,7 +620,7 @@
     "continue": "Continuar",
     "cancel": "Cancelar",
     "retry": "Tentar novamente",
-    "selfHostedOnly": "Clusters estão disponíveis em uma instância auto-hospedada do OpenShip. A Oblien gerencia a infraestrutura do Cloud.",
+    "selfHostedOnly": "Clusters estão disponíveis em uma instância auto-hospedada do Kovalio. A Oblien gerencia a infraestrutura do Cloud.",
     "managePermissionRequired": "Você precisa de permissão para gerenciar todos os servidores deste espaço de trabalho para configurar clusters.",
     "notChecked": "Ainda não verificado",
     "networkStatus": "Verificação da rede",
@@ -710,7 +710,7 @@
     "probingPeers": "Verificando a conectividade privada entre servidores…",
     "interfaceVerified": "Interface privada verificada",
     "encryption": "Criptografia",
-    "externalEncryption": "Não verificada pelo OpenShip",
+    "externalEncryption": "Não verificada pelo Kovalio",
     "verificationScope": "Esses testes verificam os endereços privados selecionados e a porta de teste. O acesso aos serviços e a criptografia dependem da rede e das políticas dos aplicativos.",
     "source": "Origem",
     "destination": "Destino",
@@ -718,7 +718,7 @@
     "failed": "Falhou",
     "noPeerChecks": "Execute a verificação para ver as conexões entre servidores.",
     "projectScope": "Conecte servidores e gerencie a conectividade privada independentemente dos clusters.",
-    "selfHostedOnly": "Redes privadas estão disponíveis em uma instância auto-hospedada do OpenShip. A Oblien gerencia a infraestrutura do Cloud.",
+    "selfHostedOnly": "Redes privadas estão disponíveis em uma instância auto-hospedada do Kovalio. A Oblien gerencia a infraestrutura do Cloud.",
     "managePermissionRequired": "Você precisa de permissão para gerenciar todos os servidores deste espaço de trabalho para configurar redes.",
     "editWhileVerifying": "Aguarde a conclusão da verificação de rede em andamento antes de editar esta rede.",
     "status": {
@@ -738,7 +738,7 @@
     "crossProviderNetworkHint": "Redes privadas de provedores diferentes precisam de uma rota ou VPN existente entre elas. Selecionar um provedor não conecta os servidores.",
     "managed": {
       "title": "Rede privada gerenciada",
-      "description": "O OpenShip cria uma rede WireGuard criptografada entre seus servidores, inclusive em provedores diferentes.",
+      "description": "O Kovalio cria uma rede WireGuard criptografada entre seus servidores, inclusive em provedores diferentes.",
       "requirements": "Requer Linux com systemd e acesso root ou sudo sem palavra-passe. Python 3.8+, iproute2 e as ferramentas WireGuard em falta são instalados automaticamente. A compatibilidade do kernel e da firewall é verificada durante a configuração.",
       "mode": "Modo de rede",
       "existingHint": "Usar endereços já configurados na rede do seu provedor.",
@@ -747,7 +747,7 @@
       "useServerAddress": "Usar endereço do servidor",
       "port": "Porta UDP do WireGuard",
       "automaticRange": "Escolher uma faixa disponível automaticamente",
-      "rangeHint": "O OpenShip verifica as faixas dos hosts, Docker, VPN, DNS e rotas e atribui endereços privados estáveis. Você também pode escolher uma sub-rede privada /16–/27.",
+      "rangeHint": "O Kovalio verifica as faixas dos hosts, Docker, VPN, DNS e rotas e atribui endereços privados estáveis. Você também pode escolher uma sub-rede privada /16–/27.",
       "inspect": "Preparar servidores",
       "inspecting": "A iniciar preparação…",
       "apply": "Aplicar rede",
@@ -756,7 +756,7 @@
       "effect": "Cria um túnel dedicado e rotas privadas e permite tráfego entre os pares listados. As rotas SSH e as configurações DNS são preservadas.",
       "keys": "As chaves privadas são geradas e mantidas em cada servidor.",
       "rollbackHint": "Alterações não confirmadas são revertidas em cada host após 20 minutos, inclusive após desconexão do controlador ou reinicialização do host.",
-      "firewallHint": "O OpenShip configura os firewalls de host compatíveis durante a aplicação. Salve as regras do provedor ou roteador antes de aplicar ou tentar novamente.",
+      "firewallHint": "O Kovalio configura os firewalls de host compatíveis durante a aplicação. Salve as regras do provedor ou roteador antes de aplicar ou tentar novamente.",
       "expires": "Plano válido até {time}",
       "expired": "Este plano expirou. Volte e inspecione os servidores novamente.",
       "packages": "Pré-requisitos",
@@ -768,10 +768,10 @@
       "progress": "Progresso por servidor",
       "resume": "Retomar operação",
       "restore": "Restaurar rede anterior",
-      "recoveryHint": "Confira os resultados dos servidores antes de retomar. O OpenShip verifica os estados registrados nos hosts e restaura ou reaplica a configuração aprovada.",
+      "recoveryHint": "Confira os resultados dos servidores antes de retomar. O Kovalio verifica os estados registrados nos hosts e restaura ou reaplica a configuração aprovada.",
       "viewOperation": "Ver operação de rede",
       "viewCluster": "Abrir rede",
-      "removalHint": "Remove o túnel gerenciado, as rotas privadas e as regras de firewall do OpenShip de cada membro. Os serviços que usam esses endereços privados perderão suas conexões.",
+      "removalHint": "Remove o túnel gerenciado, as rotas privadas e as regras de firewall do Kovalio de cada membro. Os serviços que usam esses endereços privados perderão suas conexões.",
       "removalApply": "Remover rede gerenciada",
       "status": {
         "planned": "Pronto para aplicar",
@@ -861,17 +861,17 @@
       "removeAndReset": "Remover e reverter",
       "removeSetupServerTitle": "Remover {name} da configuração?",
       "removeSetupServerDescription": "Salve os {count} servidores restantes e pause a configuração até clicar em Tentar preparação novamente. O servidor, seus serviços, dados e ferramentas instaladas serão preservados.",
-      "removeSetupServerResetDescription": "Restaure as alterações de rede do OpenShip desta tentativa no servidor selecionado e em seus pares, depois pause com os {count} servidores restantes. Tente a preparação novamente quando estiver pronto. Serviços, dados e ferramentas instaladas serão preservados. Todos os servidores devem confirmar a limpeza antes de tentar a preparação novamente.",
+      "removeSetupServerResetDescription": "Restaure as alterações de rede do Kovalio desta tentativa no servidor selecionado e em seus pares, depois pause com os {count} servidores restantes. Tente a preparação novamente quando estiver pronto. Serviços, dados e ferramentas instaladas serão preservados. Todos os servidores devem confirmar a limpeza antes de tentar a preparação novamente.",
       "keepTwoServers": "Devem permanecer pelo menos dois servidores.",
       "resetBeforeContinue": "Revertendo a configuração anterior",
-      "resetBeforeContinueDescription": "O OpenShip restaura a configuração de rede e as entradas dos pares desta tentativa. Quando todos os servidores confirmarem a limpeza, tente a preparação novamente para continuar com {count} servidores. Se um servidor estiver inacessível, restaure o acesso e tente a limpeza novamente.",
+      "resetBeforeContinueDescription": "O Kovalio restaura a configuração de rede e as entradas dos pares desta tentativa. Quando todos os servidores confirmarem a limpeza, tente a preparação novamente para continuar com {count} servidores. Se um servidor estiver inacessível, restaure o acesso e tente a limpeza novamente.",
       "continuePreparation": "Continuar preparação",
       "viewCleanup": "Ver detalhes da limpeza",
       "viewUpdatedSetup": "Ver configuração atualizada",
       "selectionSavedHint": "A seleção atualizada de servidores foi salva. A preparação permanece pausada até você tentar novamente.",
       "selectionReplacedHint": "Esta tentativa está vinculada a uma seleção de servidores atualizada. Abra a configuração atualizada para continuar.",
       "transportCheckTitle": "Acesso UDP entre servidores",
-      "transportCheckHint": "Após aplicar o plano, o OpenShip testa conexões criptografadas nesses endpoints UDP antes de atribuir endereços e rotas privadas.",
+      "transportCheckHint": "Após aplicar o plano, o Kovalio testa conexões criptografadas nesses endpoints UDP antes de atribuir endereços e rotas privadas.",
       "transportFailedTitle": "Verifique as conexões com falha antes de tentar novamente",
       "transportFailedHint": "Não foi possível estabelecer uma conexão criptografada. Confirme os endereços de destino e os encaminhamentos de portas NAT, depois verifique as regras do firewall. Selecione uma conexão com falha para ver cada direção.",
       "preparationTopologyHint": "Cada servidor mostra sua etapa atual de preparação. A conectividade UDP é testada após revisar e aplicar a rede.",
@@ -904,11 +904,11 @@
         "nativeFailedHint": "Verifique as rotas privadas, as interfaces selecionadas e as regras TCP/UDP nos firewalls do host e do provedor antes de tentar novamente.",
         "privateInterfaceHint": "Interface com este IP privado",
         "nativeScopeHint": "Estas regras permitem testes de conectividade. Adicione separadamente as portas de serviços privados necessárias às suas cargas de trabalho.",
-        "nativeFirewallHint": "Configure os firewalls do host e do provedor para a interface privada. O OpenShip verifica esta rede sem alterar suas regras de firewall.",
+        "nativeFirewallHint": "Configure os firewalls do host e do provedor para a interface privada. O Kovalio verifica esta rede sem alterar suas regras de firewall.",
         "confirmTitle": "Confirmar acesso no firewall",
         "confirmManaged": "Permiti o tráfego UDP listado nos firewalls do provedor e nos roteadores entre estes servidores.",
         "confirmNative": "Permiti o tráfego TCP/UDP listado nos firewalls do host e do provedor para estes endereços privados.",
-        "confirmHint": "O OpenShip verificará a conectividade após você continuar.",
+        "confirmHint": "O Kovalio verificará a conectividade após você continuar.",
         "confirmRequired": "Confirme o acesso no firewall antes de continuar.",
         "returnTraffic": "Tráfego de resposta",
         "nativeReturnHint": "Firewalls com estado permitem respostas automaticamente. O modelo também inclui regras de resposta para firewalls sem estado, usando os mesmos IPs privados dos pares."
@@ -967,7 +967,7 @@
       "outgoing": "Pode se conectar a",
       "none": "Nenhum",
       "empty": "Este servidor não tem conexões configuradas.",
-      "transportHint": "O WireGuard usa UDP nas duas direções para cada par conectado. O OpenShip aplica as direções de acesso privado selecionadas nos servidores.",
+      "transportHint": "O WireGuard usa UDP nas duas direções para cada par conectado. O Kovalio aplica as direções de acesso privado selecionadas nos servidores.",
       "enforcedHint": "Estas permissões abrangem esta rede privada gerenciada, incluindo portas publicadas de contêineres. O acesso público e outras redes têm suas próprias regras.",
       "blockedVerified": "Bloqueado conforme configurado",
       "unexpectedAccess": "Acesso inesperado",
@@ -987,10 +987,10 @@
     "setup": "Ativar escalonamento",
     "oneControl": "Um servidor de controle. São necessários pelo menos três servidores para um plano de controle de alta disponibilidade.",
     "threeControls": "Três servidores de controle mantêm a disponibilidade do cluster. Servidores adicionais entram como nós de trabalho.",
-    "requirements": "O OpenShip prepara os servidores, conecta-os e verifica o roteamento das aplicações. O progresso é salvo para que você possa sair e voltar.",
+    "requirements": "O Kovalio prepara os servidores, conecta-os e verifica o roteamento das aplicações. O progresso é salvo para que você possa sair e voltar.",
     "readyHint": "Escolha este cluster nos controles de escalonamento de um projeto para implantar instâncias da aplicação em seus servidores.",
     "privateConnections": "Regras de firewall privado necessárias",
-    "privateHint": "O OpenShip configura automaticamente os firewalls de host compatíveis. Se o provedor filtra a rede privada, permita estas portas de destino a partir dos endereços privados de origem listados. Não exponha estas portas à Internet.",
+    "privateHint": "O Kovalio configura automaticamente os firewalls de host compatíveis. Se o provedor filtra a rede privada, permita estas portas de destino a partir dos endereços privados de origem listados. Não exponha estas portas à Internet.",
     "remove": "Desativar escalonamento",
     "removeDescription": "Desative o escalonamento e remova sua instalação deste cluster. Primeiro remova as aplicações implantadas no cluster e os volumes persistentes. O grupo de servidores, as aplicações Docker e a rede privada permanecem disponíveis.",
     "details": "Detalhes da configuração",
@@ -1013,7 +1013,7 @@
       "verify": "Verificar roteamento das aplicações",
       "remove": "Remover configuração de escalonamento"
     },
-    "requirementsDetails": "O OpenShip instala as ferramentas ausentes, configura o K3s pela rede privada e verifica o roteamento de serviços e o DNS. Requer Linux com systemd e firewall do host sem filtragem ou baseado em iptables.",
+    "requirementsDetails": "O Kovalio instala as ferramentas ausentes, configura o K3s pela rede privada e verifica o roteamento de serviços e o DNS. Requer Linux com systemd e firewall do host sem filtragem ou baseado em iptables.",
     "technicalDetails": "Detalhes técnicos",
     "technology": "Orquestrador",
     "applicationNetwork": "Rede de pods",
@@ -1025,7 +1025,7 @@
     "label": "Conexão",
     "direct": "SSH direto",
     "hostname": "Nome do host do Access",
-    "help": "Use o nome do host do Cloudflare Access e as credenciais SSH do servidor. Entre no Cloudflare na máquina que executa o OpenShip. O aplicativo Windows inclui o cliente necessário; outras instalações precisam do cloudflared.",
+    "help": "Use o nome do host do Cloudflare Access e as credenciais SSH do servidor. Entre no Cloudflare na máquina que executa o Kovalio. O aplicativo Windows inclui o cliente necessário; outras instalações precisam do cloudflared.",
     "openAccess": "Abrir Cloudflare Access"
   },
   "acquire": {
@@ -1035,7 +1035,7 @@
     },
     "managed": {
       "label": "Obter um servidor gerenciado",
-      "description": "O Openship Cloud cuida da configuração, das rotas e do HTTPS."
+      "description": "O Kovalio Cloud cuida da configuração, das rotas e do HTTPS."
     },
     "signInHint": "Conecte sua conta Cloud para usar um servidor gerenciado existente ou obter um novo.",
     "chooseExisting": "Escolher um servidor Cloud existente",
@@ -1086,7 +1086,7 @@
     "runtime": {
       "title": "API de execução",
       "description": "Automatize comandos, arquivos e operações de execução neste servidor gerenciado usando suas próprias ferramentas.",
-      "requiredHint": "O Openship usa esta API para implantações, monitoramento e terminais, por isso ela permanece ativada enquanto o servidor é gerenciado.",
+      "requiredHint": "O Kovalio usa esta API para implantações, monitoramento e terminais, por isso ela permanece ativada enquanto o servidor é gerenciado.",
       "stoppedHint": "Retome o servidor no painel do plano antes de abrir uma conexão de execução.",
       "enable": "Ativar Runtime API",
       "credentialHint": "Administradores podem revelar uma credencial exclusiva deste servidor. Ela concede acesso completo ao ambiente de execução, incluindo todos os projetos do servidor.",
@@ -1107,7 +1107,7 @@
       "os": "Sistema operacional",
       "lifecycle": "Ciclo de vida",
       "persistent": "Servidor persistente",
-      "imageHint": "O Openship mantém a imagem Docker gerenciada. Escolha as imagens das aplicações nas configurações de implantação de cada projeto. Substituir a imagem do servidor afetaria todos os projetos e seus dados.",
+      "imageHint": "O Kovalio mantém a imagem Docker gerenciada. Escolha as imagens das aplicações nas configurações de implantação de cada projeto. Substituir a imagem do servidor afetaria todos os projetos e seus dados.",
       "resources": "Recursos alocados ao servidor",
       "resourceHint": "Os recursos vêm da assinatura deste servidor. Use a revisão existente de plano e redimensionamento para alterá-los; todos os projetos compartilham esta alocação.",
       "terminal": "Abrir terminal",
@@ -1144,7 +1144,7 @@
       "truncated": "Exibindo os primeiros 100 processos nativos. Use o terminal para consultar o inventário completo do host.",
       "sources": {
         "manual": "Carga de trabalho manual",
-        "project": "Aplicação Openship",
+        "project": "Aplicação Kovalio",
         "system": "Processo da plataforma ou gerenciado externamente"
       },
       "states": {
@@ -1169,7 +1169,7 @@
       "rulesUnavailable": "As regras de saída estão indisponíveis. Atualize antes de editá-las.",
       "invalidRules": "Informe de 1 a 50 destinos. Use * sozinho ou nomes de host/IPs sem URL, porta ou caminho.",
       "confirm": "Aplicar estas regras de saída a todos os projetos do servidor? Desativar a internet limpa a lista de destinos permitidos. A reativação usa os destinos exibidos acima.",
-      "routingHint": "Domínios públicos, TLS e redes privadas usam os controles de projetos e redes do Openship. Este formulário não altera rotas, regras de entrada nem credenciais de proxy.",
+      "routingHint": "Domínios públicos, TLS e redes privadas usam os controles de projetos e redes do Kovalio. Este formulário não altera rotas, regras de entrada nem credenciais de proxy.",
       "policyTitle": "Acesso à internet",
       "policyHint": "Controle os destinos que aplicativos e builds podem acessar.",
       "addresses": "Endereço privado e entrada"
@@ -1178,7 +1178,7 @@
       "title": "Conexão de saída",
       "description": "Escolha como este servidor se conecta à internet.",
       "currentIp": "IP de saída atual",
-      "managed": "Gerenciado pelo Openship",
+      "managed": "Gerenciado pelo Kovalio",
       "custom": "Proxy personalizado",
       "unavailable": "Não foi possível verificar as configurações atuais. Atualize antes de alterá-las.",
       "connection": "Tipo de conexão",
@@ -1210,7 +1210,7 @@
     },
     "cloudConnection": {
       "titles": {
-        "not_connected": "Entre no Openship Cloud",
+        "not_connected": "Entre no Kovalio Cloud",
         "account_mismatch": "Conecte a conta Cloud do servidor",
         "unavailable": "Status do Cloud indisponível"
       },
@@ -1229,7 +1229,7 @@
     },
     "controlUnavailable": {
       "title": "Controle indisponível",
-      "description": "Este controle ainda não está disponível na versão da API Cloud conectada. O Openship Cloud precisa ser atualizado antes do uso."
+      "description": "Este controle ainda não está disponível na versão da API Cloud conectada. O Kovalio Cloud precisa ser atualizado antes do uso."
     }
   },
   "gpu": {

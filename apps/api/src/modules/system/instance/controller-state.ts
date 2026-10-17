@@ -24,10 +24,10 @@ export async function controllerState(): Promise<ControllerState> {
       .insert(schema.instanceController)
       .values({
         installationId: randomUUID(),
-        projectId: process.env.OPENSHIP_INSTANCE_PROJECT_ID || null,
+        projectId: process.env.KOVALIO_INSTANCE_PROJECT_ID || null,
         // A provisioned receiver must NEVER run startup reconciliation or workers
         // before its source relinquishes authority, including after a restart.
-        role: process.env.OPENSHIP_INSTANCE_RECEIVE_TOKEN ? "receiving" : "active",
+        role: process.env.KOVALIO_INSTANCE_RECEIVE_TOKEN ? "receiving" : "active",
       })
       .onConflictDoNothing();
   });

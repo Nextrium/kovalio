@@ -218,7 +218,7 @@
       "forwardOnNote": "İletme açık — gh CLI uzak sunucu klonlamalarını da doğrular. Kimliğiniz klonlama başına SSH üzerinden tünellenir; sunucuda hiçbir şey saklanmaz.",
       "forwardOffHint": "Şimdilik yalnızca yerel derlemeler. Uzak sunucu dağıtımları için de gh CLI kullanmak üzere \"Git kimliğimi derleme sunucularına ilet\" seçeneğini açın.",
       "manageForward": "İletmeyi yönet",
-      "disconnectBody": "Openship bu kimlik bilgisini bu örnekten kaldıracak ve klonlamalar için kullanmayı durduracaktır. Siz GitHub'da iptal edene kadar orada geçerli kalır. İstediğiniz zaman yeniden bağlanabilirsiniz.",
+      "disconnectBody": "Kovalio bu kimlik bilgisini bu örnekten kaldıracak ve klonlamalar için kullanmayı durduracaktır. Siz GitHub'da iptal edene kadar orada geçerli kalır. İstediğiniz zaman yeniden bağlanabilirsiniz.",
       "recheck": "Tekrar kontrol et"
     },
     "replaceToken": "GitHub belirtecini değiştir",
@@ -226,7 +226,7 @@
     "tokenEditorDescription": "Depoları görüntülemek ve bu kurulumda derleme yapmak için GitHub kişisel erişim belirteci kullanın.",
     "methodTokenDesc": "Depoları görüntülemek ve yerel derlemeler için GitHub belirteci kullanın.",
     "activeVia": "{method} ile bağlandı",
-    "pickMethod": "Openship'in depolarınıza nasıl erişeceğini seçin.",
+    "pickMethod": "Kovalio'in depolarınıza nasıl erişeceğini seçin.",
     "methodDevice": "GitHub ile giriş",
     "methodApp": "GitHub Uygulaması",
     "methodAppDesc": "Yerel ve uzak dağıtımlar için kapsamlı, kısa ömürlü yükleme belirteçleri.",
@@ -246,11 +246,11 @@
     "methodHostCli": "Bu ana makinedeki gh CLI",
     "manageTokensOnGithub": "GitHub'da belirteçleri yönet",
     "manageAccessOnGithub": "GitHub'da erişimi yönet",
-    "disconnectScopeNote": "Bağlantıyı kesmek bu kimlik bilgisini Openship'ten kaldırır ve klonlamalar için kullanımını durdurur. Siz orada iptal edene kadar GitHub'da geçerli kalır.",
+    "disconnectScopeNote": "Bağlantıyı kesmek bu kimlik bilgisini Kovalio'ten kaldırır ve klonlamalar için kullanımını durdurur. Siz orada iptal edene kadar GitHub'da geçerli kalır.",
     "credentialRejected": "GitHub saklanan {method} yöntemini reddetti.",
     "credentialRejectedImpact": "İptal edildi, süresi doldu veya gerekli bir kapsamı kaybetti. Bununla klonlanan dağıtımlar, siz aşağıdan yeniden bağlanana kadar başarısız olmaya devam edecektir.",
     "credentialUnreachable": "Saklanan {method} yöntemini kontrol etmek için GitHub'a ulaşılamadı.",
-    "credentialUnreachableImpact": "Bu genellikle geçersiz bir kimlik bilgisinden ziyade bir ağ sorunudur — Openship bunu kullanmaya devam eder. GitHub erişilemez durumdaysa yeniden bağlanmak yardımcı olmaz.",
+    "credentialUnreachableImpact": "Bu genellikle geçersiz bir kimlik bilgisinden ziyade bir ağ sorunudur — Kovalio bunu kullanmaya devam eder. GitHub erişilemez durumdaysa yeniden bağlanmak yardımcı olmaz.",
     "credentialCheckedAt": "Son kontrol: {time}"
   },
   "deployDefaults": {
@@ -309,10 +309,10 @@
   "githubSources": {
     "title": "Kendi sunucunuzdaki GitHub Uygulamaları",
     "description": "Şifreli uygulama kimlik bilgileri, doğrudan webhook'lar ve kısa ömürlü kurulum belirteçleriyle bu örneğin GitHub bağlantısını yönetin.",
-    "publicUrlRequired": "Önce bu Openship örneği için herkese açık bir HTTPS adresi yapılandırın. GitHub kurulum geri çağrısına ve webhook'a erişebilmelidir.",
+    "publicUrlRequired": "Önce bu Kovalio örneği için herkese açık bir HTTPS adresi yapılandırın. GitHub kurulum geri çağrısına ve webhook'a erişebilmelidir.",
     "createWithGithub": "GitHub ile oluştur",
     "registerExisting": "Mevcut uygulamayı kaydet",
-    "manifestHelp": "Openship en az yetkili uygulama bildirimini GitHub'a gönderir. GitHub uygulamayı oluşturur, kimlik bilgilerini bir kez döndürür ve depo kurulumunu açar.",
+    "manifestHelp": "Kovalio en az yetkili uygulama bildirimini GitHub'a gönderir. GitHub uygulamayı oluşturur, kimlik bilgilerini bir kez döndürür ve depo kurulumunu açar.",
     "nameLabel": "Kaynak adı",
     "namePlaceholder": "Acme GitHub kaynağı",
     "continueOnGithub": "GitHub'da devam et",
@@ -330,9 +330,9 @@
     "makeDefault": "Varsayılan yap",
     "manage": "GitHub'da yönet",
     "delete": "Sil",
-    "confirmDelete": "{name} Openship'ten silinsin mi? Yerel kimlik bilgileri ve kurulum bağları kaldırılır; uygulama siz GitHub'dan kaldırana kadar orada kurulu kalır.",
+    "confirmDelete": "{name} Kovalio'ten silinsin mi? Yerel kimlik bilgileri ve kurulum bağları kaldırılır; uygulama siz GitHub'dan kaldırana kadar orada kurulu kalır.",
     "editHelp": "Kayıtlı şifreli değerleri korumak için gizli alanları boş bırakın.",
-    "manualHelp": "Mevcut bir GitHub Uygulamasının kimlik bilgilerini girin. Openship hiçbir şey kaydetmeden önce özel anahtarı doğrular.",
+    "manualHelp": "Mevcut bir GitHub Uygulamasının kimlik bilgilerini girin. Kovalio hiçbir şey kaydetmeden önce özel anahtarı doğrular.",
     "appIdLabel": "Uygulama kimliği",
     "clientIdLabel": "İstemci kimliği",
     "clientSecretLabel": "İstemci sırrı",
@@ -679,7 +679,7 @@
       "disconnectFailed": "Bağlantı kesilemedi"
     },
     "pitch": {
-      "title": "Openship Cloud ekleyin",
+      "title": "Kovalio Cloud ekleyin",
       "body": "Her proje otomatik SSL ile ücretsiz bir .{domain} etki alanı alır — DNS yok, sertifika yok. Kendi sunucularınız tam olarak şu anki gibi çalışmaya devam eder.",
       "perkDomain": "Her projede ücretsiz .{domain} etki alanı + otomatik SSL",
       "perkDeploy": "Yönetilen buluta dağıtın veya kendi sunucularınızda kalın",
@@ -689,15 +689,15 @@
       "viewPricing": "Fiyatlandırmayı görüntüle"
     },
     "connectModal": {
-      "title": "Openship Cloud Bağla",
-      "requiresConnection": "{feature} için Openship Cloud bağlantısı gerekir. Erişimi açmak için hesabınızı bağlayın:",
+      "title": "Kovalio Cloud Bağla",
+      "requiresConnection": "{feature} için Kovalio Cloud bağlantısı gerekir. Erişimi açmak için hesabınızı bağlayın:",
       "features": {
         "deployments": "Bulut dağıtımları",
         "infra": "Yönetilen altyapı",
         "ssl": "Otomatik SSL ve alan adları",
         "cdn": "Küresel CDN"
       },
-      "connect": "Openship Cloud Bağlan",
+      "connect": "Kovalio Cloud Bağlan",
       "waitingSignIn": "Giriş bekleniyor…",
       "maybeLater": "Belki daha sonra"
     }
@@ -707,7 +707,7 @@
       "title": "Örnek konumu",
       "thisDesktop": "Bu bilgisayar",
       "thisServer": "Bu sunucu",
-      "desktopHint": "Mevcut örneğin verilerini kullanmak için bağlanın veya Openship’i çevrimiçi tutmak için bir sunucuya taşıyın.",
+      "desktopHint": "Mevcut örneğin verilerini kullanmak için bağlanın veya Kovalio’i çevrimiçi tutmak için bir sunucuya taşıyın.",
       "serverHint": "Görevler, webhook’lar ve ekip erişimi buradan yönetilir.",
       "remoteHint": "Uzak örneğin canlı verilerini kullanıyorsunuz.",
       "retiredHint": "Bu sunucu artık projeleri yönetmiyor. Yeniden kullanmak için buraya bir örnek taşıyın.",
@@ -722,7 +722,7 @@
       "receiveInstance": "Buraya bir örnek taşı",
       "disconnect": "Yerel örneğe dön",
       "moreOptions": "Diğer örnek seçenekleri",
-      "memberTitle": "Openship’i Desktop’tan kullanın",
+      "memberTitle": "Kovalio’i Desktop’tan kullanın",
       "memberHint": "Desktop’ı buradaki erişim yetkilerinizle bağlayın.",
       "loading": "Örnek yükleniyor…",
       "sendHint": "Bir taşıma kodu oluşturun, ardından Desktop’ın Örnek ayarlarındaki diğer seçeneklerden {action} seçeneğini seçin. Desktop devri tamamlayana kadar yönetim burada kalır.",
@@ -735,9 +735,9 @@
       "pairHint": "Diğer Desktop uygulamanızdan bu kurulumun güncel verilerini mevcut yetkilerinizle kullanın. Veriler taşınmaz.",
       "pairOwnDevice": "Bu kod sizin hesabınızla oturum açar. Başka birini davet etmek için Ekip bölümünü kullanın.",
       "teamAccessTitle": "Ekip davetlerini etkinleştir",
-      "teamAccessHint": "Ekip davetleri erişilebilir bir kurulum gerektirir. Openship’e herkese açık bir adres verin veya sürekli açık bir sunucuya taşıyın.",
+      "teamAccessHint": "Ekip davetleri erişilebilir bir kurulum gerektirir. Kovalio’e herkese açık bir adres verin veya sürekli açık bir sunucuya taşıyın.",
       "adminRequired": "Bunu ayarlaması için kurulum yöneticinize başvurun.",
-      "webhookAccessHint": "GitHub, dağıtım olaylarını göndermek için erişilebilir bir Openship API’sine ihtiyaç duyar. Bu kurulumu sürekli açık bir sunucuya taşıyın veya API’sine herkese açık bir adres verin."
+      "webhookAccessHint": "GitHub, dağıtım olaylarını göndermek için erişilebilir bir Kovalio API’sine ihtiyaç duyar. Bu kurulumu sürekli açık bir sunucuya taşıyın veya API’sine herkese açık bir adres verin."
     },
     "transfer": {
       "installOnServer": "Yeni kurulum",
@@ -793,7 +793,7 @@
       "invitationHint": "Bağlantı sırasında yerel örneğiniz duraklatılır. Hiçbir veri taşınmaz."
     },
     "recovery": {
-      "title": "Openship örneğiniz",
+      "title": "Kovalio örneğiniz",
       "subtitle": "Projelerinizi yönetmeye devam etmek için taşımayı tamamlayın veya yeniden bağlanın.",
       "checkConnection": "Bağlantıyı kontrol et",
       "signInRemote": "Uzak örneğe giriş yap"
@@ -801,7 +801,7 @@
   },
   "upgradeAuth": {
     "title": "Bir şifre ekleyin",
-    "description": "Openship’e erişimi korumak için e-posta ve parola belirleyin. Projeleriniz ve geçmişiniz korunur.",
+    "description": "Kovalio’e erişimi korumak için e-posta ve parola belirleyin. Projeleriniz ve geçmişiniz korunur.",
     "close": "Kapat",
     "name": "Ad",
     "namePlaceholder": "Ahmet Yılmaz",
@@ -1422,13 +1422,13 @@
     },
     "backupTitle": "Yedekleme ve kurtarma",
     "backupDesc": "Bir dosya dışa aktarın veya mevcut bir yedekten geri yükleyin.",
-    "backupWarning": "Arşiv dosyaları Openship veritabanını ve kimlik bilgilerini içerir. Docker birim içerikleri sunucularında kalır; hizmet verileri için proje yedeklerini kullanın.",
+    "backupWarning": "Arşiv dosyaları Kovalio veritabanını ve kimlik bilgilerini içerir. Docker birim içerikleri sunucularında kalır; hizmet verileri için proje yedeklerini kullanın.",
     "exportInstanceTitle": "Örneği veya projeleri dışa aktar",
     "exportInstanceDesc": "Ortamları ve bağımlılıklarıyla birlikte tam bir örneği veya seçilen projeleri seçin.",
     "exportProjectTitle": "Projeyi dışa aktar",
     "exportProjectDesc": "Tüm proje ayarlarını, ortam değişkenlerini ve kimlik bilgilerini düz JSON olarak indirin.",
     "exportProjectIntro": "Tüm ortamları, hizmetleri, dağıtım geçmişini, analizleri, bağlantıları, alan adlarını, yedekleme ayarlarını ve anahtarları içerir. JSON dosyası şifrelenmemiştir ve parola olmadan içe aktarılır.",
-    "exportProjectReconnection": "Hedefin mevcut iş yüklerine yeniden bağlanabilmesi için aynı sunuculara veya OpenShip Cloud hesabına ihtiyacı vardır.",
+    "exportProjectReconnection": "Hedefin mevcut iş yüklerine yeniden bağlanabilmesi için aynı sunuculara veya Kovalio Cloud hesabına ihtiyacı vardır.",
     "exportInstanceIntro": "Depolanan ortam değişkenleri, sunucu anahtarları, kimlik bilgileri, yapılandırma ve geçmiş dahil olmak üzere kontrol panelini dışa aktarın.",
     "scopeLabel": "Dışa aktarma kapsamı",
     "scopeInstance": "Tüm örnek",
@@ -1455,7 +1455,7 @@
     "recordsSelected": "{count} kayıt seçildi.",
     "recordsAcrossEnvsSelected": "{envs} ortamda {count} kayıt seçildi.",
     "selectAtLeastOne": "En az bir proje veya ortam seçin.",
-    "cloudNotice": "Hedef çalışma alanı aynı Openship Cloud hesabına bağlanana kadar Cloud projeleri çalışmayacaktır."
+    "cloudNotice": "Hedef çalışma alanı aynı Kovalio Cloud hesabına bağlanana kadar Cloud projeleri çalışmayacaktır."
   },
   "migrate": {
     "chooseTitle": "Çok kullanıcılı moda geçin",
@@ -1649,11 +1649,11 @@
       },
       "cloudflare": {
         "label": "Cloudflare",
-        "summary": "Openship'in özel bir alan adının ihtiyaç duyduğu DNS kayıtlarını otomatik oluşturmasına izin verin.",
+        "summary": "Kovalio'in özel bir alan adının ihtiyaç duyduğu DNS kayıtlarını otomatik oluşturmasına izin verin.",
         "fields": {
           "apiToken": {
             "label": "API belirteci",
-            "help": "Openship tarafından yönetilmesini istediğiniz bölgelerde Zone:Read ve DNS:Edit izinlerine sahip bir belirteç."
+            "help": "Kovalio tarafından yönetilmesini istediğiniz bölgelerde Zone:Read ve DNS:Edit izinlerine sahip bir belirteç."
           }
         }
       }
@@ -1741,21 +1741,21 @@
     "description": "Bu örneğin kendini ne olarak sunduğu. Bu, buradaki herkes için varsayılandır — her kullanıcı Ayarlar → Genel bölümünden kendi görünümünü seçebilir.",
     "platformLabel": "Tam platform",
     "platformDesc": "Projeler, uygulamalar, dağıtımlar, sunucular — bu kurulumun yapabileceği her şey.",
-    "mailLabel": "Openship Mail",
-    "mailDesc": "Örneği Openship Mail olarak markalar ve kenar çubuğunu posta kontrol paneli yapar.",
+    "mailLabel": "Kovalio Mail",
+    "mailDesc": "Örneği Kovalio Mail olarak markalar ve kenar çubuğunu posta kontrol paneli yapar.",
     "savedOverridden": "Kaydedildi. Kendi görünümünüz değişmedi — Ayarlar → Genel bölümünden seçmiştiniz.",
     "errorToast": "Ürün modu değiştirilemedi.",
-    "envNote": "Bu örnek, ortamdan OPENSHIP_PRODUCT=mail ayarını takip eder. Buradan bir mod seçmek bunu geçersiz kılar."
+    "envNote": "Bu örnek, ortamdan KOVALIO_PRODUCT=mail ayarını takip eder. Buradan bir mod seçmek bunu geçersiz kılar."
   },
   "edgeOrphans": {
     "title": "İzlenmeyen edge rotaları",
-    "description": "Bu makinenin hala sunduğu ancak Openship'in kaydı bulunmayan ana makine adları",
+    "description": "Bu makinenin hala sunduğu ancak Kovalio'in kaydı bulunmayan ana makine adları",
     "scan": "Tara",
     "scanning": "Taranıyor…",
     "allClear": "Edge tarafından sunulan tüm ana makine adları hesaplanmıştır.",
     "comparedTo": "{count} izlenen ana makine adıyla karşılaştırıldı.",
     "unavailable": "Edge kontrol edilemedi",
-    "explain": "Bir projeyi \"Yalnızca Openship'ten kaldır\" seçeneğiyle kaldırmak, rotasını kasıtlı olarak çalışır durumda bırakır. Artık bir uygulama rotası, kapsayıcısı gittikten sonra 502 döndürür, ancak kalan STATİK rota eski dosyaları 200 ile sunmaya devam eder — o zamandan beri başka bir projeye verilmiş bir ana makine adında bile.",
+    "explain": "Bir projeyi \"Yalnızca Kovalio'ten kaldır\" seçeneğiyle kaldırmak, rotasını kasıtlı olarak çalışır durumda bırakır. Artık bir uygulama rotası, kapsayıcısı gittikten sonra 502 döndürür, ancak kalan STATİK rota eski dosyaları 200 ile sunmaya devam eder — o zamandan beri başka bir projeye verilmiş bir ana makine adında bile.",
     "kindStatic": "Statik dosyalar",
     "kindProxy": "Uygulama rotası",
     "staticWarning": "Hala dosyaları sunuyor. Bugün gelen isteklere yanıt veriyor.",

@@ -43,7 +43,7 @@ func startDockerOwnershipProxy(directory, id string, cpu float64, memoryMB int) 
 	temporaryDirectory := ""
 	// Unix socket paths have a small OS limit; use a private short directory.
 	if len(socket) > 95 {
-		base, err := os.MkdirTemp("", "openship-docker-*")
+		base, err := os.MkdirTemp("", "kovalio-docker-*")
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +107,7 @@ func labelDockerCreation(r *http.Request, id, socket string, cpu float64, memory
 	if labels == nil {
 		labels = map[string]interface{}{}
 	}
-	labels["io.openship.actions.job"] = id
+	labels["io.kovalio.actions.job"] = id
 	value["Labels"] = labels
 	if dockerAPIVersion.ReplaceAllString(r.URL.Path, "") == "/containers/create" {
 		host, _ := value["HostConfig"].(map[string]interface{})

@@ -22,7 +22,7 @@ import type { Context } from "hono";
 import { AppError, validateGitHubInstallationScope } from "@repo/core";
 import { getRequestContext } from "../../lib/request-context";
 import { auth } from "@repo/platform/engine/lib/auth";
-import { issueNamespaceToken } from "@repo/platform/engine/lib/openship-cloud";
+import { issueNamespaceToken } from "@repo/platform/engine/lib/kovalio-cloud";
 import {
   exchangeHandoffCode,
   validateDesktopRedirect,
@@ -950,7 +950,7 @@ export async function githubOauthSuccess(c: Context) {
   return c.html(
     renderCallbackHtml(
       "GitHub connected",
-      "GitHub repository access is authorized. You can close this window — continue App installation from Openship.",
+      "GitHub repository access is authorized. You can close this window — continue App installation from Kovalio.",
       { closeAfterMs: 2000 },
     ),
   );
@@ -959,7 +959,7 @@ export async function githubOauthSuccess(c: Context) {
 /**
  * POST /api/cloud/github/install-url
  *
- * Returns Openship's account-selection URL with a one-time state token. It
+ * Returns Kovalio's account-selection URL with a one-time state token. It
  * offers existing installations, or forwards a new install to GitHub with the
  * same state. GitHub preserves that state and appends it to the Setup URL alongside
  * `installation_id` and `setup_action` — that's what lets us attribute
@@ -981,7 +981,7 @@ export async function githubInstallUrl(c: Context) {
  * here AFTER they approve the App installation on github.com. We use the
  * one-time state token (issued by githubInstallUrl and embedded into the
  * install URL) to recover the SaaS userId + workspace that started the flow.
- * Attribution then requires that user's GitHub token and the Openship App JWT
+ * Attribution then requires that user's GitHub token and the Kovalio App JWT
  * to resolve the same installation before the state and workspace claim are
  * committed atomically. No browser session is trusted on this callback.
  */
@@ -1026,7 +1026,7 @@ export async function githubInstallCallback(c: Context) {
       return c.html(
         renderCallbackHtml(
           "Installation requested",
-          "An organization admin needs to approve the install. After approval, return to Openship Settings and choose Install GitHub App again to complete the verified workspace connection.",
+          "An organization admin needs to approve the install. After approval, return to Kovalio Settings and choose Install GitHub App again to complete the verified workspace connection.",
         ),
       );
     case "forbidden":
@@ -1074,7 +1074,7 @@ async function githubInstallSelection(c: Context) {
       return c.html(
         renderCallbackHtml(
           "Install link expired",
-          "This installation link expired or was already used. Start a new connection from Openship.",
+          "This installation link expired or was already used. Start a new connection from Kovalio.",
         ),
         400,
       );

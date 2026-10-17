@@ -322,14 +322,14 @@ export function createServerClusterRepo(db: Database) {
           tx,
           exclusive ? undefined : expiredManagedLease(),
           exclusive
-            ? "OpenShip restarted before network setup finished. Resume or restore this operation to check the host recovery state; host rollback timers run independently."
+            ? "Kovalio restarted before network setup finished. Resume or restore this operation to check the host recovery state; host rollback timers run independently."
             : "The controller stopped reporting progress. Resume or restore this operation; each host also has a local rollback deadline.",
         );
         const interrupted = await interruptVerification(
           tx,
           exclusive ? undefined : lte(clusterVerification.expiresAt, new Date()),
           exclusive
-            ? "OpenShip restarted during network verification. Run the checks again."
+            ? "Kovalio restarted during network verification. Run the checks again."
             : "Verification was interrupted. Run it again.",
         );
         const verifications = interrupted.length
@@ -368,7 +368,7 @@ export function createServerClusterRepo(db: Database) {
       // The deletion trigger uses this same predicate, closing the race between
       // the friendly auth preflight and Better Auth's subsequent DELETE.
       const [row] = await db
-        .select({ active: sql<boolean>`openship_has_managed_network_state(${org})` })
+        .select({ active: sql<boolean>`kovalio_has_managed_network_state(${org})` })
         .from(organization)
         .where(eq(organization.id, org));
       return row?.active ?? false;
@@ -817,7 +817,7 @@ export function createServerClusterRepo(db: Database) {
             await assertMembers(tx, org, plan.config);
             const [network] = await tx
               .insert(clusterNetwork)
-              .values({ clusterId: plan.clusterId, ...plan.config.network, ownership: "openship" })
+              .values({ clusterId: plan.clusterId, ...plan.config.network, ownership: "kovalio" })
               .returning();
             await writeMembers(
               tx,
@@ -967,7 +967,7 @@ export function createServerClusterRepo(db: Database) {
             throw conflict("Each member needs its host-generated public key.");
           const [network] = await tx
             .update(clusterNetwork)
-            .set({ ...config.network, source: null, ownership: "openship" })
+            .set({ ...config.network, source: null, ownership: "kovalio" })
             .where(eq(clusterNetwork.clusterId, plan.clusterId))
             .returning();
           if (!network) throw conflict("The cluster network is missing.");

@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
 
 const h = vi.hoisted(() => ({
-  env: { CLOUD_MODE: false, DEPLOY_MODE: "desktop", OPENSHIP_ALLOW_ZERO_AUTH: false,
-    OPENSHIP_PUBLIC_URL: undefined as string | undefined, OPENSHIP_REQUIRE_AUTH: false },
+  env: { CLOUD_MODE: false, DEPLOY_MODE: "desktop", KOVALIO_ALLOW_ZERO_AUTH: false,
+    KOVALIO_PUBLIC_URL: undefined as string | undefined, KOVALIO_REQUIRE_AUTH: false },
   peer: "127.0.0.1" as string | undefined,
   users: [] as { id: string }[],
   listServers: vi.fn(async () => []),
@@ -34,8 +34,8 @@ const request = (path: string) => app.request(path, {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  Object.assign(h.env, { CLOUD_MODE: false, DEPLOY_MODE: "desktop", OPENSHIP_ALLOW_ZERO_AUTH: false,
-    OPENSHIP_PUBLIC_URL: undefined, OPENSHIP_REQUIRE_AUTH: false });
+  Object.assign(h.env, { CLOUD_MODE: false, DEPLOY_MODE: "desktop", KOVALIO_ALLOW_ZERO_AUTH: false,
+    KOVALIO_PUBLIC_URL: undefined, KOVALIO_REQUIRE_AUTH: false });
   h.peer = "127.0.0.1";
   h.users = [];
 });
@@ -50,8 +50,8 @@ describe("first-run authorization", () => {
   });
 
   it.each(["public", "cli", "unconfigured-local-posture"])("rejects a loopback proxy on %s instances", async posture => {
-    if (posture === "public") h.env.OPENSHIP_PUBLIC_URL = "https://ops.example.test";
-    if (posture === "cli") h.env.OPENSHIP_REQUIRE_AUTH = true;
+    if (posture === "public") h.env.KOVALIO_PUBLIC_URL = "https://ops.example.test";
+    if (posture === "cli") h.env.KOVALIO_REQUIRE_AUTH = true;
     if (posture === "unconfigured-local-posture") h.env.DEPLOY_MODE = "docker";
     expect((await request("/sign-up/email")).status).toBe(403);
     expect((await request("/onboarding/test-connection")).status).toBe(404);
@@ -68,7 +68,7 @@ describe("first-run authorization", () => {
 
   it("retains explicitly enabled local onboarding and private-LAN SSH targets", async () => {
     h.env.DEPLOY_MODE = "bare";
-    h.env.OPENSHIP_ALLOW_ZERO_AUTH = true;
+    h.env.KOVALIO_ALLOW_ZERO_AUTH = true;
     expect((await request("/onboarding/test-connection")).status).toBe(200);
     expect(h.testConnection).toHaveBeenCalledWith(expect.objectContaining({ sshHost: "server.lan" }));
   });

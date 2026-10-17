@@ -34,7 +34,7 @@ export function ClusterDatabaseBackupSettings({
           {engine === "postgres"
             ? "Save database data and recovery logs to your backup destination."
             : "Save Redis data snapshots to your backup destination. Each data partition has its own recovery point."}{" "}
-          The cluster runs the schedule even when OpenShip is offline.
+          The cluster runs the schedule even when Kovalio is offline.
         </p>
         <BackupDestinationSelect
           value={value?.destinationId ?? ""}

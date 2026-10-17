@@ -21,7 +21,7 @@ console.log(advisories);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/notices"
+curl "$KOVALIO_URL/api/notices"
 ```
 
 </Tab>
@@ -53,8 +53,8 @@ console.log(notice.id);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/notices" \
-  -H "X-Internal-Token: $OPENSHIP_INTERNAL_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/notices" \
+  -H "X-Internal-Token: $KOVALIO_INTERNAL_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"Planned maintenance","message":"Deployments will pause during maintenance.","severity":"info","startsAt":"2026-10-01T01:00:00Z","endsAt":"2026-10-01T01:30:00Z"}'
 ```

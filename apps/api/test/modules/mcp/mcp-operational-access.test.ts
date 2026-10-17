@@ -27,7 +27,7 @@ const client = (owner: SeededOwner, token = owner.token) =>
     organizationId: owner.orgId,
   });
 beforeAll(() => {
-  vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory");
+  vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory");
   forwarding.fetch.mockImplementation((request: Request) => app.fetch(request));
 });
 afterAll(async () => {

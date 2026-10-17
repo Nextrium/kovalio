@@ -1,6 +1,6 @@
 ---
 title: MCP
-description: Call Openship tools through Model Context Protocol.
+description: Call Kovalio tools through Model Context Protocol.
 ---
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
@@ -10,7 +10,7 @@ MCP-compatible client) drive Kovalio as a set of tools. Each tool maps onto a pe
 and every call re-runs the full auth and permission stack — so an agent only ever sees and does what its
 token allows. For client setup (OAuth flow, config snippets), see the [MCP overview](/docs/mcp).
 
-Available on both self-hosted and Openship Cloud (mounted in the shared route set).
+Available on both self-hosted and Kovalio Cloud (mounted in the shared route set).
 
 ## How authentication works
 
@@ -61,18 +61,18 @@ POST /api/mcp
 ```
 
 ```bash
-curl -s "$OPENSHIP_URL/api/mcp" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -s "$KOVALIO_URL/api/mcp" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-The tool set is derived from Openship's permission-tagged routes that opt in with an `mcp` block; the
+The tool set is derived from Kovalio's permission-tagged routes that opt in with an `mcp` block; the
 credential/auth surfaces (`tokens`, `auth`, `mcp` itself) are never exposed.
 
 ## Discover and select a workspace
 
-An Openship workspace or workgroup is an **organization** in the API. Call
+An Kovalio workspace or workgroup is an **organization** in the API. Call
 `get_permissions_workspaces` with `{}` to discover workspace names and IDs before creating an app or a
 Compose project. This tool is available to read-only and restricted credentials too.
 
@@ -121,7 +121,7 @@ instead of falling back to the default workspace.
 This ID selects a request scope; it does **not** transfer an existing app between organizations.
 `get_system_servers_destinations` lists authorized execution servers, a separate concept. Select a
 `serverId` when creating or importing a project; changing where it runs does not move its records to
-another Openship instance. Cross-organization app transfer is not currently exposed.
+another Kovalio instance. Cross-organization app transfer is not currently exposed.
 
 ## Deploy a desktop folder on Cloud
 
@@ -142,7 +142,7 @@ This flow requires project creation/write and destination server write permissio
 `transfer_to_cloud` or access to the MCP client's OAuth bearer token.
 
 To manage projects whose records live in Cloud, authorize a separate MCP connection to
-`https://api.openship.io/api/mcp` and discover the Cloud organization there. A local credential cannot
+`https://api.nextrium.org/api/mcp` and discover the Cloud organization there. A local credential cannot
 use the owner's Cloud account link to access those records. `CLOUD_SCOPE_UNAVAILABLE` also applies when
 `organizationId` is omitted; removing it does not widen the credential's permissions.
 
@@ -162,11 +162,11 @@ Cloud API without the promotion endpoint rejects the request before importing.
 
 `params.name` is the tool name from `tools/list`; `params.arguments` carries any path parameters, a
 `query` object and/or JSON `body` when declared by the tool’s schema (including guarded `DELETE` operations), and an optional
-`organizationId` (sent as `X-Organization-Id` together with `X-Openship-Scope: fixed`).
+`organizationId` (sent as `X-Organization-Id` together with `X-Kovalio-Scope: fixed`).
 
 ```bash
-curl -s "$OPENSHIP_URL/api/mcp" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -s "$KOVALIO_URL/api/mcp" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call",
        "params":{"name":"get_projects","arguments":{}}}'
@@ -183,8 +183,8 @@ workflow, referencing the exact tool names to call in sequence. MCP clients surf
 starters, so they also serve as the discoverable entry points into a flow.
 
 ```bash
-curl -s "$OPENSHIP_URL/api/mcp" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -s "$KOVALIO_URL/api/mcp" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":3,"method":"prompts/get",
        "params":{"name":"deploy-from-git","arguments":{"repo":"acme/widgets"}}}'

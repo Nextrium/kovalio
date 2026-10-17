@@ -1,6 +1,6 @@
 {
   "home": {
-    "label": "Openship Cloud",
+    "label": "Kovalio Cloud",
     "title": "公開の準備はできましたか？",
     "plansAndBilling": "プランと請求",
     "description": "ビルドとホスティングの管理を任せて、成長に集中。",
@@ -80,11 +80,11 @@
     },
     "notEnabled": {
       "title": "Cloud の購入はまだ利用できません",
-      "description": "Openship ではサブスクリプションとクレジットの購入がまだ有効になっていません。しばらくしてからもう一度お試しください。"
+      "description": "Kovalio ではサブスクリプションとクレジットの購入がまだ有効になっていません。しばらくしてからもう一度お試しください。"
     },
     "notConfigured": {
       "title": "Cloud の請求設定が完了していません",
-      "description": "Openship 側で請求の設定を完了する必要があります。Openship サポートにお問い合わせください。"
+      "description": "Kovalio 側で請求の設定を完了する必要があります。Kovalio サポートにお問い合わせください。"
     },
     "forbidden": {
       "title": "請求情報へのアクセス権がありません",
@@ -97,7 +97,7 @@
     },
     "loadFailed": {
       "title": "請求情報を読み込めませんでした",
-      "description": "請求機能は一時的に利用できません。もう一度お試しください。問題が続く場合は Openship サポートにお問い合わせください。"
+      "description": "請求機能は一時的に利用できません。もう一度お試しください。問題が続く場合は Kovalio サポートにお問い合わせください。"
     }
   },
   "plansRoute": {
@@ -408,7 +408,7 @@
     "planRequired": "プランが必要です",
     "savedCredits": "保存された利用残高",
     "savedCreditsHint": "前払いの利用残高はこのワークスペースに保持されます。Cloudデプロイで使うにはプランを選択してください。",
-    "offerTitle": "Openship Cloud で公開",
+    "offerTitle": "Kovalio Cloud で公開",
     "offerLabel": "デプロイを始める",
     "offerDescription": "プロジェクト向けのマネージドリソース。",
     "startingWith": "{name} で始める",
@@ -449,7 +449,7 @@
     "diskHint": "アプリのディスクへの読み書き量です。保存容量ではありません。",
     "transfer": "アプリのデータ転送",
     "transferHint": "アプリの受信・送信データです。Edgeの配信量は別に表示します。",
-    "edgeTitle": "Openship Edge",
+    "edgeTitle": "Kovalio Edge",
     "bandwidth": "Edge転送量",
     "bandwidthHint": "ワークスペースのEdgeルートの受信・送信トラフィックです。月間枠はコンピュートとは別です。上限に達すると更新またはアップグレードまでルートが停止します。",
     "requests": "Edgeリクエスト",
@@ -536,7 +536,7 @@
   "workspaces": {
     "title": "クラウドスペース",
     "singular": "クラウドスペース",
-    "description": "プランを選んでデプロイするだけ。サーバーは Openship が管理し、プロジェクトは CPU、メモリ、ストレージを共有します。",
+    "description": "プランを選んでデプロイするだけ。サーバーは Kovalio が管理し、プロジェクトは CPU、メモリ、ストレージを共有します。",
     "loading": "クラウドスペースを読み込み中…",
     "choose": "サーバーを選択",
     "chooseBilling": "請求を表示するクラウドスペースを選択してください。",
@@ -558,7 +558,7 @@
     "create": "クラウドスペースを追加",
     "mode": "プロジェクトの分離",
     "createHint": "サーバーの作成は無料です。次にプランを選択してください。課金は購入手続きの完了後に始まります。",
-    "cloudOnly": "管理サーバーは Openship Cloud で利用できます。セルフホストのインフラは「サーバー」で管理してください。",
+    "cloudOnly": "管理サーバーは Kovalio Cloud で利用できます。セルフホストのインフラは「サーバー」で管理してください。",
     "projectCount": "{count} 件のプロジェクト",
     "noProjects": "このサーバーにはまだプロジェクトがありません。",
     "liveUsage": "現在の使用量",
@@ -615,7 +615,7 @@
     "plan": "サーバーのプラン",
     "actions": "サーバーの操作",
     "changePlan": "プランを変更",
-    "managedBy": "Openship Cloud が管理",
+    "managedBy": "Kovalio Cloud が管理",
     "network": {
       "title": "ネットワーク",
       "description": "このマネージドサーバーのプロバイダー設定です。",
@@ -813,7 +813,7 @@
     "retry": "お支払いを再試行",
     "close": "閉じる",
     "done": "完了",
-    "requestFailed": "リクエストを保存できませんでした。再試行するか、support@openship.io にメールしてください。"
+    "requestFailed": "リクエストを保存できませんでした。再試行するか、support@nextrium.org にメールしてください。"
   },
   "pendingPayments": {
     "title": "未完了のお支払い",

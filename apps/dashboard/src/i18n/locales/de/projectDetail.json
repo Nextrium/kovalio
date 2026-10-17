@@ -97,11 +97,11 @@
       "serviceCountOne": "{count} Dienst",
       "serviceCountOther": "{count} Dienste",
       "searchPlaceholder": "Nach Name, Image oder Tag suchen…",
-      "cloudConnectHint": "Verbinden Sie Openship Cloud, um den Cloud-Dienstkatalog zu durchsuchen. Sie können weiterhin jedes Image manuell hinzufügen.",
+      "cloudConnectHint": "Verbinden Sie Kovalio Cloud, um den Cloud-Dienstkatalog zu durchsuchen. Sie können weiterhin jedes Image manuell hinzufügen.",
       "noMatchesTitle": "Keine Treffer",
       "noMatchesBody": "Versuchen Sie eine andere Kategorie oder einen anderen Suchbegriff - oder wählen Sie Benutzerdefiniertes Image aus der Leiste.",
       "localImages": "Lokale Images",
-      "openshipCloud": "Openship Cloud",
+      "kovalioCloud": "Kovalio Cloud",
       "localDocker": "Lokales Docker",
       "customEntryName": "Benutzerdefiniertes Image",
       "customEntryDescription": "Beliebiges öffentliches oder privates Docker-Image per Tag beziehen.",
@@ -134,7 +134,7 @@
         "other": "Sonstiges"
       },
       "cloudConnectTitle": "Benötigen Sie verwaltete Datenbanken oder Objektspeicher?",
-      "cloudConnectBody": "Verbinden Sie Openship Cloud, um serverlose Postgres-, Redis- und S3-kompatible Buckets neben diesem Projekt bereitzustellen.",
+      "cloudConnectBody": "Verbinden Sie Kovalio Cloud, um serverlose Postgres-, Redis- und S3-kompatible Buckets neben diesem Projekt bereitzustellen.",
       "cloudConnectButton": "Cloud-Add-ons entdecken"
     },
     "detail": {
@@ -174,7 +174,7 @@
       "saveEnvironment": "Umgebung speichern",
       "environmentState": {
         "helpTitle": "So funktionieren Umgebungsvariablen",
-        "description": "In Openship gespeichert. Dienstspezifische Werte haben Vorrang vor Compose und gemeinsamen Projektwerten. Das Bearbeiten eines geerbten Werts erstellt eine Überschreibung für diesen Dienst.",
+        "description": "In Kovalio gespeichert. Dienstspezifische Werte haben Vorrang vor Compose und gemeinsamen Projektwerten. Das Bearbeiten eines geerbten Werts erstellt eine Überschreibung für diesen Dienst.",
         "sources": {
           "service": "Dienstspezifische Überschreibung",
           "compose": "Compose",
@@ -197,11 +197,11 @@
           "not-deployed": "Diese Variablen werden beim Deployment dieses Dienstes verwendet.",
           "unsupported": "Stelle diesen Dienst erneut bereit, um seine gespeicherte Umgebung anzuwenden."
         },
-        "recoveryHint": "Der laufende Container enthält Variablen, die nicht in Openship gespeichert sind. Stelle sie vor dem Anwenden wieder her, wenn du sie behalten möchtest:",
+        "recoveryHint": "Der laufende Container enthält Variablen, die nicht in Kovalio gespeichert sind. Stelle sie vor dem Anwenden wieder her, wenn du sie behalten möchtest:",
         "recover": "Aus laufendem Dienst wiederherstellen",
         "removeRuntime": "Ohne Wiederherstellung dieser Variablen anwenden und sie aus dem laufenden Dienst entfernen.",
         "recovered": "Aus laufendem Dienst wiederhergestellt — noch nicht gespeichert",
-        "recoveredHint": "Die wiederhergestellten Werte können geprüft werden. Speichere sie, um sie in Openship zu behalten.",
+        "recoveredHint": "Die wiederhergestellten Werte können geprüft werden. Speichere sie, um sie in Kovalio zu behalten.",
         "recoveryFailed": "Die Variablen konnten nicht aus dem laufenden Dienst wiederhergestellt werden. Gespeicherte Variablen wurden nicht geändert."
       },
       "environmentApply": {
@@ -383,7 +383,7 @@
     "connection": {
       "terminal": "Terminal",
       "statusTitle": "Dienststatus nicht verfügbar",
-      "statusHint": "Openship konnte den aktuellen Status nicht bestätigen. Dein Dienst läuft möglicherweise noch.",
+      "statusHint": "Kovalio konnte den aktuellen Status nicht bestätigen. Dein Dienst läuft möglicherweise noch.",
       "checkingTitle": "Dienst wird geprüft",
       "checkingHint": "Warten auf eine Antwort des Servers. Du kannst schon versuchen, das Terminal zu öffnen.",
       "startingTitle": "Warten auf den Dienst",
@@ -408,7 +408,7 @@
       "errorTitle": "Terminal nicht verfügbar",
       "errors": {
         "auth": "Dein Zugriff konnte nicht bestätigt werden. Melde dich erneut an oder prüfe deine Berechtigungen.",
-        "connect": "Openship konnte die Shell des Dienstes nicht erreichen. Versuche es erneut, sobald der Server wieder erreichbar ist.",
+        "connect": "Kovalio konnte die Shell des Dienstes nicht erreichen. Versuche es erneut, sobald der Server wieder erreichbar ist.",
         "notFound": "Dieser Dienst ist nicht verfügbar oder du hast keinen Zugriff.",
         "notDeployed": "Es läuft kein Container, mit dem du dich verbinden kannst. Prüfe den Dienststatus und versuche es erneut.",
         "notSupported": "Die Laufzeitumgebung dieses Dienstes unterstützt kein interaktives Terminal.",

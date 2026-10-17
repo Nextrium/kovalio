@@ -9,13 +9,13 @@ describe("foreign Compose collision gate", () => {
   it("finds the old CLI stack before a normal same-slug deploy creates duplicates", () => {
     expect(
       findForeignComposeCollisions({
-        slug: "openship",
+        slug: "kovalio",
         serviceNames: ["api", "dashboard", "web"],
         containers: [
           container({
             id: "old_api",
-            names: ["openship-api-1"],
-            composeProject: "openship",
+            names: ["kovalio-api-1"],
+            composeProject: "kovalio",
             composeService: "api",
           }),
           container({
@@ -26,20 +26,20 @@ describe("foreign Compose collision gate", () => {
           }),
         ],
       }),
-    ).toEqual([{ serviceName: "api", containerName: "openship-api-1" }]);
+    ).toEqual([{ serviceName: "api", containerName: "kovalio-api-1" }]);
   });
 
   it("does not call a tracked/adopted container foreign", () => {
     expect(
       findForeignComposeCollisions({
-        slug: "openship",
+        slug: "kovalio",
         serviceNames: ["api"],
         trackedContainerIds: ["old_api"],
         containers: [
           container({
             id: "old_api",
-            names: ["openship-api-1"],
-            composeProject: "openship",
+            names: ["kovalio-api-1"],
+            composeProject: "kovalio",
             composeService: "api",
           }),
         ],
@@ -84,25 +84,25 @@ describe("foreign Compose collision gate", () => {
   it("ignores an exited legacy container after the old stack was stopped", () => {
     expect(
       findForeignComposeCollisions({
-        slug: "openship",
+        slug: "kovalio",
         serviceNames: ["api", "dashboard"],
         containers: [
           container({
             id: "old_api",
             state: "exited",
-            names: ["openship-api-1"],
-            composeProject: "openship",
+            names: ["kovalio-api-1"],
+            composeProject: "kovalio",
             composeService: "api",
           }),
           container({
             id: "new_api",
             state: "created",
-            names: ["openship-api-2"],
-            composeProject: "openship",
+            names: ["kovalio-api-2"],
+            composeProject: "kovalio",
             composeService: "api",
           }),
         ],
       }),
-    ).toEqual([{ serviceName: "api", containerName: "openship-api-2" }]);
+    ).toEqual([{ serviceName: "api", containerName: "kovalio-api-2" }]);
   });
 });

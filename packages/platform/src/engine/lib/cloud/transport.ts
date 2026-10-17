@@ -96,8 +96,8 @@ export async function cloudFetch(
     const requestId = currentErrorContext().requestId;
     if (requestId) headers.set("X-Request-ID", requestId);
     if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-    headers.set(OPENSHIP_VERSION_HEADER, APP_VERSION);
-    headers.set(OPENSHIP_PLATFORM_HEADER, env.DEPLOY_MODE);
+    headers.set(KOVALIO_VERSION_HEADER, APP_VERSION);
+    headers.set(KOVALIO_PLATFORM_HEADER, env.DEPLOY_MODE);
     headers.set("X-Organization-Id", session.organizationId);
     headers.set(SDK_SCOPE_HEADER, "fixed");
     headers.set("Authorization", `Bearer ${session.token}`);

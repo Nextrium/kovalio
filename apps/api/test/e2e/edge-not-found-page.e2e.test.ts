@@ -439,7 +439,7 @@ describeDockerE2E("edge unrouted-host page, real OpenResty", () => {
     }, new BuildLogger(() => {}));
     expect(result.status).toBe("ready");
     expect(result.routeWarnings).toBeUndefined();
-    const luaDirectory = "/usr/local/openresty/site/lualib/openship";
+    const luaDirectory = "/usr/local/openresty/site/lualib/kovalio";
     for (const name of ["rules_guard.lua", "site_logger.lua"]) {
       files.set(`${luaDirectory}/${name}`, await readFile(
         join(REPO_ROOT, "packages/adapters/src/infra/lua", name), "utf8",

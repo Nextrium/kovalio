@@ -6,7 +6,7 @@ vi.mock("@repo/platform/engine/modules/github/sources/index", () => ({ createGit
 vi.mock("@repo/platform/engine/modules/github/github.http", async original => ({ ...await original<object>(), ghSend: provider.send }));
 import { db, schema, repos, seedOwner, seedServer, installFakeRunner, type SeededOwner } from "../jobs/_harness";
 import { createShip, type VerifiedIdentity } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { githubRoutes } from "../../../src/modules/github/github.routes";
 import { projectRoutes } from "../../../src/modules/projects/project.routes";
@@ -24,7 +24,7 @@ async function clients(actor: SeededOwner, organizationId = actor.orgId, limits:
   const ship = createShip({ platform: getPlatformKernel(), identity: { resolve: async () => ({ user, sessionId: "git-test", ...limits }) } });
   return {
     native: await ship.scope({ identity: "verified", organizationId }),
-    remote: new OpenshipClient({ baseUrl: "http://openship.test", token: actor.token, organizationId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch }),
+    remote: new KovalioClient({ baseUrl: "http://kovalio.test", token: actor.token, organizationId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch }),
   };
 }
 async function memberOf(owner: SeededOwner) {

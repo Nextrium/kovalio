@@ -115,7 +115,7 @@ export async function runDatabaseTask(config: DatabaseTaskConfig, signal: AbortS
     throw new Error("The database task has an invalid saved configuration.");
   const index = new TaskArchiveIndex(config, signal);
   const store = new TaskArchiveStore(config.destinationPath, signal);
-  const directory = await mkdtemp(join(tmpdir(), "openship-data-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-data-"));
   try {
     await index.read();
     if (config.operation.endsWith("restore") || config.operation === "import-backup") {

@@ -254,7 +254,7 @@ const MANAGED_NFT = String.raw`
 import json, subprocess, sys
 c = json.loads(sys.argv[1]); action = sys.argv[2]
 prefix = 'OSWG_' + c['identity'][:16] + '_'
-tag = 'openship-network-' + c['identity']
+tag = 'kovalio-network-' + c['identity']
 def call(args, data=None):
     result = subprocess.run(['nft'] + args, input=data, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20)
     if result.returncode: raise RuntimeError('Could not inspect or update the owned nftables rules.')
@@ -275,7 +275,7 @@ if action != 'down':
             raise RuntimeError('Additional nftables input/output base chains need a custom firewall adapter.')
     for rule in rules:
         if not owned(rule) and prefix in json.dumps(rule):
-            raise RuntimeError('A foreign nftables rule refers to an OpenShip-owned chain.')
+            raise RuntimeError('A foreign nftables rule refers to an Kovalio-owned chain.')
 def clean(value):
     if isinstance(value, list): return [clean(item) for item in value]
     if isinstance(value, dict): return {key: clean(item) for key, item in value.items() if key not in ('handle', 'index', 'position', 'packets', 'bytes')}
@@ -289,7 +289,7 @@ if action == 'snapshot':
         for rule in rules:
             if rule.get('family') != 'inet' or rule.get('table') != 'filter' or rule.get('chain') != parent: continue
             if rule.get('comment') == tag + '-' + suffix: found = True; break
-            if not str(rule.get('comment', '')).startswith('openship-network-'):
+            if not str(rule.get('comment', '')).startswith('kovalio-network-'):
                 raise RuntimeError('A host firewall rule precedes the network access policy. Review the firewall before continuing.')
         if not found: raise RuntimeError('The access-policy jump is missing.')
     print(json.dumps(clean([row for row in rows if ('chain' in row and row['chain'].get('name', '').startswith(prefix)) or ('rule' in row and owned(row['rule']))]), sort_keys=True))
@@ -351,12 +351,12 @@ def rules(chain):
     return result.stdout.splitlines()
 snapshot = {}
 for suffix, parent in (('I', 'INPUT'), ('O', 'OUTPUT'), ('F', 'FORWARD')):
-    jump = '-A ' + parent + ' -m comment --comment openship-network-' + c['identity'] + ' -j ' + prefix + suffix
+    jump = '-A ' + parent + ' -m comment --comment kovalio-network-' + c['identity'] + ' -j ' + prefix + suffix
     found = False
     for line in rules(parent):
         if not line.startswith('-A '): continue
         if line.replace('"', '') == jump: found = True; break
-        if '-m comment --comment openship-network-' not in line.replace('"', '') or ' -j OSWG_' not in line:
+        if '-m comment --comment kovalio-network-' not in line.replace('"', '') or ' -j OSWG_' not in line:
             raise RuntimeError('A host firewall rule precedes the network access policy. Review the firewall before continuing.')
     if not found: raise RuntimeError('The access-policy jump is missing: ' + parent)
     snapshot[suffix] = rules(prefix + suffix)
@@ -410,12 +410,12 @@ export function managedNetworkFirewall(
   }
   if (manager !== "iptables")
     return refused(
-      `Managed networking currently supports unfiltered hosts, iptables, and nftables with inet filter input/output chains. This host uses ${manager}; its firewall needs an owned-rule adapter before OpenShip can safely manage it.`,
+      `Managed networking currently supports unfiltered hosts, iptables, and nftables with inet filter input/output chains. This host uses ${manager}; its firewall needs an owned-rule adapter before Kovalio can safely manage it.`,
     );
   const input = `OSWG_${identity.slice(0, 16)}_I`;
   const output = `OSWG_${identity.slice(0, 16)}_O`;
   const forward = `OSWG_${identity.slice(0, 16)}_F`;
-  const comment = `openship-network-${identity}`;
+  const comment = `kovalio-network-${identity}`;
   const up: string[] = [];
   const down: string[] = [];
   for (const [chain, parent] of [

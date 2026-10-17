@@ -114,7 +114,7 @@ vi.mock("@repo/db", () => ({
         id: "dst_1",
         organizationId: "org_1",
         name: "R2",
-        pathPrefix: "openship",
+        pathPrefix: "kovalio",
       }),
       setLastVerified: async () => {},
     },
@@ -134,8 +134,8 @@ vi.mock("@repo/db", () => ({
     project: {
       findById: async () => ({
         id: "prj_1",
-        slug: "openship",
-        name: "Openship",
+        slug: "kovalio",
+        name: "Kovalio",
         organizationId: "org_1",
         activeDeploymentId: "dep_1",
       }),
@@ -157,9 +157,9 @@ vi.mock("@repo/adapters", async () => {
     HashingPassthrough,
     PRESERVED_ARTIFACT_METADATA_KEYS,
     sanitizeProducerOpts,
-    artifactKey: (_b: unknown, name: string) => `openship/openship/postgres/bkr_live/${name}`,
-    manifestKey: () => "openship/openship/postgres/bkr_live/manifest.json",
-    runPrefix: () => "openship/openship/postgres/bkr_live",
+    artifactKey: (_b: unknown, name: string) => `kovalio/kovalio/postgres/bkr_live/${name}`,
+    manifestKey: () => "kovalio/kovalio/postgres/bkr_live/manifest.json",
+    runPrefix: () => "kovalio/kovalio/postgres/bkr_live",
     buildManifest: () => ({ version: 1 }),
     resolveDestination: () => ({
       preflight: async () => ({ ok: true }),
@@ -296,7 +296,7 @@ describe("PostgreSQL capture completion", () => {
     expect(h.row).toMatchObject({ status: "failed", bytesTransferred: 0 });
     expect(h.row.errorMessage).toContain(`pg_dump exited ${code}`);
     expect(h.puts.some((key) => key.endsWith("manifest.json"))).toBe(false);
-    expect(h.deleted).toContain("openship/openship/postgres/bkr_live/pg-dump.dump");
+    expect(h.deleted).toContain("kovalio/kovalio/postgres/bkr_live/pg-dump.dump");
     expect(h.notifications).toEqual(["backup_run.failed"]);
     expect(h.historyReads).toEqual([]);
   });
@@ -319,7 +319,7 @@ describe("PostgreSQL capture completion", () => {
     expect(h.row).toMatchObject({ status: "failed", bytesTransferred: 0 });
     expect(h.row.errorMessage).toContain("below 1%");
     expect(h.puts.some((key) => key.endsWith("manifest.json"))).toBe(false);
-    expect(h.deleted).toContain("openship/openship/postgres/bkr_live/pg-dump.dump");
+    expect(h.deleted).toContain("kovalio/kovalio/postgres/bkr_live/pg-dump.dump");
     expect(h.notifications).toEqual(["backup_run.failed"]);
   });
 });
@@ -464,7 +464,7 @@ describe("live upload progress", () => {
     expect(events.some((event) => event.type === "complete")).toBe(false);
     expect(events.some((event) => event.status === "succeeded")).toBe(false);
     expect(h.notifications).toEqual([]);
-    expect(h.deleted).toContain("openship/openship/postgres/bkr_live/volume-pgdata.tar.zst");
+    expect(h.deleted).toContain("kovalio/kovalio/postgres/bkr_live/volume-pgdata.tar.zst");
   });
 
   it("does not delete a successful winner's run-scoped objects", async () => {

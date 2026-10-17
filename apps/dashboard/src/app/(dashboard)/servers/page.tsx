@@ -191,7 +191,7 @@ function ServerInventoryPage() {
     return () => clearInterval(timer);
   }, [pending, fetchServers]);
 
-  // "Add → This machine" (#527): register the box OpenShip runs on as a deploy
+  // "Add → This machine" (#527): register the box Kovalio runs on as a deploy
   // target. Server-host only (desktop derives "here" without a row; the SaaS
   // control plane is never its own target), and only while host control is on —
   // with it off the create call 400s. Once the isLocal row exists it's already in
@@ -835,7 +835,7 @@ function EmptyState({
           </button>
         )}
         <a
-          href={managed ? "https://openship.io/docs/guides/cloud-workspaces" : "https://openship.io/docs/guides/custom-servers"}
+          href={managed ? "https://nextrium.org/docs/guides/cloud-workspaces" : "https://nextrium.org/docs/guides/custom-servers"}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-xl bg-muted/50 px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"

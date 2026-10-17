@@ -62,7 +62,7 @@ export async function maybeCloudProjectRequest<T>(
     ctx.organizationId,
     input as Record<string, unknown>,
   );
-  const url = new URL(path, "http://openship.internal");
+  const url = new URL(path, "http://kovalio.internal");
   if (method === "GET") {
     for (const [key, value] of Object.entries(payload))
       if (value !== undefined) url.searchParams.set(key, String(value));

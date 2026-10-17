@@ -25,7 +25,7 @@ dependencies and outputs must be declared correctly.
 Installation and build commands keep their original order and source context.
 Generated Dockerfiles are excluded from application copies so session-specific
 filenames do not invalidate unchanged source layers. Existing ignore rules remain.
-Custom install scripts can need source files, so OpenShip does not automatically
+Custom install scripts can need source files, so Kovalio does not automatically
 move them ahead of the source copy. Installed dependencies, compiled executables,
 `.nuxt` and other required outputs are not automatically mounted as caches.
 Repository Dockerfiles remain the source of truth and can declare their own cache
@@ -38,8 +38,8 @@ Docker layers and supported framework/Turborepo build-only caches.
 
 Legacy Docker builders use the original recipes. Engine-API builds with explicit
 CPU/RAM limits also retain their original builder behavior; enabling cache mounts
-must not silently remove those limits. Set `OPENSHIP_BUILD_CACHE_MOUNTS=false` on
-the OpenShip API/worker, or in a project's build environment, to disable automatic
+must not silently remove those limits. Set `KOVALIO_BUILD_CACHE_MOUNTS=false` on
+the Kovalio API/worker, or in a project's build environment, to disable automatic
 mounts. This also accommodates custom clean scripts that remove entire mounted
 cache directories. Docker layer caching remains available.
 

@@ -42,9 +42,9 @@ A library has `version: 1`, an `active` preset (`light`, `dim`, `dark`, `system`
 The same library JSON can be exported, imported and reset from the CLI. `set` also accepts a single theme exported by the dashboard and merges it by ID into the current library.
 
 ```bash
-openship --json settings appearance get > appearance.json
-openship settings appearance set appearance.json
-openship settings appearance reset
+kovalio --json settings appearance get > appearance.json
+kovalio settings appearance set appearance.json
+kovalio settings appearance reset
 ```
 
 Font choices are `gellix`, `system`, `serif` or `custom` for the interface and `mono`, `systemMono` or `custom` for monospace. A custom choice requires a matching font asset with `role`, `name` and base64 WOFF2 `data`. Each font is limited to 256 KiB; the full library is limited to 1 MiB and 32 themes. All clients validate the same schema. Existing instances receive a nullable column through an additive migration; older users retain their default appearance.
@@ -63,8 +63,8 @@ console.log(settings.buildMode, settings.defaultDeployTarget);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/settings" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/settings" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -86,8 +86,8 @@ await ship.settings.setBuildMode({ buildMode: "server" });
 <Tab value="REST API">
 
 ```bash
-curl -X PATCH "$OPENSHIP_URL/api/settings/build-mode" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PATCH "$KOVALIO_URL/api/settings/build-mode" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"buildMode":"server"}'
 ```
@@ -120,8 +120,8 @@ await ship.settings.setDeployDefaults({
 <Tab value="REST API">
 
 ```bash
-curl -X PATCH "$OPENSHIP_URL/api/settings/deploy-defaults" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PATCH "$KOVALIO_URL/api/settings/deploy-defaults" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"defaultDeployTarget":"server","defaultServerId":"srv_123"}'
 ```
@@ -147,8 +147,8 @@ await ship.settings.setCloneCredentials({ token: "ghp_example", asDefault: true 
 <Tab value="REST API">
 
 ```bash
-curl -X PATCH "$OPENSHIP_URL/api/settings/clone-credentials" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PATCH "$KOVALIO_URL/api/settings/clone-credentials" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"token":"ghp_example","asDefault":true}'
 ```
@@ -180,8 +180,8 @@ await ship.settings.setTransferPreferences({
 <Tab value="REST API">
 
 ```bash
-curl -X PATCH "$OPENSHIP_URL/api/settings/transfer" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PATCH "$KOVALIO_URL/api/settings/transfer" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"transferMode":"auto","transferCompression":"zstd"}'
 ```

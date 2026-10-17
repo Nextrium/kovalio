@@ -1,4 +1,4 @@
-/** Opt in with OPENSHIP_TEST_CLOUD_POSTGRES=1 bun run --cwd packages/db test
+/** Opt in with KOVALIO_TEST_CLOUD_POSTGRES=1 bun run --cwd packages/db test
  * src/repos/cloud-build-postgres.integration.test.ts
  * Never uses DATABASE_URL/PG* credentials: owns a fresh /tmp cluster and stops it.
  */
@@ -19,8 +19,8 @@ import { createDeploymentRepo } from "./deployment.repo";
 import { createCloudBuildActivityRepo } from "./cloud-build-activity.repo";
 import { createCloudWorkspaceRepo } from "./cloud-workspace.repo";
 
-const enabled = process.env.OPENSHIP_TEST_CLOUD_POSTGRES === "1";
-const binaries = process.env.OPENSHIP_TEST_PG_BIN ?? "";
+const enabled = process.env.KOVALIO_TEST_CLOUD_POSTGRES === "1";
+const binaries = process.env.KOVALIO_TEST_PG_BIN ?? "";
 const binaryPath = `${binaries ? `${binaries}:` : ""}${process.env.PATH ?? "/usr/bin:/bin"}`;
 const resources = { cpuCores: 1, memoryMb: 1024 };
 const identity = (id: string) => ({
@@ -98,7 +98,7 @@ describe.skipIf(!enabled)("isolated PostgreSQL Cloud build concurrency", () => {
   }
 
   beforeAll(async () => {
-    root = mkdtempSync("/tmp/openship-cloud-queue-pg-");
+    root = mkdtempSync("/tmp/kovalio-cloud-queue-pg-");
     execFileSync(
       join(binaries, "initdb"),
       [

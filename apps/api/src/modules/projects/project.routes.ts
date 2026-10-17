@@ -74,7 +74,7 @@ r.get(
     localOnly: true,
     mcp: {
       description:
-        "List projects registered from directories on this Openship controller. These paths are not on the MCP client machine.",
+        "List projects registered from directories on this Kovalio controller. These paths are not on the MCP client machine.",
     },
   },
   ctrl.listLocal,
@@ -92,7 +92,7 @@ r.post(
     auditHandledByOperation: true,
     mcp: {
       description:
-        "Inspect a source directory accessible to the Openship controller and detect build or Compose configuration. For a folder on the MCP client machine, use the folder-upload workflow.",
+        "Inspect a source directory accessible to the Kovalio controller and detect build or Compose configuration. For a folder on the MCP client machine, use the folder-upload workflow.",
     },
     body: ScanLocalProjectBody,
   },
@@ -108,7 +108,7 @@ r.post(
     auditHandledByOperation: true,
     mcp: {
       description:
-        "Register a project from a source directory accessible to the Openship controller. On desktop, use localPath and an accessible managed serverId to deploy that folder to Cloud without an out-of-band upload. This creates project configuration; deploy the returned projectId separately with buildStrategy:'server' for a managed server. Source location does not choose build location.",
+        "Register a project from a source directory accessible to the Kovalio controller. On desktop, use localPath and an accessible managed serverId to deploy that folder to Cloud without an out-of-band upload. This creates project configuration; deploy the returned projectId separately with buildStrategy:'server' for a managed server. Source location does not choose build location.",
     },
     body: ImportLocalProjectBody,
   },
@@ -1206,7 +1206,7 @@ r.post(
     auditHandledByOperation: true,
     mcp: {
       description:
-        "Transfer this project’s control-plane records to the connected Openship Cloud. Inspect the returned deployment guidance: record transfer is not workload or volume migration. k3s projects cannot use this Docker/Cloud transfer path.",
+        "Transfer this project’s control-plane records to the connected Kovalio Cloud. Inspect the returned deployment guidance: record transfer is not workload or volume migration. k3s projects cannot use this Docker/Cloud transfer path.",
     },
   },
   transfer.transferToCloud,

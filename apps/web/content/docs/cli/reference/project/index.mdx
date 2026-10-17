@@ -1,92 +1,92 @@
 ---
 title: project
-description: Commands, arguments, and options for openship project.
-cliGroup: openship project
+description: Commands, arguments, and options for kovalio project.
+cliGroup: kovalio project
 ---
 
 See the [workflow guide](/docs/cli/projects) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship project
+## kovalio project
 
-Manage Openship projects
+Manage Kovalio projects
 
 ```text
-openship project|projects [options] [command]
+kovalio project|projects [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list\|ls`](/docs/cli/reference/project#openship-project-list) | List projects in the active organization |
-| [`get <id>`](/docs/cli/reference/project#openship-project-get) | Show a single project |
-| [`rename <id> <name>`](/docs/cli/reference/project#openship-project-rename) | Change a project's display name |
-| [`release-image [options] <id>`](/docs/cli/reference/project#openship-project-release-image) | Track and deploy a versioned prebuilt container image |
-| [`create [options]`](/docs/cli/reference/project#openship-project-create) | Create a project |
-| [`delete\|rm [options] <id>`](/docs/cli/reference/project#openship-project-delete) | Delete a project (tears down all resources) |
-| [`env`](/docs/cli/reference/project#openship-project-env) | Manage project environment variables |
-| [`git`](/docs/cli/reference/project/git#openship-project-git) | Manage git linkage and auto-deploy |
-| [`connect [options] <id> <domain>`](/docs/cli/reference/project#openship-project-connect) | Connect a custom domain to a project |
-| [`enable <id>`](/docs/cli/reference/project#openship-project-enable) | Start a stopped project |
-| [`disable <id>`](/docs/cli/reference/project#openship-project-disable) | Stop a running project |
-| [`sleep-mode <id> <mode>`](/docs/cli/reference/project#openship-project-sleep-mode) | Set the project sleep mode |
-| [`transfer <id> <direction>`](/docs/cli/reference/project#openship-project-transfer) | Promote a project to Openship Cloud, or bring it back (self-hosted only) |
-| [`logs [options] <id>`](/docs/cli/reference/project#openship-project-logs) | Show or stream runtime (container) logs |
-| [`server-logs [options] <id>`](/docs/cli/reference/project#openship-project-server-logs) | Show or stream HTTP request logs (edge/OpenResty) |
-| [`cluster`](/docs/cli/reference/project#openship-project-cluster) | Configure cluster placement and scale a deployed workload |
-| [`database`](/docs/cli/reference/project/database#openship-project-database) | Manage project databases, replicas, backups and application connections |
-| [`volume`](/docs/cli/reference/project/volume#openship-project-volume) | Manage replicated project volumes and recoverable backups |
-| [`options [options] <id> [file]`](/docs/cli/reference/project#openship-project-options) | Change supported project options using the shared input schema |
-| [`clear-build-cache [options] <id>`](/docs/cli/reference/project#openship-project-clear-build-cache) | Clear the host build cache used by this project; other projects on that host share it |
-| [`deployments [options] <id>`](/docs/cli/reference/project#openship-project-deployments) | Read full project deployment records with pagination |
-| [`clone-token`](/docs/cli/reference/project#openship-project-clone-token) | Manage this project's explicit clone credential |
-| [`local`](/docs/cli/reference/project#openship-project-local) | Manage folders on the Openship instance; use deploy --folder for this machine's files |
-| [`routing`](/docs/cli/reference/project/routing#openship-project-routing) | Manage project routing rules and retry route synchronization |
-| [`update <id> <file>`](/docs/cli/reference/project#openship-project-update) | Patch a project's build and runtime configuration |
-| [`environment\|environments`](/docs/cli/reference/project#openship-project-environment) | Manage isolated project environments (each has its own project ID) |
-| [`resources`](/docs/cli/reference/project#openship-project-resources) | Inspect and configure project CPU, memory, disk and build limits |
-| [`storage`](/docs/cli/reference/project#openship-project-storage) | Inspect storage and bind an app's object storage connection |
-| [`connections`](/docs/cli/reference/project/connections#openship-project-connections) | Wire app outputs into a project's environment through the engine |
-| [`pending <id>`](/docs/cli/reference/project#openship-project-pending) | Show pending deployment, routing and certificate actions |
-| [`incidents <id>`](/docs/cli/reference/project#openship-project-incidents) | Show this project's monitoring incidents |
-| [`roles <id>`](/docs/cli/reference/project#openship-project-roles) | Show active runtime roles, replicas, status and restart counts |
-| [`drift <id>`](/docs/cli/reference/project#openship-project-drift) | Compare source and deployment configuration |
-| [`rollback-capacity <id>`](/docs/cli/reference/project#openship-project-rollback-capacity) | Inspect retained rollback capacity |
-| [`info <id>`](/docs/cli/reference/project#openship-project-info) | Read project details and deployment configuration |
-| [`git-info <id>`](/docs/cli/reference/project#openship-project-git-info) | Read the configured repository and source state |
-| [`session <id>`](/docs/cli/reference/project#openship-project-session) | Find this project's active deployment session |
-| [`check-ports <id>`](/docs/cli/reference/project#openship-project-check-ports) | Probe configured service ports on the deployment destination |
-| [`check-output <id>`](/docs/cli/reference/project#openship-project-check-output) | Inspect deployed static output on its actual destination |
-| [`edge-config <id>`](/docs/cli/reference/project#openship-project-edge-config) | Read effective edge routing configuration |
+| [`list\|ls`](/docs/cli/reference/project#kovalio-project-list) | List projects in the active organization |
+| [`get <id>`](/docs/cli/reference/project#kovalio-project-get) | Show a single project |
+| [`rename <id> <name>`](/docs/cli/reference/project#kovalio-project-rename) | Change a project's display name |
+| [`release-image [options] <id>`](/docs/cli/reference/project#kovalio-project-release-image) | Track and deploy a versioned prebuilt container image |
+| [`create [options]`](/docs/cli/reference/project#kovalio-project-create) | Create a project |
+| [`delete\|rm [options] <id>`](/docs/cli/reference/project#kovalio-project-delete) | Delete a project (tears down all resources) |
+| [`env`](/docs/cli/reference/project#kovalio-project-env) | Manage project environment variables |
+| [`git`](/docs/cli/reference/project/git#kovalio-project-git) | Manage git linkage and auto-deploy |
+| [`connect [options] <id> <domain>`](/docs/cli/reference/project#kovalio-project-connect) | Connect a custom domain to a project |
+| [`enable <id>`](/docs/cli/reference/project#kovalio-project-enable) | Start a stopped project |
+| [`disable <id>`](/docs/cli/reference/project#kovalio-project-disable) | Stop a running project |
+| [`sleep-mode <id> <mode>`](/docs/cli/reference/project#kovalio-project-sleep-mode) | Set the project sleep mode |
+| [`transfer <id> <direction>`](/docs/cli/reference/project#kovalio-project-transfer) | Promote a project to Kovalio Cloud, or bring it back (self-hosted only) |
+| [`logs [options] <id>`](/docs/cli/reference/project#kovalio-project-logs) | Show or stream runtime (container) logs |
+| [`server-logs [options] <id>`](/docs/cli/reference/project#kovalio-project-server-logs) | Show or stream HTTP request logs (edge/OpenResty) |
+| [`cluster`](/docs/cli/reference/project#kovalio-project-cluster) | Configure cluster placement and scale a deployed workload |
+| [`database`](/docs/cli/reference/project/database#kovalio-project-database) | Manage project databases, replicas, backups and application connections |
+| [`volume`](/docs/cli/reference/project/volume#kovalio-project-volume) | Manage replicated project volumes and recoverable backups |
+| [`options [options] <id> [file]`](/docs/cli/reference/project#kovalio-project-options) | Change supported project options using the shared input schema |
+| [`clear-build-cache [options] <id>`](/docs/cli/reference/project#kovalio-project-clear-build-cache) | Clear the host build cache used by this project; other projects on that host share it |
+| [`deployments [options] <id>`](/docs/cli/reference/project#kovalio-project-deployments) | Read full project deployment records with pagination |
+| [`clone-token`](/docs/cli/reference/project#kovalio-project-clone-token) | Manage this project's explicit clone credential |
+| [`local`](/docs/cli/reference/project#kovalio-project-local) | Manage folders on the Kovalio instance; use deploy --folder for this machine's files |
+| [`routing`](/docs/cli/reference/project/routing#kovalio-project-routing) | Manage project routing rules and retry route synchronization |
+| [`update <id> <file>`](/docs/cli/reference/project#kovalio-project-update) | Patch a project's build and runtime configuration |
+| [`environment\|environments`](/docs/cli/reference/project#kovalio-project-environment) | Manage isolated project environments (each has its own project ID) |
+| [`resources`](/docs/cli/reference/project#kovalio-project-resources) | Inspect and configure project CPU, memory, disk and build limits |
+| [`storage`](/docs/cli/reference/project#kovalio-project-storage) | Inspect storage and bind an app's object storage connection |
+| [`connections`](/docs/cli/reference/project/connections#kovalio-project-connections) | Wire app outputs into a project's environment through the engine |
+| [`pending <id>`](/docs/cli/reference/project#kovalio-project-pending) | Show pending deployment, routing and certificate actions |
+| [`incidents <id>`](/docs/cli/reference/project#kovalio-project-incidents) | Show this project's monitoring incidents |
+| [`roles <id>`](/docs/cli/reference/project#kovalio-project-roles) | Show active runtime roles, replicas, status and restart counts |
+| [`drift <id>`](/docs/cli/reference/project#kovalio-project-drift) | Compare source and deployment configuration |
+| [`rollback-capacity <id>`](/docs/cli/reference/project#kovalio-project-rollback-capacity) | Inspect retained rollback capacity |
+| [`info <id>`](/docs/cli/reference/project#kovalio-project-info) | Read project details and deployment configuration |
+| [`git-info <id>`](/docs/cli/reference/project#kovalio-project-git-info) | Read the configured repository and source state |
+| [`session <id>`](/docs/cli/reference/project#kovalio-project-session) | Find this project's active deployment session |
+| [`check-ports <id>`](/docs/cli/reference/project#kovalio-project-check-ports) | Probe configured service ports on the deployment destination |
+| [`check-output <id>`](/docs/cli/reference/project#kovalio-project-check-output) | Inspect deployed static output on its actual destination |
+| [`edge-config <id>`](/docs/cli/reference/project#kovalio-project-edge-config) | Read effective edge routing configuration |
 
-## openship project check-output
+## kovalio project check-output
 
 Inspect deployed static output on its actual destination
 
 ```text
-openship project check-output [options] <id>
+kovalio project check-output [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project check-ports
+## kovalio project check-ports
 
 Probe configured service ports on the deployment destination
 
 ```text
-openship project check-ports [options] <id>
+kovalio project check-ports [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project clear-build-cache
+## kovalio project clear-build-cache
 
 Clear the host build cache used by this project; other projects on that host share it
 
 ```text
-openship project clear-build-cache [options] <id>
+kovalio project clear-build-cache [options] <id>
 ```
 
 | Argument | Meaning |
@@ -97,50 +97,50 @@ openship project clear-build-cache [options] <id>
 | --- | --- |
 | `-y, --yes` | Confirm clearing the destination's shared build cache |
 
-## openship project clone-token
+## kovalio project clone-token
 
 Manage this project's explicit clone credential
 
 ```text
-openship project clone-token [options] [command]
+kovalio project clone-token [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`get <id>`](/docs/cli/reference/project#openship-project-clone-token-get) | Read credential presence without revealing its value |
-| [`set <id> <file>`](/docs/cli/reference/project#openship-project-clone-token-set) | Save a project-specific clone token |
-| [`clear <id>`](/docs/cli/reference/project#openship-project-clone-token-clear) | Remove this project's explicit clone token |
+| [`get <id>`](/docs/cli/reference/project#kovalio-project-clone-token-get) | Read credential presence without revealing its value |
+| [`set <id> <file>`](/docs/cli/reference/project#kovalio-project-clone-token-set) | Save a project-specific clone token |
+| [`clear <id>`](/docs/cli/reference/project#kovalio-project-clone-token-clear) | Remove this project's explicit clone token |
 
-## openship project clone-token clear
+## kovalio project clone-token clear
 
 Remove this project's explicit clone token
 
 ```text
-openship project clone-token clear [options] <id>
+kovalio project clone-token clear [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project clone-token get
+## kovalio project clone-token get
 
 Read credential presence without revealing its value
 
 ```text
-openship project clone-token get [options] <id>
+kovalio project clone-token get [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project clone-token set
+## kovalio project clone-token set
 
 Save a project-specific clone token
 
 ```text
-openship project clone-token set [options] <id> <file>
+kovalio project clone-token set [options] <id> <file>
 ```
 
 | Argument | Meaning |
@@ -148,38 +148,38 @@ openship project clone-token set [options] <id> <file>
 | `id` | Project ID |
 | `file` | Token file, or - for stdin |
 
-## openship project cluster
+## kovalio project cluster
 
 Configure cluster placement and scale a deployed workload
 
 ```text
-openship project cluster [options] [command]
+kovalio project cluster [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`get <project>`](/docs/cli/reference/project#openship-project-cluster-get) | Read placement, replicas and the revision required for changes |
-| [`set [options] <id> [file]`](/docs/cli/reference/project#openship-project-cluster-set) | Set or clear cluster placement with explicit stateless-workload acknowledgement |
-| [`scale [options] <project> <replicas>`](/docs/cli/reference/project#openship-project-cluster-scale) | Scale the reviewed deployment; returns the new deployment ID to follow |
+| [`get <project>`](/docs/cli/reference/project#kovalio-project-cluster-get) | Read placement, replicas and the revision required for changes |
+| [`set [options] <id> [file]`](/docs/cli/reference/project#kovalio-project-cluster-set) | Set or clear cluster placement with explicit stateless-workload acknowledgement |
+| [`scale [options] <project> <replicas>`](/docs/cli/reference/project#kovalio-project-cluster-scale) | Scale the reviewed deployment; returns the new deployment ID to follow |
 
-## openship project cluster get
+## kovalio project cluster get
 
 Read placement, replicas and the revision required for changes
 
 ```text
-openship project cluster get [options] <project>
+kovalio project cluster get [options] <project>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | Project ID |
 
-## openship project cluster scale
+## kovalio project cluster scale
 
 Scale the reviewed deployment; returns the new deployment ID to follow
 
 ```text
-openship project cluster scale [options] <project> <replicas>
+kovalio project cluster scale [options] <project> <replicas>
 ```
 
 | Argument | Meaning |
@@ -192,12 +192,12 @@ openship project cluster scale [options] <project> <replicas>
 | `--deployment <id>` | Active deployment ID from cluster get |
 | `--updated-at <timestamp>` | Exact updatedAt from cluster get |
 
-## openship project cluster set
+## kovalio project cluster set
 
 Set or clear cluster placement with explicit stateless-workload acknowledgement
 
 ```text
-openship project cluster set [options] <id> [file]
+kovalio project cluster set [options] <id> [file]
 ```
 
 | Argument | Meaning |
@@ -210,12 +210,12 @@ openship project cluster set [options] <id> [file]
 | `--schema` | Print the accepted JSON schema without making a request |
 | `-y, --yes` | Confirm this operation |
 
-## openship project connect
+## kovalio project connect
 
 Connect a custom domain to a project
 
 ```text
-openship project connect [options] <id> <domain>
+kovalio project connect [options] <id> <domain>
 ```
 
 | Argument | Meaning |
@@ -227,12 +227,12 @@ openship project connect [options] <id> <domain>
 | --- | --- |
 | `--include-www` | Also connect the www. variant |
 
-## openship project create
+## kovalio project create
 
 Create a project
 
 ```text
-openship project create [options]
+kovalio project create [options]
 ```
 
 | Option | Meaning |
@@ -248,14 +248,14 @@ openship project create [options]
 | `--local-path <path>` | Source path on the controller host; use deploy --folder to upload from this machine |
 | `--port <port>` | Container port |
 | `--type <type>` | Project type: app \| docker \| services \| monorepo |
-| `--server <id>` | Registered server ID (see `openship server list`) |
+| `--server <id>` | Registered server ID (see `kovalio server list`) |
 
-## openship project delete
+## kovalio project delete
 
 Delete a project (tears down all resources)
 
 ```text
-openship project delete|rm [options] <id>
+kovalio project delete|rm [options] <id>
 ```
 
 | Argument | Meaning |
@@ -269,12 +269,12 @@ openship project delete|rm [options] <id>
 | `--wipe-volumes` | Also destroy persistent volumes |
 | `-y, --yes` | Skip the confirmation prompt |
 
-## openship project deployments
+## kovalio project deployments
 
 Read full project deployment records with pagination
 
 ```text
-openship project deployments [options] <id>
+kovalio project deployments [options] <id>
 ```
 
 | Argument | Meaning |
@@ -289,73 +289,73 @@ openship project deployments [options] <id>
 | `--status <status>` | Deployment status |
 | `--search <text>` | Search deployments |
 
-## openship project disable
+## kovalio project disable
 
 Stop a running project
 
 ```text
-openship project disable [options] <id>
+kovalio project disable [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project drift
+## kovalio project drift
 
 Compare source and deployment configuration
 
 ```text
-openship project drift [options] <id>
+kovalio project drift [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project edge-config
+## kovalio project edge-config
 
 Read effective edge routing configuration
 
 ```text
-openship project edge-config [options] <id>
+kovalio project edge-config [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project enable
+## kovalio project enable
 
 Start a stopped project
 
 ```text
-openship project enable [options] <id>
+kovalio project enable [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project env
+## kovalio project env
 
 Manage project environment variables
 
 ```text
-openship project env [options] [command]
+kovalio project env [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`get [options] <id>`](/docs/cli/reference/project#openship-project-env-get) | List env vars (secret values are masked by the API) |
-| [`set [options] <id> [pairs...]`](/docs/cli/reference/project#openship-project-env-set) | Merge env vars: upsert KEY=VALUE pairs and/or delete keys |
+| [`get [options] <id>`](/docs/cli/reference/project#kovalio-project-env-get) | List env vars (secret values are masked by the API) |
+| [`set [options] <id> [pairs...]`](/docs/cli/reference/project#kovalio-project-env-set) | Merge env vars: upsert KEY=VALUE pairs and/or delete keys |
 
-## openship project env get
+## kovalio project env get
 
 List env vars (secret values are masked by the API)
 
 ```text
-openship project env get [options] <id>
+kovalio project env get [options] <id>
 ```
 
 | Argument | Meaning |
@@ -366,12 +366,12 @@ openship project env get [options] <id>
 | --- | --- |
 | `--environment <env>` | Filter by environment (production\|preview\|development) |
 
-## openship project env set
+## kovalio project env set
 
 Merge env vars: upsert KEY=VALUE pairs and/or delete keys
 
 ```text
-openship project env set [options] <id> [pairs...]
+kovalio project env set [options] <id> [pairs...]
 ```
 
 | Argument | Meaning |
@@ -386,25 +386,25 @@ openship project env set [options] <id> [pairs...]
 | `--unset <key>` | KEY to delete (repeatable) (default: []) |
 | `--secret` | Mark every upserted value as a secret |
 
-## openship project environment
+## kovalio project environment
 
 Manage isolated project environments (each has its own project ID)
 
 ```text
-openship project environment|environments [options] [command]
+kovalio project environment|environments [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list\|ls <id>`](/docs/cli/reference/project#openship-project-environment-list) | List this project's environments and their project IDs |
-| [`create [options] <id> <name>`](/docs/cli/reference/project#openship-project-environment-create) | Create an isolated environment; deploy and link the returned project ID |
+| [`list\|ls <id>`](/docs/cli/reference/project#kovalio-project-environment-list) | List this project's environments and their project IDs |
+| [`create [options] <id> <name>`](/docs/cli/reference/project#kovalio-project-environment-create) | Create an isolated environment; deploy and link the returned project ID |
 
-## openship project environment create
+## kovalio project environment create
 
 Create an isolated environment; deploy and link the returned project ID
 
 ```text
-openship project environment create [options] <id> <name>
+kovalio project environment create [options] <id> <name>
 ```
 
 | Argument | Meaning |
@@ -419,94 +419,94 @@ openship project environment create [options] <id> <name>
 | `--branch <branch>` | Git branch for the environment |
 | `--source-mode <mode>` | How this environment tracks source (choices: "branch", "manual") |
 
-## openship project environment list
+## kovalio project environment list
 
 List this project's environments and their project IDs
 
 ```text
-openship project environment list|ls [options] <id>
+kovalio project environment list|ls [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project get
+## kovalio project get
 
 Show a single project
 
 ```text
-openship project get [options] <id>
+kovalio project get [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project git-info
+## kovalio project git-info
 
 Read the configured repository and source state
 
 ```text
-openship project git-info [options] <id>
+kovalio project git-info [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project incidents
+## kovalio project incidents
 
 Show this project's monitoring incidents
 
 ```text
-openship project incidents [options] <id>
+kovalio project incidents [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project info
+## kovalio project info
 
 Read project details and deployment configuration
 
 ```text
-openship project info [options] <id>
+kovalio project info [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project list
+## kovalio project list
 
 List projects in the active organization
 
 ```text
-openship project list|ls [options]
+kovalio project list|ls [options]
 ```
 
-## openship project local
+## kovalio project local
 
-Manage folders on the Openship instance; use deploy --folder for this machine's files
+Manage folders on the Kovalio instance; use deploy --folder for this machine's files
 
 ```text
-openship project local [options] [command]
+kovalio project local [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list`](/docs/cli/reference/project#openship-project-local-list) | List projects linked to folders on the controller |
-| [`scan <path>`](/docs/cli/reference/project#openship-project-local-scan) | Inspect a folder accessible to the self-hosted controller |
-| [`import [options] [file]`](/docs/cli/reference/project#openship-project-local-import) | Register a folder on the controller as a project |
+| [`list`](/docs/cli/reference/project#kovalio-project-local-list) | List projects linked to folders on the controller |
+| [`scan <path>`](/docs/cli/reference/project#kovalio-project-local-scan) | Inspect a folder accessible to the self-hosted controller |
+| [`import [options] [file]`](/docs/cli/reference/project#kovalio-project-local-import) | Register a folder on the controller as a project |
 
-## openship project local import
+## kovalio project local import
 
 Register a folder on the controller as a project
 
 ```text
-openship project local import [options] [file]
+kovalio project local import [options] [file]
 ```
 
 | Argument | Meaning |
@@ -517,32 +517,32 @@ openship project local import [options] [file]
 | --- | --- |
 | `--schema` | Print the accepted JSON schema without making a request |
 
-## openship project local list
+## kovalio project local list
 
 List projects linked to folders on the controller
 
 ```text
-openship project local list [options]
+kovalio project local list [options]
 ```
 
-## openship project local scan
+## kovalio project local scan
 
 Inspect a folder accessible to the self-hosted controller
 
 ```text
-openship project local scan [options] <path>
+kovalio project local scan [options] <path>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `path` | Absolute path on the controller |
 
-## openship project logs
+## kovalio project logs
 
 Show or stream runtime (container) logs
 
 ```text
-openship project logs [options] <id>
+kovalio project logs [options] <id>
 ```
 
 | Argument | Meaning |
@@ -557,12 +557,12 @@ openship project logs [options] <id>
 | `--deployment-id <id>` | Reject logs if this deployment is no longer active |
 | `-f, --follow` | Stream logs until interrupted |
 
-## openship project options
+## kovalio project options
 
 Change supported project options using the shared input schema
 
 ```text
-openship project options [options] <id> [file]
+kovalio project options [options] <id> [file]
 ```
 
 | Argument | Meaning |
@@ -574,24 +574,24 @@ openship project options [options] <id> [file]
 | --- | --- |
 | `--schema` | Print the accepted JSON schema without making a request |
 
-## openship project pending
+## kovalio project pending
 
 Show pending deployment, routing and certificate actions
 
 ```text
-openship project pending [options] <id>
+kovalio project pending [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project release-image
+## kovalio project release-image
 
 Track and deploy a versioned prebuilt container image
 
 ```text
-openship project release-image [options] <id>
+kovalio project release-image [options] <id>
 ```
 
 | Argument | Meaning |
@@ -605,12 +605,12 @@ openship project release-image [options] <id>
 | `--version-url <https-url>` | HTTPS endpoint returning a version or tag |
 | `--pin <version>` | Deploy a fixed version instead of the discovered latest release |
 
-## openship project rename
+## kovalio project rename
 
 Change a project's display name
 
 ```text
-openship project rename [options] <id> <name>
+kovalio project rename [options] <id> <name>
 ```
 
 | Argument | Meaning |
@@ -618,37 +618,37 @@ openship project rename [options] <id> <name>
 | `id` | Project ID |
 | `name` | New display name |
 
-## openship project resources
+## kovalio project resources
 
 Inspect and configure project CPU, memory, disk and build limits
 
 ```text
-openship project resources [options] [command]
+kovalio project resources [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`get <id>`](/docs/cli/reference/project#openship-project-resources-get) | Show limits and available capacity from the engine |
-| [`set <id> <file>`](/docs/cli/reference/project#openship-project-resources-set) | Change resource limits; the engine enforces destination capacity and Cloud policy |
+| [`get <id>`](/docs/cli/reference/project#kovalio-project-resources-get) | Show limits and available capacity from the engine |
+| [`set <id> <file>`](/docs/cli/reference/project#kovalio-project-resources-set) | Change resource limits; the engine enforces destination capacity and Cloud policy |
 
-## openship project resources get
+## kovalio project resources get
 
 Show limits and available capacity from the engine
 
 ```text
-openship project resources get [options] <id>
+kovalio project resources get [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project resources set
+## kovalio project resources set
 
 Change resource limits; the engine enforces destination capacity and Cloud policy
 
 ```text
-openship project resources set [options] <id> <file>
+kovalio project resources set [options] <id> <file>
 ```
 
 | Argument | Meaning |
@@ -656,36 +656,36 @@ openship project resources set [options] <id> <file>
 | `id` | Project ID |
 | `file` | JSON patch with production/build resource selections, sleepMode or port |
 
-## openship project roles
+## kovalio project roles
 
 Show active runtime roles, replicas, status and restart counts
 
 ```text
-openship project roles [options] <id>
+kovalio project roles [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project rollback-capacity
+## kovalio project rollback-capacity
 
 Inspect retained rollback capacity
 
 ```text
-openship project rollback-capacity [options] <id>
+kovalio project rollback-capacity [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project server-logs
+## kovalio project server-logs
 
 Show or stream HTTP request logs (edge/OpenResty)
 
 ```text
-openship project server-logs [options] <id>
+kovalio project server-logs [options] <id>
 ```
 
 | Argument | Meaning |
@@ -698,24 +698,24 @@ openship project server-logs [options] <id>
 | `--domain <domain>` | Restrict to a specific domain |
 | `-f, --follow` | Stream request logs until interrupted |
 
-## openship project session
+## kovalio project session
 
 Find this project's active deployment session
 
 ```text
-openship project session [options] <id>
+kovalio project session [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project sleep-mode
+## kovalio project sleep-mode
 
 Set the project sleep mode
 
 ```text
-openship project sleep-mode [options] <id> <mode>
+kovalio project sleep-mode [options] <id> <mode>
 ```
 
 | Argument | Meaning |
@@ -723,26 +723,26 @@ openship project sleep-mode [options] <id> <mode>
 | `id` | Project ID |
 | `mode` | One of: auto_sleep, always_on |
 
-## openship project storage
+## kovalio project storage
 
 Inspect storage and bind an app's object storage connection
 
 ```text
-openship project storage [options] [command]
+kovalio project storage [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`get <id>`](/docs/cli/reference/project#openship-project-storage-get) | Show the storage binding, volumes and available providers |
-| [`bind <id> <file>`](/docs/cli/reference/project#openship-project-storage-bind) | Save an object storage binding; redeploy to apply its variables |
-| [`unbind [options] <id>`](/docs/cli/reference/project#openship-project-storage-unbind) | Remove the object's storage binding from this project |
+| [`get <id>`](/docs/cli/reference/project#kovalio-project-storage-get) | Show the storage binding, volumes and available providers |
+| [`bind <id> <file>`](/docs/cli/reference/project#kovalio-project-storage-bind) | Save an object storage binding; redeploy to apply its variables |
+| [`unbind [options] <id>`](/docs/cli/reference/project#kovalio-project-storage-unbind) | Remove the object's storage binding from this project |
 
-## openship project storage bind
+## kovalio project storage bind
 
 Save an object storage binding; redeploy to apply its variables
 
 ```text
-openship project storage bind [options] <id> <file>
+kovalio project storage bind [options] <id> <file>
 ```
 
 | Argument | Meaning |
@@ -750,24 +750,24 @@ openship project storage bind [options] <id> <file>
 | `id` | Project ID |
 | `file` | JSON storage binding: bucket and sourceProjectId, or external provider credentials |
 
-## openship project storage get
+## kovalio project storage get
 
 Show the storage binding, volumes and available providers
 
 ```text
-openship project storage get [options] <id>
+kovalio project storage get [options] <id>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `id` | Project ID |
 
-## openship project storage unbind
+## kovalio project storage unbind
 
 Remove the object's storage binding from this project
 
 ```text
-openship project storage unbind [options] <id>
+kovalio project storage unbind [options] <id>
 ```
 
 | Argument | Meaning |
@@ -778,12 +778,12 @@ openship project storage unbind [options] <id>
 | --- | --- |
 | `-y, --yes` | Skip confirmation |
 
-## openship project transfer
+## kovalio project transfer
 
-Promote a project to Openship Cloud, or bring it back (self-hosted only)
+Promote a project to Kovalio Cloud, or bring it back (self-hosted only)
 
 ```text
-openship project transfer [options] <id> <direction>
+kovalio project transfer [options] <id> <direction>
 ```
 
 | Argument | Meaning |
@@ -791,12 +791,12 @@ openship project transfer [options] <id> <direction>
 | `id` | Project ID |
 | `direction` | One of: to-cloud, to-self-hosted |
 
-## openship project update
+## kovalio project update
 
 Patch a project's build and runtime configuration
 
 ```text
-openship project update [options] <id> <file>
+kovalio project update [options] <id> <file>
 ```
 
 | Argument | Meaning |

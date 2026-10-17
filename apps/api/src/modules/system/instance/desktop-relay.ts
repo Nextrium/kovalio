@@ -25,7 +25,7 @@ export async function relayInstanceRequest(c: Context, state: ControllerState): 
   const origin = instanceOrigin(connection.origin);
   const path = new URL(c.req.url);
   if (path.pathname === "/api/auth/desktop-login")
-    return c.redirect(env.OPENSHIP_LOCAL_DASHBOARD_URL!);
+    return c.redirect(env.KOVALIO_LOCAL_DASHBOARD_URL!);
   if (!path.pathname.startsWith("/api/")) return c.notFound();
   const target = new URL(`${origin}${path.pathname}${path.search}`);
   const headers = remoteSessionHeaders(connection);

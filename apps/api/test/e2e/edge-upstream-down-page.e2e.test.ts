@@ -46,11 +46,11 @@ import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const LUA_SRC = join(REPO_ROOT, "packages/adapters/src/infra/lua");
-const LUA_DEST = "/usr/local/openresty/site/lualib/openship";
+const LUA_DEST = "/usr/local/openresty/site/lualib/kovalio";
 const SITES_DIR = OPENRESTY_DEFAULT_PATHS.sitesDir;
 const CONF_PATH = `${OPENRESTY_DEFAULT_PATHS.confDir}/nginx.conf`;
-/** Must be under /opt/openship — `assertValidStaticRoot` refuses anything else. */
-const WWW = "/opt/openship/www";
+/** Must be under /opt/kovalio — `assertValidStaticRoot` refuses anything else. */
+const WWW = "/opt/kovalio/www";
 
 /** Ports the envelope's upstream stand-ins listen on. 9911 is deliberately UNUSED. */
 const PORT_DEAD = 9911;

@@ -216,7 +216,7 @@ const FORWARD_VARS = `    set $kovalio_fwd_proto $scheme;
  *     survives the second proxy hop. Vhosts written before it stall SSE behind Cloud's
  *     edge (GH-570).
  * 3 — the upstream-down `error_page` handler ({@link EDGE_UPSTREAM_DOWN_HANDLER}). Vhosts
- *     written before it serve OpenResty's stock 502 — which, behind Openship Cloud's
+ *     written before it serve OpenResty's stock 502 — which, behind Kovalio Cloud's
  *     edge, is a page branded for a third party on the operator's own domain (#556).
  */
 export const VHOST_GENERATION = 3;
@@ -1799,7 +1799,7 @@ export class NginxProvider implements RoutingProvider, SslProvider {
     opts?: ProvisionCertOptions,
   ): Promise<{ dir: string; authCommand: string; cleanupCommand?: string } | null> {
     if (!opts?.dnsAuthHookScript) return null;
-    const dir = join(dirname(this.certDir), `.openship-dns-${randomBytes(12).toString("hex")}`);
+    const dir = join(dirname(this.certDir), `.kovalio-dns-${randomBytes(12).toString("hex")}`);
     const authPath = join(dir, "auth.sh");
     const cleanupPath = join(dir, "cleanup.sh");
     const recordPath = join(dir, "record-id.txt");
@@ -1814,7 +1814,7 @@ export class NginxProvider implements RoutingProvider, SslProvider {
       await this._rm(dir).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "adapters/infra/nginx"); return undefined; });
       throw err;
     }
-    const recordEnv = `OPENSHIP_DNS_RECORD_FILE=${sq(recordPath)}`;
+    const recordEnv = `KOVALIO_DNS_RECORD_FILE=${sq(recordPath)}`;
     // Certbot validates the first word as an executable before invoking a shell.
     // env preserves the assignment and inherited CERTBOT_* variables.
     return {
@@ -2427,7 +2427,7 @@ ${serveLocation}
 
   private isChallengeFor(conf: string, host: string): boolean {
     const names = this.serverNamesIn(conf);
-    return /^# openship-oblien-challenge:/m.test(conf) && names.length > 0 &&
+    return /^# kovalio-oblien-challenge:/m.test(conf) && names.length > 0 &&
       names.every((name) => name === host.toLowerCase().replace(/\.$/, ""));
   }
 
@@ -2445,7 +2445,7 @@ ${serveLocation}
         // Keeping a second config for the same host is unsafe too: nginx only
         // warns and may continue serving the underscore-prefixed file instead.
         throw new Error(
-          `Cannot configure ${host}: ${path} claims this hostname but is not an exclusively owned Openship challenge vhost.`,
+          `Cannot configure ${host}: ${path} claims this hostname but is not an exclusively owned Kovalio challenge vhost.`,
         );
       }
     }

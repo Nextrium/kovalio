@@ -23,7 +23,7 @@ async function stored(ctx: ExecutionContext, id: string) {
   return row;
 }
 async function serverAccess(ctx: ExecutionContext, kind: string, serverId: string | null | undefined) {
-  if (kind === "openship_server" && serverId) {
+  if (kind === "kovalio_server" && serverId) {
     await authorization.authorize({ ...ctx, scopeMode: "fixed" }, { resourceType: "server", resourceId: serverId, action: "write" });
   }
 }

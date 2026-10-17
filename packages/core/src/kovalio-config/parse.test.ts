@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { parseKovalioConfig, parseKovalioConfigJson } from "./parse";
 
-describe("parseOpenshipConfig", () => {
+describe("parseKovalioConfig", () => {
   it.each(["web\nEOF\nprintf injected\n#", "web;id", "$(id)", "two services", "-option"])(
     "rejects unsafe service name %s",
     (name) => {
-      const { config, errors } = parseOpenshipConfig({
+      const { config, errors } = parseKovalioConfig({
         services: [{ name, image: "nginx:alpine" }],
       });
       expect(errors.length).toBeGreaterThan(0);
@@ -113,7 +113,7 @@ describe("parseOpenshipConfig", () => {
   });
 
   it("parses per-service Docker build args with project-env inheritance", () => {
-    const { config, errors } = parseOpenshipConfig({
+    const { config, errors } = parseKovalioConfig({
       services: [
         {
           name: "admin",
@@ -135,7 +135,7 @@ describe("parseOpenshipConfig", () => {
   });
 
   it("rejects invalid native Docker build args before deployment", () => {
-    const { config, errors } = parseOpenshipConfig({
+    const { config, errors } = parseKovalioConfig({
       services: [{ name: "admin", build: ".", buildArgs: { "BAD-KEY": "x", PORT: 3000 } }],
     });
 
@@ -241,7 +241,7 @@ describe("parseOpenshipConfig", () => {
       [".", "./"],
       ["apps\\web", "apps/web"],
     ])("rejects duplicate monorepo override roots %s and %s (#873)", (first, second) => {
-      const { config, errors } = parseOpenshipConfig({
+      const { config, errors } = parseKovalioConfig({
         monorepo: {
           apps: [
             { name: "web", rootDirectory: first },
@@ -262,7 +262,7 @@ describe("parseOpenshipConfig", () => {
         "deploy/docker-compose/docker-compose.yml",
         "deploy/docker-compose",
       ]) {
-        const { config, errors, warnings } = parseOpenshipConfig({ composePath });
+        const { config, errors, warnings } = parseKovalioConfig({ composePath });
         expect(errors).toEqual([]);
         expect(warnings).toEqual([]);
         expect(config?.composePath).toBe(composePath);
@@ -283,17 +283,17 @@ describe("parseOpenshipConfig", () => {
   describe("releaseCommands", () => {
     it("round-trips a list of commands in declared order", () => {
       const releaseCommands = ["php artisan migrate --force", "php artisan db:seed --force"];
-      const { config, errors, warnings } = parseOpenshipConfig({ releaseCommands });
+      const { config, errors, warnings } = parseKovalioConfig({ releaseCommands });
       expect(errors).toEqual([]);
       expect(warnings).toEqual([]);
       expect(config?.releaseCommands).toEqual(releaseCommands);
     });
 
     it("rejects a bare string and a non-string entry", () => {
-      expect(parseOpenshipConfig({ releaseCommands: "php artisan migrate" }).errors).toEqual([
+      expect(parseKovalioConfig({ releaseCommands: "php artisan migrate" }).errors).toEqual([
         "releaseCommands: must be an array of strings",
       ]);
-      expect(parseOpenshipConfig({ releaseCommands: ["ok", 7] }).errors).toEqual([
+      expect(parseKovalioConfig({ releaseCommands: ["ok", 7] }).errors).toEqual([
         "releaseCommands[1]: must be a string",
       ]);
     });
@@ -302,13 +302,13 @@ describe("parseOpenshipConfig", () => {
     // phase is opt-in, and an undeclared field has to behave exactly as it did
     // before the field existed.
     it("is absent (not undefined-valued) when undeclared", () => {
-      const { config, errors } = parseOpenshipConfig({ framework: "nextjs" });
+      const { config, errors } = parseKovalioConfig({ framework: "nextjs" });
       expect(errors).toEqual([]);
       expect(config && "releaseCommands" in config).toBe(false);
     });
 
     it("keeps an explicit empty list as a declared opt-out", () => {
-      const { config, errors } = parseOpenshipConfig({ releaseCommands: [] });
+      const { config, errors } = parseKovalioConfig({ releaseCommands: [] });
       expect(errors).toEqual([]);
       expect(config?.releaseCommands).toEqual([]);
     });
@@ -417,7 +417,7 @@ describe("parseOpenshipConfig", () => {
 
   describe("roles (#935)", () => {
     it("reports a missing role kind instead of silently discarding the worker", () => {
-      const { config, errors } = parseOpenshipConfig({
+      const { config, errors } = parseKovalioConfig({
         roles: [{ name: "jobs", command: "bin/jobs" }],
       });
       expect(errors).toContain("roles[0].kind: is required");
@@ -425,7 +425,7 @@ describe("parseOpenshipConfig", () => {
     });
 
     it.each(["name", "command"])("rejects a whitespace-only role %s", (field) => {
-      const { errors } = parseOpenshipConfig({
+      const { errors } = parseKovalioConfig({
         roles: [{ name: "jobs", kind: "worker", command: "bin/jobs", [field]: " \t\n " }],
       });
       expect(errors.some((error) => error.startsWith(`roles[0].${field}:`))).toBe(true);
@@ -434,7 +434,7 @@ describe("parseOpenshipConfig", () => {
     it.each([undefined, "", " \t\n "])(
       "rejects an exec health check without a usable command (%j)",
       (command) => {
-        const { errors } = parseOpenshipConfig({
+        const { errors } = parseKovalioConfig({
           roles: [
             {
               name: "jobs",
@@ -449,7 +449,7 @@ describe("parseOpenshipConfig", () => {
     );
 
     it("rejects a replica count that cannot be represented exactly", () => {
-      const { errors } = parseOpenshipConfig({
+      const { errors } = parseKovalioConfig({
         roles: [
           {
             name: "jobs",
@@ -465,7 +465,7 @@ describe("parseOpenshipConfig", () => {
     it("preserves meaningful command whitespace while validating non-empty content", () => {
       const command = "  exec bin/jobs\n";
       const healthCommand = "  test -f /tmp/worker-ready\n";
-      const { config, errors } = parseOpenshipConfig({
+      const { config, errors } = parseKovalioConfig({
         roles: [
           {
             name: "jobs",
@@ -481,7 +481,7 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("parses a valid worker role with health and replicas", () => {
-      const { config, errors } = parseOpenshipConfig({
+      const { config, errors } = parseKovalioConfig({
         roles: [
           {
             name: "jobs",
@@ -504,9 +504,9 @@ describe("parseOpenshipConfig", () => {
       ]);
     });
 
-    it("warns that `when` and `unless` are ignored on an openship.json role", () => {
+    it("warns that `when` and `unless` are ignored on an kovalio.json role", () => {
       const horizon = { deps: ["laravel/horizon"] };
-      const { config, errors, warnings } = parseOpenshipConfig({
+      const { config, errors, warnings } = parseKovalioConfig({
         roles: [
           { name: "queue", kind: "worker", command: "php artisan queue:work", unless: horizon },
           { name: "horizon", kind: "worker", command: "php artisan horizon", when: horizon },
@@ -525,19 +525,19 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("an absent `roles` field parses byte-identical to a config with none declared", () => {
-      const withoutRoles = parseOpenshipConfig({ framework: "rails" });
+      const withoutRoles = parseKovalioConfig({ framework: "rails" });
       expect(withoutRoles.config).not.toHaveProperty("roles");
       expect(withoutRoles.errors).toEqual([]);
     });
 
     it("roles: [] is a valid explicit opt-out", () => {
-      const { config, errors } = parseOpenshipConfig({ roles: [] });
+      const { config, errors } = parseKovalioConfig({ roles: [] });
       expect(errors).toEqual([]);
       expect(config?.roles).toEqual([]);
     });
 
     it("rejects a role with kind: web - web is derived from startCommand", () => {
-      const { errors, config } = parseOpenshipConfig({
+      const { errors, config } = parseKovalioConfig({
         roles: [{ name: "web", kind: "web", command: "bin/rails server" }],
       });
       expect(errors.some((e) => e.startsWith("roles[0].kind"))).toBe(true);
@@ -545,7 +545,7 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("rejects a role with an empty or missing name", () => {
-      const { errors } = parseOpenshipConfig({
+      const { errors } = parseKovalioConfig({
         roles: [
           { kind: "worker", command: "bin/jobs" },
           { name: "", kind: "worker", command: "bin/jobs" },
@@ -555,7 +555,7 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("rejects duplicate role names", () => {
-      const { errors, config } = parseOpenshipConfig({
+      const { errors, config } = parseKovalioConfig({
         roles: [
           { name: "jobs", kind: "worker", command: "bin/jobs" },
           { name: "jobs", kind: "worker", command: "bin/other" },
@@ -566,26 +566,26 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("rejects a missing or empty command", () => {
-      const { errors } = parseOpenshipConfig({
+      const { errors } = parseKovalioConfig({
         roles: [{ name: "jobs", kind: "worker", command: "" }],
       });
       expect(errors.some((e) => e.includes("requires a non-empty `command`"))).toBe(true);
     });
 
     it("rejects a non-integer or sub-1 replicas count", () => {
-      const { errors: e1 } = parseOpenshipConfig({
+      const { errors: e1 } = parseKovalioConfig({
         roles: [{ name: "jobs", kind: "worker", command: "bin/jobs", replicas: 1.5 }],
       });
       expect(e1.some((e) => e.includes("roles[0].replicas"))).toBe(true);
 
-      const { errors: e2 } = parseOpenshipConfig({
+      const { errors: e2 } = parseKovalioConfig({
         roles: [{ name: "jobs", kind: "worker", command: "bin/jobs", replicas: 0 }],
       });
       expect(e2.some((e) => e.includes("roles[0].replicas"))).toBe(true);
     });
 
     it("rejects replicas > 1 on a scheduler role instead of capping it", () => {
-      const { errors } = parseOpenshipConfig({
+      const { errors } = parseKovalioConfig({
         roles: [{ name: "cron", kind: "scheduler", command: "bin/cron", replicas: 3 }],
       });
       expect(errors.some((e) => e.includes("roles[0].replicas") && e.includes("scheduler"))).toBe(
@@ -594,7 +594,7 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("rejects replicas > 1 on a singleton worker, accepts replicas: 1", () => {
-      const { errors } = parseOpenshipConfig({
+      const { errors } = parseKovalioConfig({
         roles: [
           { name: "jobs", kind: "worker", command: "bin/jobs", singleton: true, replicas: 2 },
         ],
@@ -603,7 +603,7 @@ describe("parseOpenshipConfig", () => {
         true,
       );
 
-      const { errors: ok, config } = parseOpenshipConfig({
+      const { errors: ok, config } = parseKovalioConfig({
         roles: [
           { name: "jobs", kind: "worker", command: "bin/jobs", singleton: true, replicas: 1 },
         ],
@@ -615,7 +615,7 @@ describe("parseOpenshipConfig", () => {
     it.each(["Jobs", "jobs_1", "-jobs", "jobs-", "my worker", "jobs.1", "é", "a".repeat(64)])(
       "rejects the non-DNS-label role name %j",
       (name) => {
-        const { errors } = parseOpenshipConfig({
+        const { errors } = parseKovalioConfig({
           roles: [{ name, kind: "worker", command: "bin/jobs" }],
         });
         expect(errors.some((e) => e.startsWith("roles[0].name:") && e.includes("DNS label"))).toBe(
@@ -627,7 +627,7 @@ describe("parseOpenshipConfig", () => {
     it.each(["a", "jobs", "queue-2", "0", "a-b-c", "a".repeat(63)])(
       "accepts the DNS-label role name %j",
       (name) => {
-        const { errors, config } = parseOpenshipConfig({
+        const { errors, config } = parseKovalioConfig({
           roles: [{ name, kind: "worker", command: "bin/jobs" }],
         });
         expect(errors).toEqual([]);
@@ -636,13 +636,13 @@ describe("parseOpenshipConfig", () => {
     );
 
     it("accepts replicas up to 100 and rejects 101", () => {
-      const { errors: ok, config } = parseOpenshipConfig({
+      const { errors: ok, config } = parseKovalioConfig({
         roles: [{ name: "jobs", kind: "worker", command: "bin/jobs", replicas: 100 }],
       });
       expect(ok).toEqual([]);
       expect(config?.roles?.[0]?.replicas).toBe(100);
 
-      const { errors } = parseOpenshipConfig({
+      const { errors } = parseKovalioConfig({
         roles: [{ name: "jobs", kind: "worker", command: "bin/jobs", replicas: 101 }],
       });
       expect(errors.some((e) => e.startsWith("roles[0].replicas:") && e.includes("100"))).toBe(
@@ -651,7 +651,7 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("rejects health.kind http for roles and accepts process and exec", () => {
-      const { errors } = parseOpenshipConfig({
+      const { errors } = parseKovalioConfig({
         roles: [
           {
             name: "jobs",
@@ -665,7 +665,7 @@ describe("parseOpenshipConfig", () => {
         errors.some((e) => e.startsWith("roles[0].health.kind") && e.includes("portless")),
       ).toBe(true);
 
-      const { errors: ok } = parseOpenshipConfig({
+      const { errors: ok } = parseKovalioConfig({
         roles: [
           { name: "a", kind: "worker", command: "x", health: { kind: "process" } },
           { name: "b", kind: "worker", command: "y", health: { kind: "exec", command: "true" } },
@@ -676,7 +676,7 @@ describe("parseOpenshipConfig", () => {
 
     it("accepts SIG names and positive integers for stopSignal", () => {
       for (const stopSignal of ["SIGTERM", "SIGQUIT", "SIGUSR1", "3"]) {
-        const { errors, config } = parseOpenshipConfig({
+        const { errors, config } = parseKovalioConfig({
           roles: [{ name: "jobs", kind: "worker", command: "bin/jobs", stopSignal }],
         });
         expect(errors).toEqual([]);
@@ -686,7 +686,7 @@ describe("parseOpenshipConfig", () => {
 
     it("rejects an invalid stopSignal", () => {
       for (const stopSignal of ["", "term", "SIG", "SIG TERM", "0", "-1", "1.5", 9]) {
-        const { errors } = parseOpenshipConfig({
+        const { errors } = parseKovalioConfig({
           roles: [{ name: "jobs", kind: "worker", command: "bin/jobs", stopSignal }],
         });
         expect(errors.some((e) => e.includes("roles[0].stopSignal"))).toBe(true);
@@ -712,7 +712,7 @@ describe("parseOpenshipConfig", () => {
         "1w",
         "100μs",
       ]) {
-        const { errors, config } = parseOpenshipConfig({
+        const { errors, config } = parseKovalioConfig({
           roles: [{ name: "jobs", kind: "worker", command: "bin/jobs", stopGracePeriod }],
         });
         expect(errors).toEqual([]);
@@ -722,7 +722,7 @@ describe("parseOpenshipConfig", () => {
 
     it("rejects a stopGracePeriod that would parse to nothing", () => {
       for (const stopGracePeriod of ["", "soon", "10x", "s", "1m30", "10 m", "-5s", 30]) {
-        const { errors } = parseOpenshipConfig({
+        const { errors } = parseKovalioConfig({
           roles: [{ name: "jobs", kind: "worker", command: "bin/jobs", stopGracePeriod }],
         });
         expect(errors.some((e) => e.includes("roles[0].stopGracePeriod"))).toBe(true);
@@ -730,7 +730,7 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("forces singleton true for a scheduler role regardless of what was declared", () => {
-      const { config, errors } = parseOpenshipConfig({
+      const { config, errors } = parseKovalioConfig({
         roles: [{ name: "cron", kind: "scheduler", command: "bin/cron", singleton: false }],
       });
       expect(errors).toEqual([]);
@@ -738,7 +738,7 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("rejects an unknown role kind and an unknown health kind", () => {
-      const { errors } = parseOpenshipConfig({
+      const { errors } = parseKovalioConfig({
         roles: [
           { name: "jobs", kind: "batch", command: "bin/jobs" },
           { name: "cron", kind: "scheduler", command: "bin/cron", health: { kind: "tcp" } },
@@ -749,32 +749,32 @@ describe("parseOpenshipConfig", () => {
     });
 
     it("rejects `roles` that isn't an array", () => {
-      const { errors } = parseOpenshipConfig({ roles: { name: "jobs" } });
+      const { errors } = parseKovalioConfig({ roles: { name: "jobs" } });
       expect(errors.some((e) => e.startsWith("roles:"))).toBe(true);
     });
   });
 
   describe("optimize", () => {
     it("omits optimize when absent (defaults OFF)", () => {
-      const { config, errors } = parseOpenshipConfig({ framework: "laravel" });
+      const { config, errors } = parseKovalioConfig({ framework: "laravel" });
       expect(errors).toEqual([]);
       expect(config).not.toHaveProperty("optimize");
     });
 
     it("accepts optimize: true", () => {
-      const { config, errors } = parseOpenshipConfig({ framework: "laravel", optimize: true });
+      const { config, errors } = parseKovalioConfig({ framework: "laravel", optimize: true });
       expect(errors).toEqual([]);
       expect(config?.optimize).toBe(true);
     });
 
     it("accepts optimize: false", () => {
-      const { config, errors } = parseOpenshipConfig({ framework: "laravel", optimize: false });
+      const { config, errors } = parseKovalioConfig({ framework: "laravel", optimize: false });
       expect(errors).toEqual([]);
       expect(config?.optimize).toBe(false);
     });
 
     it("rejects a non-boolean optimize", () => {
-      const { errors } = parseOpenshipConfig({ optimize: "yes" });
+      const { errors } = parseKovalioConfig({ optimize: "yes" });
       expect(errors.some((e) => e.startsWith("optimize:"))).toBe(true);
     });
   });

@@ -169,7 +169,7 @@ export function ClusterVolumePanel({
       {storage !== undefined && storage?.status !== "ready" && (
         <div className="space-y-3 rounded-xl bg-muted/40 p-4">
           <p className="text-sm">
-            Enable shared storage on this cluster first. OpenShip prepares the disks and checks file
+            Enable shared storage on this cluster first. Kovalio prepares the disks and checks file
             access between servers.
           </p>
           <Link

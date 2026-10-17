@@ -19,7 +19,7 @@ describeDockerE2E("Cloud builds use a bounded, temporary Docker worker", () => {
   let runtime: DockerRuntime;
   let root: string;
   const projectId = `cloud-capacity-e2e-${randomUUID()}`;
-  const builder = `openship-cache-${createHash("sha256").update(projectId).digest("hex").slice(0, 24)}`;
+  const builder = `kovalio-cache-${createHash("sha256").update(projectId).digest("hex").slice(0, 24)}`;
   const worker = `buildx_buildkit_${builder}0`;
   const sibling = `${projectId}-runtime`;
   const images = new Set<string>();
@@ -37,7 +37,7 @@ describeDockerE2E("Cloud builds use a bounded, temporary Docker worker", () => {
     vi.stubEnv("DOCKER_CONTEXT", undefined);
     // Fail rather than skip: the new driver must actually run in CI/release tests.
     await docker("buildx", "version");
-    root = await mkdtemp(join(tmpdir(), "openship-cloud-build-capacity-"));
+    root = await mkdtemp(join(tmpdir(), "kovalio-cloud-build-capacity-"));
     const executor = new LocalExecutor();
     // Reap the test's local shell as the Cloud executor reaps its remote task.
     const hostExec = executor.exec.bind(executor);
@@ -65,7 +65,7 @@ describeDockerE2E("Cloud builds use a bounded, temporary Docker worker", () => {
 
   async function build(outcome: "success" | "failure" | "cancel", limits = resources) {
     const marker = `running-${randomUUID()}`;
-    const image = `openship/capacity-e2e:${randomUUID()}`;
+    const image = `kovalio/capacity-e2e:${randomUUID()}`;
     images.add(image);
     await writeFile(
       join(root, "Dockerfile"),
@@ -162,7 +162,7 @@ describeDockerE2E("Cloud builds use a bounded, temporary Docker worker", () => {
     };
     let attemptedTag = "";
     const attempt = async (version: string, fail = false) => {
-      const tag = `openship/cache-e2e:${randomUUID()}`;
+      const tag = `kovalio/cache-e2e:${randomUUID()}`;
       attemptedTag = tag;
       images.add(tag);
       const logs: string[] = [];
@@ -181,8 +181,8 @@ describeDockerE2E("Cloud builds use a bounded, temporary Docker worker", () => {
     expect((await docker("run", "--rm", first.tag)).stdout.trim()).toBe("first");
     expect((await docker("ps", "-aq", "--filter", `name=^/${worker}$`)).stdout.trim()).toBe("");
     const state = JSON.parse((await docker("volume", "inspect", `${worker}_state`)).stdout)[0];
-    expect(state.Labels["openship.build-cache.project"]).toBe(projectId);
-    expect(state.Labels["openship.project"]).toBeUndefined();
+    expect(state.Labels["kovalio.build-cache.project"]).toBe(projectId);
+    expect(state.Labels["kovalio.project"]).toBeUndefined();
   });
 
   it.each([
@@ -190,7 +190,7 @@ describeDockerE2E("Cloud builds use a bounded, temporary Docker worker", () => {
     { version: "4.9.2", install: "yarn install", run: "yarn node" },
   ])("keeps Yarn $version PnP dependencies runnable after the build worker stops", async ({ version, install, run }) => {
     const directory = await mkdtemp(join(root, "yarn-pnp-"));
-    const tag = `openship/yarn-pnp-e2e:${randomUUID()}`;
+    const tag = `kovalio/yarn-pnp-e2e:${randomUUID()}`;
     images.add(tag);
     const command = `${run} -p "require('is-number')(42)"`;
     const config = {
@@ -203,7 +203,7 @@ describeDockerE2E("Cloud builds use a bounded, temporary Docker worker", () => {
     const logs: string[] = [];
     try {
       await writeFile(join(directory, "package.json"), JSON.stringify({
-        name: "openship-pnp-fixture", private: true, packageManager: `yarn@${version}`,
+        name: "kovalio-pnp-fixture", private: true, packageManager: `yarn@${version}`,
         dependencies: { "is-number": "7.0.0" },
       }));
       await writeFile(join(directory, ".yarnrc.yml"), "nodeLinker: pnp\nenableGlobalCache: true\n");

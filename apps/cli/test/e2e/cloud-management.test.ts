@@ -66,7 +66,7 @@ describe("Cloud server and billing commands", () => {
     expect(fetchStub.calls).toEqual([]);
   });
 
-  it("keeps Cloud management inside the selected Openship API and its SDK", async () => {
+  it("keeps Cloud management inside the selected Kovalio API and its SDK", async () => {
     fetchStub = stubFetch(() => ({
       json: { ...workspace, state: "pending", subscriptionStatus: "unpaid" },
     }));

@@ -78,7 +78,7 @@ export function assertManagedArtifactPath(ref: string, ownedBase = MANAGED_ARTIF
   }
   if (target !== base && !target.startsWith(`${base}/`)) {
     throw new Error(
-      `Refusing to remove "${ref}": outside ${base}. Openship removes only ` +
+      `Refusing to remove "${ref}": outside ${base}. Kovalio removes only ` +
         `directories it created (release dirs, static doc-roots, build dirs).`,
     );
   }

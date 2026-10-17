@@ -1,5 +1,5 @@
 import type { ExecutionContext as RequestContext } from "@repo/platform";
-import { ensureNamespace } from "@repo/platform/engine/lib/openship-cloud";
+import { ensureNamespace } from "@repo/platform/engine/lib/kovalio-cloud";
 import { createTenantCloudAdmin } from "@repo/platform/engine/lib/cloud-tenant-admin";
 import { authorizeCloudRelayWorkspace } from "./cloud-relay-access";
 

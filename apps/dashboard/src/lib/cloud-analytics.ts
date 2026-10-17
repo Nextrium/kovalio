@@ -7,7 +7,7 @@ import type {
 } from "@repo/contracts";
 import { getRestApiBaseUrl } from "./api/urls";
 
-const STORAGE_KEY = "openship:cloud-analytics:v1";
+const STORAGE_KEY = "kovalio:cloud-analytics:v1";
 type Identity = { anonymousId: string; userId: string | null; attribution: CloudAttribution };
 let identity: Identity | null = null;
 let active = false;
@@ -104,9 +104,9 @@ export function configureCloudAnalytics(
     demo ||
     window.location.origin !== config.dashboardOrigin ||
     window.location.protocol !== "https:" ||
-    (window as unknown as { desktop?: { isDesktop?: boolean }; __OPENSHIP_API_ORIGIN__?: string })
+    (window as unknown as { desktop?: { isDesktop?: boolean }; __KOVALIO_API_ORIGIN__?: string })
       .desktop?.isDesktop ||
-    (window as unknown as { __OPENSHIP_API_ORIGIN__?: string }).__OPENSHIP_API_ORIGIN__
+    (window as unknown as { __KOVALIO_API_ORIGIN__?: string }).__KOVALIO_API_ORIGIN__
   )
     return;
   try {

@@ -64,7 +64,7 @@ import { resetMcpToolCache } from "../../../src/modules/mcp/mcp-tools";
 import { handleApiError } from "../../../src/middleware/error-handler";
 import { scanRoutes } from "../../../src/lib/route-scanner";
 import { ensureCloudDockerWorkspace } from "@repo/platform/engine/lib/cloud-docker-workspace";
-import { ensureNamespace } from "@repo/platform/engine/lib/openship-cloud";
+import { ensureNamespace } from "@repo/platform/engine/lib/kovalio-cloud";
 import { cloudBillingOwner } from "@repo/platform/engine/lib/cloud-workspace-scope";
 import { withCloudWorkspaceActivity } from "@repo/platform/engine/lib/cloud-workspace-lock";
 import { drainBackgroundWork } from "@repo/platform/engine/lib/background-work";
@@ -89,7 +89,7 @@ import { getCheckoutStatus } from "@repo/platform/engine/modules/billing/billing
 import { reconcileWorkspaceSubscriptionChange } from "@repo/platform/engine/modules/billing/billing-plan-change";
 import { customSubscriptionOffer } from "@repo/platform/engine/modules/billing/billing-custom-offer";
 import { createShip, type VerifiedIdentity } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { deleteFolderSession } from "@repo/platform/engine/modules/projects/folder/session-store";
 import { rm } from "node:fs/promises";
@@ -140,8 +140,8 @@ async function nativeShip(actor = owner, credential?: VerifiedIdentity["credenti
 async function clients(actor = owner, credential?: VerifiedIdentity["credential"]) {
   return [
     (await nativeShip(actor, credential)).servers,
-    new OpenshipClient({
-      baseUrl: "http://openship.test",
+    new KovalioClient({
+      baseUrl: "http://kovalio.test",
       token: actor.token,
       organizationId: actor.orgId,
       fetch: ((url, init) => app.request(String(url), init)) as typeof fetch,
@@ -896,8 +896,8 @@ describe("workspace payment and deletion races", () => {
       billingInterval: "monthly" as const,
       offer: subscriptionOffer("hobby", "monthly"),
       metadata: subscriptionMetadata("hobby", owner.orgId, workspace.namespace!),
-      successUrl: "https://app.openship.io/billing",
-      cancelUrl: "https://app.openship.io/billing",
+      successUrl: "https://kovalio.nextrium.org/billing",
+      cancelUrl: "https://kovalio.nextrium.org/billing",
       idempotencyKey: key,
     };
   }
@@ -915,7 +915,7 @@ describe("workspace payment and deletion races", () => {
     const accepted = new Map<string, string>();
     const reservations = new Map<string, { quote: { id: string; namespace: string; paymentSource: "stripe" };
       checkoutId: string; url: string }>();
-    const remote = (actor = owner) => new OpenshipClient({ baseUrl: "http://openship.test", token: actor.token,
+    const remote = (actor = owner) => new KovalioClient({ baseUrl: "http://kovalio.test", token: actor.token,
       organizationId: actor.orgId, fetch: ((url, init) => app.request(String(url), init)) as typeof fetch }).billing;
     const selected = async () => (await remote().listCheckouts({ workspaceId: workspace.id })).items[0]!;
     const action = async () => ({ workspaceId: workspace.id, id: (await selected()).id });
@@ -1373,8 +1373,8 @@ describe("provider subscription changes through billing and the shared server wo
     });
   });
 
-  const billingClient = async (remote = false, actor = owner) => remote ? new OpenshipClient({
-    baseUrl: "http://openship.test", token: actor.token, organizationId: actor.orgId,
+  const billingClient = async (remote = false, actor = owner) => remote ? new KovalioClient({
+    baseUrl: "http://kovalio.test", token: actor.token, organizationId: actor.orgId,
     fetch: ((url, init) => app.request(String(url), init)) as typeof fetch,
   }).billing : (await nativeShip(actor)).billing;
   async function review(remote = false) {
@@ -1510,9 +1510,9 @@ describe("provider subscription changes through billing and the shared server wo
     const saved = subscriptions.get(workspace.namespace!)!;
     delete saved.offer!.billingMode;
     delete saved.offer!.capacity;
-    Object.assign(saved.offer!, { reference: "openship:starter:v8", credits: 1700,
+    Object.assign(saved.offer!, { reference: "kovalio:starter:v8", credits: 1700,
       policy: { overdraft: 0, suspendThreshold: 0, onOverdraftAction: "stop_workspaces" } });
-    saved.metadata!.openship_offer_version = "8";
+    saved.metadata!.kovalio_offer_version = "8";
     await provision();
     const client = await billingClient();
     const quote = await client.previewSubscriptionChange({ workspaceId: workspace.id, planTierId: "starter", idempotencyKey: randomUUID() });
@@ -1602,7 +1602,7 @@ describe("provider subscription changes through billing and the shared server wo
     subscriptions.set(workspace.namespace!, { ...subscriptions.get(workspace.namespace!)!, pendingChange: null });
     await reconcileWorkspaceSubscriptionChange(owner.orgId, workspace.id);
     expect((await repos.cloudWorkspace.findById(workspace.id))?.subscriptionChange?.completed).toBe(true);
-    expect(subscriptions.get(workspace.namespace!)?.metadata?.openship_plan).toBe("hobby");
+    expect(subscriptions.get(workspace.namespace!)?.metadata?.kovalio_plan).toBe("hobby");
     expect(h.client.resize).not.toHaveBeenCalled();
     expect(await client.previewSubscriptionChange({ workspaceId: workspace.id, planTierId: "pro", idempotencyKey: randomUUID() })).toHaveProperty("id");
   });
@@ -1663,7 +1663,7 @@ describe("provider subscription changes through billing and the shared server wo
     await reconcileWorkspaceSubscriptionChange(owner.orgId, workspace.id);
     await drainBackgroundWork();
     expect((await repos.cloudWorkspace.findById(workspace.id))?.operation).toMatchObject({ kind: "resize", status: "failed" });
-    expect(subscriptions.get(workspace.namespace!)?.metadata?.openship_plan).toBe("starter");
+    expect(subscriptions.get(workspace.namespace!)?.metadata?.kovalio_plan).toBe("starter");
     const retry = await request("POST", `/${workspace.id}/retry`);
     expect(retry.status, JSON.stringify(retry.body)).toBe(202);
     await drainBackgroundWork();
@@ -1698,9 +1698,9 @@ describe("managed server free-domain scope", () => {
     const saved = subscriptions.get(workspace.namespace!)!;
     delete saved.offer!.billingMode;
     delete saved.offer!.capacity;
-    Object.assign(saved.offer!, { reference: "openship:starter:v8", credits: 1700,
+    Object.assign(saved.offer!, { reference: "kovalio:starter:v8", credits: 1700,
       policy: { overdraft: 0, suspendThreshold: 0, onOverdraftAction: "stop_workspaces" } });
-    saved.metadata!.openship_offer_version = "8";
+    saved.metadata!.kovalio_offer_version = "8";
     await repos.cloudWorkspace.create({ organizationId: owner.orgId, name: "Unpaid sibling" });
     const sdk = await nativeShip();
     const server = (await repos.server.findByWorkspace(workspace.id, owner.orgId))!;

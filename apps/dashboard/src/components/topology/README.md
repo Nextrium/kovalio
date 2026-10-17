@@ -33,7 +33,7 @@ container identity. Connections show only detected startup dependencies, and
 the canvas actions select services without connecting handles or calling project
 configuration APIs. Discovery passes a null layout key so nothing is persisted.
 Both views edit the same selection and use the shared OptionCard selection surface.
-Compose and recovered Openship projects share this selector. Each expanded project
+Compose and recovered Kovalio projects share this selector. Each expanded project
 has its own canvas with service nodes only. Recovered services are read-only, and
 the project header opens recovery in the sidebar through the existing re-import API.
 
@@ -46,7 +46,7 @@ the project header opens recovery in the sidebar through the existing re-import 
   synthetic main application node. An active deployment is a release record,
   not proof that a container is currently healthy.
 - Public route edges come from the existing exposed-service/domain settings.
-  Routing is presented as **OpenShip Edge**.
+  Routing is presented as **Kovalio Edge**.
 - Dragging between service handles edits only the source service's `dependsOn`.
   The edge is labeled **Starts after**. It does not provision a network or inject
   credentials. Duplicates, self-dependencies, and cycles are rejected.

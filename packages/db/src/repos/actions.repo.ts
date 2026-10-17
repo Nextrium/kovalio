@@ -82,7 +82,7 @@ export function createActionsRepo(db: Database) {
       // caller authorized this file. Never attach a project to unchecked access.
       if (
         !inserted &&
-        (workflow.controller !== (value.controller ?? "openship") ||
+        (workflow.controller !== (value.controller ?? "kovalio") ||
           workflow.owner !== (value.owner ?? null) ||
           workflow.repo !== (value.repo ?? null) ||
           workflow.ref !== (value.ref ?? "main") ||
@@ -687,7 +687,7 @@ export function createActionsRepo(db: Database) {
         // Compatibility for an existing independent fork request. New policies
         // always require the exact key shown in the review screen.
         const legacy =
-          !workflow.accessPolicy && run.controller === "openship" && run.untrusted && !key;
+          !workflow.accessPolicy && run.controller === "kovalio" && run.untrusted && !key;
         if (
           !legacy &&
           (!key ||
@@ -726,7 +726,7 @@ export function createActionsRepo(db: Database) {
         .from(actionRun)
         .where(
           and(
-            eq(actionRun.controller, "openship"),
+            eq(actionRun.controller, "kovalio"),
             isNull(actionRun.settledAt),
             or(isNull(actionRun.leaseUntil), lt(actionRun.leaseUntil, new Date())),
           ),
@@ -806,7 +806,7 @@ export function createActionsRepo(db: Database) {
             ),
           )
           .for("update");
-        if (!run || run.controller !== "openship" || !actionRunAdmitted(workflow, run))
+        if (!run || run.controller !== "kovalio" || !actionRunAdmitted(workflow, run))
           return false;
         if (run.startedAt) return true;
         if (run.concurrencyGroup) {
@@ -928,7 +928,7 @@ export function createActionsRepo(db: Database) {
             ),
           )
           .for("update");
-        if (!run || run.controller !== "openship" || run.expandedJobs.includes(jobKey)) return;
+        if (!run || run.controller !== "kovalio" || run.expandedJobs.includes(jobKey)) return;
         const [total] = await tx
           .select({ value: count() })
           .from(actionJob)
@@ -1026,7 +1026,7 @@ export function createActionsRepo(db: Database) {
             ),
           )
           .for("update");
-        if (!run || run.controller !== "openship" || !jobIdentity.runnerId) return;
+        if (!run || run.controller !== "kovalio" || !jobIdentity.runnerId) return;
         const [runner] = await tx
           .select()
           .from(actionRunner)
@@ -1091,7 +1091,7 @@ export function createActionsRepo(db: Database) {
           );
         if (
           !run ||
-          run.controller !== "openship" ||
+          run.controller !== "kovalio" ||
           !actionRunAdmitted(workflow, run) ||
           (runnerId !== null && !workflow!.runnerIds.includes(runnerId))
         )

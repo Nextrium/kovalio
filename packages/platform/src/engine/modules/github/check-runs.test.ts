@@ -7,7 +7,7 @@ import { checkFailureSummary, syncGitHubCheck, type GitHubCheckUpdate } from "./
 import { GitHubApiError } from "./github.http";
 const ctx = { userId: "owner", organizationId: "org" } as ExecutionContext;
 const update: GitHubCheckUpdate = {
-  name: "Openship / app", externalId: "deployment:attempt:one", headSha: "a".repeat(40),
+  name: "Kovalio / app", externalId: "deployment:attempt:one", headSha: "a".repeat(40),
   status: "completed", conclusion: "failure", output: { title: "Deployment failed", summary: "Build failed" },
 };
 beforeEach(() => { vi.resetAllMocks(); h.token.mockResolvedValue("app-token"); });

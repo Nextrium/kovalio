@@ -53,7 +53,7 @@
     "selfHostedUnlimited": "Unbegrenzt viele Deploys, Projekte, Server und Domains",
     "selfHostedServices": "Alle Managed Services – Postgres, Redis, Mail",
     "selfHostedClients": "CLI, Web und Desktop – ein Backend",
-    "selfHostedFreeSubdomains": "{freeSubdomains} kostenlose Subdomains unter {freeDomainSuffix} bei Verbindung mit Openship Cloud",
+    "selfHostedFreeSubdomains": "{freeSubdomains} kostenlose Subdomains unter {freeDomainSuffix} bei Verbindung mit Kovalio Cloud",
     "monthlyCoverage": "CPU, RAM und Speicher für den bezahlten Monat enthalten",
     "namespaceCapacity": "Insgesamt: {namespaceCpu} vCPU, {namespaceRamGb} GB RAM, {namespaceDiskGb} GB Speicher"
   },

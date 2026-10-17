@@ -322,7 +322,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = dirname(fileURLToPath(import.meta.url));
 // This source release installs its own PGlite package. CLI-bundled WASM assets
 // belong to a different build and must not override that package (issue #869).
-const { OPENSHIP_PGLITE_ASSETS_DIR: _cliAssets, ...sourceEnv } = process.env;
+const { KOVALIO_PGLITE_ASSETS_DIR: _cliAssets, ...sourceEnv } = process.env;
 
 const apiPort = process.env.API_PORT ?? process.env.PORT ?? "4000";
 const dashboardPort = process.env.DASHBOARD_PORT ?? "3000";
@@ -387,7 +387,7 @@ start(
 
 const README = (version: string) => `# Kovalio release dist (v${version})
 
-Self-contained release of the Openship platform (API + dashboard).
+Self-contained release of the Kovalio platform (API + dashboard).
 Extract on a target server for a fresh install. After starting it, use
 Settings → Data Transfer to import an existing installation.
 

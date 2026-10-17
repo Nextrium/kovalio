@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { OpenshipClient } from "../src";
+import { KovalioClient } from "../src";
 import { createTheme, defaultAppearance } from "@repo/core";
 it("reads, saves and resets the authenticated user's portable theme library", async () => {
   const appearance = {
@@ -9,8 +9,8 @@ it("reads, saves and resets the authenticated user's portable theme library", as
   const fetcher = vi.fn(async (_url: unknown, request: RequestInit | undefined) =>
     Response.json(request?.method === "PUT" ? JSON.parse(String(request.body)) : { appearance }),
   );
-  const client = new OpenshipClient({
-    baseUrl: "https://openship.test",
+  const client = new KovalioClient({
+    baseUrl: "https://kovalio.test",
     token: "test-token",
     fetch: fetcher,
   });
@@ -18,6 +18,6 @@ it("reads, saves and resets the authenticated user's portable theme library", as
   expect(await client.settings.setAppearance({ appearance })).toEqual({ appearance });
   expect(await client.settings.setAppearance({ appearance: null })).toEqual({ appearance: null });
   expect(fetcher.mock.calls.map((call) => String(call[0]))).toEqual(
-    Array(3).fill("https://openship.test/api/settings/appearance"),
+    Array(3).fill("https://kovalio.test/api/settings/appearance"),
   );
 });

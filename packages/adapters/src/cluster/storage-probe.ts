@@ -17,8 +17,8 @@ export class StorageProbe {
     private signal: AbortSignal,
     private fence: () => Promise<void>,
   ) {
-    this.namespace = `openship-storage-check-${createHash("sha256").update(runtimeId).digest("hex").slice(0, 16)}`;
-    this.labels = { "openship.io/runtime": runtimeId, "openship.io/storage-check": "true" };
+    this.namespace = `kovalio-storage-check-${createHash("sha256").update(runtimeId).digest("hex").slice(0, 16)}`;
+    this.labels = { "nextrium.org/runtime": runtimeId, "nextrium.org/storage-check": "true" };
   }
   private assertOwned(object: KubernetesObject) {
     if (Object.entries(this.labels).some(([key, value]) => object.metadata.labels?.[key] !== value))

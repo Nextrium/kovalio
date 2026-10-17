@@ -127,7 +127,7 @@ it("installs generic Cloud webmail with encrypted client secrets and no managed-
   });
   expect(createServiceMock).toHaveBeenCalledOnce();
   expect(createServiceMock.mock.calls[0]?.[2]).toMatchObject({
-    name: "webmail", image: "ghcr.io/oblien/openship-webmail:latest",
+    name: "webmail", image: "ghcr.io/oblien/kovalio-webmail:latest",
   });
   const vars = setEnvMock.mock.calls.find(call => call[2] === "svc-webmail")?.[3].vars;
   for (const key of ["SESSION_ENCRYPTION_KEY", "BRANDING_ADMIN_TOKEN"]) {
@@ -146,9 +146,9 @@ it.each(["self-hosted", "cloud"] as const)(
       templateId: "wordpress",
       ...(mode === "cloud" ? { serverId: "cloud-server", deployTarget: "cloud" as const } : {}),
       config: {
-        OPENSHIP_ADMIN_EMAIL: "owner@example.com",
-        OPENSHIP_SITE_TITLE: "Our site",
-        OPENSHIP_ADMIN_USER: "owner",
+        KOVALIO_ADMIN_EMAIL: "owner@example.com",
+        KOVALIO_SITE_TITLE: "Our site",
+        KOVALIO_ADMIN_USER: "owner",
       },
       routes: [
         { service: "wordpress", port: 80, mode: "custom", customDomain: "site.example.com" },
@@ -163,9 +163,9 @@ it.each(["self-hosted", "cloud"] as const)(
     const wordpress = writes("svc-wordpress");
     expect(wordpress).toEqual(
       expect.arrayContaining([
-        { key: "OPENSHIP_ADMIN_EMAIL", value: "owner@example.com", isSecret: false },
-        { key: "OPENSHIP_SITE_TITLE", value: "Our site", isSecret: false },
-        { key: "OPENSHIP_ADMIN_USER", value: "owner", isSecret: false },
+        { key: "KOVALIO_ADMIN_EMAIL", value: "owner@example.com", isSecret: false },
+        { key: "KOVALIO_SITE_TITLE", value: "Our site", isSecret: false },
+        { key: "KOVALIO_ADMIN_USER", value: "owner", isSecret: false },
       ]),
     );
     const dbPassword = writes("svc-wordpress-db").find(
@@ -176,7 +176,7 @@ it.each(["self-hosted", "cloud"] as const)(
       isSecret: true,
     });
     expect(dbPassword.isSecret).toBe(true);
-    expect(wordpress.find((field) => field.key === "OPENSHIP_ADMIN_PASSWORD")).toMatchObject({
+    expect(wordpress.find((field) => field.key === "KOVALIO_ADMIN_PASSWORD")).toMatchObject({
       isSecret: true,
       value: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
@@ -188,13 +188,13 @@ it.each(["self-hosted", "cloud"] as const)(
     const service = createServiceMock.mock.calls.find((call) => call[2]?.name === "wordpress")![2];
     expect(service).toMatchObject({
       image: "wordpress:7.1.3-php8.3-apache",
-      commandArgv: ["sh", "/etc/openship/wordpress-start.sh", "apache2-foreground"],
-      advanced: { files: [expect.objectContaining({ path: "/etc/openship/wordpress-start.sh" })] },
+      commandArgv: ["sh", "/etc/kovalio/wordpress-start.sh", "apache2-foreground"],
+      advanced: { files: [expect.objectContaining({ path: "/etc/kovalio/wordpress-start.sh" })] },
     });
     expect(service.advanced.build).toBeUndefined();
     expect(JSON.stringify(service.advanced.files)).not.toContain(dbPassword.value);
     expect(JSON.stringify(service.advanced.files)).not.toContain(
-      wordpress.find((field) => field.key === "OPENSHIP_ADMIN_PASSWORD")!.value,
+      wordpress.find((field) => field.key === "KOVALIO_ADMIN_PASSWORD")!.value,
     );
   },
 );
@@ -265,13 +265,13 @@ it("installs Odoo's startup helper as runtime configuration without an image bui
   ]);
   await installApp(ctx, {
     templateId: "odoo",
-    config: { OPENSHIP_ADMIN_EMAIL: "owner@example.com" },
+    config: { KOVALIO_ADMIN_EMAIL: "owner@example.com" },
   });
   const service = createServiceMock.mock.calls.find((call) => call[2]?.name === "odoo")![2];
   expect(service).toMatchObject({
     image: "odoo:19.0-20260926",
-    commandArgv: ["python3", "/etc/openship/odoo-start.py"],
-    advanced: { files: [expect.objectContaining({ path: "/etc/openship/odoo-start.py" })] },
+    commandArgv: ["python3", "/etc/kovalio/odoo-start.py"],
+    advanced: { files: [expect.objectContaining({ path: "/etc/kovalio/odoo-start.py" })] },
   });
   expect(service.advanced.build).toBeUndefined();
   expect(payloadFor("odoo-db")).toMatchObject({ exposed: false, ports: [], publicEndpoints: [] });

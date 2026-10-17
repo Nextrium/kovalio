@@ -29,7 +29,7 @@ export interface ResolveStackRolesInput {
   /** File paths detected in the project (e.g. "bin/jobs"). */
   files?: readonly string[];
   /**
-   * openship.json `roles`, when the field is present AT ALL - including `[]`.
+   * kovalio.json `roles`, when the field is present AT ALL - including `[]`.
    * Leave undefined when the config has no `roles` key so presets can apply;
    * an explicit array (empty or not) replaces presets entirely.
    */

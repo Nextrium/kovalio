@@ -120,10 +120,10 @@ function OnboardingInner() {
               </>
             )}
           </div>
-          <a className="ob-top-bar-link" href="https://openship.io" target="_blank" rel="noopener noreferrer" title={t.onboarding.topBar.website}>
+          <a className="ob-top-bar-link" href="https://nextrium.org" target="_blank" rel="noopener noreferrer" title={t.onboarding.topBar.website}>
             <UiIcon name="globe" size={18} />
           </a>
-          <a className="ob-top-bar-link" href="https://github.com/oblien/openship" target="_blank" rel="noopener noreferrer" title={t.onboarding.topBar.github}>
+          <a className="ob-top-bar-link" href="https://github.com/Nextrium/kovalio" target="_blank" rel="noopener noreferrer" title={t.onboarding.topBar.github}>
             <UiIcon name="github" size={18} />
           </a>
         </div>

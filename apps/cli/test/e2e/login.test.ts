@@ -23,7 +23,7 @@ vi.mock("node:process", async (original) => ({
 vi.mock("@clack/prompts", () => ({
   isCancel: (value: unknown) => typeof value === "symbol",
   select: async () => h.target,
-  text: async () => "https://ship.example.com/openship",
+  text: async () => "https://ship.example.com/kovalio",
   password: async () => "opsh_pat_interactive_fixture",
 }));
 vi.mock("open", () => ({ default: h.open }));
@@ -66,7 +66,7 @@ afterEach(() => {
   setJsonMode(false);
 });
 
-describe("openship login endpoint preservation", () => {
+describe("kovalio login endpoint preservation", () => {
   it("guides a fresh interactive login to Cloud and opens its token page", async () => {
     h.interactive = true;
     const result = await runCommand(loginCommand, []);
@@ -82,13 +82,13 @@ describe("openship login endpoint preservation", () => {
     h.target = "selfhosted";
     const result = await runCommand(loginCommand, []);
     expect(result.code).toBe(0);
-    expect(h.open).toHaveBeenCalledWith("https://ship.example.com/openship/settings");
-    expect(fetchStub.calls[0].url).toBe("https://ship.example.com/openship/api/tokens");
+    expect(h.open).toHaveBeenCalledWith("https://ship.example.com/kovalio/settings");
+    expect(fetchStub.calls[0].url).toBe("https://ship.example.com/kovalio/api/tokens");
     expect(h.added.at(-1)).toMatchObject({
       name: "ship.example.com",
       opts: {
-        apiUrl: "https://ship.example.com/openship",
-        dashboardUrl: "https://ship.example.com/openship",
+        apiUrl: "https://ship.example.com/kovalio",
+        dashboardUrl: "https://ship.example.com/kovalio",
       },
     });
   });

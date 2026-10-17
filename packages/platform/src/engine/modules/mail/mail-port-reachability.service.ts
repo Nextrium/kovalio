@@ -3,7 +3,7 @@
  *
  * This combines two different facts without conflating them:
  *   1. a listener scan on the mail host; and
- *   2. a TCP connection from the Openship API to the public DNS address. On a
+ *   2. a TCP connection from the Kovalio API to the public DNS address. On a
  *      single-server install, this originates on the mail host itself.
  *
  * The first catches a stopped daemon or loopback-only bind. The second catches
@@ -31,7 +31,7 @@ const SMTP_INBOUND_PORT = 25;
  * inbound reachability unverified until it is checked independently.
  */
 const SMTP_INBOUND_UNVERIFIED_DETAIL =
-  "Inbound TCP 25 could not be verified from the Openship API server. Providers " +
+  "Inbound TCP 25 could not be verified from the Kovalio API server. Providers " +
   "such as AWS can block this server's outbound port 25 even when inbound mail " +
   "works. Submission (465/587) and IMAP (993) are reachable. Verify port 25 from " +
   "an independent host or send a test message from another mail provider before " +

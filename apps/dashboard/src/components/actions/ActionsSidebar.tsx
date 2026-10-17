@@ -154,7 +154,7 @@ export function ActionsSidebar({
           </ol>
         )}
         <a
-          href="https://openship.io/docs/guides/actions"
+          href="https://nextrium.org/docs/guides/actions"
           target="_blank"
           rel="noopener noreferrer"
           className="mt-5 flex items-center gap-2 rounded-lg border-t border-border/50 pt-4 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"

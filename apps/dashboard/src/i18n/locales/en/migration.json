@@ -179,7 +179,7 @@
     "envFromImage": "{n} vars come from the image",
     "envFromImageHint": "Not imported as config — the image supplies these at runtime. Import them to pin the values before you rebuild from source.",
     "envFromImageImport": "Import anyway",
-    "alreadyManaged": "{count} container(s) already managed by Openship were skipped.",
+    "alreadyManaged": "{count} container(s) already managed by Kovalio were skipped.",
     "chooseProject": "Choose what to import",
     "chooseHint": "Select a Compose project or individual services.",
     "topology": "Topology",
@@ -211,7 +211,7 @@
     "failed": "Re-import failed",
     "review": "Recover project",
     "reviewNamed": "Recover {name}",
-    "groupLabel": "Openship project",
+    "groupLabel": "Kovalio project",
     "recoverHint": "Restore its settings and reconnect the running containers.",
     "configuration": "Configuration",
     "snapshot": "Saved snapshot",
@@ -291,7 +291,7 @@
     "disconnect": "Disconnect source",
     "empty": "Connect the server you want to import from.",
     "hint": "For migrations only. Remove the connection when you're done.",
-    "importHint": "Copy apps and data to a managed Openship server. Keep the source until you confirm cutover."
+    "importHint": "Copy apps and data to a managed Kovalio server. Keep the source until you confirm cutover."
   },
   "review": {
     "progress": "Import progress",

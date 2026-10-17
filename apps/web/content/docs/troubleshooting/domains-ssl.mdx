@@ -11,7 +11,7 @@ If you haven't added a domain yet, start with the [custom domains guide](/docs/g
 page is for when something is already stuck.
 
 <Callout title="Check the verification mode">
-Openship Cloud checks a routing record and an ownership TXT record; with external ingress it checks only
+Kovalio Cloud checks a routing record and an ownership TXT record; with external ingress it checks only
 the TXT record. Self-hosted verification obtains or reuses a valid certificate through ACME, without
 comparing the public IP or checking an ownership TXT record. Self-hosted external ingress accepts the
 operator's configuration and leaves TLS to the proxy.
@@ -25,14 +25,14 @@ container port. An unmapped project-level domain is skipped with a warning namin
 ports; it must not inherit a stale project port from another service. Then retry routing or set
 up the project's edge. Review any route warnings even when the edge itself is healthy.
 
-On an Openship control-plane project, an instance administrator can use these repair actions to
+On an Kovalio control-plane project, an instance administrator can use these repair actions to
 route the adopted dashboard to its configured loopback port. The repair preserves the dashboard
 service's existing port claim. Project membership alone does not grant access to reserved host
 ports, and organization-bound or restricted API tokens cannot perform this instance action.
 
-If setup recorded `OPENSHIP_PUBLIC_URL` as **external ingress**, boot assumes an existing proxy
-terminates TLS. That record alone does not provision Openship's edge. Use the self-hosted setup
-flow to configure Openship's edge when changing who owns ingress; retain external ingress when
+If setup recorded `KOVALIO_PUBLIC_URL` as **external ingress**, boot assumes an existing proxy
+terminates TLS. That record alone does not provision Kovalio's edge. Use the self-hosted setup
+flow to configure Kovalio's edge when changing who owns ingress; retain external ingress when
 your existing proxy should continue serving the domain.
 
 A static route needs the absolute release directory of its active deployment. A container ID,
@@ -43,10 +43,10 @@ means the deployment's artifact or workload metadata needs repair or a new succe
 
 <Callout type="error" title="Symptom / what you see">
 You click **Verify** and it doesn't turn green. The **"Verification failed"** toast contains the reason
-Openship returned. On Openship Cloud, DNS failures name one or both records:
+Kovalio returned. On Kovalio Cloud, DNS failures name one or both records:
 
 - `CNAME record not found for app.example.com`
-- `TXT record _openship-challenge.app.example.com must equal "…"`
+- `TXT record _kovalio-challenge.app.example.com must equal "…"`
 
 (If Kovalio can't produce a specific reason it falls back to the generic *"\{hostname} could not be verified yet."*)
 
@@ -60,18 +60,18 @@ Fix each record named in the message.
 
 | Message you see | Which record | What's wrong |
 |---|---|---|
-| `CNAME record not found for …` | Routing (`CNAME`) — Openship Cloud | The `CNAME` is missing or doesn't point at the Cloud target. |
-| `TXT record _openship-challenge.… must equal "…"` | Ownership (`TXT`) | The `_openship-challenge` TXT record is missing, or its value doesn't match the secret code. |
+| `CNAME record not found for …` | Routing (`CNAME`) — Kovalio Cloud | The `CNAME` is missing or doesn't point at the Cloud target. |
+| `TXT record _kovalio-challenge.… must equal "…"` | Ownership (`TXT`) | The `_kovalio-challenge` TXT record is missing, or its value doesn't match the secret code. |
 
 ### If the Cloud routing record is failing
 
 **How to fix**
 
 1. Open your project's **Domains** tab and reopen the **DNS Records** panel for the domain (or run
-   `openship domain records <domainId>`).
+   `kovalio domain records <domainId>`).
 2. Compare the routing row against your registrar's record. Cloud expects a `CNAME` pointing at the
-   **Openship Cloud target** shown in the panel.
-3. Fix any mismatch — copy the value from Openship, don't retype it. Delete any old, conflicting record for the
+   **Kovalio Cloud target** shown in the panel.
+3. Fix any mismatch — copy the value from Kovalio, don't retype it. Delete any old, conflicting record for the
    same name first (a stale `A`/`CNAME` left in place is a common cause).
 4. Wait for the change to take effect, then click **Verify** again.
 
@@ -115,25 +115,25 @@ fresh TXT value, or switch to **Automatic provider** for unattended renewal. See
 Cloudflare represents TXT content with surrounding double quotes, for example
 `"ownership-token"`. Automatic DNS setup writes this form and repairs older
 unquoted values when you apply the DNS plan again. The quotes delimit the DNS
-string; they are not extra characters in the ownership token. Openship accepts
+string; they are not extra characters in the ownership token. Kovalio accepts
 quoted resolver answers and joins chunks within a single TXT record.
 
 ## Cloud DNS is correct, but the certificate check fails
 
-Openship Cloud gets its certificate status from the Cloud provider. Connecting
+Kovalio Cloud gets its certificate status from the Cloud provider. Connecting
 Cloudflare automates DNS records; it does not move Cloud certificate issuance to
-the Openship API server. A Cloudflare certificate notification alone does not
+the Kovalio API server. A Cloudflare certificate notification alone does not
 confirm the origin's certificate or the application's route.
 
 If the response contains `CLOUD_DOMAIN_NOT_CONNECTED`, the provider has no route
 for this domain and project. Check the service mapping in **Domains & Routes**,
 retry routing, then verify HTTPS. `CLOUD_DOMAIN_CHANGED` means the binding changed
-during the operation; refresh the domain details before retrying. Openship does
+during the operation; refresh the domain details before retrying. Kovalio does
 not adopt another project's route to repair this condition.
 
 Older Cloud adapters could throw `undefined is not an object` while reading
 `info?.ssl.status`, even after the provider issued a certificate. Update the
-Openship API to a version that accepts both flat and nested provider SSL status
+Kovalio API to a version that accepts both flat and nested provider SSL status
 responses, then use **Recheck SSL**. Rechecking reads the existing certificate
 and does not request another one.
 
@@ -229,7 +229,7 @@ HTTPS — but Kovalio keeps asking for an `A`/`CNAME` and tries to issue its own
 want.
 </Callout>
 
-**What it means.** Standard verification lets Openship manage the certificate. With an external proxy,
+**What it means.** Standard verification lets Kovalio manage the certificate. With an external proxy,
 that proxy owns public TLS. External ingress keeps certificate issuance out of domain verification;
 Cloud still checks ownership, while self-hosted installations accept the operator's configuration.
 
@@ -237,15 +237,15 @@ Cloud still checks ownership, while self-hosted installations accept the operato
 
 1. When adding the domain, turn on **External ingress & TLS**. From the API, pass
    `"externalIngress": true` on `POST /api/domains`.
-2. On **Openship Cloud**, add the requested `_openship-challenge` TXT record. On **self-hosted instances**,
+2. On **Kovalio Cloud**, add the requested `_kovalio-challenge` TXT record. On **self-hosted instances**,
    no DNS record is requested or checked. Configure DNS to reach your proxy, including internal DNS for
    a homelab behind Nginx Proxy Manager; a rotating WAN IP does not block this verification mode.
-3. Click **Verify**. Openship confirms *"Domain verified — TLS is handled by your external ingress;
-   no certificate is issued here."* Your proxy must forward requests to the Openship server and serve HTTPS.
+3. Click **Verify**. Kovalio confirms *"Domain verified — TLS is handled by your external ingress;
+   no certificate is issued here."* Your proxy must forward requests to the Kovalio server and serve HTTPS.
 
 <Callout title="What the SSL pill shows" type="info">
 An external-ingress domain reads **External TLS** for its SSL status. Verification does not request a
-certificate from Openship; maintain the public certificate at your proxy. Any separately configured
+certificate from Kovalio; maintain the public certificate at your proxy. Any separately configured
 origin certificate protects the proxy-to-server connection.
 </Callout>
 

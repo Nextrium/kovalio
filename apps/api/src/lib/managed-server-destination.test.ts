@@ -22,7 +22,7 @@ vi.mock("@repo/db", () => ({
     project: { findByIdInOrganization: h.project },
   },
 }));
-vi.mock("@repo/platform/engine/lib/openship-cloud", () => ({ issueNamespaceToken: h.issueToken }));
+vi.mock("@repo/platform/engine/lib/kovalio-cloud", () => ({ issueNamespaceToken: h.issueToken }));
 vi.mock("@repo/platform/engine/lib/cloud-tenant-admin", () => ({
   createTenantCloudAdmin: () => ({}),
 }));

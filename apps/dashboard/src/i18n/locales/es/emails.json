@@ -1,7 +1,7 @@
 {
   "cloudClient": {
     "title": "Correo electrónico",
-    "subtitle": "Usa tus buzones actuales con Openship Webmail.",
+    "subtitle": "Usa tus buzones actuales con Kovalio Webmail.",
     "connectTitle": "Conecta tu servidor de correo",
     "description": "Conecta cualquier servidor IMAP/SMTP. Tus buzones y la entrega del correo siguen con tu proveedor.",
     "connectAction": "Conectar un servidor existente",
@@ -11,8 +11,8 @@
   "cloudComingSoon": {
     "title": "Correo gestionado",
     "badge": "Próximamente",
-    "description": "El correo gestionado en Openship Cloud llegará próximamente. Los planes de servidores Cloud alojan aplicaciones y no crean un servidor de correo.",
-    "selfHosted": "Puedes alojar correo en tu propio servidor con una instalación autohospedada de Openship."
+    "description": "El correo gestionado en Kovalio Cloud llegará próximamente. Los planes de servidores Cloud alojan aplicaciones y no crean un servidor de correo.",
+    "selfHosted": "Puedes alojar correo en tu propio servidor con una instalación autohospedada de Kovalio."
   },
   "page": {
     "title": "Servidor de correo",

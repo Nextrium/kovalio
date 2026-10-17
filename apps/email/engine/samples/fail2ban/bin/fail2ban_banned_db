@@ -66,12 +66,12 @@ export CMD_GEOIPLOOKUP6="$(which geoiplookup6 2>/dev/null)"
 # `dig`. Used to query reverse hostname.
 export CMD_DIG="/usr/bin/dig"
 
-if [ -f /etc/fail2ban/openship-postgresql.conf ]; then
-    # Containerized Openship uses a TCP sidecar. A password-file record does
+if [ -f /etc/fail2ban/kovalio-postgresql.conf ]; then
+    # Containerized Kovalio uses a TCP sidecar. A password-file record does
     # not select the endpoint; load the private connection written at boot.
     # Keep this scoped to this helper, including cron/manual invocations.
     unset PGPASSWORD PGHOSTADDR PGSERVICE PGSERVICEFILE
-    . /etc/fail2ban/openship-postgresql.conf || exit 1
+    . /etc/fail2ban/kovalio-postgresql.conf || exit 1
     export CMD_SQL="psql -X -w -v ON_ERROR_STOP=1 -U ${DB_USER} -d ${DB_NAME}"
     export DB_TYPE="pgsql"
 elif [ -f /root/.my.cnf-fail2ban ]; then

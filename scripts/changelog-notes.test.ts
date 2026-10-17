@@ -21,7 +21,7 @@ import {
 
 const SAMPLE = `# Changelog
 
-All notable changes to Openship.
+All notable changes to Kovalio.
 
 ## 0.6.1
 
@@ -81,9 +81,9 @@ describe("buildReleaseNotes", () => {
   });
 
   test("falls back to a CHANGELOG pointer when the version has no entry", () => {
-    const notes = buildReleaseNotes(SAMPLE, "v9.9.9", { repo: "oblien/openship" });
+    const notes = buildReleaseNotes(SAMPLE, "v9.9.9", { repo: "oblien/kovalio" });
     expect(notes).toContain("No changelog entry for 9.9.9");
-    expect(notes).toContain("https://github.com/oblien/openship/blob/v9.9.9/CHANGELOG.md");
+    expect(notes).toContain("https://github.com/Nextrium/kovalio/blob/v9.9.9/CHANGELOG.md");
   });
 
   test("never throws on an empty or malformed changelog", () => {
@@ -130,7 +130,7 @@ describe("buildReleaseNotes", () => {
 
 describe("changelog-notes CLI", () => {
   test("accepts both custom-file argument forms and preserves prose as data", () => {
-    const dir = mkdtempSync(join(tmpdir(), "openship-changelog-"));
+    const dir = mkdtempSync(join(tmpdir(), "kovalio-changelog-"));
     try {
       const path = join(dir, "custom changelog.md");
       const body = '- Keep `code`, "quotes", and $(literal) unchanged.';

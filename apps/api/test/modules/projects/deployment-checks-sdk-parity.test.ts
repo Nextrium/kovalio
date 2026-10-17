@@ -4,7 +4,7 @@ import { repos } from "@repo/db";
 import { DEFAULT_GITHUB_DEPLOYMENT_CHECKS } from "@repo/core";
 import { seedOwner } from "../jobs/_harness";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { projectRoutes } from "../../../src/modules/projects/project.routes";
 import { healthRoutes } from "../../../src/modules/health/health.routes";
@@ -18,7 +18,7 @@ async function clients() {
     user: { id: user.id, email: user.email, name: user.name }, sessionId: "deployment-checks-test",
   }) } });
   return [await ship.scope({ identity: "verified", organizationId: owner.orgId }),
-    new OpenshipClient({ baseUrl: "http://openship.test", token: owner.token, organizationId: owner.orgId,
+    new KovalioClient({ baseUrl: "http://kovalio.test", token: owner.token, organizationId: owner.orgId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch })];
 }
 describe("GitHub deployment settings through native SDK and HTTP", () => {

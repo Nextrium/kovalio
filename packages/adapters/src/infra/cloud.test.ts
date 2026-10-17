@@ -15,14 +15,14 @@ let provider: CloudInfraProvider;
 beforeEach(() => {
   vi.mocked(probePublicTlsCertificate).mockReset().mockImplementation(async domain => ({ domain, verified: true, expiresAt: expiry, issuer: "Let's Encrypt", reason: "issued" }));
   page = { slug: "route-one", domain: "opsh.io", url: `https://${hostname}`, custom_domain: hostname,
-    namespace: "ns-one", source_workspace_id: "ws-one", exported_path: "/opt/openship/cloud-docker/routes/route-one" };
+    namespace: "ns-one", source_workspace_id: "ws-one", exported_path: "/opt/kovalio/cloud-docker/routes/route-one" };
   routes = vi.fn(async () => ({ data: [{ hostname, namespace: "ns-one", owner_type: "page", owner_id: "route-one", is_custom: 1 }] }));
   pages = {
     list: vi.fn(async () => ({ pages: [page] })), get: vi.fn(async () => ({ page })),
     getDomain: vi.fn(async () => ({ domain: { customDomain: hostname, sslStatus: "active", sslExpiry: expiry } })),
     renewSSL: vi.fn(), disconnectDomain: vi.fn(), delete: vi.fn(async () => ({ success: true })),
   };
-  provider = new CloudInfraProvider({ domain: { routes }, pages } as unknown as Oblien, { namespace: "ns-one", workspaceId: "ws-one", routeRoot: "/opt/openship/cloud-docker/routes", lock: { run: work => work() } });
+  provider = new CloudInfraProvider({ domain: { routes }, pages } as unknown as Oblien, { namespace: "ns-one", workspaceId: "ws-one", routeRoot: "/opt/kovalio/cloud-docker/routes", lock: { run: work => work() } });
 });
 
 describe("Cloud custom-domain certificates", () => {
@@ -128,7 +128,7 @@ describe("Cloud custom-domain certificates", () => {
 
   it("does not use another project's Docker Page for TLS", async () => {
     provider = new CloudInfraProvider({ domain: { routes }, pages } as unknown as Oblien, {
-      namespace: "ns-one", workspaceId: "ws-other", routeRoot: "/opt/openship/cloud-docker/routes",
+      namespace: "ns-one", workspaceId: "ws-other", routeRoot: "/opt/kovalio/cloud-docker/routes",
     });
     await expect(provider.renewCert(hostname)).rejects.toMatchObject({ code: "CLOUD_DOMAIN_NOT_CONNECTED" });
     expect(pages.renewSSL).not.toHaveBeenCalled();

@@ -362,22 +362,22 @@ export class OblienBillingApi {
         subscription_ended: "This subscription has ended. Start a new checkout to subscribe again.",
         billing_customer_conflict: "This organization's billing needs to be separated from a legacy account. Contact support.",
         billing_identity_conflict: "This organization's billing identity needs to be verified. Contact support.",
-        billing_redirect_not_allowed: "Cloud billing return links are not configured. Contact Openship support.",
-        invalid_redirect_url: "Cloud billing requires a valid HTTPS return link. Contact Openship support.",
-        billing_idempotency_conflict: "This checkout attempt no longer matches the original request. Contact Openship support before starting another payment.",
-        billing_checkout_reconciliation_required: "An earlier checkout needs to be reviewed. Contact Openship support before starting another payment.",
+        billing_redirect_not_allowed: "Cloud billing return links are not configured. Contact Kovalio support.",
+        invalid_redirect_url: "Cloud billing requires a valid HTTPS return link. Contact Kovalio support.",
+        billing_idempotency_conflict: "This checkout attempt no longer matches the original request. Contact Kovalio support before starting another payment.",
+        billing_checkout_reconciliation_required: "An earlier checkout needs to be reviewed. Contact Kovalio support before starting another payment.",
         checkout_cancellation_pending:
           "Cancellation is still being confirmed. Retry the same payment before starting another checkout.",
         checkout_already_paid: "Payment already completed. Refresh its verification status.",
         checkout_expired: "This checkout has expired. Choose your plan again to start a new checkout.",
         capacity_checkout_expired: "This checkout has expired. Choose your plan again to start a new checkout.",
-        invalid_offer: "This Cloud offer is not configured correctly. Contact Openship support.",
-        reseller_enterprise_required: "Cloud payments require an account configuration update by Openship. Contact Openship support.",
-        billing_provider_configuration_error: "Cloud payments are not configured correctly. Contact Openship support.",
-        billing_database_collation_error: "Cloud billing is unavailable. Contact Openship support.",
+        invalid_offer: "This Cloud offer is not configured correctly. Contact Kovalio support.",
+        reseller_enterprise_required: "Cloud payments require an account configuration update by Kovalio. Contact Kovalio support.",
+        billing_provider_configuration_error: "Cloud payments are not configured correctly. Contact Kovalio support.",
+        billing_database_collation_error: "Cloud billing is unavailable. Contact Kovalio support.",
         billing_storage_unavailable: "Cloud billing is temporarily unavailable. Please try again later.",
         billing_provider_unavailable: "Cloud checkout is temporarily unavailable. Please try again later.",
-        billing_provider_rejected: "Cloud checkout could not be completed. Contact Openship support.",
+        billing_provider_rejected: "Cloud checkout could not be completed. Contact Kovalio support.",
         billing_quote_expired: "This price quote expired. Review a fresh quote before confirming.",
         billing_quote_changed: "The subscription or price changed. Review a fresh quote before confirming.",
         idempotency_conflict: "This billing attempt no longer matches its original request. Refresh its status before trying again.",
@@ -388,9 +388,9 @@ export class OblienBillingApi {
         capacity_billing_unavailable: "Monthly server purchases are temporarily unavailable. Existing paid servers keep their coverage.",
         capacity_unavailable: "This server size is temporarily unavailable. Please try again later or contact support.",
         billing_capacity_unavailable: "This server size is temporarily unavailable. Please try again later or contact support.",
-        billing_offer_underfunded: "Cloud pricing is not configured correctly for this server. Contact Openship support.",
-        capacity_price_below_cost: "Cloud pricing is not configured correctly for this server. Contact Openship support.",
-        insufficient_redeemable_balance: "Cloud server purchases are temporarily unavailable. Contact Openship support.",
+        billing_offer_underfunded: "Cloud pricing is not configured correctly for this server. Contact Kovalio support.",
+        capacity_price_below_cost: "Cloud pricing is not configured correctly for this server. Contact Kovalio support.",
+        insufficient_redeemable_balance: "Cloud server purchases are temporarily unavailable. Contact Kovalio support.",
       };
       const checkoutUnavailable = path === "/billing/checkout" && providerFailure;
       const message = Object.hasOwn(known, code) ? known[code]
@@ -450,7 +450,7 @@ export class OblienBillingApi {
       !reseller.effectiveResourceLimits || !reseller.aggregateResourceLimits
     ) {
       throw new AppError(
-        "The billing provider must enforce total namespace capacity before Cloud checkout can be enabled. Contact Openship support.",
+        "The billing provider must enforce total namespace capacity before Cloud checkout can be enabled. Contact Kovalio support.",
         503,
         "OBLIEN_BILLING_UPGRADE_REQUIRED",
       );

@@ -126,7 +126,7 @@ function box(opts: BoxOpts = {}) {
     // The batched mount resolve — one exec answers all four `pwd -P`s (#774).
     if (cmd.includes("pwd -P")) {
       return EDGE_CONTAINER_MOUNTS.map(
-        (mount) => `__OPENSHIP_MOUNT__\n${opts.canonicalMounts?.[mount.host] ?? mount.host}\n`,
+        (mount) => `__KOVALIO_MOUNT__\n${opts.canonicalMounts?.[mount.host] ?? mount.host}\n`,
       ).join("");
     }
     if (cmd.startsWith("docker logs")) return opts.crashLog ?? "";
@@ -249,7 +249,7 @@ describe("buildEdgeRunCommand", () => {
     expect(cmd).toContain("--log-driver json-file");
     expect(cmd).toContain("--log-opt max-size=20m");
     expect(cmd).toContain("--log-opt max-file=3");
-    expect(cmd).toContain("'/var/lib/openship/edge/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled:z'");
+    expect(cmd).toContain("'/var/lib/kovalio/edge/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled:z'");
     expect(cmd).toContain("'/etc/letsencrypt:/etc/letsencrypt:z'");
     expect(cmd).toContain("'/var/lib/kovalio/edge/acme:/var/www/acme:z'");
     expect(cmd).toContain("'/opt/kovalio/static:/opt/kovalio/static:z'");
@@ -274,13 +274,13 @@ describe("buildEdgeRunCommand", () => {
 describe("resolveEdgeContainerMounts", () => {
   /** Output of the batched resolve script: one marker line, then that mount's segment. */
   const batchOutput = (segments: string[]) =>
-    segments.map((s) => `__OPENSHIP_MOUNT__\n${s}\n`).join("");
+    segments.map((s) => `__KOVALIO_MOUNT__\n${s}\n`).join("");
 
   const canonical = [
-    "/private/var/lib/openship/edge/sites-enabled",
+    "/private/var/lib/kovalio/edge/sites-enabled",
     "/private/etc/letsencrypt",
-    "/private/var/lib/openship/edge/acme",
-    "/opt/openship/static",
+    "/private/var/lib/kovalio/edge/acme",
+    "/opt/kovalio/static",
   ];
 
   it("canonicalizes on the executor's host, not in the API process (#692)", async () => {
@@ -320,13 +320,13 @@ describe("resolveEdgeContainerMounts", () => {
       batchOutput([
         canonical[0],
         canonical[1],
-        "sh: 1: cd: can't cd to /var/lib/openship/edge/acme",
+        "sh: 1: cd: can't cd to /var/lib/kovalio/edge/acme",
         canonical[3],
       ]),
     );
 
     await expect(resolveEdgeContainerMounts({ exec })).rejects.toThrow(
-      /source \/var\/lib\/openship\/edge\/acme .*can't cd/,
+      /source \/var\/lib\/kovalio\/edge\/acme .*can't cd/,
     );
   });
 

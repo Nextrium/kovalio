@@ -50,7 +50,7 @@ function reportReachability(sequence: number, reachable: boolean): void {
   reachabilitySequence = sequence;
   try {
     if (reachable) _networkRecoveryHandler?.();
-    else _networkErrorHandler?.("Cannot reach Openship. Check the connection and server availability.");
+    else _networkErrorHandler?.("Cannot reach Kovalio. Check the connection and server availability.");
   } catch (error) {
     // A notice subscriber must not change the original request's outcome.
     observeCaughtError(error, "dashboard/lib/api/client");
@@ -307,9 +307,9 @@ export function setActiveOrganizationId(orgId: string | null) {
     try {
       if (window.localStorage) {
         if (orgId) {
-          window.localStorage.setItem("openship.activeOrgId", orgId);
+          window.localStorage.setItem("kovalio.activeOrgId", orgId);
         } else {
-          window.localStorage.removeItem("openship.activeOrgId");
+          window.localStorage.removeItem("kovalio.activeOrgId");
         }
       }
     } catch {
@@ -326,7 +326,7 @@ export function getActiveOrganizationId(): string | null {
 // Restore from localStorage on module load so a page refresh keeps the
 // previously-active org in context until the auth hook sets a fresh one.
 if (typeof window !== "undefined" && window.localStorage) {
-  const stored = window.localStorage.getItem("openship.activeOrgId");
+  const stored = window.localStorage.getItem("kovalio.activeOrgId");
   if (stored) _currentOrgId = stored;
 }
 

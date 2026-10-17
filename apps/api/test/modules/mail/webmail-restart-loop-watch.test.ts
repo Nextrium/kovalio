@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { OpenshipReadiness } from "@repo/core";
+import type { KovalioReadiness } from "@repo/core";
 import { resolveReadinessGate } from "@repo/platform/engine/modules/deployments/readiness-gate";
 
 /**

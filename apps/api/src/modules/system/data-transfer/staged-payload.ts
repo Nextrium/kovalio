@@ -41,7 +41,7 @@ export async function readStagedJson(
   const metadata = await listChunkMetadata(session.id);
   assertCompleteChunkSet(metadata, manifest.totalChunks);
 
-  const dir = await mkdtemp(join(tmpdir(), "openship-transfer-"));
+  const dir = await mkdtemp(join(tmpdir(), "kovalio-transfer-"));
   const path = join(dir, "payload.json");
   const handle = await open(path, "wx", 0o600);
   const hash = createHash("sha256");

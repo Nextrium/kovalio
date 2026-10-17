@@ -13,7 +13,7 @@ const { Socket } = require("node:net");
 const MAX_FRAME = 50_000_000;
 const fail = () => {
   process.stderr.write(
-    "Openship blocked this runner assignment before workflow code executed. Check the run's access and approval settings.\n",
+    "Kovalio blocked this runner assignment before workflow code executed. Check the run's access and approval settings.\n",
   );
   process.exit(1);
 };

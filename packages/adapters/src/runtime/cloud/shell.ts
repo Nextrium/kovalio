@@ -14,7 +14,7 @@ export async function openCloudShell(rt: Runtime, opts?: ShellOptions, workspace
   const rows = clampShellWindow(opts?.rows, 24, 500);
   const tracking = currentManagedCommandTracking();
   if (tracking && !workspaceId) throw new Error("Managed terminal is missing its server identity");
-  const command: ManagedCommandRef = { workspaceId: workspaceId ?? "", marker: `openship-exec-${randomUUID()}:`, kind: "terminal" };
+  const command: ManagedCommandRef = { workspaceId: workspaceId ?? "", marker: `kovalio-exec-${randomUUID()}:`, kind: "terminal" };
   await tracking?.record(command);
   let terminalId: string;
   try {

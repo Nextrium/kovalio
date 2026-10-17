@@ -97,7 +97,7 @@ describeDockerE2E("multiple projects on one subscribed Docker workspace", () => 
     const helper = await local.docker.createContainer({
       Image: image,
       Cmd: ["sleep", "3600"],
-      Labels: { "openship.test": tag },
+      Labels: { "kovalio.test": tag },
       HostConfig: { Binds: ["/:/host"], NetworkMode: "host", PidMode: "host" },
     });
     helperId = helper.id;
@@ -323,12 +323,12 @@ describeDockerE2E("multiple projects on one subscribed Docker workspace", () => 
       for (const projectId of ids) {
         for (const row of await local.docker.listContainers({
           all: true,
-          filters: { label: [`openship.project=${projectId}`] },
+          filters: { label: [`kovalio.project=${projectId}`] },
         }))
           await local.docker.getContainer(row.Id).remove({ force: true, v: true });
         await local.removeNetwork(projectId).catch(() => {});
         const volumes = await local.docker.listVolumes({
-          filters: { label: [`openship.project=${projectId}`] },
+          filters: { label: [`kovalio.project=${projectId}`] },
         });
         for (const volume of volumes.Volumes ?? [])
           await local.docker.getVolume(volume.Name).remove();
@@ -354,7 +354,7 @@ describeDockerE2E("multiple projects on one subscribed Docker workspace", () => 
     expect(info.HostConfig.NanoCpus).toBe(250_000_000);
     expect(info.HostConfig.Memory).toBe(128 * 1024 * 1024);
     const aVolume = info.Mounts.find((mount) => mount.Destination === "/data")!.Name!;
-    expect((await local.docker.getVolume(aVolume).inspect()).Labels["openship.project"]).toBe(
+    expect((await local.docker.getVolume(aVolume).inspect()).Labels["kovalio.project"]).toBe(
       a.projectId,
     );
     expect((await a.listAllContainers()).map((row) => row.id)).toEqual([aId]);
@@ -539,7 +539,7 @@ describeDockerE2E("multiple projects on one subscribed Docker workspace", () => 
         source,
         expect.objectContaining({ id: deployment.id }),
       );
-      await b.attachToExternalNetworks(b.projectId, [`openship-${alias}`], [], {
+      await b.attachToExternalNetworks(b.projectId, [`kovalio-${alias}`], [], {
         onlyContainerIds: [bId],
         strict: true,
       });
@@ -547,7 +547,7 @@ describeDockerE2E("multiple projects on one subscribed Docker workspace", () => 
       await b.leaveServiceGroupContainers(alias, [bId]);
       expect(
         (await local.docker.getContainer(bId).inspect()).NetworkSettings.Networks,
-      ).not.toHaveProperty(`openship-${alias}`);
+      ).not.toHaveProperty(`kovalio-${alias}`);
     } finally {
       await a.leaveServiceGroupContainers(alias, [aId]);
       await a.removeNetwork(alias);
@@ -593,15 +593,15 @@ describeDockerE2E("multiple projects on one subscribed Docker workspace", () => 
     const measurements = {
       storage,
       containers: inventory.Containers?.filter((container) =>
-        ids.includes(container.Labels?.["openship.project"] ?? ""),
+        ids.includes(container.Labels?.["kovalio.project"] ?? ""),
       ).map((container) => ({
-        project: container.Labels?.["openship.project"],
+        project: container.Labels?.["kovalio.project"],
         bytes: container.SizeRw,
       })),
       volumes: inventory.Volumes?.filter((volume) =>
-        ids.includes(volume.Labels?.["openship.project"] ?? ""),
+        ids.includes(volume.Labels?.["kovalio.project"] ?? ""),
       ).map((volume) => ({
-        project: volume.Labels?.["openship.project"],
+        project: volume.Labels?.["kovalio.project"],
         usage: volume.UsageData,
       })),
     };
@@ -665,11 +665,11 @@ describeDockerE2E("multiple projects on one subscribed Docker workspace", () => 
     expect(
       await local.docker.listContainers({
         all: true,
-        filters: { label: [`openship.project=${a.projectId}`] },
+        filters: { label: [`kovalio.project=${a.projectId}`] },
       }),
     ).toEqual([]);
     expect(
-      (await local.docker.listVolumes({ filters: { label: [`openship.project=${a.projectId}`] } }))
+      (await local.docker.listVolumes({ filters: { label: [`kovalio.project=${a.projectId}`] } }))
         .Volumes,
     ).toEqual([]);
     await db.delete(schema.project).where(eq(schema.project.id, a.projectId));

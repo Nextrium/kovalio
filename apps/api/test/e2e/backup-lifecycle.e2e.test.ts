@@ -16,7 +16,7 @@ import { incrementalBackupStorage, backupArtifactObjects } from "@repo/core";
 import { getFreePort } from "@repo/core/ports";
 import { db, repos, type BackupRun } from "@repo/db";
 import type { BackupRun as RunSnapshot, BackupRestore as RestoreSnapshot } from "@repo/contracts";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { env } from "@repo/platform/engine/config/index";
 import { mintPatToken } from "@repo/platform/engine/lib/pat";
 import { resolvePlatformConfig } from "@repo/platform/engine/lib/platform-config";
@@ -54,7 +54,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describeDockerE2E("backup lifecycle through the public controls", () => {
   let runtime: DockerRuntime;
-  let client: OpenshipClient;
+  let client: KovalioClient;
   let organizationId = "",
     userId = "",
     projectId = "",
@@ -65,7 +65,7 @@ describeDockerE2E("backup lifecycle through the public controls", () => {
     sftpContainer = "",
     destRoot = "";
   let sshPort = 0;
-  const storageImage = `openship-backup-test:${randomBytes(6).toString("hex")}`;
+  const storageImage = `kovalio-backup-test:${randomBytes(6).toString("hex")}`;
   const containers: string[] = [],
     volumes: string[] = [],
     localRoots: string[] = [];
@@ -91,8 +91,8 @@ describeDockerE2E("backup lifecycle through the public controls", () => {
       scoped: false,
       expiresAt: null,
     });
-    return new OpenshipClient({
-      baseUrl: "http://openship.test",
+    return new KovalioClient({
+      baseUrl: "http://kovalio.test",
       token: pat.token,
       organizationId: org.organizationId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
@@ -118,7 +118,7 @@ describeDockerE2E("backup lifecycle through the public controls", () => {
     return output;
   }
   async function createVolume() {
-    const name = `openship-backup-release-${randomBytes(6).toString("hex")}`;
+    const name = `kovalio-backup-release-${randomBytes(6).toString("hex")}`;
     await runtime.docker.createVolume({ Name: name });
     volumes.push(name);
     return name;
@@ -565,7 +565,7 @@ describeDockerE2E("backup lifecycle through the public controls", () => {
 
   it("resumes a quiesced service and reaps its helper when storage rejects the upload", async () => {
     const blocked = await localDestination("Unavailable storage path");
-    await writeFile(join(blocked.root, "openship"), "not a directory");
+    await writeFile(join(blocked.root, "kovalio"), "not a directory");
     const before = new Set(
       (await runtime.docker.listContainers({ all: true })).map((container) => container.Id),
     );

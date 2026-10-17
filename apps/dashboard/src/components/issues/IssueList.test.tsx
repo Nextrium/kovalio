@@ -46,13 +46,13 @@ const panelTones = (html: string) =>
 
 describe("grouping", () => {
   it("puts scopes needing attention before scopes with only advisories", () => {
-    expect(groupOrder(render())).toEqual(["Servers", "Projects", "Domains", "Openship"]);
+    expect(groupOrder(render())).toEqual(["Servers", "Projects", "Domains", "Kovalio"]);
   });
 
   it("puts a project problem before platform and server updates", () => {
     const updates = ISSUE_FIXTURES.advisory!.filter((issue) => issue.scope !== "project");
     const project = ISSUE_FIXTURES.action!.find((issue) => issue.kind === "workload_unhealthy")!;
-    expect(groupOrder(render([...updates, project]))).toEqual(["Projects", "Openship", "Servers"]);
+    expect(groupOrder(render([...updates, project]))).toEqual(["Projects", "Kovalio", "Servers"]);
   });
 
   it("omits a scope with nothing in it rather than showing an empty panel", () => {

@@ -6,7 +6,7 @@ import { I18nProvider } from "@/components/i18n-provider";
 import { api, ApiError } from "@/lib/api/client";
 import { NetworkErrorHandler } from "./network-error-handler";
 
-vi.mock("@/lib/api/urls", () => ({ getRestApiBaseUrl: () => "http://openship.test/api" }));
+vi.mock("@/lib/api/urls", () => ({ getRestApiBaseUrl: () => "http://kovalio.test/api" }));
 let node: HTMLDivElement;
 let root: Root;
 const fetcher = vi.fn<typeof fetch>();
@@ -42,7 +42,7 @@ it("shows one connection notice for concurrent request failures and clears it af
     await vi.advanceTimersByTimeAsync(1_500);
   });
   expect(node.querySelectorAll('[role="status"]')).toHaveLength(1);
-  expect(node.textContent).toContain("Can’t reach Openship");
+  expect(node.textContent).toContain("Can’t reach Kovalio");
   expect(node.textContent).toContain("Status updates may be delayed");
 
   // A workload failure returned by a reachable API is not a browser connection failure.
@@ -76,7 +76,7 @@ it("retries only liveness without repeating the failed mutation", async () => {
   fetcher.mockResolvedValueOnce(new Response("{}"));
   await act(async () => { node.querySelector("button")!.click(); });
   expect(fetcher).toHaveBeenCalledTimes(2);
-  expect(String(fetcher.mock.calls[1]![0])).toBe("http://openship.test/api/health");
+  expect(String(fetcher.mock.calls[1]![0])).toBe("http://kovalio.test/api/health");
   expect(fetcher.mock.calls[1]![1]).toMatchObject({ method: "GET", cache: "no-store" });
   expect(node.querySelector('[role="status"]')).toBeNull();
 });

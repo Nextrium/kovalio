@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ApiError, OpenshipClient } from "../src/client";
+import { ApiError, KovalioClient } from "../src/client";
 import { SDK_CAPABILITIES } from "@repo/contracts";
 import { deploymentFixture } from "../../contracts/test/fixtures";
 
@@ -22,7 +22,7 @@ const scopedFetch = () =>
 describe("remote SDK", () => {
   it.each(["buildAccess", "start"] as const)("rejects a pending-check response from %s without inventing a deployment ID", async method => {
     const waiting = { project_id: "project-a", awaiting_actions: true, action_request_id: "adep-a" };
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "https://ship.example.test",
       fetch: async () => method === "start"
         ? new Response(`event: started\ndata: ${JSON.stringify(waiting)}\n\n`, { headers: { "content-type": "text/event-stream" } })
@@ -38,7 +38,7 @@ describe("remote SDK", () => {
     "https://ship.example.test/api/",
   ])("uses the same deployment command and the selected tenant at %s", async (baseUrl) => {
     const fetcher = scopedFetch();
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl,
       token: "credential",
       organizationId: "org-a",
@@ -55,7 +55,7 @@ describe("remote SDK", () => {
     expect(url).toBe("https://ship.example.test/api/deployments");
     expect(new Headers(request.headers).get("authorization")).toBe("Bearer credential");
     expect(new Headers(request.headers).get("x-organization-id")).toBe("org-a");
-    expect(new Headers(request.headers).get("x-openship-scope")).toBe("fixed");
+    expect(new Headers(request.headers).get("x-kovalio-scope")).toBe("fixed");
     expect(JSON.parse(request.body as string)).toEqual({ projectId: "project-a", forceAll: true });
     expect(request.redirect).toBe("error");
     expect(fetcher).toHaveBeenCalledTimes(2);
@@ -64,13 +64,13 @@ describe("remote SDK", () => {
   it("refreshes credentials without mutating other clients", async () => {
     const fetcher = scopedFetch();
     let token = "old";
-    const a = new OpenshipClient({
+    const a = new KovalioClient({
       baseUrl: "http://localhost:4000",
       token: () => token,
       organizationId: "org-a",
       fetch: fetcher,
     });
-    const b = new OpenshipClient({
+    const b = new KovalioClient({
       baseUrl: "http://localhost:4000",
       token: "b",
       organizationId: "org-b",
@@ -96,7 +96,7 @@ describe("remote SDK", () => {
   it("preserves structured API errors and never retries a mutation", async () => {
     const body = { error: "This access token is read-only", code: "TOKEN_READ_ONLY" };
     const fetcher = vi.fn(async () => Response.json(body, { status: 403 }));
-    const client = new OpenshipClient({ baseUrl: "https://ship.example.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.example.test", fetch: fetcher });
     await expect(client.deployments.create({ projectId: "project-a" })).rejects.toMatchObject({
       name: "ApiError",
       status: 403,
@@ -108,7 +108,7 @@ describe("remote SDK", () => {
 
   it("rejects invalid inputs without sending a request and rejects invalid successful envelopes", async () => {
     const fetcher = vi.fn(async () => Response.json({ success: true }));
-    const client = new OpenshipClient({ baseUrl: "http://localhost:4000", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "http://localhost:4000", fetch: fetcher });
     await expect(
       client.deployments.create({ projectId: "project-a", refresh: "yes" } as never),
     ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
@@ -121,7 +121,7 @@ describe("remote SDK", () => {
   it("preserves ID-only compatibility without claiming a full deployment record", async () => {
     const data = { deployment_id: "dep-project-a", project_id: "project-a" };
     const fetcher = vi.fn(async () => Response.json({ data }, { status: 202 }));
-    const client = new OpenshipClient({ baseUrl: "http://localhost:4000", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "http://localhost:4000", fetch: fetcher });
     await expect(client.deployments.create({ projectId: "project-a" })).resolves.toEqual(data);
     expect(fetcher).toHaveBeenCalledOnce();
   });
@@ -135,7 +135,7 @@ describe("remote SDK", () => {
       },
     };
     const fetcher = vi.fn(async () => Response.json(body, { status: 202 }));
-    const client = new OpenshipClient({ baseUrl: "http://localhost:4000", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "http://localhost:4000", fetch: fetcher });
     await expect(client.deployments.create({ projectId: "project-a" })).rejects.toMatchObject({
       name: "ApiError",
       status: 502,
@@ -146,7 +146,7 @@ describe("remote SDK", () => {
 
   it("refuses a scoped mutation before sending it to a server that ignores tenant confinement", async () => {
     const fetcher = vi.fn(async () => Response.json({ status: "ok" }));
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "https://old.example.test",
       organizationId: "org-a",
       fetch: fetcher,

@@ -1,6 +1,6 @@
 /**
  * Capabilities of the Scale planner, not a list of provisioned database engines.
- * Limits are OpenShip product limits; they are not upstream database limits.
+ * Limits are Kovalio product limits; they are not upstream database limits.
  * Keep this module serializable and independent of React and server integrations.
  */
 export const RESOURCE_KINDS = ["edge", "service", "postgres", "redis"] as const;
@@ -150,7 +150,7 @@ export type ClusterAddition =
 
 export const RESOURCE_CATALOG = {
   edge: {
-    title: "OpenShip Edge",
+    title: "Kovalio Edge",
     description: "Ingress, TLS, and load balancing",
     paletteDescription: "TLS, routing and load balancing",
     connection: { protocols: ["http", "https"], defaultProtocol: "https", defaultPort: 443 },

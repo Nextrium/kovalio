@@ -32,13 +32,13 @@ let archive: Buffer, digest: string;
 const sha256 = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 
 beforeAll(async () => {
-  root = await mkdtemp(join(tmpdir(), "openship-upload-http-test-"));
+  root = await mkdtemp(join(tmpdir(), "kovalio-upload-http-test-"));
   scratch = join(root, "staging");
   const source = join(root, "input");
   await mkdir(source);
   await mkdir(scratch);
   vi.stubEnv("TMPDIR", scratch);
-  vi.stubEnv("OPENSHIP_NATIVE", "false");
+  vi.stubEnv("KOVALIO_NATIVE", "false");
   // Incompressible bytes ensure the gzip itself crosses the reported 10 MiB
   // boundary, rather than merely expanding to that size after extraction.
   const payload = randomBytes(12 * 1024 * 1024);

@@ -10,13 +10,13 @@ project. It mirrors what you'd otherwise set in the [deploy wizard](/docs/guides
 so a repo becomes "ready to ship on Kovalio" and [auto-deploy on push](/docs/guides/auto-deploy)
 and `kovalio deploy` become deterministic — no wizard needed.
 
-When refreshing services for a project with a saved subfolder, Openship uses that subfolder's
-`openship.json` when present. Otherwise, it uses the repository-root manifest, preserving existing
+When refreshing services for a project with a saved subfolder, Kovalio uses that subfolder's
+`kovalio.json` when present. Otherwise, it uses the repository-root manifest, preserving existing
 service definitions and environment defaults. The saved build directory still applies.
 
 <Callout title="Authoritative overlay">
-  Openship **auto-detects** your stack first, then applies every field present in `openship.json` on
-  top. Fields you omit keep their detected value. So a good `openship.json` is **small** — declare
+  Kovalio **auto-detects** your stack first, then applies every field present in `kovalio.json` on
+  top. Fields you omit keep their detected value. So a good `kovalio.json` is **small** — declare
   only what you want to override or pin, not the whole detected config.
 </Callout>
 
@@ -101,7 +101,7 @@ keep their existing repository detection and defaults; an explicit unsupported s
 before a project write or build instead of being ignored.
 
 For the Laravel and Symfony stacks, select a version in the deploy wizard's
-build settings or declare it in `openship.json`:
+build settings or declare it in `kovalio.json`:
 
 ```json
 {
@@ -141,10 +141,10 @@ PHP in their own image instead. Existing projects and user Dockerfiles without `
 
 The API and SDK accept `runtimeVersion` in project creation, ensure/update and build options. Send
 `null` in project options to restore the default PHP version; custom builder overrides are preserved. Folder scans, the SDK source deployment flow,
-and `openship deploy --folder` preserve repository declarations. The CLI validates this field with
-`openship config validate`. Version and resolved image references are frozen in each deployment
+and `kovalio deploy --folder` preserve repository declarations. The CLI validates this field with
+`kovalio config validate`. Version and resolved image references are frozen in each deployment
 snapshot; rollback reuses that release's retained application image rather than the latest project
-setting. Openship Edge, TLS, routing and resource monitoring continue through the existing deployment path.
+setting. Kovalio Edge, TLS, routing and resource monitoring continue through the existing deployment path.
 
 ## Runtime
 
@@ -188,7 +188,7 @@ gain little, so leave them unwarmed.
 present when it runs. After that, every `env()` call outside `config/*.php`
 returns `null`.
 
-Warm the cache at startup, after Openship injects the runtime environment. Do
+Warm the cache at startup, after Kovalio injects the runtime environment. Do
 not warm it in `buildCommand`, which freezes build-time values. Do not warm it
 in `releaseCommands`, which runs in a throwaway container whose
 `bootstrap/cache` is discarded. Read configuration through `config()` and keep
@@ -261,7 +261,7 @@ a Laravel version verified to drain.
 
 Docker source builds offer a **Runtime image** field under Advanced build settings.
 It is a production **base** image, separate from the builder and the final application image.
-Omit it in `openship.json`, or send `runtimeImage: null` through project options, to restore the managed default.
+Omit it in `kovalio.json`, or send `runtimeImage: null` through project options, to restore the managed default.
 
 ```json
 {
@@ -314,7 +314,7 @@ Nothing is injected for you. A framework's release set is a choice, so an app wi
 Rails uses `db:prepare` rather than `db:migrate` because it also creates the database and
 loads the schema when it is empty, which is exactly the state of a first deploy.
 
-Set these commands in **Build settings → Before activation**, `openship.json`, or the
+Set these commands in **Build settings → Before activation**, `kovalio.json`, or the
 project API/SDK. A repository scan seeds a new project; existing projects keep their saved
 commands, including an explicit empty list. The list is frozen on each deployment.
 
@@ -324,7 +324,7 @@ cancellation stops activation and leaves the previous application running.
 
 On Docker, each command runs in a temporary container using the candidate image, the
 project's persistent mounts, and its connected-service networks. It publishes no ports
-and does not restart. Openship removes the container and its anonymous scratch volumes
+and does not restart. Kovalio removes the container and its anonymous scratch volumes
 afterwards. On Bare, commands run in the staged release directory **after persistent
 paths are linked**, before the supervisor changes the running app. When a forward deploy
 reuses a retained Bare release, the command gets a temporary copy so it cannot edit the
@@ -358,7 +358,7 @@ run the commands saved on that deployment, even when they reuse an existing imag
 
 Use idempotent commands and schema changes compatible with the previous application.
 **Rolling code back does not undo database changes**, and a command may have made partial
-changes before failing. Openship does not promise a transaction across multiple commands.
+changes before failing. Kovalio does not promise a transaction across multiple commands.
 </Callout>
 
 ## Runtime roles
@@ -386,7 +386,7 @@ worker can scale without scaling the web app, and a scheduler runs exactly once.
 }
 ```
 
-Roles are read from `openship.json` when a project is created from a repository scan.
+Roles are read from `kovalio.json` when a project is created from a repository scan.
 Like release commands, an existing project
 keeps the roles it has saved, so change those through the project API/SDK (`roles`; send
 `[]` to remove them). The list is frozen on each deployment, and a project holds at most
@@ -411,7 +411,7 @@ Roles run on **single-app projects deployed to a Docker server**. A deploy that 
 roles is refused **before the build starts**, with no build, release command or container
 run, on:
 
-- Openship Cloud
+- Kovalio Cloud
 - direct (bare) hosts
 - Kubernetes
 - multi-service projects (Compose or monorepo)
@@ -453,11 +453,11 @@ unchanged command.
 
 A previous singleton that no new role continues is outgoing. A rename, a command change, a
 name swap or a change to a scalable worker each make a singleton outgoing. When the deploy
-also adds or changes a role, Openship stops and retains each outgoing singleton after the
+also adds or changes a role, Kovalio stops and retains each outgoing singleton after the
 unchanged workers pass their startup check, and before any added or changed role starts.
 Otherwise an outgoing singleton keeps running until the new web container is live.
 
-When unwinding a failed deploy, Openship attempts to remove the new containers and restore
+When unwinding a failed deploy, Kovalio attempts to remove the new containers and restore
 retained singletons. A continued singleton is restored only after its replacement is
 confirmed removed. An outgoing singleton is restored only after every added or changed role
 is confirmed removed.
@@ -510,7 +510,7 @@ Status checks only inspect the runtime; they do not start processes or run healt
 commands. An unreachable server shows unknown status with Retry. A saved log link
 is pinned to its deployment, so it cannot silently open a newer release's container.
 
-Role configuration is still set in `openship.json` or through the project API. The SDK
+Role configuration is still set in `kovalio.json` or through the project API. The SDK
 exposes the same read-only inventory and log selection:
 
 ```ts
@@ -529,12 +529,12 @@ if (runtime.deploymentId) {
 From the CLI:
 
 ```bash
-openship project roles proj_example
-openship project logs proj_example --role queue --replica 1 --follow
+kovalio project roles proj_example
+kovalio project logs proj_example --role queue --replica 1 --follow
 ```
 
 On the server, role containers are named
-`openship-<project slug>-<deployment id>-<role>-<replica>`; `docker logs <name>`
+`kovalio-<project slug>-<deployment id>-<role>-<replica>`; `docker logs <name>`
 remains available for direct inspection.
 
 ## Persistent storage
@@ -734,7 +734,7 @@ which Dockerfile arguments it consumes. A service's own `env` is runtime-only an
 with sibling builds. Keep runtime-only credentials in service `env` where possible: Docker build
 arguments are not a secret-storage mechanism and can be retained in image metadata or build cache.
 
-A compose file's own limits are honored too — Openship reads `mem_limit` / `cpus` and
+A compose file's own limits are honored too — Kovalio reads `mem_limit` / `cpus` and
 `deploy.resources.limits.{memory,cpus}` off each service and applies them over the project-wide
 setting.
 
@@ -746,7 +746,7 @@ scratch (the detector finds the apps).
 
 Each override must have a different normalized `rootDirectory`. Declaring a web
 process and a worker at the same root is not a supported multi-app declaration.
-`openship config validate` rejects duplicate roots; source scans report unmatched
+`kovalio config validate` rejects duplicate roots; source scans report unmatched
 apps and workspace overrides in the configuration diagnostics.
 
 Create a monorepo through the repository import flow, which supplies the detected
@@ -796,12 +796,12 @@ the required roots and start commands.
 
 ## How it maps
 
-| `openship.json`                                                                                                | Deploy wizard / API                               |
+| `kovalio.json`                                                                                                | Deploy wizard / API                               |
 | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | `framework`, `packageManager`, `*Command`, `outputDirectory`, `buildImage`, `runtimeVersion`, `runtimeImage`, `productionPaths`, `rootDirectory` | Build settings                                    |
 | `port`, `productionMode`, `runtime`                                                                            | Runtime settings (`hasServer`, runtime isolation) |
 | `releaseCommands`                                                                                              | Build settings → Before activation                  |
-| `roles`                                                                                                        | No dashboard field: set in `openship.json` or the project API |
+| `roles`                                                                                                        | No dashboard field: set in `kovalio.json` or the project API |
 | `volumes`                                                                                                      | Configuration → Persistent storage                |
 | `env`                                                                                                          | Environment variables (seeded as editable rows)   |
 | `domains`                                                                                                      | Public endpoints / custom domains                 |

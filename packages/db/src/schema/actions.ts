@@ -108,7 +108,7 @@ export const actionWorkflow = pgTable(
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    controller: text("controller").$type<ActionWorkflowController>().notNull().default("openship"),
+    controller: text("controller").$type<ActionWorkflowController>().notNull().default("kovalio"),
     githubWorkflowId: text("github_workflow_id"),
     syncAfter: timestamp("sync_after").notNull().defaultNow(),
     syncLeaseOwner: text("sync_lease_owner"),
@@ -142,7 +142,7 @@ export const actionWorkflow = pgTable(
     uniqueIndex("action_workflow_repo_path_unique").on(t.organizationId, t.owner, t.repo, t.path),
     index("action_workflow_repo_idx").on(t.owner, t.repo),
     index("action_workflow_sync_idx").on(t.controller, t.syncAfter, t.syncLeaseUntil),
-    check("action_workflow_controller_check", sql`${t.controller} IN ('openship', 'github')`),
+    check("action_workflow_controller_check", sql`${t.controller} IN ('kovalio', 'github')`),
     check(
       "action_workflow_github_check",
       sql`${t.controller} <> 'github' OR (${t.owner} IS NOT NULL AND ${t.repo} IS NOT NULL AND ${t.source} IS NULL AND ${t.githubWorkflowId} IS NOT NULL)`,
@@ -238,7 +238,7 @@ export const actionRun = pgTable(
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     workflowId: text("workflow_id").notNull(),
-    controller: text("controller").$type<ActionWorkflowController>().notNull().default("openship"),
+    controller: text("controller").$type<ActionWorkflowController>().notNull().default("kovalio"),
     github: jsonb("github").$type<ActionGitHubRun>(),
     number: integer("number").notNull(),
     attempt: integer("attempt").notNull().default(1),
@@ -292,7 +292,7 @@ export const actionRun = pgTable(
     index("action_run_workflow_created_idx").on(t.workflowId, t.createdAt),
     index("action_run_pending_idx").on(t.settledAt, t.leaseUntil),
     index("action_run_concurrency_idx").on(t.organizationId, t.concurrencyGroup, t.status),
-    check("action_run_controller_check", sql`${t.controller} IN ('openship', 'github')`),
+    check("action_run_controller_check", sql`${t.controller} IN ('kovalio', 'github')`),
     uniqueIndex("action_run_github_unique").on(
       t.organizationId,
       sql`(${t.github}->>'id')`,

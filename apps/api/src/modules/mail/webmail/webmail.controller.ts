@@ -69,7 +69,7 @@ export async function getTargetsHandler(c: Context) {
  *     mailServerId: string,
  *     hostname: string,
  *     target:
- *       | { kind: "self", serverId: string }   // self-hosted on an openship server
+ *       | { kind: "self", serverId: string }   // self-hosted on an kovalio server
  *       | { kind: "cloud", serverId: string }  // selected managed Cloud server
  *     replaceLegacy?: boolean                  // consent to replace a pre-catalog webmail
  *   }

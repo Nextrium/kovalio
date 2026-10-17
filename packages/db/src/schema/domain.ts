@@ -83,9 +83,9 @@ export const domain = pgTable(
      * Externally-managed ingress + TLS. When true, an upstream (Cloudflare Tunnel,
      * a load balancer, etc.) terminates TLS and forwards HTTP to this box, so the
      * hostname does NOT resolve to the server's (possibly Tailscale) SSH address.
-     * Openship then: verifies ownership via TXT only (no A-record check), skips
+     * Kovalio then: verifies ownership via TXT only (no A-record check), skips
      * certbot, and serves a plain-HTTP OpenResty route. DNS/LB/firewall stay
-     * outside Openship.
+     * outside Kovalio.
      */
     externalIngress: boolean("external_ingress").notNull().default(false),
 
@@ -105,7 +105,7 @@ export const domain = pgTable(
     /* ── Verification ───────────────────────────────────────────────────── */
     /** pending (not checked yet) | active | failed (last check failed) | removing */
     status: text("status").notNull().default("pending"),
-    /** DNS TXT verification value (e.g. "openship-verify=abc123") */
+    /** DNS TXT verification value (e.g. "kovalio-verify=abc123") */
     verificationToken: text("verification_token"),
     /** Whether DNS verification has passed */
     verified: boolean("verified").notNull().default(false),

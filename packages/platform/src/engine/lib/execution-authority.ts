@@ -79,7 +79,7 @@ export async function resolveExecutionAuthority(value: ExecutionAuthority | null
     tokenScope,
     credential,
   }, value.organizationId);
-  const frozen = freezeContext({ ...context, source: "system", userAgent: `openship-action:${label}` });
+  const frozen = freezeContext({ ...context, source: "system", userAgent: `kovalio-action:${label}` });
   delegations.set(frozen, structuredClone(value));
   return frozen;
 }

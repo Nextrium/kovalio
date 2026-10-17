@@ -10,7 +10,7 @@ vi.mock("../../src/lib/request-context", () => ({ getRequestContext: () => ({ or
 // This unit suite exercises the provider delegate; host permission enforcement
 // is covered through real authentication and persistence in cloud-execution-access.
 vi.mock("../../src/modules/cloud/cloud-relay-access", () => ({ authorizeCloudRelayWorkspace: async () => null }));
-vi.mock("@repo/platform/engine/lib/openship-cloud", () => ({ ensureNamespace: async () => "ns-a" }));
+vi.mock("@repo/platform/engine/lib/kovalio-cloud", () => ({ ensureNamespace: async () => "ns-a" }));
 vi.mock("@repo/platform/engine/lib/oblien-client", () => ({ getOblienClient: () => ({
   workspaces: { get: h.workspaceGet },
   pages: { list: h.pageList, get: h.pageGet, create: h.pageCreate, deploy: h.pageDeploy, delete: h.pageDelete },

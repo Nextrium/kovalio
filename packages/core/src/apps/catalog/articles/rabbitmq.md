@@ -1,6 +1,6 @@
 ## RabbitMQ with management
 
-The official RabbitMQ management image includes the broker and its browser dashboard. A generated `openship` account administers the broker. The `openship` virtual host is created on the first boot.
+The official RabbitMQ management image includes the broker and its browser dashboard. A generated `kovalio` account administers the broker. The `kovalio` virtual host is created on the first boot.
 
 ## Connect applications
 

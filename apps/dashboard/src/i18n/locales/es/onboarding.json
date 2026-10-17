@@ -41,7 +41,7 @@
     "local": {
       "title": "Esta máquina",
       "badge": "Beta",
-      "desc": "Instala Openship aquí mismo, sin SSH ni configuración remota",
+      "desc": "Instala Kovalio aquí mismo, sin SSH ni configuración remota",
       "comingSoon": "La instalación local estará disponible pronto.",
       "comingSoonDesc": "Por ahora, hospeda en cualquier servidor Linux con Docker instalado."
     },

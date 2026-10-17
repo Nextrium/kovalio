@@ -26,7 +26,7 @@ export async function createLocalCliSession(c: Context) {
   const admin = await repos.user.findFoundingAdmin();
   if (!admin || admin.role !== "admin") {
     return c.json(
-      { error: "No local administrator is available. Complete Openship setup first." },
+      { error: "No local administrator is available. Complete Kovalio setup first." },
       409,
     );
   }
@@ -41,7 +41,7 @@ export async function createLocalCliSession(c: Context) {
     purpose: "local-cli",
     userId: admin.id,
     activeOrganizationId: organizationId,
-    userAgent: "openship-cli/local",
+    userAgent: "kovalio-cli/local",
     // Bounds abandoned sessions if the process is killed before sign-out.
     ttlSeconds: 24 * 60 * 60,
   });

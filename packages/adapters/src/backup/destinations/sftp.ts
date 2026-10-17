@@ -282,7 +282,7 @@ class SftpDestinationImpl implements BackupDestination {
 
   async preflight(): Promise<{ ok: true } | { ok: false; reason: string }> {
     try {
-      const probeName = `.openship-probe-${randomBytes(6).toString("hex")}`;
+      const probeName = `.kovalio-probe-${randomBytes(6).toString("hex")}`;
       await this.withSftp(async (sftp, signal) => {
         await this.ensureDir(sftp, this.rootPath, signal);
         const probePath = posix.join(this.rootPath, probeName);

@@ -18,7 +18,7 @@ function volume(projectId: string, bytes = GIB, refs = 0) {
   return {
     Name: projectBuildCacheVolume(projectId),
     Mountpoint: `/cache/${projectId}`,
-    Labels: { "openship.build-cache": "1", "openship.build-cache.project": projectId },
+    Labels: { "kovalio.build-cache": "1", "kovalio.build-cache.project": projectId },
     CreatedAt: new Date().toISOString(),
     UsageData: { Size: bytes, RefCount: refs },
   };
@@ -60,7 +60,7 @@ describe("bounded project build cache", () => {
     });
     expect(() => parseBuildStorage("bad")).toThrow(/measure/);
     expect(
-      parseBuildStorage("login banner\nOPENSHIP_STORAGE 102400 51200\nOPENSHIP_INODES 1000 100\n"),
+      parseBuildStorage("login banner\nKOVALIO_STORAGE 102400 51200\nKOVALIO_INODES 1000 100\n"),
     ).toEqual({ totalBytes: 104857600, freeBytes: 52428800, freeInodes: 100 });
     expect(() => parseBuildStorage("1024 2048")).toThrow(/measure/);
     expect(() =>
@@ -77,11 +77,11 @@ describe("bounded project build cache", () => {
     { inodes: "1000 900 100 90%", freeInodes: 100, exhausted: false },
     { inodes: "1000 1000 0 100%", freeInodes: 0, exhausted: true },
   ])("measures df inode statistics correctly: $inodes", ({ inodes, freeInodes, exhausted }) => {
-    const root = mkdtempSync(join(tmpdir(), "openship-storage-probe-"));
+    const root = mkdtempSync(join(tmpdir(), "kovalio-storage-probe-"));
     try {
       writeFileSync(
         join(root, "docker"),
-        '#!/bin/sh\nprintf "%s\\n" "$OPENSHIP_TEST_STORAGE_ROOT"\n',
+        '#!/bin/sh\nprintf "%s\\n" "$KOVALIO_TEST_STORAGE_ROOT"\n',
       );
       writeFileSync(
         join(root, "df"),
@@ -100,7 +100,7 @@ fi
         env: {
           ...process.env,
           PATH: `${root}:${process.env.PATH}`,
-          OPENSHIP_TEST_STORAGE_ROOT: root,
+          KOVALIO_TEST_STORAGE_ROOT: root,
         },
       });
       const storage = parseBuildStorage(output);
@@ -121,7 +121,7 @@ fi
     "keeps disk-space admission checks when inode statistics are unknown: %s",
     (inodes) => {
       const storage = parseBuildStorage(
-        `OPENSHIP_STORAGE 104857600 1048576\nOPENSHIP_INODES ${inodes}\n`,
+        `KOVALIO_STORAGE 104857600 1048576\nKOVALIO_INODES ${inodes}\n`,
       );
       expect(storage.freeInodes).toBeNull();
       expect(() => assertBuildStorage(storage)).toThrow(
@@ -137,7 +137,7 @@ fi
           volume("a"),
           { ...volume("b"), Name: "database" },
           { ...volume("c"), Labels: {} },
-          { ...volume("data"), Labels: { ...volume("data").Labels, "openship.project": "data" } },
+          { ...volume("data"), Labels: { ...volume("data").Labels, "kovalio.project": "data" } },
           { ...volume("d"), UsageData: { Size: -1, RefCount: 0 } },
         ],
       }),
@@ -166,7 +166,7 @@ fi
     const exec = h.exec.getMockImplementation()!;
     h.exec.mockImplementation((command) =>
       command.includes("df -Pk")
-        ? Promise.resolve("OPENSHIP_STORAGE 524288000 301989888\nOPENSHIP_INODES 0 0\n")
+        ? Promise.resolve("KOVALIO_STORAGE 524288000 301989888\nKOVALIO_INODES 0 0\n")
         : exec(command),
     );
     const result = await pruneManagedBuildCaches(h.docker as never, h.executor, {

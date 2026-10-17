@@ -318,7 +318,7 @@ export function buildProjectRouteDomains(opts: {
       tls: !external || manualSsl,
       requiresSslTooling,
       // Ours to terminate unless an upstream ingress owns it (externalIngress) or
-      // it's a managed *.opsh.io host fronted by Openship Cloud's edge.
+      // it's a managed *.opsh.io host fronted by Kovalio Cloud's edge.
       terminatesTlsLocally: opts.certificateManagement !== "provider" && !external && !managed.isManaged,
       // Attempt issuance on the FIRST deploy of an unverified custom domain —
       // issuing IS the verification on self-hosted, so the domain is Live at

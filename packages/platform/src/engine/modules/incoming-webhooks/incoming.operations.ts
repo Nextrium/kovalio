@@ -22,7 +22,7 @@ function normalize(config: IncomingWebhookActionConfig) {
 }
 async function authorizeAction(ctx: ExecutionContext, projectId: string, type: "deploy" | "job", config: IncomingWebhookActionConfig, auth: "none" | "token" | "hmac") {
   if (type === "job") {
-    if (env.CLOUD_MODE) throw new ValidationError("Job webhooks are not available on Openship Cloud");
+    if (env.CLOUD_MODE) throw new ValidationError("Job webhooks are not available on Kovalio Cloud");
     if (auth === "none") throw new ValidationError("Job webhooks require token or HMAC auth");
     if (!config.jobKey) throw new ValidationError("A job is required for a job webhook");
     await assertJobRunnable(ctx, config.jobKey);

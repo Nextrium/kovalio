@@ -3,7 +3,7 @@ import { seedOwner, seedServer, type SeededOwner } from "../jobs/_harness";
 import { Hono } from "hono";
 import { repos } from "@repo/db";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { sshManager } from "@repo/platform/engine/lib/ssh-manager";
 import { serverManagementRoutes } from "../../../src/modules/system/server-management.routes";
@@ -34,8 +34,8 @@ async function clients(owner: SeededOwner) {
     },
   });
   const native = await ship.scope({ identity: "verified", organizationId: owner.orgId });
-  const remote = new OpenshipClient({
-    baseUrl: "http://openship.test",
+  const remote = new KovalioClient({
+    baseUrl: "http://kovalio.test",
     token: owner.token,
     organizationId: owner.orgId,
     fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,

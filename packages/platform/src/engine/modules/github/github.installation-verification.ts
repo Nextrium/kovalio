@@ -3,7 +3,7 @@
  *
  * GitHub treats that query parameter as untrusted. A valid claim must prove
  * both that the initiating GitHub user can see the installation and that the
- * installation belongs to the App configured by this Openship control plane.
+ * installation belongs to the App configured by this Kovalio control plane.
  * Cloud and operator-owned self-hosted Apps deliberately share this function.
  */
 
@@ -80,7 +80,7 @@ export async function verifyGitHubInstallationForUser(
   }
 
   // User-token lookup binds the untrusted id to the human who initiated the
-  // Openship flow. An App JWT alone can see every tenant installation.
+  // Kovalio flow. An App JWT alone can see every tenant installation.
   const userInstallation = await findUserInstallation(userToken, installationId);
   if (!userInstallation) {
     return {
@@ -113,7 +113,7 @@ export async function verifyGitHubInstallationForUser(
 
 /**
  * Verify an installation for a workspace-owned custom App. The initiating
- * Openship user is already an authenticated workspace owner and the one-time
+ * Kovalio user is already an authenticated workspace owner and the one-time
  * state binds the browser round-trip; the source's App JWT independently proves
  * that the untrusted installation_id belongs to this exact App.
  */

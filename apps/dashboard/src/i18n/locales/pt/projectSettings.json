@@ -25,7 +25,7 @@
     "installing": "Instalando…",
     "advanced": "Opções avançadas de deploy",
     "nameLabel": "Nome",
-    "nameHint": "Como este aplicativo aparece no Openship.",
+    "nameHint": "Como este aplicativo aparece no Kovalio.",
     "domainTitle": "Onde ele deve ficar?",
     "domainFree": "Subdomínio gratuito",
     "domainFreeHint": "Um subdomínio gratuito em {domain}",
@@ -73,8 +73,8 @@
     "routePortLabel": "Apenas porta (sem domínio)",
     "routePortDesc": "Acessível pelo endereço e porta do host — sem necessidade de domínio ou Cloud.",
     "routeFreeLabel": "Subdomínio gratuito",
-    "routeFreeDesc": "Um subdomínio gratuito em {domain}, roteado pelo Openship Cloud.",
-    "routeFreeNeedsCloud": "Conecte o Openship Cloud para usar um subdomínio gratuito.",
+    "routeFreeDesc": "Um subdomínio gratuito em {domain}, roteado pelo Kovalio Cloud.",
+    "routeFreeNeedsCloud": "Conecte o Kovalio Cloud para usar um subdomínio gratuito.",
     "routeCustomLabel": "Seu próprio domínio",
     "routeCustomDesc": "Aponte um domínio próprio para este aplicativo.",
     "routeDomainLabel": "Domínio",
@@ -848,10 +848,10 @@
     "linkedTitleOther": "{count} projetos estão conectados a este app",
     "linkedNote": "Continuam em execução com os dados intactos — perdem apenas esta conexão. Reimplante-os para aplicar.",
     "linkedNoteRecordOnly": "Continuam em execução, mas o vínculo vai com o registro — reimportar este app depois não o restaura.",
-    "recordOnlyLabel": "Remover apenas do Openship",
-    "recordOnlyDesc": "Mantém o app e seus dados rodando no seu servidor — apenas o registro do Openship é removido. Você pode importá-lo novamente mais tarde.",
+    "recordOnlyLabel": "Remover apenas do Kovalio",
+    "recordOnlyDesc": "Mantém o app e seus dados rodando no seu servidor — apenas o registro do Kovalio é removido. Você pode importá-lo novamente mais tarde.",
     "recordOnlyReversible": "Reversível — o aplicativo continua no seu servidor.",
-    "recordOnlyNote": "Nada no servidor é alterado — o aplicativo continua funcionando com seus dados. Apenas o registro do Openship é removido e pode ser reimportado mais tarde.",
+    "recordOnlyNote": "Nada no servidor é alterado — o aplicativo continua funcionando com seus dados. Apenas o registro do Kovalio é removido e pode ser reimportado mais tarde.",
     "confirmRecordOnly": "Remover registro"
   },
   "routing": {
@@ -939,7 +939,7 @@
       "servesPathHint": "Requisições para este domínio são atendidas a partir deste caminho no build final.",
       "servesPathRedeploy": "Novos caminhos entram em vigor no seu próximo deploy.",
       "externalIngress": "Ingress e TLS externo",
-      "externalIngressDesc": "O TLS termina no seu proxy reverso (Cloudflare Tunnel, Nginx Proxy Manager ou balanceador de carga). O domínio não precisa apontar para este servidor e o Openship não emitirá certificado.",
+      "externalIngressDesc": "O TLS termina no seu proxy reverso (Cloudflare Tunnel, Nginx Proxy Manager ou balanceador de carga). O domínio não precisa apontar para este servidor e o Kovalio não emitirá certificado.",
       "noWww": "Esse domínio já está neste projeto."
     },
     "dns": {
@@ -1067,8 +1067,8 @@
         "deployment": "Esta rota aguarda uma implantação. Implante o projeto para aplicá-la.",
         "disabled": "Este projeto ou serviço está desativado. Ative-o antes de verificar a rota.",
         "removing": "Este domínio está sendo removido. Nenhuma verificação está agendada.",
-        "manual_certificate": "Este domínio usa um certificado enviado manualmente. Envie uma substituição válida e verifique-a. O Openship não o renova automaticamente.",
-        "managed_certificate": "O TLS é gerenciado pelo seu proxy externo ou pelo Openship Cloud. Confira a configuração desse provedor.",
+        "manual_certificate": "Este domínio usa um certificado enviado manualmente. Envie uma substituição válida e verifique-a. O Kovalio não o renova automaticamente.",
+        "managed_certificate": "O TLS é gerenciado pelo seu proxy externo ou pelo Kovalio Cloud. Confira a configuração desse provedor.",
         "route_missing": "Esta rota configurada ainda não foi aplicada. Tente o roteamento novamente para aplicá-la. Nenhuma nova tentativa automática de roteamento está agendada.",
         "manual_dns": "Este certificado usa verificação TXT manual. Abra a configuração de HTTPS para confirmar um novo registro TXT ou escolha um provedor DNS conectado para a renovação automática.",
         "managed_owner": "Este nome de host e seu certificado são gerenciados pelo serviço proprietário. Verifique as configurações de domínio desse serviço."
@@ -1094,7 +1094,7 @@
       "automatic": "Provedor automático",
       "manual": "TXT manual",
       "automaticHint": "Conecte o Cloudflare em Configurações → DNS para criar as verificações do certificado e renovar HTTPS automaticamente.",
-      "manualHint": "Adicione um registro TXT temporário no seu provedor DNS. Cada renovação precisa de um novo registro TXT; o Openship mostrará quando renovar.",
+      "manualHint": "Adicione um registro TXT temporário no seu provedor DNS. Cada renovação precisa de um novo registro TXT; o Kovalio mostrará quando renovar.",
       "routing": "1. Aponte o domínio para este servidor",
       "certificate": "2. Ative HTTPS",
       "startAutomatic": "Ativar HTTPS automaticamente",
@@ -1202,7 +1202,7 @@
     "updating": "Atualizando…",
     "updateFailed": "Falha na atualização",
     "toastTitle": "Origem",
-    "cliManaged": "Este é o painel de controle do Openship — ele se atualiza sozinho. Execute \"openship update\" no host para atualizá-lo; não há nada para alterar aqui."
+    "cliManaged": "Este é o painel de controle do Kovalio — ele se atualiza sozinho. Execute \"kovalio update\" no host para atualizá-lo; não há nada para alterar aqui."
   },
   "routeRules": {
     "title": "Regras de rota",

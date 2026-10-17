@@ -9,7 +9,7 @@ export async function canRouteSelfApp(ctx: ExecutionContext, projectId: string):
   const project = await repos.project.findById(projectId);
   if (
     project?.organizationId !== ctx.organizationId ||
-    project.appTemplateId !== "openship" ||
+    project.appTemplateId !== "kovalio" ||
     !project.activeDeploymentId
   )
     return false;

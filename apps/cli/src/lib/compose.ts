@@ -506,7 +506,7 @@ export interface ComposeUpOpts {
 }
 
 /** Pinned compose stack. Vars come from the generated .env (env_file + interpolation). */
-const COMPOSE_YAML = `# Managed by \`openship up\` — do not edit; re-run \`openship up\` to regenerate.
+const COMPOSE_YAML = `# Managed by \`kovalio up\` — do not edit; re-run \`kovalio up\` to regenerate.
 x-logging: &default-logging
   driver: "${DEFAULT_CONTAINER_LOG_CONFIG.Type}"
   options:
@@ -613,8 +613,8 @@ ${edgeVolumeYaml("      ")}
     image: \${KOVALIO_IMAGE_REGISTRY:-ghcr.io/oblien}/kovalio-dashboard:\${KOVALIO_VERSION:-latest}
     restart: unless-stopped
     logging: *default-logging
-    # Loopback by default (see api note); OPENSHIP_BIND_ADDR opts into a public interface.
-    ports: ["\${OPENSHIP_BIND_ADDR:-127.0.0.1}:\${DASHBOARD_PORT:-3001}:\${DASHBOARD_PORT:-3001}"]
+    # Loopback by default (see api note); KOVALIO_BIND_ADDR opts into a public interface.
+    ports: ["\${KOVALIO_BIND_ADDR:-127.0.0.1}:\${DASHBOARD_PORT:-3001}:\${DASHBOARD_PORT:-3001}"]
     env_file: [.env]
     environment:
       NODE_ENV: production
@@ -2090,7 +2090,7 @@ function probePgDataDir(volume: string): { layout: PgProbe; detail?: string } {
  */
 function resolvePgData(prev: Record<string, string>): PgDataResolution {
   const SUB = `${PGDATA_ROOT}/pgdata`;
-  if (prev.OPENSHIP_PGDATA) return { path: prev.OPENSHIP_PGDATA, risk: null };
+  if (prev.KOVALIO_PGDATA) return { path: prev.KOVALIO_PGDATA, risk: null };
   const volume = survivingDbVolume(prev);
   if (!volume) return { path: SUB, risk: null };
   const probe = probePgDataDir(volume);
@@ -2104,7 +2104,7 @@ function resolvePgData(prev: Record<string, string>): PgDataResolution {
 /**
  * #487: a data volume this run didn't create holds data we don't recognize — no
  * cluster at the root or the pgdata/ subdir, but not empty either. Writing a
- * guessed OPENSHIP_PGDATA here is how #487 destroyed installs, so callers stop and
+ * guessed KOVALIO_PGDATA here is how #487 destroyed installs, so callers stop and
  * make the operator pin the path themselves. A failed probe is also unresolved;
  * it cannot establish that either path is safe.
  */
@@ -2143,7 +2143,7 @@ export function renderPgDataRefusal(
       `    volume: ${risk.volume}\n` +
       (risk.detail ? `    reason: ${risk.detail}\n` : "") +
       `\n  No configuration has been written. Resolve the probe error above, then retry.\n` +
-      `  OPENSHIP_PGDATA must not be guessed from a failed probe.\n`
+      `  KOVALIO_PGDATA must not be guessed from a failed probe.\n`
     );
   }
   return (
@@ -2971,7 +2971,7 @@ function managedEnvLines(
     `KOVALIO_VERSION=${resolveImageVersion(opts)}`,
     `POSTGRES_PASSWORD=${keepSecret(prev, "POSTGRES_PASSWORD")}`,
     // Pin the path established by resolvePgData; existing clusters may use either layout.
-    `OPENSHIP_PGDATA=${pgData}`,
+    `KOVALIO_PGDATA=${pgData}`,
     `BETTER_AUTH_SECRET=${keepSecret(prev, "BETTER_AUTH_SECRET")}`,
     `INTERNAL_TOKEN=${keepSecret(prev, "INTERNAL_TOKEN")}`,
     `API_PORT=${cfg.apiPort}`,

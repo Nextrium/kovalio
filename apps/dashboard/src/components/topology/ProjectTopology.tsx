@@ -593,7 +593,7 @@ export default function ProjectTopology({
       changes.length ||
       project.deployTarget !== "server" ||
       !project.serverId ||
-      project.appTemplateId === "openship"
+      project.appTemplateId === "kovalio"
     )
       return;
     setPlacement({
@@ -635,7 +635,7 @@ export default function ProjectTopology({
     project.deployTarget === "server" &&
     project.serverId &&
     project.activeDeploymentId &&
-    project.appTemplateId !== "openship"
+    project.appTemplateId !== "kovalio"
   ) {
     topologyActions.push({
       id: "placement",
@@ -789,7 +789,7 @@ export default function ProjectTopology({
             {runtime.ready ? (
               <TopologyCanvas
                 key={instanceServiceId ?? "overview"}
-                layoutKey={`openship:topology-layout:v1:${id}:${instanceServiceId ?? "overview"}`}
+                layoutKey={`kovalio:topology-layout:v1:${id}:${instanceServiceId ?? "overview"}`}
                 graph={graph}
                 selection={selection}
                 fullscreen={fullscreen}
@@ -1001,7 +1001,7 @@ export default function ProjectTopology({
               {addKind === null ? (
                 <div className="space-y-3">
                   <p className="mb-4 text-sm text-muted-foreground">
-                    Add what your application needs. OpenShip handles the setup across your servers.
+                    Add what your application needs. Kovalio handles the setup across your servers.
                   </p>
                   {[
                     ...(!clusterTarget

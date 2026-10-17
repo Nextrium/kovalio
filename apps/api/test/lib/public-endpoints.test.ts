@@ -480,7 +480,7 @@ describe("resolveProjectAccess", () => {
     expect(resolveServicePublicEndpoints(service)).toMatchObject([{ customDomain: "*.example.com" }]);
     expect(resolveServiceEndpointUrls({ slug: "project" } as any, service)).toEqual([]);
   });
-  it("resolves a project whose only domains are service-scoped (the openship repro)", () => {
+  it("resolves a project whose only domains are service-scoped (the kovalio repro)", () => {
     // Multi-service project: both verified custom domains live on service-scoped
     // rows, so project-level publicEndpoints is empty — the exact case that used
     // to fall back to localhost. Access must be the primary service host.

@@ -7,7 +7,7 @@ const h = vi.hoisted(() => ({
 }));
 vi.mock("@repo/platform/engine/config/env", () => ({
   env: {},
-  runtimeTarget: { dashboard: "https://app.openship.io" },
+  runtimeTarget: { dashboard: "https://kovalio.nextrium.org" },
 }));
 vi.mock("@repo/platform/engine/modules/cloud-analytics/index", () => ({
   cloudAnalytics: { payment: h.payment, subscription: h.subscription, enabled: h.enabled },
@@ -28,7 +28,7 @@ const environment = {
   POSTHOG_PROJECT_KEY: "phc_test",
   POSTHOG_HOST: "https://eu.i.posthog.com",
 };
-const url = "https://app.openship.io";
+const url = "https://kovalio.nextrium.org";
 beforeEach(() => {
   vi.clearAllMocks();
   h.enabled.mockReturnValue(true);
@@ -85,7 +85,7 @@ describe("Cloud analytics gates and verified billing semantics", () => {
         paymentId: "pi",
         kind: "subscription",
         amount: { unitAmount: 1000, currency: "usd" },
-        metadata: { openship_organization: "another" },
+        metadata: { kovalio_organization: "another" },
       },
     ])
       await observeVerifiedBillingEvent("org", "payment.succeeded", data);

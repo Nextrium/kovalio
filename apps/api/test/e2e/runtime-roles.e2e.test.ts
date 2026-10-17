@@ -18,10 +18,10 @@ const exec = promisify(execFile);
 const projectId = `roles-e2e-${process.pid}`;
 const slug = projectId;
 const sourceName = `${slug}-database`;
-const externalNetwork = `openship-${sourceName}`;
-const volume = `openship-${slug}-data`;
+const externalNetwork = `kovalio-${sourceName}`;
+const volume = `kovalio-${slug}-data`;
 const baseImage = "busybox:1.37";
-const image = `openship-roles-e2e:${process.pid}`;
+const image = `kovalio-roles-e2e:${process.pid}`;
 let runtime: DockerRuntime;
 
 async function docker(...args: string[]): Promise<string> {
@@ -103,7 +103,7 @@ async function containersOf(deploymentId: string): Promise<{ id: string; state: 
     "ps",
     "-a",
     "--filter",
-    `label=openship.deployment=${deploymentId}`,
+    `label=kovalio.deployment=${deploymentId}`,
     "--format",
     "{{.ID}} {{.State}}",
   );
@@ -143,7 +143,7 @@ describeDockerE2E("runtime roles against Docker", () => {
   beforeAll(async () => {
     await requireDocker();
     await docker("pull", baseImage);
-    const source = await mkdtemp(join(tmpdir(), "openship-roles-image-"));
+    const source = await mkdtemp(join(tmpdir(), "kovalio-roles-image-"));
     try {
       await writeFile(
         join(source, "Dockerfile"),
@@ -177,13 +177,13 @@ describeDockerE2E("runtime roles against Docker", () => {
   });
   afterAll(async () => {
     try {
-      const ids = (await docker("ps", "-aq", "--filter", `label=openship.project=${projectId}`))
+      const ids = (await docker("ps", "-aq", "--filter", `label=kovalio.project=${projectId}`))
         .split("\n")
         .filter(Boolean);
       if (ids.length) await docker("rm", "-fv", ...ids);
       await docker("rm", "-f", sourceName).catch(() => {});
       await docker("volume", "rm", volume).catch(() => {});
-      await docker("network", "rm", externalNetwork, `openship-${slug}`).catch(() => {});
+      await docker("network", "rm", externalNetwork, `kovalio-${slug}`).catch(() => {});
       await docker("image", "rm", image).catch(() => {});
     } finally {
       await runtime?.dispose();
@@ -199,7 +199,7 @@ describeDockerE2E("runtime roles against Docker", () => {
         "--name",
         name,
         "--label",
-        `openship.project=${projectId}`,
+        `kovalio.project=${projectId}`,
         image,
         "sh",
         "-c",
@@ -224,7 +224,7 @@ describeDockerE2E("runtime roles against Docker", () => {
     expect(running.every((c) => c.state === "running")).toBe(true);
     for (const { id } of running) {
       const labels = JSON.parse(await docker("inspect", "--format", "{{json .Config.Labels}}", id));
-      expect(["queue", "scheduler"]).toContain(labels["openship.role"]);
+      expect(["queue", "scheduler"]).toContain(labels["kovalio.role"]);
       expect(await docker("port", id)).toBe("");
       const env: string[] = JSON.parse(
         await docker("inspect", "--format", "{{json .Config.Env}}", id),
@@ -319,9 +319,9 @@ describeDockerE2E("runtime roles against Docker", () => {
           "ps",
           "-q",
           "--filter",
-          `label=openship.project=${projectId}`,
+          `label=kovalio.project=${projectId}`,
           "--filter",
-          "label=openship.role=scheduler",
+          "label=kovalio.role=scheduler",
         );
         expect(schedulers.split("\n").filter(Boolean)).toHaveLength(1);
         const warning = warnings.find((line) => line.includes("Rollback incomplete"));

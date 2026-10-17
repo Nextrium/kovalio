@@ -35,7 +35,7 @@ vi.mock("@repo/platform/engine/modules/github/sources/index", async (original) =
     getConnectionStatus: async () => ({
       state: {
         primary: "gh-cli",
-        sources: { openshipApp: { connected: false }, ghCli: { available: true, login: "owner" } },
+        sources: { kovalioApp: { connected: false }, ghCli: { available: true, login: "owner" } },
       },
       accounts: [],
     }),
@@ -124,7 +124,7 @@ import {
 import { handleApiError } from "../../../src/middleware/error-handler";
 import { scanRoutes } from "../../../src/lib/route-scanner";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { flushAudit } from "@repo/platform/engine/lib/audit-emitter";
 import { decrypt, encrypt } from "@repo/platform/engine/lib/encryption";
@@ -191,8 +191,8 @@ async function clients(owner: SeededOwner) {
     },
   });
   const native = await ship.scope({ identity: "verified", organizationId: owner.orgId });
-  const remote = new OpenshipClient({
-    baseUrl: "http://openship.test",
+  const remote = new KovalioClient({
+    baseUrl: "http://kovalio.test",
     token: owner.token,
     fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
   });
@@ -212,7 +212,7 @@ async function fixture() {
     name: "CI",
     owner: "acme",
     repo: "app",
-    path: ".openship/workflows/ci.yml",
+    path: ".kovalio/workflows/ci.yml",
     ref: "main",
     source,
     runnerIds: [runner.id],
@@ -224,8 +224,8 @@ async function fixture() {
 
 describe("Actions HTTP, native SDK and authorization", () => {
   it("issues verifiable OIDC only for an approved running job and stops after destination revocation", async () => {
-    const runtimeBefore = process.env.OPENSHIP_ACTIONS_RUNTIME_URL;
-    process.env.OPENSHIP_ACTIONS_RUNTIME_URL = "https://ci.example.test";
+    const runtimeBefore = process.env.KOVALIO_ACTIONS_RUNTIME_URL;
+    process.env.KOVALIO_ACTIONS_RUNTIME_URL = "https://ci.example.test";
     const issuer = "https://ci.example.test/api/actions/oidc";
     try {
       const f = await fixture();
@@ -248,7 +248,7 @@ describe("Actions HTTP, native SDK and authorization", () => {
       const environment = await actionOidcService().environment(run, job!);
       const path =
         new URL(environment.ACTIONS_ID_TOKEN_REQUEST_URL!).pathname +
-        `?job=${job!.id}&audience=openship-test`;
+        `?job=${job!.id}&audience=kovalio-test`;
       const init = {
         headers: { authorization: `Bearer ${environment.ACTIONS_ID_TOKEN_REQUEST_TOKEN}` },
       };
@@ -264,12 +264,12 @@ describe("Actions HTTP, native SDK and authorization", () => {
       const keys = await (await app.request("/api/actions/oidc/jwks")).json();
       const { payload } = await jwtVerify((await response.json()).value, createLocalJWKSet(keys), {
         issuer,
-        audience: "openship-test",
+        audience: "kovalio-test",
         algorithms: ["RS256"],
       });
-      expect(payload.openship_organization_id).toBe(f.owner.orgId);
+      expect(payload.kovalio_organization_id).toBe(f.owner.orgId);
       expect(payload.sub).toContain(":source:override");
-      expect(payload.openship_job_id).toBe(job!.id);
+      expect(payload.kovalio_job_id).toBe(job!.id);
       expect(JSON.stringify(keys)).not.toContain("private");
       // A committed instance import replaces its stored signing identity.
       // The old process cache must not keep issuing tokens from a removed key.
@@ -291,7 +291,7 @@ describe("Actions HTTP, native SDK and authorization", () => {
       const restored = await jwtVerify(
         (await restoredResponse.json()).value,
         createLocalJWKSet(restoredKeys),
-        { issuer, audience: "openship-test", algorithms: ["RS256"] },
+        { issuer, audience: "kovalio-test", algorithms: ["RS256"] },
       );
       expect(restored.protectedHeader.kid).toBe("restored-identity");
       await db
@@ -303,8 +303,8 @@ describe("Actions HTTP, native SDK and authorization", () => {
       expect((await app.request(path, init)).status).toBe(403);
       await repos.actions.releaseRun(f.owner.orgId, run.id, lease);
     } finally {
-      if (runtimeBefore === undefined) delete process.env.OPENSHIP_ACTIONS_RUNTIME_URL;
-      else process.env.OPENSHIP_ACTIONS_RUNTIME_URL = runtimeBefore;
+      if (runtimeBefore === undefined) delete process.env.KOVALIO_ACTIONS_RUNTIME_URL;
+      else process.env.KOVALIO_ACTIONS_RUNTIME_URL = runtimeBefore;
     }
   });
   it("reports repository Checks through both clients without dispatching or changing GitHub", async () => {
@@ -321,7 +321,7 @@ describe("Actions HTTP, native SDK and authorization", () => {
         account: { login: "owner", kind: "account" },
       });
       expect(
-        await client.repositoryChecks({ owner: "acme", repo: "app", controller: "openship" }),
+        await client.repositoryChecks({ owner: "acme", repo: "app", controller: "kovalio" }),
       ).toMatchObject({
         repository: "acme/app",
         status: "app_required",
@@ -512,7 +512,7 @@ describe("Actions HTTP, native SDK and authorization", () => {
     const workflows = ["build", "test"].map((name) => ({
       ...f.input,
       name,
-      path: `.openship/workflows/${name}.yml`,
+      path: `.kovalio/workflows/${name}.yml`,
     }));
     const first = await f.remote.importWorkflows({ workflows });
     const again = await f.native.importWorkflows({ workflows });
@@ -528,14 +528,14 @@ describe("Actions HTTP, native SDK and authorization", () => {
   it("does not save any file when another selected file is invalid or unauthorized", async () => {
     const f = await fixture(),
       other = await fixture();
-    const first = { ...f.input, path: ".openship/workflows/build.yml" };
+    const first = { ...f.input, path: ".kovalio/workflows/build.yml" };
     await expect(
       f.remote.importWorkflows({
         workflows: [
           first,
           {
             ...f.input,
-            path: ".openship/workflows/invalid.yml",
+            path: ".kovalio/workflows/invalid.yml",
             source: "jobs: [not a workflow",
           },
         ],
@@ -547,7 +547,7 @@ describe("Actions HTTP, native SDK and authorization", () => {
           first,
           {
             ...f.input,
-            path: ".openship/workflows/other.yml",
+            path: ".kovalio/workflows/other.yml",
             runnerIds: [other.runner.id],
           },
         ],
@@ -562,7 +562,7 @@ describe("Actions HTTP, native SDK and authorization", () => {
 
   const repositoryPath = ".github/workflows/ci.yml";
   const reusableSource =
-    "name: CI\non: [push, workflow_dispatch]\njobs:\n  gate:\n    uses: ./.github/workflows/shared.yml\n    secrets: inherit\n  release:\n    needs: gate\n    runs-on: [self-hosted, openship, macos]\n    environment: production\n    permissions:\n      contents: write\n      id-token: write\n    steps:\n      - run: echo release\n";
+    "name: CI\non: [push, workflow_dispatch]\njobs:\n  gate:\n    uses: ./.github/workflows/shared.yml\n    secrets: inherit\n  release:\n    needs: gate\n    runs-on: [self-hosted, kovalio, macos]\n    environment: production\n    permissions:\n      contents: write\n      id-token: write\n    steps:\n      - run: echo release\n";
 
   it("automatically previews and links reusable repository workflows through HTTP and the native SDK", async () => {
     const f = await fixture();
@@ -655,9 +655,9 @@ describe("Actions HTTP, native SDK and authorization", () => {
         repositoryRunnerConsent: true,
       }),
     ).rejects.toMatchObject({ code: "ACTIONS_CONTROLLER_BUSY" });
-    expect((await repos.actions.run(f.owner.orgId, run.id))?.controller).toBe("openship");
+    expect((await repos.actions.run(f.owner.orgId, run.id))?.controller).toBe("kovalio");
     expect((await repos.actions.workflow(f.owner.orgId, f.workflow.id))?.controller).toBe(
-      "openship",
+      "kovalio",
     );
   });
 
@@ -935,7 +935,7 @@ describe("Actions HTTP, native SDK and authorization", () => {
     expect(await c.remote.runners()).toEqual([]);
     await expect(
       c.native.preview({
-        path: ".openship/workflows/ci.yml",
+        path: ".kovalio/workflows/ci.yml",
         source: source.replace(
           "runs-on: [self-hosted, macos]",
           "runs-on: [self-hosted, macos]\n    environment: production",
@@ -1214,7 +1214,7 @@ describe("Actions project, repository and Jobs integration", () => {
       ...f.input,
       owner: null,
       repo: null,
-      path: ".openship/workflows/automation.yml",
+      path: ".kovalio/workflows/automation.yml",
       source: source.replace(
         "on: workflow_dispatch",
         "on:\n  workflow_dispatch:\n    inputs:\n      version:\n        type: string\n        required: true\n  repository_dispatch:\n    types: [release]",

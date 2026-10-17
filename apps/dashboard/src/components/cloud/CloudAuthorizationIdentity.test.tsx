@@ -69,7 +69,7 @@ function desktopParams() {
   h.params = new URLSearchParams({
     callback: "http://localhost:4500/api/auth/cloud-callback",
     flow: "desktop-cloud",
-    app: "Openship Desktop",
+    app: "Kovalio Desktop",
     machine: "My Mac",
     state: "opaque-state",
     code_challenge: challenge,

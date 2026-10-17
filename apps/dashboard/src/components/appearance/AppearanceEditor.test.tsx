@@ -161,7 +161,7 @@ it("ignores a late save from the previous account", async () => {
 it("honors an API reset instead of restoring a cached custom theme", async () => {
   const theme = createTheme("dim", "cached", "Cached");
   localStorage.setItem(
-    "openship-appearance-v1:https://instance.test/api/:alice",
+    "kovalio-appearance-v1:https://instance.test/api/:alice",
     JSON.stringify({ ...defaultAppearance("cached"), themes: [theme] }),
   );
   m.get.mockResolvedValue({ appearance: null });

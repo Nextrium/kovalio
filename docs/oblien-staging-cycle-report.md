@@ -42,7 +42,7 @@ cleanup. SDK 2.3.2 also passes 77 targeted adapter tests, 158 API billing/quota
 tests and 77 API teardown/workspace tests, plus API and adapter type checks.
 
 The provider now returns `accepted:true` while workspace deletion is in progress.
-Openship's runtime waits for a scoped 404 before completing teardown; timeout or
+Kovalio's runtime waits for a scoped 404 before completing teardown; timeout or
 failed inspection leaves cleanup retryable. The live runtime confirmed deletion
 during both manual and billing suspension at 04:27–04:28 UTC. Acceptance scripts
 also wait for the workspace to disappear from the scoped list. The earlier
@@ -53,7 +53,7 @@ immediate-list assertion was a test timing error, not a provider deletion refusa
 Actual Page/route registration returned `403 domain_not_allowed` at
 04:29:27 UTC using SDK 2.3.2. Slug availability is insufficient: this fails the
 real Docker deployment's public routing step. Grant the intended account
-permission to publish on the Openship domain, including its edge/DNS/TLS setup.
+permission to publish on the Kovalio domain, including its edge/DNS/TLS setup.
 The failed routing test cleaned up its namespace, VM and Page candidates.
 
 ## Earlier manual-shutdown observation: passed on the final recheck
@@ -67,10 +67,10 @@ This did not reproduce in the final full cycle. At 04:31:02 and 04:31:05 UTC,
 both manual suspensions of `os-cycle-36a7ac81a18040-a` (workspace
 `c8ffe7ef01bbd59e`) returned `stopped:1`; immediate scoped inspection confirmed
 `info.status:stopped` and `info.is_running:false`. Explicit activation did not
-start the VM; the subsequent customer Start succeeded. No Openship workaround
+start the VM; the subsequent customer Start succeeded. No Kovalio workaround
 was used for these shutdowns. This is no longer listed as a current blocker.
 
-## Openship release work still required
+## Kovalio release work still required
 
 The code is wired to the updated provider, but local tests are not a complete
 customer launch certification. Deploy the API/worker and apply the documented
@@ -84,7 +84,7 @@ renewal/cancellation/resumption and credit-pack cycles. Include duplicate events
 missed webhook reconciliation, plan replacement and public project deployment.
 Finite policy grants used by the infrastructure tests do not establish a paid
 subscription or exercise checkout. Purchases remain disabled until these gates
-pass. See [the release checklist](./openship-cloud-launch.md).
+pass. See [the release checklist](./kovalio-cloud-launch.md).
 
 The read-only readiness checker now passes provider catalog, default policy,
 namespace subscription/entitlement agreement and finite allowance. It still

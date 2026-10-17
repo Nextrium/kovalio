@@ -29,7 +29,7 @@ appCommand.addCommand(new Command("host-fit").argument("<id>", "Catalog app ID")
   .option("--target <target>", "Deployment target, such as cloud")
   .action((id: string, options: { server?: string; target?: string }) => data(() => getShipClient().apps.hostFit(id, { serverId: options.server, deployTarget: options.target }))));
 appCommand.addCommand(new Command("install").argument("<id>", "Catalog app ID")
-  .description("Create or update an app installation draft; deploy its returned project ID with openship deploy")
+  .description("Create or update an app installation draft; deploy its returned project ID with kovalio deploy")
   .option("--name <name>", "Project name")
   .option("--config <file>", "JSON object of app configuration values")
   .option("--routes <file>", "JSON array of endpoint routing choices")

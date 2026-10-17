@@ -44,7 +44,7 @@ the original Actions run and its logs. Draw one node
 per logical workflow job, with matrix executions in the selectable job list.
 Show persisted step state and resumable logs together. GitHub mode uses the same
 step presentation, with a direct link to live GitHub logs and completed logs in
-Openship. Preserve GitHub-owned Checks instead of publishing duplicate status. Refreshing or switching
+Kovalio. Preserve GitHub-owned Checks instead of publishing duplicate status. Refreshing or switching
 views must not discard a running job's state. Only confirm cancellation after the
 worker stops, and show cleanup while its destination remains occupied.
 Expected cancellation uses its status badge; keep engine cancellation details in
@@ -124,12 +124,12 @@ unrelated fields and comments. Reject dependency cycles and dangling job-output
 references; undo/redo affects the same draft across views. Review repository changes
 before committing, using the reviewed file SHA. Repository discovery selects the
 integration from the file path; do not expose engine-selection tabs. Files in
-`.github/workflows` use GitHub's scheduler and the selected Openship runners;
-standalone YAML and `.openship/workflows` use the independent controller.
+`.github/workflows` use GitHub's scheduler and the selected Kovalio runners;
+standalone YAML and `.kovalio/workflows` use the independent controller.
 Repository preview and saving follow the same rule, including existing drafts.
 GitHub workflows always commit changed YAML,
 use repository-managed credentials/storage, and explain the explicit
-`self-hosted, openship` routing labels and repository-wide runner trust. Independent
+`self-hosted, kovalio` routing labels and repository-wide runner trust. Independent
 workflows offer Automatic repository updates or Review first; the latter stores the existing inline YAML snapshot and continues
 using it until an explicit review and save. Loading a newer repository file must not
 overwrite that snapshot or an edited draft. No second sync engine or runner path is
@@ -175,7 +175,7 @@ whether each run needs approval, and whether fork pull requests may use disposab
 Cloud runners. Default to the connected account, approval for each run and forks blocked.
 Keep the policy when changing selected files or runners; reset it when changing repositories.
 Use verified GitHub account identities for selected users. Keep GitHub protection settings
-one link away and explain that those protections still apply alongside Openship approval.
+one link away and explain that those protections still apply alongside Kovalio approval.
 Run approval shows the commit, attempt, requester and destinations before execution.
 Missing destination details remain retryable; readers see who can approve instead of a
 button they cannot use. After a rejected approval, refresh the run so an old review cannot
@@ -377,7 +377,7 @@ check retryable before starting the move.
   can reuse a server's plan or create a separate server and subscription from the same flow.
 - Import discovery defaults to Cards, with the shared topology canvas as an optional view.
   Each Compose project has its own section and canvas; do not add another parent node around
-  its services. Recovered Openship projects belong in the same selector; their recovery action
+  its services. Recovered Kovalio projects belong in the same selector; their recovery action
   and naming live in the sidebar. Selection uses the shared OptionCard surface and border.
   Discovery cards use two lines: service name with the shared status ring and selection
   control, then the image and volume count. Keep Add project beside the project name and
@@ -509,7 +509,7 @@ check retryable before starting the move.
   details in a compact disclosure. Put Monthly coverage after the main billing overview and
   usage guide, so plan capacity and usage lead the page. Existing metered subscriptions retain their credit view.
   Prepaid PAYG shows package amounts beside their credit value, using the provider's
-  conversion and published resource rates. Keep the Openship resource tiers inside the
+  conversion and published resource rates. Keep the Kovalio resource tiers inside the
   resource card, using compact shared tabs above its inputs. Present the selected tier's
   CPU, RAM, disk and server-count limits as plain capacity values in a compact summary
   that wraps on smaller screens. These limits stay fixed while configuring a server.
@@ -607,7 +607,7 @@ Other choices appear only when opened. On narrow screens,
 place the picker before usage and keep plan capacity below the main content. Spaces are deployment destinations using existing purchased workspace identities,
 not organization workspaces or combined capacity. Keep resource and billing actions on the existing billing flow.
 
-Cloud spaces uses the read-only provider metrics stream through Openship's authenticated monitor
+Cloud spaces uses the read-only provider metrics stream through Kovalio's authenticated monitor
 endpoint. Title the card Resource usage, and show Live only after a valid sample; pause hidden pages and cancel subscriptions when
 the space, account or tab changes. Retain and label the last reading on disconnect with Retry.
 Recent charts contain at most 60 samples from the open page, not billed usage or historical analytics.

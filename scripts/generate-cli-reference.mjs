@@ -159,18 +159,18 @@ export function renderCliReference(catalog) {
   let index =
     "---\ntitle: CLI command reference\ndescription: Every public CLI command, argument, and option, grouped by task.\n---\n\n";
   index +=
-    "Use `openship <command> --help` to check the version installed on your machine. `<value>` is required; `[value]` is optional. Aliases appear beside the command name.\n\n";
+    "Use `kovalio <command> --help` to check the version installed on your machine. `<value>` is required; `[value]` is optional. Aliases appear beside the command name.\n\n";
   index += "## Global options\n\n| Option | Meaning |\n| --- | --- |\n";
-  for (const option of catalog.find((entry) => entry.command === "openship").options)
+  for (const option of catalog.find((entry) => entry.command === "kovalio").options)
     index += `| ${syntax(option.syntax)} | ${prose(option.description)} |\n`;
   index +=
-    "\nPut global options before the command, for example `openship --json project list`. See [native mode](/docs/cli/native) before using `--native-config`.\n\n";
+    "\nPut global options before the command, for example `kovalio --json project list`. See [native mode](/docs/cli/native) before using `--native-config`.\n\n";
   const pages = ["index"];
   for (const [category, names] of Object.entries(categories)) {
     index += `## ${category}\n\n| Command | Purpose |\n| --- | --- |\n`;
     pages.push(`---${category}---`, ...names);
     for (const name of names) {
-      const entry = top.find((entry) => entry.command === "openship " + name);
+      const entry = top.find((entry) => entry.command === "kovalio " + name);
       index += `| [${syntax(entry.command)}](/docs/cli/reference/${name}) | ${prose(entry.description)} |\n`;
     }
     index += "\n";

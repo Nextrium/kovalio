@@ -14,12 +14,12 @@ saving, so renaming an account does not transfer permission. Repository collabor
 must have write, maintain or admin permission. Both the original actor and the actor
 requesting a retry must be eligible.
 
-Standalone workflows use the authenticated Openship account or authorized workspace
+Standalone workflows use the authenticated Kovalio account or authorized workspace
 members. Existing organization, repository and destination permissions still apply.
 Only an Actions administrator who can administer the selected destinations may
 approve. The server checks permissions again when approval is submitted.
 
-**Automatically allow eligible users** skips the Openship review for trusted runs.
+**Automatically allow eligible users** skips the Kovalio review for trusted runs.
 It does not bypass the audience restriction or GitHub's own protections. Eligible
 fork requests always require review and can use only disposable Cloud runners.
 Connected servers, including Macs, never receive fork execution. GitHub
@@ -39,8 +39,8 @@ or finished attempts cannot still be approved.
 ## GitHub controls
 
 Repository files in `.github/workflows` still use GitHub's controller and the official
-runner on the selected Openship destination. GitHub owns event matching, protected
-environments, fork approvals, workflow attempts and Checks. Openship's Access step
+runner on the selected Kovalio destination. GitHub owns event matching, protected
+environments, fork approvals, workflow attempts and Checks. Kovalio's Access step
 adds destination authorization and links to repository settings; it does not configure
 GitHub reviewers or approve GitHub's pending reviews on the user's behalf.
 
@@ -106,4 +106,4 @@ request capabilities identify one organization, run and job; the token endpoint
 rechecks current authority, admission, assigned runner, execution start and
 cancellation before signing. Fork runs cannot request identities. Tokens expire
 within five minutes, and edited workflow subjects are marked as overrides.
-External services must trust the Openship issuer explicitly.
+External services must trust the Kovalio issuer explicitly.

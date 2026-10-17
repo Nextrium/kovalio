@@ -35,7 +35,7 @@ ALTER TABLE "project" ADD CONSTRAINT "project_server_workspace_fk" FOREIGN KEY (
 -- The server is the execution identity. Keep the indexed billing-owner column
 -- derived from it so a missing/stale caller field cannot detach a shared project
 -- from the workspace's quota, deletion and subscription checks.
-CREATE FUNCTION "openship_project_server_owner"() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE FUNCTION "kovalio_project_server_owner"() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE owner_workspace text; owner_org text;
 BEGIN
   IF TG_OP = 'UPDATE' AND OLD."workspace_id" IS NOT NULL AND
@@ -60,9 +60,9 @@ END;
 $$;
 --> statement-breakpoint
 CREATE TRIGGER "project_server_owner" BEFORE INSERT OR UPDATE OF "server_id", "workspace_id", "organization_id" ON "project"
-FOR EACH ROW EXECUTE FUNCTION "openship_project_server_owner"();
+FOR EACH ROW EXECUTE FUNCTION "kovalio_project_server_owner"();
 --> statement-breakpoint
-CREATE FUNCTION "openship_managed_server_owner"() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE FUNCTION "kovalio_managed_server_owner"() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   IF (OLD."workspace_id" IS NOT NULL OR NEW."workspace_id" IS NOT NULL) AND
     (NEW."workspace_id" IS DISTINCT FROM OLD."workspace_id" OR NEW."organization_id" IS DISTINCT FROM OLD."organization_id") THEN
@@ -73,4 +73,4 @@ END;
 $$;
 --> statement-breakpoint
 CREATE TRIGGER "managed_server_owner" BEFORE UPDATE OF "workspace_id", "organization_id" ON "servers"
-FOR EACH ROW EXECUTE FUNCTION "openship_managed_server_owner"();
+FOR EACH ROW EXECUTE FUNCTION "kovalio_managed_server_owner"();

@@ -100,9 +100,9 @@ describe("parseLoopbackOnlyPorts", () => {
 
 describe("parsePortProbeOutput", () => {
   test("parses only explicit probe results", () => {
-    expect(parsePortProbeOutput("__OPENSHIP_PORT_LISTENING__\n")).toBe(true);
-    expect(parsePortProbeOutput("__OPENSHIP_PORT_FREE__\n")).toBe(false);
-    expect(parsePortProbeOutput("__OPENSHIP_PORT_UNAVAILABLE__\n")).toBeNull();
+    expect(parsePortProbeOutput("__KOVALIO_PORT_LISTENING__\n")).toBe(true);
+    expect(parsePortProbeOutput("__KOVALIO_PORT_FREE__\n")).toBe(false);
+    expect(parsePortProbeOutput("__KOVALIO_PORT_UNAVAILABLE__\n")).toBeNull();
   });
 
   test("treats empty or unexpected output as inconclusive", () => {
@@ -117,8 +117,8 @@ describe("buildPortProbeCommand", () => {
     const cmd = buildPortProbeCommand(80);
     expect(cmd).toContain("lsof -nP -t -iTCP:80 -sTCP:LISTEN");
     expect(cmd).toContain('ss -tln "sport = :80"');
-    expect(cmd).toContain("__OPENSHIP_PORT_FREE__");
-    expect(cmd).toContain("__OPENSHIP_PORT_UNAVAILABLE__");
+    expect(cmd).toContain("__KOVALIO_PORT_FREE__");
+    expect(cmd).toContain("__KOVALIO_PORT_UNAVAILABLE__");
   });
 
   test("rejects values that are not valid TCP ports before shell interpolation", () => {
@@ -199,7 +199,7 @@ describe("waitForPortListening", () => {
     });
   });
   test("handles macOS lsof listening PID output", async () => {
-    const exec = fallbackExecutor("__OPENSHIP_PORT_LISTENING__\n");
+    const exec = fallbackExecutor("__KOVALIO_PORT_LISTENING__\n");
     expect(await waitForPortListening(exec, 80, { timeoutMs: 150, intervalMs: 50 })).toEqual({
       listening: true,
       checked: true,
@@ -207,7 +207,7 @@ describe("waitForPortListening", () => {
   });
 
   test("handles macOS lsof __FREE__ output", async () => {
-    const exec = fallbackExecutor("__OPENSHIP_PORT_FREE__\n");
+    const exec = fallbackExecutor("__KOVALIO_PORT_FREE__\n");
     expect(await waitForPortListening(exec, 80, { timeoutMs: 150, intervalMs: 50 })).toEqual({
       listening: false,
       checked: true,
@@ -215,7 +215,7 @@ describe("waitForPortListening", () => {
   });
 
   test("treats __UNAVAILABLE__ or missing output as inconclusive", async () => {
-    const exec = fallbackExecutor("__OPENSHIP_PORT_UNAVAILABLE__\n");
+    const exec = fallbackExecutor("__KOVALIO_PORT_UNAVAILABLE__\n");
     expect(await waitForPortListening(exec, 80, { timeoutMs: 150, intervalMs: 50 })).toEqual({
       listening: false,
       checked: false,
@@ -225,7 +225,7 @@ describe("waitForPortListening", () => {
 
 describe("waitForPortFree", () => {
   test("returns {free:true, checked:true} when __FREE__ is returned", async () => {
-    const exec = fallbackExecutor("__OPENSHIP_PORT_FREE__\n");
+    const exec = fallbackExecutor("__KOVALIO_PORT_FREE__\n");
     expect(await waitForPortFree(exec, 80, { timeoutMs: 150, intervalMs: 50 })).toEqual({
       free: true,
       checked: true,
@@ -233,7 +233,7 @@ describe("waitForPortFree", () => {
   });
 
   test("returns {free:false, checked:true} when port remains occupied via lsof PID", async () => {
-    const exec = fallbackExecutor("__OPENSHIP_PORT_LISTENING__\n");
+    const exec = fallbackExecutor("__KOVALIO_PORT_LISTENING__\n");
     expect(await waitForPortFree(exec, 80, { timeoutMs: 150, intervalMs: 50 })).toEqual({
       free: false,
       checked: true,
@@ -241,7 +241,7 @@ describe("waitForPortFree", () => {
   });
 
   test("returns {free:false, checked:false} when probe is inconclusive", async () => {
-    const exec = fallbackExecutor("__OPENSHIP_PORT_UNAVAILABLE__\n");
+    const exec = fallbackExecutor("__KOVALIO_PORT_UNAVAILABLE__\n");
     expect(await waitForPortFree(exec, 80, { timeoutMs: 150, intervalMs: 50 })).toEqual({
       free: false,
       checked: false,
@@ -274,13 +274,13 @@ describe("probePortListeningOnce", () => {
 
   test("uses the portable fallback when procfs is unavailable", async () => {
     await expect(
-      probePortListeningOnce(fallbackExecutor("__OPENSHIP_PORT_LISTENING__\n"), 80),
+      probePortListeningOnce(fallbackExecutor("__KOVALIO_PORT_LISTENING__\n"), 80),
     ).resolves.toBe(true);
     await expect(
-      probePortListeningOnce(fallbackExecutor("__OPENSHIP_PORT_FREE__\n"), 80),
+      probePortListeningOnce(fallbackExecutor("__KOVALIO_PORT_FREE__\n"), 80),
     ).resolves.toBe(false);
     await expect(
-      probePortListeningOnce(fallbackExecutor("__OPENSHIP_PORT_UNAVAILABLE__\n"), 80),
+      probePortListeningOnce(fallbackExecutor("__KOVALIO_PORT_UNAVAILABLE__\n"), 80),
     ).resolves.toBeNull();
   });
 });

@@ -20,7 +20,7 @@ function mockProxy() {
 }
 
 describe("Cloudflare SSH subprocess stream ordering", () => {
-  beforeEach(() => vi.stubEnv("OPENSHIP_CLOUDFLARED_PATH", process.execPath));
+  beforeEach(() => vi.stubEnv("KOVALIO_CLOUDFLARED_PATH", process.execPath));
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();

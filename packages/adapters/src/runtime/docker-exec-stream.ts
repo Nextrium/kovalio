@@ -361,7 +361,7 @@ export function installDockerodeBuildKitSessionWorkaround(docker: { modem?: unkn
     void startBuildKitSessionStream(
       daemonConnectionFrom(docker),
       sessionId,
-      sessionName || "openship",
+      sessionName || "kovalio",
     ).then(
       (socket) => callback(null, socket),
       (error: unknown) => { /* diagnostics-ignore: The Docker transport callback propagates the failure to the request consumer. */ return callback(error instanceof Error ? error : new Error(String(error)), null); },

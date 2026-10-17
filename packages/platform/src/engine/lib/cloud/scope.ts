@@ -17,7 +17,7 @@ export function canProxyCloudResources(ctx: ExecutionContext): boolean {
 export function assertCloudProxyScope(ctx: ExecutionContext): void {
   if (!canProxyCloudResources(ctx)) {
     throw new AppError(
-      "This credential is scoped to this Openship instance. To deploy from desktop, select a connected managed server with serverId and keep the project here. To manage projects stored in Cloud, authorize a separate connection to the Cloud API's /api/mcp and use its organizationId. Omitting organizationId does not widen this credential's access.",
+      "This credential is scoped to this Kovalio instance. To deploy from desktop, select a connected managed server with serverId and keep the project here. To manage projects stored in Cloud, authorize a separate connection to the Cloud API's /api/mcp and use its organizationId. Omitting organizationId does not widen this credential's access.",
       409,
       "CLOUD_SCOPE_UNAVAILABLE",
     );

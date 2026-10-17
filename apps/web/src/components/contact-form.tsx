@@ -132,7 +132,7 @@ export function ContactForm({ source = "contact" }: { source?: "support" | "cont
           Request received
         </h2>
         <p className="legal-p" style={{ color: "var(--th-text-body)", margin: "0 0 32px 0" }}>
-          Your request is saved for the Openship team. We&rsquo;ll reply by email.
+          Your request is saved for the Kovalio team. We&rsquo;ll reply by email.
         </p>
         <p className="legal-p">Reference: <strong style={{ overflowWrap: "anywhere" }}>{receipt?.id}</strong></p>
         <p className="legal-p" style={{ marginBottom: 24 }}>

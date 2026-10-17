@@ -51,7 +51,7 @@ const app = new Hono()
   .route("/api/permissions", permissionsRoutes)
   .get("/api/auth/get-session", (c) => auth.handler(c.req.raw));
 
-beforeAll(() => vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory"));
+beforeAll(() => vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory"));
 afterAll(async () => {
   await shutdownRateLimit();
   vi.unstubAllEnvs();

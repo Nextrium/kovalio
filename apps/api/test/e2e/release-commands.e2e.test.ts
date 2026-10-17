@@ -12,10 +12,10 @@ const exec = promisify(execFile);
 const projectId = `release-e2e-${process.pid}`;
 const slug = projectId;
 const sourceName = `${slug}-database`;
-const externalNetwork = `openship-${sourceName}`;
-const volume = `openship-${slug}-data`;
+const externalNetwork = `kovalio-${sourceName}`;
+const volume = `kovalio-${slug}-data`;
 const baseImage = "busybox:1.37";
-const image = `openship-release-e2e:${process.pid}`;
+const image = `kovalio-release-e2e:${process.pid}`;
 let runtime: DockerRuntime;
 let liveContainer: string;
 const scratchVolumes = new Set<string>();
@@ -51,8 +51,8 @@ async function release(commands: string[], options: ReleaseCommandOptions = {}, 
 }
 async function expectLiveAppAndNoReleaseContainer() {
   expect(await docker("exec", liveContainer, "wget", "-qO-", "http://127.0.0.1:8080")).toBe("live");
-  const containers = await docker("ps", "-a", "--filter", `label=openship.project=${projectId}`, "--format", "{{.Names}}");
-  expect(containers).not.toContain("openship-release-candidate-");
+  const containers = await docker("ps", "-a", "--filter", `label=kovalio.project=${projectId}`, "--format", "{{.Names}}");
+  expect(containers).not.toContain("kovalio-release-candidate-");
   const remaining = new Set((await docker("volume", "ls", "-q")).split("\n"));
   expect([...scratchVolumes].filter(name => remaining.has(name))).toEqual([]);
   const networks = await docker("inspect", "--format", "{{json .NetworkSettings.Networks}}", liveContainer);
@@ -63,7 +63,7 @@ describeDockerE2E("release commands against Docker", () => {
   beforeAll(async () => {
     await requireDocker();
     await docker("pull", baseImage);
-    const source = await mkdtemp(join(tmpdir(), "openship-release-image-"));
+    const source = await mkdtemp(join(tmpdir(), "kovalio-release-image-"));
     try {
       await writeFile(join(source, "Dockerfile"), `FROM ${baseImage}\nWORKDIR /app\nVOLUME /scratch\n`);
       await docker("build", "-t", image, source);
@@ -77,11 +77,11 @@ describeDockerE2E("release commands against Docker", () => {
   });
   afterAll(async () => {
     try {
-      const ids = (await docker("ps", "-aq", "--filter", `label=openship.project=${projectId}`)).split("\n").filter(Boolean);
+      const ids = (await docker("ps", "-aq", "--filter", `label=kovalio.project=${projectId}`)).split("\n").filter(Boolean);
       if (ids.length) await docker("rm", "-fv", ...ids);
       await docker("rm", "-f", sourceName).catch(() => {});
       await docker("volume", "rm", volume, ...scratchVolumes).catch(() => {});
-      await docker("network", "rm", externalNetwork, `openship-${slug}`).catch(() => {});
+      await docker("network", "rm", externalNetwork, `kovalio-${slug}`).catch(() => {});
       await docker("image", "rm", image).catch(() => {});
     } finally { await runtime?.dispose(); }
   });

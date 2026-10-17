@@ -16,7 +16,7 @@ const finalize = () =>
     body: JSON.stringify({ code: "secret-login-code", codeVerifier: "secret-verifier" }),
   });
 
-beforeAll(() => vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory"));
+beforeAll(() => vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory"));
 afterAll(async () => {
   await shutdownRateLimit();
   vi.unstubAllEnvs();

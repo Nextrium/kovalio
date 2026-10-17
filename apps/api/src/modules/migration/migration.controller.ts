@@ -23,7 +23,7 @@ import {
   type DiscoveredStack,
   type DiscoveredService,
 } from "@repo/platform/engine/modules/migration/docker-inspect.service";
-import { adoptServerStack, reimportOpenshipProject, parseRepoCompose } from "@repo/platform/engine/modules/migration/migrate.service";
+import { adoptServerStack, reimportKovalioProject, parseRepoCompose } from "@repo/platform/engine/modules/migration/migrate.service";
 import {
   assertProjectMovable,
   loadProjectRoleWork,

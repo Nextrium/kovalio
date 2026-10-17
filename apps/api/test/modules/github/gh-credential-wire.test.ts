@@ -20,7 +20,7 @@ vi.mock("@repo/platform/engine/modules/github/github.auth", () => ({
   resolveGitHubAuthMode,
   getGitHubAuthMode: () => "gh-first",
   getGitHubConnectionState: vi.fn(async () => ({
-    sources: { openshipApp: { connected: false }, ghCli: { available: false } },
+    sources: { kovalioApp: { connected: false }, ghCli: { available: false } },
     primary: null,
   })),
   getInstallationId: vi.fn(),
@@ -163,7 +163,7 @@ describe("LocalGitHubSource — gh credential on the wire", () => {
       const repositories = [{ full_name: "acme/private-api", source: "app" }];
       const accounts = [{ login: "acme", source: "app" }];
       app.home.mockResolvedValue({
-        state: { primary: "openship-app", sources: { openshipApp: { connected: true, hasInstallations: true }, ghCli: { available: false } } },
+        state: { primary: "kovalio-app", sources: { kovalioApp: { connected: true, hasInstallations: true }, ghCli: { available: false } } },
         accounts, repos: repositories,
       });
       app.repos.mockResolvedValue(repositories);
@@ -172,7 +172,7 @@ describe("LocalGitHubSource — gh credential on the wire", () => {
 
       const home = await src.getHome();
       expect(home).toMatchObject({ accounts, repos: repositories, state: {
-        primary: "openship-app",
+        primary: "kovalio-app",
         sources: { ghCli: { available: false, method: "token", problem: "rejected" } },
       } });
       expect(await src.listReposForOwner("acme")).toEqual(repositories);

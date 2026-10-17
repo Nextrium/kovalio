@@ -61,8 +61,8 @@ export async function syncProjectToServerManifest(input: {
     return;
   }
   try {
-    const domainRows = await repos.domain.listByProject(project.id).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/lib/openship-manifest-sync"); return []; });
-    const app = await repos.projectGroup.findById(project.groupId).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/lib/openship-manifest-sync"); return null; });
+    const domainRows = await repos.domain.listByProject(project.id).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/lib/kovalio-manifest-sync"); return []; });
+    const app = await repos.projectGroup.findById(project.groupId).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/lib/kovalio-manifest-sync"); return null; });
     const meta = (deployment.meta ?? {}) as { runtimeMode?: string };
     const entry: ManifestProjectEntry = {
       id: project.id,
@@ -92,8 +92,8 @@ export async function syncProjectToServerManifest(input: {
     await upsertProjectIntoManifest(executor, entry);
     log?.("Synced project to server .kovalio/manifest.json (recovery index)");
   } catch (err) {
-    observeCaughtError(err, "platform/engine/lib/openship-manifest-sync");
-    log?.(`Warning: .openship manifest sync failed (non-fatal): ${safeErrorMessage(err)}`);
+    observeCaughtError(err, "platform/engine/lib/kovalio-manifest-sync");
+    log?.(`Warning: .kovalio manifest sync failed (non-fatal): ${safeErrorMessage(err)}`);
   }
 
   // Full secret-free subgraph dump — the faithful-restore payload. Independent
@@ -103,8 +103,8 @@ export async function syncProjectToServerManifest(input: {
     await writeProjectSnapshot(executor, project.id, dump);
     log?.("Wrote server .kovalio project snapshot (faithful recovery restore)");
   } catch (err) {
-    observeCaughtError(err, "platform/engine/lib/openship-manifest-sync");
-    log?.(`Warning: .openship project snapshot write failed (non-fatal): ${safeErrorMessage(err)}`);
+    observeCaughtError(err, "platform/engine/lib/kovalio-manifest-sync");
+    log?.(`Warning: .kovalio project snapshot write failed (non-fatal): ${safeErrorMessage(err)}`);
   }
 }
 
@@ -143,11 +143,11 @@ export async function pruneOrphanManifestArtifacts(
     });
     for (const p of dropped) {
       await removeProjectSnapshot(exec, p.id).catch((diagnosticFailure) => {
-        observeCaughtError(diagnosticFailure, "platform/engine/lib/openship-manifest-sync");
+        observeCaughtError(diagnosticFailure, "platform/engine/lib/kovalio-manifest-sync");
       });
     }
   } catch (diagnosticFailure) {
-    observeCaughtError(diagnosticFailure, "platform/engine/lib/openship-manifest-sync");
+    observeCaughtError(diagnosticFailure, "platform/engine/lib/kovalio-manifest-sync");
     // best-effort — never fail the scan on a pruning hiccup.
   }
 }
@@ -157,7 +157,7 @@ export async function removeProjectFromServerManifests(project: Project): Promis
   try {
     deps = (await repos.deployment.listByProject(project.id, { perPage: 1000 })).rows;
   } catch (diagnosticFailure) {
-    observeCaughtError(diagnosticFailure, "platform/engine/lib/openship-manifest-sync");
+    observeCaughtError(diagnosticFailure, "platform/engine/lib/kovalio-manifest-sync");
     return;
   }
   const seenServers = new Set<string>();
@@ -174,14 +174,14 @@ export async function removeProjectFromServerManifests(project: Project): Promis
         if (exec) {
           await removeProjectFromManifest(exec, project.id);
           await removeProjectSnapshot(exec, project.id).catch((diagnosticFailure) => {
-            observeCaughtError(diagnosticFailure, "platform/engine/lib/openship-manifest-sync");
+            observeCaughtError(diagnosticFailure, "platform/engine/lib/kovalio-manifest-sync");
           });
         }
       } finally {
         disposePlatform(resolved);
       }
     } catch (diagnosticFailure) {
-      observeCaughtError(diagnosticFailure, "platform/engine/lib/openship-manifest-sync");
+      observeCaughtError(diagnosticFailure, "platform/engine/lib/kovalio-manifest-sync");
       // Server unreachable — fine; the reconcile cross-check (no running
       // container → skip) prevents resurrecting the deleted project.
     }

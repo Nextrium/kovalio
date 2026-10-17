@@ -8,7 +8,7 @@
  * ended up looking at a page carrying the CLOUD provider's branding and links — a third
  * party, from the point of view of the operator whose own domain was requested. That is
  * the report this fixes: whatever the box answers with is what the visitor sees, because
- * Openship Cloud's shared edge forwards by IP with the `Host:` header and relays the
+ * Kovalio Cloud's shared edge forwards by IP with the `Host:` header and relays the
  * box's response (see `edge-target.ts`).
  *
  * It cannot cover every 502. When the BOX ITSELF is unreachable, the Cloud edge answers
@@ -51,7 +51,7 @@
  *
  * A support/diagnostic marker, and ONLY that. Nothing branches on it.
  */
-export const EDGE_UPSTREAM_DOWN_SENTINEL = "openship-edge-upstream-down";
+export const EDGE_UPSTREAM_DOWN_SENTINEL = "kovalio-edge-upstream-down";
 
 /** The named location the `error_page` redirects into. `@`-prefixed, so it is reachable
  *  only from `error_page` and can never be selected by a request URI. */
@@ -119,7 +119,7 @@ const HTML_FRAGMENTS: readonly string[] = [
   `<li>The application may have stopped or crashed</li>`,
   `<li>Trying again in a moment may work</li>`,
   `</ul>`,
-  `<footer>Served by Openship</footer>`,
+  `<footer>Served by Kovalio</footer>`,
   `</main>`,
   `</body>`,
   `</html>`,

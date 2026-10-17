@@ -56,7 +56,7 @@ import type { InstanceOperations } from "@repo/contracts";
 import type { ProjectOperations, SourceOperations, ServiceOperations, DomainOperations, DnsOperations, CredentialOperations, ServerOperations, SystemOperations, AppOperations } from "@repo/contracts";
 
 export { ApiError } from "./errors";
-export { OpenshipOperatorClient, type OpenshipOperatorClientOptions } from "./operator-client";
+export { KovalioOperatorClient, type KovalioOperatorClientOptions } from "./operator-client";
 export { OperationError, ValidationError, parseOptionalEnvironmentScope } from "@repo/contracts";
 export { normalizeComposeServices } from "./compose";
 export { HttpClient, type HttpClientOptions, type HttpRequestOptions, type PaginateOptions } from "./http";
@@ -67,10 +67,10 @@ export type { DeploySourceInput, SourceDeploymentResult } from "./source-input";
 export type { TerminalOperations, TerminalOptions, TerminalSession, TerminalSocket } from "./terminal-client";
 export type * from "@repo/contracts";
 
-export interface OpenshipClientOptions extends Omit<HttpClientOptions, "internalToken"> {}
+export interface KovalioClientOptions extends Omit<HttpClientOptions, "internalToken"> {}
 
 /** Remote facade. The client entry has no native platform or database dependency. */
-export class OpenshipClient {
+export class KovalioClient {
   /** Interactive terminals use authenticated HTTP tickets and WebSockets. */
   readonly terminal: TerminalOperations;
   /** Self-hosted mail administration through the authenticated remote controller. */
@@ -104,9 +104,9 @@ export class OpenshipClient {
   readonly jobs: JobOperations;
   readonly actions: ActionOperations;
   readonly http: HttpClient;
-  private readonly options: Readonly<OpenshipClientOptions>;
+  private readonly options: Readonly<KovalioClientOptions>;
 
-  constructor(options: OpenshipClientOptions) {
+  constructor(options: KovalioClientOptions) {
     this.options = Object.freeze({ ...options });
     const http = this.http = new HttpClient(options);
     this.terminal = createRemoteTerminalOperations(http);
@@ -177,8 +177,8 @@ export class OpenshipClient {
   }
 
   /** A new fixed tenant view; other views retain their credentials and organization. */
-  scope(organizationId: string): OpenshipClient {
-    return new OpenshipClient({ ...this.options, organizationId });
+  scope(organizationId: string): KovalioClient {
+    return new KovalioClient({ ...this.options, organizationId });
   }
 
   deployment(id: string): DeploymentHandle {

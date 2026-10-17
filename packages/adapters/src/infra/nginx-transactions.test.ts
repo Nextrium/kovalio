@@ -48,7 +48,7 @@ function suffixedChallenge(host: string) {
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), "openship-edge-transaction-"));
+  root = await mkdtemp(join(tmpdir(), "kovalio-edge-transaction-"));
   sites = join(root, "sites-enabled");
   await mkdir(sites);
   challenge = join(sites, "_oblien-challenge-staging-app-example-com.conf");
@@ -80,7 +80,7 @@ describe("container real-IP configuration rollback", () => {
   )(
     "restores the shared include and route after $operation fails (previous include: $exists)",
     async ({ operation, exists }) => {
-      vi.stubEnv("OPENSHIP_EDGE_TRUSTED_PROXIES", "172.17.0.0/16");
+      vi.stubEnv("KOVALIO_EDGE_TRUSTED_PROXIES", "172.17.0.0/16");
       await nginx.registerRoute(route(DOTTED));
       await writeFile(join(root, "nginx.conf"), "events {}\nhttp {\n}\n");
       const include = join(sites, EDGE_CONTAINER_REAL_IP_CONF_NAME);
@@ -95,7 +95,7 @@ describe("container real-IP configuration rollback", () => {
         return "";
       });
 
-      vi.stubEnv("OPENSHIP_EDGE_TRUSTED_PROXIES", "192.0.2.1");
+      vi.stubEnv("KOVALIO_EDGE_TRUSTED_PROXIES", "192.0.2.1");
       await expect(apply(operation)).rejects.toThrow("reload refused");
       expect(seen[0]).toContain("set_real_ip_from 192.0.2.1;");
       expect(seen[1]).toBe(previous);
@@ -112,7 +112,7 @@ describe("container real-IP configuration rollback", () => {
   it.each([false, true])(
     "restores a failed include publication (rename completed: %s)",
     async (renamed) => {
-      vi.stubEnv("OPENSHIP_EDGE_TRUSTED_PROXIES", "172.17.0.0/16");
+      vi.stubEnv("KOVALIO_EDGE_TRUSTED_PROXIES", "172.17.0.0/16");
       await nginx.registerRoute(route(DOTTED));
       const include = join(sites, EDGE_CONTAINER_REAL_IP_CONF_NAME);
       const previous = await readFile(include, "utf8");
@@ -126,7 +126,7 @@ describe("container real-IP configuration rollback", () => {
         }
         return rename(from, to);
       });
-      vi.stubEnv("OPENSHIP_EDGE_TRUSTED_PROXIES", "192.0.2.1");
+      vi.stubEnv("KOVALIO_EDGE_TRUSTED_PROXIES", "192.0.2.1");
       await expect(nginx.registerRoute(route(DOTTED, 3002))).rejects.toThrow(
         "include publication failed",
       );
@@ -137,7 +137,7 @@ describe("container real-IP configuration rollback", () => {
   );
 
   it.each(operations)("does not reload a partial restore after %s fails", async (operation) => {
-    vi.stubEnv("OPENSHIP_EDGE_TRUSTED_PROXIES", "172.17.0.0/16");
+    vi.stubEnv("KOVALIO_EDGE_TRUSTED_PROXIES", "172.17.0.0/16");
     await nginx.registerRoute(route(DOTTED));
     await writeFile(join(root, "nginx.conf"), "events {}\nhttp {\n}\n");
     const include = join(sites, EDGE_CONTAINER_REAL_IP_CONF_NAME);
@@ -147,7 +147,7 @@ describe("container real-IP configuration rollback", () => {
       if (to === include && ++writes === 2) throw new Error("include restore denied");
       return rename(from, to);
     });
-    vi.stubEnv("OPENSHIP_EDGE_TRUSTED_PROXIES", "192.0.2.1");
+    vi.stubEnv("KOVALIO_EDGE_TRUSTED_PROXIES", "192.0.2.1");
     reload.mockClear().mockRejectedValueOnce(new Error("reload refused"));
     await expect(apply(operation)).rejects.toThrow(/rollback failed:.*include restore denied/);
     expect(reload).toHaveBeenCalledTimes(1);

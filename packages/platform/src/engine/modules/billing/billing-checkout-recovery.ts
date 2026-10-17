@@ -261,7 +261,7 @@ export async function cancelCheckout(
             return false;
           });
         let cancellation: NonNullable<Intent["cancellation"]>;
-        const idempotencyKey = `openship:cancel:${identity(owner, intent)}`;
+        const idempotencyKey = `kovalio:cancel:${identity(owner, intent)}`;
         if (genericCancellation) {
           cancellation = { checkoutId: intent.checkoutId, idempotencyKey };
         } else {

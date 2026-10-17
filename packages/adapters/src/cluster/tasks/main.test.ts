@@ -23,7 +23,7 @@ const config: DatabaseTaskConfig = {
 };
 const prefix = `archives/${config.namespace}/redis`;
 const manifest = (name: string): RedisArchiveManifest => ({
-  format: "openship-redis-rdb-v1",
+  format: "kovalio-redis-rdb-v1",
   databaseId: config.databaseId,
   runtimeId: config.runtimeId,
   mode: "standalone",
@@ -69,7 +69,7 @@ beforeEach(() => {
         metadata: {
           uid: "index",
           resourceVersion: String(version),
-          labels: { "openship.io/database": "database", "openship.io/runtime": "runtime" },
+          labels: { "nextrium.org/database": "database", "nextrium.org/runtime": "runtime" },
         },
         data: structuredClone(data),
       };

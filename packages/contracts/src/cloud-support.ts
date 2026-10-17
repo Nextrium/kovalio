@@ -52,7 +52,7 @@ export const CloudSupportReceiptSchema = Type.Object(
 export type CloudSupportReceipt = Static<typeof CloudSupportReceiptSchema>;
 
 /** A connection binding, never a credential. Local relays require it on ticket requests. */
-export const CLOUD_SUPPORT_ACCOUNT_HEADER = "X-Openship-Support-Account";
+export const CLOUD_SUPPORT_ACCOUNT_HEADER = "X-Kovalio-Support-Account";
 export const CloudSupportSessionSchema = Type.Object(
   {
     account: Type.Union([

@@ -3,27 +3,27 @@ import type { ReactNode } from "react";
 import { CURRENCY_LD, getCloudPricing, priceLd, type CloudPricing } from "@/lib/pricing";
 import { faq } from "./_data";
 
-const PAGE_URL = "https://openship.io/pricing";
+const PAGE_URL = "https://nextrium.org/pricing";
 export const revalidate = 60;
 const DESCRIPTION =
-  "Compare Openship Cloud managed servers. Monthly CPU, RAM and storage for your projects, with clear resource limits and no per-seat fees.";
+  "Compare Kovalio Cloud managed servers. Monthly CPU, RAM and storage for your projects, with clear resource limits and no per-seat fees.";
 export const metadata: Metadata = {
   title: "Pricing",
   description: DESCRIPTION,
   alternates: { canonical: "/pricing" },
   openGraph: {
-    title: "Pricing - Openship",
+    title: "Pricing - Kovalio",
     description: DESCRIPTION,
     url: "/pricing",
     type: "website",
   },
-  twitter: { card: "summary_large_image", title: "Pricing - Openship", description: DESCRIPTION },
+  twitter: { card: "summary_large_image", title: "Pricing - Kovalio", description: DESCRIPTION },
 };
 
 function buildLd(pricing: CloudPricing) {
   const offers = pricing.tiers.map((plan) => ({
     "@type": "Offer",
-    name: `Openship Cloud ${plan.name}`,
+    name: `Kovalio Cloud ${plan.name}`,
     description: plan.description,
     price: priceLd(plan.price.monthly),
     priceCurrency: CURRENCY_LD,
@@ -50,9 +50,9 @@ function buildLd(pricing: CloudPricing) {
     {
       "@context": "https://schema.org",
       "@type": "Product",
-      name: "Openship Cloud",
+      name: "Kovalio Cloud",
       description: DESCRIPTION,
-      brand: { "@type": "Brand", name: "Openship" },
+      brand: { "@type": "Brand", name: "Kovalio" },
       category: "Software / Developer Tools",
       ...(offers.length
         ? {
@@ -72,7 +72,7 @@ function buildLd(pricing: CloudPricing) {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: "https://openship.io" },
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://nextrium.org" },
         { "@type": "ListItem", position: 2, name: "Pricing", item: PAGE_URL },
       ],
     },

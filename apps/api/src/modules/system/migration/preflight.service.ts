@@ -26,7 +26,7 @@ import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics"
 import { repos } from "@repo/db";
 import { SERVER_MIGRATION_UNAVAILABLE } from "./migrate-instance.service";
 import { sshManager } from "@repo/platform/engine/lib/ssh-manager";
-import { resolveOpenshipDistDirOrNull } from "./openship-dist";
+import { resolveKovalioDistDirOrNull } from "./kovalio-dist";
 
 export type DomainChoice =
   | { kind: "custom"; hostname: string }

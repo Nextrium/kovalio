@@ -22,7 +22,7 @@ func officialRequest(t *testing.T) jobRequest {
 	r := nativeRequest(t, "")
 	r.Environment = nil
 	r.Secrets = nil
-	r.GitHub = &githubRequest{RequireAdmission: true, Repository: "owner/repo", Name: "openship-session_12345", Token: "temporary-registration-token", Labels: []string{"self-hosted", "openship"}, DownloadURL: "https://github.com/actions/runner/releases/download/v2.338.0/actions-runner-linux-x64-2.338.0.tar.gz", SHA256: strings.Repeat("a", 64)}
+	r.GitHub = &githubRequest{RequireAdmission: true, Repository: "owner/repo", Name: "kovalio-session_12345", Token: "temporary-registration-token", Labels: []string{"self-hosted", "kovalio"}, DownloadURL: "https://github.com/actions/runner/releases/download/v2.338.0/actions-runner-linux-x64-2.338.0.tar.gz", SHA256: strings.Repeat("a", 64)}
 	return r
 }
 func TestOfficialRunnerRequestTrustBoundary(t *testing.T) {
@@ -50,7 +50,7 @@ func TestOfficialRunnerRequestTrustBoundary(t *testing.T) {
 	}
 }
 func TestOfficialDockerChildrenKeepOwnershipAndLimits(t *testing.T) {
-	req := httptest.NewRequest("POST", "http://docker/v1.47/containers/create", strings.NewReader(`{"Image":"node:22","Labels":{"app":"test","io.openship.actions.job":"spoofed"},"HostConfig":{"NanoCpus":8000000000,"Memory":8589934592,"Binds":["/var/run/docker.sock:/var/run/docker.sock","/data:/data"]}}`))
+	req := httptest.NewRequest("POST", "http://docker/v1.47/containers/create", strings.NewReader(`{"Image":"node:22","Labels":{"app":"test","io.kovalio.actions.job":"spoofed"},"HostConfig":{"NanoCpus":8000000000,"Memory":8589934592,"Binds":["/var/run/docker.sock:/var/run/docker.sock","/data:/data"]}}`))
 	if err := labelDockerCreation(req, "owned-job", "/private/proxy.sock", 2, 1024); err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestOfficialDockerChildrenKeepOwnershipAndLimits(t *testing.T) {
 	}
 	labels := body["Labels"].(map[string]interface{})
 	host := body["HostConfig"].(map[string]interface{})
-	if labels["app"] != "test" || labels["io.openship.actions.job"] != "owned-job" {
+	if labels["app"] != "test" || labels["io.kovalio.actions.job"] != "owned-job" {
 		t.Fatalf("ownership: %v", labels)
 	}
 	if host["NanoCpus"] != float64(2e9) || host["Memory"] != float64(1024*1024*1024) {
@@ -162,7 +162,7 @@ func TestOfficialContainerFilesStayReadableBySupervisor(t *testing.T) {
 	if err := os.MkdirAll(runnerRoot, 0700); err != nil {
 		t.Fatal(err)
 	}
-	name := "openship-github-" + r.ID
+	name := "kovalio-github-" + r.ID
 	args, err := githubContainerArgs(r, runnerRoot, name, "")
 	if err != nil {
 		t.Fatal(err)

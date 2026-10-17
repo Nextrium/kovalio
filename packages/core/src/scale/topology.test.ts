@@ -37,7 +37,7 @@ import {
 const empty = (): ScaleDraft => ({ version: 2, services: [], nodes: [], edges: [] });
 const history = (): DraftHistory => ({ present: createExampleDraft(), past: [], future: [] });
 
-describe("OpenShip Edge topology", () => {
+describe("Kovalio Edge topology", () => {
   it("classifies PostgreSQL and Redis as database engines", () => {
     expect(RESOURCE_KINDS.filter(isDatabaseKind)).toEqual(DATABASE_KINDS);
     expect(isDatabaseKind("edge")).toBe(false);

@@ -11,15 +11,15 @@ import { expect, it } from "vitest";
 import { signDesktopUpdates } from "../scripts/sign-updates.mjs";
 
 it("downloads and verifies redirected updates in real Electron, with cancellation and host checks", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "openship-electron-update-"));
+  const directory = await mkdtemp(join(tmpdir(), "kovalio-electron-update-"));
   try {
     const keys = generateKeyPairSync("ed25519", {
       privateKeyEncoding: { type: "pkcs8", format: "pem" },
       publicKeyEncoding: { type: "spki", format: "pem" },
     });
     const bytes = "signed update fixture\n".repeat(1024);
-    await writeFile(join(directory, "Openship.AppImage"), bytes);
-    await writeFile(join(directory, "Openship.AppImage.sha256"), createHash("sha256").update(bytes).digest("hex"));
+    await writeFile(join(directory, "Kovalio.AppImage"), bytes);
+    await writeFile(join(directory, "Kovalio.AppImage.sha256"), createHash("sha256").update(bytes).digest("hex"));
     await signDesktopUpdates({ directory, version: "9.8.7", ...keys });
     const entry = join(directory, "test.cjs");
     await build({

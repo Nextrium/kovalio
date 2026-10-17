@@ -11,10 +11,10 @@ import { WebSocketServer } from "ws";
 
 const require = createRequire(import.meta.url);
 const clients = [
-  (await import("openship")).OpenshipClient,
-  (await import("openship/client")).OpenshipClient,
-  require("openship").OpenshipClient,
-  require("openship/client").OpenshipClient,
+  (await import("kovalio")).KovalioClient,
+  (await import("kovalio/client")).KovalioClient,
+  require("kovalio").KovalioClient,
+  require("kovalio/client").KovalioClient,
 ];
 const requests = [];
 const sockets = new Set();
@@ -39,8 +39,8 @@ const server = createServer(async (req, res) => {
           teamMode: "single_user",
           migrationTargetUrl: null,
           migrationInProgress: false,
-          cloudAuthUrl: "https://app.openship.io",
-          cloudApiUrl: "https://api.openship.io",
+          cloudAuthUrl: "https://kovalio.nextrium.org",
+          cloudApiUrl: "https://api.nextrium.org",
         }),
       );
       return;
@@ -73,7 +73,7 @@ const ws = new WebSocketServer({ noServer: true });
 server.on("upgrade", (req, socket, head) => {
   assert.equal(req.headers.origin, "https://dashboard.package.test");
   assert.equal(req.headers.authorization, undefined);
-  assert.equal(req.headers["sec-websocket-protocol"], "openship.terminal.v1+package-ticket");
+  assert.equal(req.headers["sec-websocket-protocol"], "kovalio.terminal.v1+package-ticket");
   assert.equal(req.url.includes("package-ticket"), false);
   ws.handleUpgrade(req, socket, head, (connection) => {
     sockets.add(connection);
@@ -143,13 +143,13 @@ try {
   ]) {
     const result = await run(
       process.execPath,
-      ["node_modules/openship/dist/node-entry.js", "--context", "production", "--json", ...args],
+      ["node_modules/kovalio/dist/node-entry.js", "--context", "production", "--json", ...args],
       {
         env: {
           ...process.env,
-          OPENSHIP_HOME: state,
-          OPENSHIP_TOKEN: "ambient-must-not-leak",
-          OPENSHIP_API_URL: "http://127.0.0.1:1",
+          KOVALIO_HOME: state,
+          KOVALIO_TOKEN: "ambient-must-not-leak",
+          KOVALIO_API_URL: "http://127.0.0.1:1",
         },
         timeout: 30_000,
       },

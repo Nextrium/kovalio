@@ -21,7 +21,7 @@ import {
   resizeDockerWorkspace,
   findOwnedDockerWorkspace,
 } from "../../lib/cloud-docker-workspace";
-import { getNamespaceClient } from "../../lib/openship-cloud";
+import { getNamespaceClient } from "../../lib/kovalio-cloud";
 import { getOblienClient } from "../../lib/oblien-client";
 import {
   assertCloudCanSpend,
@@ -76,7 +76,7 @@ function presentOperation(
 function requireSaas() {
   if (!env.CLOUD_MODE)
     throw new AppError(
-      "Cloud spaces are available in Openship Cloud",
+      "Cloud spaces are available in Kovalio Cloud",
       400,
       "CLOUD_WORKSPACE_TARGET_UNAVAILABLE",
     );

@@ -14,7 +14,7 @@ export function assertResourceInOrg<T extends { organizationId?: string | null }
 }
 
 /**
- * Refuse a runtime action on the Openship control-plane self-app.
+ * Refuse a runtime action on the Kovalio control-plane self-app.
  *
  * The self-app IS the process serving the request, so "stop it" is a request to
  * kill the thing that would report the result. Every mutating surface needs the
@@ -27,11 +27,11 @@ export function assertResourceInOrg<T extends { organizationId?: string | null }
  *
  * One definition, because it had grown three — a project copy, a services copy,
  * and a deployments wrapper — and they had already drifted: one of them told
- * operators to run `openship restart`, which is not a command (`restart` exists
+ * operators to run `kovalio restart`, which is not a command (`restart` exists
  * only under `deployment` and `service`).
  */
 /**
- * Is this project Openship itself?
+ * Is this project Kovalio itself?
  *
  * The boolean behind {@link assertNotControlPlane}, split out because not every
  * caller wants a throw: the migration adopt path needs to RECOGNIZE the control
@@ -44,13 +44,13 @@ export function assertResourceInOrg<T extends { organizationId?: string | null }
 export function isControlPlaneProject(
   project: { appTemplateId?: string | null } | null | undefined,
 ): boolean {
-  return project?.appTemplateId === "openship";
+  return project?.appTemplateId === "kovalio";
 }
 
 export function controlPlaneManagementMessage(): string {
-  return process.env.OPENSHIP_INSTANCE_PROJECT_ID
-    ? "This is your active Openship API. Use Settings → Instance → Move back to Desktop before changing its runtime or updating its service images."
-    : "The Openship control plane manages its own runtime — manage it with the CLI on the host (`openship up`, `openship stop`, `openship update`), not from the dashboard.";
+  return process.env.KOVALIO_INSTANCE_PROJECT_ID
+    ? "This is your active Kovalio API. Use Settings → Instance → Move back to Desktop before changing its runtime or updating its service images."
+    : "The Kovalio control plane manages its own runtime — manage it with the CLI on the host (`kovalio up`, `kovalio stop`, `kovalio update`), not from the dashboard.";
 }
 
 export function assertNotControlPlane(

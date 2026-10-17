@@ -1,6 +1,6 @@
 ---
 title: Email & webmail
-description: Connect existing IMAP/SMTP mailboxes through webmail on Cloud, or run and manage your own mail server with Desktop and self-hosted Openship.
+description: Connect existing IMAP/SMTP mailboxes through webmail on Cloud, or run and manage your own mail server with Desktop and self-hosted Kovalio.
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
@@ -20,10 +20,10 @@ go through them. The fiddly bits — the exact DNS records and the reverse-DNS s
 happen, because the wizard walks you through those live.
 
 <Callout title="Cloud webmail and self-hosted mail servers">
-**Emails** is available on Cloud, Desktop and self-hosted Openship. On Cloud, it connects your existing
+**Emails** is available on Cloud, Desktop and self-hosted Kovalio. On Cloud, it connects your existing
 IMAP/SMTP mailboxes through the webmail app. **Managed email is coming soon**: Cloud application plans
 do not provision SMTP/IMAP servers or mailboxes. Mail-server setup and administration remain available
-through Desktop and self-hosted Openship. See [Installation](/docs/getting-started/installation).
+through Desktop and self-hosted Kovalio. See [Installation](/docs/getting-started/installation).
 </Callout>
 
 ## Connect existing mailboxes on Cloud
@@ -34,7 +34,7 @@ ports in the backend's advanced fields; IMAP and SMTP connections require TLS. C
 deploys the webmail app through the normal application pipeline.
 
 Sign in to the deployed webmail with your mailbox email address and password. Your existing provider
-keeps the mailboxes and mail delivery; Openship hosts the browser client. Manage that client through
+keeps the mailboxes and mail delivery; Kovalio hosts the browser client. Manage that client through
 **Apps** or its project page, including domains, settings, logs and redeployment. This flow does not
 install a new mail server, change MX records or create a mailbox at your provider.
 
@@ -208,7 +208,7 @@ On the admin panel's **Overview** tab, find the mail server card and click **Dep
 Two choices:
 
 - **Deploy to** — where the webmail app should run. You can put it on **this mail server**, on **another one of
-  your servers**, or on one of your managed **Openship Cloud servers**. The shared server picker connects a
+  your servers**, or on one of your managed **Kovalio Cloud servers**. The shared server picker connects a
   selected Cloud server when needed. Redeploying an existing webmail starts with its saved destination.
 - **Domain** — the web address people will open to reach the inbox. It defaults to `mail.yourdomain`. Whatever
   you pick, its DNS must point at the deploy target — the on-screen hint tells you what's expected for the
@@ -239,9 +239,9 @@ domains and every message stay on the mail server, untouched — everyone just s
 
 ## CLI
 
-The provisioning flow works from the CLI too. `openship mail webmail` exposes the same deployment workflow;
-see the [mail command reference](/docs/cli/reference/mail#openship-mail-webmail) for its options. Every `mail`
-command addresses a self-hosted Openship instance, which can deploy the webmail app to a connected Cloud server.
+The provisioning flow works from the CLI too. `kovalio mail webmail` exposes the same deployment workflow;
+see the [mail command reference](/docs/cli/reference/mail#kovalio-mail-webmail) for its options. Every `mail`
+command addresses a self-hosted Kovalio instance, which can deploy the webmail app to a connected Cloud server.
 
 ```bash
 # Start the install on a server for your domain (streams live)
@@ -272,11 +272,11 @@ When the install pauses, the CLI prints the exact `--start-step` number to resum
 
 <Callout title="Webmail opens, but sign-in cannot reach the mail server" type="warn">
 Webmail connects to IMAP from the server running the webmail app. A mailbox working in Gmail or another
-client does not prove that this server can reach it. For an Openship-managed mail server, the app settings
+client does not prove that this server can reach it. For an Kovalio-managed mail server, the app settings
 should use `mail.<install-domain>` on IMAP port **993** and SMTP port **465**, even for mailboxes on additional
 domains or when outgoing mail uses a relay. The webmail address may be different from this backend hostname.
 
-When webmail runs on the mail server itself, Openship maps this backend hostname to Docker's
+When webmail runs on the mail server itself, Kovalio maps this backend hostname to Docker's
 `host-gateway` in the service configuration. This avoids a host DNS resolver returning a loopback
 address inside the container while preserving the hostname used to verify the mail certificate.
 The mapping is saved for redeploy and rollback. Cloud and other-server webmail use the mail server's

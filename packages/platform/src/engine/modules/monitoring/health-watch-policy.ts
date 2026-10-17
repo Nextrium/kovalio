@@ -16,7 +16,7 @@ export function continuousHealthAvailable(): boolean {
 }
 
 export function containerHealthEventsAvailable(): boolean {
-  return continuousHealthAvailable() && !env.OPENSHIP_DISABLE_CONTAINER_EVENTS;
+  return continuousHealthAvailable() && !env.KOVALIO_DISABLE_CONTAINER_EVENTS;
 }
 
 export function healthWatchActive(

@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { fetchRemoteUncached } from "./useUpdates";
 
-const RELEASE_URL = "https://api.github.com/repos/oblien/openship/releases/latest";
-const CHANGELOG_URL = "https://raw.githubusercontent.com/oblien/openship/v0.6.9/CHANGELOG.md";
+const RELEASE_URL = "https://api.github.com/repos/oblien/kovalio/releases/latest";
+const CHANGELOG_URL = "https://raw.githubusercontent.com/oblien/kovalio/v0.6.9/CHANGELOG.md";
 const MANIFEST_URL =
-  "https://raw.githubusercontent.com/oblien/openship/v0.6.9/release-advisories.json";
+  "https://raw.githubusercontent.com/oblien/kovalio/v0.6.9/release-advisories.json";
 
 function response(body: BodyInit, init?: ResponseInit): Response {
   return new Response(body, { status: 200, ...init });

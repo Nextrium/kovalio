@@ -272,7 +272,7 @@ function LoginPageInner() {
           onClick={() => { void handleCloudSignIn(callbackUrl); }}
         >
           {loading ? <UiIcon name="spinner" className="me-2 size-4 animate-spin" /> : <UiIcon name="external-link" className="me-2 size-4" />}
-          {loading ? "Opening Openship Cloud..." : "Sign in with Openship"}
+          {loading ? "Opening Kovalio Cloud..." : "Sign in with Kovalio"}
         </Button>
       </AuthShell>
     );

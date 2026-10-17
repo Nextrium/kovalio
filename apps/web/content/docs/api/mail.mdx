@@ -52,8 +52,8 @@ POST /api/mail/setup
 />
 
 ```bash
-curl -N -X POST "$OPENSHIP_URL/api/mail/setup" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -N -X POST "$KOVALIO_URL/api/mail/setup" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"serverId":"srv_123","domain":"example.com"}'
 ```
@@ -109,14 +109,14 @@ POST /api/mail/adopt
 
 ```bash
 # 1. Probe for iRedMail + its on-server state
-curl -X POST "$OPENSHIP_URL/api/mail/scan" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/mail/scan" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"serverId":"srv_123"}'
 
 # 2. Re-adopt it (idempotent)
-curl -X POST "$OPENSHIP_URL/api/mail/adopt" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/mail/adopt" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"serverId":"srv_123"}'
 ```
@@ -154,8 +154,8 @@ POST /api/mail/admin/:serverId/domains
 `active` (boolean).
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/mail/admin/srv_123/domains" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/mail/admin/srv_123/domains" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"domain":"example.com","defaultQuotaMB":2048}'
 ```
@@ -180,8 +180,8 @@ POST /api/mail/admin/:serverId/mailboxes
 (all optional). `DELETE` soft-deletes by default; add `?hard=true` to purge the maildir.
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/mail/admin/srv_123/mailboxes" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/mail/admin/srv_123/mailboxes" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"localPart":"alice","domain":"example.com","password":"a-strong-password"}'
 ```
@@ -251,8 +251,8 @@ POST /api/mail/webmail/deploy-project
 
 `target` is one of:
 
-- `{ "kind": "self", "serverId": "srv_123" }` — self-hosted on one of your Openship servers.
-- `{ "kind": "cloud", "serverId": "srv_managed" }` — on a selected managed Openship Cloud server.
+- `{ "kind": "self", "serverId": "srv_123" }` — self-hosted on one of your Kovalio servers.
+- `{ "kind": "cloud", "serverId": "srv_managed" }` — on a selected managed Kovalio Cloud server.
 
 Both targets need a real server ID. Use `GET /api/system/servers/destinations` to list accessible servers.
 For a Cloud server that is not connected to this installation yet, use
@@ -262,8 +262,8 @@ Redeploying an existing managed webmail preserves its server binding; moving it 
 the normal project migration flow.
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/mail/webmail/deploy-project" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/mail/webmail/deploy-project" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"mailServerId":"srv_123","hostname":"mail.example.com","target":{"kind":"self","serverId":"srv_123"}}'
 ```
@@ -362,7 +362,7 @@ Use `--schema` for JSON configuration commands. Mail is a remote, self-hosted fe
 | --- | --- | --- |
 | List all setup steps and the total count. | `mail.getSteps()`<br />Remote client | `GET /api/mail/steps`<br />`mail_server:read` · Self-hosted |
 | Current setup progress for a server (rendered from its on-server state file). | `mail.getStatus(input?)`<br />Remote client | `GET /api/mail/status`<br />`mail_server:read` · Self-hosted |
-| List every server Openship has provisioned (or is provisioning) mail on. | `mail.listServers()`<br />Remote client | `GET /api/mail/servers`<br />`mail_server:list` · Self-hosted |
+| List every server Kovalio has provisioned (or is provisioning) mail on. | `mail.listServers()`<br />Remote client | `GET /api/mail/servers`<br />`mail_server:list` · Self-hosted |
 | Probe a server for an existing iRedMail install + its on-server state (read-only). | `mail.scan(input)`<br />Remote client | `POST /api/mail/scan`<br />`mail_server:write` · Self-hosted |
 | Re-adopt a scanned server whose orchestrator state was lost. | `mail.adopt(input)`<br />Remote client | `POST /api/mail/adopt`<br />`mail_server:write` · Self-hosted |
 | Cancel the running setup. | `mail.cancelSetup()`<br />Remote client | `POST /api/mail/setup/cancel`<br />`mail_server:write` · Self-hosted |
@@ -377,7 +377,7 @@ Use `--schema` for JSON configuration commands. Mail is a remote, self-hosted fe
 | Mail daemons, outbound delivery, and cached public-port reachability (TCP 25/465/587/993). | `mail.getHealth(id, input?)`<br />Remote client | `GET /api/mail/health/:serverId`<br />`mail_server:read` · Self-hosted |
 | Read the mail certificate, SMTP/IMAP TLS checks and automatic renewal settings. | `mail.getCertificate(id)`<br />Remote client | `GET /api/mail/admin/:serverId/certificate`<br />`mail_server:read` · Self-hosted |
 | Recheck the certificate on disk and served by SMTP/IMAP without issuing a certificate or sending email. | `mail.checkCertificate(id)`<br />Remote client | `POST /api/mail/admin/:serverId/certificate/check`<br />`mail_server:write` · Self-hosted |
-| Renew a due mail certificate through Openship Edge and reload Postfix/Dovecot, reusing a still-valid certificate and repairing its service configuration. | `mail.renewCertificate(id)`<br />Remote client | `POST /api/mail/admin/:serverId/certificate/renew`<br />`mail_server:admin` · Self-hosted |
+| Renew a due mail certificate through Kovalio Edge and reload Postfix/Dovecot, reusing a still-valid certificate and repairing its service configuration. | `mail.renewCertificate(id)`<br />Remote client | `POST /api/mail/admin/:serverId/certificate/renew`<br />`mail_server:admin` · Self-hosted |
 | Set `autoRenew` to enable or disable automatic mail certificate renewal. Monitoring continues when renewal is disabled. | `mail.updateCertificate(id, input)`<br />Remote client | `PATCH /api/mail/admin/:serverId/certificate`<br />`mail_server:admin` · Self-hosted |
 | List mail domains on the server. | `mail.listDomains(id)`<br />Remote client | `GET /api/mail/admin/:serverId/domains`<br />`mail_server:list` · Self-hosted |
 | Add a mail domain. | `mail.createDomain(id, input)`<br />Remote client | `POST /api/mail/admin/:serverId/domains`<br />`mail_server:write` · Self-hosted |

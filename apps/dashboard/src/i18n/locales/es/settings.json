@@ -179,7 +179,7 @@
       "forwardOnNote": "El reenvío está activado — gh CLI también autentica clonaciones en servidores remotos. Tu identidad se tuneliza por SSH por clonación; no se almacena nada en el servidor.",
       "forwardOffHint": "Por ahora solo compilaciones locales. Activa \"Reenviar mi identidad git a servidores de compilación\" para usar gh CLI también en despliegues en servidores remotos.",
       "manageForward": "Gestionar reenvío",
-      "disconnectBody": "Openship eliminará esta credencial de esta instancia y dejará de usarla para clonar. Seguirá siendo válida en GitHub hasta que la revoques allí. Puedes volver a conectarte en cualquier momento.",
+      "disconnectBody": "Kovalio eliminará esta credencial de esta instancia y dejará de usarla para clonar. Seguirá siendo válida en GitHub hasta que la revoques allí. Puedes volver a conectarte en cualquier momento.",
       "recheck": "Comprobar de nuevo"
     },
     "replaceToken": "Reemplazar token de GitHub",
@@ -187,7 +187,7 @@
     "tokenEditorDescription": "Usa un token de acceso personal de GitHub para explorar repositorios y compilar en esta instancia.",
     "methodTokenDesc": "Usa un token de GitHub para explorar repositorios y realizar compilaciones locales.",
     "activeVia": "Conectado mediante {method}",
-    "pickMethod": "Elige cómo Openship accede a tus repositorios.",
+    "pickMethod": "Elige cómo Kovalio accede a tus repositorios.",
     "methodDevice": "Inicio de sesión de GitHub",
     "methodApp": "GitHub App",
     "methodAppDesc": "Tokens de instalación de ámbito limitado y corta duración para despliegues locales y remotos.",
@@ -207,11 +207,11 @@
     "methodHostCli": "gh CLI en este host",
     "manageTokensOnGithub": "Gestionar tokens en GitHub",
     "manageAccessOnGithub": "Gestionar acceso en GitHub",
-    "disconnectScopeNote": "Desconectar elimina esta credencial de Openship y deja de usarla para clonar. Seguirá siendo válida en GitHub hasta que la revoques allí.",
+    "disconnectScopeNote": "Desconectar elimina esta credencial de Kovalio y deja de usarla para clonar. Seguirá siendo válida en GitHub hasta que la revoques allí.",
     "credentialRejected": "GitHub rechazó el {method} guardado.",
     "credentialRejectedImpact": "Fue revocado, expiró o perdió un ámbito requerido. Los despliegues que clonen con él seguirán fallando hasta que te reconectes abajo.",
     "credentialUnreachable": "No se pudo contactar con GitHub para comprobar el {method} guardado.",
-    "credentialUnreachableImpact": "Normalmente es un problema de red y no una credencial incorrecta — Openship continuará usándola. Reconectar no ayudará si GitHub no es accesible.",
+    "credentialUnreachableImpact": "Normalmente es un problema de red y no una credencial incorrecta — Kovalio continuará usándola. Reconectar no ayudará si GitHub no es accesible.",
     "credentialCheckedAt": "Última comprobación {time}"
   },
   "deployDefaults": {
@@ -270,10 +270,10 @@
   "githubSources": {
     "title": "Aplicaciones de GitHub autohospedadas",
     "description": "Controla la conexión de GitHub en esta instancia con credenciales cifradas, webhooks directos y tokens de instalación de corta duración.",
-    "publicUrlRequired": "Primero configura una URL HTTPS pública para esta instancia de Openship. GitHub debe poder acceder al retorno de configuración y al webhook.",
+    "publicUrlRequired": "Primero configura una URL HTTPS pública para esta instancia de Kovalio. GitHub debe poder acceder al retorno de configuración y al webhook.",
     "createWithGithub": "Crear con GitHub",
     "registerExisting": "Registrar aplicación existente",
-    "manifestHelp": "Openship enviará a GitHub un manifiesto con permisos mínimos. GitHub creará la aplicación, devolverá sus credenciales una sola vez y abrirá la instalación en repositorios.",
+    "manifestHelp": "Kovalio enviará a GitHub un manifiesto con permisos mínimos. GitHub creará la aplicación, devolverá sus credenciales una sola vez y abrirá la instalación en repositorios.",
     "nameLabel": "Nombre de la fuente",
     "namePlaceholder": "GitHub de Acme",
     "continueOnGithub": "Continuar en GitHub",
@@ -291,9 +291,9 @@
     "makeDefault": "Usar como predeterminada",
     "manage": "Gestionar en GitHub",
     "delete": "Eliminar",
-    "confirmDelete": "¿Eliminar {name} de Openship? Se borrarán sus credenciales locales y vínculos de instalación, pero la aplicación seguirá instalada en GitHub hasta que la desinstales allí.",
+    "confirmDelete": "¿Eliminar {name} de Kovalio? Se borrarán sus credenciales locales y vínculos de instalación, pero la aplicación seguirá instalada en GitHub hasta que la desinstales allí.",
     "editHelp": "Deja vacíos los campos secretos para conservar los valores cifrados ya guardados.",
-    "manualHelp": "Introduce las credenciales de una aplicación de GitHub existente. Openship verifica la clave privada antes de guardar nada.",
+    "manualHelp": "Introduce las credenciales de una aplicación de GitHub existente. Kovalio verifica la clave privada antes de guardar nada.",
     "appIdLabel": "ID de aplicación",
     "clientIdLabel": "ID de cliente",
     "clientSecretLabel": "Secreto de cliente",
@@ -552,13 +552,13 @@
     },
     "reachability": {
       "description": "Los compañeros de equipo necesitan una URL pública para acceder a este espacio de trabajo.",
-      "notInstalledTitle": "Asigna una dirección pública a Openship",
-      "notInstalledBody": "Openship aún no está configurado con una URL pública. Despliégalo con una dirección pública (p. ej. `openship up --public-url …`), luego añade un dominio aquí para que los compañeros puedan acceder.",
-      "noDomainTitle": "Añade un dominio a Openship",
-      "noDomainBody": "Añade un dominio a la app Openship para que los compañeros puedan acceder a este espacio de trabajo — las invitaciones se activarán automáticamente en cuanto esté activo.",
+      "notInstalledTitle": "Asigna una dirección pública a Kovalio",
+      "notInstalledBody": "Kovalio aún no está configurado con una URL pública. Despliégalo con una dirección pública (p. ej. `kovalio up --public-url …`), luego añade un dominio aquí para que los compañeros puedan acceder.",
+      "noDomainTitle": "Añade un dominio a Kovalio",
+      "noDomainBody": "Añade un dominio a la app Kovalio para que los compañeros puedan acceder a este espacio de trabajo — las invitaciones se activarán automáticamente en cuanto esté activo.",
       "addDomain": "Añadir un dominio",
       "pendingTitle": "Finaliza la configuración de tu dominio",
-      "pendingBody": "Tu dominio de Openship está pendiente de verificación (DNS / SSL). Las invitaciones se activarán una vez que esté activo.",
+      "pendingBody": "Tu dominio de Kovalio está pendiente de verificación (DNS / SSL). Las invitaciones se activarán una vez que esté activo.",
       "viewDomain": "Ver dominio"
     }
   },
@@ -609,8 +609,8 @@
     "cloudNotReady": "No conectado",
     "noMailSystem": "No hay ningún sistema de correo configurado, por lo que la invitación no se entregará.",
     "setUpEmail": "Configurar correo →",
-    "cloudNotConnected": "Openship Cloud no está conectado, por lo que no puede enviar la invitación.",
-    "connectCloud": "Conectar Openship Cloud →"
+    "cloudNotConnected": "Kovalio Cloud no está conectado, por lo que no puede enviar la invitación.",
+    "connectCloud": "Conectar Kovalio Cloud →"
   },
   "teamWorkspace": {
     "title": "Espacio de trabajo de equipo",
@@ -640,7 +640,7 @@
       "disconnectFailed": "No se pudo desconectar"
     },
     "pitch": {
-      "title": "Añadir Openship Cloud",
+      "title": "Añadir Kovalio Cloud",
       "body": "Cada proyecto obtiene un dominio .{domain} gratuito con SSL automático — sin DNS, sin certificados. Tus propios servidores siguen funcionando exactamente igual que ahora.",
       "perkDomain": "Dominio .{domain} gratuito + SSL automático en cada proyecto",
       "perkDeploy": "Despliega en nube gestionada o mantén en tus propios servidores",
@@ -650,15 +650,15 @@
       "viewPricing": "Ver precios"
     },
     "connectModal": {
-      "title": "Conectar Openship Cloud",
-      "requiresConnection": "{feature} requiere una conexión a Openship Cloud. Conecta tu cuenta para desbloquear:",
+      "title": "Conectar Kovalio Cloud",
+      "requiresConnection": "{feature} requiere una conexión a Kovalio Cloud. Conecta tu cuenta para desbloquear:",
       "features": {
         "deployments": "Despliegues en la nube",
         "infra": "Infraestructura gestionada",
         "ssl": "SSL y dominios automáticos",
         "cdn": "CDN global"
       },
-      "connect": "Conectar a Openship Cloud",
+      "connect": "Conectar a Kovalio Cloud",
       "waitingSignIn": "Esperando inicio de sesión…",
       "maybeLater": "Quizás más tarde"
     }
@@ -668,7 +668,7 @@
       "title": "Ubicación de la instancia",
       "thisDesktop": "Este equipo",
       "thisServer": "Este servidor",
-      "desktopHint": "Conéctate para usar los datos de una instancia existente o traslada Openship a un servidor para mantenerlo disponible.",
+      "desktopHint": "Conéctate para usar los datos de una instancia existente o traslada Kovalio a un servidor para mantenerlo disponible.",
       "serverHint": "Los trabajos, los webhooks y el acceso del equipo se gestionan aquí.",
       "remoteHint": "Estás usando los datos en vivo de la instancia remota.",
       "retiredHint": "Este servidor ya no gestiona proyectos. Mueve una instancia aquí para volver a usarlo.",
@@ -683,7 +683,7 @@
       "receiveInstance": "Mover una instancia aquí",
       "disconnect": "Volver a la instancia local",
       "moreOptions": "Más opciones de instancia",
-      "memberTitle": "Usa Openship desde Desktop",
+      "memberTitle": "Usa Kovalio desde Desktop",
       "memberHint": "Conecta Desktop con el mismo acceso que tienes aquí.",
       "loading": "Cargando instancia…",
       "sendHint": "Crea un código de traslado y elige {action} en Más opciones de los ajustes de instancia de Desktop. El control permanece aquí hasta que Desktop complete el traslado.",
@@ -696,9 +696,9 @@
       "pairHint": "Usa tu otro Desktop con los datos actuales de esta instancia y tus permisos actuales. No se trasladan datos.",
       "pairOwnDevice": "Este código inicia sesión con tu cuenta. Usa Equipo para invitar a otra persona.",
       "teamAccessTitle": "Activar invitaciones al equipo",
-      "teamAccessHint": "Las invitaciones necesitan una instancia accesible. Dale a Openship una dirección pública o trasládalo a un servidor siempre disponible.",
+      "teamAccessHint": "Las invitaciones necesitan una instancia accesible. Dale a Kovalio una dirección pública o trasládalo a un servidor siempre disponible.",
       "adminRequired": "Pide al administrador de tu instancia que lo configure.",
-      "webhookAccessHint": "GitHub necesita una API de Openship accesible para enviar eventos de despliegue. Traslada esta instancia a un servidor siempre disponible o dale a su API una dirección pública."
+      "webhookAccessHint": "GitHub necesita una API de Kovalio accesible para enviar eventos de despliegue. Traslada esta instancia a un servidor siempre disponible o dale a su API una dirección pública."
     },
     "transfer": {
       "installOnServer": "Nueva instalación",
@@ -754,7 +754,7 @@
       "invitationHint": "Tu instancia local se pausa mientras estás conectado. No se mueve ningún dato."
     },
     "recovery": {
-      "title": "Tu instancia de Openship",
+      "title": "Tu instancia de Kovalio",
       "subtitle": "Termina la migración o reconéctate para continuar administrando tus proyectos.",
       "checkConnection": "Comprobar conexión",
       "signInRemote": "Iniciar sesión en la instancia remota"
@@ -762,7 +762,7 @@
   },
   "upgradeAuth": {
     "title": "Añadir una contraseña",
-    "description": "Configura un correo y una contraseña para proteger el acceso a Openship. Tus proyectos e historial se conservan.",
+    "description": "Configura un correo y una contraseña para proteger el acceso a Kovalio. Tus proyectos e historial se conservan.",
     "close": "Cerrar",
     "name": "Nombre",
     "namePlaceholder": "Juana Pérez",
@@ -1383,13 +1383,13 @@
     },
     "backupTitle": "Copia de seguridad y recuperación",
     "backupDesc": "Exporte un archivo o restaure una copia de seguridad existente.",
-    "backupWarning": "Los archivos de archivado incluyen la base de datos y credenciales de Openship. Los volúmenes de Docker permanecen en sus servidores; use copias del proyecto para datos de servicios.",
+    "backupWarning": "Los archivos de archivado incluyen la base de datos y credenciales de Kovalio. Los volúmenes de Docker permanecen en sus servidores; use copias del proyecto para datos de servicios.",
     "exportInstanceTitle": "Exportar instancia o proyectos",
     "exportInstanceDesc": "Elija una instancia completa o proyectos seleccionados, con sus entornos y dependencias.",
     "exportProjectTitle": "Exportar proyecto",
     "exportProjectDesc": "Descargue todas las configuraciones del proyecto, valores de entorno y credenciales en JSON plano.",
     "exportProjectIntro": "Incluye todos los entornos, servicios, historial de despliegues, analítica, conexiones, dominios, configuraciones de respaldo y claves. El archivo JSON no está cifrado y se importa sin contraseña.",
-    "exportProjectReconnection": "El destino necesita los mismos servidores o cuenta de OpenShip Cloud para reconectar las cargas de trabajo existentes.",
+    "exportProjectReconnection": "El destino necesita los mismos servidores o cuenta de Kovalio Cloud para reconectar las cargas de trabajo existentes.",
     "exportInstanceIntro": "Exporte el plano de control, incluidos valores de entorno, claves de servidor, credenciales, configuración e historial.",
     "scopeLabel": "Alcance de exportación",
     "scopeInstance": "Instancia completa",
@@ -1416,7 +1416,7 @@
     "recordsSelected": "{count} registros seleccionados.",
     "recordsAcrossEnvsSelected": "{count} registros en {envs} entornos seleccionados.",
     "selectAtLeastOne": "Seleccione al menos un proyecto o entorno.",
-    "cloudNotice": "Los proyectos de Cloud no funcionarán hasta que el espacio de trabajo de destino esté conectado a la misma cuenta de Openship Cloud."
+    "cloudNotice": "Los proyectos de Cloud no funcionarán hasta que el espacio de trabajo de destino esté conectado a la misma cuenta de Kovalio Cloud."
   },
   "migrate": {
     "chooseTitle": "Cambiar al modo multiusuario",
@@ -1610,11 +1610,11 @@
       },
       "cloudflare": {
         "label": "Cloudflare",
-        "summary": "Permite que Openship escriba los registros DNS necesarios en lugar de copiarlos manualmente.",
+        "summary": "Permite que Kovalio escriba los registros DNS necesarios en lugar de copiarlos manualmente.",
         "fields": {
           "apiToken": {
             "label": "Token de API",
-            "help": "Un token con Zone:Read y DNS:Edit en las zonas que desea que Openship administre."
+            "help": "Un token con Zone:Read y DNS:Edit en las zonas que desea que Kovalio administre."
           }
         }
       }
@@ -1702,16 +1702,16 @@
     "description": "Cómo se presenta esta instancia. Es el valor predeterminado para todos — cada usuario puede elegir su propia vista en Configuración → General.",
     "platformLabel": "Plataforma completa",
     "platformDesc": "Proyectos, aplicaciones, despliegues, servidores — todo lo que esta instalación puede hacer.",
-    "mailLabel": "Openship Mail",
-    "mailDesc": "Presenta la instancia como Openship Mail y convierte la barra lateral en el panel de control de correo.",
+    "mailLabel": "Kovalio Mail",
+    "mailDesc": "Presenta la instancia como Kovalio Mail y convierte la barra lateral en el panel de control de correo.",
     "savedOverridden": "Guardado. Tu propia vista no ha cambiado — la elegiste en Configuración → General.",
     "errorToast": "No se pudo cambiar el modo de producto.",
-    "envNote": "Esta instancia sigue OPENSHIP_PRODUCT=mail del entorno. Elegir un modo aquí lo anula."
+    "envNote": "Esta instancia sigue KOVALIO_PRODUCT=mail del entorno. Elegir un modo aquí lo anula."
   },
   "email": {
     "title": "Correo electrónico (SMTP)",
     "description": "El servicio SMTP a través del cual esta instancia envía correos",
-    "intro": "Se utiliza para restablecer contraseñas, verificar correo, invitar al equipo y notificaciones. Solo pega las credenciales SMTP de cualquier proveedor — Amazon SES, Gmail, Mailgun, un relay corporativo — host, puerto, usuario, contraseña. Sin servidores que configurar; Openship se conecta directamente. La contraseña se cifra y nunca se vuelve a mostrar.",
+    "intro": "Se utiliza para restablecer contraseñas, verificar correo, invitar al equipo y notificaciones. Solo pega las credenciales SMTP de cualquier proveedor — Amazon SES, Gmail, Mailgun, un relay corporativo — host, puerto, usuario, contraseña. Sin servidores que configurar; Kovalio se conecta directamente. La contraseña se cifra y nunca se vuelve a mostrar.",
     "loading": "Cargando…",
     "configuredBadge": "Configurado",
     "notConfigured": "Aún no configurado — el restablecimiento de contraseñas, invitaciones y notificaciones por correo permanecen desactivados hasta que introduzcas las credenciales SMTP abajo.",
@@ -1725,7 +1725,7 @@
     "passwordPlaceholder": "Contraseña SMTP o clave de aplicación",
     "passwordKeepPlaceholder": "•••••••• (dejar en blanco para mantener la actual)",
     "fromLabel": "Dirección del remitente",
-    "fromPlaceholder": "Openship <no-reply@ejemplo.com>",
+    "fromPlaceholder": "Kovalio <no-reply@ejemplo.com>",
     "fromHint": "Opcional. Por defecto es el nombre de usuario.",
     "fromHintRequired": "Obligatorio — tu usuario no es un correo electrónico, por lo que los destinatarios necesitan una dirección remitente real.",
     "fromRequired": "Introduce una dirección remitente — el usuario de este proveedor no es un correo electrónico, por lo que no puede ser el remitente.",
@@ -1749,13 +1749,13 @@
   },
   "edgeOrphans": {
     "title": "Rutas edge no rastreadas",
-    "description": "Hostnames que esta máquina aún sirve pero de los que Openship no tiene registro",
+    "description": "Hostnames que esta máquina aún sirve pero de los que Kovalio no tiene registro",
     "scan": "Escanear",
     "scanning": "Escaneando…",
     "allClear": "Todos los hostnames que sirve el edge están registrados.",
     "comparedTo": "Comparado con {count} hostnames rastreados.",
     "unavailable": "No se pudo comprobar el edge",
-    "explain": "Eliminar un proyecto con \"Eliminar solo de Openship\" deja deliberadamente su ruta activa. Una ruta de aplicación sobrante devuelve 502 cuando su contenedor desaparece, pero una ruta ESTÁTICA sobrante continúa sirviendo los archivos antiguos con código 200 — incluso en un hostname asignado desde entonces a otro proyecto.",
+    "explain": "Eliminar un proyecto con \"Eliminar solo de Kovalio\" deja deliberadamente su ruta activa. Una ruta de aplicación sobrante devuelve 502 cuando su contenedor desaparece, pero una ruta ESTÁTICA sobrante continúa sirviendo los archivos antiguos con código 200 — incluso en un hostname asignado desde entonces a otro proyecto.",
     "kindStatic": "Archivos estáticos",
     "kindProxy": "Ruta de aplicación",
     "staticWarning": "Aún sirve archivos. Responde a solicitudes hoy.",

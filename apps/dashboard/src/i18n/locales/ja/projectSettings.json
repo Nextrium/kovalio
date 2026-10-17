@@ -25,7 +25,7 @@
     "installing": "インストール中…",
     "advanced": "高度なデプロイオプション",
     "nameLabel": "名前",
-    "nameHint": "Openship でのこのアプリの表示名。",
+    "nameHint": "Kovalio でのこのアプリの表示名。",
     "domainTitle": "公開先",
     "domainFree": "無料のサブドメイン",
     "domainFreeHint": "{domain} 上の無料サブドメイン",
@@ -73,8 +73,8 @@
     "routePortLabel": "ポートのみ（ドメインなし）",
     "routePortDesc": "ホストのアドレスとポートでアクセス可能 — ドメインや Cloud は不要です。",
     "routeFreeLabel": "無料のサブドメイン",
-    "routeFreeDesc": "{domain} 上の無料サブドメイン（Openship Cloud 経由でルーティング）。",
-    "routeFreeNeedsCloud": "無料サブドメインを使用するには Openship Cloud を接続してください。",
+    "routeFreeDesc": "{domain} 上の無料サブドメイン（Kovalio Cloud 経由でルーティング）。",
+    "routeFreeNeedsCloud": "無料サブドメインを使用するには Kovalio Cloud を接続してください。",
     "routeCustomLabel": "独自のドメイン",
     "routeCustomDesc": "所有しているドメインをこのアプリに向けます。",
     "routeDomainLabel": "ドメイン",
@@ -848,10 +848,10 @@
     "linkedTitleOther": "{count} 件のプロジェクトがこのアプリに接続しています",
     "linkedNote": "データはそのままで動作を続けます。失うのはこの接続だけです。反映するには再デプロイしてください。",
     "linkedNoteRecordOnly": "動作は続きますが、リンクはレコードとともに失われます。後でこのアプリを再インポートしても復元されません。",
-    "recordOnlyLabel": "Openship からのみ削除",
-    "recordOnlyDesc": "アプリとそのデータをサーバー上で実行したまま維持し、Openship のレコードのみを削除します。後で再インポートできます。",
+    "recordOnlyLabel": "Kovalio からのみ削除",
+    "recordOnlyDesc": "アプリとそのデータをサーバー上で実行したまま維持し、Kovalio のレコードのみを削除します。後で再インポートできます。",
     "recordOnlyReversible": "元に戻せます — アプリはサーバー上に残ります。",
-    "recordOnlyNote": "サーバー上のものは一切変更されません — アプリはデータとともに実行を続けます。Openship のレコードのみが削除され、後で再インポートできます。",
+    "recordOnlyNote": "サーバー上のものは一切変更されません — アプリはデータとともに実行を続けます。Kovalio のレコードのみが削除され、後で再インポートできます。",
     "confirmRecordOnly": "レコードを削除"
   },
   "routing": {
@@ -939,7 +939,7 @@
       "servesPathHint": "このドメインへのリクエストは、ビルド出力内のこのパスから提供されます。",
       "servesPathRedeploy": "新しいパスは次回のデプロイ時に有効になります。",
       "externalIngress": "外部 ingress と TLS",
-      "externalIngressDesc": "TLS はリバースプロキシ（Cloudflare Tunnel、Nginx Proxy Manager、ロードバランサーなど）で終端します。ドメインがこのサーバーを指している必要はなく、Openship は証明書を発行しません。",
+      "externalIngressDesc": "TLS はリバースプロキシ（Cloudflare Tunnel、Nginx Proxy Manager、ロードバランサーなど）で終端します。ドメインがこのサーバーを指している必要はなく、Kovalio は証明書を発行しません。",
       "noWww": "そのドメインは既にこのプロジェクトに存在します。"
     },
     "dns": {
@@ -1067,8 +1067,8 @@
         "deployment": "このルートはデプロイを待っています。プロジェクトをデプロイして適用してください。",
         "disabled": "このプロジェクトまたはサービスは無効です。ルートを確認する前に有効にしてください。",
         "removing": "このドメインは削除中です。検証は予定されていません。",
-        "manual_certificate": "このドメインはアップロードされた証明書を使用しています。有効な証明書をアップロードして再確認してください。Openship は自動更新しません。",
-        "managed_certificate": "TLS は外部プロキシまたは Openship Cloud が管理しています。そのプロバイダーの設定を確認してください。",
+        "manual_certificate": "このドメインはアップロードされた証明書を使用しています。有効な証明書をアップロードして再確認してください。Kovalio は自動更新しません。",
+        "managed_certificate": "TLS は外部プロキシまたは Kovalio Cloud が管理しています。そのプロバイダーの設定を確認してください。",
         "route_missing": "設定されたルートはまだ適用されていません。ルーティングを再試行して適用してください。ルーティングの自動再試行は予定されていません。",
         "manual_dns": "この証明書は手動の TXT 検証を使用しています。HTTPS 設定を開いて新しい TXT レコードを確認するか、接続済みの DNS プロバイダーを選んで自動更新を有効にしてください。",
         "managed_owner": "このホスト名と証明書は所有サービスによって管理されています。そのサービスのドメイン設定を確認してください。"
@@ -1094,7 +1094,7 @@
       "automatic": "自動（プロバイダー）",
       "manual": "手動 TXT",
       "automaticHint": "設定 → DNS で Cloudflare を接続すると、証明書の検証レコードを作成し、HTTPS を自動更新できます。",
-      "manualHint": "DNS プロバイダーで一時的な TXT レコードを追加してください。更新のたびに新しい TXT レコードが必要です。更新時期は Openship に表示されます。",
+      "manualHint": "DNS プロバイダーで一時的な TXT レコードを追加してください。更新のたびに新しい TXT レコードが必要です。更新時期は Kovalio に表示されます。",
       "routing": "1. ドメインをこのサーバーに向ける",
       "certificate": "2. HTTPS を有効にする",
       "startAutomatic": "HTTPS を自動で有効にする",
@@ -1202,7 +1202,7 @@
     "updating": "アップデート中…",
     "updateFailed": "アップデートに失敗しました",
     "toastTitle": "ソース",
-    "cliManaged": "これは Openship のコントロールプレーンです — 自動で更新されます。アップグレードするにはホスト上で \"openship update\" を実行してください。ここで変更する必要はありません。"
+    "cliManaged": "これは Kovalio のコントロールプレーンです — 自動で更新されます。アップグレードするにはホスト上で \"kovalio update\" を実行してください。ここで変更する必要はありません。"
   },
   "routeRules": {
     "title": "ルーティングルール",

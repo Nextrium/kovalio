@@ -696,7 +696,7 @@ export const mailApi = {
      * /build/[deploymentId] and subscribes to the standard SSE endpoint.
      *
      * `target` discriminator:
-     *   { kind: "self", serverId } - host on an openship-managed server
+     *   { kind: "self", serverId } - host on an kovalio-managed server
      *   { kind: "cloud", serverId } - host on the selected managed Cloud server
      *
      * A pre-catalog webmail (`MailWebmailSummary.legacy`) can't be redeployed:

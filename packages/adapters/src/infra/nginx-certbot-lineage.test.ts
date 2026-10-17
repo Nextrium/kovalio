@@ -31,7 +31,7 @@ afterEach(async () => {
 
 /** Real files and shell file operations; only Certbot and the running edge are simulated. */
 async function setup() {
-  const root = await mkdtemp(join(tmpdir(), "openship-certbot-lineage-"));
+  const root = await mkdtemp(join(tmpdir(), "kovalio-certbot-lineage-"));
   temporary.push(root);
   const certDir = join(root, "live");
   const sitesDir = join(root, "sites");

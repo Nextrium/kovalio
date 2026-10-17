@@ -9,15 +9,15 @@ installation, trusted identity, and organization. It is loaded only when you pas
 ## Create a configuration
 
 Install the [SDK package](/docs/api/sdk/installation) and set a persistent
-`OPENSHIP_ENCRYPTION_KEY` of at least 32 bytes. Save this file in your Node project:
+`KOVALIO_ENCRYPTION_KEY` of at least 32 bytes. Save this file in your Node project:
 
 ```js title="ship-native.config.mjs"
 import { resolve } from "node:path";
 
-const encryptionKey = process.env.OPENSHIP_ENCRYPTION_KEY;
-if (!encryptionKey) throw new Error("Set OPENSHIP_ENCRYPTION_KEY");
+const encryptionKey = process.env.KOVALIO_ENCRYPTION_KEY;
+if (!encryptionKey) throw new Error("Set KOVALIO_ENCRYPTION_KEY");
 const stateDirectory = resolve("./ship-state");
-/** @type {import("openship/native").VerifiedIdentity | null} */
+/** @type {import("kovalio/native").VerifiedIdentity | null} */
 let identity = null;
 
 export default {
@@ -35,7 +35,7 @@ export default {
         assertion === "local-cli" ? identity : null,
     },
   },
-  /** @param {import("openship/native").OwnedShip<string>} ship */
+  /** @param {import("kovalio/native").OwnedShip<string>} ship */
   async scope(ship) {
     const operator = ship.operator;
     if (!operator) throw new Error("Native administration is required");
@@ -56,9 +56,9 @@ its own authentication service. Retain the same key, instance ID, and storage wh
 ## Run a command
 
 ```bash
-npx openship --native-config ./ship-native.config.mjs --json project create --name my-app
-npx openship --native-config ./ship-native.config.mjs --json project list
-npx openship --native-config ./ship-native.config.mjs status
+npx kovalio --native-config ./ship-native.config.mjs --json project create --name my-app
+npx kovalio --native-config ./ship-native.config.mjs --json project list
+npx kovalio --native-config ./ship-native.config.mjs status
 ```
 
 The CLI creates and starts the installation, selects the scope, runs the command, and drains the

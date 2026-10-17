@@ -4,7 +4,7 @@ Immich backs up and organizes photos and videos. This template follows the pinne
 
 ## First login
 
-Choose the initial administrator's email and display name. Openship generates and encrypts the password. Registration runs against a loopback-only startup listener; public access starts only after the owner exists, with unauthenticated setup disabled. Changed account details and passwords survive redeployment. Retrieve the initial credentials in **Connection** and use the same server address in Immich's mobile app.
+Choose the initial administrator's email and display name. Kovalio generates and encrypts the password. Registration runs against a loopback-only startup listener; public access starts only after the owner exists, with unauthenticated setup disabled. Changed account details and passwords survive redeployment. Retrieve the initial credentials in **Connection** and use the same server address in Immich's mobile app.
 
 ## Requirements and storage
 

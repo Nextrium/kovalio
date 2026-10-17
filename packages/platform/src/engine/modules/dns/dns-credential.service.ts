@@ -301,7 +301,7 @@ async function classifyRecord(
   if (!target) return { action: "create" };
   const content = provider.formatContent?.(desired.type, desired.content) ?? desired.content;
   if (target.content === content) return { action: "in-sync", current: target.content };
-  return { action: isOpenshipManaged(target) ? "update" : "adopt", current: target.content };
+  return { action: isKovalioManaged(target) ? "update" : "adopt", current: target.content };
 }
 
 /**
@@ -480,7 +480,7 @@ export async function releaseRecords(
       }
     } catch (err) {
       observeCaughtError(err, "platform/engine/modules/dns/dns-credential.service");
-      // Best effort by design: a domain must still be removable from Openship
+      // Best effort by design: a domain must still be removable from Kovalio
       // when the provider is unreachable. The leftover record is visible in the
       // operator's zone; a blocked delete is not.
       return { deleted, reason: safeErrorMessage(err) };

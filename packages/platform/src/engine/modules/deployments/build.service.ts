@@ -52,7 +52,7 @@ import {
   type SourceKind,
   type BuildKind,
   type WorkloadType,
-  type OpenshipEnv,
+  type KovalioEnv,
   type StackRole,
 } from "@repo/core";
 import type { LogEntry, ResourceConfig } from "@repo/adapters";
@@ -822,9 +822,9 @@ function composeCouldHaveChanged(project: Project, changedPaths: string[]): bool
   const declared = project.composePath?.trim().replace(/^\.\//, "").replace(/\/$/, "");
   return changedPaths.some((rawPath) => {
     const changed = rawPath.replace(/^\.\//, "");
-    // openship.json can itself declare the complete native service set and its
+    // kovalio.json can itself declare the complete native service set and its
     // buildArgs, so it is a Compose-source change even when no YAML changed.
-    if (/(^|\/)openship\.json$/i.test(changed)) return true;
+    if (/(^|\/)kovalio\.json$/i.test(changed)) return true;
     if (COMPOSE_PATH_RE.test(changed)) return true;
     if (!declared) return false;
     return changed === declared || changed.startsWith(`${declared}/`);
@@ -961,7 +961,7 @@ async function reconcileComposeSource(
  * Read the small environment-only slice of a Git/local source when Compose
  * reconciliation did not already return it. This keeps explicit single-app
  * mode free of Compose parsing while giving every deployment entry point the
- * same openship.json environment semantics.
+ * same kovalio.json environment semantics.
  */
 async function resolveLifecycleSourceEnv(
   ctx: RequestContext,
@@ -1105,7 +1105,7 @@ export async function resolveSnapshotTarget(
   const runtimeMode =
     override?.runtimeMode ?? toRuntimeMode(project.runtimeMode) ?? activeMeta?.runtimeMode;
 
-  if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION !== "true") {
+  if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION !== "true") {
     const local = deployTarget === "local" || (!deployTarget && !env.CLOUD_MODE && env.DEPLOY_MODE !== "cloud");
     const server = serverId ? await requireOrgServer(serverId, project.organizationId) : null;
     const { isLocalHostRow } = await import("../../lib/box-org");
@@ -1218,7 +1218,7 @@ function resolveSubmittedProjectEnv(
 type PersistableProjectEnv = { key: string; value: string; isSecret: boolean };
 type SourceEnvInfo = ProjectSourceEnv;
 
-function openshipEnvValue(value: OpenshipEnv[string]): { value: string; isSecret: boolean } {
+function kovalioEnvValue(value: KovalioEnv[string]): { value: string; isSecret: boolean } {
   return typeof value === "string"
     ? { value, isSecret: false }
     : { value: value.value, isSecret: value.secret === true };
@@ -1227,7 +1227,7 @@ function openshipEnvValue(value: OpenshipEnv[string]): { value: string; isSecret
 /**
  * Layer source-owned environment defaults underneath the project environment.
  *
- * The source is never trusted through the browser: `openship.json` and an
+ * The source is never trusted through the browser: `kovalio.json` and an
  * explicitly imported root `.env` arrive at build/access only as masked names,
  * then this server-side source scan recovers their values. Existing/supplied
  * project rows win. Newly inherited values are returned separately so callers
@@ -1245,8 +1245,8 @@ function mergeSourceEnvDefaults(
   const encrypted = { ...(encryptedProjectEnv ?? {}) };
   const sourceDefaults = new Map<string, { value: string; isSecret: boolean }>();
 
-  for (const [key, value] of Object.entries(sourceInfo?.openshipEnv ?? {})) {
-    sourceDefaults.set(key, openshipEnvValue(value));
+  for (const [key, value] of Object.entries(sourceInfo?.kovalioEnv ?? {})) {
+    sourceDefaults.set(key, kovalioEnvValue(value));
   }
 
   // A root `.env` remains opt-in. New clients send a values-free key list so an
@@ -1628,7 +1628,7 @@ export async function requestBuildAccess(
   const resolvedTarget = await resolveSnapshotTarget(project, { deployTarget, serverId, runtimeMode });
   if (resolvedTarget.deployTarget === "cloud" && buildStrategy === "local")
     throw new AppError("Managed servers build on the selected server. Choose a server build to continue.", 400, "MANAGED_SERVER_BUILD_STRATEGY");
-  if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION !== "true") {
+  if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION !== "true") {
     if (buildStrategy === "local" || deployTarget === "local")
       throw new AppError("Host execution is disabled by this native installation's policy", 403, "HOST_EXECUTION_DISABLED");
   }
@@ -1698,10 +1698,10 @@ export async function requestBuildAccess(
   let refreshedUploadServices: DeployableService[] | undefined;
   let sourceInfo: SourceEnvInfo | undefined =
     uploadSession &&
-    (uploadSession.rootEnv !== undefined || uploadSession.openshipEnv !== undefined)
+    (uploadSession.rootEnv !== undefined || uploadSession.kovalioEnv !== undefined)
       ? {
           rootEnv: uploadSession.rootEnv,
-          openshipEnv: uploadSession.openshipEnv,
+          kovalioEnv: uploadSession.kovalioEnv,
         }
       : undefined;
   if (uploadSession && serviceDeploymentMode !== "single" && uploadSession.services !== undefined) {
@@ -1783,7 +1783,7 @@ export async function requestBuildAccess(
     }
   }
 
-  // `openship.json.env` is a source-owned DEFAULT layer. Resolve it again from
+  // `kovalio.json.env` is a source-owned DEFAULT layer. Resolve it again from
   // the trusted source here (never from the masked browser payload), put saved /
   // explicitly submitted project values above it, and freeze the result onto
   // this deployment. This is the missing link in #795: the downstream Docker
@@ -2371,7 +2371,7 @@ export async function redeployBuildSession(
 ) {
   const { dep: oldDep, project } = await loadDeployment(deploymentId);
   resolveDeploymentEnvironment(project, oldDep.environment);
-  // The Openship control plane updates itself via the CLI — never a redeploy.
+  // The Kovalio control plane updates itself via the CLI — never a redeploy.
   // The apply-update endpoint (updates.service) reaches redeploy directly, and
   // the self-app is a repo-less release project so the GitHub gate below
   // short-circuits without catching it — guard explicitly here too, matching
@@ -2708,7 +2708,7 @@ export async function triggerDeployment(ctx: RequestContext, data: DeploymentTri
   }
   const environment = resolveDeploymentEnvironment(project, data.environment);
   if (data.serverId) await requireOrgServer(data.serverId, ctx.organizationId);
-  // The Openship control plane IS the running host service, not a redeployable
+  // The Kovalio control plane IS the running host service, not a redeployable
   // workload — it updates itself via the CLI. It's a release-provider project, so
   // the git/localPath 403 below would NOT catch it; guard it explicitly.
   assertNotControlPlane(project);

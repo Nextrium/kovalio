@@ -38,7 +38,7 @@ export class CloudProcessSupervisor implements ProcessSupervisor {
 
   private id(deploymentId: string) {
     if (!idPattern.test(deploymentId)) throw new Error("Invalid bare deployment identity");
-    return `openship-${deploymentId}`;
+    return `kovalio-${deploymentId}`;
   }
 
   private pidPath(deploymentId: string) {
@@ -50,8 +50,8 @@ export class CloudProcessSupervisor implements ProcessSupervisor {
     const labels = workload?.labels as Record<string, unknown> | undefined;
     if (
       workload?.id !== this.id(deploymentId) ||
-      labels?.["openship.project"] !== this.projectId ||
-      labels?.["openship.deployment"] !== deploymentId
+      labels?.["kovalio.project"] !== this.projectId ||
+      labels?.["kovalio.deployment"] !== deploymentId
     ) {
       throw new AppError("Process does not belong to this project", 404, "PROCESS_NOT_FOUND");
     }
@@ -130,7 +130,7 @@ export class CloudProcessSupervisor implements ProcessSupervisor {
       throw new Error("Invalid managed process port");
     const params = {
       id: this.id(options.deploymentId),
-      name: `Openship ${options.projectId} ${options.deploymentId}`,
+      name: `Kovalio ${options.projectId} ${options.deploymentId}`,
       // Record PID + start time before exec. A recycled PID must never report
       // another application's resource usage as this deployment's usage.
       cmd: [
@@ -147,9 +147,9 @@ export class CloudProcessSupervisor implements ProcessSupervisor {
       restart_policy: "always" as const,
       enabled: true,
       labels: {
-        "openship.project": this.projectId,
-        "openship.deployment": options.deploymentId,
-        "openship.ports": JSON.stringify(ports),
+        "kovalio.project": this.projectId,
+        "kovalio.deployment": options.deploymentId,
+        "kovalio.ports": JSON.stringify(ports),
       },
     };
     // The saved workload reserves its listeners even while stopped. Inspect,
@@ -197,10 +197,10 @@ export class CloudProcessSupervisor implements ProcessSupervisor {
           return (
             saved.name === params.name &&
             matchesCommand(saved) &&
-            (labels?.["openship.project"] === undefined ||
-              labels["openship.project"] === this.projectId) &&
-            (labels?.["openship.deployment"] === undefined ||
-              labels["openship.deployment"] === options.deploymentId)
+            (labels?.["kovalio.project"] === undefined ||
+              labels["kovalio.project"] === this.projectId) &&
+            (labels?.["kovalio.deployment"] === undefined ||
+              labels["kovalio.deployment"] === options.deploymentId)
           );
         });
         throw new AppError(
@@ -343,7 +343,7 @@ export class CloudProcessSupervisor implements ProcessSupervisor {
     const workloads = await this.server.workspace().workloads.list();
     return workloads.flatMap((workload) => {
       const labels = workload.labels as Record<string, unknown> | undefined;
-      if (labels?.["openship.project"] !== this.projectId) return [];
+      if (labels?.["kovalio.project"] !== this.projectId) return [];
       return managedProcessPorts(workload);
     });
   }
@@ -354,8 +354,8 @@ export class CloudProcessSupervisor implements ProcessSupervisor {
     const workloads = await this.server.workspace().workloads.list();
     return workloads.flatMap((workload) => {
       const labels = workload.labels as Record<string, unknown> | undefined;
-      if (labels?.["openship.project"] !== projectId) return [];
-      const deploymentId = labels["openship.deployment"];
+      if (labels?.["kovalio.project"] !== projectId) return [];
+      const deploymentId = labels["kovalio.deployment"];
       if (typeof deploymentId !== "string")
         throw new Error("Managed process has no deployment identity");
       this.assertOwned(workload, deploymentId);

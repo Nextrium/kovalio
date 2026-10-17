@@ -100,7 +100,7 @@ describe("commit drift — the deployed side is live", () => {
     expect(await evaluateDrift(p, commitUpstream(p, NEWER), {} as never)).toMatchObject({
       behind: false,
     });
-    expect(compareCommits).toHaveBeenCalledWith({}, "oblien", "openship", SHIPPED, NEWER);
+    expect(compareCommits).toHaveBeenCalledWith({}, "oblien", "kovalio", SHIPPED, NEWER);
   });
 
   it("reports an update when the project root changed", async () => {
@@ -271,7 +271,7 @@ describe("cache keys — a repointed source is a miss, not stale drift", () => {
 
   it("ignores a HEAD polled for a different repo", async () => {
     const upstream = commitUpstream(gitProject(), NEWER);
-    const now = gitProject({ gitRepo: "openship-fork" });
+    const now = gitProject({ gitRepo: "kovalio-fork" });
     deploymentRepo.findById.mockResolvedValue({ id: "dep_live", projectId: "proj_1", organizationId: "org_1", commitSha: SHIPPED });
 
     expect(await evaluateDrift(now, upstream)).toMatchObject({ behind: false, latestSha: null });
@@ -324,7 +324,7 @@ describe("cache keys — a repointed source is a miss, not stale drift", () => {
   });
 
   it("tracks a matching release while it deploys and an update through cleanup", async () => {
-    const p = gitProject({ gitProvider: "release", releaseSource: { mode: "github", repo: "oblien/openship" } as never });
+    const p = gitProject({ gitProvider: "release", releaseSource: { mode: "github", repo: "oblien/kovalio" } as never });
     const upstream: UpstreamDrift = { supported: true, mode: "release", key: releaseSourceKey(p), latestVersion: "0.6.0", pinned: false };
     deploymentRepo.findById.mockResolvedValue({ id: "dep_live", projectId: p.id, organizationId: p.organizationId, releaseVersion: "0.5.0" });
     deploymentRepo.listInFlightByProject.mockResolvedValue([{ id: "dep_release", releaseVersion: "0.6.0", trigger: "webhook" }]);

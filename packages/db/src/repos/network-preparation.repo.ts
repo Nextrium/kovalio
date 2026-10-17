@@ -64,7 +64,7 @@ export function createNetworkPreparationRepo(db: Database) {
       return interrupt(
         exclusive ? undefined : expiredLease(),
         exclusive
-          ? "OpenShip restarted before server preparation finished. Retry preparation to recheck each server and continue installing missing tools."
+          ? "Kovalio restarted before server preparation finished. Retry preparation to recheck each server and continue installing missing tools."
           : "The controller stopped reporting progress. Retry preparation to recheck each server and continue installing missing tools.",
       );
     },

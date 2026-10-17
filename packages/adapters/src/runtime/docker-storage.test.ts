@@ -11,12 +11,12 @@ describe("workspace disk accounting", () => {
       {
         Containers: [
           {
-            Labels: { "openship.project": "a" },
+            Labels: { "kovalio.project": "a" },
             SizeRw: 10,
             Mounts: [{ Type: "volume", Name: "data" }],
           },
           {
-            Labels: { "openship.project": "a" },
+            Labels: { "kovalio.project": "a" },
             SizeRw: 20,
             Mounts: [
               { Type: "volume", Name: "data" },
@@ -24,7 +24,7 @@ describe("workspace disk accounting", () => {
             ],
           },
           {
-            Labels: { "openship.project": "b" },
+            Labels: { "kovalio.project": "b" },
             SizeRw: 5,
             Mounts: [{ Type: "volume", Name: "shared" }],
           },
@@ -32,7 +32,7 @@ describe("workspace disk accounting", () => {
         Volumes: [
           { Name: "data", UsageData: { Size: 100 } },
           { Name: "shared", UsageData: { Size: 200 } },
-          { Name: "orphan", Labels: { "openship.project": "b" }, UsageData: { Size: 50 } },
+          { Name: "orphan", Labels: { "kovalio.project": "b" }, UsageData: { Size: 50 } },
         ],
       },
       projects,
@@ -48,14 +48,14 @@ describe("workspace disk accounting", () => {
         {
           Volumes: [
             {
-              Name: "openship-app-db-data",
-              Labels: { "openship.project": "a" },
+              Name: "kovalio-app-db-data",
+              Labels: { "kovalio.project": "a" },
               UsageData: { Size: 80 },
             },
-            { Name: "openship-app-unknown", UsageData: { Size: 90 } },
+            { Name: "kovalio-app-unknown", UsageData: { Size: 90 } },
             {
-              Name: "openship-app-forged",
-              Labels: { "openship.project": "foreign" },
+              Name: "kovalio-app-forged",
+              Labels: { "kovalio.project": "foreign" },
               UsageData: { Size: 200 },
             },
           ],
@@ -70,7 +70,7 @@ describe("workspace disk accounting", () => {
   it("keeps unavailable measurements unknown instead of displaying zero", () => {
     expect(
       dockerProjectStorage(
-        { Containers: [{ Labels: { "openship.project": "a" }, SizeRw: -1 }] },
+        { Containers: [{ Labels: { "kovalio.project": "a" }, SizeRw: -1 }] },
         projects,
       ),
     ).toEqual([
@@ -85,8 +85,8 @@ describe("workspace disk accounting", () => {
       dockerProjectStorage(
         {
           Containers: [
-            { Labels: { "openship.project": "a" }, Mounts: [{ Type: "volume", Name: "data" }] },
-            { Labels: { "openship.project": "b" } },
+            { Labels: { "kovalio.project": "a" }, Mounts: [{ Type: "volume", Name: "data" }] },
+            { Labels: { "kovalio.project": "b" } },
           ],
           Volumes: [{ Name: "data", UsageData: { Size: 8192 } }],
         },

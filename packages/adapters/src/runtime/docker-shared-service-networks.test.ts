@@ -23,7 +23,7 @@ function network(id: string, initial: string[]) {
 
 describe("shared service Docker networking", () => {
   it("disconnects one consumer without removing the source or another consumer", async () => {
-    const shared = network("openship-shared-db", ["source", "shop", "workers"]);
+    const shared = network("kovalio-shared-db", ["source", "shop", "workers"]);
     const runtime = runtimeWithDocker({ getNetwork: () => shared });
     await runtime.leaveServiceGroupContainers("shared-db", ["shop", "shop", "already-gone"]);
     expect([...shared.members]).toEqual(["source", "workers"]);
@@ -32,7 +32,7 @@ describe("shared service Docker networking", () => {
   });
 
   it("removes an empty network after the final source and consumer leave", async () => {
-    const shared = network("openship-shared-db", ["source", "shop"]);
+    const shared = network("kovalio-shared-db", ["source", "shop"]);
     const runtime = runtimeWithDocker({ getNetwork: () => shared });
     await runtime.leaveServiceGroupContainers("shared-db", ["shop", "source"]);
     expect(shared.members.size).toBe(0);
@@ -40,22 +40,22 @@ describe("shared service Docker networking", () => {
   });
 
   it("attaches adopted containers, revokes an old link and retains the project's own export", async () => {
-    const old = network("openship-shared-old", ["old-source", "web"]);
-    const incoming = network("openship-shared-new", ["new-source"]);
-    const own = network("openship-shared-own", ["web", "other-consumer"]);
+    const old = network("kovalio-shared-old", ["old-source", "web"]);
+    const incoming = network("kovalio-shared-new", ["new-source"]);
+    const own = network("kovalio-shared-own", ["web", "other-consumer"]);
     const networks: Record<string, ReturnType<typeof network>> = {
-      "openship-shared-old": old, "openship-shared-new": incoming, "openship-shared-own": own,
+      "kovalio-shared-old": old, "kovalio-shared-new": incoming, "kovalio-shared-own": own,
     };
     const runtime = runtimeWithDocker({
       getNetwork: (name: string) => networks[name],
       listContainers: async () => [{ Id: "web", HostConfig: { NetworkMode: "bridge" }, NetworkSettings: { Networks: {
-        "openship-shared-old": { NetworkID: "openship-shared-old" },
-        "openship-shared-own": { NetworkID: "openship-shared-own" },
+        "kovalio-shared-old": { NetworkID: "kovalio-shared-old" },
+        "kovalio-shared-own": { NetworkID: "kovalio-shared-own" },
       } } }],
       getContainer: () => ({ inspect: async () => ({ Id: "adopted", HostConfig: { NetworkMode: "bridge" }, NetworkSettings: { Networks: {} } }) }),
     });
-    await runtime.attachToExternalNetworks("consumer", ["openship-shared-new"], ["adopted"], {
-      prunePrefix: "openship-shared-", retain: ["openship-shared-own"], strict: true,
+    await runtime.attachToExternalNetworks("consumer", ["kovalio-shared-new"], ["adopted"], {
+      prunePrefix: "kovalio-shared-", retain: ["kovalio-shared-own"], strict: true,
     });
     expect([...incoming.members]).toEqual(["new-source", "web", "adopted"]);
     expect([...old.members]).toEqual(["old-source"]);
@@ -64,18 +64,18 @@ describe("shared service Docker networking", () => {
   });
 
   it("attaches only the release candidate without reconciling the live app's networks", async () => {
-    const old = network("openship-shared-old", ["live-app"]);
-    const database = network("openship-shared-db", ["database"]);
+    const old = network("kovalio-shared-old", ["live-app"]);
+    const database = network("kovalio-shared-db", ["database"]);
     const listContainers = vi.fn();
     const getContainer = vi.fn((id: string) => ({ inspect: async () => ({
       Id: id, HostConfig: { NetworkMode: "bridge" }, NetworkSettings: { Networks: {} },
     }) }));
     const runtime = runtimeWithDocker({
       listContainers, getContainer,
-      getNetwork: (name: string) => name === "openship-shared-db" ? database : old,
+      getNetwork: (name: string) => name === "kovalio-shared-db" ? database : old,
     });
-    await runtime.attachToExternalNetworks("app", ["openship-shared-db"], ["live-app"], {
-      onlyContainerIds: ["release"], prunePrefix: "openship-shared-", strict: true,
+    await runtime.attachToExternalNetworks("app", ["kovalio-shared-db"], ["live-app"], {
+      onlyContainerIds: ["release"], prunePrefix: "kovalio-shared-", strict: true,
     });
     expect(listContainers).not.toHaveBeenCalled();
     expect(getContainer).toHaveBeenCalledExactlyOnceWith("release");
@@ -86,24 +86,24 @@ describe("shared service Docker networking", () => {
 
   it("reports an unreachable daemon when a private connection is required", async () => {
     const runtime = runtimeWithDocker({ listContainers: async () => { throw new Error("daemon unreachable"); } });
-    await expect(runtime.attachToExternalNetworks("consumer", ["openship-shared-db"], [], { strict: true })).rejects.toThrow("daemon unreachable");
-    await expect(runtime.attachToExternalNetworks("legacy", ["openship-project"])).resolves.toBeUndefined();
+    await expect(runtime.attachToExternalNetworks("consumer", ["kovalio-shared-db"], [], { strict: true })).rejects.toThrow("daemon unreachable");
+    await expect(runtime.attachToExternalNetworks("legacy", ["kovalio-project"])).resolves.toBeUndefined();
   });
 
   it("rejects containers that cannot join a private bridge network", async () => {
-    const shared = network("openship-shared-db", ["source"]);
+    const shared = network("kovalio-shared-db", ["source"]);
     const runtime = runtimeWithDocker({
       getNetwork: () => shared,
       listContainers: async () => [{ Id: "web", HostConfig: { NetworkMode: "host" }, NetworkSettings: { Networks: {} } }],
     });
-    await expect(runtime.attachToExternalNetworks("consumer", ["openship-shared-db"], [], { strict: true })).rejects.toThrow(/bridge networking/);
+    await expect(runtime.attachToExternalNetworks("consumer", ["kovalio-shared-db"], [], { strict: true })).rejects.toThrow(/bridge networking/);
     expect(shared.connect).not.toHaveBeenCalled();
   });
 
   it("joins only the selected source container and propagates failed exports", async () => {
-    const shared = network("openship-shared-db", []);
+    const shared = network("kovalio-shared-db", []);
     const runtime = runtimeWithDocker({ getNetwork: () => shared });
-    vi.spyOn(runtime, "ensureNetwork").mockResolvedValue("openship-shared-db");
+    vi.spyOn(runtime, "ensureNetwork").mockResolvedValue("kovalio-shared-db");
     await runtime.joinServiceGroupContainers("shared-db", [{ containerId: "db", aliases: ["shared-db"] }], { strict: true });
     expect(shared.connect).toHaveBeenCalledWith({ Container: "db", EndpointConfig: { Aliases: ["shared-db"] } });
     shared.connect.mockRejectedValueOnce(new Error("endpoint unavailable"));

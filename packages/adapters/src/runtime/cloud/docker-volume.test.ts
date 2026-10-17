@@ -41,32 +41,32 @@ describe("Cloud project volume identity", () => {
     expect(
       await resolveCloudProjectVolumeName(f.docker, "project-a", "renamed", "wordpress_db_data"),
     ).toBe(first);
-    expect(f.volumes.get(first)?.Labels?.["openship.project"]).toBe("project-a");
-    expect(f.volumes.get(second)?.Labels?.["openship.project"]).toBe("project-b");
+    expect(f.volumes.get(first)?.Labels?.["kovalio.project"]).toBe("project-a");
+    expect(f.volumes.get(second)?.Labels?.["kovalio.project"]).toBe("project-b");
     expect(await resolveCloudProjectVolumeName(f.docker, "project-a", "wordpress", first)).toBe(
       first,
     );
   });
 
   it("reuses an owned legacy volume without creating or replacing its data", async () => {
-    const volume = { Labels: { "openship.project": "project-a" } };
-    const f = fixture({ "openship-wordpress-wordpress_db_data": volume });
+    const volume = { Labels: { "kovalio.project": "project-a" } };
+    const f = fixture({ "kovalio-wordpress-wordpress_db_data": volume });
     const name = await resolveCloudProjectVolumeName(
       f.docker,
       "project-a",
       "wordpress",
       "wordpress_db_data",
     );
-    expect(name).toBe("openship-wordpress-wordpress_db_data");
+    expect(name).toBe("kovalio-wordpress-wordpress_db_data");
     await ensureCloudProjectVolume(f.docker, name, "project-a");
     expect(f.volumes.get(name)).toBe(volume);
     expect(f.createVolume).not.toHaveBeenCalled();
   });
 
-  it.each([{}, { Labels: { "openship.project": "project-b" } }])(
+  it.each([{}, { Labels: { "kovalio.project": "project-b" } }])(
     "leaves unowned legacy storage untouched for a fresh installation (%j)",
     async (volume) => {
-      const legacy = "openship-wordpress-wordpress_db_data";
+      const legacy = "kovalio-wordpress-wordpress_db_data";
       const f = fixture({ [legacy]: volume });
       const name = await resolveCloudProjectVolumeName(
         f.docker,
@@ -77,15 +77,15 @@ describe("Cloud project volume identity", () => {
       expect(name).not.toBe(legacy);
       await ensureCloudProjectVolume(f.docker, name, "project-a");
       expect(f.volumes.get(legacy)).toBe(volume);
-      expect(f.volumes.get(name)?.Labels?.["openship.project"]).toBe("project-a");
+      expect(f.volumes.get(name)?.Labels?.["kovalio.project"]).toBe("project-a");
     },
   );
 
   it("refuses to switch an existing project's disputed mount to an empty database", async () => {
-    const legacy = "openship-wordpress-wordpress_db_data";
+    const legacy = "kovalio-wordpress-wordpress_db_data";
     const f = fixture({ [legacy]: {} }, [
       {
-        Labels: { "openship.project": "project-a" },
+        Labels: { "kovalio.project": "project-a" },
         Mounts: [{ Type: "volume", Name: legacy }],
       },
     ]);
@@ -97,8 +97,8 @@ describe("Cloud project volume identity", () => {
   });
 
   it("keeps a persisted import name and rejects a foreign concrete volume instead of redirecting it", async () => {
-    const name = "openship-wordpress-imported_data";
-    const f = fixture({ [name]: { Labels: { "openship.project": "project-b" } } });
+    const name = "kovalio-wordpress-imported_data";
+    const f = fixture({ [name]: { Labels: { "kovalio.project": "project-b" } } });
     expect(await resolveCloudProjectVolumeName(f.docker, "project-a", "wordpress", name)).toBe(
       name,
     );
@@ -112,12 +112,12 @@ describe("Cloud project volume identity", () => {
     const f = fixture();
     const name = await resolveCloudProjectVolumeName(f.docker, "project-a", "wordpress", "data");
     f.createVolume.mockImplementationOnce(async (input) => {
-      f.volumes.set(input.Name, { Labels: { "openship.project": "project-b" } });
+      f.volumes.set(input.Name, { Labels: { "kovalio.project": "project-b" } });
     });
     await expect(ensureCloudProjectVolume(f.docker, name, "project-a")).rejects.toMatchObject({
       code: "CLOUD_VOLUME_CONFLICT",
     });
-    expect(f.volumes.get(name)?.Labels?.["openship.project"]).toBe("project-b");
+    expect(f.volumes.get(name)?.Labels?.["kovalio.project"]).toBe("project-b");
   });
 
   it("propagates Docker inspection failures instead of treating unavailable storage as absent", async () => {

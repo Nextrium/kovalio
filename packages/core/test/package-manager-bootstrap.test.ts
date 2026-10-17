@@ -16,7 +16,7 @@ function run(
     reportedVersion?: string;
   } = {},
 ) {
-  const root = mkdtempSync(join(tmpdir(), "openship-pnpm-bootstrap-"));
+  const root = mkdtempSync(join(tmpdir(), "kovalio-pnpm-bootstrap-"));
   roots.push(root);
   mkdirSync(join(root, ".git"));
   mkdirSync(join(root, "bin"));

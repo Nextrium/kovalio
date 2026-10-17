@@ -12,7 +12,7 @@ const run: ActionRun = {
   id: "run-one",
   organizationId: "org",
   workflowId: "workflow-one",
-  controller: "openship",
+  controller: "kovalio",
   github: null,
   number: 1,
   attempt: 1,
@@ -37,7 +37,7 @@ const run: ActionRun = {
   configuration: {
     owner: "acme",
     repo: "app",
-    path: ".openship/workflows/ci.yml",
+    path: ".kovalio/workflows/ci.yml",
     defaultBranch: "main",
     runnerIds: [],
     variables: {},
@@ -98,7 +98,7 @@ jobs:
       expect(h.request.mock.calls.at(-1)?.[0]).toMatchObject({
         method: "POST",
         params: {
-          name: "Openship / CI / Build after tests",
+          name: "Kovalio / CI / Build after tests",
           conclusion: status,
           output: { title: "CI · Build after tests" },
         },
@@ -146,7 +146,7 @@ jobs:
     expect(await syncActionCheck(run, job)).toEqual({ id: "8", error: null });
     expect(h.request.mock.calls.at(-1)?.[0]).toMatchObject({
       method: "POST",
-      params: { head_sha: run.revision, external_id: "openship-action:run-one:job-one" },
+      params: { head_sha: run.revision, external_id: "kovalio-action:run-one:job-one" },
     });
   });
 

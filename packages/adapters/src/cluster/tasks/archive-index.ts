@@ -3,7 +3,7 @@ import { request } from "node:https";
 import { gzipSync, gunzipSync } from "node:zlib";
 import type { ArchiveEntry, DatabaseTaskConfig } from "./types";
 
-export const ARCHIVE_INDEX = "openship-archive-index";
+export const ARCHIVE_INDEX = "kovalio-archive-index";
 export function decodeArchiveEntries(data?: Record<string, string>): ArchiveEntry[] {
   if (!data?.archives) return [];
   const entries = JSON.parse(
@@ -101,8 +101,8 @@ export class TaskArchiveIndex {
     if (
       row.metadata.uid !== this.config.indexUid ||
       row.metadata.deletionTimestamp ||
-      row.metadata.labels?.["openship.io/database"] !== this.config.databaseId ||
-      row.metadata.labels?.["openship.io/runtime"] !== this.config.runtimeId
+      row.metadata.labels?.["nextrium.org/database"] !== this.config.databaseId ||
+      row.metadata.labels?.["nextrium.org/runtime"] !== this.config.runtimeId
     )
       throw new Error("The backup catalogue changed ownership. This task stopped.");
     return row;

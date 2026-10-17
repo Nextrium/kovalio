@@ -52,7 +52,7 @@ export const deployCommand = new Command("deploy")
     "--name <name>",
     "Project name for a folder (non-git) deploy (defaults to the directory name)",
   )
-  .option("--server <id>", "Registered server ID (see `openship server list`)")
+  .option("--server <id>", "Registered server ID (see `kovalio server list`)")
   .option("--watch", "Stream the deployment logs until it finishes")
   .option("--timeout <ms>", "Maximum watch duration; timing out leaves the deployment running", timeoutMilliseconds, 600_000)
   .action(async (opts) => {
@@ -132,7 +132,7 @@ export const deployCommand = new Command("deploy")
     } else {
       const projectId: string | undefined = opts.project || link?.projectId;
       if (!projectId) {
-        err("No project specified. Pass --project <id> or run `openship init` to link one.");
+        err("No project specified. Pass --project <id> or run `kovalio init` to link one.");
         exitCommand(1);
       }
 

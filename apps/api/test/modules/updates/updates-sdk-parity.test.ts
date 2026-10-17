@@ -10,7 +10,7 @@ import {
 } from "../jobs/_harness";
 import { eq } from "@repo/db";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { flushAudit } from "@repo/platform/engine/lib/audit-emitter";
 import { commitSourceKey } from "@repo/platform/engine/modules/projects/project-crud.service";
@@ -65,8 +65,8 @@ async function clients(owner: SeededOwner) {
   });
   return {
     native: await ship.scope({ identity: "verified", organizationId: owner.orgId }),
-    remote: new OpenshipClient({
-      baseUrl: "http://openship.test",
+    remote: new KovalioClient({
+      baseUrl: "http://kovalio.test",
       token: owner.token,
       organizationId: owner.orgId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,

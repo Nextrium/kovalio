@@ -1,14 +1,14 @@
 -- A project move may rebind its own project and restore the saved source. The
 -- transaction must name that run explicitly; ordinary project edits retain the
 -- managed-server ownership guard, even while a migration is in progress.
-CREATE OR REPLACE FUNCTION "openship_project_server_owner"() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE OR REPLACE FUNCTION "kovalio_project_server_owner"() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE owner_workspace text; owner_org text; server_purpose text;
 BEGIN
   IF TG_OP = 'UPDATE' AND OLD."workspace_id" IS NOT NULL AND
     (NEW."server_id" IS DISTINCT FROM OLD."server_id" OR NEW."organization_id" IS DISTINCT FROM OLD."organization_id") THEN
     IF NEW."organization_id" IS DISTINCT FROM OLD."organization_id" OR NOT EXISTS (
       SELECT 1 FROM "docker_migration_run" m
-      WHERE m."id" = current_setting('openship.migration_id', true)
+      WHERE m."id" = current_setting('kovalio.migration_id', true)
         AND m."organization_id" = OLD."organization_id" AND m."project_id" = OLD."id"
         AND m."mode" = 'project_move' AND m."finished_at" IS NULL
         AND m."recovery" #>> '{sourceProject,serverId}' = m."source_server_id"

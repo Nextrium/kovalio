@@ -1230,7 +1230,7 @@ async function removeLiveDomain(ctx: RequestContext, domain: Domain, project: Pr
   // and "remove this domain from Kovalio" must never take their mail with it.
   const released = await releaseRecords(ctx.organizationId, domain.hostname, [
     domain.hostname,
-    `_openship-challenge.${domain.hostname}`,
+    `_kovalio-challenge.${domain.hostname}`,
   ]).catch((err: unknown) => { observeCaughtError(err, "platform/engine/modules/domains/domain.service"); return ({ deleted: 0, reason: safeErrorMessage(err) }); });
   if (released.reason) {
     // Not fatal: a domain must stay removable from Kovalio when the provider is

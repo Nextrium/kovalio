@@ -348,7 +348,7 @@ export function shouldRefuseLoopbackRoute(
   port: number,
   opts: ReapplyProjectLiveRoutesOptions = {},
 ): boolean {
-  const ownDashboard = opts.isSelfApp && port === (env.OPENSHIP_DASHBOARD_PORT || 3001);
+  const ownDashboard = opts.isSelfApp && port === (env.KOVALIO_DASHBOARD_PORT || 3001);
   return isLoopbackHost(host) && isReservedLoopbackPort(port) && !ownDashboard;
 }
 

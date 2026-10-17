@@ -1,4 +1,4 @@
-# Openship Actions implementation
+# Kovalio Actions implementation
 
 Actions runs GitHub-compatible workflow files on authorized connected servers or
 disposable Cloud VMs. It has its own workflow/run/job records and topology view;

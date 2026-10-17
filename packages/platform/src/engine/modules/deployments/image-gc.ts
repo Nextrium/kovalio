@@ -1,13 +1,13 @@
 /**
  * Built-image garbage collector.
  *
- * Every build mints a globally-unique tag (`openship/<slug>-<svc>:bld_..-svc_..`)
+ * Every build mints a globally-unique tag (`kovalio/<slug>-<svc>:bld_..-svc_..`)
  * so a redeploy never overwrites the prior image — without a sweep, each deploy
  * server accumulates old builds (and dangling layers) forever. This reconciles
  * the images ACTUALLY on each host against the DB keep-set and prunes the rest.
  *
  * Safety model (see the audit): the ONLY images considered are those carrying
- * the `openship.project=<id>` label, which `labels()` stamps on FINAL build
+ * the `kovalio.project=<id>` label, which `labels()` stamps on FINAL build
  * images — base/third-party images (postgres, redis, mongo, …) are PULLED, never
  * labeled, and are therefore structurally unreachable here. The keep-set is the
  * exact imageRef of the active + pinned + newest-`rollbackWindow` deployments

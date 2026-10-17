@@ -1,39 +1,39 @@
 ---
 title: github repo
-description: Commands, arguments, and options for openship github repo.
-cliGroup: openship github repo
+description: Commands, arguments, and options for kovalio github repo.
+cliGroup: kovalio github repo
 ---
 
 See the [workflow guide](/docs/cli/access) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship github repo
+## kovalio github repo
 
 Browse and manage repositories available to this connection
 
 ```text
-openship github repo [options] [command]
+kovalio github repo [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list [options]`](/docs/cli/reference/github/repo#openship-github-repo-list) | List repositories with explicit pagination and filters |
-| [`get [options] <repository>`](/docs/cli/reference/github/repo#openship-github-repo-get) | Inspect a repository |
-| [`create [options] <name>`](/docs/cli/reference/github/repo#openship-github-repo-create) | Create a GitHub repository |
-| [`remove [options] <repository>`](/docs/cli/reference/github/repo#openship-github-repo-remove) | Permanently delete a GitHub repository |
-| [`branches [options] <repository>`](/docs/cli/reference/github/repo#openship-github-repo-branches) | List branches and whether another page is available |
-| [`clone-token <repository>`](/docs/cli/reference/github/repo#openship-github-repo-clone-token) | Print a short-lived clone credential; output contains a secret |
-| [`detect [options] <repository>`](/docs/cli/reference/github/repo#openship-github-repo-detect) | Detect stack, build configuration and Compose services |
-| [`files [options] <repository>`](/docs/cli/reference/github/repo#openship-github-repo-files) | List files at a repository path |
-| [`tree [options] <repository>`](/docs/cli/reference/github/repo#openship-github-repo-tree) | List the repository tree |
-| [`file [options] <repository> <path>`](/docs/cli/reference/github/repo#openship-github-repo-file) | Read a repository file and its revision |
-| [`webhook`](/docs/cli/reference/github/repo#openship-github-repo-webhook) | Manage Openship deployment webhooks on a GitHub repository |
+| [`list [options]`](/docs/cli/reference/github/repo#kovalio-github-repo-list) | List repositories with explicit pagination and filters |
+| [`get [options] <repository>`](/docs/cli/reference/github/repo#kovalio-github-repo-get) | Inspect a repository |
+| [`create [options] <name>`](/docs/cli/reference/github/repo#kovalio-github-repo-create) | Create a GitHub repository |
+| [`remove [options] <repository>`](/docs/cli/reference/github/repo#kovalio-github-repo-remove) | Permanently delete a GitHub repository |
+| [`branches [options] <repository>`](/docs/cli/reference/github/repo#kovalio-github-repo-branches) | List branches and whether another page is available |
+| [`clone-token <repository>`](/docs/cli/reference/github/repo#kovalio-github-repo-clone-token) | Print a short-lived clone credential; output contains a secret |
+| [`detect [options] <repository>`](/docs/cli/reference/github/repo#kovalio-github-repo-detect) | Detect stack, build configuration and Compose services |
+| [`files [options] <repository>`](/docs/cli/reference/github/repo#kovalio-github-repo-files) | List files at a repository path |
+| [`tree [options] <repository>`](/docs/cli/reference/github/repo#kovalio-github-repo-tree) | List the repository tree |
+| [`file [options] <repository> <path>`](/docs/cli/reference/github/repo#kovalio-github-repo-file) | Read a repository file and its revision |
+| [`webhook`](/docs/cli/reference/github/repo#kovalio-github-repo-webhook) | Manage Kovalio deployment webhooks on a GitHub repository |
 
-## openship github repo branches
+## kovalio github repo branches
 
 List branches and whether another page is available
 
 ```text
-openship github repo branches [options] <repository>
+kovalio github repo branches [options] <repository>
 ```
 
 | Argument | Meaning |
@@ -44,24 +44,24 @@ openship github repo branches [options] <repository>
 | --- | --- |
 | `--page <number>` | Page number |
 
-## openship github repo clone-token
+## kovalio github repo clone-token
 
 Print a short-lived clone credential; output contains a secret
 
 ```text
-openship github repo clone-token [options] <repository>
+kovalio github repo clone-token [options] <repository>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `repository` | owner/repo |
 
-## openship github repo create
+## kovalio github repo create
 
 Create a GitHub repository
 
 ```text
-openship github repo create [options] <name>
+kovalio github repo create [options] <name>
 ```
 
 | Argument | Meaning |
@@ -74,12 +74,12 @@ openship github repo create [options] <name>
 | `--description <text>` | Repository description |
 | `--public` | Create a public repository (default: private) |
 
-## openship github repo detect
+## kovalio github repo detect
 
 Detect stack, build configuration and Compose services
 
 ```text
-openship github repo detect [options] <repository>
+kovalio github repo detect [options] <repository>
 ```
 
 | Argument | Meaning |
@@ -91,12 +91,12 @@ openship github repo detect [options] <repository>
 | `--branch <name>` | Branch to inspect |
 | `--compose-path <path>` | Compose file to inspect |
 
-## openship github repo file
+## kovalio github repo file
 
 Read a repository file and its revision
 
 ```text
-openship github repo file [options] <repository> <path>
+kovalio github repo file [options] <repository> <path>
 ```
 
 | Argument | Meaning |
@@ -108,12 +108,12 @@ openship github repo file [options] <repository> <path>
 | --- | --- |
 | `--branch <name>` | Branch |
 
-## openship github repo files
+## kovalio github repo files
 
 List files at a repository path
 
 ```text
-openship github repo files [options] <repository>
+kovalio github repo files [options] <repository>
 ```
 
 | Argument | Meaning |
@@ -125,12 +125,12 @@ openship github repo files [options] <repository>
 | `--branch <name>` | Branch |
 | `--path <path>` | Directory or file path |
 
-## openship github repo get
+## kovalio github repo get
 
 Inspect a repository
 
 ```text
-openship github repo get [options] <repository>
+kovalio github repo get [options] <repository>
 ```
 
 | Argument | Meaning |
@@ -141,12 +141,12 @@ openship github repo get [options] <repository>
 | --- | --- |
 | `--branches` | Include the first branch page |
 
-## openship github repo list
+## kovalio github repo list
 
 List repositories with explicit pagination and filters
 
 ```text
-openship github repo list [options]
+kovalio github repo list [options]
 ```
 
 | Option | Meaning |
@@ -159,12 +159,12 @@ openship github repo list [options]
 | `--visibility <type>` | Visibility filter (choices: "all", "public", "private") |
 | `--sort <field>` | Sort order (choices: "updated", "name", "stars") |
 
-## openship github repo remove
+## kovalio github repo remove
 
 Permanently delete a GitHub repository
 
 ```text
-openship github repo remove [options] <repository>
+kovalio github repo remove [options] <repository>
 ```
 
 | Argument | Meaning |
@@ -175,12 +175,12 @@ openship github repo remove [options] <repository>
 | --- | --- |
 | `-y, --yes` | Confirm deletion on GitHub |
 
-## openship github repo tree
+## kovalio github repo tree
 
 List the repository tree
 
 ```text
-openship github repo tree [options] <repository>
+kovalio github repo tree [options] <repository>
 ```
 
 | Argument | Meaning |
@@ -191,50 +191,50 @@ openship github repo tree [options] <repository>
 | --- | --- |
 | `--branch <name>` | Branch |
 
-## openship github repo webhook
+## kovalio github repo webhook
 
-Manage Openship deployment webhooks on a GitHub repository
+Manage Kovalio deployment webhooks on a GitHub repository
 
 ```text
-openship github repo webhook [options] [command]
+kovalio github repo webhook [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list <repository>`](/docs/cli/reference/github/repo#openship-github-repo-webhook-list) | list repository webhooks |
-| [`register <repository>`](/docs/cli/reference/github/repo#openship-github-repo-webhook-register) | register repository webhooks |
-| [`remove [options] <repository> <hook>`](/docs/cli/reference/github/repo#openship-github-repo-webhook-remove) | Delete a repository webhook |
+| [`list <repository>`](/docs/cli/reference/github/repo#kovalio-github-repo-webhook-list) | list repository webhooks |
+| [`register <repository>`](/docs/cli/reference/github/repo#kovalio-github-repo-webhook-register) | register repository webhooks |
+| [`remove [options] <repository> <hook>`](/docs/cli/reference/github/repo#kovalio-github-repo-webhook-remove) | Delete a repository webhook |
 
-## openship github repo webhook list
+## kovalio github repo webhook list
 
 list repository webhooks
 
 ```text
-openship github repo webhook list [options] <repository>
+kovalio github repo webhook list [options] <repository>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `repository` | owner/repo |
 
-## openship github repo webhook register
+## kovalio github repo webhook register
 
 register repository webhooks
 
 ```text
-openship github repo webhook register [options] <repository>
+kovalio github repo webhook register [options] <repository>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `repository` | owner/repo |
 
-## openship github repo webhook remove
+## kovalio github repo webhook remove
 
 Delete a repository webhook
 
 ```text
-openship github repo webhook remove [options] <repository> <hook>
+kovalio github repo webhook remove [options] <repository> <hook>
 ```
 
 | Argument | Meaning |

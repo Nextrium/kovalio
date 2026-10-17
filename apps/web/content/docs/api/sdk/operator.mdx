@@ -24,15 +24,15 @@ the complete mapping and scope flow.
 
 ## Remote operator
 
-`OpenshipOperatorClient` uses an internal installation token and exposes notice administration:
+`KovalioOperatorClient` uses an internal installation token and exposes notice administration:
 
 ```ts title="operator.mts"
-import { OpenshipOperatorClient } from "openship";
+import { KovalioOperatorClient } from "kovalio";
 
-const internalToken = process.env.OPENSHIP_INTERNAL_TOKEN;
-if (!internalToken) throw new Error("Set OPENSHIP_INTERNAL_TOKEN");
+const internalToken = process.env.KOVALIO_INTERNAL_TOKEN;
+if (!internalToken) throw new Error("Set KOVALIO_INTERNAL_TOKEN");
 
-export const operator = new OpenshipOperatorClient({
+export const operator = new KovalioOperatorClient({
   baseUrl: "https://ship.example.com",
   internalToken,
 });

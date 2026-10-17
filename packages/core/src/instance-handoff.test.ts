@@ -15,7 +15,7 @@ describe("instance handoff", () => {
     const connection = {
       origin: "https://ops.example.com",
       installationId: "target",
-      cookies: { "openship.session_token": "device" },
+      cookies: { "kovalio.session_token": "device" },
     };
     const source: HandoffSource = {
       async freeze() {

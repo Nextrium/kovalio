@@ -117,7 +117,7 @@ export function elevatedExecutor(inner: CommandExecutor): CommandExecutor {
     content: string,
     opts?: { mode?: number },
   ): Promise<void> => {
-    const stage = `/tmp/.openship-elev-${randomBytes(12).toString("hex")}`;
+    const stage = `/tmp/.kovalio-elev-${randomBytes(12).toString("hex")}`;
     await inner.exec(`mkdir -m 700 ${sq(stage)}`);
     try {
       const staged = `${stage}/payload`;

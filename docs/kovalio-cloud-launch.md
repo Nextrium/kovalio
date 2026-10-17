@@ -1,4 +1,4 @@
-# Openship Cloud release gate
+# Kovalio Cloud release gate
 
 ## Current contract — monthly servers, 2026-10-04
 
@@ -15,7 +15,7 @@ exceeds Hobby, Starter and Pro retail prices. The product decision is to keep
 retail unchanged and have Oblien configure the agreed tariff or explicit subsidy.
 Do not claim those payments are verified until that configuration settles them.
 
-Openship uses SDK 2.8.0 with the existing checkout, portal, plan-change and signed
+Kovalio uses SDK 2.8.0 with the existing checkout, portal, plan-change and signed
 webhook flow. Monthly offers carry `billingMode: "monthly"`, an explicit pool,
 zero credits and no credit policy. Oblien owns metering, proration, paid coverage
 and resource admission. The namespace's embedded capacity is checked against its
@@ -82,24 +82,24 @@ The September 19 hosted checkout probe now succeeds and reuses the same session
 for an identical idempotent retry. The earlier Oblien SQL collation failure no
 longer reproduces. A fresh namespace still has no paid subscription after merely
 opening checkout. A completed payment and signed public delivery remain to be
-verified; see [the checkout verification report](openship-cloud-production-verification.md).
+verified; see [the checkout verification report](kovalio-cloud-production-verification.md).
 
 ## Reseller offer contract, updated 2026-09-29
 
-New purchases use Openship's $5 / $20 / $39 / $99 monthly catalog. Each checkout saves
+New purchases use Kovalio's $5 / $20 / $39 / $99 monthly catalog. Each checkout saves
 an immutable generic offer: price, namespace credits, zero-by-default configurable
 grace, VM caps and application plan metadata. The namespace receives the customer
 subscription. The reseller account receives wallet funding and retains its own
-platform subscription. Oblien has no Openship-specific plan mapping.
+platform subscription. Oblien has no Kovalio-specific plan mapping.
 
 New namespace checkouts require the reseller owner's Enterprise account or an
 operator-granted Enterprise tier. Oblien enforces this for custom offers, catalog
-plans and top-ups in test and live mode. A customer's Openship plan cannot grant
+plans and top-ups in test and live mode. A customer's Kovalio plan cannot grant
 it. `reseller_enterprise_required` is an operator configuration failure, shown to
-customers as a request to contact Openship support. Existing customer billing
+customers as a request to contact Kovalio support. Existing customer billing
 management and renewal/refund processing continue after an owner downgrade.
 
-Openship resolves `reseller` subscriptions using the saved offer reference,
+Kovalio resolves `reseller` subscriptions using the saved offer reference,
 organization, namespace and application-limit snapshot. Unknown or mismatched
 contracts fail closed. Renewals keep those terms even when the current catalog
 changes. The catalog and detailed configuration are documented in
@@ -108,9 +108,9 @@ changes. The catalog and detailed configuration are documented in
 Deploy the matching Oblien API first: `/billing/catalog` must report
 `reseller: { contractVersion: 2, offerPolicy: true, resourceLimits: true, effectiveResourceLimits: true, aggregateResourceLimits: true }`.
 Dashboard docs alone cannot enable this contract. Then deploy the updated
-Openship API and dashboard together. Checkout and the readiness check reject an
+Kovalio API and dashboard together. Checkout and the readiness check reject an
 older provider; startup also logs the missing capability. Existing subscription
-management remains available during that update. Openship pins the published
+management remains available during that update. Kovalio pins the published
 2.7.0 SDK for the official subscription-change methods and upstream stream
 cancellation fixes; the earlier local SDK patch is no longer required.
 
@@ -127,21 +127,21 @@ dispute, expiry and provider errors have explicit states. Signed events and the
 five-minute sweep continue to reconcile authoritative subscription state.
 
 For this deployment, the callback is
-`https://api.openship.io/api/billing/oblien-webhook`; browser checkout/portal
-returns use `https://app.openship.io`. Allowlist `app.openship.io` in Oblien's
+`https://api.nextrium.org/api/billing/oblien-webhook`; browser checkout/portal
+returns use `https://kovalio.nextrium.org`. Allowlist `kovalio.nextrium.org` in Oblien's
 redirect configuration. The callback URL is a server POST receiver and is not a
 browser return URL.
 
 ## What is connected
 
-- `oblien@2.7.0` supplies the official billing module. Openship validates the
+- `oblien@2.7.0` supplies the official billing module. Kovalio validates the
   returned namespace, subscription shape, hosted URL, and agreement between the
   namespace subscription and its entitlement. Its JSON transport rejects
   credential redirects, bounds request time, checks both HTTP and body failures,
   preserves SDK request cancellation, and keeps provider error bodies private.
   Workspace limits now return HTTP 409 in the live API; compatibility handling
   also rejects the older HTTP 200 `valid:false / NAMESPACE_LIMIT_REACHED` response.
-- Public prices and credit packs come from Openship's server catalog, served by
+- Public prices and credit packs come from Kovalio's server catalog, served by
   `/api/billing/plans` to marketing and all dashboards. Legacy provider IDs
   `hobby`, `pro`, `scale` remain readable, but new checkout sends an `offer`.
 - Purchases use `/billing/checkout` with the authenticated organization's
@@ -171,12 +171,12 @@ browser return URL.
   in the database. Admin-only Pages/routing operations check every referenced
   resource's namespace on the SaaS, including desktop/self-hosted calls.
 - New billable work requires a current entitlement and usable provider balance.
-  Openship does not apply the spend gate before Stop/Delete. Scoped inspection,
+  Kovalio does not apply the spend gate before Stop/Delete. Scoped inspection,
   repeated Stop and Delete pass during billing and manual suspension. Accepted
   asynchronous workspace deletions are confirmed before completing local
   teardown; failed inspection or timeout leaves cleanup retryable.
 - New namespaces get explicit resource ceilings derived from the customer's
-  Openship plan. Oblien owns reseller/platform capacity; billing and namespace
+  Kovalio plan. Oblien owns reseller/platform capacity; billing and namespace
   onboarding do not depend on the reseller's workspace-quota response. Billing
   reads and checkout do not synchronize resource ceilings. Spend and token gates
   still confirm customer ceilings without changing credits or usage. Builds,
@@ -224,9 +224,9 @@ blocked. Returning from checkout does not grant access or automatically deploy:
 the customer checks the current plan, returns to the project, and retries the
 action through the existing server guards. Purchase feature flags still apply.
 
-Pricing uses Openship's server-defined prices and explicit credit grants,
+Pricing uses Kovalio's server-defined prices and explicit credit grants,
 exposed as `monthlyCredits` and `annualCredits` in milli-credits. Build minutes remain a
-monthly Openship limit. Cards show build minutes, simultaneous services,
+monthly Kovalio limit. Cards show build minutes, simultaneous services,
 per-service CPU/RAM and project limits with a shared usage explanation. Edge traffic is measured without an invented custom-plan allowance.
 
 Billing leads with measured resource usage. Provider usage buckets are already
@@ -247,7 +247,7 @@ missing, extra or untranslated entries.
 ## Customer billing onboarding, 2026-09-19
 
 Each customer workspace has its own Oblien namespace. New namespaces start with
-zero credits, zero overdraft, and no paid subscription. Openship validates those
+zero credits, zero overdraft, and no paid subscription. Kovalio validates those
 automatic defaults without rewriting existing balances. A free-tier entitlement
 cannot start billable work even if a legacy policy reports a positive or null
 balance. Oblien applies the paid subscription and credits after payment; opening
@@ -294,7 +294,7 @@ allowance, so physical CPU-hours are not presented as guaranteed remaining hours
 Build-minute periods now clamp month-end anniversaries without gaps or overlaps,
 and uncapped plans still report their measured build time.
 
-Openship's catalog supplies prices, allowances, resource limits, metadata and
+Kovalio's catalog supplies prices, allowances, resource limits, metadata and
 checkout copy. The generic offer path is now used for both subscriptions and
 top-ups. Existing catalog subscriptions remain readable through a legacy ID
 mapping. New offers use their saved identity and application-limit snapshot;
@@ -319,7 +319,7 @@ Paid customers retain their verified balance and subscription controls if the
 plan catalog is temporarily unavailable. Usage explanations are collapsed, and
 resource usage keeps the provider's actual units. The copy is available in all
 nine dashboard locales. Both API and dashboard must be rebuilt and deployed for
-these changes. See [production-path verification](openship-cloud-production-verification.md)
+these changes. See [production-path verification](kovalio-cloud-production-verification.md)
 for test coverage and the remaining live payment/webhook verification.
 
 ## Historical validation: Compose workspaces, 2026-09-17
@@ -334,7 +334,7 @@ label: Docker + Compose). The entry advertises Docker Engine 29 running at boot,
 Compose, Buildx/BuildKit, and persistent containers and volumes. Its current
 `vm_defaults` are 2 vCPUs, 4096 MiB RAM, 32768 MiB disk, a Docker-capable kernel,
 and a `docker-ready` readiness check. These are catalog defaults, not verified
-minimum resource requirements. Openship now uses the published SDK 2.4.0.
+minimum resource requirements. Kovalio now uses the published SDK 2.4.0.
 
 New Compose and multi-application projects now use this model:
 
@@ -499,7 +499,7 @@ certify customer checkout or publish the local changes.
   immediately inherit zero-credit policies. Unpaid namespaces return their own
   free/null subscription state and billing period, rather than the account
   owner's plan. Repeating ensure preserves an existing fixture's allowance.
-  Openship retains its subscription/entitlement consistency checks.
+  Kovalio retains its subscription/entitlement consistency checks.
 - Live tests confirm VM/Page isolation, concurrent workspace-cap enforcement,
   CPU/RAM/disk resize ceilings, and actual HTTP 409 limit responses. Docker CPU
   and memory usage now debit namespace credits. Subsequent usage exhausted a
@@ -540,10 +540,10 @@ registry were rechecked at 20:15 UTC:
 
 The earlier `401 authentication_required` blocker is resolved. The same staging
 key also returned 200 for `/namespaces` and `/billing/defaults`. The read-only
-Openship readiness checker passed the SDK-backed catalog, default-policy, and
+Kovalio readiness checker passed the SDK-backed catalog, default-policy, and
 namespace subscription checks; it still fails for the missing public HTTPS
 callback and disabled purchase flags. These probes do not yet verify management
-of a paid subscription or a complete payment/webhook cycle. Openship rejects an
+of a paid subscription or a complete payment/webhook cycle. Kovalio rejects an
 unscoped portal response; it never returns the owner's billing session.
 
 That September 15 check created no namespace, token, checkout, workspace, or
@@ -563,7 +563,7 @@ assuming the `.env.saas` filename indicates production provider credentials.
    passes actual create/ensure inheritance checks after the provider fix.
    Verify actual creation in the intended launch account, not only the template.
    The initial policy is payment before compute: zero quota and zero overdraft.
-   Openship rejects nonzero or unlimited automatic credit defaults. Example
+   Kovalio rejects nonzero or unlimited automatic credit defaults. Example
    `PUT /billing/defaults` body:
 
    ```json
@@ -578,12 +578,12 @@ assuming the `.env.saas` filename indicates production provider credentials.
 
    Review the account this applies to first. Do not apply this default to
    existing paid namespaces or reset their usage. Oblien grants paid allowances
-   on successful payment. Openship only validates this configuration.
+   on successful payment. Kovalio only validates this configuration.
 3. Configure the API process:
 
    ```dotenv
    CLOUD_MODE=true
-   OPENSHIP_TARGET=cloud-saas
+   KOVALIO_TARGET=cloud-saas
    OBLIEN_API_URL=https://api.oblien.com
    OBLIEN_CLIENT_ID=<server-only key>
    OBLIEN_CLIENT_SECRET=<server-only secret>
@@ -594,8 +594,8 @@ assuming the `.env.saas` filename indicates production provider credentials.
    BILLING_TOPUPS_ENABLED=false
    ```
 
-   Use staging origins/credentials for staging. Set `OPENSHIP_CLOUD_API_URL` and
-   `OPENSHIP_CLOUD_DASHBOARD_URL` to the actual staging origins so checkout
+   Use staging origins/credentials for staging. Set `KOVALIO_CLOUD_API_URL` and
+   `KOVALIO_CLOUD_DASHBOARD_URL` to the actual staging origins so checkout
    returns and the marketing catalog point to staging. The callback defaults to
    the selected runtime's API origin plus `/api/billing/oblien-webhook`; it does
    not require a separate webhook host. If a reverse proxy serves
@@ -627,7 +627,7 @@ Both Compose stacks read the repository's root `.env`. The
 not configure a deployed container. The normal API `start` command loads `.env`
 in its working directory. Deployment platforms should supply the flags and
 `OBLIEN_CLIENT_ID`, `OBLIEN_CLIENT_SECRET`, and `OBLIEN_WEBHOOK_SECRET` directly to
-the API service. Use the production Oblien account for production. No Openship
+the API service. Use the production Oblien account for production. No Kovalio
 Stripe keys or price IDs are required for this flow.
 
 For the root SaaS Compose stack, apply changed environment values with:
@@ -638,7 +638,7 @@ docker compose up -d --no-deps --force-recreate api
 
 A plain `docker compose restart` retains the container's old environment. On a
 deployment platform, redeploy the API service after saving its environment.
-When Openship manages the deployment, open the API service's **Environment** tab,
+When Kovalio manages the deployment, open the API service's **Environment** tab,
 save the variables, and choose **Apply environment changes**. This refreshes the
 selected API service using the running image's immutable ID, without pulling its
 local build tag or creating a deployment/build session. Progress and completion stay
@@ -725,7 +725,7 @@ check does not prove actual payment settlement or provider-price acceptance.
 The updated billing contract requires a namespace for the portal and returns it
 in the response. Each namespace has its own Stripe customer. A legacy shared
 customer returns `409 billing_customer_conflict`; an inconsistent subscription
-identity returns `409 billing_identity_conflict`. Neither is bypassed in Openship.
+identity returns `409 billing_identity_conflict`. Neither is bypassed in Kovalio.
 
 - Authentication and empty-namespace responses are verified against staging.
   Test two customer portals, invoice/payment isolation, cancellation, resumption,
@@ -743,7 +743,7 @@ identity returns `409 billing_identity_conflict`. Neither is bypassed in Openshi
   billable subscriptions for one namespace. The provider now documents replacing
   only that namespace's old subscription after payment; test this with multiple
   pending checkouts. Reseller status is read through
-  `GET /billing/checkout/:checkoutId?namespace=...`; Openship exposes the safe
+  `GET /billing/checkout/:checkoutId?namespace=...`; Kovalio exposes the safe
   subset at `GET /api/billing/checkout?checkoutId=...`. Do not infer payment from
   a checkout redirect.
 

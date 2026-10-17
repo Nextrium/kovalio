@@ -71,8 +71,8 @@ describe("mail backup plan targets the right topology", () => {
     // /var/vmail is a bind mount on container setups (${MAIL_HOST_STATE_DIR}/vmail) and
     // a direct path on host setups.
     const { payloadConfig: container } = buildMailBackupPayload("example.com", FLAGS, "container");
-    expect(container.produceCommand).toContain('sudo -n tar -c -C "$tmp" . -C /var/lib/openship/mail/vmail vmail1');
-    expect(container.restoreCommand).toContain('if [ -d "$tmp/vmail1" ]; then cp -a "$tmp/vmail1" /var/lib/openship/mail/vmail/');
+    expect(container.produceCommand).toContain('sudo -n tar -c -C "$tmp" . -C /var/lib/kovalio/mail/vmail vmail1');
+    expect(container.restoreCommand).toContain('if [ -d "$tmp/vmail1" ]; then cp -a "$tmp/vmail1" /var/lib/kovalio/mail/vmail/');
 
     const { payloadConfig: host } = buildMailBackupPayload("example.com", FLAGS, "host");
     expect(host.produceCommand).toContain('sudo -n tar -c -C "$tmp" . -C /var/vmail vmail1');

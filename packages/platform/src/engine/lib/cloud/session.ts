@@ -27,7 +27,7 @@ export async function storeCloudSession(userId: string, token: string): Promise<
   const response = await request("/api/cloud/account");
   const account = response.ok ? await readVerifiedCloudAccount(response, request) : null;
   if (!account)
-    throw new AppError("Could not verify the Cloud account and organization. Reconnect to Openship Cloud.", 401, "CLOUD_IDENTITY_UNVERIFIED");
+    throw new AppError("Could not verify the Cloud account and organization. Reconnect to Kovalio Cloud.", 401, "CLOUD_IDENTITY_UNVERIFIED");
   const session: StoredCloudSession = {
     token, apiUrl: cloudRuntimeTarget.api,
     userId: account.id, organizationId: account.organizationId,

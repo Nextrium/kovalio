@@ -1,18 +1,18 @@
 ---
-title: Manage Openship Cloud
+title: Manage Kovalio Cloud
 description: Deploy and operate Cloud projects from your laptop, CI runner, or another server.
 ---
 
-Use a Cloud token to connect directly to Openship Cloud. Remote commands need Node.js 22 or later and
-network access to the API; Docker and a local Openship installation are not required.
+Use a Cloud token to connect directly to Kovalio Cloud. Remote commands need Node.js 22 or later and
+network access to the API; Docker and a local Kovalio installation are not required.
 
 ## Connect and select a workspace
 
 ```bash
-openship login --cloud
-openship --context cloud access workspaces
-openship --context cloud --organization org_123 --json project list
-openship --context cloud --organization org_123 server managed list
+kovalio login --cloud
+kovalio --context cloud access workspaces
+kovalio --context cloud --organization org_123 --json project list
+kovalio --context cloud --organization org_123 server managed list
 ```
 
 Save the organization during login with `--organization org_123`, or provide it before each command.
@@ -22,14 +22,14 @@ token in another context to manage that installation with the same project and s
 ## Deploy code or redeploy a project
 
 ```bash
-openship --context cloud --organization org_123 deploy \
+kovalio --context cloud --organization org_123 deploy \
   --folder --name my-app --server srv_123 --watch
 
-openship --context cloud --organization org_123 deploy \
+kovalio --context cloud --organization org_123 deploy \
   --project proj_123 --watch
 
-openship --context cloud --organization org_123 service list --project proj_123
-openship --context cloud --organization org_123 project server-logs proj_123 --follow
+kovalio --context cloud --organization org_123 service list --project proj_123
+kovalio --context cloud --organization org_123 project server-logs proj_123 --follow
 ```
 
 Run the first command inside the source directory. The CLI uploads it through the SDK's source
@@ -46,10 +46,10 @@ authority.
 ## Inspect or buy capacity
 
 ```bash
-openship --context cloud billing plans
-openship --context cloud billing state --server srv_123
-openship --context cloud billing usage --server srv_123 --group-by day
-openship --context cloud billing subscription get --server srv_123
+kovalio --context cloud billing plans
+kovalio --context cloud billing state --server srv_123
+kovalio --context cloud billing usage --server srv_123 --group-by day
+kovalio --context cloud billing subscription get --server srv_123
 ```
 
 `--server` resolves that exact server's billing workspace. It does not select another subscription.
@@ -58,8 +58,8 @@ Use `--workspace` for a known retained billing workspace.
 To obtain another managed server, create its entry and request a checkout for a plan from `billing plans`:
 
 ```bash
-openship --context cloud server managed create "Production"
-openship --context cloud billing subscription create <plan-id> \
+kovalio --context cloud server managed create "Production"
+kovalio --context cloud billing subscription create <plan-id> \
   --server <new-server-id> --idempotency-key <checkout-key>
 ```
 
@@ -70,9 +70,9 @@ payment or provisioning finished.
 For an existing subscription, review the exact quote before confirming a capacity change:
 
 ```bash
-openship --context cloud billing change preview <plan-id> \
+kovalio --context cloud billing change preview <plan-id> \
   --server srv_123 --idempotency-key <change-key>
-openship --context cloud billing change apply <quote-id> \
+kovalio --context cloud billing change apply <quote-id> \
   --server srv_123 --confirm-restart --yes
 ```
 
@@ -83,8 +83,8 @@ uses `billing quote` and the returned resources and `quoteReference`. See the
 ## JSON configuration and useful operations
 
 Complex commands accept a JSON file or `-` for stdin. `--schema` prints the current input schema
-without contacting the API, for example `openship project options proj_123 --schema` or
-`openship migration project --schema`.
+without contacting the API, for example `kovalio project options proj_123 --schema` or
+`kovalio migration project --schema`.
 
 Use `project environment` for isolated environments, `project resources` for runtime limits,
 `project database` and `project volume` for managed data, `backup` for recovery, `monitoring` for

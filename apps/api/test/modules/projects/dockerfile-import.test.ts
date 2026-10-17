@@ -6,7 +6,7 @@ import { Hono } from "hono";
 import { repos } from "@repo/db";
 import { seedOwner } from "../jobs/_harness";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { buildConfigSnapshot } from "@repo/platform/engine/modules/deployments/build.service";
 import { projectRoutes } from "../../../src/modules/projects/project.routes";
@@ -31,8 +31,8 @@ async function clients() {
   });
   return [
     await ship.scope({ identity: "verified", organizationId: owner.orgId }),
-    new OpenshipClient({
-      baseUrl: "http://openship.test",
+    new KovalioClient({
+      baseUrl: "http://kovalio.test",
       token: owner.token,
       organizationId: owner.orgId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
@@ -42,7 +42,7 @@ async function clients() {
 
 describe("Dockerfile command defaults through native SDK and HTTP", () => {
   it("persists image defaults as a web workload and preserves explicit command overrides", async () => {
-    const source = await mkdtemp(join(tmpdir(), "openship-docker-import-"));
+    const source = await mkdtemp(join(tmpdir(), "kovalio-docker-import-"));
     try {
       await writeFile(
         join(source, "package.json"),

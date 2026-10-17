@@ -18,7 +18,7 @@ import {
 import type { ExecutionContext } from "@repo/platform";
 import { ensureRouteDomainRecord } from "@repo/platform/engine/lib/routing-domains";
 import { Hono } from "hono";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { mailRoutes } from "../../../src/modules/mail/mail.routes";
 import { healthRoutes } from "../../../src/modules/health/health.routes";
 import { handleApiError } from "../../../src/middleware/error-handler";
@@ -205,12 +205,12 @@ describe("webmail link recovery", () => {
   it("exposes read-only suggestions and reconnects through the public SDK and HTTP contract", async () => {
     const { owner, serverId, input, first } = await orphaned();
     const app = new Hono().onError(handleApiError).route("/api/health", healthRoutes).route("/api/mail", mailRoutes);
-    const client = new OpenshipClient({ baseUrl: "http://openship.test", token: owner.token, organizationId: owner.orgId,
+    const client = new KovalioClient({ baseUrl: "http://kovalio.test", token: owner.token, organizationId: owner.orgId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
     const status = await client.mail.getStatus({ serverId });
     expect(status.webmailRecoveryCandidates?.map(candidate => candidate.projectId)).toEqual([first.projectId]);
     expect((await repos.mailServer.get(serverId))?.webmailProjectId).toBeNull();
-    const invalid = await app.request("http://openship.test/api/mail/webmail/deploy-project", {
+    const invalid = await app.request("http://kovalio.test/api/mail/webmail/deploy-project", {
       method: "POST", headers: { ...owner.auth, "Content-Type": "application/json", "X-Organization-Id": owner.orgId },
       body: JSON.stringify({ ...input, reconnectProjectId: 42 }),
     });
@@ -229,7 +229,7 @@ describe("webmail link recovery", () => {
     const lookup = vi.spyOn(repos.project, "findById").mockRejectedValueOnce(new Error("temporary read failure"));
     await expect(startWebmailDeploy(ctx, input)).rejects.toMatchObject({ statusCode: 503, code: "WEBMAIL_LINK_UNAVAILABLE" });
     lookup.mockRejectedValueOnce(new Error("temporary read failure"));
-    const response = await app.request(`http://openship.test/api/mail/status?serverId=${serverId}`, { headers: owner.auth });
+    const response = await app.request(`http://kovalio.test/api/mail/status?serverId=${serverId}`, { headers: owner.auth });
     expect(response.status).toBe(503);
     expect(await response.json()).toMatchObject({ code: "MAIL_STATUS_UNAVAILABLE" });
     lookup.mockRestore();

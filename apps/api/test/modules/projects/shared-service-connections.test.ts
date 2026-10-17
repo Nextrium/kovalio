@@ -148,7 +148,7 @@ describe("connections to a service inside a project", () => {
     const attach = vi.fn();
     await attachLinkedNetworks("source", { joinServiceGroupContainers: h.join, attachToExternalNetworks: attach }, undefined, "dep-new");
     expect(h.join).toHaveBeenCalledWith("shared-svc-db", [{ containerId: "dep-new:svc_db", aliases: ["shared-svc-db"] }], { strict: true });
-    expect(attach).toHaveBeenCalledWith("source", [], ["adopted-web"], { prunePrefix: "openship-shared-", retain: ["openship-shared-svc-db", "openship-source"], strict: true });
+    expect(attach).toHaveBeenCalledWith("source", [], ["adopted-web"], { prunePrefix: "kovalio-shared-", retain: ["kovalio-shared-svc-db", "kovalio-source"], strict: true });
   });
 
   it("fails a source deployment if its replacement container cannot be shared", async () => {
@@ -161,7 +161,7 @@ describe("connections to a service inside a project", () => {
     h.projects.get("target")!.slug = "shared-tools";
     const attach = vi.fn();
     await attachLinkedNetworks("target", { joinServiceGroupContainers: h.join, attachToExternalNetworks: attach });
-    expect(attach).toHaveBeenCalledWith("target", [], ["adopted-web"], { prunePrefix: "openship-shared-", retain: ["openship-shared-tools"], strict: false });
+    expect(attach).toHaveBeenCalledWith("target", [], ["adopted-web"], { prunePrefix: "kovalio-shared-", retain: ["kovalio-shared-tools"], strict: false });
   });
 
   it("preserves another consumer's network when disconnecting one project", async () => {

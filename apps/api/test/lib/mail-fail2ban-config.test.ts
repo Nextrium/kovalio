@@ -6,10 +6,10 @@ import { dirname, join, resolve } from "node:path";
 
 const script = resolve(import.meta.dirname, "../../../email/docker/configure-fail2ban-db.py");
 const roots: string[] = [];
-const settings = "etc/fail2ban/openship-postgresql.conf";
-const credentials = "etc/fail2ban/openship-postgresql.pgpass";
+const settings = "etc/fail2ban/kovalio-postgresql.conf";
+const credentials = "etc/fail2ban/kovalio-postgresql.pgpass";
 async function root() {
-  const path = await mkdtemp(join(tmpdir(), "openship-fail2ban-config-"));
+  const path = await mkdtemp(join(tmpdir(), "kovalio-fail2ban-config-"));
   roots.push(path);
   return path;
 }
@@ -18,8 +18,8 @@ const run = (root: string, values: Record<string, string> = {}) =>
     encoding: "utf8",
     env: {
       ...process.env,
-      OPENSHIP_MAIL_DB_HOST: "127.0.0.1",
-      OPENSHIP_MAIL_DB_PORT: "5432",
+      KOVALIO_MAIL_DB_HOST: "127.0.0.1",
+      KOVALIO_MAIL_DB_PORT: "5432",
       VMAIL_DB_BIND_PASSWD: "test-password",
       ...values,
     },
@@ -43,7 +43,7 @@ describe("fail2ban sidecar connection configuration", () => {
       "127.0.0.1:5432:fail2ban:fail2ban:test-password\n",
     );
     expect(await readFile(join(directory, settings), "utf8")).toContain(
-      "export PGPASSFILE=/etc/fail2ban/openship-postgresql.pgpass\n",
+      "export PGPASSFILE=/etc/fail2ban/kovalio-postgresql.pgpass\n",
     );
     for (const path of [settings, credentials])
       expect((await stat(join(directory, path))).mode & 0o777).toBe(0o600);
@@ -55,7 +55,7 @@ describe("fail2ban sidecar connection configuration", () => {
     const directory = await root();
     const password = "test:back\\slash'quote";
     for (const port of ["5432", "5544", "5432"]) {
-      run(directory, { VMAIL_DB_BIND_PASSWD: password, OPENSHIP_MAIL_DB_PORT: port });
+      run(directory, { VMAIL_DB_BIND_PASSWD: password, KOVALIO_MAIL_DB_PORT: port });
       expect(await readFile(join(directory, settings), "utf8")).toContain(
         `export PGPORT=${port}\n`,
       );
@@ -67,7 +67,7 @@ describe("fail2ban sidecar connection configuration", () => {
 
   it("supports IPv6 without using wildcard credentials", async () => {
     const directory = await root();
-    run(directory, { OPENSHIP_MAIL_DB_HOST: "::1" });
+    run(directory, { KOVALIO_MAIL_DB_HOST: "::1" });
     expect(await readFile(join(directory, credentials), "utf8")).toBe(
       "\\:\\:1:5432:fail2ban:fail2ban:test-password\n",
     );
@@ -75,11 +75,11 @@ describe("fail2ban sidecar connection configuration", () => {
   });
 
   it.each([
-    { OPENSHIP_MAIL_DB_HOST: "/var/run/postgresql" },
-    { OPENSHIP_MAIL_DB_HOST: "localhost;echo bad" },
-    { OPENSHIP_MAIL_DB_PORT: "0" },
-    { OPENSHIP_MAIL_DB_PORT: "65536" },
-    { OPENSHIP_MAIL_DB_PORT: "5432;exit 0" },
+    { KOVALIO_MAIL_DB_HOST: "/var/run/postgresql" },
+    { KOVALIO_MAIL_DB_HOST: "localhost;echo bad" },
+    { KOVALIO_MAIL_DB_PORT: "0" },
+    { KOVALIO_MAIL_DB_PORT: "65536" },
+    { KOVALIO_MAIL_DB_PORT: "5432;exit 0" },
     { VMAIL_DB_BIND_PASSWD: "" },
     { VMAIL_DB_BIND_PASSWD: "secret\nextra-record" },
   ])("rejects invalid connection input before writing files: %j", async (values) => {

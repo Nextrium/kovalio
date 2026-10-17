@@ -101,7 +101,7 @@ continuing.
 Twice during the install, the wizard pauses and needs you to act — first for DNS, then for reverse DNS.
 
 The final **Verify Public Mail Ports** step first confirms the daemons are listening on the server, then
-connects from the Openship API to the public DNS address on TCP 25, 465, 587, and 993. The API may run on the
+connects from the Kovalio API to the public DNS address on TCP 25, 465, 587, and 993. The API may run on the
 mail server itself. Missing or loopback-only listeners, failed client ports (465/587/993), and non-timeout
 errors on TCP 25 stop setup. Check both the host firewall and the cloud provider's firewall when a listening
 port cannot be reached.
@@ -246,7 +246,7 @@ actual values when something's off.
 
 ### Health
 
-If Openship cannot read the server, **Mail status unavailable** offers **Retry status**. Saved details
+If Kovalio cannot read the server, **Mail status unavailable** offers **Retry status**. Saved details
 remain visible when available, and current health is unknown until a check succeeds. A failed
 connection does not offer setup or engine repair, or start and stop mail services.
 
@@ -254,7 +254,7 @@ The single "is everything working?" screen. A banner at the top aggregates a ver
 
 - **Daemons** — live systemd status of each mail process (Postfix, Dovecot, anti-spam, etc.), refreshed on a
   10-second poll. Each row has a **Logs** button and a menu to **Start**, **Stop**, or **Restart** that unit.
-- **Public mail ports** — combines the server's local listener table with connections from the Openship
+- **Public mail ports** — combines the server's local listener table with connections from the Kovalio
   control plane to the public DNS address on TCP 25, 465, 587, and 993. The UI poll reuses one result for 60
   seconds, so this is a bounded health check rather than a continuous port watcher.
 - **Outbound delivery** — shows the direct/relay send path, queue depth, and actionable deferral reasons.
@@ -284,7 +284,7 @@ each run; successful runs offer **Restore** (in place) and **Migrate** (onto ano
 ### Advanced
 
 **Mail certificate** shows expiry and the certificate served by SMTP (465/587) and IMAP (993).
-**Check certificate** refreshes those observations. **Renew certificate** uses the existing Openship
+**Check certificate** refreshes those observations. **Renew certificate** uses the existing Kovalio
 edge to obtain a certificate when due, reloads Postfix and Dovecot, and checks the served certificates.
 A certificate that is still valid is reused, so repeated clicks do not create extra ACME orders.
 
@@ -293,8 +293,8 @@ renewal** job; disabling the mail toggle leaves certificate monitoring active. E
 and services still serving an old certificate appear in **Health** and global **Monitoring**.
 The checks share a five-minute cache; Monitoring's re-scan refreshes them immediately.
 
-The Openship control plane must remain running for scheduled renewal. In Desktop, keep Openship open;
-for unattended operation, run a self-hosted control plane. When adopting a legacy mail host, Openship
+The Kovalio control plane must remain running for scheduled renewal. In Desktop, keep Kovalio open;
+for unattended operation, run a self-hosted control plane. When adopting a legacy mail host, Kovalio
 retires a host Certbot timer only if it manages this mail certificate alone. A timer that also manages
 other certificates is left unchanged and reported for migration.
 

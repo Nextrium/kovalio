@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { OpenshipClient } from "../src";
+import { KovalioClient } from "../src";
 
 it("preserves the monitor URL by default and sends the opt-in usage format", async () => {
   const fetcher = vi.fn(
@@ -8,8 +8,8 @@ it("preserves the monitor URL by default and sends the opt-in usage format", asy
         headers: { "content-type": "text/event-stream" },
       }),
   );
-  const ship = new OpenshipClient({
-    baseUrl: "https://openship.test",
+  const ship = new KovalioClient({
+    baseUrl: "https://kovalio.test",
     token: "test-token",
     fetch: fetcher,
   });
@@ -20,9 +20,9 @@ it("preserves the monitor URL by default and sends the opt-in usage format", asy
     /* consume the response */
   }
   expect(String(fetcher.mock.calls[0]?.[0])).toBe(
-    "https://openship.test/api/system/monitor/stream?serverId=server-a",
+    "https://kovalio.test/api/system/monitor/stream?serverId=server-a",
   );
   expect(String(fetcher.mock.calls[1]?.[0])).toBe(
-    "https://openship.test/api/system/monitor/stream?serverId=server-a&format=usage",
+    "https://kovalio.test/api/system/monitor/stream?serverId=server-a&format=usage",
   );
 });

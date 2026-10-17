@@ -26,8 +26,8 @@ console.log(traffic.summary, traffic.periods);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/analytics/overview?projectId=proj_123&from=2026-09-01T00:00:00Z&to=2026-09-02T00:00:00Z" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/analytics/overview?projectId=proj_123&from=2026-09-01T00:00:00Z&to=2026-09-02T00:00:00Z" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -55,8 +55,8 @@ console.log(stats.successfulDeployments, stats.failedDeployments);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/analytics/deployments?projectId=proj_123" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/analytics/deployments?projectId=proj_123" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -82,8 +82,8 @@ console.log(usage.supported, usage.overall, usage.services);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/analytics/resources?projectId=proj_123" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/analytics/resources?projectId=proj_123" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -109,8 +109,8 @@ for await (const event of ship.analytics.streamUsage("proj_123", {
 <Tab value="REST API">
 
 ```bash
-curl -N "$OPENSHIP_URL/api/analytics/usage/stream?projectId=proj_123" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -N "$KOVALIO_URL/api/analytics/usage/stream?projectId=proj_123" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -132,8 +132,8 @@ await ship.analytics.setPathsCollection("proj_123", { enabled: true });
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/analytics/paths-collection/proj_123" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/analytics/paths-collection/proj_123" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"enabled":true}'
 ```
@@ -160,8 +160,8 @@ console.log(buckets);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/analytics/server/srv_123?domain=app.example.com" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/analytics/server/srv_123?domain=app.example.com" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>

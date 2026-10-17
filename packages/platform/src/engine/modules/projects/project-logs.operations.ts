@@ -28,7 +28,7 @@ async function assertTrafficAccess(ctx: ExecutionContext, sources: ProjectTraffi
     // A deployment snapshot must not redirect project log access to another tenant's server.
     const server = await repos.server.get(source.serverId);
     assertResourceInOrg(server, "Server", ctx.organizationId, source.serverId);
-    if (server.isLocal && process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION !== "true")
+    if (server.isLocal && process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION !== "true")
       throw new AppError("Host execution is disabled by this native installation's policy", 403, "HOST_EXECUTION_DISABLED");
   }
 }
@@ -260,8 +260,8 @@ export const openProjectServerLogs: NonNullable<ProjectDependencies["openServerL
       if (!conn) {
         const edgeUp = !failure && (await probeMgmt(serverId).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/projects/project-logs.operations"); return false; }));
         const error = edgeUp
-          ? `The Openship edge is running but refused the log stream for ${domain}. Check that this domain is routed through the edge, then retry.`
-          : `Couldn't reach the Openship edge's log service on this server${failure ? `: ${failure}` : ""}. Make sure the edge is running (\`docker ps\` should show openship-edge) and redeploy the routing if it isn't.`;
+          ? `The Kovalio edge is running but refused the log stream for ${domain}. Check that this domain is routed through the edge, then retry.`
+          : `Couldn't reach the Kovalio edge's log service on this server${failure ? `: ${failure}` : ""}. Make sure the edge is running (\`docker ps\` should show kovalio-edge) and redeploy the routing if it isn't.`;
         yield new TextEncoder().encode(`event: error\ndata: ${JSON.stringify({ error })}\n\n`);
         return;
       }

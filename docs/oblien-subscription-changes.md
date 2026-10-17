@@ -1,8 +1,8 @@
 # Oblien subscription changes
 
-Openship uses the published `oblien@2.7.0` plan-change API for existing managed
+Kovalio uses the published `oblien@2.7.0` plan-change API for existing managed
 server subscriptions. Each server has its own namespace and subscription.
-Oblien owns proration, payment, credits, renewals and entitlements; Openship
+Oblien owns proration, payment, credits, renewals and entitlements; Kovalio
 supplies trusted retail offers and the existing server resize/restart workflow.
 
 Provider contract: [Reseller subscription plan changes](https://oblien.com/docs/api/billing#reseller-subscription-plan-changes).
@@ -13,7 +13,7 @@ Checked against the published API docs and npm SDK on October 3, 2026.
 Checked against `oblien@2.10.0` and the provider billing documentation on
 October 14, 2026. This is separate from changing an existing subscription.
 
-When the provider catalog advertises `reseller.checkoutCancellation`, Openship
+When the provider catalog advertises `reseller.checkoutCancellation`, Kovalio
 cancels the original checkout through
 `POST /billing/checkout/:checkoutId/cancel`. It saves the checkout ID and stable
 retry key before dispatch, then re-reads that original checkout. Confirmed expiry
@@ -26,7 +26,7 @@ Saved quote cancellations continue through that path after an upgrade. A saved
 checkout cancellation retries its original ID and key even if capability
 discovery is unavailable; it never switches payment identity after dispatch.
 The provider SDK adds `billing.cancelCheckout(namespace, checkoutId, input)`;
-until that SDK release is adopted, Openship uses its existing authenticated,
+until that SDK release is adopted, Kovalio uses its existing authenticated,
 bounded billing transport and shared checkout-response validator.
 
 A provider without either capability returns
@@ -67,7 +67,7 @@ The same application operations serve SaaS HTTP routes, the SDK, and linked
 self-hosted installations. Local links map their server billing scope to the
 verified Cloud identity; they do not maintain a second financial operation.
 
-| Openship route | Permission | Official Oblien SDK method |
+| Kovalio route | Permission | Official Oblien SDK method |
 | --- | --- | --- |
 | `POST /api/billing/subscription/change/preview` | `billing:write` | `billing.previewPlanChange(namespace, input)` |
 | `POST /api/billing/subscription/change` | `billing:admin` | `billing.changePlan(namespace, input)` |

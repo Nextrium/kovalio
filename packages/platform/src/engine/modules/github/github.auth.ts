@@ -242,7 +242,7 @@ export async function getInstallationId(
   }
 
   // For an owner not covered by a custom source, preserve the pre-source auth
-  // mode. In cloud-app mode api.openship.io remains authoritative; a legacy
+  // mode. In cloud-app mode api.nextrium.org remains authoritative; a legacy
   // local snapshot must never shadow it.
   const mode = await resolveGitHubFallbackAuthMode(ctx).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/github/github.auth"); return "none" as const; });
   if (mode === "cloud-app") {
@@ -290,7 +290,7 @@ export async function getInstallationIdByOrg(
   if (cached) return Number(cached);
 
   // A workspace-owned source is fully local and intentionally wins over the
-  // optional Openship Cloud bridge. It was explicitly configured for this org.
+  // optional Kovalio Cloud bridge. It was explicitly configured for this org.
   const local = await repos.gitInstallation.findByOrgAndOwner(organizationId, owner);
   if (local?.sourceId) {
     await store.set(cacheKey, String(local.installationId), GITHUB_TOKEN_CACHE_TTL_SECONDS);
@@ -1040,7 +1040,7 @@ export async function getUserInstallations(
     : [];
   // A custom source augments the existing integration. It is authoritative for
   // owners it covers, but it must not hide installations that still come from
-  // Openship Cloud or the user's OAuth connection.
+  // Kovalio Cloud or the user's OAuth connection.
   const mode = customConfigured
     ? await resolveGitHubFallbackAuthMode(ctx)
     : await resolveGitHubAuthMode(ctx);
@@ -1235,12 +1235,12 @@ export function getGitHubAuthMode(): GitHubAuthMode {
  *
  * The canonical answer for any request that has a userId. Resolution:
  *
- *   1. `CLOUD_MODE=true` (this IS api.openship.io) → "app", unconditionally.
+ *   1. `CLOUD_MODE=true` (this IS api.nextrium.org) → "app", unconditionally.
  *   2. A workspace-owned custom App → "app" for the composite source UI.
  *   3. Explicit `GITHUB_AUTH_MODE` env var → used as-is on self-hosted only.
- *   4. Self-hosted + the user is connected to Openship Cloud → "cloud-app".
+ *   4. Self-hosted + the user is connected to Kovalio Cloud → "cloud-app".
  *      All App-scoped operations (install URL, list installations, mint
- *      install token, OAuth identity) proxy through api.openship.io.
+ *      install token, OAuth identity) proxy through api.nextrium.org.
  *   5. Self-hosted + NOT cloud-connected → "cli" (the gh CLI / PAT
  *      escape hatch — no App-scoped features available).
  *
@@ -1348,7 +1348,7 @@ export function getInstallUrl(): string {
 
 /**
  * Per-user install URL resolution. In cloud-app mode this round-trips
- * through openship.io to get a state-bound URL. A self-hosted local App mints
+ * through nextrium.org to get a state-bound URL. A self-hosted local App mints
  * the same one-shot user/workspace binding locally; stateless install URLs are
  * never returned because the setup redirect's installation_id is untrusted.
  */
@@ -1380,7 +1380,7 @@ export async function resolveInstallUrl(
     const { cloudClient } = await import("../../lib/cloud/client");
     const res = await cloudClient({ organizationId }).github.installUrl();
     if (res) {
-      // The Openship App's Setup URL returns to Cloud, so Cloud's durable DB
+      // The Kovalio App's Setup URL returns to Cloud, so Cloud's durable DB
       // binding is authoritative. Persisting the same nonce locally creates a
       // dead second copy that no callback can consume.
       return res;
@@ -1394,7 +1394,7 @@ export async function resolveInstallUrl(
     // Signal unreachable so the caller tells the user the truth instead
     // of handing them a dead link.
     errorDiagnostics.warn("platform/engine/modules/github/github.auth",
-      "[GitHub] install URL unavailable — Openship Cloud unreachable (cloud-app mode); refusing stateless local fallback",
+      "[GitHub] install URL unavailable — Kovalio Cloud unreachable (cloud-app mode); refusing stateless local fallback",
     );
     return { url: "", state: "", cloudUnreachable: true };
   }

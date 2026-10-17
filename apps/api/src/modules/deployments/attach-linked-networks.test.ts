@@ -91,7 +91,7 @@ describe("attachLinkedNetworks", () => {
       attachToExternalNetworks, joinServiceGroupContainers: vi.fn(),
     }, undefined, "candidate-deploy", ["release-container"]);
     expect(attachToExternalNetworks).toHaveBeenCalledWith(
-      "target", ["openship-database"], [], expect.objectContaining({
+      "target", ["kovalio-database"], [], expect.objectContaining({
         onlyContainerIds: ["release-container"], strict: true,
       }),
     );

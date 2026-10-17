@@ -11,8 +11,8 @@ vi.mock("./useUpdates", () => ({
       latestVersion: "0.7.0",
       updateAvailable: true,
       advisories: [],
-      changelogUrl: "https://openship.io/changelog",
-      latestChangelogUrl: "https://openship.io/changelog/v0-6-10",
+      changelogUrl: "https://nextrium.org/changelog",
+      latestChangelogUrl: "https://nextrium.org/changelog/v0-6-10",
     },
     latest: { version: "0.7.0", tag: "v0.7.0", notes: "newer notes" },
     muted: false,
@@ -29,15 +29,15 @@ vi.mock("./useUpdates", () => ({
 }));
 
 describe("UpdateCenter changelog links", () => {
-  it("sends the post-update toast to that version on the Openship website", () => {
+  it("sends the post-update toast to that version on the Kovalio website", () => {
     const html = renderToStaticMarkup(
       <I18nProvider>
         <UpdateCenter />
       </I18nProvider>,
     );
 
-    expect(html).toContain("Updated to Openship 0.6.9");
-    expect(html).toContain('href="https://openship.io/changelog/v0-6-9"');
-    expect(html).not.toContain("github.com/oblien/openship");
+    expect(html).toContain("Updated to Kovalio 0.6.9");
+    expect(html).toContain('href="https://nextrium.org/changelog/v0-6-9"');
+    expect(html).not.toContain("github.com/Nextrium/kovalio");
   });
 });

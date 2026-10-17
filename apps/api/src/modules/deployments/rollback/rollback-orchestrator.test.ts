@@ -181,7 +181,7 @@ describe("static rollback inspects the selected deployment's filesystem", () => 
   });
 
   it.each([false, "unreachable"])("never substitutes local files when the server reports %s", async result => {
-    const path = await mkdtemp(join(tmpdir(), "openship-remote-restore-"));
+    const path = await mkdtemp(join(tmpdir(), "kovalio-remote-restore-"));
     try {
       staticTarget(path, "cloud");
       if (result === "unreachable") h.pathExists.mockRejectedValue(new Error("server unreachable"));
@@ -195,7 +195,7 @@ describe("static rollback inspects the selected deployment's filesystem", () => 
   });
 
   it("reads a local static mount without needing the host SSH channel", async () => {
-    const path = await mkdtemp(join(tmpdir(), "openship-local-restore-"));
+    const path = await mkdtemp(join(tmpdir(), "kovalio-local-restore-"));
     try {
       staticTarget(path, "local");
       h.localHost = true;
@@ -237,7 +237,7 @@ describe("rollback — reacquire a frozen release image", () => {
   it("pins Cloud Docker service images while retaining the original shared workspace and volume configuration", async () => {
     h.runtimeName = "cloud";
     h.imagePresent = true;
-    h.serviceImages = [{ serviceId: "web", serviceName: "web", imageRef: "openship/app-web:bld_v1" }];
+    h.serviceImages = [{ serviceId: "web", serviceName: "web", imageRef: "kovalio/app-web:bld_v1" }];
     const binding = { projectId: "project-1", workspaceId: "shared-vm" };
     const services = [{ id: "web", name: "web", volumes: ["data:/data"] }];
     h.target!.imageRef = "compose";
@@ -247,7 +247,7 @@ describe("rollback — reacquire a frozen release image", () => {
     const [, request] = h.triggerDeployment.mock.calls[0] as [unknown, TriggerRequest];
     expect(request.reuseSnapshot.meta).toMatchObject({
       cloudDockerWorkspace: binding, workspaceId: "shared-vm", composeServices: services,
-      handoverImages: { web: "openship/app-web:bld_v1" }, buildStrategy: "server", deployTarget: "cloud",
+      handoverImages: { web: "kovalio/app-web:bld_v1" }, buildStrategy: "server", deployTarget: "cloud",
     });
     expect(request.reuseSnapshot.envVars).toEqual({ API_KEY: "encrypted-frozen" });
   });

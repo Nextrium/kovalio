@@ -46,7 +46,7 @@ GitHub or GitHub Enterprise App, manage installations, rotate credentials, verif
 default source. See [Self-hosted GitHub Apps](/docs/guides/self-hosted-github-app).
 
 The **GitHub** connection card underneath manages the separate local `gh`/device/token identity and the
-managed Openship App fallback. When workspace-owned Apps exist, their install, manage, and delete controls
+managed Kovalio App fallback. When workspace-owned Apps exist, their install, manage, and delete controls
 remain exclusively in the source cards, so **Disconnect** cannot misleadingly remove only an unrelated
 OAuth account.
 
@@ -156,8 +156,8 @@ when. Search across events, actors, and resources, filter by event type, and exp
 
 ## Cloud
 
-*(Self-hosted and desktop only.)* Link this instance to Openship Cloud to unlock cloud deployments, managed SSL, and the
-global CDN. Press **Connect to Openship Cloud**, sign in, and review the account and organization
+*(Self-hosted and desktop only.)* Link this instance to Kovalio Cloud to unlock cloud deployments, managed SSL, and the
+global CDN. Press **Connect to Kovalio Cloud**, sign in, and review the account and organization
 before authorizing. The consent screen has **Switch** actions for both. Once connected the card shows
 your cloud account with a **Disconnect** option. This connection also enables migrating your instance
 to Cloud — see [Connect to Cloud & migrate](/docs/guides/cloud-connect-migration).
@@ -201,7 +201,7 @@ backup policies and destinations, and Git credentials. Related self-hosted serve
 included by default. You can choose which configuration and history to include. Both instance and project
 exports include environment values, private keys, deployment snapshots, inline Compose configuration,
 and credentials as **unencrypted JSON**, with no export password. Credentials and all history are selected
-by default. Keep using the listed servers, or connect the destination to the same Openship Cloud account.
+by default. Keep using the listed servers, or connect the destination to the same Kovalio Cloud account.
 
 **Import data** uploads the file once and previews its contents. An instance archive starts in **Replace
 the entire destination instance** mode, with confirmation before applying. It restores the source
@@ -215,7 +215,7 @@ how many records will be removed. Excluded categories and other projects are ret
 can override that choice. Shared integrations and backup
 destinations are reused unless you explicitly choose to overwrite shared settings.
 
-Cloud projects require the destination workspace to be connected to the **same Openship Cloud account**.
+Cloud projects require the destination workspace to be connected to the **same Kovalio Cloud account**.
 Cloud servers cannot be transferred between accounts. For project imports, a source control-plane host needs an
 explicit target mapping. Projects mapped to a different host arrive disabled with live container
 references cleared, ready for a migration or redeployment.

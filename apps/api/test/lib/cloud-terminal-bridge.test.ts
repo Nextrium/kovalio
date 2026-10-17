@@ -92,7 +92,7 @@ describe("real WebSocket terminal relay", () => {
     const { handlers, client, peer, request } = await connect(kind);
     expect(request.url).toBe(kind === "server" ? "/api/terminal/ws/cloud-resource" : "/api/services/terminal/ws/cloud-resource");
     expect(request.headers.origin).toBe("https://app.example.test");
-    expect(request.headers["sec-websocket-protocol"]).toBe(`openship.terminal.v1+${token}`);
+    expect(request.headers["sec-websocket-protocol"]).toBe(`kovalio.terminal.v1+${token}`);
     expect(request.headers.authorization).toBeUndefined();
     expect(request.headers.cookie).toBeUndefined();
     const message = once(peer, "message");

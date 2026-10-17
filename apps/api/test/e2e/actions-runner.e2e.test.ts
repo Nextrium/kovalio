@@ -30,7 +30,7 @@ import { availablePort, sshReady } from "../helpers/migration-host";
 import { workspaceRuntime } from "../helpers/workspace-runtime";
 
 const tag = randomUUID().slice(0, 8);
-const hostImage = `openship-actions-host:${tag}`;
+const hostImage = `kovalio-actions-host:${tag}`;
 const local = new LocalExecutor();
 const fixture = join(dirname(fileURLToPath(import.meta.url)), "../fixtures/migration-target");
 
@@ -47,15 +47,15 @@ describeDockerE2E("Actions on an isolated SSH Docker host and managed execution 
     await requireDocker();
     ensureRunnerAssets();
     parent = await DockerRuntime.create({ transport: "socket" });
-    temp = await mkdtemp(join(tmpdir(), "openship-actions-e2e-"));
+    temp = await mkdtemp(join(tmpdir(), "kovalio-actions-e2e-"));
     const key = join(temp, "identity");
     await local.exec(`ssh-keygen -q -t ed25519 -N '' -f ${q(key)}`);
     await local.exec(`docker build -q -t ${q(hostImage)} ${q(fixture)}`, { timeout: 300_000 });
     const port = await availablePort();
     const vm = await parent.docker.createContainer({
       Image: hostImage,
-      name: `openship-actions-test-${tag}`,
-      Labels: { "openship.test": tag },
+      name: `kovalio-actions-test-${tag}`,
+      Labels: { "kovalio.test": tag },
       // Docker's wrapper delegates cgroup v2 controllers before the inner
       // daemon starts, so CPU/memory enforcement is exercised on this host.
       Entrypoint: ["/usr/local/bin/dind", "/usr/local/bin/migration-target"],
@@ -85,7 +85,7 @@ describeDockerE2E("Actions on an isolated SSH Docker host and managed execution 
       "FROM node:22-bookworm-slim\nRUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl && rm -rf /var/lib/apt/lists/*\n",
     );
     await ssh.exec(
-      "docker build -q -t openship-actions-fixture /tmp/actions-image && docker pull nginx:stable-alpine && docker pull busybox:1.37",
+      "docker build -q -t kovalio-actions-fixture /tmp/actions-image && docker pull nginx:stable-alpine && docker pull busybox:1.37",
       { timeout: 300_000 },
     );
     await ssh.exec(
@@ -139,7 +139,7 @@ describeDockerE2E("Actions on an isolated SSH Docker host and managed execution 
       secrets: { TOKEN: "secret-never-visible-in-journal" },
       variables: {},
       inputs: {},
-      platforms: { "self-hosted": native ? "-self-hosted" : "openship-actions-fixture" },
+      platforms: { "self-hosted": native ? "-self-hosted" : "kovalio-actions-fixture" },
       timeoutSeconds: 180,
       containerCpu: 0.5,
       containerMemoryMb: 512,
@@ -238,7 +238,7 @@ jobs:
 jobs:
   test:
     runs-on: self-hosted
-    container: openship-actions-fixture
+    container: kovalio-actions-fixture
     services:
       site:
         image: nginx:stable-alpine
@@ -279,7 +279,7 @@ jobs:
     for (const resource of ["ps -aq", "volume ls -q", "network ls -q"])
       expect(
         await ssh.exec(
-          `docker ${resource} --filter ${q("label=io.openship.actions.job=" + input.id)}`,
+          `docker ${resource} --filter ${q("label=io.kovalio.actions.job=" + input.id)}`,
         ),
       ).toBe("");
     await assertAppUnchanged();
@@ -295,7 +295,7 @@ jobs:
     let container = "";
     for (let i = 0; i < 100; i++) {
       container = (
-        await ssh.exec(`docker ps -q --filter ${q("label=io.openship.actions.job=" + input.id)}`)
+        await ssh.exec(`docker ps -q --filter ${q("label=io.kovalio.actions.job=" + input.id)}`)
       ).trim();
       if (container) break;
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -345,7 +345,7 @@ jobs:
     await worker.start(installed.binary, directory, input);
     expect((await ssh.readFile("/tmp/native-actions-side-effect")).trim()).toBe("once");
     expect(
-      await ssh.exec(`docker ps -aq --filter ${q("label=io.openship.actions.job=" + input.id)}`),
+      await ssh.exec(`docker ps -aq --filter ${q("label=io.kovalio.actions.job=" + input.id)}`),
     ).toBe("");
     await worker.clean(installed.binary, directory);
     await assertAppUnchanged();
@@ -409,7 +409,7 @@ jobs:
           name: "Isolated build host",
           config: {
             mode: "container",
-            image: "openship-actions-fixture",
+            image: "kovalio-actions-fixture",
             cpu: 0.5,
             memoryMb: 512,
             maxParallel: 1,

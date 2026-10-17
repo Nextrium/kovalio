@@ -9,30 +9,30 @@ Store a personal access token in your CI secret store. The CLI reads an ephemera
 environment variables without writing the token to disk:
 
 ```bash
-export OPENSHIP_API_URL=https://api.openship.io
-export OPENSHIP_ORGANIZATION_ID=org_123
-# OPENSHIP_TOKEN is injected by your CI secret store.
-openship --json project list
-openship deploy --project proj_123 --watch
+export KOVALIO_API_URL=https://api.nextrium.org
+export KOVALIO_ORGANIZATION_ID=org_123
+# KOVALIO_TOKEN is injected by your CI secret store.
+kovalio --json project list
+kovalio deploy --project proj_123 --watch
 ```
 
-Use a token with the resource grants needed for the job. `OPENSHIP_CONTEXT` selects a saved context
+Use a token with the resource grants needed for the job. `KOVALIO_CONTEXT` selects a saved context
 before applying the environment overrides. An explicit `--context production` uses only the saved
 connection, so a token intended for a different API cannot leak into that invocation. An API override
 without a replacement token never reuses a saved token from another endpoint.
 
-For a persistent login, `openship login --cloud --token-file /run/secrets/openship` reads a private file;
+For a persistent login, `kovalio login --cloud --token-file /run/secrets/kovalio` reads a private file;
 `--token-file -` reads stdin. Both avoid putting the token in command arguments.
 
 ## Use explicit IDs and JSON
 
 ```bash
-openship --json project list > projects.json
-openship deploy --project proj_123 --branch main --watch
+kovalio --json project list > projects.json
+kovalio deploy --project proj_123 --branch main --watch
 ```
 
 Put global `--json` before the command. Structured resource commands write JSON to stdout and
-diagnostics to stderr. `OPENSHIP_JSON=1` also enables JSON output. Interactive installation commands
+diagnostics to stderr. `KOVALIO_JSON=1` also enables JSON output. Interactive installation commands
 retain their command-specific behavior; inspect their help before using them unattended.
 
 Long-running event commands emit one JSON object per line with `event` and `data`. Starting a job,

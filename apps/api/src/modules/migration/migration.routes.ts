@@ -16,7 +16,7 @@ const r = secureRouter(new Hono(), {
   ids: { server: "serverId" },
 });
 
-r.get("/sources", { tag: "server:read", collection: true, mcp: { description: "List reusable migration-only SSH sources in the active organization. These connections cannot host Openship deployments or run general server commands." } }, migration.listSources);
+r.get("/sources", { tag: "server:read", collection: true, mcp: { description: "List reusable migration-only SSH sources in the active organization. These connections cannot host Kovalio deployments or run general server commands." } }, migration.listSources);
 r.post("/sources/test", { tag: "server:write", collection: true, body: MigrationRequestSchemas.source, mcp: { description: "Verify a public SSH migration source using a password or uploaded private key. Returns its host fingerprint; does not save credentials or modify workloads." } }, migration.testSource);
 r.post("/sources", { tag: "server:write", collection: true, body: MigrationRequestSchemas.source, mcp: { description: "Connect a public SSH server for migration only. Verifies the connection, pins its host key and encrypts credentials. Scan it, preview a move to a managed server, then start the existing migration flow." } }, migration.createSource);
 r.delete("/sources/:serverId", { tag: "server:write", mcp: { description: "Remove a migration-only connection and its stored credentials after its runs finish. Does not delete the external server, source containers, data or imported projects." } }, migration.deleteSource);
@@ -28,10 +28,10 @@ r.get("/scan/stream", { tag: "server:write", collection: true, mcpExcluded: "SSE
 // On-demand reveal of ONE discovered container's real env (scan masks it). Write-
 // gated: the masked scan is a read, revealing the real secret is a write (#336).
 r.post("/reveal-env", { tag: "server:write", collection: true, mcpExcluded: "Explicit dashboard secret reveal. Migration rediscovers real source environment server-side; MCP passes selected container IDs." }, migration.revealServiceEnv);
-// Create an Openship project from the selected discovered services (records only).
-r.post("/adopt", { localOnly: true, tag: "server:write", collection: true, mcp: { description: "Register selected discovered Docker services as an Openship project while preserving running containers and volumes. Rediscovers values on the server; do not send masked secrets as replacements. Deployment and cutover are separate." }, body: MigrationRequestSchemas.adopt }, migration.adoptServer);
-// Re-import an orphaned Openship project (DR / cross-instance), preserving its id.
-r.post("/reimport", { localOnly: true, tag: "server:write", collection: true, mcp: { description: "Re-register an orphaned Openship project found on this server, preserving its scanned project ID and configuration. Use scan to identify the project; this is recovery of existing workloads." }, body: MigrationRequestSchemas.reimport }, migration.reimportServer);
+// Create an Kovalio project from the selected discovered services (records only).
+r.post("/adopt", { localOnly: true, tag: "server:write", collection: true, mcp: { description: "Register selected discovered Docker services as an Kovalio project while preserving running containers and volumes. Rediscovers values on the server; do not send masked secrets as replacements. Deployment and cutover are separate." }, body: MigrationRequestSchemas.adopt }, migration.adoptServer);
+// Re-import an orphaned Kovalio project (DR / cross-instance), preserving its id.
+r.post("/reimport", { localOnly: true, tag: "server:write", collection: true, mcp: { description: "Re-register an orphaned Kovalio project found on this server, preserving its scanned project ID and configuration. Use scan to identify the project; this is recovery of existing workloads." }, body: MigrationRequestSchemas.reimport }, migration.reimportServer);
 
 // Read-only: parse a linked repo's docker-compose (GitHub API) for the map step.
 r.post("/repo-compose", { tag: "server:read", readOnly: true, collection: true, mcp: { description: "Read derived Compose service configuration from an accessible GitHub repository for migration mapping. Environment values are masked; absence of Compose returns an empty services list." }, body: MigrationRequestSchemas.repoCompose }, migration.repoCompose);

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { SDK_CAPABILITIES } from "@repo/contracts";
-import { OpenshipClient, ApiError } from "../src/client";
+import { KovalioClient, ApiError } from "../src/client";
 
 function fixture(reply: (url: URL, request: RequestInit) => Response) {
   const calls: Array<{ url: URL; request: RequestInit }> = [];
-  const ship = new OpenshipClient({
+  const ship = new KovalioClient({
     baseUrl: "https://controller.example.test/control",
     token: "opsh_pat_mail",
     organizationId: "org_mail",
@@ -39,7 +39,7 @@ describe("mail administration uses the existing authenticated controller", () =>
     expect(f.calls[0].url.search).toBe("?hard=false");
     expect(f.calls[0].request.body).toBeUndefined();
     expect(new Headers(f.calls[0].request.headers).get("x-organization-id")).toBe("org_mail");
-    expect(new Headers(f.calls[0].request.headers).get("x-openship-scope")).toBe("fixed");
+    expect(new Headers(f.calls[0].request.headers).get("x-kovalio-scope")).toBe("fixed");
     expect(new Headers(f.calls[0].request.headers).get("authorization")).toBe(
       "Bearer opsh_pat_mail",
     );

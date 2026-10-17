@@ -61,7 +61,7 @@ describe("rolesUnsupportedReason", () => {
 
   it("refuses a multi-service deploy", () => {
     expect(rolesUnsupportedReason(input({ multiService: true }))).toBe(
-      'Runtime roles are not supported on multi-service deployments yet. Remove "roles" from openship.json, or deploy the app as a single service.',
+      'Runtime roles are not supported on multi-service deployments yet. Remove "roles" from kovalio.json, or deploy the app as a single service.',
     );
   });
 
@@ -74,7 +74,7 @@ describe("rolesUnsupportedReason", () => {
   it("refuses a runtime without the roles capability and names it", () => {
     const reason = rolesUnsupportedReason(input({ runtime: bareLike }));
     expect(reason).toBe(
-      'Runtime roles are not supported on the "bare" runtime yet. Deploy to a Docker server, or remove "roles" from openship.json.',
+      'Runtime roles are not supported on the "bare" runtime yet. Deploy to a Docker server, or remove "roles" from kovalio.json.',
     );
   });
 

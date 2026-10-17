@@ -127,7 +127,7 @@ export function serializeNewProjectEnv(
  * were loaded with. Untouched masked values never leave the browser, while an
  * explicit edit to an empty string remains a real upsert.
  *
- * Source-owned rows discovered from openship.json have no `originalKey` and
+ * Source-owned rows discovered from kovalio.json have no `originalKey` and
  * may also be preserved. The deployment wizard can ignore those rows because
  * build/access resolves them from source; ordinary editors reject them instead
  * of pretending they were persisted.

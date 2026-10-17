@@ -26,7 +26,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@repo/platform/engine/config/env", () => ({
-  localDashboardUrl: "https://app.openship.io",
+  localDashboardUrl: "https://kovalio.nextrium.org",
   env: {
     get OBLIEN_WEBHOOK_SECRET() {
       return h.secret;

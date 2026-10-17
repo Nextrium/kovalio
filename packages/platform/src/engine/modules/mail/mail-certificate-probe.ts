@@ -28,20 +28,20 @@ const ENDPOINTS = [
 export function mailCertificateProbeCommand(hostname: string): string {
   assertMailCertificateHostname(hostname);
   return [
-    `echo OPENSHIP_CERT_disk_BEGIN`,
-    `if [ -r ${sq(`/etc/letsencrypt/live/${hostname}/fullchain.pem`)} ]; then cat ${sq(`/etc/letsencrypt/live/${hostname}/fullchain.pem`)}; else echo OPENSHIP_CERT_MISSING; fi`,
-    `echo OPENSHIP_CERT_disk_END`,
+    `echo KOVALIO_CERT_disk_BEGIN`,
+    `if [ -r ${sq(`/etc/letsencrypt/live/${hostname}/fullchain.pem`)} ]; then cat ${sq(`/etc/letsencrypt/live/${hostname}/fullchain.pem`)}; else echo KOVALIO_CERT_MISSING; fi`,
+    `echo KOVALIO_CERT_disk_END`,
     ...ENDPOINTS.flatMap(({ protocol, port, starttls }) => [
-      `echo OPENSHIP_CERT_${protocol}_BEGIN`,
+      `echo KOVALIO_CERT_${protocol}_BEGIN`,
       `timeout 6 openssl s_client${starttls} -connect 127.0.0.1:${port} -servername ${sq(hostname)} -verify_hostname ${sq(hostname)} -showcerts </dev/null 2>&1 || true`,
-      `echo OPENSHIP_CERT_${protocol}_END`,
+      `echo KOVALIO_CERT_${protocol}_END`,
     ]),
   ].join("\n");
 }
 
 function block(output: string, name: string): string {
   return (
-    output.split(`OPENSHIP_CERT_${name}_BEGIN\n`)[1]?.split(`OPENSHIP_CERT_${name}_END`)[0] ?? ""
+    output.split(`KOVALIO_CERT_${name}_BEGIN\n`)[1]?.split(`KOVALIO_CERT_${name}_END`)[0] ?? ""
   );
 }
 
@@ -93,7 +93,7 @@ export function parseMailCertificateProbe(hostname: string, output: string): Mai
     }),
   };
   if (!disk.certificate) {
-    health.status = block(output, "disk").includes("OPENSHIP_CERT_MISSING") ? "fail" : "unknown";
+    health.status = block(output, "disk").includes("KOVALIO_CERT_MISSING") ? "fail" : "unknown";
     health.reason = health.status === "fail" ? "missing" : "unavailable";
     health.detail = "The managed mail certificate could not be read on this server.";
   } else if (!disk.matches || health.endpoints.some((p) => p.certificate && !p.trusted)) {
@@ -197,7 +197,7 @@ for conf in /etc/letsencrypt/renewal/*.conf; do
   [ -e "$conf" ] || continue
   lineage=$(basename "$conf" .conf)
   if [ ! "/etc/letsencrypt/live/$lineage/fullchain.pem" -ef ${sq(`/etc/letsencrypt/live/${hostname}/fullchain.pem`)} ]; then
-    echo 'The host Certbot timer also manages other certificates. Migrate that timer before enabling Openship mail renewal; it has been left unchanged.' >&2
+    echo 'The host Certbot timer also manages other certificates. Migrate that timer before enabling Kovalio mail renewal; it has been left unchanged.' >&2
     exit 1
   fi
 done

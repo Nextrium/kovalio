@@ -1,9 +1,9 @@
 import { parseArgs } from "node:util";
 import { createHash } from "node:crypto";
-import { OpenshipClient } from "../packages/sdk/src/client";
+import { KovalioClient } from "../packages/sdk/src/client";
 import { buildCatalog } from "../packages/core/scripts/gen-catalog";
 
-type RepairClient = Pick<OpenshipClient, "projects" | "services" | "deployments" | "deployment">;
+type RepairClient = Pick<KovalioClient, "projects" | "services" | "deployments" | "deployment">;
 
 /** Exact static recipe identity; unknown recipe fields are not a retired default. */
 export function catalogBuildRecipeHash(input: unknown): string | null {
@@ -172,20 +172,20 @@ if (import.meta.main) {
   });
   if (values.help) {
     console.log(
-      "OPENSHIP_URL=https://api.openship.io OPENSHIP_TOKEN=... bun scripts/catalog-image-repair.ts --project <id> --service <id> [--apply]\nDefaults to preview. --apply uses the normal service update and deployment flow. Image distribution replacements require a failed single-service install. Exact catalog-authored retired recipes can switch to their declared image and setup files while preserving data and unrelated settings.",
+      "KOVALIO_URL=https://api.nextrium.org KOVALIO_TOKEN=... bun scripts/catalog-image-repair.ts --project <id> --service <id> [--apply]\nDefaults to preview. --apply uses the normal service update and deployment flow. Image distribution replacements require a failed single-service install. Exact catalog-authored retired recipes can switch to their declared image and setup files while preserving data and unrelated settings.",
     );
   } else {
     try {
       if (
         !values.project ||
         !values.service ||
-        !process.env.OPENSHIP_URL ||
-        !process.env.OPENSHIP_TOKEN
+        !process.env.KOVALIO_URL ||
+        !process.env.KOVALIO_TOKEN
       )
-        throw new Error("Set OPENSHIP_URL and OPENSHIP_TOKEN, and pass --project and --service");
-      const ship = new OpenshipClient({
-        baseUrl: process.env.OPENSHIP_URL,
-        token: process.env.OPENSHIP_TOKEN,
+        throw new Error("Set KOVALIO_URL and KOVALIO_TOKEN, and pass --project and --service");
+      const ship = new KovalioClient({
+        baseUrl: process.env.KOVALIO_URL,
+        token: process.env.KOVALIO_TOKEN,
       });
       const result = await repairCatalogImage(ship, values.project, values.service, values.apply);
       console.log(JSON.stringify(result, null, 2));

@@ -36,8 +36,8 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.runtimeTarget.selfHosted = true;
   mocks.deployment.mockResolvedValue({ selfHosted: false, deployMode: "cloud" });
-  vi.stubEnv("OPENSHIP_LOCAL_API_URL", "");
-  vi.stubEnv("OPENSHIP_ICON_BASE_URL", "");
+  vi.stubEnv("KOVALIO_LOCAL_API_URL", "");
+  vi.stubEnv("KOVALIO_ICON_BASE_URL", "");
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -50,7 +50,7 @@ describe("dashboard icon hosting", () => {
   it.each(["", "/icons", "https://custom.example/icons"])(
     "renders Cloud icons from the CDN before hydration, regardless of the self-hosted override (%s)",
     async (override) => {
-      vi.stubEnv("OPENSHIP_ICON_BASE_URL", override);
+      vi.stubEnv("KOVALIO_ICON_BASE_URL", override);
       expect(await iconSource()).toBe(`${CLOUD_ICON_BASE_URL}/arrow%20-%20right-18-1663766896.png`);
     },
   );
@@ -67,7 +67,7 @@ describe("dashboard icon hosting", () => {
 
   it("honors a custom asset host on self-hosted installations", async () => {
     mocks.deployment.mockResolvedValue({ selfHosted: true, deployMode: "docker" });
-    vi.stubEnv("OPENSHIP_ICON_BASE_URL", "https://custom.example/icons/");
+    vi.stubEnv("KOVALIO_ICON_BASE_URL", "https://custom.example/icons/");
     expect(await iconSource()).toBe(
       iconAssetUrl(outlineModern["arrow-right"], "https://custom.example/icons"),
     );
@@ -85,7 +85,7 @@ describe("dashboard icon hosting", () => {
   );
 
   it("keeps desktop's injected local API on bundled artwork even while connected to Cloud", async () => {
-    vi.stubEnv("OPENSHIP_LOCAL_API_URL", "http://localhost:4999");
+    vi.stubEnv("KOVALIO_LOCAL_API_URL", "http://localhost:4999");
     expect(await iconSource()).toBe(iconAssetUrl(outlineModern["arrow-right"]));
   });
 });
@@ -111,15 +111,15 @@ describe("dashboard diagnostic privacy", () => {
     async ({ info, localApi, expected }) => {
       mocks.deployment.mockResolvedValue(info);
       mocks.runtimeTarget.selfHosted = false; // A Cloud account/target alone is insufficient.
-      vi.stubEnv("OPENSHIP_LOCAL_API_URL", localApi);
+      vi.stubEnv("KOVALIO_LOCAL_API_URL", localApi);
       const html = renderToStaticMarkup(await RootLayout({ children: null }));
       const script = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)]
         .map((match) => match[1]!)
-        .find((script) => script.includes("__OPENSHIP_ERROR_REPORTING__"));
+        .find((script) => script.includes("__KOVALIO_ERROR_REPORTING__"));
       expect(script).toBeTruthy();
-      const window: { __OPENSHIP_ERROR_REPORTING__?: boolean } = {};
+      const window: { __KOVALIO_ERROR_REPORTING__?: boolean } = {};
       runInNewContext(script!, { window });
-      expect(window.__OPENSHIP_ERROR_REPORTING__).toBe(expected);
+      expect(window.__KOVALIO_ERROR_REPORTING__).toBe(expected);
     },
   );
 });

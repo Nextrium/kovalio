@@ -55,8 +55,8 @@ export const InstanceImportSelectionSchema = Type.Unsafe<ImportSelection>(
 export const InstanceArchiveSchema = Type.Object(
   {
     kind: Type.Union([
-      Type.Literal("openship-instance-export"),
-      Type.Literal("openship-project-export"),
+      Type.Literal("kovalio-instance-export"),
+      Type.Literal("kovalio-project-export"),
     ]),
     envelopeVersion: Type.Integer({ minimum: 1 }),
     createdAt: Type.String(),

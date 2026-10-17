@@ -15,7 +15,7 @@ vi.mock("@repo/platform/engine/modules/apps/catalog-source", async (importOrigin
 import { seedOwner, db, repos, schema, type SeededOwner } from "../jobs/_harness";
 import { mintPatToken } from "@repo/platform/engine/lib/pat";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { createShip } from "@repo/sdk/native";
 import { permissionsRoutes } from "../../../src/modules/permissions/permissions.routes";
 import { projectRoutes } from "../../../src/modules/projects/project.routes";
@@ -39,7 +39,7 @@ const app = new Hono().onError(handleApiError)
   .route("/api/mcp", mcpRoutes);
 
 beforeAll(() => {
-  vi.stubEnv("OPENSHIP_RATE_LIMIT_STORE", "memory");
+  vi.stubEnv("KOVALIO_RATE_LIMIT_STORE", "memory");
   forwarding.fetch.mockImplementation(request => app.fetch(request));
   resetMcpToolCache();
 });
@@ -141,7 +141,7 @@ describe("MCP workspace discovery", () => {
   it("shares the discovery contract with SDKs and respects fixed native scopes", async () => {
     const owner = await seedOwner({ bound: false });
     const target = await secondWorkspace(owner);
-    const http = new OpenshipClient({ baseUrl: "http://openship.test", token: owner.token, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+    const http = new KovalioClient({ baseUrl: "http://kovalio.test", token: owner.token, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
     expect((await http.permissions.listWorkspaces()).workspaces).toHaveLength(2);
     const remote = await http.scope(target.orgId).permissions.listWorkspaces();
     const user = (await repos.user.findById(owner.userId))!;
@@ -178,7 +178,7 @@ describe("MCP destination selection", () => {
     expect((await repos.project.findById(result.data.project_id))?.organizationId).toBe(target.orgId);
     expect((await repos.service.listByProject(result.data.project_id)).map(service => service.name).sort()).toEqual(["db", "web"]);
     expect((await repos.project.listByOrganization(owner.orgId)).total).toBe(0);
-    expect(forwarding.fetch.mock.calls[0][0].headers.get("X-Openship-Scope")).toBe("fixed");
+    expect(forwarding.fetch.mock.calls[0][0].headers.get("X-Kovalio-Scope")).toBe("fixed");
     // A selection applies only to the call, not the account's future default.
     expect((await discover(owner)).currentOrganizationId).toBe(owner.orgId);
   });

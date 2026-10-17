@@ -93,13 +93,13 @@ jobs:
           E2E_SCOPE: scaling-${{ matrix.journey }}
         run: |
           set -o pipefail
-          mkdir -p "$RUNNER_TEMP/openship-scaling"
-          bun run --cwd apps/api test:e2e 2>&1 | tee "$RUNNER_TEMP/openship-scaling/output.log"
+          mkdir -p "$RUNNER_TEMP/kovalio-scaling"
+          bun run --cwd apps/api test:e2e 2>&1 | tee "$RUNNER_TEMP/kovalio-scaling/output.log"
       - name: Save diagnostics
         if: steps.resume.outputs.reused != 'true' && (always())
         uses: actions/upload-artifact@v7
         with:
           name: scaling-e2e-${{ matrix.journey }}-diagnostics
-          path: ${{ runner.temp }}/openship-scaling
+          path: ${{ runner.temp }}/kovalio-scaling
           if-no-files-found: ignore
           retention-days: 7

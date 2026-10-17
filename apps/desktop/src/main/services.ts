@@ -216,7 +216,7 @@ async function startDashboard(
     // already gone
   }
   if (!isCurrent()) return null;
-  console.log("[openship] dashboard utilityProcess did not start — falling back to node spawn");
+  console.log("[kovalio] dashboard utilityProcess did not start — falling back to node spawn");
   const sp = spawn(process.execPath, [serverJs], {
     cwd: dashboardDir,
     env: { ...env, ELECTRON_RUN_AS_NODE: "1" },
@@ -264,7 +264,7 @@ async function startApi(
   up.on("exit", (code) => {
     upDead = true;
     if (apiProc === up) apiExited = true;
-    console.log(`[openship] api(utility) exited (code=${code})`);
+    console.log(`[kovalio] api(utility) exited (code=${code})`);
   });
   pipeLogs("api", up);
   if (await waitForPort(healthUrl, () => upDead || !isCurrent())) return up;
@@ -272,7 +272,7 @@ async function startApi(
   // 2. Fallback — ELECTRON_RUN_AS_NODE spawn (works, but tiles the Dock).
   killService(up);
   if (!isCurrent()) return null;
-  console.log("[openship] api utilityProcess did not start — falling back to node spawn");
+  console.log("[kovalio] api utilityProcess did not start — falling back to node spawn");
   apiExited = false;
   const sp = spawn(process.execPath, [apiEntry], {
     cwd,
@@ -284,7 +284,7 @@ async function startApi(
   sp.on("exit", (code, signal) => {
     spDead = true;
     if (apiProc === sp) apiExited = true;
-    console.log(`[openship] api exited (code=${code ?? "null"} signal=${signal ?? "none"})`);
+    console.log(`[kovalio] api exited (code=${code ?? "null"} signal=${signal ?? "none"})`);
   });
   pipeLogs("api", sp);
   if (await waitForPort(healthUrl, () => spDead || !isCurrent())) return sp;
@@ -385,8 +385,8 @@ export async function startLocalServices(internalToken: string): Promise<void> {
       // Point geo-ip.ts straight at the staged mmdb. Only set when the file is
       // actually there, so a stale/partial Resources dir falls back to geo-ip's
       // own download path instead of pinning a bad override.
-      ...(existsSync(geoipDb) ? { OPENSHIP_GEOIP_DB: geoipDb } : {}),
-      ...(process.platform === "win32" && existsSync(cloudflaredPath) ? { OPENSHIP_CLOUDFLARED_PATH: cloudflaredPath } : {}),
+      ...(existsSync(geoipDb) ? { KOVALIO_GEOIP_DB: geoipDb } : {}),
+      ...(process.platform === "win32" && existsSync(cloudflaredPath) ? { KOVALIO_CLOUDFLARED_PATH: cloudflaredPath } : {}),
       // Pin the mail-server install source to the staged engine tree. Gated on
       // existsSync so a stale/partial Resources dir falls back to the resolver's
       // default rather than pinning a path that definitely isn't there.
@@ -458,10 +458,10 @@ export async function startLocalServices(internalToken: string): Promise<void> {
               if (next) supervise(next);
               else
                 errorDiagnostics.error("desktop/main/services",
-                  "[openship] API reload failed; reopen Desktop to resume the saved instance move.",
+                  "[kovalio] API reload failed; reopen Desktop to resume the saved instance move.",
                 );
             })
-            .catch((error) => errorDiagnostics.error("desktop/main/services", "[openship] API reload failed", error));
+            .catch((error) => errorDiagnostics.error("desktop/main/services", "[kovalio] API reload failed", error));
         };
         (child as unknown as NodeJS.EventEmitter).once("exit", onExit);
       };

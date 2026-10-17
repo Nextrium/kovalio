@@ -1535,7 +1535,7 @@ services:
 
 /**
  * GPU. Docker has no "GPU" field: the container only sees a card if the CREATE carried a device
- * request, and OpenShip used to drop every spelling of it (`devices`/`runtime` were reported as not
+ * request, and Kovalio used to drop every spelling of it (`devices`/`runtime` were reported as not
  * modeled, `deploy.resources.reservations` was never read). So a GPU service deployed fine, ran, and
  * silently fell back to CPU.
  */

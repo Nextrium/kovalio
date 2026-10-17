@@ -3,7 +3,7 @@ import type { Context } from "hono";
 import { z } from "zod";
 import { AppError } from "@repo/core";
 import { getRequestContext } from "../../lib/request-context";
-import { ensureNamespace } from "@repo/platform/engine/lib/openship-cloud";
+import { ensureNamespace } from "@repo/platform/engine/lib/kovalio-cloud";
 import { createTenantCloudAdmin } from "@repo/platform/engine/lib/cloud-tenant-admin";
 import { authorizeCloudRelayWorkspace } from "./cloud-relay-access";
 

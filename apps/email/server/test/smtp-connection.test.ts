@@ -13,7 +13,7 @@ import { sendMail } from '../src/lib/smtp';
 let dir: string;
 let cert: Buffer;
 beforeAll(() => {
-  dir = mkdtempSync(join(tmpdir(), 'openship-test-smtp-'));
+  dir = mkdtempSync(join(tmpdir(), 'kovalio-test-smtp-'));
   writeFileSync(
     join(dir, 'openssl.cnf'),
     '[req]\nprompt=no\ndistinguished_name=dn\nx509_extensions=cert\n[dn]\nCN=localhost\n[cert]\nsubjectAltName=DNS:localhost\nbasicConstraints=critical,CA:TRUE\n',

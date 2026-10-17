@@ -44,7 +44,7 @@ vi.mock("@repo/adapters", async () => {
   };
   return {
     ...(await import("../../../../packages/adapters/src/system/errors")),
-    HOST_STATE_DIR: "/root/.openship",
+    HOST_STATE_DIR: "/root/.kovalio",
     getPlatform: () => ({ target: "selfhosted", runtime: { name: "docker" } }),
     peekPlatform: () => undefined,
     createExecutor: executor,
@@ -126,7 +126,7 @@ vi.mock("@repo/platform/engine/lib/provision-lock", () => ({
 }));
 vi.mock("@repo/platform/engine/lib/acme-config", () => ({ resolveAcmeProviderOptions: () => ({}) }));
 vi.mock("@repo/platform/engine/modules/dns/dns-credential.service", () => ({ resolveDnsManager: vi.fn() }));
-vi.mock("@repo/platform/engine/lib/openship-manifest", () => ({
+vi.mock("@repo/platform/engine/lib/kovalio-manifest", () => ({
   removeProjectFromManifest: h.infraWork,
   removeProjectSnapshot: async (exec: { readFile: () => Promise<string> }) => { await exec.readFile(); },
 }));
@@ -147,7 +147,7 @@ import {
 } from "@repo/platform/engine/lib/domain-ssl";
 import { ensureTargetVerified } from "@repo/platform/engine/lib/edge-target-verify";
 import { runEdgeVerifySweep } from "@repo/platform/engine/modules/domains/edge-verify-schedule";
-import { removeProjectFromServerManifests } from "@repo/platform/engine/lib/openship-manifest-sync";
+import { removeProjectFromServerManifests } from "@repo/platform/engine/lib/kovalio-manifest-sync";
 
 const idleWindow = 6 * 60_000;
 const advance = () => vi.advanceTimersByTimeAsync(idleWindow);

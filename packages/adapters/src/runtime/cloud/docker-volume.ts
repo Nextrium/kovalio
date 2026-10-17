@@ -5,7 +5,7 @@ import { ensureScopedVolumeName } from "../volume-namespace";
 
 /** Immutable project identity, independent of a reusable app/organization slug. */
 function projectVolumePrefix(projectId: string): string {
-  return `openship-project-${createHash("sha256").update(projectId).digest("hex").slice(0, 32)}-`;
+  return `kovalio-project-${createHash("sha256").update(projectId).digest("hex").slice(0, 32)}-`;
 }
 
 async function inspectVolume(docker: Pick<Dockerode, "getVolume">, name: string) {
@@ -30,24 +30,24 @@ export async function resolveCloudProjectVolumeName(
   const prefix = projectVolumePrefix(projectId);
   // Concrete names persisted by an import or read from our own mounts retain
   // their identity. The caller must still verify ownership before using them.
-  if (source.startsWith(prefix) || source.startsWith(`openship-${slug}-`)) return source;
+  if (source.startsWith(prefix) || source.startsWith(`kovalio-${slug}-`)) return source;
 
   const name = `${prefix}${source}`;
   if (await inspectVolume(docker, name)) return name;
   const legacy = ensureScopedVolumeName(slug, source);
   const volume = await inspectVolume(docker, legacy);
-  if (volume?.Labels?.["openship.project"] === projectId) return legacy;
+  if (volume?.Labels?.["kovalio.project"] === projectId) return legacy;
   if (volume) {
     // An existing workload pointing at disputed storage must fail before
     // cutover, instead of silently switching to an empty database.
     const containers = await docker.listContainers({
       all: true,
-      filters: { label: [`openship.project=${projectId}`], volume: [legacy] },
+      filters: { label: [`kovalio.project=${projectId}`], volume: [legacy] },
     });
     if (
       containers.some(
         (container) =>
-          container.Labels?.["openship.project"] === projectId &&
+          container.Labels?.["kovalio.project"] === projectId &&
           container.Mounts?.some((mount) => mount.Type === "volume" && mount.Name === legacy),
       )
     )
@@ -68,9 +68,9 @@ export async function ensureCloudProjectVolume(docker: Pick<Dockerode, "getVolum
   } catch (error) {
     if ((error as { statusCode?: number; status?: number }).statusCode !== 404 &&
         (error as { status?: number }).status !== 404) throw error;
-    await docker.createVolume({ Name: name, Labels: { "openship.project": projectId } });
+    await docker.createVolume({ Name: name, Labels: { "kovalio.project": projectId } });
     volume = await docker.getVolume(name).inspect();
   }
-  if (volume.Labels?.["openship.project"] !== projectId)
+  if (volume.Labels?.["kovalio.project"] !== projectId)
     throw new AppError("A volume with this name belongs to another project. Choose a different name.", 409, "CLOUD_VOLUME_CONFLICT");
 }

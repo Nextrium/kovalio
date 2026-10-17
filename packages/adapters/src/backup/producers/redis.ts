@@ -158,7 +158,7 @@ class RedisRdbProducerImpl implements BackupProducer {
       `case "$BG" in`,
       `  *"Background saving started"|*"Background save already in progress") ;;`,
       `  *)`,
-      `  echo "openship: Redis would not start a background save, so /data/dump.rdb is` +
+      `  echo "kovalio: Redis would not start a background save, so /data/dump.rdb is` +
         ` whatever an earlier save left there — refusing to archive it as this backup.` +
         ` redis-cli said: $BG" >&2`,
       `  exit 92 ;;`,
@@ -189,7 +189,7 @@ class RedisRdbProducerImpl implements BackupProducer {
       `  i=$((i+1)); sleep 1`,
       `done`,
       `[ "$SAVED" = 1 ] || {`,
-      `  echo "openship: Redis BGSAVE did not finish within ${waitSeconds}s — neither a new` +
+      `  echo "kovalio: Redis BGSAVE did not finish within ${waitSeconds}s — neither a new` +
         ` LASTSAVE nor successful save completion was confirmed. Refusing to archive a` +
         ` possibly stale dump; use a volume payload for a dataset this large, or retry." >&2`,
       `  exit 94`,

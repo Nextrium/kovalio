@@ -5,7 +5,7 @@ import { seedOwner, installFakeRunner } from "../jobs/_harness";
 
 const remote = vi.hoisted(() => ({
   identity: {
-    apiUrl: "https://api.openship.io",
+    apiUrl: "https://api.nextrium.org",
     userId: "cloud-user",
     organizationId: "cloud-org",
   },
@@ -114,7 +114,7 @@ beforeEach(async () => {
     return Response.json({
       ok: true,
       organizationId: "cloud-org",
-      publicUrl: "https://app.openship.io",
+      publicUrl: "https://kovalio.nextrium.org",
       imported: { project: 1, deployment: 1 },
       promotionId,
     });

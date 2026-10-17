@@ -145,7 +145,7 @@ describe("Oblien-managed entitlements", () => {
       cancelAtPeriodEnd: false, canceledAt: null,
       offer: subscriptionOffer("starter", "monthly"),
       metadata: { ...subscriptionMetadata("starter", "org_1", "os-customer"),
-        openship_limits: JSON.stringify({ ...planLimits("starter"), [field]: 5 }) },
+        kovalio_limits: JSON.stringify({ ...planLimits("starter"), [field]: 5 }) },
     } });
     await expect(assertCloudCanSpend("org_1")).rejects.toMatchObject({ code: "OBLIEN_RESELLER_CONTRACT_INVALID" });
     expect(h.mirror).not.toHaveBeenCalled();
@@ -160,8 +160,8 @@ describe("Oblien-managed entitlements", () => {
       periodEnd: entitlement().periodEnd,
       cancelAtPeriodEnd: false,
       canceledAt: null,
-      offer: { ...subscriptionOffer("starter", "monthly"), reference: "openship:starter:v2", unitAmount: 1000, credits: 800 },
-      metadata: { ...subscriptionMetadata("starter", "org_1", "os-customer"), openship_offer_version: "2" },
+      offer: { ...subscriptionOffer("starter", "monthly"), reference: "kovalio:starter:v2", unitAmount: 1000, credits: 800 },
+      metadata: { ...subscriptionMetadata("starter", "org_1", "os-customer"), kovalio_offer_version: "2" },
     };
     const limits = structuredClone(planLimits("starter"));
     const raw = PRICING.plans.find((plan) => plan.id === "starter")!;
@@ -193,11 +193,11 @@ describe("Oblien-managed entitlements", () => {
     }
   });
   it.each([
-    "openship_organization",
-    "openship_namespace",
-    "openship_plan",
-    "openship_offer_version",
-    "openship_limits",
+    "kovalio_organization",
+    "kovalio_namespace",
+    "kovalio_plan",
+    "kovalio_offer_version",
+    "kovalio_limits",
   ])(
     "refuses a mismatched reseller contract field %s before changing customer state",
     async (field) => {

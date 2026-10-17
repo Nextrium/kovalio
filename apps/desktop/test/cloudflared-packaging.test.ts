@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { cloudflaredRelease, downloadCloudflared, stageCloudflared, verifyCloudflaredAsset } from "../scripts/fetch-cloudflared.mjs";
 
 const directories: string[] = [];
-const directory = () => { const dir = mkdtempSync(join(tmpdir(), "openship-cf-package-")); directories.push(dir); return dir; };
+const directory = () => { const dir = mkdtempSync(join(tmpdir(), "kovalio-cf-package-")); directories.push(dir); return dir; };
 afterEach(() => { for (const dir of directories.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
 describe("pinned Windows Cloudflare client", () => {

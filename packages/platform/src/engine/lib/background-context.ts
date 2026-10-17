@@ -28,7 +28,7 @@ export function buildBackgroundContext(opts: {
     sessionId: opts.label ? `bg:${opts.label}` : "background",
     sessionKind: "bearer" as const,
     clientIp: null,
-    userAgent: opts.label ? `openship-bg:${opts.label}` : "openship-bg",
+    userAgent: opts.label ? `kovalio-bg:${opts.label}` : "kovalio-bg",
     traceId: opts.traceId ?? `bg_${Math.random().toString(36).slice(2)}`,
     source: "system",
     scopeMode: "fixed",

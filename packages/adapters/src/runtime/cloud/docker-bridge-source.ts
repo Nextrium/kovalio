@@ -3,13 +3,13 @@
  * Raw HTTP is carried inside WebSocket binary frames so Docker's exec/attach
  * upgrades and streaming archives work without exposing a Docker TCP port. */
 export const CLOUD_DOCKER_BRIDGE_PORT = 23750;
-export const CLOUD_DOCKER_BRIDGE_VERSION = "openship-docker-bridge-v3";
+export const CLOUD_DOCKER_BRIDGE_VERSION = "kovalio-docker-bridge-v3";
 export const CLOUD_DOCKER_BRIDGE_SOURCE = String.raw`
 import base64, hashlib, http.client, http.server, io, json, os, queue, re, socket, struct, threading
 
 VERSION = "${CLOUD_DOCKER_BRIDGE_VERSION}"
 MAX_FRAME = 8 * 1024 * 1024
-REQUESTS = "/opt/openship/cloud-docker/requests"
+REQUESTS = "/opt/kovalio/cloud-docker/requests"
 request_lock = threading.RLock()
 active_requests = {}
 

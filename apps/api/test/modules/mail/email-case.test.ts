@@ -49,7 +49,7 @@ vi.mock("@repo/platform/engine/modules/mail/admin/password", () => ({
 vi.mock("@repo/platform/engine/modules/mail/admin/platform-mailbox.service", () => ({
   buildInsertMailboxSql: vi.fn(),
   buildInsertSelfForwardingSql: vi.fn(),
-  PLATFORM_LOCAL_PART: "openship",
+  PLATFORM_LOCAL_PART: "kovalio",
 }));
 
 import { createAlias } from "../../../src/modules/mail/admin/aliases.service";

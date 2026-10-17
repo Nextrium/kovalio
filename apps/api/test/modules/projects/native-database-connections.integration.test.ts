@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
 import { db, schema, repos, seedOwner, type SeededOwner } from "../jobs/_harness";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import * as lifecycle from "@repo/platform/engine/modules/system/network-setup-lifecycle";
 import * as target from "@repo/platform/engine/lib/cluster-deployment-target";
@@ -39,8 +39,8 @@ async function clients(owner: SeededOwner, organizationId = owner.orgId) {
     },
   });
   const native = (await ship.scope({ identity: "verified", organizationId })).projects;
-  const remote = new OpenshipClient({
-    baseUrl: "http://openship.test",
+  const remote = new KovalioClient({
+    baseUrl: "http://kovalio.test",
     token: owner.token,
     organizationId,
     fetch: ((url, init) => app.request(String(url), init)) as typeof fetch,
@@ -62,7 +62,7 @@ async function fixture() {
       engine: "postgres",
       mode: "standalone",
       instances: 1,
-      storageClass: "openship-local",
+      storageClass: "kovalio-local",
       storageGiB: 1,
       cpuMillis: 250,
       memoryMiB: 256,
@@ -85,9 +85,9 @@ async function fixture() {
   );
   const namespace = clusterDatabaseNamespace(database.id);
   const labels = {
-    "openship.io/database": database.id,
-    "openship.io/runtime": source.runtime.id,
-    "openship.io/project": kubernetesIdLabel(source.id),
+    "nextrium.org/database": database.id,
+    "nextrium.org/runtime": source.runtime.id,
+    "nextrium.org/project": kubernetesIdLabel(source.id),
   };
   const resources = new Map<string, KubernetesObject>([
     [
@@ -259,7 +259,7 @@ describe("native database sharing through existing project connections", () => {
     expect(f.policy().spec.ingress[1].from).toHaveLength(3);
     await f.sdk.remote.removeConnection(f.consumer.id, first.connection.id);
     expect(await repos.projectConnection.listByTarget(f.consumer.id)).toEqual([]);
-    expect(f.policy().spec.ingress[1].from[1].podSelector.matchLabels["openship.io/project"]).toBe(
+    expect(f.policy().spec.ingress[1].from[1].podSelector.matchLabels["nextrium.org/project"]).toBe(
       kubernetesIdLabel(another.id),
     );
     expect(await sharedNativeDatabases(f.owner.orgId, another.id, f.source.runtime.id)).toEqual([
@@ -311,9 +311,9 @@ describe("native database sharing through existing project connections", () => {
         name: replacementNamespace,
         uid: "replacement-namespace",
         labels: {
-          "openship.io/database": replacement.id,
-          "openship.io/runtime": f.source.runtime.id,
-          "openship.io/project": kubernetesIdLabel(f.source.id),
+          "nextrium.org/database": replacement.id,
+          "nextrium.org/runtime": f.source.runtime.id,
+          "nextrium.org/project": kubernetesIdLabel(f.source.id),
         },
       },
     });

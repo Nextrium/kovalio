@@ -4,7 +4,7 @@ import type { IngressConnection } from "@repo/db";
 const VERSION = "2026.10.0";
 const IMAGE =
   "cloudflare/cloudflared:2026.10.0@sha256:9b49eed8f62806d5d45ddf59ecefb5710429598ea6d3fcccd2af938f621b2b07";
-const BIN = `/usr/local/lib/openship/cloudflared-${VERSION}`;
+const BIN = `/usr/local/lib/kovalio/cloudflared-${VERSION}`;
 const RELEASES: Record<string, { asset: string; sha: string }> = {
   x86_64: {
     asset: "amd64",
@@ -18,10 +18,10 @@ const RELEASES: Record<string, { asset: string; sha: string }> = {
 function identity(connection: IngressConnection) {
   if (!/^[a-zA-Z0-9_-]+$/.test(connection.id) || !/^[a-zA-Z0-9-]+$/.test(connection.tunnelId ?? ""))
     throw new AppError("Invalid connector identity", 400, "INGRESS_CONNECTOR_ID");
-  const name = `openship-cloudflare-${connection.id}`;
+  const name = `kovalio-cloudflare-${connection.id}`;
   return {
     name,
-    dir: `/etc/openship/ingress/${connection.id}`,
+    dir: `/etc/kovalio/ingress/${connection.id}`,
     marker: JSON.stringify({ connectionId: connection.id, tunnelId: connection.tunnelId }),
   };
 }
@@ -81,14 +81,14 @@ export async function manageConnector(
       )
     ).trim() === name;
 
-  const expectedUnit = `[Unit]\nDescription=Openship Cloudflare connector ${connection.id}\nAfter=network-online.target\nWants=network-online.target\n[Service]\nExecStart=${BIN} tunnel --no-autoupdate run --token-file /run/credentials/${name}.service/token\nLoadCredential=token:${dir}/token\nDynamicUser=yes\nRestart=on-failure\nRestartSec=5\nNoNewPrivileges=yes\nProtectSystem=strict\nProtectHome=yes\nPrivateTmp=yes\n[Install]\nWantedBy=multi-user.target\n`;
+  const expectedUnit = `[Unit]\nDescription=Kovalio Cloudflare connector ${connection.id}\nAfter=network-online.target\nWants=network-online.target\n[Service]\nExecStart=${BIN} tunnel --no-autoupdate run --token-file /run/credentials/${name}.service/token\nLoadCredential=token:${dir}/token\nDynamicUser=yes\nRestart=on-failure\nRestartSec=5\nNoNewPrivileges=yes\nProtectSystem=strict\nProtectHome=yes\nPrivateTmp=yes\n[Install]\nWantedBy=multi-user.target\n`;
   if (remove) {
     if (!present) return;
     if (
       (await executor.exec(`${sudo}test -e ${q(unit)} && echo yes || echo no`)).trim() === "yes"
     ) {
       if ((await read(unit)).trim() !== expectedUnit.trim())
-        fail("The connector service was edited outside Openship. It has been retained for review.");
+        fail("The connector service was edited outside Kovalio. It has been retained for review.");
       await executor.exec(`${sudo}systemctl disable --now ${q(name + ".service")}`);
       await executor.exec(`${sudo}rm -f ${q(unit)} && ${sudo}systemctl daemon-reload`);
     } else if (kind === "systemd") {
@@ -104,7 +104,7 @@ export async function manageConnector(
     } else if (await dockerExists()) {
       const owner = (
         await executor.exec(
-          `${sudo}docker inspect --format '{{index .Config.Labels "openship.ingress"}}' ${q(name)}`,
+          `${sudo}docker inspect --format '{{index .Config.Labels "kovalio.ingress"}}' ${q(name)}`,
         )
       ).trim();
       if (owner !== connection.id)
@@ -122,8 +122,8 @@ export async function manageConnector(
     fail(
       "Connector setup needs systemd 247 or newer, or Docker. Install cloudflared yourself and choose an existing connector instead.",
     );
-  const tmp = (await executor.exec("mktemp -d /tmp/openship-ingress.XXXXXXXXXX")).trim();
-  if (!/^\/tmp\/openship-ingress\.[a-zA-Z0-9]+$/.test(tmp))
+  const tmp = (await executor.exec("mktemp -d /tmp/kovalio-ingress.XXXXXXXXXX")).trim();
+  if (!/^\/tmp\/kovalio-ingress\.[a-zA-Z0-9]+$/.test(tmp))
     fail("Could not create a private setup directory.");
   try {
     await executor.writeFile(`${tmp}/token`, token!, { mode: 0o600 });
@@ -157,13 +157,13 @@ export async function manageConnector(
           `printf '%s  %s\\n' ${q(release.sha)} ${q(tmp + "/cloudflared")} | sha256sum -c -`,
         );
         await executor.exec(
-          `${sudo}install -d -m 755 /usr/local/lib/openship && ${sudo}install -m 755 ${q(tmp + "/cloudflared")} ${q(BIN)}`,
+          `${sudo}install -d -m 755 /usr/local/lib/kovalio && ${sudo}install -m 755 ${q(tmp + "/cloudflared")} ${q(BIN)}`,
         );
       } else
         await executor.exec(`${sudo}sha256sum ${q(BIN)} | cut -d ' ' -f 1`).then((sha) => {
           if (sha.trim() !== release.sha)
             fail(
-              "The managed cloudflared binary changed outside Openship. Review it before retrying.",
+              "The managed cloudflared binary changed outside Kovalio. Review it before retrying.",
             );
         });
       if (
@@ -171,7 +171,7 @@ export async function manageConnector(
           "yes" &&
         (await read(unit)).trim() !== expectedUnit.trim()
       )
-        fail("The connector service was edited outside Openship. Review it before retrying.");
+        fail("The connector service was edited outside Kovalio. Review it before retrying.");
       const active =
         (
           await executor.exec(`${sudo}systemctl is-active ${q(name + ".service")} || true`)
@@ -187,11 +187,11 @@ export async function manageConnector(
       if (exists) {
         const owner = (
           await executor.exec(
-            `${sudo}docker inspect --format '{{index .Config.Labels "openship.ingress"}}' ${q(name)}`,
+            `${sudo}docker inspect --format '{{index .Config.Labels "kovalio.ingress"}}' ${q(name)}`,
           )
         ).trim();
         if (owner !== connection.id)
-          fail("A container already uses this connector name. Openship will not replace it.");
+          fail("A container already uses this connector name. Kovalio will not replace it.");
         if (sameToken) {
           await executor.exec(`${sudo}docker start ${q(name)}`);
           return;
@@ -203,7 +203,7 @@ export async function manageConnector(
         `${sudo}install -o 65532 -g 65532 -m 400 ${q(tmp + "/token")} ${q(dir + "/token")}`,
       );
       await executor.exec(
-        `${sudo}docker run -d --name ${q(name)} --label ${q(`openship.ingress=${connection.id}`)} --restart unless-stopped --network host --read-only --cap-drop ALL --security-opt no-new-privileges --user 65532:65532 --mount ${q(`type=bind,src=${dir}/token,dst=/run/secrets/token,readonly`)} ${q(IMAGE)} tunnel --no-autoupdate run --token-file /run/secrets/token`,
+        `${sudo}docker run -d --name ${q(name)} --label ${q(`kovalio.ingress=${connection.id}`)} --restart unless-stopped --network host --read-only --cap-drop ALL --security-opt no-new-privileges --user 65532:65532 --mount ${q(`type=bind,src=${dir}/token,dst=/run/secrets/token,readonly`)} ${q(IMAGE)} tunnel --no-autoupdate run --token-file /run/secrets/token`,
         { timeout: 190000 },
       );
     }

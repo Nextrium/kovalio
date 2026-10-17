@@ -1,4 +1,4 @@
-/** Bounded logs for containers created and managed by Openship. */
+/** Bounded logs for containers created and managed by Kovalio. */
 export const DEFAULT_CONTAINER_LOG_CONFIG = {
   Type: "json-file",
   Config: { "max-size": "20m", "max-file": "3" },

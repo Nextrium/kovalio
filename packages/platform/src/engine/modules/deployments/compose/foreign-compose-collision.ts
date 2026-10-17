@@ -25,7 +25,7 @@ function canBlockParallelStack(state: string | undefined): boolean {
 /**
  * Detect a pre-existing Docker Compose stack which merely shares this project's
  * slug. A normal deployment does not own those containers and must not silently
- * create a parallel Openship-managed stack beside them.
+ * create a parallel Kovalio-managed stack beside them.
  */
 export function findForeignComposeCollisions(input: {
   slug: string;

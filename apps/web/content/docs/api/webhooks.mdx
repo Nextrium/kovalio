@@ -24,8 +24,8 @@ console.log(hook.id, hook.url);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects/proj_123/incoming-webhooks" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/projects/proj_123/incoming-webhooks" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"Deploy site","actionType":"deploy","authMode":"token"}'
 ```
@@ -46,7 +46,7 @@ Job hooks require project-write, job-write, and administration access to every j
 
 ## Invoke an authorized action
 
-Use this operation when your integration is already authenticated with Openship:
+Use this operation when your integration is already authenticated with Kovalio:
 
 <Tabs items={['SDK', 'REST API']} groupId="api-transport" persist>
 <Tab value="SDK">
@@ -60,8 +60,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/projects/proj_123/incoming-webhooks/hook_123/invoke" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/projects/proj_123/incoming-webhooks/hook_123/invoke" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -109,7 +109,7 @@ The dispatcher:
 ```bash
 # GitHub sends this automatically. Illustrative manual delivery — the signature
 # must be a valid HMAC-SHA256 of the exact body using the project's webhook secret:
-curl -X POST "$OPENSHIP_URL/api/webhooks/github" \
+curl -X POST "$KOVALIO_URL/api/webhooks/github" \
   -H "Content-Type: application/json" \
   -H "X-GitHub-Event: ping" \
   -H "X-GitHub-Delivery: $(uuidgen)" \

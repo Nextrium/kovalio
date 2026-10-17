@@ -434,7 +434,7 @@ describe("operator-selected host port", () => {
   });
 
   test("offers an alternative for a protected edge without offering to stop it", async () => {
-    const host = recordingHost(() => [["--filter publish=80", psLine({ name: "openship-edge" })]]);
+    const host = recordingHost(() => [["--filter publish=80", psLine({ name: "kovalio-edge" })]]);
     const apply = vi.fn(async () => true);
     const spy = promptSpy("use_port:20002");
     await ensurePortAvailable(host.executor, 80, fakeLogger().logger, spy.promptUser, {
@@ -461,14 +461,14 @@ describe("operator-selected host port", () => {
 
 describe("isDockerHostPortAvailable", () => {
   test("requires both the socket table and Docker to confirm the port is free", async () => {
-    const host = recordingHost(() => [["__OPENSHIP_PORT_FREE__", "__OPENSHIP_PORT_FREE__"]]);
+    const host = recordingHost(() => [["__KOVALIO_PORT_FREE__", "__KOVALIO_PORT_FREE__"]]);
     expect(await isDockerHostPortAvailable(host.executor, 20002)).toBe(true);
   });
 
   test("detects a Docker DNAT publish even without a host listener", async () => {
     const host = recordingHost(() => [
       ["--filter publish=20002", OWNED_LINE],
-      ["__OPENSHIP_PORT_FREE__", "__OPENSHIP_PORT_FREE__"],
+      ["__KOVALIO_PORT_FREE__", "__KOVALIO_PORT_FREE__"],
     ]);
     expect(await isDockerHostPortAvailable(host.executor, 20002)).toBe(false);
   });
@@ -480,8 +480,8 @@ describe("isDockerHostPortAvailable", () => {
         ["--filter publish=20002", probe === "docker" ? null : ""],
         ["/proc/net/tcp", probe === "socket" ? null : ""],
         [
-          "__OPENSHIP_PORT_FREE__",
-          probe === "socket" ? "__OPENSHIP_PORT_UNAVAILABLE__" : "__OPENSHIP_PORT_FREE__",
+          "__KOVALIO_PORT_FREE__",
+          probe === "socket" ? "__KOVALIO_PORT_UNAVAILABLE__" : "__KOVALIO_PORT_FREE__",
         ],
       ]);
       expect(await isDockerHostPortAvailable(host.executor, 20002)).toBeNull();
@@ -600,7 +600,7 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
       [`/proc/${PROXY_PID}/cgroup`, CGROUP_DOCKER_SERVICE],
       [
         "--filter publish=80",
-        psLine({ name: "openship-edge", image: "ghcr.io/oblien/openship-edge:latest" }),
+        psLine({ name: "kovalio-edge", image: "ghcr.io/oblien/kovalio-edge:latest" }),
       ],
     ]);
     const { logger } = fakeLogger();
@@ -707,7 +707,7 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
     await expect(
       ensurePortAvailable(host.executor, PORT, logger, spy.promptUser),
     ).resolves.toBeUndefined();
-    expect(spy.calls[0]!.actions[0]!.label).toBe("Stop Openship Deployment & Continue");
+    expect(spy.calls[0]!.actions[0]!.label).toBe("Stop Kovalio Deployment & Continue");
     expect(spy.calls[0]!.details).toMatchObject({
       stopTarget: "unit",
       isManagedDeployment: true,
@@ -761,7 +761,7 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
     expect(forbiddenCommands(host.seen)).toEqual([]);
   });
 
-  test('openship-dev.service is the control plane, not a deployment with id "dev"', async () => {
+  test('kovalio-dev.service is the control plane, not a deployment with id "dev"', async () => {
     const host = recordingHost(() => [
       [`sport = :${PORT}`, `LISTEN 0 511 *:${PORT} *:* users:(("bun",pid=900,fd=20))`],
       ["-p 900 -o args=", "bun run apps/api/src/index.ts"],
@@ -813,8 +813,8 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
     const host = recordingHost(() => [
       [`sport = :${PORT}`, `LISTEN 0 511 *:${PORT} *:* users:(("node",pid=702,fd=18))`],
       ["-p 702 -o args=", "next-server (v16.3.1)"],
-      ["/proc/702/cgroup", "0::/system.slice/openship-dep_Old1.service"],
-      ["--property=Description", "Openship deployment dep_Old1"],
+      ["/proc/702/cgroup", "0::/system.slice/kovalio-dep_Old1.service"],
+      ["--property=Description", "Kovalio deployment dep_Old1"],
     ]);
     const { logger } = fakeLogger();
     const spy = promptSpy("free_port");
@@ -828,12 +828,12 @@ describe("ensurePortAvailable — systemd occupants keep working", () => {
     expect(forbiddenCommands(host.seen)).toEqual([]);
   });
 
-  test("another Openship deployment on the port is still prompted for", async () => {
+  test("another Kovalio deployment on the port is still prompted for", async () => {
     const host = recordingHost(() => [
       [`sport = :${PORT}`, `LISTEN 0 511 *:${PORT} *:* users:(("node",pid=703,fd=18))`],
       ["-p 703 -o args=", "node /srv/other/server.js"],
-      ["/proc/703/cgroup", "0::/system.slice/openship-dep_Other.service"],
-      ["--property=Description", "Openship deployment dep_Other"],
+      ["/proc/703/cgroup", "0::/system.slice/kovalio-dep_Other.service"],
+      ["--property=Description", "Kovalio deployment dep_Other"],
     ]);
     const { logger } = fakeLogger();
     const spy = promptSpy("abort");
@@ -996,18 +996,18 @@ describe("ensurePortAvailable — the fixes the adversarial review found", () =>
       [
         "--filter publish=5432",
         psLine({
-          name: "openship-postgres-1",
+          name: "kovalio-postgres-1",
           image: "postgres:16-alpine",
-          composeProject: "openship",
+          composeProject: "kovalio",
         }),
       ],
       [
-        "label=com.docker.compose.project='openship'",
-        `${psLine({ name: "openship-api-1", image: "ghcr.io/oblien/openship-api:latest", composeProject: "openship" })}\n` +
+        "label=com.docker.compose.project='kovalio'",
+        `${psLine({ name: "kovalio-api-1", image: "ghcr.io/oblien/kovalio-api:latest", composeProject: "kovalio" })}\n` +
           psLine({
-            name: "openship-postgres-1",
+            name: "kovalio-postgres-1",
             image: "postgres:16-alpine",
-            composeProject: "openship",
+            composeProject: "kovalio",
           }),
       ],
     ]);

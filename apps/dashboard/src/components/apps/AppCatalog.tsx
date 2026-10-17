@@ -28,7 +28,7 @@ import { HelpMenu } from "@/components/HelpMenu";
 // present in the catalog are shown.
 const CATEGORY_ORDER = ["backend", "database", "cms", "ai", "analytics", "automation", "mail", "other"] as const;
 
-/** Not installable right now: coming-soon OR needs a newer Openship. */
+/** Not installable right now: coming-soon OR needs a newer Kovalio. */
 const isLocked = (a: AppCatalogEntry) => !!a.comingSoon || !!a.requiresUpdate;
 
 export function AppCatalog({ embedded = false }: { embedded?: boolean } = {}) {
@@ -80,7 +80,7 @@ export function AppCatalog({ embedded = false }: { embedded?: boolean } = {}) {
         return `${a.name} ${a.description} ${localizedDesc} ${(a.tags ?? []).join(" ")}`.toLowerCase().includes(q);
       })
       // Installable apps lead (grouped up front); locked ones (coming-soon or
-      // needs-newer-Openship) after — a stable sort keeps order within a group.
+      // needs-newer-Kovalio) after — a stable sort keeps order within a group.
       .sort((a, b) => Number(isLocked(a)) - Number(isLocked(b)));
   }, [catalog, category, query, t.library]);
 
@@ -168,7 +168,7 @@ export function AppCatalog({ embedded = false }: { embedded?: boolean } = {}) {
                 icon: <UiIcon name="book" className="size-4" />,
                 onClick: () =>
                   window.open(
-                    "https://github.com/oblien/openship/tree/main/packages/core/src/apps",
+                    "https://github.com/Nextrium/kovalio/tree/main/packages/core/src/apps",
                     "_blank",
                     "noopener,noreferrer",
                   ),
@@ -263,7 +263,7 @@ export function AppCatalog({ embedded = false }: { embedded?: boolean } = {}) {
                     </div>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                       {needsUpdate
-                        ? (ap.needsUpdateDesc || "Update your Openship instance to install this app.")
+                        ? (ap.needsUpdateDesc || "Update your Kovalio instance to install this app.")
                         : (t.library as any)?.catalog?.apps?.[app.id] || app.description}
                     </p>
                     {app.gpu && <div className="mt-2 min-w-0"><AppGpuBadge gpu={app.gpu} /></div>}

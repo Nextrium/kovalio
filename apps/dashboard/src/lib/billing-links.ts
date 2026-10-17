@@ -15,7 +15,7 @@ export function billingTabHref(tab: "overview" | "plans" | "payment", query: Rec
 
 /** Keep the chosen subscription and organization through billing navigation. */
 export function scopedBillingHref(path: string, { workspaceId, organizationId }: BillingLinkScope = {}) {
-  const url = new URL(path, "https://openship.invalid");
+  const url = new URL(path, "https://kovalio.invalid");
   // A new purchase must never inherit the server currently being inspected.
   if (url.searchParams.get("newServer") === "1") url.searchParams.delete("workspaceId");
   else if (workspaceId) url.searchParams.set("workspaceId", workspaceId);

@@ -234,11 +234,11 @@ describe("DockerRuntime build cancellation", () => {
     const { runtime } = runtimeWith(executor, {
       _docker: {
         listContainers: vi.fn(async () => [
-          { Id: "builder", Labels: { "openship.build": "cancel-owned-svc-api" } },
+          { Id: "builder", Labels: { "kovalio.build": "cancel-owned-svc-api" } },
           { Id: "application", Labels: {
-            "openship.build": "cancel-owned-svc-api", "openship.deployment": "deployment-current",
+            "kovalio.build": "cancel-owned-svc-api", "kovalio.deployment": "deployment-current",
           } },
-          { Id: "other-builder", Labels: { "openship.build": "unrelated-build" } },
+          { Id: "other-builder", Labels: { "kovalio.build": "unrelated-build" } },
         ]),
         getContainer,
       },
@@ -483,7 +483,7 @@ describe("DockerRuntime build cancellation — dockerode path", () => {
     });
     expect(verifyImageBuilt).not.toHaveBeenCalled();
     const ownershipEntry = buildImage.mock.calls[0]?.[1].extrahosts;
-    expect(ownershipEntry).toMatch(/^openship-build-[0-9a-f-]+\.invalid:127\.0\.0\.1$/);
+    expect(ownershipEntry).toMatch(/^kovalio-build-[0-9a-f-]+\.invalid:127\.0\.0\.1$/);
     expect(streamDockerodeBuild.mock.calls[0]?.[2]).toMatchObject({
       legacyBuilder: { ownershipHost: ownershipEntry?.split(":")[0] },
     });
@@ -521,7 +521,7 @@ describe("packBuildContext", () => {
   });
 
   it("hands cancellation ownership to the progress-stream phase after upload", async () => {
-    contextDir = await mkdtemp(join(tmpdir(), "openship-pack-"));
+    contextDir = await mkdtemp(join(tmpdir(), "kovalio-pack-"));
     await writeFile(join(contextDir, "Dockerfile"), "FROM scratch\n");
 
     const cancel = new AbortController();

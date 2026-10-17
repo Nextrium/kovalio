@@ -98,7 +98,7 @@ describe("project cache teardown", () => {
       }
       if (command.startsWith("docker buildx rm")) attached = false;
       if (command.includes("df -Pk"))
-        return "OPENSHIP_STORAGE 104857600 52428800\nOPENSHIP_INODES 100000\n";
+        return "KOVALIO_STORAGE 104857600 52428800\nKOVALIO_INODES 100000\n";
       if (command.startsWith("du ")) return "1024\t/cache/state\n";
       return "";
     });
@@ -108,7 +108,7 @@ describe("project cache teardown", () => {
     const volume = {
       Name: projectBuildCacheVolume("p1"),
       Mountpoint: "/cache/state",
-      Labels: { "openship.build-cache": "1", "openship.build-cache.project": "p1" },
+      Labels: { "kovalio.build-cache": "1", "kovalio.build-cache.project": "p1" },
     };
     Object.assign(runtime, {
       connectionOptions: {
@@ -151,7 +151,7 @@ describe("project cache teardown", () => {
     expect(h.remove).toHaveBeenCalledOnce();
     expect(h.calls[0]).toBe("lock");
     expect(h.calls.at(-1)).toBe("unlock");
-    expect(h.calls.findIndex((command) => command.includes("openship-cache-"))).toBeLessThan(
+    expect(h.calls.findIndex((command) => command.includes("kovalio-cache-"))).toBeLessThan(
       h.calls.indexOf("remove-volume"),
     );
   });

@@ -40,7 +40,7 @@ import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const CLI_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
-const PACKAGE_DIR = join(CLI_DIR, "../../packages/openship");
+const PACKAGE_DIR = join(CLI_DIR, "../../packages/kovalio");
 const DIST = join(PACKAGE_DIR, "dist");
 const OUT = join(CLI_DIR, ".cli-payload");
 const STAGE = join(OUT, "stage");

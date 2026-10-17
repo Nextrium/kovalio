@@ -1,6 +1,6 @@
 # Cloud product analytics
 
-Openship can send a small, typed set of product events to PostHog from the hosted
+Kovalio can send a small, typed set of product events to PostHog from the hosted
 Cloud API. Desktop, self-hosted, development and test instances stay disabled,
 including installations connected to Cloud. Local project operations never enter
 this pipeline. Operations actually performed by the Cloud API, including purchases
@@ -21,7 +21,7 @@ POSTHOG_EXCLUDED_USER_IDS=user_internal
 ```
 
 Use `https://eu.i.posthog.com` for an EU project. The key is the project token, not
-a personal API key. Keep the normal production `OPENSHIP_TARGET` configuration;
+a personal API key. Keep the normal production `KOVALIO_TARGET` configuration;
 the browser collector accepts only that runtime target's HTTPS dashboard origin.
 An invalid/missing token, unsupported ingestion host, or non-production target
 leaves analytics disabled. No dashboard build variables or PostHog browser script
@@ -71,7 +71,7 @@ preview with its own PostHog project, never with the production token.
 
 The authoritative property schemas live in
 `packages/contracts/src/cloud-analytics.ts`. Every event also carries `product =
-openship_cloud`, `environment = production`, its source and available workspace.
+kovalio_cloud`, `environment = production`, its source and available workspace.
 
 | Events                                                                         | Meaning                                                                                                                                                                         |
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -137,7 +137,7 @@ checkout amount as the refunded amount or present gross receipts as net revenue.
 
 ## Launch dashboard
 
-Create an **Openship Cloud launch** dashboard in PostHog with these reports:
+Create an **Kovalio Cloud launch** dashboard in PostHog with these reports:
 
 1. **Acquisition:** unique visitors to `cloud_page_viewed`, broken down by UTM
    source/campaign and referrer host. This starts at entry to Cloud. Visits that

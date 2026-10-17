@@ -5,7 +5,7 @@ description: Manage organizations, members, invitations, and grants.
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-The Permissions API runs Openship's team and access-control model: it reports whether the active org is a
+The Permissions API runs Kovalio's team and access-control model: it reports whether the active org is a
 team, lists the resources you can grant, creates a team organization, and manages the
 per-member **grants** and invitations that scope a `restricted` member to specific projects, servers, or
 other resources. In the dashboard this is the organization's **Team** tab. See
@@ -50,8 +50,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/permissions/create-team-org" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/permissions/create-team-org" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"Acme Platform"}'
 ```
@@ -87,8 +87,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/permissions/resources?type=server" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/permissions/resources?type=server" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -120,8 +120,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/permissions/grants" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/permissions/grants" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"userId":"user_123","resourceType":"project","resourceId":"proj_abc","permissions":["read","write"]}'
 ```
@@ -172,8 +172,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X PUT "$OPENSHIP_URL/api/permissions/grants" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PUT "$KOVALIO_URL/api/permissions/grants" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "userId":"user_123",
@@ -235,8 +235,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/permissions/invite-with-grants" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/permissions/invite-with-grants" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "email":"dev@acme.com",
@@ -276,8 +276,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/permissions/invitations/inv_123/materialize" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/permissions/invitations/inv_123/materialize" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>

@@ -57,7 +57,7 @@ export const DiscoveredStackSchema = Type.Unsafe<DiscoveredStack>(
     warnings: strings,
     adoptable: Type.Boolean(),
     alreadyManaged: count,
-    openshipProjects: Type.Array(
+    kovalioProjects: Type.Array(
       Type.Object({
         projectId: text,
         suggestedName: text,

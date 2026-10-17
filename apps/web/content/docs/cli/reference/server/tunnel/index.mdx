@@ -1,45 +1,45 @@
 ---
 title: server tunnel
-description: Commands, arguments, and options for openship server tunnel.
-cliGroup: openship server tunnel
+description: Commands, arguments, and options for kovalio server tunnel.
+cliGroup: kovalio server tunnel
 ---
 
 See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship server tunnel
+## kovalio server tunnel
 
-Manage tunnels opened on the selected Openship instance (not this CLI machine)
+Manage tunnels opened on the selected Kovalio instance (not this CLI machine)
 
 ```text
-openship server tunnel [options] [command]
+kovalio server tunnel [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`list <server>`](/docs/cli/reference/server/tunnel#openship-server-tunnel-list) | List saved tunnels and current listeners |
-| [`save <server> <file>`](/docs/cli/reference/server/tunnel#openship-server-tunnel-save) | Save a tunnel configuration on the controller |
-| [`start <server> <tunnel>`](/docs/cli/reference/server/tunnel#openship-server-tunnel-start) | start this tunnel on the controller |
-| [`stop <server> <tunnel>`](/docs/cli/reference/server/tunnel#openship-server-tunnel-stop) | stop this tunnel on the controller |
-| [`remove [options] <server> <tunnel>`](/docs/cli/reference/server/tunnel#openship-server-tunnel-remove) | remove this tunnel on the controller |
+| [`list <server>`](/docs/cli/reference/server/tunnel#kovalio-server-tunnel-list) | List saved tunnels and current listeners |
+| [`save <server> <file>`](/docs/cli/reference/server/tunnel#kovalio-server-tunnel-save) | Save a tunnel configuration on the controller |
+| [`start <server> <tunnel>`](/docs/cli/reference/server/tunnel#kovalio-server-tunnel-start) | start this tunnel on the controller |
+| [`stop <server> <tunnel>`](/docs/cli/reference/server/tunnel#kovalio-server-tunnel-stop) | stop this tunnel on the controller |
+| [`remove [options] <server> <tunnel>`](/docs/cli/reference/server/tunnel#kovalio-server-tunnel-remove) | remove this tunnel on the controller |
 
-## openship server tunnel list
+## kovalio server tunnel list
 
 List saved tunnels and current listeners
 
 ```text
-openship server tunnel list [options] <server>
+kovalio server tunnel list [options] <server>
 ```
 
 | Argument | Meaning |
 | --- | --- |
 | `server` | Server ID |
 
-## openship server tunnel remove
+## kovalio server tunnel remove
 
 remove this tunnel on the controller
 
 ```text
-openship server tunnel remove [options] <server> <tunnel>
+kovalio server tunnel remove [options] <server> <tunnel>
 ```
 
 | Argument | Meaning |
@@ -51,12 +51,12 @@ openship server tunnel remove [options] <server> <tunnel>
 | --- | --- |
 | `-y, --yes` | Confirm tunnel removal |
 
-## openship server tunnel save
+## kovalio server tunnel save
 
 Save a tunnel configuration on the controller
 
 ```text
-openship server tunnel save [options] <server> <file>
+kovalio server tunnel save [options] <server> <file>
 ```
 
 | Argument | Meaning |
@@ -64,12 +64,12 @@ openship server tunnel save [options] <server> <file>
 | `server` | Server ID |
 | `file` | JSON remotePort, optional remoteHost, localPort and autoStart; - reads stdin |
 
-## openship server tunnel start
+## kovalio server tunnel start
 
 start this tunnel on the controller
 
 ```text
-openship server tunnel start [options] <server> <tunnel>
+kovalio server tunnel start [options] <server> <tunnel>
 ```
 
 | Argument | Meaning |
@@ -77,12 +77,12 @@ openship server tunnel start [options] <server> <tunnel>
 | `server` | Server ID |
 | `tunnel` | Tunnel ID |
 
-## openship server tunnel stop
+## kovalio server tunnel stop
 
 stop this tunnel on the controller
 
 ```text
-openship server tunnel stop [options] <server> <tunnel>
+kovalio server tunnel stop [options] <server> <tunnel>
 ```
 
 | Argument | Meaning |

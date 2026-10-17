@@ -3,7 +3,7 @@ import { repos, seedOwner } from "../modules/jobs/_harness";
 import type { ExecutionContext } from "@repo/platform";
 import { Hono } from "hono";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { projectRoutes } from "../../src/modules/projects/project.routes";
 import { healthRoutes } from "../../src/modules/health/health.routes";
@@ -30,10 +30,10 @@ async function setup(instanceAdmin = true) {
   const owner = await seedOwner({ instanceAdmin });
   const user = (await repos.user.findById(owner.userId))!;
   const input = {
-    name: "Openship",
-    slug: `openship-${owner.userId}`,
+    name: "Kovalio",
+    slug: `kovalio-${owner.userId}`,
     organizationId: owner.orgId,
-    appTemplateId: "openship",
+    appTemplateId: "kovalio",
   };
   const group = await repos.projectGroup.create(input);
   const project = await repos.project.create({ ...input, groupId: group.id });
@@ -77,8 +77,8 @@ describe("self-app route repair authorization (#879)", () => {
         identity: { resolve: async () => ({ user: ctx.user, sessionId: ctx.sessionId }) },
       });
       const native = await ship.scope({ identity: "verified", organizationId: ctx.organizationId });
-      const remote = new OpenshipClient({
-        baseUrl: "http://openship.test",
+      const remote = new KovalioClient({
+        baseUrl: "http://kovalio.test",
         token: owner.token,
         organizationId: ctx.organizationId,
         fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,

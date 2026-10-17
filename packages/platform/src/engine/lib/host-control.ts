@@ -31,7 +31,7 @@ import { resolvePlatformConfig } from "./platform-config";
  * control plane. Explicit host policy controls whether its local server exists. */
 export function isHostControlTarget(): boolean {
   const target = resolvePlatformConfig().target;
-  return target === "selfhosted" || (process.env.OPENSHIP_NATIVE === "true" && target === "desktop");
+  return target === "selfhosted" || (process.env.KOVALIO_NATIVE === "true" && target === "desktop");
 }
 
 /** The raw env floor, parsed exactly as @repo/adapters does, so an unset DB value
@@ -50,7 +50,7 @@ let cacheGeneration = 0;
  * value the dashboard reads (raw + effective) and the client gate keys on.
  */
 export async function resolveHostControlEnabled(): Promise<boolean> {
-  if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION !== "true") return false;
+  if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION !== "true") return false;
   // Host control is meaningless off a self-hosted box: the SaaS control plane and
   // desktop never register the isLocal row. Checked first so no stored value or env
   // var can advertise a target that localServerOwnerOrg would refuse to create.

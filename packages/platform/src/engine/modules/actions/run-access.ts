@@ -26,7 +26,7 @@ export async function actionCallerIdentity(
   repository: boolean,
 ): Promise<ActionActorIdentity> {
   if (!repository)
-    return { provider: "openship", id: ctx.userId, login: ctx.user.name || ctx.userId };
+    return { provider: "kovalio", id: ctx.userId, login: ctx.user.name || ctx.userId };
   const status = await getUserStatus(ctx.userId, ctx);
   const identity = status.connected
     ? githubActionActor({ id: Number(status.id), login: status.login })
@@ -62,7 +62,7 @@ export async function prepareActionAccessPolicy(
       ? existing.accessPolicy.owner
       : requested.audience === "owner"
         ? await actionCallerIdentity(ctx, !!input.owner)
-        : { provider: "openship" as const, id: ctx.userId, login: ctx.user.name || ctx.userId };
+        : { provider: "kovalio" as const, id: ctx.userId, login: ctx.user.name || ctx.userId };
   // Switching an older collaborators policy to Only my account resolves the
   // editor's personal identity, never an installation or organization name.
   const principal =
@@ -188,7 +188,7 @@ export async function evaluateActionRunAdmission(
   else if (policy.audience === "selected")
     allowed = identities.every((value) => policy.users.some((user) => same(user, value)));
   else if (!workflow.owner)
-    allowed = identities.every((value) => value.provider === "openship"); // Existing workspace/destination authorization still applies.
+    allowed = identities.every((value) => value.provider === "kovalio"); // Existing workspace/destination authorization still applies.
   else {
     const api = new GitHubActionsApi(ctx, workflow.owner, workflow.repo!);
     allowed = true;

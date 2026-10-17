@@ -1,5 +1,5 @@
 /**
- * Off-box TCP reachability from the Openship API host.
+ * Off-box TCP reachability from the Kovalio API host.
  *
  * A listener scan only proves that a process bound a socket on the target. This
  * module owns the second half of that answer: can the control plane actually

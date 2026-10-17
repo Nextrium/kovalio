@@ -567,7 +567,7 @@ it.each(["container-ip", "loopback-port"] as const)(
         inspectContainer: async (id: string) => {
           inspectionStarted();
           await inspection;
-          return { id, labels: { "openship.project": "project" }, networks: ["openship-stack"] };
+          return { id, labels: { "kovalio.project": "project" }, networks: ["kovalio-stack"] };
         },
         removeNetwork,
       },
@@ -718,7 +718,7 @@ it.each([
     previousRuntime,
     {
       inspectContainer: async () => ({
-        networks: scenario === "unconfirmed network" ? [] : ["openship-stack"],
+        networks: scenario === "unconfirmed network" ? [] : ["kovalio-stack"],
       }),
     },
   );

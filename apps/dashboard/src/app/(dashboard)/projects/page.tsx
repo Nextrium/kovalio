@@ -34,7 +34,7 @@ export default function ProjectsPage() {
   const [filter, setFilter] = useState<ProjectFilter>({ kind: "all" });
   const [view, setView] = useState<ProjectView>("grid");
   const [updatesBehind, setUpdatesBehind] = useState<Set<string>>(new Set());
-  const viewKey = "openship-projects-view";
+  const viewKey = "kovalio-projects-view";
 
   // Read after hydration so the server and initial client render agree.
   useEffect(() => {

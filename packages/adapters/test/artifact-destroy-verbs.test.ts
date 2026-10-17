@@ -45,7 +45,7 @@ describe("DockerRuntime.removeImage", () => {
       "getImage",
     ).mockReturnValue({ remove } as never);
 
-    await rt.removeImage("openship/my-app:bld_1");
+    await rt.removeImage("kovalio/my-app:bld_1");
     expect(remove).toHaveBeenCalledWith({ force: false });
   });
 });

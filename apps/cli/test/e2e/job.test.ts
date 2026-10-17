@@ -27,11 +27,11 @@ beforeEach(async () => {
   vi.resetModules();
   command = (await import("../../src/commands/job")).jobCommand;
   (await import("../../src/lib/output")).setJsonMode(false);
-  dir = mkdtempSync(join(tmpdir(), "openship-job-test-"));
+  dir = mkdtempSync(join(tmpdir(), "kovalio-job-test-"));
 });
 afterEach(() => { fetchStub?.restore(); rmSync(dir, { recursive: true, force: true }); });
 
-describe("openship job", () => {
+describe("kovalio job", () => {
   it.each([false, true])("lists authenticated jobs with JSON mode %s", async (json) => {
     (await import("../../src/lib/output")).setJsonMode(json);
     const rows = [job];

@@ -20,8 +20,8 @@ describe("notification email delivery", () => {
     expect(mocks.sendMail).toHaveBeenCalledOnce();
     const sent = mocks.sendMail.mock.calls[0]![0];
     expect(sent.to).toBe("operator@example.com");
-    expect(sent.subject).toBe("[Openship] test");
-    expect(sent.text).toBe("Openship test notification — this channel is configured correctly.");
+    expect(sent.subject).toBe("[Kovalio] test");
+    expect(sent.text).toBe("Kovalio test notification — this channel is configured correctly.");
     expect(sent.html).toContain("<h2");
     expect(sent.html).toContain(sent.text);
     expect(sent.html).not.toContain("<pre");

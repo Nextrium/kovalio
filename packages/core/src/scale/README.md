@@ -9,7 +9,7 @@ graph commands used by the Scale workspace.
 - `catalog.ts` exports the serializable `SCALE_CATALOG` (version **1**, stage **planning**) and
   per-engine `DATABASE_CATALOG`. Definitions include deployment modes, defaults, capacity limits,
   member roles, access and removal rules, replication sources and modes, connection protocols and ports, and
-  stable command IDs with their scope. Limits are OpenShip planning limits, not database engine limits.
+  stable command IDs with their scope. Limits are Kovalio planning limits, not database engine limits.
 - `topology.ts` defines the `ScaleDraft` **version 2** schema, its resource union discriminated by
   `kind` and database `mode`, and `parseDraft(serialized)` for runtime validation. It validates
   configuration, references, routing, capacity, and nested member graphs. Unknown kinds, modes, and

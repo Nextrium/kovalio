@@ -372,9 +372,9 @@ export function createProjectRepo(db: Database, encryption: ConfigurationEncrypt
     },
 
     async create(data: Omit<NewProject, "id"> & { id?: string }, access?: { tokenId: string }) {
-      // `id` is normally generated, but re-import (recovering an Openship project
-      // from a server's `.openship/manifest.json`) passes the ORIGINAL id so the
-      // still-running containers' `openship.project` labels re-attach immediately.
+      // `id` is normally generated, but re-import (recovering an Kovalio project
+      // from a server's `.kovalio/manifest.json`) passes the ORIGINAL id so the
+      // still-running containers' `kovalio.project` labels re-attach immediately.
       const { id: providedId, ...rest } = data;
       const id = providedId ?? generateId("proj");
       const row = { id, ...rest };

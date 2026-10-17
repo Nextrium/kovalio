@@ -178,13 +178,13 @@ describe("assembleGitClone — relay (desktop credential helper) mode", () => {
     expect(command).toContain(
       "GIT_CONFIG_KEY_3='http.https://github.com/owner/repo.git.extraHeader'",
     );
-    expect(command).toContain('GIT_CONFIG_VALUE_3="$OPENSHIP_GIT_AUTH_HEADER"');
+    expect(command).toContain('GIT_CONFIG_VALUE_3="$KOVALIO_GIT_AUTH_HEADER"');
     expect(command.indexOf("auth-header")).toBeLessThan(command.indexOf("git clone"));
   });
   it("Git scopes the relay header to the parent repo and excludes foreign submodules", () => {
     // A CI checkout can carry its own host-wide authorization header. Use an
     // empty repository and no host config so only the assembled config is read.
-    const cwd = mkdtempSync(join(tmpdir(), "openship-git-config-"));
+    const cwd = mkdtempSync(join(tmpdir(), "kovalio-git-config-"));
     const env = {
       ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))),
       GIT_CONFIG_NOSYSTEM: "1",
@@ -194,7 +194,7 @@ describe("assembleGitClone — relay (desktop credential helper) mode", () => {
     // exact environment that a networked clone/submodule command would inherit.
     const scoped = {
       ...inv,
-      shellPrelude: "OPENSHIP_GIT_AUTH_HEADER='Authorization: Basic test-only'",
+      shellPrelude: "KOVALIO_GIT_AUTH_HEADER='Authorization: Basic test-only'",
     };
     const lookup = (url: string) =>
       execFileSync(

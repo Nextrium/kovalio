@@ -1,5 +1,5 @@
 {
-  "$schema": "https://openship.io/app.schema.json",
+  "$schema": "https://nextrium.org/app.schema.json",
   "available": true,
   "verified": true,
   "minEngine": "0.9.0",
@@ -62,7 +62,7 @@
         "MYSQL_USER": "nextcloud",
         "REDIS_HOST": "nextcloud-redis",
         "NEXTCLOUD_ADMIN_USER": "admin",
-        "OPENSHIP_PUBLIC_URL": "{{publicUrl:nextcloud}}"
+        "KOVALIO_PUBLIC_URL": "{{publicUrl:nextcloud}}"
       },
       "volumes": ["nextcloud_data:/var/www/html"],
       "exposedPort": 80,
@@ -100,7 +100,7 @@
         "MYSQL_USER": "nextcloud",
         "REDIS_HOST": "nextcloud-redis",
         "NEXTCLOUD_ADMIN_USER": "admin",
-        "OPENSHIP_PUBLIC_URL": "{{publicUrl:nextcloud}}"
+        "KOVALIO_PUBLIC_URL": "{{publicUrl:nextcloud}}"
       },
       "volumes": ["nextcloud_data:/var/www/html"],
       "dependsOn": ["nextcloud"],
@@ -244,8 +244,8 @@
   "files": [
     {
       "service": "nextcloud",
-      "path": "/usr/src/nextcloud/config/openship.config.php",
-      "content": "<?php\n$url = parse_url(getenv('OPENSHIP_PUBLIC_URL'));\n$host = $url['host'] ?? 'localhost';\n$authority = $host . (isset($url['port']) ? ':' . $url['port'] : '');\n$CONFIG = [\n  'trusted_domains' => [$host],\n  'overwritehost' => $authority,\n  'overwriteprotocol' => $url['scheme'] ?? 'http',\n  'overwrite.cli.url' => getenv('OPENSHIP_PUBLIC_URL'),\n];\n"
+      "path": "/usr/src/nextcloud/config/kovalio.config.php",
+      "content": "<?php\n$url = parse_url(getenv('KOVALIO_PUBLIC_URL'));\n$host = $url['host'] ?? 'localhost';\n$authority = $host . (isset($url['port']) ? ':' . $url['port'] : '');\n$CONFIG = [\n  'trusted_domains' => [$host],\n  'overwritehost' => $authority,\n  'overwriteprotocol' => $url['scheme'] ?? 'http',\n  'overwrite.cli.url' => getenv('KOVALIO_PUBLIC_URL'),\n];\n"
     }
   ],
   "prepare": [

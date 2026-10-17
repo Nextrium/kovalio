@@ -38,13 +38,13 @@ export function rolesUnsupportedReason(input: {
   const { roles, runtime, deployMode, multiService } = input;
   if (!roles?.length) return null;
   if (multiService) {
-    return 'Runtime roles are not supported on multi-service deployments yet. Remove "roles" from openship.json, or deploy the app as a single service.';
+    return 'Runtime roles are not supported on multi-service deployments yet. Remove "roles" from kovalio.json, or deploy the app as a single service.';
   }
   if (deployMode === "static-file-serve") {
     return "Runtime roles need a server image; a static site has no process to run them from.";
   }
   if (!runtime.supports("roles") || !runtime.deployRole) {
-    return `Runtime roles are not supported on the "${runtime.name}" runtime yet. Deploy to a Docker server, or remove "roles" from openship.json.`;
+    return `Runtime roles are not supported on the "${runtime.name}" runtime yet. Deploy to a Docker server, or remove "roles" from kovalio.json.`;
   }
   return null;
 }

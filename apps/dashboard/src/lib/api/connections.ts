@@ -39,7 +39,7 @@ export interface CreateConnectionBody {
   mode: ConnectionMode;
 }
 
-export const CONNECTIONS_CHANGED = "openship:connections-changed";
+export const CONNECTIONS_CHANGED = "kovalio:connections-changed";
 async function notifyConnections<T>(request: Promise<T>): Promise<T> {
   const result = await request;
   if (typeof window !== "undefined") window.dispatchEvent(new Event(CONNECTIONS_CHANGED));

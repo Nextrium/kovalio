@@ -19,7 +19,7 @@ export const sourceDependencies: SourceDependencies = {
   open: async (ctx, input, apiBaseUrl) => (await import("./folder.service")).createFolderSession({ ...input, orgId: ctx.organizationId, userId: ctx.userId, apiBaseUrl }, ctx),
   async stage(ctx, input) {
     const { createFolderSession } = await import("./folder.service");
-    const root = process.env.OPENSHIP_DATA_DIR ? join(process.env.OPENSHIP_DATA_DIR, "sources") : undefined;
+    const root = process.env.KOVALIO_DATA_DIR ? join(process.env.KOVALIO_DATA_DIR, "sources") : undefined;
     const source = await prepareSourceDirectory(input.source, { temporaryRoot: root, validatePath: assertNativeSourcePath });
     let id: string | undefined;
     try {

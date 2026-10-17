@@ -11,7 +11,7 @@
  */
 
 import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
-const KEY = "openship:infraAutoScanAt";
+const KEY = "kovalio:infraAutoScanAt";
 /** Re-scan at most this often per browser, across all surfaces. */
 const STALE_MS = 30 * 60 * 1000;
 

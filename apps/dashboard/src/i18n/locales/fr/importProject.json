@@ -77,7 +77,7 @@
     },
     "runtimeVersionLabel": "Version du runtime",
     "runtimeVersionDefault": "Par défaut",
-    "runtimeVersionDesc": "Utilise des images de compilation et d’exécution adaptées à la version sélectionnée. Nécessite une compilation Docker générée par Openship.",
+    "runtimeVersionDesc": "Utilise des images de compilation et d’exécution adaptées à la version sélectionnée. Nécessite une compilation Docker générée par Kovalio.",
     "buildImageLabel": "Image de compilation",
     "buildImageDesc": "Image de conteneur de compilation pour les builds cloud ou serveur. Remplacez-la lorsque l'image de base détectée est incorrecte.",
     "productionPathsLabel": "Chemins de production",
@@ -222,7 +222,7 @@
       "statefulWarnBold": "pas transférées d'une recompilation à l'autre",
       "statefulWarnPart2": ". Sauvegardez et restaurez explicitement les données avant de remplacer l’espace de travail.",
       "volumeHint": "Volume nommé ou chemin de l'hôte → chemin du conteneur.",
-      "volumeCloudNote": "Openship Cloud ne prend pas en charge les montages de volumes persistants. Choisissez un serveur pour les charges qui nécessitent des volumes.",
+      "volumeCloudNote": "Kovalio Cloud ne prend pas en charge les montages de volumes persistants. Choisissez un serveur pour les charges qui nécessitent des volumes.",
       "sourcePlaceholder": "Source",
       "containerPathPlaceholder": "Chemin du conteneur",
       "readOnlyMount": "Montage en lecture seule",
@@ -464,8 +464,8 @@
   "configDiagnostics": {
     "title": "Certains paramètres de déploiement du dépôt n’ont pas été appliqués",
     "description": "Vérifiez les paramètres ignorés ci-dessous avant le déploiement.",
-    "titleWholeFile": "Le openship.json de ce dépôt a été ignoré",
-    "descriptionWholeFile": "Rien n'en a été appliqué. Le déploiement se poursuivra avec les réglages détectés par Openship.",
+    "titleWholeFile": "Le kovalio.json de ce dépôt a été ignoré",
+    "descriptionWholeFile": "Rien n'en a été appliqué. Le déploiement se poursuivra avec les réglages détectés par Kovalio.",
     "refused": "Refusé",
     "unrecognized": "Non reconnu",
     "hint": "Vérifiez les fichiers de configuration indiqués et mettez à jour les paramètres non pris en charge avant le prochain déploiement."

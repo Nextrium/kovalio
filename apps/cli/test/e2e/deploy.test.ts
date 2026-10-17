@@ -15,7 +15,7 @@ import { runCommand, stubFetch, type FetchStub } from "../helpers/harness";
 let fetchStub: FetchStub;
 afterEach(() => fetchStub?.restore());
 
-describe("openship deploy — registered server target (#763)", () => {
+describe("kovalio deploy — registered server target (#763)", () => {
   it("sends --server through the normal deployment trigger", async () => {
     fetchStub = stubFetch((req) => {
       expect(req.url).toBe("http://api.test/api/deployments");
@@ -54,7 +54,7 @@ describe("openship deploy — registered server target (#763)", () => {
   });
 
   it("carries --server through folder ensure and build/access", async () => {
-    const sourceDir = mkdtempSync(join(tmpdir(), "openship-cli-target-"));
+    const sourceDir = mkdtempSync(join(tmpdir(), "kovalio-cli-target-"));
     writeFileSync(join(sourceDir, "index.html"), "ok");
     fetchStub = stubFetch((req) => {
       if (req.url.endsWith("/api/projects/folder/session")) {

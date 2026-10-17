@@ -5,7 +5,7 @@ description: Connect installations to Cloud and use its HTTP control endpoints.
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-Cloud endpoints connect a self-hosted installation to Openship Cloud and support browser handoffs,
+Cloud endpoints connect a self-hosted installation to Kovalio Cloud and support browser handoffs,
 managed routing, and transfers. The self-hosted connection routes and Cloud control-plane routes share
 `/api/cloud`; the process mode determines which are available.
 
@@ -29,8 +29,8 @@ GET /api/cloud/status
 ```
 
 ```bash
-curl "$OPENSHIP_URL/api/cloud/status" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/cloud/status" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 Connecting itself is a browser flow started from the dashboard (**Settings → Cloud**): a popup runs the
@@ -105,7 +105,7 @@ The public `GET` handoff routes take query params, not a body — `desktop-hando
 expect `redirect`, `state`, and `code_challenge`; `github/install-callback` expects `installation_id`,
 `setup_action`, and `state`; `github/oauth-bridge` expects `token`.
 
-GitHub installation links first open Openship's account selection using `flow=select` and
+GitHub installation links first open Kovalio's account selection using `flow=select` and
 `state`. The user can reconnect an existing installation or continue to GitHub for a new
 one. This also works in the external browser used by self-hosted and desktop instances:
 the temporary state binds the choice to its initiating user and workspace without requiring
@@ -236,7 +236,7 @@ import counts, allowing the source to retry local cleanup without importing or o
 Matching project IDs alone do not authorize cleanup; older duplicates without a receipt require
 review. Both instances must support this endpoint. An older Cloud API rejects it before importing.
 
-Before local cleanup starts, Openship blocks configuration writes and checks the source snapshot
+Before local cleanup starts, Kovalio blocks configuration writes and checks the source snapshot
 again. An edit committed before this check preserves the local copy with `TRANSFER_SOURCE_CHANGED`;
 edits attempted during cleanup return `PROJECT_TRANSFER_IN_PROGRESS`. Failed cleanup releases this
 guard so the project remains editable. New builds admitted after import are preserved, not cancelled
@@ -348,7 +348,7 @@ from the dashboard.
 | Exchange a one-time code for user + session (rate-limited). | `POST /api/cloud/exchange-code`<br />`Handler authentication` |
 | Export an org- or project-scope subgraph dump (rate-limited). | `POST /api/cloud/export-subgraph`<br />`cloud:admin` |
 | Select an existing GitHub installation with flow=select, or atomically claim the workspace-bound attempt after GitHub user-token and App-JWT verification. | `GET /api/cloud/github/install-callback`<br />`Handler authentication` |
-| Build an Openship installation-selection URL with a one-time workspace state; existing installations can reconnect without another GitHub setup callback. | `POST /api/cloud/github/install-url`<br />`cloud:write` |
+| Build an Kovalio installation-selection URL with a one-time workspace state; existing installations can reconnect without another GitHub setup callback. | `POST /api/cloud/github/install-url`<br />`cloud:write` |
 | Mint a short-lived (~60min) installation access token. | `POST /api/cloud/github/installation-token`<br />`cloud:write` |
 | List the org owner's GitHub App installations. | `GET /api/cloud/github/installations`<br />`cloud:read` |
 | Consume the bridge token and redirect the browser into GitHub OAuth. | `GET /api/cloud/github/oauth-bridge`<br />`Handler authentication` |
@@ -365,7 +365,7 @@ from the dashboard.
 | Run an allowed Pages or routing action after verifying customer namespace ownership. | `POST /api/cloud/resource-proxy`<br />`cloud:write` |
 | Read routes or certificates belonging to the caller's Cloud namespace. | `GET /api/cloud/route-registry`<br />`cloud:read` |
 | Relay an invitation email via the SaaS mail infrastructure. | `POST /api/cloud/send-invitation`<br />`cloud:write` |
-| Openship Cloud connection status for this instance. | `GET /api/cloud/status`<br />`cloud:read` · Self-hosted |
+| Kovalio Cloud connection status for this instance. | `GET /api/cloud/status`<br />`cloud:read` · Self-hosted |
 | Delete a project's rows on the SaaS (bring-home / reconcile). | `POST /api/cloud/teardown-project`<br />`cloud:admin` |
 | Mint a namespace-scoped Oblien token for the caller's org. | `POST /api/cloud/token`<br />`cloud:write` |
 

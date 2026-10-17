@@ -33,7 +33,7 @@ async function freshRepos() {
     id: "dest1",
     organizationId: "org1",
     name: "Remote NAS",
-    kind: "openship_server",
+    kind: "kovalio_server",
   });
 
   await db.insert(schema.backupPolicy).values({

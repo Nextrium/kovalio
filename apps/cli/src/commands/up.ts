@@ -377,7 +377,7 @@ export async function runHeadlessProvision(
       method: extra?.method,
       onLog: (m) => console.log(chalk.dim(`  ${m}`)),
     });
-    console.log(chalk.green(`\n  ✓ Openship provisioned${result.liveUrl ? `: ${result.liveUrl}` : "."}`));
+    console.log(chalk.green(`\n  ✓ Kovalio provisioned${result.liveUrl ? `: ${result.liveUrl}` : "."}`));
     for (const w of result.warnings) reportCliMessage("warn", chalk.yellow(`  ⚠ ${w}`));
   } catch (err) {
     observeCaughtError(err, "cli/commands/up");
@@ -553,7 +553,7 @@ async function runCompose(opts: UpOpts & { yes?: boolean }): Promise<{ apiPort: 
     // stack isn't coming up, so put it back — never leave the box dark.
     const restored = edgePlan.action ? await rollbackHostEdge() : false;
     reportCliMessage("error",
-      chalk.dim("\n  Check `docker compose -f ~/.openship/compose/docker-compose.yml logs`.\n") +
+      chalk.dim("\n  Check `docker compose -f ~/.kovalio/compose/docker-compose.yml logs`.\n") +
         (restored
           ? chalk.yellow("  Restored the previous proxy on :80/:443 — your sites are serving again.\n")
           : chalk.dim("  If ports 80/443 are held by another proxy, re-run — the preflight will offer to migrate or take over.\n")),
@@ -577,7 +577,7 @@ async function runCompose(opts: UpOpts & { yes?: boolean }): Promise<{ apiPort: 
   if (edgePlan.action && (await edgeIsBroken(new LocalExecutor()))) {
     const reason = await edgeCrashReason(new LocalExecutor());
     reportCliMessage("error",
-      chalk.red(`\n  Openship's edge container is not running${reason ? ` — ${reason}` : "."}`),
+      chalk.red(`\n  Kovalio's edge container is not running${reason ? ` — ${reason}` : "."}`),
     );
     const restored = await rollbackHostEdge();
     // The same "put your proxy back" hint `edge-import` and `uninstall` print, from the

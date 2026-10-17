@@ -30,7 +30,7 @@ describe("instance URL discovery", () => {
       request.mockResolvedValueOnce(
         response === "not-found"
           ? new Response(null, { status: 404 })
-          : new Response("<!doctype html><title>Openship</title>"),
+          : new Response("<!doctype html><title>Kovalio</title>"),
       );
       request.mockResolvedValueOnce(Response.json(identity(`${origin}/api/proxy`)));
       expect(await discoverInstance(origin)).toEqual(identity(`${origin}/api/proxy`));

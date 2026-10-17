@@ -187,7 +187,7 @@ function parseBuildArgs(
   return out;
 }
 
-function parseDomains(ctx: Ctx, v: unknown, path: string): OpenshipDomain[] | undefined {
+function parseDomains(ctx: Ctx, v: unknown, path: string): KovalioDomain[] | undefined {
   if (v === undefined) return undefined;
   if (!Array.isArray(v)) {
     ctx.err(path, "must be an array of hostnames or domain objects");
@@ -561,7 +561,7 @@ function parseReplicas(ctx: Ctx, v: unknown, path: string): number | undefined {
   return v;
 }
 
-function parseMonorepo(ctx: Ctx, v: unknown, path: string): OpenshipMonorepo | undefined {
+function parseMonorepo(ctx: Ctx, v: unknown, path: string): KovalioMonorepo | undefined {
   if (v === undefined) return undefined;
   if (!ctx.isObj(v)) {
     ctx.err(path, "must be an object");
@@ -588,7 +588,7 @@ function parseMonorepo(ctx: Ctx, v: unknown, path: string): OpenshipMonorepo | u
   if (v.apps !== undefined) {
     if (!Array.isArray(v.apps)) ctx.err(`${path}.apps`, "must be an array");
     else {
-      const apps: OpenshipMonorepoApp[] = [];
+      const apps: KovalioMonorepoApp[] = [];
       const roots = new Map<string, number>();
       v.apps.forEach((a, i) => {
         const p = `${path}.apps[${i}]`;
@@ -659,8 +659,8 @@ function parseRuntimeVersion(ctx: Ctx, raw: unknown): string | undefined {
   return raw;
 }
 
-/** Parse + validate raw `openship.json` JSON (already `JSON.parse`d) into a config. */
-export function parseOpenshipConfig(raw: unknown): ParseResult {
+/** Parse + validate raw `kovalio.json` JSON (already `JSON.parse`d) into a config. */
+export function parseKovalioConfig(raw: unknown): ParseResult {
   const ctx = new Ctx();
   if (!ctx.isObj(raw)) {
     return { config: null, errors: ["kovalio.json must be a JSON object"], warnings: [] };

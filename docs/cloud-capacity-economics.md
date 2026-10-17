@@ -3,7 +3,7 @@
 This is a historical provider-price comparison for the resource sizes below.
 For current retail resources, see [the pricing catalog](../packages/core/src/pricing/README.md).
 
-Openship and Oblien are part of the same company. The product decision is to sell
+Kovalio and Oblien are part of the same company. The product decision is to sell
 one managed server per subscription, with CPU, RAM and disk covered continuously
 for the paid month. Keep the agreed retail prices and resources:
 
@@ -18,15 +18,15 @@ The provider amounts above are a dated comparison against
 `GET https://api.oblien.com/billing/capacity/catalog`, tariff
 `workspace-capacity-2026-10-v1`: 600 cents/vCPU, 100 cents/GiB RAM,
 5 cents/GiB disk, with a 500-cent monthly minimum. They are not copied into
-Openship's runtime pricing code. The live provider owns price and admission.
+Kovalio's runtime pricing code. The live provider owns price and admission.
 
 ## Message for the Oblien team
 
-> Keep Openship monthly retail at Hobby $5 (1 vCPU / 4 GiB / 25 GiB), Starter $20
+> Keep Kovalio monthly retail at Hobby $5 (1 vCPU / 4 GiB / 25 GiB), Starter $20
 > (2 / 8 / 32), Pro $39 (4 / 16 / 128), and Scale $99 (8 / 32 / 256), one managed
 > workspace per subscription. The published capacity tariff currently costs
 > $11.25 / $21.60 / $46.40 / $92.80 for those sizes. Please configure the agreed
-> Openship provider tariff, or explicit company subsidy support, so
+> Kovalio provider tariff, or explicit company subsidy support, so
 > `/billing/checkout` and subscription plan changes accept these retail prices.
 > We send `offer.billingMode: "monthly"`, `credits: 0`, the resource pool and no
 > credit policy. A confirmed payment must cover CPU, RAM and disk for the full
@@ -62,7 +62,7 @@ uses the reseller's wallet rather than a tenant-funded payment balance.
 Count customer revenue once across the company. Moving funds to the internal
 provider wallet is not a second sale. Actual fleet costs, safe placement density,
 card fees and operational headroom belong to infrastructure/finance planning;
-Openship does not approximate them to bypass provider admission.
+Kovalio does not approximate them to bypass provider admission.
 
 ## Prepaid PAYG pricing preview
 
@@ -107,11 +107,11 @@ or recorded savings.
 > RAM or retained-disk costs, and the current retention flow can create storage
 > debt. We need an explicit reserve, funded grace period or agreed deletion policy,
 > with no surprise postpaid bill. Keep custody, metering and settlement in Oblien;
-> Openship will present and orchestrate the existing APIs.
+> Kovalio will present and orchestrate the existing APIs.
 
 ## Verification
 
-Openship validates the published catalog, saved monthly capacity/entitlement,
+Kovalio validates the published catalog, saved monthly capacity/entitlement,
 provider blocking flag, zero-credit checkout fulfillment and signed event
 reconciliation. Upgrade prices and dates come from Oblien. Resource reductions
 and billing-model changes wait for renewal; paid upgrades use the existing
@@ -124,4 +124,4 @@ live purchase. Verify the agreed tariff and the complete signed
 payment-to-server cycle in the intended provider environment before rollout.
 
 See [the catalog contract](../packages/core/src/pricing/README.md) and
-[Cloud release gate](openship-cloud-launch.md).
+[Cloud release gate](kovalio-cloud-launch.md).

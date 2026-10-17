@@ -239,7 +239,7 @@ export function ConnectPrompt({
           ) : showCredentialChoices ? (
             // Desktop: sign in with GitHub (device code, nothing to register), or
             // bring your own credential. A single card centers; two go side by side.
-            // Openship Cloud is deliberately absent here — reachable in Settings.
+            // Kovalio Cloud is deliberately absent here — reachable in Settings.
             <div
               className={`grid w-full gap-3 mx-auto text-start ${
                 cardCount <= 1 ? "max-w-sm sm:grid-cols-1" : "max-w-xl sm:grid-cols-2"

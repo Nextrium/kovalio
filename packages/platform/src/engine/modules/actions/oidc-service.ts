@@ -25,7 +25,7 @@ const denied = () =>
   new AppError("This job cannot request an identity token", 403, "ACTIONS_OIDC_FORBIDDEN");
 export function assertOidcJob(run: ActionRun, job: ActionJob) {
   if (
-    run.controller !== "openship" ||
+    run.controller !== "kovalio" ||
     run.status !== "running" ||
     run.untrusted ||
     run.cancelRequestedAt ||
@@ -124,10 +124,10 @@ export class ActionOidcService {
         "actor_id",
         "event_name",
         "runner_environment",
-        "openship_organization_id",
-        "openship_job_id",
-        "openship_runner_id",
-        "openship_workflow_modified",
+        "kovalio_organization_id",
+        "kovalio_job_id",
+        "kovalio_runner_id",
+        "kovalio_workflow_modified",
       ],
     };
   }
@@ -187,17 +187,17 @@ export class ActionOidcService {
     const called = job.spec?.scope?.at(-1);
     const callee = called && workflows?.[called.sourceId];
     const encode = (value: string) => encodeURIComponent(value).replace(/%2F/gi, "/");
-    const subject = `openship:organization:${encode(run.organizationId)}:${owner && repo ? `repo:${encode(`${owner}/${repo}`)}:ref:${encode(run.ref)}` : `workflow:${encode(run.workflowId)}`}${root?.modified ? ":source:override" : ""}`;
+    const subject = `kovalio:organization:${encode(run.organizationId)}:${owner && repo ? `repo:${encode(`${owner}/${repo}`)}:ref:${encode(run.ref)}` : `workflow:${encode(run.workflowId)}`}${root?.modified ? ":source:override" : ""}`;
     const workflowRef = (value: NonNullable<typeof root>) =>
       `${value.owner}/${value.repo}/${value.path}@${value.ref}`;
     const repository = run.event.repository as { id?: number; owner?: { id?: number } } | undefined;
     const actor = run.configuration.actorIdentity;
     const now = Math.floor(Date.now() / 1000);
     const token = await new SignJWT({
-      openship_organization_id: run.organizationId,
-      openship_job_id: job.id,
-      openship_runner_id: job.runnerId,
-      openship_workflow_modified: !!root?.modified,
+      kovalio_organization_id: run.organizationId,
+      kovalio_job_id: job.id,
+      kovalio_runner_id: job.runnerId,
+      kovalio_workflow_modified: !!root?.modified,
       ...(owner && repo && { repository: `${owner}/${repo}`, repository_owner: owner }),
       ...(Number.isSafeInteger(repository?.id) && { repository_id: String(repository!.id) }),
       ...(Number.isSafeInteger(repository?.owner?.id) && {

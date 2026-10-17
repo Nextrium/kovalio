@@ -103,7 +103,7 @@ If `next build` reports `getaddrinfo ENOTFOUND db`, followed by an error such as
 `Failed to collect page data for /api/hours`, code evaluated during the build tried to resolve
 the `db` hostname. Check the named route and its imported helpers for database initialization.
 
-Use `"dependsOn": ["db"]` in `openship.json` (or `depends_on: [db]` in Compose). This orders
+Use `"dependsOn": ["db"]` in `kovalio.json` (or `depends_on: [db]` in Compose). This orders
 container startup; it does not start Postgres before image builds or attach the builder to the
 services' network. Even an already-running database is not automatically reachable by its
 service name from the builder.
@@ -200,7 +200,7 @@ is just **saved**, and you deploy the project yourself to bring it up.
 
 ### Re-syncing after the compose file changes
 
-You don't normally sync by hand — on every deploy Openship **re-reads the current Compose source** (the
+You don't normally sync by hand — on every deploy Kovalio **re-reads the current Compose source** (the
 repository for GitHub projects or `localPath` for local projects) and reconciles it against your service rows
 automatically. GitHub pushes use the same path and skip the scan only when the changed-file list proves the
 Compose file was untouched. From the terminal you can also force a sync from a specific file:
@@ -270,7 +270,7 @@ Target a service by its name or its `svc_…` id.
 
 ## When the repo and your edits disagree: drift
 
-On each deploy Openship merges the current Compose source with your saved service configuration,
+On each deploy Kovalio merges the current Compose source with your saved service configuration,
 comparing each field against the previously imported version:
 
 - **base** — the compose values it last read in,
@@ -305,7 +305,7 @@ version from its existing banner.
 <Tab value="CLI">
 ```bash
 # Accept a legacy source review; saved environment values are preserved
-openship service drift accept --project my-app web
+kovalio service drift accept --project my-app web
 
 # Keep your edits and stop flagging the change
 kovalio service drift keep --project my-app web
@@ -325,11 +325,11 @@ How ports and volumes behave depends on **where** the stack runs:
   lives on its workspace disk, which survives restarts but is **not** carried across a rebuild unless you turn
 on backups.
 
-Compose port publishing and Openship-managed domain routing are separate
+Compose port publishing and Kovalio-managed domain routing are separate
 ownership boundaries. A domain is changed only when you explicitly configure a
-project/service endpoint in Openship; an unrelated Caddy, nginx, or Traefik
+project/service endpoint in Kovalio; an unrelated Caddy, nginx, or Traefik
 vhost is never inferred from `ports` and is never rewritten. For an
-Openship-managed domain on the same server, redeploy keeps its tracked host port
+Kovalio-managed domain on the same server, redeploy keeps its tracked host port
 pinned so the route cannot silently move to a different upstream.
 
 You'll see this in the interface too. When you set the stack up in the deploy wizard, a cloud project **greys

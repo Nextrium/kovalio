@@ -86,8 +86,8 @@ describe("health monitoring capabilities at the HTTP boundary", () => {
       label: "Health",
       defaultCron: "* * * * *",
     });
-    vi.stubEnv("OPENSHIP_NATIVE", "true");
-    vi.stubEnv("OPENSHIP_NATIVE_JOBS", "false");
+    vi.stubEnv("KOVALIO_NATIVE", "true");
+    vi.stubEnv("KOVALIO_NATIVE_JOBS", "false");
     await reconcileJobs();
     const response = await app.request("/api/issues/health", { headers: admin.auth });
     expect(response.status).toBe(200);

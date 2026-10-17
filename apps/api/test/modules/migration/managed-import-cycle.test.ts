@@ -76,7 +76,7 @@ beforeEach(async () => {
       name, containerId, image: "busybox:1.37", imageId: "fixture-image", source: "container",
       running: running.has(containerId!), ports: [], volumes: [], networks: [], dependsOn: [], warnings: [],
       env: { TOKEN: "fixture-app-secret" },
-    })), groups: [], openshipProjects: [], warnings: [] };
+    })), groups: [], kovalioProjects: [], warnings: [] };
   });
   h.runtime.mockImplementation(async (id, org) => {
     expect([sourceId, targetId]).toContain(id); expect(org).toBe(ctx.organizationId);

@@ -1,6 +1,6 @@
 {
   "home": {
-    "label": "Openship Cloud",
+    "label": "Kovalio Cloud",
     "title": "Yayına hazır mısınız?",
     "plansAndBilling": "Planlar ve faturalandırma",
     "description": "Büyümeye alan tanıyan, yönetilen derlemeler ve barındırma.",
@@ -80,11 +80,11 @@
     },
     "notEnabled": {
       "title": "Cloud satın alımları henüz kullanılamıyor",
-      "description": "Openship abonelikleri ve kredi satın alımlarını henüz etkinleştirmedi. Lütfen daha sonra tekrar deneyin."
+      "description": "Kovalio abonelikleri ve kredi satın alımlarını henüz etkinleştirmedi. Lütfen daha sonra tekrar deneyin."
     },
     "notConfigured": {
       "title": "Cloud faturalandırma kurulumu tamamlanmadı",
-      "description": "Openship’in faturalandırma kurulumunu tamamlaması gerekiyor. Lütfen Openship desteğiyle iletişime geçin."
+      "description": "Kovalio’in faturalandırma kurulumunu tamamlaması gerekiyor. Lütfen Kovalio desteğiyle iletişime geçin."
     },
     "forbidden": {
       "title": "Faturalandırmaya erişiminiz yok",
@@ -97,7 +97,7 @@
     },
     "loadFailed": {
       "title": "Faturalandırma yüklenemedi",
-      "description": "Faturalandırma geçici olarak kullanılamıyor. Tekrar deneyin. Sorun devam ederse Openship desteğiyle iletişime geçin."
+      "description": "Faturalandırma geçici olarak kullanılamıyor. Tekrar deneyin. Sorun devam ederse Kovalio desteğiyle iletişime geçin."
     }
   },
   "plansRoute": {
@@ -408,7 +408,7 @@
     "planRequired": "Plan gerekli",
     "savedCredits": "Saklanan kullanım bakiyesi",
     "savedCreditsHint": "Ön ödemeli kullanımınız bu çalışma alanında kalır. Cloud dağıtımlarında kullanmak için bir plan seçin.",
-    "offerTitle": "Openship Cloud üzerinde yayına çıkın",
+    "offerTitle": "Kovalio Cloud üzerinde yayına çıkın",
     "offerLabel": "Dağıtıma başlayın",
     "offerDescription": "Projeleriniz için yönetilen kaynaklar.",
     "startingWith": "{name} ile başlayın",
@@ -449,7 +449,7 @@
     "diskHint": "Uygulama disklerinden okunan ve yazılan veriler. Depolama alanı değildir.",
     "transfer": "Uygulama veri aktarımı",
     "transferHint": "Uygulamalarınızın gelen ve giden verileri. Edge trafiği ayrı gösterilir.",
-    "edgeTitle": "Openship Edge",
+    "edgeTitle": "Kovalio Edge",
     "bandwidth": "Edge veri aktarımı",
     "bandwidthHint": "Çalışma alanınızın Edge rotalarındaki gelen ve giden trafik. Aylık kota işlem kotasından ayrıdır. Sınırda rotalar yenilenme veya yükseltmeye kadar duraklatılır.",
     "requests": "Edge istekleri",
@@ -536,7 +536,7 @@
   "workspaces": {
     "title": "Bulut alanları",
     "singular": "Bulut alanı",
-    "description": "Bir plan seçin ve dağıtın. Sunucuyu Openship yönetir; projeleriniz CPU, bellek ve depolamayı paylaşır.",
+    "description": "Bir plan seçin ve dağıtın. Sunucuyu Kovalio yönetir; projeleriniz CPU, bellek ve depolamayı paylaşır.",
     "loading": "Bulut alanları yükleniyor…",
     "choose": "Sunucu seçin",
     "chooseBilling": "Faturalandırmasını görmek için bir bulut alanı seçin.",
@@ -558,7 +558,7 @@
     "create": "Bulut alanı ekle",
     "mode": "Proje yalıtımı",
     "createHint": "Sunucu oluşturmak ücretsizdir. Sonraki adımda planını seçin; faturalandırma ödeme tamamlandıktan sonra başlar.",
-    "cloudOnly": "Yönetilen sunucular Openship Cloud'da kullanılabilir. Kendi altyapınızı yönetmek için Sunucular'ı kullanın.",
+    "cloudOnly": "Yönetilen sunucular Kovalio Cloud'da kullanılabilir. Kendi altyapınızı yönetmek için Sunucular'ı kullanın.",
     "projectCount": "{count} proje",
     "noProjects": "Bu sunucunda henüz proje yok.",
     "liveUsage": "Anlık kullanım",
@@ -615,7 +615,7 @@
     "plan": "Sunucu planı",
     "actions": "Sunucu işlemleri",
     "changePlan": "Planı değiştir",
-    "managedBy": "Openship Cloud tarafından yönetilir",
+    "managedBy": "Kovalio Cloud tarafından yönetilir",
     "network": {
       "title": "Ağ",
       "description": "Bu yönetilen sunucunun sağlayıcı ayarları.",
@@ -813,7 +813,7 @@
     "retry": "Ödemeyi yeniden dene",
     "close": "Kapat",
     "done": "Tamam",
-    "requestFailed": "İsteğiniz kaydedilemedi. Yeniden deneyin veya support@openship.io adresine e-posta gönderin."
+    "requestFailed": "İsteğiniz kaydedilemedi. Yeniden deneyin veya support@nextrium.org adresine e-posta gönderin."
   },
   "pendingPayments": {
     "title": "Bekleyen ödemeler",

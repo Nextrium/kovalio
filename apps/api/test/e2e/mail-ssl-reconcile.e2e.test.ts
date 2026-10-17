@@ -8,7 +8,7 @@ import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 
 const exec = promisify(execFile);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
-const RUNNER = `openship-e2e-mailtls-${process.pid.toString(36)}`;
+const RUNNER = `kovalio-e2e-mailtls-${process.pid.toString(36)}`;
 const IMAGE = "alpine:3.23";
 const HOST = "mail.example.test";
 const MAIL = `/test/live/${HOST}`;

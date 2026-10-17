@@ -115,6 +115,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: catalog-${{ matrix.app }}-${{ matrix.arch }}-diagnostics
-          path: /tmp/openship-catalog-smoke*failure.log
+          path: /tmp/kovalio-catalog-smoke*failure.log
           if-no-files-found: ignore
           retention-days: 5

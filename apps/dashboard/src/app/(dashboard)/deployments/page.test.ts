@@ -14,7 +14,7 @@ it("redirects bookmarked deployment filters to Monitoring", async () => {
       tab: "open",
     }),
   });
-  const url = new URL(redirect.mock.calls[0][0], "https://openship.io");
+  const url = new URL(redirect.mock.calls[0][0], "https://nextrium.org");
   expect(url.pathname).toBe("/monitoring");
   expect(Object.fromEntries(url.searchParams)).toEqual({
     status: "failed",

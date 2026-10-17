@@ -20,9 +20,9 @@ export { getPlatform as platform } from "@repo/adapters";
  *   3. Default → "selfhosted" with docker or bare runtime
  */
 export function resolvePlatformConfig(): PlatformConfig {
-  if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ROUTING === "none") {
+  if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ROUTING === "none") {
     // Reuse the bare/no-routing adapter without adopting Electron's authentication posture.
-    return { target: "desktop", bare: { workDir: join(process.env.OPENSHIP_DATA_DIR!, "workloads") } };
+    return { target: "desktop", bare: { workDir: join(process.env.KOVALIO_DATA_DIR!, "workloads") } };
   }
   if (isOblienConfigured()) {
     return {
@@ -30,7 +30,7 @@ export function resolvePlatformConfig(): PlatformConfig {
       cloudClientId: env.OBLIEN_CLIENT_ID,
       cloudClientSecret: env.OBLIEN_CLIENT_SECRET,
       cloudApiUrl: env.OBLIEN_API_URL,
-      allowHostBuild: !env.CLOUD_MODE && (process.env.OPENSHIP_NATIVE !== "true" || process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION === "true"),
+      allowHostBuild: !env.CLOUD_MODE && (process.env.KOVALIO_NATIVE !== "true" || process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION === "true"),
     };
   }
 
@@ -43,6 +43,6 @@ export function resolvePlatformConfig(): PlatformConfig {
     target: "selfhosted",
     runtime: env.DEPLOY_MODE === "bare" ? "bare" : "docker",
     nginx: edgeProviderOptions(),
-    ...(process.env.OPENSHIP_NATIVE === "true" && { bare: { workDir: join(process.env.OPENSHIP_DATA_DIR!, "workloads") } }),
+    ...(process.env.KOVALIO_NATIVE === "true" && { bare: { workDir: join(process.env.KOVALIO_DATA_DIR!, "workloads") } }),
   };
 }

@@ -64,7 +64,7 @@ export class CloudSupportService {
       ctx.user?.id !== ctx.userId
     )
       throw new AppError(
-        "Sign in to Openship Cloud to manage your support tickets.",
+        "Sign in to Kovalio Cloud to manage your support tickets.",
         403,
         "SUPPORT_SESSION_REQUIRED",
       );
@@ -277,7 +277,7 @@ export class CloudSupportService {
                 message.kind === "notification" || message.kind === "customer_reply"
                   ? ticket.email
                   : SUPPORT_EMAIL,
-              messageId: `<support-${hash(message.id)}@openship.io>`,
+              messageId: `<support-${hash(message.id)}@nextrium.org>`,
               ...supportEmail({ ...ticket, kind: message.kind, reply: message.body }),
             });
             if (!accepted)

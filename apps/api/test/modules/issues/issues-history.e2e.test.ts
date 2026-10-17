@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "@repo/db";
 import { initPlatform, resetPlatform } from "@repo/adapters";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { createShip } from "@repo/sdk/native";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { flushAudit } from "@repo/platform/engine/lib/audit-emitter";
@@ -34,8 +34,8 @@ async function clients(owner: SeededOwner) {
       }),
     },
   }).scope({ identity: "verified", organizationId: owner.orgId });
-  const remote = new OpenshipClient({
-    baseUrl: "http://openship.test",
+  const remote = new KovalioClient({
+    baseUrl: "http://kovalio.test",
     token: owner.token,
     organizationId: owner.orgId,
     fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,

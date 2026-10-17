@@ -90,7 +90,7 @@ export type TlsIssuedElsewhere = "external_ingress" | "manual_cert" | "managed_e
  *   manualSsl       → operator-uploaded cert (BYO / Cloudflare Origin CA). certbot
  *                     never issued it, so `renew` would error and flip it to
  *                     "error".
- *   free            → a managed `*.opsh.io` host: Openship Cloud's edge terminates
+ *   free            → a managed `*.opsh.io` host: Kovalio Cloud's edge terminates
  *                     TLS and forwards to plain :80 here. The box usually has no
  *                     public A record for the name at all, so HTTP-01 cannot pass.
  */
@@ -131,7 +131,7 @@ export function describeTlsIssuedElsewhere(where: TlsIssuedElsewhere, hostname: 
     case "manual_cert":
       return `${hostname} serves an uploaded certificate — certbot is not run for it.`;
     default:
-      return `TLS for ${hostname} is handled by Openship Cloud — no local certificate needed.`;
+      return `TLS for ${hostname} is handled by Kovalio Cloud — no local certificate needed.`;
   }
 }
 
@@ -501,7 +501,7 @@ async function resolveSslProvider(owner: SslOwner): Promise<ResolvedSslProvider>
 
   // Fallback anchor. `platform().ssl` is the API's OWN context — for a
   // containerized API that's the API container (no edge/OpenResty there) or a
-  // DockerEdgeExecutor for a non-existent `openship-edge`, so certbot's HTTP-01
+  // DockerEdgeExecutor for a non-existent `kovalio-edge`, so certbot's HTTP-01
   // never resolves and issuance/verify silently fails. Resolve the self-hosted
   // instance's LOCAL host-server instead (createHostExecutor → the bare host's
   // OpenResty + /etc/letsencrypt), which is where the edge actually lives.
@@ -567,7 +567,7 @@ RECORD_NAME="_acme-challenge.\${DOMAIN}"
 case "$DOMAIN" in ''|*[!A-Za-z0-9.-]*) echo "Invalid ACME domain" >&2; exit 1;; esac
 case "$CERTBOT_VALIDATION" in ''|*[!A-Za-z0-9_-]*) echo "Invalid ACME validation value" >&2; exit 1;; esac
 DNS_PAYLOAD=$(printf '%s' '{"type":"TXT","name":"' "$RECORD_NAME" \\
-  '","content":"\\"' "$CERTBOT_VALIDATION" '\\"","ttl":60,"comment":"Managed by Openship"}')
+  '","content":"\\"' "$CERTBOT_VALIDATION" '\\"","ttl":60,"comment":"Managed by Kovalio"}')
 RES=$(curl -s -S --connect-timeout 5 --max-time 15 -X POST "https://api.cloudflare.com/client/v4/zones/${manager.zone.id}/dns_records" \\
   -H "Authorization: Bearer ${manager.credentials.apiToken}" \\
   -H "Content-Type: application/json" \\
@@ -582,7 +582,7 @@ if [ -z "$RECORD_ID" ]; then
   echo "Cloudflare created no ACME TXT record id" >&2
   exit 1
 fi
-echo "$RECORD_ID" > "$OPENSHIP_DNS_RECORD_FILE"
+echo "$RECORD_ID" > "$KOVALIO_DNS_RECORD_FILE"
 
 # Wait for the public resolver to observe the exact value. A fixed sleep makes
 # issuance flaky when provider propagation is slower than usual.
@@ -602,14 +602,14 @@ exit 1
 `;
 
   const cleanupScript = `#!/bin/sh
-if [ -f "$OPENSHIP_DNS_RECORD_FILE" ]; then
-  RECORD_ID=$(cat "$OPENSHIP_DNS_RECORD_FILE")
+if [ -f "$KOVALIO_DNS_RECORD_FILE" ]; then
+  RECORD_ID=$(cat "$KOVALIO_DNS_RECORD_FILE")
   if [ -n "$RECORD_ID" ]; then
     curl -s -S --connect-timeout 5 --max-time 15 -X DELETE "https://api.cloudflare.com/client/v4/zones/${manager.zone.id}/dns_records/\${RECORD_ID}" \\
       -H "Authorization: Bearer ${manager.credentials.apiToken}" \\
       -H "Content-Type: application/json" || true
   fi
-  rm -f "$OPENSHIP_DNS_RECORD_FILE"
+  rm -f "$KOVALIO_DNS_RECORD_FILE"
 fi
 `;
   return { authHookScript: authScript, cleanupHookScript: cleanupScript };

@@ -3,12 +3,12 @@ import { projectBuildKitWorker, removeProjectBuildKitWorker } from "./docker-bui
 
 const worker = projectBuildKitWorker("project-a");
 it("derives a stable single-node identity without accepting command text from project IDs", () => {
-  expect(worker.builderName).toMatch(/^openship-cache-[a-f0-9]{24}$/);
+  expect(worker.builderName).toMatch(/^kovalio-cache-[a-f0-9]{24}$/);
   expect(worker.nodeName).toBe(`${worker.builderName}0`);
   expect(worker.containerName).toBe(`buildx_buildkit_${worker.nodeName}`);
   expect(projectBuildKitWorker("project-b")).not.toEqual(worker);
   expect(projectBuildKitWorker("'; docker rm other #").builderName).toMatch(
-    /^openship-cache-[a-f0-9]{24}$/,
+    /^kovalio-cache-[a-f0-9]{24}$/,
   );
 });
 

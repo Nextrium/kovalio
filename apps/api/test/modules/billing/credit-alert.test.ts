@@ -25,7 +25,7 @@ const input = {
   timestamp: "2026-09-28T00:00:00Z",
   data: { namespace: "tenant", service: "workspace_vm", threshold: 95, alert: { limit: 4000 } },
   organizationId: "org-a",
-  dashboardUrl: "https://app.openship.io",
+  dashboardUrl: "https://kovalio.nextrium.org",
   entitlement: state(),
 };
 
@@ -34,7 +34,7 @@ describe("provider credit alerts", () => {
     const result = creditAlertNotification(input)!;
     expect(result.payload.message).toContain("95%");
     expect(result.payload.message).toContain("200 credits");
-    expect(result.payload.url).toBe("https://app.openship.io/cloud-billing?organizationId=org-a");
+    expect(result.payload.url).toBe("https://kovalio.nextrium.org/cloud-billing?organizationId=org-a");
     expect(result.idempotencyKey).toBe("evt1");
   });
   it("drops a late warning after a top-up, renewal, or a newer warning band", () => {

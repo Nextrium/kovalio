@@ -57,7 +57,7 @@ export class ServiceBuildDnsDiagnostics {
       "Move connections needed only at runtime into a request handler or startup code. " +
       "For Next.js/Payload, check the route and its imports for top-level getPayload() calls; force-dynamic alone does not prevent module initialization. " +
       "If the build needs data, use a source reachable from the build environment. " +
-      "See https://openship.io/docs/guides/compose-multi-service#database-access-during-a-nextjs-build"
+      "See https://nextrium.org/docs/guides/compose-multi-service#database-access-during-a-nextjs-build"
     );
   }
 }

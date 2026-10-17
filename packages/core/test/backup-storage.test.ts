@@ -12,14 +12,14 @@ import {
 import { validatePolicyPayload } from "../src/backup-catalog";
 
 const block = (): BackupChunk => ({
-  key: "openship/app/data/old/blocks/content.gz",
+  key: "kovalio/app/data/old/blocks/content.gz",
   sizeBytes: 100,
   sha256: "a".repeat(64),
   contentBytes: 1000,
   contentSha256: "b".repeat(64),
 });
 const artifact = (chunks = [block()]): StoredBackupArtifact => ({
-  key: "openship/app/data/new/data.tar.chunks.json",
+  key: "kovalio/app/data/new/data.tar.chunks.json",
   sizeBytes: chunks.reduce((sum, chunk) => sum + chunk.contentBytes, 0),
   sha256: "c".repeat(64),
   metadata: {

@@ -26,8 +26,8 @@ import { randomBytes, timingSafeEqual } from "node:crypto";
 import type { Context } from "hono";
 import { getRequestContext } from "./request-context";
 
-const CALL_SOURCE_HEADER = "x-openship-call-source";
-const CALL_CLIENT_HEADER = "x-openship-call-client";
+const CALL_SOURCE_HEADER = "x-kovalio-call-source";
+const CALL_CLIENT_HEADER = "x-kovalio-call-client";
 
 /**
  * Shape of an attributable client id: the canonical principal id the auth layer

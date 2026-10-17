@@ -52,7 +52,7 @@ import { assertNetworkSetupAcceptingWork, deferNetworkSetupWork } from "./networ
 
 function infrastructureUnavailable(): string | null {
   if (isOblienConfigured())
-    return "Server clusters are managed by self-hosted OpenShip. Oblien manages Cloud infrastructure.";
+    return "Server clusters are managed by self-hosted Kovalio. Oblien manages Cloud infrastructure.";
   // Manual adoption and bounded verification work from a local/desktop controller
   // too. Always-on reconciliation is a separate, future capability.
   return null;
@@ -174,7 +174,7 @@ export function presentCluster(row: ServerClusterRecord): ServerCluster {
       ...(row.network.mode === "wireguard"
         ? {
             mode: "wireguard" as const,
-            ownership: "openship" as const,
+            ownership: "kovalio" as const,
             encryption: "wireguard" as const,
             managedId: row.network.managedId!,
             interfaceName: row.network.interfaceName!,

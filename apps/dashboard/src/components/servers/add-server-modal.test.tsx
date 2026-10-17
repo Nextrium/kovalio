@@ -127,7 +127,7 @@ async function open(productView: "platform" | "mail" = "platform") {
       .find((node) => node.textContent?.trim() === backup.fieldName)
       ?.querySelector("input") ?? null;
   await edit(name, "Hourly backup");
-  await edit(document.querySelector('input[placeholder="/backups/openship"]'), "/backups/hourly");
+  await edit(document.querySelector('input[placeholder="/backups/kovalio"]'), "/backups/hourly");
   await click(baseDictionary.widgets.shared.serverSelector.addServer, false);
 }
 async function fillServer() {
@@ -150,7 +150,7 @@ describe("add server from backup destination (#836)", () => {
       await click(backup.saveDestination);
       expect(api.createDestination).toHaveBeenCalledExactlyOnceWith({
         name: "Hourly backup",
-        kind: "openship_server",
+        kind: "kovalio_server",
         serverId: savedServer.id,
         pathPrefix: "/backups/hourly",
       });

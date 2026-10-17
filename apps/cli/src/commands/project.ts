@@ -38,7 +38,7 @@ function action(fn: (...args: any[]) => Promise<void>) {
     } catch (e) {
       rethrowCommandExit(e);
       // A bare 401 ("Unauthorized") means no token or a rejected one; say how to fix it.
-      if (e instanceof ApiError) err(`  ${e.message}${e.status === 401 ? "\n  Run `openship login` first." : ""}`);
+      if (e instanceof ApiError) err(`  ${e.message}${e.status === 401 ? "\n  Run `kovalio login` first." : ""}`);
       else err(`  ${e instanceof Error ? e.message : String(e)}`);
       process.exitCode = 1;
     }
@@ -221,7 +221,7 @@ const createCmd = new Command("create")
   .option("--local-path <path>", "Source path on the controller host; use deploy --folder to upload from this machine")
   .option("--port <port>", "Container port", positiveInteger)
   .option("--type <type>", "Project type: app | docker | services | monorepo")
-  .option("--server <id>", "Registered server ID (see `openship server list`)")
+  .option("--server <id>", "Registered server ID (see `kovalio server list`)")
   .action(
     action(async (opts) => {
       if (opts.schema) { printJson(CreateProjectBody); return; }

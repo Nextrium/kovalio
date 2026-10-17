@@ -248,7 +248,7 @@ async function teardownProjectLocked(
     await (
       await import("../../lib/project-storage-guard")
     ).assertProjectStorageEmpty(ctx.organizationId, projectId, preload.clusterId);
-  if (preload?.appTemplateId === "openship") {
+  if (preload?.appTemplateId === "kovalio") {
     push({
       step: "guard_control_plane",
       status: "failed",

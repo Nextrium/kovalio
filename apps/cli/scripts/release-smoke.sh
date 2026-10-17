@@ -20,7 +20,7 @@
 set -u
 
 CLI_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PACKAGE_DIR="${SMOKE_PACKAGE_DIR:-$CLI_DIR/../../packages/openship}"
+PACKAGE_DIR="${SMOKE_PACKAGE_DIR:-$CLI_DIR/../../packages/kovalio}"
 DIST="$PACKAGE_DIR/dist/index.js"
 SERVER="$PACKAGE_DIR/dist/server/index.js"
 FAILED=0
@@ -178,7 +178,7 @@ fi
 # The `bin` must be dist/node-entry.js with a plain `#!/usr/bin/env node`.
 group "C7 — npm bin shebang (Windows launcher regression, #460)"
 NODE_ENTRY="$PACKAGE_DIR/dist/node-entry.js"
-BIN_FIELD="$(cd "$PACKAGE_DIR" && node -e 'process.stdout.write(require("./package.json").bin.openship||"")' 2>/dev/null)"
+BIN_FIELD="$(cd "$PACKAGE_DIR" && node -e 'process.stdout.write(require("./package.json").bin.kovalio||"")' 2>/dev/null)"
 if [ "$BIN_FIELD" != "./dist/node-entry.js" ]; then
   fail "package.json bin.kovalio is '$BIN_FIELD' (expected ./dist/node-entry.js — npm would read index.js's sh polyglot)"
 elif [ ! -f "$NODE_ENTRY" ]; then

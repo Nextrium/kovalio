@@ -20,8 +20,8 @@ console.log(updates);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/updates?behind=1" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/updates?behind=1" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -44,8 +44,8 @@ console.log(scan.scanned, scan.supported);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/updates/scan" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/updates/scan" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -68,8 +68,8 @@ console.log(submitted.deployment_id, submitted.project_id);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/updates/proj_123/apply" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/updates/proj_123/apply" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>

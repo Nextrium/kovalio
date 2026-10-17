@@ -53,8 +53,8 @@ recursively change production volume ownership as a generic repair step.
 
 ## Existing failed installs
 
-From a checkout containing the updated catalog, set `OPENSHIP_URL` to the intended
-instance and `OPENSHIP_TOKEN` to a token authorized for the project. Preview:
+From a checkout containing the updated catalog, set `KOVALIO_URL` to the intended
+instance and `KOVALIO_TOKEN` to a token authorized for the project. Preview:
 
 ```sh
 bun scripts/catalog-image-repair.ts --project PROJECT_ID --service SERVICE_ID
@@ -72,7 +72,7 @@ does not delete the data volume or cancel a deployment on an observation timeout
 Running installations need their normal reviewed image-update flow, including
 storage compatibility and backup checks. A pinned digest fixes reproducibility,
 not upstream availability: keep the scheduled check enabled and review replacement
-images when the registry stops serving a digest. An Openship-maintained mirror
+images when the registry stops serving a digest. An Kovalio-maintained mirror
 can be introduced separately after its publishing and maintenance are established.
 
 ## Existing WordPress and Odoo build recipes
@@ -115,9 +115,9 @@ Homepage has no built-in authentication. The catalog adds Caddy HTTP Basic
 authentication, with a generated encrypted password; only that proxy is public.
 The smoke test checks unauthenticated rejection, authenticated access, and saved
 configuration after replacement. Docker socket and host filesystem integrations
-are not enabled. Use HTTPS for public access, through the normal Openship routing.
+are not enabled. Use HTTPS for public access, through the normal Kovalio routing.
 
-Jellyfin requires Openship 0.9.2 for `entrypointArgv`, which maps to the existing
+Jellyfin requires Kovalio 0.9.2 for `entrypointArgv`, which maps to the existing
 Compose entrypoint support. Its version gate prevents older installers from
 ignoring the helper and exposing an unclaimed owner wizard. Immich requires at
 least 6 GiB RAM, 2 CPU cores, and x86-64-v2 for the current AMD64 ML image. Keep

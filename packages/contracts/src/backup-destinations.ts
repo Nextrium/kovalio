@@ -15,7 +15,7 @@ const mutableFields = {
   isDefault: Type.Optional(Type.Boolean()),
 };
 export const BackupDestinationKindSchema = Type.Union([
-  Type.Literal("s3_compatible"), Type.Literal("sftp"), Type.Literal("openship_server"), Type.Literal("local"), Type.Literal("http_upload"),
+  Type.Literal("s3_compatible"), Type.Literal("sftp"), Type.Literal("kovalio_server"), Type.Literal("local"), Type.Literal("http_upload"),
 ]);
 export const CreateBackupDestinationSchema = Type.Object({
   ...mutableFields, name: Type.String({ minLength: 1, maxLength: 80 }), kind: BackupDestinationKindSchema,

@@ -31,7 +31,7 @@ type Workload = Awaited<ReturnType<ManagedConnection["workspace"]["workloads"]["
 const text = (value: unknown) => (typeof value === "string" ? value : null);
 const flag = (value: unknown) => (typeof value === "boolean" ? value : null);
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");
-const manualPrefix = "openship-manual-";
+const manualPrefix = "kovalio-manual-";
 const missing = (error: unknown) => (error as { status?: number })?.status === 404;
 
 function sshStatus(
@@ -109,10 +109,10 @@ function boundedLogs(result: { success?: unknown; logs?: unknown }, tail: number
 function manualWorkload(workload: Workload, connection: ManagedConnection) {
   return (
     workload.id.startsWith(manualPrefix) &&
-    workload.labels?.["openship.manual"] === "v1" &&
-    workload.labels?.["openship.workspace"] === connection.binding.workspaceId &&
-    !workload.labels?.["openship.project"] &&
-    !workload.labels?.["openship.deployment"]
+    workload.labels?.["kovalio.manual"] === "v1" &&
+    workload.labels?.["kovalio.workspace"] === connection.binding.workspaceId &&
+    !workload.labels?.["kovalio.project"] &&
+    !workload.labels?.["kovalio.deployment"]
   );
 }
 function presentWorkload(
@@ -127,7 +127,7 @@ function presentWorkload(
     // diagnostics-ignore: The status read is observed separately; unknown is an explicit UI state, never stopped.
   }
   const manual = manualWorkload(workload, connection);
-  const project = workload.labels?.["openship.project"];
+  const project = workload.labels?.["kovalio.project"];
   return {
     id: workload.id,
     name: text(workload.name) ?? workload.id,
@@ -377,7 +377,7 @@ const controls: ResourceServices<typeof ManagedServerResourceSchemas> = {
         if (
           row.id !== workloadId ||
           !manualWorkload(row, connection) ||
-          row.labels?.["openship.request"] !== request
+          row.labels?.["kovalio.request"] !== request
         )
           throw new AppError(
             "This request ID belongs to a different process. Refresh before creating another.",
@@ -404,9 +404,9 @@ const controls: ResourceServices<typeof ManagedServerResourceSchemas> = {
               restart_policy: input.restartPolicy,
               enabled: false,
               labels: {
-                "openship.manual": "v1",
-                "openship.workspace": connection.binding.workspaceId!,
-                "openship.request": request,
+                "kovalio.manual": "v1",
+                "kovalio.workspace": connection.binding.workspaceId!,
+                "kovalio.request": request,
               },
             }),
           );

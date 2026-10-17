@@ -26,16 +26,16 @@ export async function runClusterJob(
   const { signal, fence } = options;
   const job = structuredClone(definition);
   const signature = createHash("sha256").update(JSON.stringify(definition.spec)).digest("hex");
-  job.metadata.annotations = { ...job.metadata.annotations, "openship.io/job-spec": signature };
+  job.metadata.annotations = { ...job.metadata.annotations, "nextrium.org/job-spec": signature };
   const base = `/apis/batch/v1/namespaces/${job.metadata.namespace}/jobs`;
   const path = `${base}/${job.metadata.name}`;
   const assertOwned = (object: KubernetesObject) => {
     if (
-      !job.metadata.labels?.["openship.io/runtime"] ||
+      !job.metadata.labels?.["nextrium.org/runtime"] ||
       Object.entries(job.metadata.labels).some(
         ([key, value]) => object.metadata.labels?.[key] !== value,
       ) ||
-      object.metadata.annotations?.["openship.io/job-spec"] !== signature
+      object.metadata.annotations?.["nextrium.org/job-spec"] !== signature
     )
       throw new AppError(
         "An existing task has different ownership or configuration. It was left unchanged.",

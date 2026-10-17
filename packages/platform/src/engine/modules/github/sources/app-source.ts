@@ -11,7 +11,7 @@
  * Used two ways:
  *   - SaaS (CLOUD_MODE): the base source, optionally supplemented by the user's
  *     personal token in the factory. No host/gh identity.
- *   - local + Openship Cloud connected: LocalGitHubSource (the merge) composes
+ *   - local + Kovalio Cloud connected: LocalGitHubSource (the merge) composes
  *     one of these as its App sub-source for installations + cloud-minted clone
  *     tokens, while gh drives listing.
  */
@@ -50,7 +50,7 @@ export class GitHubAppSource implements GitHubSource {
   constructor(
     private readonly ctx: RequestContext,
     /** "app" when this process owns the App (SaaS or self-hosted),
-     *  "cloud-app" when a self-host proxies through Openship Cloud. */
+     *  "cloud-app" when a self-host proxies through Kovalio Cloud. */
     readonly mode: GitHubMode = "app",
   ) {}
 
@@ -142,7 +142,7 @@ export class GitHubAppSource implements GitHubSource {
     }
     return {
       sources: {
-        openshipApp:
+        kovalioApp:
           connected && status.connected && !customConfigured
             ? {
                 connected: true,

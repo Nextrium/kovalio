@@ -2,7 +2,7 @@
  * Host-wide Docker build-cache collection.
  *
  * BuildKit cache records cannot be attributed reliably to a project: unlike
- * final images, intermediate records do not retain our `openship.project`
+ * final images, intermediate records do not retain our `kovalio.project`
  * label. Automatic cleanup is therefore intentionally host-scoped and bounded,
  * while the dashboard's explicit action performs a full unused-cache prune on
  * the host that owns the selected project.
@@ -92,7 +92,7 @@ const defaultDependencies: BuildCacheGcDependencies = {
       }
       return createServerDockerRuntime(target.serverId, target.organizationId);
     }
-    if (process.env.OPENSHIP_NATIVE === "true" && process.env.OPENSHIP_NATIVE_ALLOW_HOST_EXECUTION !== "true")
+    if (process.env.KOVALIO_NATIVE === "true" && process.env.KOVALIO_NATIVE_ALLOW_HOST_EXECUTION !== "true")
       throw new AppError("Host execution is disabled by this native installation's policy", 403, "HOST_EXECUTION_DISABLED");
     return DockerRuntime.create({ transport: "socket" });
   },
@@ -106,7 +106,7 @@ const defaultDependencies: BuildCacheGcDependencies = {
 
 /**
  * One target per configured Docker host. Local aliases collapse to one entry;
- * remote server ids remain distinct because that is OpenShip's physical target
+ * remote server ids remain distinct because that is Kovalio's physical target
  * identity everywhere else too. The platform runtime decides whether the local
  * socket is a Docker target, including when its last project has been deleted
  * and there is no auto-registered server row (or project row) left to infer from.

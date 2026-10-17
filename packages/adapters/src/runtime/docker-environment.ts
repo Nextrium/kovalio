@@ -56,8 +56,8 @@ export async function applyDockerEnvironment(
   const before = await original.inspect();
   const labels = before.Config.Labels ?? {};
   if (
-    (labels["openship.project"] && labels["openship.project"] !== options.projectId) ||
-    (labels["openship.service"] && labels["openship.service"] !== options.serviceName)
+    (labels["kovalio.project"] && labels["kovalio.project"] !== options.projectId) ||
+    (labels["kovalio.service"] && labels["kovalio.service"] !== options.serviceName)
   )
     conflict("The running container does not belong to this service.");
   if (before.State.Paused || before.HostConfig.AutoRemove) {

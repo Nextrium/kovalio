@@ -21,8 +21,8 @@ console.log(scan.scanned, scan.orphans);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/system/edge/untracked" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/system/edge/untracked" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -30,11 +30,11 @@ curl "$OPENSHIP_URL/api/system/edge/untracked" \
 
 Site inspection and removal require installation administrator authority. Review discovered sites before
 importing or removing them. Importing associates supported sites with
-Openship projects; removing an untracked site changes the host's edge configuration.
+Kovalio projects; removing an untracked site changes the host's edge configuration.
 
 ## Installation edge preflight
 
-`POST /api/system/self-edge/preflight` checks the edge configuration needed to expose Openship itself.
+`POST /api/system/self-edge/preflight` checks the edge configuration needed to expose Kovalio itself.
 It is separate from attaching a domain to an application project.
 
 For the interactive workflow and command options, see the [Edge guide](/docs/guides/the-edge) and
@@ -56,6 +56,6 @@ For the interactive workflow and command options, see the [Edge guide](/docs/gui
 | Operation | SDK | REST API |
 | --- | --- | --- |
 | Import discovered edge sites. | HTTP only | `POST /api/system/edge/import-sites`<br />`Internal operator` · Self-hosted |
-| Check edge readiness for the Openship installation itself. | HTTP only | `POST /api/system/self-edge/preflight`<br />`Internal operator` · Self-hosted |
+| Check edge readiness for the Kovalio installation itself. | HTTP only | `POST /api/system/self-edge/preflight`<br />`Internal operator` · Self-hosted |
 
 {/* api-operations:end */}

@@ -7,7 +7,7 @@ const networkFetch = globalThis.fetch;
 globalThis.fetch = async (input, init) => {
   const request = new Request(input, init);
   const url = new URL(request.url);
-  if (url.origin === "https://api.openship.io") {
+  if (url.origin === "https://api.nextrium.org") {
     const plans = workerData.testCloudPlans;
     if (
       request.method !== "GET" ||

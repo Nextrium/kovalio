@@ -30,7 +30,7 @@ describe("bare process supervisor privileges", () => {
     await supervisor.start("dep-root");
     expect(host.exec.mock.calls.map(([command]) => command)).toEqual([
       ENVIRONMENT_PROBE_SCRIPT,
-      "systemctl start 'openship-dep-root.service'",
+      "systemctl start 'kovalio-dep-root.service'",
     ]);
   });
 
@@ -42,7 +42,7 @@ describe("bare process supervisor privileges", () => {
     const command = host.exec.mock.calls.at(-1)![0];
     expect(command).toMatch(/^sudo -n sh -c /);
     expect(command).toContain("systemctl start");
-    expect(command).toContain("openship-dep-sudo.service");
+    expect(command).toContain("kovalio-dep-sudo.service");
     expect(host.exec).toHaveBeenCalledTimes(2);
   });
 
@@ -79,7 +79,7 @@ describe("bare process supervisor privileges", () => {
       host.exec.mock.calls.some(
         ([command]) =>
           command.startsWith("sudo -n ") &&
-          command.includes("/etc/systemd/system/openship-dep-sudo.service"),
+          command.includes("/etc/systemd/system/kovalio-dep-sudo.service"),
       ),
     ).toBe(true);
   });

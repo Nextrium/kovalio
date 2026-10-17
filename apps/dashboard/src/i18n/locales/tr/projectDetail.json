@@ -97,14 +97,14 @@
       "serviceCountOne": "{count} servis",
       "serviceCountOther": "{count} servis",
       "searchPlaceholder": "Ad, imaj veya etikete göre ara…",
-      "cloudConnectHint": "Bulut servis kataloğuna göz atmak için Openship Bulut'a bağlanın. Yine de herhangi bir imajı manuel ekleyebilirsiniz.",
-      "cloudConnectTitle": "Openship Bulut'a Bağlan",
-      "cloudConnectBody": "Yönetilen bulut imajlarına göz atmak ve eklemek için bu kurulumu Openship Bulut'a bağlayın. Yerel imajlardan istediğinizi yine manuel olarak ekleyebilirsiniz.",
-      "cloudConnectButton": "Openship Bulut'a Bağlan",
+      "cloudConnectHint": "Bulut servis kataloğuna göz atmak için Kovalio Bulut'a bağlanın. Yine de herhangi bir imajı manuel ekleyebilirsiniz.",
+      "cloudConnectTitle": "Kovalio Bulut'a Bağlan",
+      "cloudConnectBody": "Yönetilen bulut imajlarına göz atmak ve eklemek için bu kurulumu Kovalio Bulut'a bağlayın. Yerel imajlardan istediğinizi yine manuel olarak ekleyebilirsiniz.",
+      "cloudConnectButton": "Kovalio Bulut'a Bağlan",
       "noMatchesTitle": "Eşleşme yok",
       "noMatchesBody": "Farklı bir kategori veya arama terimi deneyin - ya da menüden Özel imaj seçeneğini belirleyin.",
       "localImages": "Yerel imajlar",
-      "openshipCloud": "Openship Bulut",
+      "kovalioCloud": "Kovalio Bulut",
       "localDocker": "Yerel Docker",
       "customEntryName": "Özel imaj",
       "customEntryDescription": "Etiketine göre herkese açık veya özel bir Docker imajı çekin.",
@@ -178,7 +178,7 @@
       "saveEnvironment": "Ortamı kaydet",
       "environmentState": {
         "helpTitle": "Ortam değişkenleri nasıl çalışır",
-        "description": "Openship üzerinde kaydedildi. Hizmetin özel değerleri, Compose ve paylaşılan proje değerlerinden önceliklidir. Devralınan bir değeri düzenlemek bu hizmet için özel bir değer oluşturur.",
+        "description": "Kovalio üzerinde kaydedildi. Hizmetin özel değerleri, Compose ve paylaşılan proje değerlerinden önceliklidir. Devralınan bir değeri düzenlemek bu hizmet için özel bir değer oluşturur.",
         "sources": {
           "service": "Hizmete özel değer",
           "compose": "Compose",
@@ -201,11 +201,11 @@
           "not-deployed": "Bu değişkenler hizmet dağıtıldığında kullanılacak.",
           "unsupported": "Kaydedilmiş ortamı uygulamak için bu hizmeti yeniden dağıtın."
         },
-        "recoveryHint": "Çalışan kapsayıcıda Openship üzerinde kaydedilmemiş değişkenler var. Bunları korumak istiyorsanız uygulamadan önce kurtarın:",
+        "recoveryHint": "Çalışan kapsayıcıda Kovalio üzerinde kaydedilmemiş değişkenler var. Bunları korumak istiyorsanız uygulamadan önce kurtarın:",
         "recover": "Çalışan hizmetten kurtar",
         "removeRuntime": "Bu değişkenleri kurtarmadan uygula ve çalışan hizmetten kaldır.",
         "recovered": "Çalışan hizmetten kurtarıldı — henüz kaydedilmedi",
-        "recoveredHint": "Kurtarılan değerler incelemeye hazır. Openship üzerinde tutmak için kaydedin.",
+        "recoveredHint": "Kurtarılan değerler incelemeye hazır. Kovalio üzerinde tutmak için kaydedin.",
         "recoveryFailed": "Değişkenler çalışan hizmetten kurtarılamadı. Kaydedilmiş değişkenler değiştirilmedi."
       },
       "environmentApply": {
@@ -383,7 +383,7 @@
     "connection": {
       "terminal": "Terminal",
       "statusTitle": "Servis durumu alınamıyor",
-      "statusHint": "Openship güncel durumu doğrulayamadı. Servisiniz hâlâ çalışıyor olabilir.",
+      "statusHint": "Kovalio güncel durumu doğrulayamadı. Servisiniz hâlâ çalışıyor olabilir.",
       "checkingTitle": "Servis kontrol ediliyor",
       "checkingHint": "Sunucudan yanıt bekleniyor. Terminali açmayı şimdi de deneyebilirsiniz.",
       "startingTitle": "Servis bekleniyor",
@@ -408,7 +408,7 @@
       "errorTitle": "Terminal kullanılamıyor",
       "errors": {
         "auth": "Erişiminiz doğrulanamadı. Yeniden oturum açın veya izinlerinizi kontrol edin.",
-        "connect": "Openship servisin kabuğuna ulaşamadı. Sunucu yeniden erişilebilir olduğunda tekrar deneyin.",
+        "connect": "Kovalio servisin kabuğuna ulaşamadı. Sunucu yeniden erişilebilir olduğunda tekrar deneyin.",
         "notFound": "Bu servis kullanılamıyor veya erişim izniniz yok.",
         "notDeployed": "Bağlanılabilecek çalışan bir konteyner yok. Servisin durumunu kontrol edip tekrar deneyin.",
         "notSupported": "Bu servisin çalışma ortamı etkileşimli terminali desteklemiyor.",

@@ -24,7 +24,7 @@ import { scanEdgeOrphans } from "@repo/platform/engine/lib/edge-orphans.service"
 const HOST = "forgotten.example.com";
 const VHOST = `server { listen 80; server_name ${HOST}; location / { proxy_pass http://127.0.0.1:3009; } }`;
 const paths = [
-  "/var/lib/openship/edge/sites-enabled",
+  "/var/lib/kovalio/edge/sites-enabled",
   "/usr/local/openresty/nginx/conf/sites-enabled",
   "/etc/openresty/sites-enabled",
 ];
@@ -32,10 +32,10 @@ const sq = (value: string) => `'${value.replace(/'/g, "'\\''")}'`;
 let root: string;
 
 beforeEach(async () => {
-  vi.stubEnv("OPENSHIP_EDGE_MODE", "docker");
-  vi.stubEnv("OPENSHIP_EDGE_CONTAINER", "openship-edge");
+  vi.stubEnv("KOVALIO_EDGE_MODE", "docker");
+  vi.stubEnv("KOVALIO_EDGE_CONTAINER", "kovalio-edge");
   vi.stubEnv("SHELL", "/bin/sh");
-  root = await mkdtemp(join(tmpdir(), "openship-pr1003-scan-"));
+  root = await mkdtemp(join(tmpdir(), "kovalio-pr1003-scan-"));
   await mkdir(join(root, "layout-1"));
   await writeFile(join(root, "layout-1", "app.conf"), VHOST);
   await mkdir(join(root, "bin"));

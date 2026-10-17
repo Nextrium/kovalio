@@ -190,8 +190,8 @@ export interface PrepareProjectResponse extends PrepareAppConfig {
   monorepoApps?: PrepareMonorepoApp[];
   monorepoWorkspace?: PrepareMonorepoWorkspace;
   rootEnv?: Record<string, string>;
-  /** Names explicitly declared under openship.json `env` (values stay masked). */
-  openshipEnvKeys?: string[];
+  /** Names explicitly declared under kovalio.json `env` (values stay masked). */
+  kovalioEnvKeys?: string[];
   /** Routing config parsed from the repo's vercel.json (persisted on the project). */
   routing?: RoutingConfig;
   // ── Declared overlay (repo-root kovalio.json) — present only when the repo
@@ -224,7 +224,7 @@ export interface PrepareProjectResponse extends PrepareAppConfig {
    * Declared readiness gate. Seeds the wizard's Health section; absent (the
    * common case) leaves it off, which is also what the pipeline does.
    */
-  readiness?: OpenshipReadiness;
+  readiness?: KovalioReadiness;
   /** Ordered commands required before activating a single-app release. */
   releaseCommands?: string[] | null;
   /** Declared runtime roles; absent means web only, a declared [] means none. */

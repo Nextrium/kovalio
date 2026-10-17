@@ -224,7 +224,7 @@ function pairError(draft: ScaleDraft, sourceId: string, targetId: string): strin
   if (sourceId === targetId) return "A resource cannot connect to itself.";
   const allowed = CONNECTION_TARGETS[source.kind].includes(target.kind);
   if (!allowed)
-    return "Connect OpenShip Edge to gateways or application instances, and applications to data stores.";
+    return "Connect Kovalio Edge to gateways or application instances, and applications to data stores.";
   if (draft.edges.some((edge) => edge.source === sourceId && edge.target === targetId))
     return "These resources are already connected.";
   const pending = [targetId];
@@ -454,7 +454,7 @@ export function reviewDraft(draft: ScaleDraft): PlanIssue[] {
   if (!draft.nodes.length)
     return [
       {
-        message: "Add OpenShip Edge or an application to start the topology.",
+        message: "Add Kovalio Edge or an application to start the topology.",
         severity: "warning",
       },
     ];
@@ -476,7 +476,7 @@ export function reviewDraft(draft: ScaleDraft): PlanIssue[] {
     if (node.kind !== "edge" && !reachable.has(node.id))
       issues.push({
         nodeId: node.id,
-        message: `${node.name} has no route from OpenShip Edge.`,
+        message: `${node.name} has no route from Kovalio Edge.`,
         severity: "warning",
       });
     if (node.kind === "edge" && !connections.some((edge) => edge.source === node.id))
@@ -501,7 +501,7 @@ export function reviewDraft(draft: ScaleDraft): PlanIssue[] {
   if (draft.nodes.filter((node) => node.kind === "edge").length === 1)
     issues.push({
       message:
-        "One OpenShip Edge gateway is a single point of failure. Add a second gateway for redundancy.",
+        "One Kovalio Edge gateway is a single point of failure. Add a second gateway for redundancy.",
       severity: "info",
     });
   return issues;
@@ -766,5 +766,5 @@ export function draftReducer(state: DraftHistory, action: DraftAction): DraftHis
 }
 
 export function draftStorageKey(userId: string, organizationId?: string | null): string {
-  return `openship:scale:v1:${encodeURIComponent(userId)}:${encodeURIComponent(organizationId ?? "personal")}`;
+  return `kovalio:scale:v1:${encodeURIComponent(userId)}:${encodeURIComponent(organizationId ?? "personal")}`;
 }

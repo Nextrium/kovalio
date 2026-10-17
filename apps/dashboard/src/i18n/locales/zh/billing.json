@@ -1,6 +1,6 @@
 {
   "home": {
-    "label": "Openship Cloud",
+    "label": "Kovalio Cloud",
     "title": "准备好上线了吗？",
     "plansAndBilling": "套餐与账单",
     "description": "托管构建与部署，助力项目持续成长。",
@@ -80,11 +80,11 @@
     },
     "notEnabled": {
       "title": "Cloud 购买功能尚未开放",
-      "description": "Openship 尚未启用订阅和积分购买。请稍后重试。"
+      "description": "Kovalio 尚未启用订阅和积分购买。请稍后重试。"
     },
     "notConfigured": {
       "title": "Cloud 账单设置尚未完成",
-      "description": "Openship 需要完成账单设置。请联系 Openship 支持团队。"
+      "description": "Kovalio 需要完成账单设置。请联系 Kovalio 支持团队。"
     },
     "forbidden": {
       "title": "你无权访问账单",
@@ -97,7 +97,7 @@
     },
     "loadFailed": {
       "title": "无法加载账单",
-      "description": "账单功能暂时不可用。请重试。如果问题仍然存在，请联系 Openship 支持团队。"
+      "description": "账单功能暂时不可用。请重试。如果问题仍然存在，请联系 Kovalio 支持团队。"
     }
   },
   "plansRoute": {
@@ -408,7 +408,7 @@
     "planRequired": "需要订阅计划",
     "savedCredits": "保留的用量余额",
     "savedCreditsHint": "预付用量保留在此工作区中。选择套餐即可用于 Cloud 部署。",
-    "offerTitle": "在 Openship Cloud 上线",
+    "offerTitle": "在 Kovalio Cloud 上线",
     "offerLabel": "开始部署",
     "offerDescription": "为项目提供托管资源。",
     "startingWith": "从 {name} 开始",
@@ -449,7 +449,7 @@
     "diskHint": "应用磁盘的读写数据量，不是已占用的存储容量。",
     "transfer": "应用数据传输",
     "transferHint": "应用的入站和出站数据。Edge 分发流量单独显示。",
-    "edgeTitle": "Openship Edge",
+    "edgeTitle": "Kovalio Edge",
     "bandwidth": "Edge 流量",
     "bandwidthHint": "工作空间所有 Edge 路由的入站和出站流量。此月度额度独立于计算额度。达到上限后路由暂停，直到重置或升级。",
     "requests": "Edge 请求",
@@ -536,7 +536,7 @@
   "workspaces": {
     "title": "云空间",
     "singular": "云空间",
-    "description": "选择套餐即可部署。Openship 管理服务器，项目共享 CPU、内存和存储。",
+    "description": "选择套餐即可部署。Kovalio 管理服务器，项目共享 CPU、内存和存储。",
     "loading": "正在加载云空间…",
     "choose": "选择服务器",
     "chooseBilling": "选择云空间以查看其账单。",
@@ -558,7 +558,7 @@
     "create": "添加云空间",
     "mode": "项目隔离",
     "createHint": "创建服务器免费。接下来选择套餐，完成付款后才开始计费。",
-    "cloudOnly": "托管服务器适用于 Openship Cloud。请使用“服务器”管理自托管基础设施。",
+    "cloudOnly": "托管服务器适用于 Kovalio Cloud。请使用“服务器”管理自托管基础设施。",
     "projectCount": "{count} 个项目",
     "noProjects": "此服务器中尚无项目。",
     "liveUsage": "实时用量",
@@ -615,7 +615,7 @@
     "plan": "服务器套餐",
     "actions": "服务器操作",
     "changePlan": "更改套餐",
-    "managedBy": "由 Openship Cloud 管理",
+    "managedBy": "由 Kovalio Cloud 管理",
     "network": {
       "title": "网络",
       "description": "此托管服务器的提供商设置。",
@@ -813,7 +813,7 @@
     "retry": "重试支付",
     "close": "关闭",
     "done": "完成",
-    "requestFailed": "无法保存您的请求。请重试或发送邮件至 support@openship.io。"
+    "requestFailed": "无法保存您的请求。请重试或发送邮件至 support@nextrium.org。"
   },
   "pendingPayments": {
     "title": "待完成付款",

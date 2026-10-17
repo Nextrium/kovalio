@@ -11,9 +11,9 @@ export function projectNamespaceManifest(projectId: string, runtimeId: string): 
     metadata: {
       name: kubernetesProjectNamespace(projectId),
       labels: {
-        "app.kubernetes.io/managed-by": "openship",
-        "openship.io/project": kubernetesIdLabel(projectId),
-        "openship.io/runtime": runtimeId,
+        "app.kubernetes.io/managed-by": "kovalio",
+        "nextrium.org/project": kubernetesIdLabel(projectId),
+        "nextrium.org/runtime": runtimeId,
         "pod-security.kubernetes.io/enforce": "baseline",
       },
     },

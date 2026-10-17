@@ -185,11 +185,11 @@ describe("edgeProxyFor", () => {
                 location / { proxy_pass ${proxyPass}; }
               }`;
           }
-          if (cmd.includes("docker ps -a")) return "openship-edge\tghcr.io/openship/edge:latest\trunning";
+          if (cmd.includes("docker ps -a")) return "kovalio-edge\tghcr.io/kovalio/edge:latest\trunning";
           return "";
         }),
       } as unknown as CommandExecutor;
-      const api = edgeProxyFor(ownEdge, "openresty", { ours: true, container: "openship-edge" });
+      const api = edgeProxyFor(ownEdge, "openresty", { ours: true, container: "kovalio-edge" });
       expect(await api.listLoopbackUpstreamPortsStrict()).toEqual(new Set());
     },
   );
@@ -270,14 +270,14 @@ describe("edgeProxyFor", () => {
           }`;
         }
         if (cmd.includes("docker ps -a")) {
-          return "openship-edge\tghcr.io/openship/edge:latest\trunning";
+          return "kovalio-edge\tghcr.io/kovalio/edge:latest\trunning";
         }
         return "";
       }),
     } as unknown as CommandExecutor;
     const api = edgeProxyFor(dynamicPort, "openresty", {
       ours: true,
-      container: "openship-edge",
+      container: "kovalio-edge",
     });
 
     await expect(api.listLoopbackUpstreamPortsStrict()).rejects.toThrow("uses an nginx variable");
@@ -296,14 +296,14 @@ describe("edgeProxyFor", () => {
           }`;
         }
         if (cmd.includes("docker ps -a")) {
-          return "openship-edge\tghcr.io/openship/edge:latest\trunning";
+          return "kovalio-edge\tghcr.io/kovalio/edge:latest\trunning";
         }
         return "";
       }),
     } as unknown as CommandExecutor;
     const api = edgeProxyFor(uriVariables, "openresty", {
       ours: true,
-      container: "openship-edge",
+      container: "kovalio-edge",
     });
 
     expect(await api.listLoopbackUpstreamPortsStrict()).toEqual(new Set([4_000]));
@@ -322,14 +322,14 @@ describe("edgeProxyFor", () => {
           }`;
         }
         if (cmd.includes("docker ps -a")) {
-          return "openship-edge\tghcr.io/openship/edge:latest\trunning";
+          return "kovalio-edge\tghcr.io/kovalio/edge:latest\trunning";
         }
         return "";
       }),
     } as unknown as CommandExecutor;
     const api = edgeProxyFor(queryVariables, "openresty", {
       ours: true,
-      container: "openship-edge",
+      container: "kovalio-edge",
     });
 
     expect(await api.listLoopbackUpstreamPortsStrict()).toEqual(new Set([4_100]));

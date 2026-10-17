@@ -113,7 +113,7 @@
     "needsLoginPre": "Kovalio の ",
     "needsLoginMid": " に参加します。サインインするか、",
     "needsLoginPost": " でアカウントを作成して承認してください。",
-    "signInToAccept": "Openship の {org} に参加します。{email} でサインインして承認してください。",
+    "signInToAccept": "Kovalio の {org} に参加します。{email} でサインインして承認してください。",
     "accountCreationDisabled": "この招待を承認する前に、インスタンス管理者がアカウントを作成する必要があります。",
     "signIn": "サインイン",
     "createAccount": "アカウントを作成",
@@ -158,7 +158,7 @@
     "invalidTitle": "無効な認可リクエスト",
     "title": "デバイスを承認",
     "instancePre": "アドレス ",
-    "instancePost": " の Openship インスタンスが、あなたの Openship Cloud アカウントへの接続を求めています。",
+    "instancePost": " の Kovalio インスタンスが、あなたの Kovalio Cloud アカウントへの接続を求めています。",
     "organization": "組織",
     "switch": "切り替え",
     "switchAccount": "アカウントを切り替え",
@@ -176,7 +176,7 @@
     "authorizing": "認可しています…",
     "authorize": "承認",
     "cancel": "キャンセル",
-    "deviceDoneTitle": "Openship Cloud に接続しました",
+    "deviceDoneTitle": "Kovalio Cloud に接続しました",
     "deviceDoneBody": "このタブを閉じてターミナルに戻ることができます。セットアップは自動的に続行されます。"
   },
   "cloudConnect": {

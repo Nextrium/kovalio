@@ -144,7 +144,7 @@ describe("registry connection errors", () => {
       const result = await verifyCredentialValues(provider, values("registry.example.com"));
       expect(result.ok).toBe(false);
       expect(result.reason).toContain("TLS");
-      expect(result.reason).toContain("Openship API");
+      expect(result.reason).toContain("Kovalio API");
       expect(result.reason).not.toMatch(/operator|registry-token|private\.example|\/secret/);
       if (challenge?.startsWith("Bearer")) expect(result.reason).toContain("token endpoint");
     },

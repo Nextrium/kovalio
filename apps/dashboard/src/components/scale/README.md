@@ -4,12 +4,12 @@ The production workspace is now [Project topology](../topology/README.md) at
 `/projects/:id/topology`; `/scale` redirects to the project list. The example
 planner described below is retained for capability development and tests and
 is not rendered by a dashboard route. Its example does not provision servers,
-configure OpenShip Edge, run an autoscaler, or change databases. Shared canvas
+configure Kovalio Edge, run an autoscaler, or change databases. Shared canvas
 edges and the collapsible details panel are reused by project topology.
 
 ## Topology
 
-- **OpenShip Edge** is a single resource type handling ingress, TLS termination, API routing,
+- **Kovalio Edge** is a single resource type handling ingress, TLS termination, API routing,
   health checks, and load balancing. There is no standalone
   load-balancer module. Gateways connect directly to application instances or to other gateways.
 - **Applications** are runtime-agnostic APIs, websites, or HTTP services. Shared configuration lives
@@ -96,10 +96,10 @@ layout, or reset) or the Fit button, not selection, focus, configuration edits, 
 Users keep control of the viewport while working with node settings. Fitting leaves room for the
 toolbar (including its two-row compact layout) and bottom controls.
 
-Surfaces and controls still follow OpenShip: `bg-card` / `rounded-2xl`, `Button`, `Input`, `CustomSelect`,
+Surfaces and controls still follow Kovalio: `bg-card` / `rounded-2xl`, `Button`, `Input`, `CustomSelect`,
 `Tabs`, and `Switch`. Nodes and resource panel icons use subtle type colors from the existing theme.
 The node palette uses separated cards with each type's own tinted background, border, and icon:
-amber for OpenShip Edge, green for applications, blue for PostgreSQL, and red for Redis.
+amber for Kovalio Edge, green for applications, blue for PostgreSQL, and red for Redis.
 Choosing a database engine opens Standalone and Cluster cards with short descriptions. Sizing and
 member counts are configured in the inspector after adding the node. Back returns to the engine list
 and restores focus.
@@ -148,7 +148,7 @@ have implemented operations and validation before it is advertised in the Scale 
 
 A future validation/application API must map applications and instances to real projects and servers,
 enforce permissions and placement, and reconcile desired configuration with observed state. Edge
-customization belongs in the OpenShip Edge integration, not a separate load-balancer
+customization belongs in the Kovalio Edge integration, not a separate load-balancer
 service. Database replication/failover and Redis rebalancing require backend orchestration and an
 explicit review/apply operation; local layout persistence must never apply infrastructure changes.
 

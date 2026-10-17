@@ -9,10 +9,10 @@ Pass global `--json` before the command for structured output.
 ## Health and issues
 
 ```bash
-openship monitoring issues
-openship monitoring summary
-openship monitoring health
-openship monitoring scan
+kovalio monitoring issues
+kovalio monitoring summary
+kovalio monitoring health
+kovalio monitoring scan
 ```
 
 Issue results include counts and the engine's recovery actions. Health results include workload state,
@@ -28,11 +28,11 @@ capabilities returned by the engine, including Cloud and native restrictions.
 ## Notifications
 
 ```bash
-openship notification categories
-openship notification channel create channel.json
-openship notification channel test channel_123
-openship notification subscription set deploy.failed --channel channel_123
-openship notification deliveries list --limit 50
+kovalio notification categories
+kovalio notification channel create channel.json
+kovalio notification channel test channel_123
+kovalio notification subscription set deploy.failed --channel channel_123
+kovalio notification deliveries list --limit 50
 ```
 
 A channel file contains its `kind`, `label` and provider `config`, as defined by the notification API.
@@ -42,9 +42,9 @@ The `channel test` command sends a real test notification and exits nonzero if d
 ## Incoming webhooks
 
 ```bash
-openship webhook list --project proj_123
-openship webhook create webhook.json --project proj_123
-openship webhook deliveries --project proj_123 --limit 50
+kovalio webhook list --project proj_123
+kovalio webhook create webhook.json --project proj_123
+kovalio webhook deliveries --project proj_123 --limit 50
 ```
 
 The JSON definition selects the name, action and authentication using the shared webhook contract.
@@ -55,10 +55,10 @@ Delivery pages return `nextCursor`; pass it as `--cursor` for the next page.
 ## Audit
 
 ```bash
-openship audit list
-openship audit list --query filters.json
-openship audit facets
-openship audit settings get
+kovalio audit list
+kovalio audit list --query filters.json
+kovalio audit facets
+kovalio audit settings get
 ```
 
 Audit queries accept the shared filters, dates and pagination fields, for example

@@ -83,7 +83,7 @@ describe.skipIf(process.env.RUN_ACME_E2E !== "1")(
   "manual DNS certificates against a real ACME CA",
   () => {
     beforeAll(async () => {
-      directory = await mkdtemp(join(tmpdir(), "openship-acme-e2e-"));
+      directory = await mkdtemp(join(tmpdir(), "kovalio-acme-e2e-"));
       const { stdout } = await execute("go", ["env", "GOMODCACHE"]);
       const module = join(stdout.trim(), `github.com/letsencrypt/pebble/v2@${version}`);
       const [dns, management, ca, caManagement] = await Promise.all([

@@ -65,7 +65,7 @@ export function actionWorkflowView(workflow: ActionWorkflow) {
   } = workflow;
   return {
     id,
-    controller: workflow.controller ?? "openship",
+    controller: workflow.controller ?? "kovalio",
     githubWorkflowId: workflow.githubWorkflowId ?? null,
     name,
     owner,
@@ -109,7 +109,7 @@ export function actionRunView(run: ActionRun, jobs: ActionJob[]) {
   }
   return {
     id: run.id,
-    controller: run.controller ?? "openship",
+    controller: run.controller ?? "kovalio",
     externalUrl: run.github?.url ?? null,
     workflowId: run.workflowId,
     name: run.plan.name,

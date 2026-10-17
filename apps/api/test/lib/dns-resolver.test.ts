@@ -12,14 +12,14 @@ describe("DNS TXT verification sources", () => {
       { type: 16, data: '"separate"' },
       { type: 16, data: "raw-token" },
     ] }) }));
-    expect(await resolveRecords("_openship-challenge.app.example.com", "TXT"))
+    expect(await resolveRecords("_kovalio-challenge.app.example.com", "TXT"))
       .toEqual(["firstsecond", "separate", "raw-token"]);
   });
 
   it("joins the chunks of a local TXT record without joining separate records", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("DoH unavailable")));
     vi.spyOn(dns, "resolveTxt").mockResolvedValue([["first", "second"], ["separate"]]);
-    expect(await resolveRecords("_openship-challenge.app.example.com", "TXT"))
+    expect(await resolveRecords("_kovalio-challenge.app.example.com", "TXT"))
       .toEqual(["firstsecond", "separate"]);
   });
 
@@ -27,6 +27,6 @@ describe("DNS TXT verification sources", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ Answer: [
       { type: 5, data: "token" },
     ] }) }));
-    expect(await resolveRecords("_openship-challenge.app.example.com", "TXT")).toEqual([]);
+    expect(await resolveRecords("_kovalio-challenge.app.example.com", "TXT")).toEqual([]);
   });
 });

@@ -97,11 +97,11 @@
       "serviceCountOne": "{count} 件のサービス",
       "serviceCountOther": "{count} 件のサービス",
       "searchPlaceholder": "名前、イメージ、またはタグで検索…",
-      "cloudConnectHint": "Openship Cloud を接続すると、クラウドサービスのカタログを参照できます。イメージは手動でも追加できます。",
+      "cloudConnectHint": "Kovalio Cloud を接続すると、クラウドサービスのカタログを参照できます。イメージは手動でも追加できます。",
       "noMatchesTitle": "一致するものがありません",
       "noMatchesBody": "別のカテゴリや検索語をお試しください。またはサイドバーから「カスタムイメージ」を選択してください。",
       "localImages": "ローカルイメージ",
-      "openshipCloud": "Openship Cloud",
+      "kovalioCloud": "Kovalio Cloud",
       "localDocker": "ローカル Docker",
       "customEntryName": "カスタムイメージ",
       "customEntryDescription": "任意の公開または非公開の Docker イメージをタグで取得します。",
@@ -134,7 +134,7 @@
         "other": "その他"
       },
       "cloudConnectTitle": "マネージドデータベースまたはオブジェクトストレージが必要ですか？",
-      "cloudConnectBody": "Openship Cloud に接続して、このプロジェクトと一緒にサーバーレス Postgres、Redis、S3 互換バケットをプロビジョニングします。",
+      "cloudConnectBody": "Kovalio Cloud に接続して、このプロジェクトと一緒にサーバーレス Postgres、Redis、S3 互換バケットをプロビジョニングします。",
       "cloudConnectButton": "Cloud アドオンを見る"
     },
     "detail": {
@@ -174,7 +174,7 @@
       "saveEnvironment": "環境を保存",
       "environmentState": {
         "helpTitle": "環境変数の仕組み",
-        "description": "Openship に保存されています。サービスの上書き設定は、Compose とプロジェクトの共有値より優先されます。継承した値を編集すると、このサービスの上書き設定が作成されます。",
+        "description": "Kovalio に保存されています。サービスの上書き設定は、Compose とプロジェクトの共有値より優先されます。継承した値を編集すると、このサービスの上書き設定が作成されます。",
         "sources": {
           "service": "サービスの上書き設定",
           "compose": "Compose",
@@ -197,11 +197,11 @@
           "not-deployed": "これらの変数は、このサービスのデプロイ時に使用されます。",
           "unsupported": "保存済みの環境変数を適用するには、このサービスを再デプロイしてください。"
         },
-        "recoveryHint": "実行中のコンテナには Openship に保存されていない変数があります。保持する場合は、適用する前に復元してください：",
+        "recoveryHint": "実行中のコンテナには Kovalio に保存されていない変数があります。保持する場合は、適用する前に復元してください：",
         "recover": "実行中のサービスから復元",
         "removeRuntime": "これらの変数を復元せずに適用し、実行中のサービスから削除します。",
         "recovered": "実行中のサービスから復元済み — 未保存",
-        "recoveredHint": "復元した値を確認できます。Openship に保持するには保存してください。",
+        "recoveredHint": "復元した値を確認できます。Kovalio に保持するには保存してください。",
         "recoveryFailed": "実行中のサービスから変数を復元できませんでした。保存済みの変数は変更されていません。"
       },
       "environmentApply": {
@@ -383,7 +383,7 @@
     "connection": {
       "terminal": "ターミナル",
       "statusTitle": "サービスの状態を確認できません",
-      "statusHint": "Openship は現在の状態を確認できませんでした。サービスは稼働している可能性があります。",
+      "statusHint": "Kovalio は現在の状態を確認できませんでした。サービスは稼働している可能性があります。",
       "checkingTitle": "サービスを確認中",
       "checkingHint": "サーバーの応答を待っています。今すぐターミナルへの接続を試すこともできます。",
       "startingTitle": "サービスを待機中",
@@ -408,7 +408,7 @@
       "errorTitle": "ターミナルを利用できません",
       "errors": {
         "auth": "アクセス権を確認できませんでした。再度ログインするか、権限を確認してください。",
-        "connect": "Openship はサービスのシェルに接続できませんでした。サーバーへの接続が回復してから再試行してください。",
+        "connect": "Kovalio はサービスのシェルに接続できませんでした。サーバーへの接続が回復してから再試行してください。",
         "notFound": "このサービスは利用できないか、アクセス権がありません。",
         "notDeployed": "接続できる稼働中のコンテナがありません。サービスの状態を確認して再試行してください。",
         "notSupported": "このサービスのランタイムは対話型ターミナルに対応していません。",

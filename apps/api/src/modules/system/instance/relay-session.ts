@@ -50,7 +50,7 @@ export async function saveRemoteCookies(state: ControllerState, headers: Headers
       if (equals < 1) continue;
       const name = pair!.slice(0, equals).trim(),
         value = pair!.slice(equals + 1).trim();
-      // Better Auth prefixes are fixed by Openship. Ignore arbitrary cookies
+      // Better Auth prefixes are fixed by Kovalio. Ignore arbitrary cookies
       // from a proxy/application sharing the public host.
       if (!deviceCookieName.test(name) || value.length > 16_384) continue;
       const expired =

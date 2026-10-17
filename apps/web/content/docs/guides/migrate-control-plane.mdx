@@ -1,20 +1,20 @@
 ---
-title: Move your Openship instance
+title: Move your Kovalio instance
 description: Move control between Desktop and a server while keeping your projects, credentials and deployment ownership.
 ---
 
-Moving an instance changes **where Openship manages your infrastructure**. Your apps and
+Moving an instance changes **where Kovalio manages your infrastructure**. Your apps and
 volumes keep running on their existing servers. All workspaces, users, server connections,
 projects, credentials, deployment history and backup settings travel together.
 
 Use **Settings → Instance → Instance location**. Moving requires an instance administrator;
 being the owner of an organization alone does not grant access to other organizations' data.
-Openship Cloud's shared SaaS control plane cannot be moved this way.
+Kovalio Cloud's shared SaaS control plane cannot be moved this way.
 
 ## Desktop to a server
 
 1. Choose **Move to a server**.
-2. Select a connected server with the normal server picker. A managed Openship Cloud server
+2. Select a connected server with the normal server picker. A managed Kovalio Cloud server
    is also a destination, using its existing subscription and execution connection.
 3. Choose **Use through Desktop** to install only the API, or **Desktop + browser** to install
    the API and dashboard. Both need a reachable HTTPS address for webhooks and remote clients.
@@ -22,7 +22,7 @@ Openship Cloud's shared SaaS control plane cannot be moved this way.
    a free address uses that server's Cloud routing connection.
 5. On a fresh Desktop, choose **Continue** to set your account email and password. Your selected
    server, access mode and address stay in the same dialog. Account creation does not start the move.
-6. Review and confirm. Openship deploys its normal API service with persistent database storage,
+6. Review and confirm. Kovalio deploys its normal API service with persistent database storage,
    verifies the receiving API and version, then transfers the instance.
 
 The interface remains on your Desktop and connects to the new API. Work continues on the
@@ -30,10 +30,10 @@ server when Desktop closes. Team invitations, jobs and webhooks use the active s
 
 Team settings and a disabled push-to-deploy switch offer **Move to a server** when the
 instance needs a reachable address. These shortcuts open the same destination setup.
-An instance that already has a public address does not need to move; if its Openship app
+An instance that already has a public address does not need to move; if its Kovalio app
 only needs a domain, Team settings links directly to that domain setup.
 
-Both ends must run the **same compatible Openship release**. The destination must be able to
+Both ends must run the **same compatible Kovalio release**. The destination must be able to
 pull its API/dashboard images. An older image is rejected before the source is paused.
 
 ## Use an existing instance
@@ -82,7 +82,7 @@ their expiry, recipient binding and revocation controls in **Pending invitations
 
 ## Move back to Desktop
 
-On a connected Desktop, choose **Move back to Desktop**. Openship transfers the **latest remote
+On a connected Desktop, choose **Move back to Desktop**. Kovalio transfers the **latest remote
 data**, including work created since you moved. It does not reactivate an old local snapshot.
 The source server retires before Desktop starts managing jobs and deployments.
 If that instance manages apps on its own host, select its saved SSH connection in the
@@ -104,9 +104,9 @@ handoff. It reuses the API installation; it does not create another server or su
 
 ## Local connections and credentials
 
-Before moving, Openship checks for connections that cannot work from the destination:
+Before moving, Kovalio checks for connections that cannot work from the destination:
 
-- A source-local or loopback host needs a saved SSH connection to that **same host**. Openship
+- A source-local or loopback host needs a saved SSH connection to that **same host**. Kovalio
   verifies its host identity and preserves server ids, container ids, routes and volumes.
 - SSH-agent credentials need a saved private key or password. File-backed private keys are
   carried using the existing credential export process.
@@ -123,7 +123,7 @@ updated callback URLs when that hostname changes.
 
 ## Interrupted moves
 
-Openship pauses new control-plane changes and waits for running operations before taking the
+Kovalio pauses new control-plane changes and waits for running operations before taking the
 snapshot. Your already-running app containers are not stopped. Requests arriving during the
 handoff receive a retryable response; externally delivered webhooks may need redelivery.
 
@@ -141,7 +141,7 @@ interrupted move within that window; older recovery requires operator assistance
 The active API project is protected from stopping or deleting itself. For an instance
 installed by this flow, move control to Desktop, update the former API project's service
 images through the normal deployment flow, and then choose **Move to previous server**.
-CLI-installed instances continue to use `openship update` on their host.
+CLI-installed instances continue to use `kovalio update` on their host.
 
 ## Backup and recovery files
 
@@ -153,14 +153,14 @@ retire another controller, so it is not a substitute for the live handoff above.
 The CLI uses the same archive endpoints:
 
 ```bash
-openship system data-transfer export --out openship-export.osx
-openship system data-transfer import --file openship-export.osx --mode merge --yes
+kovalio system data-transfer export --out kovalio-export.osx
+kovalio system data-transfer import --file kovalio-export.osx --mode merge --yes
 ```
 
 The export is written with private file permissions. `merge` retains destination records on
 conflict; `wipe` replaces the destination's data and requires signing in as the imported owner.
 Use these options for reviewed recovery or selective transfer. The earlier
-`openship system migration start` command remains disabled; it does not run the handoff above.
+`kovalio system migration start` command remains disabled; it does not run the handoff above.
 
 See [Settings](/docs/dashboard/settings) for archive options and
 [server-to-server migration](/docs/guides/server-to-server-migration) to move an application's

@@ -97,7 +97,7 @@ function setup(opts: { certOnDisk?: boolean; certbotOutput?: string } = {}) {
         return `nginx: master process ${PATHS.bin} -g daemon on;`;
       }
       if (command === "cat /proc/321/cgroup 2>/dev/null") {
-        return "0::/system.slice/openship-openresty.service";
+        return "0::/system.slice/kovalio-openresty.service";
       }
       if (command.includes("/proc/321/stat")) return "987";
       if (command.startsWith("readlink -f ")) {

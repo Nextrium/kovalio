@@ -14,7 +14,7 @@ import { createConfigurationSecrets } from "@repo/db/configuration-secrets";
 import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 
 const exec = promisify(execFile);
-const container = `openship-e2e-config-secrets-${process.pid}`;
+const container = `kovalio-e2e-config-secrets-${process.pid}`;
 const encryption = createEncryption("configuration-e2e-key-844");
 const codec = createConfigurationSecrets(encryption);
 let connection: DatabaseConnection;

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://openship.io/app.schema.json",
+  "$schema": "https://nextrium.org/app.schema.json",
   "available": true,
   "verified": false,
   "minEngine": "0.9.0",
@@ -16,7 +16,7 @@
       "restart": "unless-stopped",
       "image": "mariadb:11.4.13",
       "environment": {
-        "MARIADB_USER": "openship",
+        "MARIADB_USER": "kovalio",
         "MARIADB_DATABASE": "app"
       },
       "volumes": ["mariadb_data:/var/lib/mysql"],
@@ -110,7 +110,7 @@
       {
         "id": "url",
         "label": "Database URL",
-        "source": "template:mysql://openship:{{env:mariadb:MARIADB_PASSWORD}}@mariadb:3306/app",
+        "source": "template:mysql://kovalio:{{env:mariadb:MARIADB_PASSWORD}}@mariadb:3306/app",
         "service": "mariadb",
         "secret": true,
         "envKey": "DATABASE_URL",
@@ -182,7 +182,7 @@
   "files": [
     {
       "service": "adminer",
-      "path": "/var/www/html/plugins-enabled/openship-servers.php",
+      "path": "/var/www/html/plugins-enabled/kovalio-servers.php",
       "content": "<?php\nrequire_once __DIR__ . '/../plugins/login-servers.php';\nreturn new AdminerLoginServers(['MariaDB' => ['server' => 'mariadb', 'driver' => 'server']]);\n"
     }
   ],

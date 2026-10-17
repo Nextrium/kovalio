@@ -37,7 +37,7 @@ func installGitHubGate(directory string) error {
 		return errors.New("official runner has no supported admission runtime")
 	}
 	worker := filepath.Join(root, "bin", "Runner.Worker")
-	original := worker + ".openship"
+	original := worker + ".kovalio"
 	if err := os.Rename(worker, original); err != nil {
 		return err
 	}

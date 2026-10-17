@@ -6,7 +6,7 @@ import {
   type VerifiedIdentity,
 } from "@repo/platform";
 import { alice, authorizationFixture } from "../../platform/test/fixtures";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 import { createShip } from "../src/native";
 
 describe("routing retry facades", () => {
@@ -22,7 +22,7 @@ describe("routing retry facades", () => {
           { headers: { "content-type": "text/event-stream" } },
         ),
     );
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch });
     const events = [];
     for await (const event of client.projects.retryRoutingStream("project/a")) events.push(event);
     expect(fetch).toHaveBeenCalledOnce();
@@ -35,7 +35,7 @@ describe("routing retry facades", () => {
   });
 
   it("keeps a server rejection actionable instead of replacing it with a generic timeout", async () => {
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "https://ship.test",
       fetch: async () =>
         Response.json(
@@ -61,7 +61,7 @@ describe("routing retry facades", () => {
           headers: { "content-type": "text/event-stream" },
         }),
     );
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch });
     const events = [];
     for await (const event of client.projects.retryRoutingStream("project/a", {
       sessionId: "routing/a?",

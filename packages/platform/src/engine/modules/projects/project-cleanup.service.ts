@@ -193,7 +193,7 @@ async function ownedCloudVolumeNames(
   if (runtime.projectId !== projectId)
     throw new Error("Cloud volume inventory belongs to another project");
   return (await runtime.listAllVolumes())
-    .filter((volume) => volume.labels["openship.project"] === projectId)
+    .filter((volume) => volume.labels["kovalio.project"] === projectId)
     .map((volume) => volume.name);
 }
 

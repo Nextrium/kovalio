@@ -164,7 +164,7 @@ function scannedStack(): DiscoveredStack {
     warnings: [],
     adoptable: true,
     alreadyManaged: 0,
-    openshipProjects: [],
+    kovalioProjects: [],
   };
 }
 
@@ -900,7 +900,7 @@ it("offers recovered projects inside discovery and keeps recovery separate from 
     services: [],
     groups: [],
     adoptable: false,
-    openshipProjects: [
+    kovalioProjects: [
       {
         projectId: "original-id",
         suggestedName: "recovered",
@@ -914,7 +914,7 @@ it("offers recovered projects inside discovery and keeps recovery separate from 
   await pickSource("First server");
   await act(async () => button("Scan server").click());
   expect(container.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe("Cards");
-  expect(container.textContent).not.toContain("Openship projects found");
+  expect(container.textContent).not.toContain("Kovalio projects found");
   await act(async () =>
     container.querySelector<HTMLButtonElement>('[aria-label="Recover recovered"]')!.click(),
   );
@@ -944,7 +944,7 @@ it("does not show a stale recovery response after the organization changes", asy
   const stack = scannedStack();
   h.scanStream.mockResolvedValue({
     ...stack,
-    openshipProjects: [
+    kovalioProjects: [
       {
         projectId: "private-project",
         suggestedName: "Private recovery",
@@ -984,7 +984,7 @@ it("remembers a successful recovery that finishes after leaving its review", asy
   const stack = scannedStack();
   h.scanStream.mockResolvedValue({
     ...stack,
-    openshipProjects: [
+    kovalioProjects: [
       {
         projectId: "original-id",
         suggestedName: "Existing shop",

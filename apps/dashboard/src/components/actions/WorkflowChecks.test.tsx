@@ -124,7 +124,7 @@ describe("workflow Checks setup", () => {
     expect(host.textContent).toContain("octocat");
     expect(h.checks.mock.calls.map(([input]) => input.controller).sort()).toEqual([
       "github",
-      "openship",
+      "kovalio",
     ]);
     expect(host.textContent).not.toContain("Account-wide Actions notifications");
     expect(host.querySelector('a[href*="tab=notifications"]')).toBeNull();
@@ -259,7 +259,7 @@ describe("workflow Checks setup", () => {
   });
   it("keeps standalone results local without querying GitHub", async () => {
     await render({ repository: null, github: false, independent: true });
-    expect(host.textContent).toContain("Job and step results stay in Openship.");
+    expect(host.textContent).toContain("Job and step results stay in Kovalio.");
     expect(h.checks).not.toHaveBeenCalled();
   });
 });

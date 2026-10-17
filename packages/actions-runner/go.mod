@@ -1,4 +1,4 @@
-module github.com/oblien/openship/packages/actions-runner
+module github.com/Nextrium/kovalio/packages/actions-runner
 
 go 1.25.0
 

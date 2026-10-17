@@ -15,10 +15,10 @@ export function savedMetadata(
   namespace: string,
 ): Record<string, string> {
   return {
-    openship_plan: tier,
-    openship_offer_version: "5",
-    openship_organization: organizationId,
-    openship_namespace: namespace,
-    openship_limits: JSON.stringify(savedLimits(tier)),
+    kovalio_plan: tier,
+    kovalio_offer_version: "5",
+    kovalio_organization: organizationId,
+    kovalio_namespace: namespace,
+    kovalio_limits: JSON.stringify(savedLimits(tier)),
   };
 }

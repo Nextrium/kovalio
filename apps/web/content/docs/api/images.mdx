@@ -9,7 +9,7 @@ The Images API returns the **build-image catalog** — the curated list of ready
 (PostgreSQL, Redis, and friends) you pick from when adding a service to a project. In the dashboard this is
 the image grid in the **Add service** modal; it's a read-only lookup, so there's nothing to create or edit.
 
-<Callout title="Catalog comes from Openship Cloud" type="info">
+<Callout title="Catalog comes from Kovalio Cloud" type="info">
 The module is available on every deploy mode (self-hosted, cloud, and desktop), but the catalog itself is
 served by Kovalio Cloud. On a **SaaS** instance it uses the master catalog; on a **self-hosted** instance
 with a cloud account linked it uses your org's cloud token. On a self-hosted instance with **no** cloud
@@ -34,12 +34,12 @@ GET /api/images
 />
 
 ```bash
-curl "$OPENSHIP_URL/api/images" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/images" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 
 # With filters:
-curl "$OPENSHIP_URL/api/images?search=postgres&category=database" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/images?search=postgres&category=database" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 The response is `{ "success": true, "images": [ … ] }`. Each entry describes one catalog image; common fields

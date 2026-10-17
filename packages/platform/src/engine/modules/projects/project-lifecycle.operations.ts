@@ -28,16 +28,16 @@ export function createProjectLifecycleOperations(
         // attempts on resources the actor could actually see.
         return failOperation({ ok: false, error: "Project not found" }, 404);
       }
-      // The Openship control plane deploys itself; deleting its app row would drop
+      // The Kovalio control plane deploys itself; deleting its app row would drop
       // the Apps entry + domain while the host service keeps running (and orphan the
       // edge route). It's managed from the CLI, never torn down via the dashboard.
-      if (proj.appTemplateId === "openship") {
+      if (proj.appTemplateId === "kovalio") {
         return failOperation(
           {
             ok: false,
             code: "PROJECT_IS_CONTROL_PLANE",
             error:
-              "This is the Openship control plane — manage it with the CLI, not the dashboard.",
+              "This is the Kovalio control plane — manage it with the CLI, not the dashboard.",
           },
           403,
         );

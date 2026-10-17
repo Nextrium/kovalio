@@ -116,11 +116,11 @@ export async function prepareHandoffSnapshot(
   // The source's API keeps running as a fenced receiver/client, but is no
   // longer the incoming instance's self-app. Preserve its runtime records;
   // only relinquish the control-plane marker. Legacy CLI installs use the
-  // reserved openship slug, while provisioned instances have an exact binding.
+  // reserved kovalio slug, while provisioned instances have an exact binding.
   for (const project of payload.file.dump.tables.project ?? []) {
     if (
-      project.appTemplateId === "openship" &&
-      (sourceProjectId ? project.id === sourceProjectId : project.slug === "openship")
+      project.appTemplateId === "kovalio" &&
+      (sourceProjectId ? project.id === sourceProjectId : project.slug === "kovalio")
     )
       project.appTemplateId = null;
   }

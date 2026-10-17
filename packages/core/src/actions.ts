@@ -7,7 +7,7 @@ export const ACTIONS_MAX_LOG_BYTES = 8 * 1024 * 1024;
 export const ACTIONS_MAX_JOB_SECONDS = 6 * 60 * 60;
 
 /** Exactly one controller owns a workflow's scheduling and job results. */
-export type ActionWorkflowController = "openship" | "github";
+export type ActionWorkflowController = "kovalio" | "github";
 
 /** Additional workflow notifications; account-wide subscriptions still apply. */
 export interface ActionWorkflowNotifications {
@@ -17,7 +17,7 @@ export interface ActionWorkflowNotifications {
 
 /** Account IDs, rather than mutable names, own execution permissions. */
 export interface ActionActorIdentity {
-  provider: "github" | "openship";
+  provider: "github" | "kovalio";
   id: string;
   login: string;
 }
@@ -88,7 +88,7 @@ export function inferActionWorkflowController(
   path = ".github/workflows/ci.yml",
   repository = true,
 ): ActionWorkflowController {
-  return repository && path.startsWith(".github/workflows/") ? "github" : "openship";
+  return repository && path.startsWith(".github/workflows/") ? "github" : "kovalio";
 }
 
 export interface ActionGitHubRun {

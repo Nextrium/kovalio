@@ -83,7 +83,7 @@ const addCmd = new Command("add")
         printJson(res);
         return;
       }
-      info("  Add these DNS records at your registrar, then run `openship domain verify " + res.domain.id + "`:");
+      info("  Add these DNS records at your registrar, then run `kovalio domain verify " + res.domain.id + "`:");
       if (res.records) printRecords(res.records);
     } catch (e) {
       observeCaughtError(e, "cli/commands/domain");

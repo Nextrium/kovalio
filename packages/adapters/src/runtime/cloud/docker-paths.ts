@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
-export const CLOUD_DOCKER_ROUTE_ROOT = "/opt/openship/cloud-docker/routes";
-const MOUNT_ROOT = "/opt/openship/cloud-docker/mounts";
+export const CLOUD_DOCKER_ROUTE_ROOT = "/opt/kovalio/cloud-docker/routes";
+const MOUNT_ROOT = "/opt/kovalio/cloud-docker/mounts";
 
 /** Stable project storage within its selected managed server. */
 export function cloudDockerProjectPaths(projectId: string) {

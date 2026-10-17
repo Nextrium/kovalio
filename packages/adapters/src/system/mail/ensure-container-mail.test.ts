@@ -49,9 +49,9 @@ describe("buildMailRunCommand", () => {
 
 describe("buildDbRunCommand", () => {
   it("defaults to binding host loopback port 5432 to container port 5432", () => {
-    const cmd = buildDbRunCommand("openship-mail-db");
+    const cmd = buildDbRunCommand("kovalio-mail-db");
     expect(cmd).toContain("-p '127.0.0.1:5432:5432'");
-    expect(cmd).toContain("--name 'openship-mail-db'");
+    expect(cmd).toContain("--name 'kovalio-mail-db'");
     expect(cmd).toContain("--restart unless-stopped");
     expect(cmd).toContain("--log-driver json-file");
     expect(cmd).toContain("--log-opt max-size=20m");
@@ -59,7 +59,7 @@ describe("buildDbRunCommand", () => {
   });
 
   it("binds a custom host port mapped to internal 5432 container port", () => {
-    const cmd = buildDbRunCommand("openship-mail-db", 5433);
+    const cmd = buildDbRunCommand("kovalio-mail-db", 5433);
     expect(cmd).toContain("-p '127.0.0.1:5433:5432'");
   });
 });
@@ -140,7 +140,7 @@ describe("retainedDbPort", () => {
       if (cmd.includes("PG_VERSION")) return "yes\n";
       return "";
     });
-    const readFile = vi.fn(async () => "OPENSHIP_MAIL_DB_PORT=5435\n");
+    const readFile = vi.fn(async () => "KOVALIO_MAIL_DB_PORT=5435\n");
     const port = await retainedDbPort({ exec, readFile } as never);
     expect(port).toBe(5435);
   });
@@ -250,7 +250,7 @@ function firstBootExecutor(opts: { imagePresent: boolean }) {
 // so it pulls `:APP_VERSION`.
 describe("ensureContainerMail image acquisition gate", () => {
   it("reuses an existing sidecar binding when the engine is missing", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const box = firstBootExecutor({ imagePresent: true });
     const exec = vi.fn(async (cmd: string) => {
       if (cmd.includes("HostConfig.PortBindings"))
@@ -268,13 +268,13 @@ describe("ensureContainerMail image acquisition gate", () => {
       box.streamExec.mock.calls.find(([cmd]) => cmd.includes("postgres:16-alpine"))?.[0],
     ).toContain("-p '127.0.0.1:5436:5432'");
     expect(writeFile.mock.calls.find(([path]) => path.endsWith("engine.env"))?.[1]).toContain(
-      "OPENSHIP_MAIL_DB_PORT=5436\n",
+      "KOVALIO_MAIL_DB_PORT=5436\n",
     );
     expect(
       exec.mock.calls.filter(([cmd]) => cmd.includes("docker rm")).map(([cmd]) => cmd),
     ).toEqual([
       "docker rm -f 'custom-mail-db' 2>/dev/null || true",
-      "docker rm -f 'openship-mail' 2>/dev/null || true",
+      "docker rm -f 'kovalio-mail' 2>/dev/null || true",
     ]);
   });
 
@@ -494,7 +494,7 @@ describe("mail database credential over a retained pgdata (GH-564)", () => {
   it.each(['"quoted-password"', " leading and trailing "])(
     "preserves the literal retained env-file password %s",
     async (password) => {
-      setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+      setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
       const { executor, writeFile } = retainedDbExecutor({
         initialised: true,
         retainedEnv: `POSTGRES_PASSWORD=${password}\n`,
@@ -824,7 +824,7 @@ describe("mail bring-up on a non-root sudo box (GH-630)", () => {
     expect(box.denied).toEqual([]);
     // Search on both components, granted without read so the directory stays unlistable.
     expect(box.traversable.has(MAIL_HOST_STATE_DIR)).toBe(true);
-    expect(box.traversable.has("/var/lib/openship")).toBe(true);
+    expect(box.traversable.has("/var/lib/kovalio")).toBe(true);
     const grants = box.exec.mock.calls
       .map(([c]) => String(c))
       .filter((c) => c.includes("chmod a+x"));
@@ -877,7 +877,7 @@ describe("mail bring-up on a non-root sudo box (GH-630)", () => {
   });
 
   it("publishes the configured dbPort for the postgres sidecar and in engine env", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const box = nonRootSudoBox({ imagePresent: true });
 
     const originalExec = box.exec;
@@ -912,7 +912,7 @@ describe("mail bring-up on a non-root sudo box (GH-630)", () => {
   });
 
   it("auto-discovers next available port when default 5432 is occupied during ensureContainerMail", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const box = nonRootSudoBox({ imagePresent: true });
 
     const originalExec = box.exec;
@@ -947,13 +947,13 @@ describe("mail bring-up on a non-root sudo box (GH-630)", () => {
   });
 
   it("retains the previously assigned dbPort from engine.env on an existing cluster", async () => {
-    setDefaultMailImage("ghcr.io/x/openship-mail:pinned");
+    setDefaultMailImage("ghcr.io/x/kovalio-mail:pinned");
     const box = nonRootSudoBox({ imagePresent: true });
 
     const originalExec = box.exec;
     box.executor.exec = box.exec = vi.fn(async (cmd: string) => {
       if (cmd.includes("PG_VERSION")) return "yes\n";
-      if (cmd.includes("cat ") && cmd.includes("engine.env")) return "OPENSHIP_MAIL_DB_PORT=5436\n";
+      if (cmd.includes("cat ") && cmd.includes("engine.env")) return "KOVALIO_MAIL_DB_PORT=5436\n";
       if (cmd.includes("cat ") && cmd.includes("db.env")) return "POSTGRES_PASSWORD=pw\n";
       if (cmd.includes("/proc/net/tcp")) {
         return (

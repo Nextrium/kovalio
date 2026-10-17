@@ -25,7 +25,7 @@ const rule = (id: string, target = "inbox@example.test") => ({
   channelIds: [id], maxSpamScore: null, fromPattern: null, subjectPattern: null,
 } as MailInboundRule);
 const message = (file: string, recipient = "inbox@example.test", extra = "") =>
-  `__OPENSHIP_MSG__ ${file}\nFrom: sender@elsewhere.test\nTo: ${recipient}\nSubject: Hello\n${extra}\n`;
+  `__KOVALIO_MSG__ ${file}\nFrom: sender@elsewhere.test\nTo: ${recipient}\nSubject: Hello\n${extra}\n`;
 const run = (dryRun = false) => runInboundForServer({ serverId: "server", organizationId: "org", dryRun });
 function removals() {
   return h.run.mock.calls.map(([, render]) => render("container")).filter((command: string) => command.startsWith("rm -f"));

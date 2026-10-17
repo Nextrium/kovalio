@@ -76,7 +76,7 @@ beforeEach(() => {
   // A module mock permanently removed signIn for tests loaded later. Replace
   // only the session hook and restore it, keeping the real auth API available.
   spyOn(authClient, "useSession").mockReturnValue({ data: null, isPending: false, refetch: async () => {} });
-  browser = new Window({ url: "https://mail.openship.test/mail/inbox" });
+  browser = new Window({ url: "https://mail.kovalio.test/mail/inbox" });
   setGlobal("window", browser);
   setGlobal("document", browser.document);
   setGlobal("navigator", browser.navigator);
@@ -138,7 +138,7 @@ describe("mailbox refresh ownership", () => {
     await act(async () => render("sent"));
     expect(first.closed).toBe(true);
     expect(MailStream.instances.filter(stream => !stream.closed)).toHaveLength(1);
-    expect(MailStream.instances[1]!.url).toBe("https://mail.openship.test/mail/idle?view=sent");
+    expect(MailStream.instances[1]!.url).toBe("https://mail.kovalio.test/mail/idle?view=sent");
     await act(async () => root.unmount());
     expect(MailStream.instances.every(stream => stream.closed)).toBe(true);
   });
@@ -166,6 +166,6 @@ describe("mailbox refresh ownership", () => {
       Array(5).fill("arrived-while-open"),
     );
     expect(MailStream.instances.filter((stream) => !stream.closed)).toHaveLength(1);
-    expect(MailStream.instances[0]!.url).toBe("https://mail.openship.test/mail/idle?view=inbox");
+    expect(MailStream.instances[0]!.url).toBe("https://mail.kovalio.test/mail/idle?view=inbox");
   });
 });

@@ -26,7 +26,7 @@ describe("liveContainerStatus", () => {
   ])("preserves healthcheck evidence independently of runtime status: %s", (status, state, health) => {
     const matches = resolveLiveServiceState({
       services: [{ id: "svc", name: "app" }], projectId: "project", slug: "test",
-      live: [container({ id: "live", names: ["openship-test-app"], status })],
+      live: [container({ id: "live", names: ["kovalio-test-app"], status })],
     });
     expect(matches.get("svc")).toMatchObject({ containerId: "live", status: state, health });
   });
@@ -71,14 +71,14 @@ describe("compose-label fallback scope", () => {
     const live = [
       container({
         id: "c_managed",
-        names: ["openship-openship-api"],
-        labels: { "openship.project": "proj_user", "openship.service": "api" },
+        names: ["kovalio-kovalio-api"],
+        labels: { "kovalio.project": "proj_user", "kovalio.service": "api" },
       }),
       container({
         id: "c_control_plane",
-        names: ["openship-api-1"],
+        names: ["kovalio-api-1"],
         labels: {
-          "com.docker.compose.project": "openship",
+          "com.docker.compose.project": "kovalio",
           "com.docker.compose.service": "api",
         },
       }),
@@ -87,7 +87,7 @@ describe("compose-label fallback scope", () => {
       services: [{ id: "svc_api", name: "api" }],
       live,
       projectId: "proj_user",
-      slug: "openship",
+      slug: "kovalio",
       tiers: liveMatchTiersForDeployment({ deployTarget: "server" }),
     });
 

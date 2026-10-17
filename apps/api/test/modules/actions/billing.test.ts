@@ -42,7 +42,7 @@ import { db, repos, schema, seedOwner, type SeededOwner } from "../jobs/_harness
 import { actionDepositUnits, actionCreditUnits, generateId, PRICING } from "@repo/core";
 import { eq } from "@repo/db";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { actionBillingNamespace } from "@repo/platform/engine/modules/actions/billing";
 import { actionsBillingRoutes } from "../../../src/modules/billing/actions-billing.routes";
@@ -62,7 +62,7 @@ async function clients(actor: SeededOwner, org = actor.orgId) {
   });
   return [
     (await ship.scope({ identity: "verified", organizationId: org })).billing,
-    new OpenshipClient({
+    new KovalioClient({
       baseUrl: "http://actions.test",
       token: actor.token,
       organizationId: org,

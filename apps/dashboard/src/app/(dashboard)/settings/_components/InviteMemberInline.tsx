@@ -280,7 +280,7 @@ export function InviteMemberInline({
                   trigger={
                     <>
                       <Icon name={mailSource === "cloud" ? "cloud" : "send"} className="size-3.5" />
-                      {mailSource === "cloud" ? copy.openshipCloud : copy.yourMailServer}
+                      {mailSource === "cloud" ? copy.kovalioCloud : copy.yourMailServer}
                       <Icon name="chevron-down" className="size-3" />
                     </>
                   }
@@ -293,7 +293,7 @@ export function InviteMemberInline({
                     },
                     {
                       id: "cloud",
-                      label: copy.openshipCloud,
+                      label: copy.kovalioCloud,
                       icon: <Icon name="cloud" className="size-4" />,
                       onClick: () => void changeMailSource("cloud"),
                     },

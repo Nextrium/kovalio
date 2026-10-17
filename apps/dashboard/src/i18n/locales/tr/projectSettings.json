@@ -87,7 +87,7 @@
     "updating": "Güncelleniyor…",
     "updateFailed": "Güncelleme başarısız oldu",
     "toastTitle": "Kaynak",
-    "cliManaged": "Bu Openship kontrol panelidir — kendi kendini günceller. Yükseltmek için ana makinede \"openship update\" komutunu çalıştırın; burada değiştirilecek bir şey yoktur."
+    "cliManaged": "Bu Kovalio kontrol panelidir — kendi kendini günceller. Yükseltmek için ana makinede \"kovalio update\" komutunu çalıştırın; burada değiştirilecek bir şey yoktur."
   },
   "appSettings": {
     "modeApp": "Uygulama ayarları",
@@ -216,7 +216,7 @@
       "hostsRequired": "Hem IMAP hem de SMTP sunucu adresini girin."
     },
     "nameLabel": "Ad",
-    "nameHint": "Bu uygulamanın Openship'te nasıl görüneceği.",
+    "nameHint": "Bu uygulamanın Kovalio'te nasıl görüneceği.",
     "showLogs": "Günlükleri göster",
     "hideLogs": "Günlükleri gizle",
     "deployLogs": "dağıtım günlükleri",
@@ -229,8 +229,8 @@
     "routePortLabel": "Yalnızca bağlantı noktası (etki alanı yok)",
     "routePortDesc": "Ana makine adresi ve bağlantı noktasından erişilebilir — etki alanı veya Cloud gerekmez.",
     "routeFreeLabel": "Ücretsiz alt etki alanı",
-    "routeFreeDesc": "Openship Cloud tarafından yönlendirilen, {domain} üzerinde ücretsiz bir alt etki alanı.",
-    "routeFreeNeedsCloud": "Ücretsiz bir alt etki alanı kullanmak için Openship Cloud'a bağlanın.",
+    "routeFreeDesc": "Kovalio Cloud tarafından yönlendirilen, {domain} üzerinde ücretsiz bir alt etki alanı.",
+    "routeFreeNeedsCloud": "Ücretsiz bir alt etki alanı kullanmak için Kovalio Cloud'a bağlanın.",
     "routeCustomLabel": "Kendi etki alanınız",
     "routeCustomDesc": "Sahip olduğunuz bir etki alanını bu uygulamaya yönlendirin.",
     "routeDomainLabel": "Etki alanı",
@@ -897,10 +897,10 @@
     "linkedTitleOther": "{count} proje bu uygulamaya bağlı",
     "linkedNote": "Verileri dokunulmadan çalışmaya devam eder — yalnızca bu bağlantıyı kaybederler. Uygulamak için yeniden dağıtın.",
     "linkedNoteRecordOnly": "Çalışmaya devam ederler, ama bağlantı kayıtla birlikte gider — uygulamayı sonra yeniden içe aktarmak onu geri getirmez.",
-    "recordOnlyLabel": "Yalnızca Openship'ten kaldır",
-    "recordOnlyDesc": "Uygulamayı ve verilerini sunucunuzda çalışır durumda tutar — yalnızca Openship kaydı kaldırılır. Daha sonra tekrar içe aktarabilirsiniz.",
+    "recordOnlyLabel": "Yalnızca Kovalio'ten kaldır",
+    "recordOnlyDesc": "Uygulamayı ve verilerini sunucunuzda çalışır durumda tutar — yalnızca Kovalio kaydı kaldırılır. Daha sonra tekrar içe aktarabilirsiniz.",
     "recordOnlyReversible": "Geri alınabilir — uygulama sunucunuzda kalır.",
-    "recordOnlyNote": "Sunucudaki hiçbir şeye dokunulmaz — uygulama verileriyle çalışmaya devam eder. Yalnızca Openship'in kaydı kaldırılır ve daha sonra tekrar içe aktarılabilir.",
+    "recordOnlyNote": "Sunucudaki hiçbir şeye dokunulmaz — uygulama verileriyle çalışmaya devam eder. Yalnızca Kovalio'in kaydı kaldırılır ve daha sonra tekrar içe aktarılabilir.",
     "confirmRecordOnly": "Kaydı kaldır"
   },
   "routing": {
@@ -983,7 +983,7 @@
       "includeWwwDesc": "Ayrıca www.{domain} için de kayıtlar oluştur",
       "includeWwwFallback": "alanadiniz.com",
       "externalIngress": "Harici trafik girişi ve TLS",
-      "externalIngressDesc": "TLS ters proxy’nizde (Cloudflare Tunnel, Nginx Proxy Manager veya yük dengeleyici) sonlandırılır. Alan adının bu sunucuya yönlenmesi gerekmez ve Openship sertifika düzenlemez.",
+      "externalIngressDesc": "TLS ters proxy’nizde (Cloudflare Tunnel, Nginx Proxy Manager veya yük dengeleyici) sonlandırılır. Alan adının bu sunucuya yönlenmesi gerekmez ve Kovalio sertifika düzenlemez.",
       "dnsChallenge": "DNS-01 doğrulamasını kullan",
       "dnsChallengeDesc": "Bir DNS sağlayıcısı veya geçici TXT kaydı ile doğrulayın. Port 80 kullanılamadığında yararlıdır.",
       "dnsChallengeWildcardDesc": "Joker alan adı için HTTPS kurulumunda gereklidir. Bağlı bir DNS sağlayıcısı kullanın veya HTTPS kurulumu sırasında geçici bir TXT kaydı ekleyin.",
@@ -1149,8 +1149,8 @@
         "deployment": "Bu rota dağıtım bekliyor. Uygulamak için projeyi dağıtın.",
         "disabled": "Bu proje veya hizmet devre dışı. Rotayı kontrol etmeden önce etkinleştirin.",
         "removing": "Bu alan adı kaldırılıyor. Planlanmış doğrulama yok.",
-        "manual_certificate": "Bu alan adı yüklenmiş bir sertifika kullanıyor. Geçerli bir yenisini yükleyip tekrar kontrol edin. Openship bunu otomatik yenilemez.",
-        "managed_certificate": "TLS, harici vekil sunucunuz veya Openship Cloud tarafından yönetiliyor. Sağlayıcının yapılandırmasını kontrol edin.",
+        "manual_certificate": "Bu alan adı yüklenmiş bir sertifika kullanıyor. Geçerli bir yenisini yükleyip tekrar kontrol edin. Kovalio bunu otomatik yenilemez.",
+        "managed_certificate": "TLS, harici vekil sunucunuz veya Kovalio Cloud tarafından yönetiliyor. Sağlayıcının yapılandırmasını kontrol edin.",
         "route_missing": "Yapılandırılmış bu rota henüz uygulanmadı. Uygulamak için yönlendirmeyi yeniden deneyin. Otomatik yönlendirme denemesi planlanmamış.",
         "manual_dns": "Bu sertifika manuel TXT doğrulaması kullanıyor. Yeni bir TXT kaydını onaylamak için HTTPS kurulumunu açın veya otomatik yenileme için bağlı bir DNS sağlayıcısı seçin.",
         "managed_owner": "Bu ana makine adı ve sertifikası, sahibi olan hizmet tarafından yönetilir. O hizmetin alan adı ayarlarını kontrol edin."
@@ -1163,7 +1163,7 @@
       "automatic": "Otomatik sağlayıcı",
       "manual": "Manuel TXT",
       "automaticHint": "Sertifika doğrulama kayıtları oluşturmak ve HTTPS'i otomatik yenilemek için Ayarlar → DNS bölümünden Cloudflare'i bağlayın.",
-      "manualHint": "DNS sağlayıcınızda geçici bir TXT kaydı ekleyin. Her yenileme yeni bir TXT kaydı gerektirir; Openship yenileme zamanını gösterecektir.",
+      "manualHint": "DNS sağlayıcınızda geçici bir TXT kaydı ekleyin. Her yenileme yeni bir TXT kaydı gerektirir; Kovalio yenileme zamanını gösterecektir.",
       "routing": "1. Alan adını bu sunucuya yönlendirin",
       "certificate": "2. HTTPS'i etkinleştirin",
       "startAutomatic": "HTTPS'i otomatik etkinleştir",

@@ -1,5 +1,5 @@
 // Package main is the execution-only bridge to act. Workflow scheduling and
-// authorization belong to Openship; one invocation runs one concrete job.
+// authorization belong to Kovalio; one invocation runs one concrete job.
 package main
 
 import (
@@ -253,7 +253,7 @@ func runJob(parent context.Context, request jobRequest, events *eventWriter) (jo
 		request.Environment = map[string]string{}
 		config.Env = request.Environment
 	}
-	request.Environment["RUNNER_TRACKING_ID"] = "openship-action-" + request.ID
+	request.Environment["RUNNER_TRACKING_ID"] = "kovalio-action-" + request.ID
 	rc := &runner.RunContext{
 		Name: request.ID, JobName: request.Job, Config: config,
 		Run: &model.Run{Workflow: workflow, JobID: request.Job}, Matrix: request.Matrix, RuntimeStrategy: request.Strategy, RuntimeInputs: request.TypedInputs,

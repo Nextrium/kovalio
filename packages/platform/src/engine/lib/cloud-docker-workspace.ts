@@ -20,7 +20,7 @@ import { repos, type Project, type CloudWorkspaceOperation } from "@repo/db";
 import { AppError, deploymentBelongsToProject } from "@repo/core";
 import { cloudWorkspaceResourcesFromLimits } from "./resources";
 import { env } from "../config/env";
-import { issueNamespaceToken } from "./openship-cloud";
+import { issueNamespaceToken } from "./kovalio-cloud";
 import { ensureLinkedCloudServer } from "./cloud/server-connection";
 import { createProvisionLock } from "./provision-lock";
 import {
@@ -51,7 +51,7 @@ export async function findOwnedDockerWorkspace(
     for (const workspace of matches) {
       if (found && found.id !== workspace.id)
         throw new Error(
-          "Multiple Cloud servers match this subscription. Contact support@openship.io to verify its workspace before retrying.",
+          "Multiple Cloud servers match this subscription. Contact support@nextrium.org to verify its workspace before retrying.",
         );
       found = workspace;
     }
@@ -102,8 +102,8 @@ export async function resizeDockerWorkspace(input: {
         .filter((workload) => {
           const labels = workload.labels as Record<string, unknown> | undefined;
           return (
-            labels?.["openship.project"] &&
-            labels["openship.deployment"]
+            labels?.["kovalio.project"] &&
+            labels["kovalio.deployment"]
           );
         });
       const live = await Promise.all(managed.map(workload => readManagedProcessStatus(ws.workloads, workload)));
@@ -117,7 +117,7 @@ export async function resizeDockerWorkspace(input: {
     }
     if (
       running.containers.some((id) => !/^[a-f0-9]{12,64}$/.test(id)) ||
-      running.processes.some((id) => !/^openship-[A-Za-z0-9_-]{1,160}$/.test(id))
+      running.processes.some((id) => !/^kovalio-[A-Za-z0-9_-]{1,160}$/.test(id))
     )
       throw new Error("Invalid workload identity during Cloud server resizing");
     input.signal?.throwIfAborted();
@@ -194,8 +194,8 @@ export async function resizeDockerWorkspace(input: {
               const labels = workload.labels as Record<string, unknown> | undefined;
               if (
                 workload.id !== id ||
-                !labels?.["openship.project"] ||
-                id !== `openship-${labels["openship.deployment"]}`
+                !labels?.["kovalio.project"] ||
+                id !== `kovalio-${labels["kovalio.deployment"]}`
               )
                 throw new Error("Process ownership changed during server resizing");
               return readManagedProcessStatus(ws.workloads, workload);

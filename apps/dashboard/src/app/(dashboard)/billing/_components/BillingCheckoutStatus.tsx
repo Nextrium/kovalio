@@ -220,7 +220,7 @@ function CheckoutConfirmation({
             )}
             {needsSupport && (
               <Button asChild variant="link" size="sm">
-                <a href="mailto:support@openship.io">{t.billing.checkout.support}</a>
+                <a href="mailto:support@nextrium.org">{t.billing.checkout.support}</a>
               </Button>
             )}
           </div>

@@ -31,7 +31,7 @@ describe("native Redis backup integrity", () => {
   it("rejects foreign, mixed and out-of-prefix recovery manifests", () => {
     const source = { databaseId: "db", runtimeId: "runtime" };
     const manifest: RedisArchiveManifest = {
-      format: "openship-redis-rdb-v1",
+      format: "kovalio-redis-rdb-v1",
       ...source,
       mode: "standalone",
       createdAt: new Date().toISOString(),

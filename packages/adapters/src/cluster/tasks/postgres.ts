@@ -19,7 +19,7 @@ export function validatePostgresManifest(
   prefix: string,
 ) {
   if (
-    manifest?.format !== "openship-postgres-dump-v1" ||
+    manifest?.format !== "kovalio-postgres-dump-v1" ||
     manifest.databaseId !== source.databaseId ||
     manifest.runtimeId !== source.runtimeId ||
     !/^[a-z][a-z0-9_]{0,47}$/.test(manifest.databaseName) ||
@@ -49,7 +49,7 @@ export async function capturePostgres(
     environment(config.postgres),
   );
   return {
-    format: "openship-postgres-dump-v1",
+    format: "kovalio-postgres-dump-v1",
     databaseId: config.databaseId,
     runtimeId: config.runtimeId,
     createdAt: new Date().toISOString(),

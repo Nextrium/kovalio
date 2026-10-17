@@ -162,8 +162,8 @@ describe("scanEdgeOrphans", () => {
   });
 
   it("reads the bind-mounted compose edge when the API image has no Docker CLI", async () => {
-    vi.stubEnv("OPENSHIP_EDGE_MODE", "docker");
-    vi.stubEnv("OPENSHIP_EDGE_CONTAINER", "openship-edge");
+    vi.stubEnv("KOVALIO_EDGE_MODE", "docker");
+    vi.stubEnv("KOVALIO_EDGE_CONTAINER", "kovalio-edge");
     h.edgePresent = false; // the shell-based probe cannot run without the Docker CLI
     h.sites = [staticSite("forgotten.example.com")];
 

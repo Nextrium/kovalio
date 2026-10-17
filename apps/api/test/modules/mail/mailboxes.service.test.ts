@@ -50,7 +50,7 @@ vi.mock("@repo/platform/engine/modules/mail/admin/password", () => ({
 vi.mock("@repo/platform/engine/modules/mail/admin/platform-mailbox.service", () => ({
   buildInsertMailboxSql: vi.fn(),
   buildInsertSelfForwardingSql: vi.fn(),
-  PLATFORM_LOCAL_PART: "openship",
+  PLATFORM_LOCAL_PART: "kovalio",
 }));
 
 import {
@@ -133,23 +133,23 @@ describe("platform mailbox protection", () => {
 
   test("marks only the primary install sender as platform-owned", async () => {
     mocks.queryRows.mockResolvedValue([
-      mailbox("openship@primary.example", "primary.example"),
+      mailbox("kovalio@primary.example", "primary.example"),
       mailbox("alice@primary.example", "primary.example"),
     ]);
 
     const rows = await listMailboxes("srv_test", "primary.example");
 
     expect(rows.map(({ username, isPlatform }) => ({ username, isPlatform }))).toEqual([
-      { username: "openship@primary.example", isPlatform: true },
+      { username: "kovalio@primary.example", isPlatform: true },
       { username: "alice@primary.example", isPlatform: false },
     ]);
   });
 
   test("fails closed for the reserved sender when install state is unreadable", async () => {
     mocks.readState.mockResolvedValue(null);
-    mocks.queryOne.mockResolvedValue(mailbox("openship@primary.example", "primary.example"));
+    mocks.queryOne.mockResolvedValue(mailbox("kovalio@primary.example", "primary.example"));
 
-    await expect(hardDeleteMailbox("srv_test", "openship@primary.example")).rejects.toBeInstanceOf(
+    await expect(hardDeleteMailbox("srv_test", "kovalio@primary.example")).rejects.toBeInstanceOf(
       PlatformMailboxProtectedError,
     );
     expect(mocks.transaction).not.toHaveBeenCalled();
@@ -161,7 +161,7 @@ describe("platform mailbox protection", () => {
 
     await expect(
       createMailbox("srv_test", {
-        localPart: "openship",
+        localPart: "kovalio",
         domain: "primary.example",
         password: "long-enough-password",
       }),
@@ -170,14 +170,14 @@ describe("platform mailbox protection", () => {
   });
 
   test.each([
-    ["update", () => updateMailbox("srv_test", "openship@primary.example", { active: false })],
+    ["update", () => updateMailbox("srv_test", "kovalio@primary.example", { active: false })],
     [
       "soft delete",
-      () => softDeleteMailbox("srv_test", "openship@primary.example", "admin@example.com"),
+      () => softDeleteMailbox("srv_test", "kovalio@primary.example", "admin@example.com"),
     ],
-    ["hard delete", () => hardDeleteMailbox("srv_test", "openship@primary.example")],
+    ["hard delete", () => hardDeleteMailbox("srv_test", "kovalio@primary.example")],
   ])("refuses ordinary %s operations", async (_operation, run) => {
-    mocks.queryOne.mockResolvedValue(mailbox("openship@primary.example", "primary.example"));
+    mocks.queryOne.mockResolvedValue(mailbox("kovalio@primary.example", "primary.example"));
 
     await expect(run()).rejects.toBeInstanceOf(PlatformMailboxProtectedError);
 

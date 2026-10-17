@@ -206,7 +206,7 @@ describe("runPreflightChecks", () => {
       {
         repoUrl: "",
         branch: "",
-        localPath: "/tmp/openship-upload/source",
+        localPath: "/tmp/kovalio-upload/source",
         framework: "docker",
         buildImage: "ubuntu:22.04",
         installCommand: "",
@@ -234,7 +234,7 @@ describe("runPreflightChecks", () => {
 
   it.each(["cloud", "server", "local"])("does not require a Docker image for an explicit bare build on %s", async deployTarget => {
     const result = await runPreflightChecks({
-      repoUrl: "", branch: "", localPath: "/tmp/openship-source", framework: "python",
+      repoUrl: "", branch: "", localPath: "/tmp/kovalio-source", framework: "python",
       runtimeMode: "bare", buildImage: "", installCommand: "", buildCommand: "",
       startCommand: "python3 app.py", port: 8080, hasBuild: false, hasServer: true,
       deployTarget, organizationId: "org-1",
@@ -244,7 +244,7 @@ describe("runPreflightChecks", () => {
 
   it("still requires the build image when a static bare release is built in Docker", async () => {
     const result = await runPreflightChecks({
-      repoUrl: "", branch: "", localPath: "/tmp/openship-source", framework: "vite",
+      repoUrl: "", branch: "", localPath: "/tmp/kovalio-source", framework: "vite",
       runtimeMode: "bare", buildImage: "", installCommand: "npm ci", buildCommand: "npm run build",
       startCommand: "", hasBuild: true, hasServer: false, workload: "static", outputDirectory: "dist",
       serverId: "server-a", deployTarget: "server", organizationId: "org-1",
@@ -256,7 +256,7 @@ describe("runPreflightChecks", () => {
 
   it("still requires a Docker image for a container build", async () => {
     const result = await runPreflightChecks({
-      repoUrl: "", branch: "", localPath: "/tmp/openship-source", framework: "python",
+      repoUrl: "", branch: "", localPath: "/tmp/kovalio-source", framework: "python",
       runtimeMode: "docker", buildImage: "", installCommand: "", buildCommand: "",
       startCommand: "python3 app.py", port: 8080, hasBuild: false, hasServer: true,
       deployTarget: "cloud", organizationId: "org-1",
@@ -337,7 +337,7 @@ describe("runPreflightChecks", () => {
       {
         repoUrl: "",
         branch: "",
-        localPath: "/tmp/openship-upload/source",
+        localPath: "/tmp/kovalio-upload/source",
         framework: "docker",
         installCommand: "",
         buildCommand: "",

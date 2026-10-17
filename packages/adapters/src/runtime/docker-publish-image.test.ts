@@ -112,11 +112,11 @@ describe("cluster image publication", () => {
       expect(commands).not.toContain(
         Buffer.from(`${auth.username}:${auth.password}`).toString("base64"),
       );
-      expect(commands).toContain("mkdir -m 700 '/tmp/openship-push-");
-      expect(commands).toContain("chmod 600 '/tmp/openship-push-");
+      expect(commands).toContain("mkdir -m 700 '/tmp/kovalio-push-");
+      expect(commands).toContain("chmod 600 '/tmp/kovalio-push-");
       expect(executor.writeFile).toHaveBeenCalledOnce();
       expect(executor.exec).toHaveBeenLastCalledWith(
-        expect.stringMatching(/^rm -rf '\/tmp\/openship-push-/),
+        expect.stringMatching(/^rm -rf '\/tmp\/kovalio-push-/),
         { timeout: 10_000 },
       );
       expect(executor.runWithAbortSignal).toHaveBeenCalledTimes(2);

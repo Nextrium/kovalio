@@ -85,7 +85,7 @@ vi.mock("@repo/platform/engine/lib/project-runtime-lock", () => ({
   withProjectStateLock: async (_id: string, work: () => Promise<unknown>) => work(),
   withProjectRuntimeLock: async (_projectId: string, run: () => Promise<unknown>) => run(),
 }));
-vi.mock("@repo/platform/engine/lib/openship-manifest-sync", () => ({
+vi.mock("@repo/platform/engine/lib/kovalio-manifest-sync", () => ({
   removeProjectFromServerManifests: vi.fn(async () => {}),
 }));
 vi.mock("@repo/platform/engine/modules/deployments/build.service", () => ({

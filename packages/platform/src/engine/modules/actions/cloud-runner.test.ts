@@ -160,7 +160,7 @@ describe("temporary Cloud Actions workers", () => {
     expect(new Set(requests.map((input) => input.slug)).size).toBe(ids.length);
     for (const [index, input] of requests.entries()) {
       expect(input.slug).toMatch(/^[a-z0-9][a-z0-9-]{1,126}[a-z0-9]$/);
-      expect(input.idempotency_key).toBe(`openship-actions-${ids[index]}`);
+      expect(input.idempotency_key).toBe(`kovalio-actions-${ids[index]}`);
     }
   });
 
@@ -179,7 +179,7 @@ describe("temporary Cloud Actions workers", () => {
         cpus: 2,
         memory_mb: 4096,
         disk_size_mb: 25600,
-        idempotency_key: `openship-actions-${state.job.id}`,
+        idempotency_key: `kovalio-actions-${state.job.id}`,
         config: expect.objectContaining({
           ttl: 4800,
           ttl_action: "remove",
@@ -350,7 +350,7 @@ describe("temporary Cloud Actions workers", () => {
       cloudProfileId: "linux_2",
       enabled: true,
     });
-    vi.stubEnv("OPENSHIP_ACTIONS_CLOUD_POOLS", "[]");
+    vi.stubEnv("KOVALIO_ACTIONS_CLOUD_POOLS", "[]");
     await ensureConfiguredActionPools();
     expect(state.rows[0]!.enabled).toBe(true);
   });
@@ -358,7 +358,7 @@ describe("temporary Cloud Actions workers", () => {
   it("rejects an operator mapping onto a customer billing namespace", async () => {
     state.billingOwner.mockResolvedValue({ kind: "actions", organizationId: run.organizationId });
     vi.stubEnv(
-      "OPENSHIP_ACTIONS_CLOUD_POOLS",
+      "KOVALIO_ACTIONS_CLOUD_POOLS",
       JSON.stringify([
         {
           organizationId: run.organizationId,
@@ -391,11 +391,11 @@ describe("temporary Cloud Actions workers", () => {
       image: "node:22",
       labels: ["ubuntu-latest"],
     };
-    vi.stubEnv("OPENSHIP_ACTIONS_CLOUD_POOLS", JSON.stringify([pool]));
+    vi.stubEnv("KOVALIO_ACTIONS_CLOUD_POOLS", JSON.stringify([pool]));
     await ensureConfiguredActionPools();
     expect(state.rows[0]!.enabled).toBe(true);
     state.busy.mockResolvedValue(true);
-    vi.stubEnv("OPENSHIP_ACTIONS_CLOUD_POOLS", JSON.stringify([{ ...pool, cpu: 4 }]));
+    vi.stubEnv("KOVALIO_ACTIONS_CLOUD_POOLS", JSON.stringify([{ ...pool, cpu: 4 }]));
     await expect(ensureConfiguredActionPools()).rejects.toMatchObject({
       code: "ACTIONS_POOL_DRAINING",
     });
@@ -405,7 +405,7 @@ describe("temporary Cloud Actions workers", () => {
     await ensureConfiguredActionPools();
     expect(state.rows[0]!.config).toMatchObject({ cpu: 4 });
     expect(state.rows[0]!.enabled).toBe(true);
-    vi.stubEnv("OPENSHIP_ACTIONS_CLOUD_POOLS", "[]");
+    vi.stubEnv("KOVALIO_ACTIONS_CLOUD_POOLS", "[]");
     await ensureConfiguredActionPools();
     expect(state.rows[0]!.enabled).toBe(false);
   });

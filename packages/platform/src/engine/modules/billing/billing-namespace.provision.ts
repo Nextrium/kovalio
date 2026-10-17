@@ -1,4 +1,4 @@
-import { ensureNamespace } from "../../lib/openship-cloud";
+import { ensureNamespace } from "../../lib/kovalio-cloud";
 import { syncOblienEntitlement, assertNamespaceHasQuota } from "./billing-oblien-quota";
 
 /** Create identity; Oblien's default policy and paid entitlement own the grant. */

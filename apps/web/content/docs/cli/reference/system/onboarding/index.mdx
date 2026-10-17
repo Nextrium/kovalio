@@ -1,30 +1,30 @@
 ---
 title: system onboarding
-description: Commands, arguments, and options for openship system onboarding.
-cliGroup: openship system onboarding
+description: Commands, arguments, and options for kovalio system onboarding.
+cliGroup: kovalio system onboarding
 ---
 
 See the [workflow guide](/docs/cli/self-host) for examples. Global flags such as `--json` go before the command; see [global options](/docs/cli/reference#global-options).
 
-## openship system onboarding
+## kovalio system onboarding
 
 First-run instance setup
 
 ```text
-openship system onboarding [options] [command]
+kovalio system onboarding [options] [command]
 ```
 
 | Subcommand | Purpose |
 | --- | --- |
-| [`status`](/docs/cli/reference/system/onboarding#openship-system-onboarding-status) | Check whether the controller has completed first-run setup |
-| [`apply [options]`](/docs/cli/reference/system/onboarding#openship-system-onboarding-apply) | Configure a fresh instance (fails once already configured) |
+| [`status`](/docs/cli/reference/system/onboarding#kovalio-system-onboarding-status) | Check whether the controller has completed first-run setup |
+| [`apply [options]`](/docs/cli/reference/system/onboarding#kovalio-system-onboarding-apply) | Configure a fresh instance (fails once already configured) |
 
-## openship system onboarding apply
+## kovalio system onboarding apply
 
 Configure a fresh instance (fails once already configured)
 
 ```text
-openship system onboarding apply [options]
+kovalio system onboarding apply [options]
 ```
 
 | Option | Meaning |
@@ -46,10 +46,10 @@ openship system onboarding apply [options]
 | `--default-build-mode <mode>` | Default build mode |
 | `--default-rollback-window <n>` | Default rollback window |
 
-## openship system onboarding status
+## kovalio system onboarding status
 
 Check whether the controller has completed first-run setup
 
 ```text
-openship system onboarding status [options]
+kovalio system onboarding status [options]
 ```

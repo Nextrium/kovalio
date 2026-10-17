@@ -5,9 +5,9 @@ import { longhornBase } from "./storage";
 import { kubernetesIdLabel } from "./kubernetes-label";
 
 const labels = {
-  "app.kubernetes.io/managed-by": "openship",
-  "openship.io/runtime": "runtime",
-  "openship.io/project": kubernetesIdLabel("project"),
+  "app.kubernetes.io/managed-by": "kovalio",
+  "nextrium.org/runtime": "runtime",
+  "nextrium.org/project": kubernetesIdLabel("project"),
 };
 const signal = () => AbortSignal.timeout(5000);
 
@@ -94,25 +94,25 @@ function fixture() {
   const fence = vi.fn(async () => {});
   const adapter = new ClusterVolumeAdapter(api, "project", "runtime", signal(), fence);
   put(`/api/v1/namespaces/${adapter.namespace}`, { metadata: { name: adapter.namespace, labels } });
-  put("/apis/storage.k8s.io/v1/storageclasses/openship-replicated", {
+  put("/apis/storage.k8s.io/v1/storageclasses/kovalio-replicated", {
     apiVersion: "storage.k8s.io/v1",
     kind: "StorageClass",
-    metadata: { name: "openship-replicated", labels: { "openship.io/runtime": "runtime" } },
+    metadata: { name: "kovalio-replicated", labels: { "nextrium.org/runtime": "runtime" } },
     provisioner: "driver.longhorn.io",
     parameters: { numberOfReplicas: "2" },
   });
   return { objects, put, request, api, adapter, fence };
 }
-const archived = (name = "saved-files", project = labels["openship.io/project"]) => ({
+const archived = (name = "saved-files", project = labels["nextrium.org/project"]) => ({
   apiVersion: "longhorn.io/v1beta2",
   kind: "Backup",
   metadata: { name },
   spec: {},
   status: {
     labels: {
-      "openship-project": project,
-      "openship-runtime": "runtime",
-      "openship-volume": "uploads",
+      "kovalio-project": project,
+      "kovalio-runtime": "runtime",
+      "kovalio-volume": "uploads",
     },
     state: "Completed",
     volumeSize: String(1024 ** 3),
@@ -140,7 +140,7 @@ describe("shared file ownership and recovery", () => {
       }),
     ).rejects.toThrow(/Claim rejected/);
     expect(
-      [...objects.values()].some((object) => object.metadata.name?.startsWith("openship-restore-")),
+      [...objects.values()].some((object) => object.metadata.name?.startsWith("kovalio-restore-")),
     ).toBe(false);
     expect(objects.has(`${longhornBase}/backups/saved-files`)).toBe(true);
   });
@@ -178,7 +178,7 @@ describe("shared file ownership and recovery", () => {
     });
     expect(restored).toMatchObject({ name: "recovered", phase: "Pending" });
     const storageClass = [...objects.values()].find((object) =>
-      object.metadata.name?.startsWith("openship-restore-"),
+      object.metadata.name?.startsWith("kovalio-restore-"),
     );
     expect(storageClass?.parameters.fromBackup).toBe("s3://saved-test-archive");
   });
@@ -186,7 +186,7 @@ describe("shared file ownership and recovery", () => {
     for (const problem of ["foreign", "incomplete", "undersized"]) {
       const { adapter, put, request } = fixture();
       const backup = archived();
-      if (problem === "foreign") backup.status.labels["openship-project"] = "foreign";
+      if (problem === "foreign") backup.status.labels["kovalio-project"] = "foreign";
       if (problem === "incomplete") backup.status.state = "InProgress";
       if (problem === "undersized") backup.status.volumeSize = String(3 * 1024 ** 3);
       put(`${longhornBase}/backups/saved-files`, backup);
@@ -214,7 +214,7 @@ describe("shared file ownership and recovery", () => {
     await expect(adapter.create({ ...input, sizeGiB: 3 })).rejects.toThrow(/different request/);
     objects.get(
       `/api/v1/namespaces/${adapter.namespace}/persistentvolumeclaims/shared-uploads`,
-    )!.metadata.labels!["openship.io/runtime"] = "another-runtime";
+    )!.metadata.labels!["nextrium.org/runtime"] = "another-runtime";
     await expect(adapter.create(input)).rejects.toThrow(/different project or cluster/);
   });
   it("refuses to adopt a claim whose configuration drifted after creation", async () => {
@@ -288,7 +288,7 @@ describe("shared file ownership and recovery", () => {
     expect(await adapter.list()).toEqual([]);
     expect(
       [...objects.values()].some(
-        (object) => object.metadata.labels?.["openship.io/volume-deletion"],
+        (object) => object.metadata.labels?.["nextrium.org/volume-deletion"],
       ),
     ).toBe(false);
   });

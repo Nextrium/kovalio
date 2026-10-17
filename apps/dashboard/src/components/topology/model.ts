@@ -504,7 +504,7 @@ export function buildProjectTopology({
       id: edgeId,
       kind: "edge",
       projectId: project.id,
-      name: "OpenShip Edge",
+      name: "Kovalio Edge",
       tone: "edge",
       state: "configured",
       description: "Public routing",

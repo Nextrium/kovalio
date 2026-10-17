@@ -13,7 +13,7 @@ operations. These notes cover all merged changes since 0.9.1.
 ### Workers and schedulers
 
 - **Run roles beside your web app** — declare workers and schedulers in
-  `openship.json` or the project API. Single-app Docker deployments start separate
+  `kovalio.json` or the project API. Single-app Docker deployments start separate
   containers from the app image, with shared environment, volumes and connected
   networks, their own commands and shutdown settings, and no published ports.
   Roles follow pause, resume, restart, rollback and project deletion.
@@ -60,11 +60,11 @@ operations. These notes cover all merged changes since 0.9.1.
 
 ### Cloudflare Tunnel and domains
 
-- **Manage self-hosted ingress from Openship** — Server → Security can connect or
+- **Manage self-hosted ingress from Kovalio** — Server → Security can connect or
   create a remotely managed named Cloudflare Tunnel using saved credentials,
   configure proxied DNS and optionally apply an existing reusable Access policy.
   Install a pinned connector on a supported Linux server or use its existing
-  connector. Managed Openship Cloud routing retains its existing path.
+  connector. Managed Kovalio Cloud routing retains its existing path.
 - **Enroll domains with recoverable setup** — explicitly enable automatic tunnel
   enrollment for new custom domains or connect existing domains individually.
   Setup records Access, tunnel and DNS progress, supports retry after interrupted
@@ -285,22 +285,22 @@ notes cover all changes since 0.9.0.
 
 ## 0.9.0
 
-Openship Actions brings repository CI to your own Linux and macOS servers and
-Cloud runners. This release also lets you move your Openship control plane between
+Kovalio Actions brings repository CI to your own Linux and macOS servers and
+Cloud runners. This release also lets you move your Kovalio control plane between
 Desktop and a server, adds GitHub deployment Checks and shared notifications, and
 improves Cloud build scheduling, routing, monitoring and webmail. These notes cover
 all changes since 0.8.2.
 
-### Openship Actions
+### Kovalio Actions
 
-- **Run CI independently of GitHub Actions** — workflows in `.openship/workflows/`
-  use GitHub-style YAML and run through Openship on selected destinations. Trigger
+- **Run CI independently of GitHub Actions** — workflows in `.kovalio/workflows/`
+  use GitHub-style YAML and run through Kovalio on selected destinations. Trigger
   them manually, on repository pushes or pull requests, on schedules, through
   authenticated dispatch, or from Jobs. GitHub can provide source, events and
   commit Checks without running the workflow itself.
-- **Use existing GitHub workflows with Openship runners** — workflows in
+- **Use existing GitHub workflows with Kovalio runners** — workflows in
   `.github/workflows/` keep GitHub's orchestration, secrets, environments and Checks.
-  Register official runners on Openship destinations and target their self-hosted
+  Register official runners on Kovalio destinations and target their self-hosted
   labels. Jobs targeting GitHub-hosted labels still run on GitHub; importing a
   workflow does not silently change its execution platform.
 - **One workflow editor** — import multiple workflow files from a repository or
@@ -327,12 +327,12 @@ all changes since 0.8.2.
 - **Follow runs without losing your place** — expandable jobs and steps sit beside
   masked logs, with a topology view and a separate approvals tab. Waiting work has
   visible progress; selection and log position survive refreshes. Independent runs
-  stream logs in Openship. GitHub-coordinated runs link to live GitHub logs and
+  stream logs in Kovalio. GitHub-coordinated runs link to live GitHub logs and
   import completed logs.
 - **Artifacts, caches and OIDC** — independent workflows support artifact/cache
   actions through scoped storage access and configured backup destinations. Jobs
-  with `id-token: write` can request short-lived Openship OIDC tokens from an HTTPS
-  instance. Identity providers must explicitly trust the Openship issuer; these
+  with `id-token: write` can request short-lived Kovalio OIDC tokens from an HTTPS
+  instance. Identity providers must explicitly trust the Kovalio issuer; these
   are not GitHub-issued tokens. Signing keys travel with instance moves.
 - **Know the boundaries** — independent execution does not implement GitHub
   protected environments or attestations. Windows runners and GitHub Enterprise
@@ -481,8 +481,8 @@ all changes since 0.8.2.
   instance connections, managed server controls, migrations, mail and terminals.
   The CLI shares platform contracts, expands Cloud and remote operations, accepts
   `/api` paths and positional environment pairs, and guides users to login on
-  authorization failures. Actions are available through `openship api`; this
-  release does not introduce a dedicated `openship actions` command group.
+  authorization failures. Actions are available through `kovalio api`; this
+  release does not introduce a dedicated `kovalio actions` command group.
 - **Updated documentation** — Actions setup, independent versus GitHub execution,
   runner access, Cloud funding, instance moves and API/SDK/CLI/MCP references cover
   the new flows, with live execution verification records.
@@ -503,8 +503,8 @@ all changes since 0.8.2.
 ### Updating
 
 Desktop 0.8.2 users can use the built-in updater. **Desktop users still on 0.8.0
-or 0.8.1 must download the [0.9.0 installer](https://github.com/oblien/openship/releases/tag/v0.9.0)
-and install it manually once.** Quit Openship and replace the application; keep
+or 0.8.1 must download the [0.9.0 installer](https://github.com/Nextrium/kovalio/releases/tag/v0.9.0)
+and install it manually once.** Quit Kovalio and replace the application; keep
 application data to preserve projects, servers and settings. The server/CLI
 update path does not require this desktop recovery step. Update the API and
 dashboard together; instance moves require compatible versions at both ends.
@@ -516,7 +516,7 @@ dashboard together; instance moves require compatible versions at both ends.
 **Desktop users on 0.8.0 or 0.8.1: please install this update manually once.**
 The built-in updater in those versions can fail with **"Redirect was cancelled"**.
 Download the installer for your operating system from the
-[0.8.2 release](https://github.com/oblien/openship/releases/tag/v0.8.2), quit Openship,
+[0.8.2 release](https://github.com/Nextrium/kovalio/releases/tag/v0.8.2), quit Kovalio,
 and replace the installed application. Keep your application data: your local
 projects, servers and settings are preserved. Subsequent desktop updates use the
 fixed downloader.
@@ -531,9 +531,9 @@ fixed downloader.
 
 ## 0.8.1
 
-Openship Cloud now runs projects on managed servers with their own monthly plans.
+Kovalio Cloud now runs projects on managed servers with their own monthly plans.
 Share a server across applications, add another when you need it, and manage your
-Cloud resources alongside local projects from desktop or self-hosted Openship.
+Cloud resources alongside local projects from desktop or self-hosted Kovalio.
 This release also adds passkeys, authenticator 2FA and a private support inbox,
 expands CLI automation, and improves billing, migration and deployment recovery.
 
@@ -568,7 +568,7 @@ expands CLI automation, and improves billing, migration and deployment recovery.
   stopped. Project deletion removes its own resources and preserves the shared
   server; server deletion checks remaining projects and subscription state.
 
-### Cloud accounts on desktop and self-hosted Openship
+### Cloud accounts on desktop and self-hosted Kovalio
 
 - **Your existing Cloud resources appear when you connect** — Cloud projects,
   apps and managed servers join the local inventory. A server already linked to
@@ -631,7 +631,7 @@ expands CLI automation, and improves billing, migration and deployment recovery.
   and password resets do not disable 2FA. OAuth, invitation and MCP handoffs resume
   after verification. Security setup state clears when the account changes.
 - **GitHub repository access is independent of sign-in** — one GitHub identity
-  can authorize repositories for multiple Openship accounts without transferring
+  can authorize repositories for multiple Kovalio accounts without transferring
   login ownership. Reconnect existing installations from the shared connection
   flow, including direct installation links, and see completion or failure for
   each attempt (#992).
@@ -648,7 +648,7 @@ expands CLI automation, and improves billing, migration and deployment recovery.
   self-hosted installations. Team membership does not expose another user's
   tickets (#1073).
 - **Support and contact pages accept durable requests** — submissions are saved
-  before email delivery, with a receipt and notification to `support@openship.io`.
+  before email delivery, with a receipt and notification to `support@nextrium.org`.
   Delivery retries survive API restarts, and support replies appear in the inbox
   and are emailed to the customer. Retried submissions reuse their original
   receipt rather than creating another ticket (#970).
@@ -731,7 +731,7 @@ expands CLI automation, and improves billing, migration and deployment recovery.
   (#1054, #1003, #1017, #1045).
 - **Source updates remain visible until deployment completes** — the project
   deployment tab indicates available updates; unchanged image services are not
-  refreshed unnecessarily. Updates on the local Openship instance use the
+  refreshed unnecessarily. Updates on the local Kovalio instance use the
   appropriate advisory flow, and resource reporting accepts current Docker
   runtime limits (#1006, #1047).
 - **Connection and setup fixes** — recover Cloud Docker connections after
@@ -787,7 +787,7 @@ expands CLI automation, and improves billing, migration and deployment recovery.
   explicit migration to managed servers; updating alone does not consolidate VMs
   or replace saved subscription terms.
 - **Keep account-security configuration stable** — self-hosted passkeys require
-  HTTPS and a stable dashboard hostname through `OPENSHIP_PUBLIC_URL` (localhost
+  HTTPS and a stable dashboard hostname through `KOVALIO_PUBLIC_URL` (localhost
   is supported for development). Retain and back up `BETTER_AUTH_SECRET`, which
   protects authenticator secrets and recovery codes.
 
@@ -802,7 +802,7 @@ backup, mail and security fixes accumulated since 0.7.2.
 ### Server clusters and private networking
 
 - **Connect servers across providers** — register and verify an existing private
-  network or prepare an Openship-managed WireGuard network across your servers.
+  network or prepare an Kovalio-managed WireGuard network across your servers.
   Provider network groups retain their provider and network details; managed
   networking also supports custom infrastructure (#899, #900).
 - **Networks and compute clusters have separate responsibilities** — the
@@ -811,7 +811,7 @@ backup, mail and security fixes accumulated since 0.7.2.
   by their projects.
 - **Choose which servers can reach each other** — edit connections in the network
   topology, allow traffic in both directions or one direction, or remove a
-  connection. Openship enforces the private-access policy on supported hosts and
+  connection. Kovalio enforces the private-access policy on supported hosts and
   shows the provider firewall rules to apply before setup. Cluster setup checks
   that its selected servers have the bidirectional connectivity it requires.
 - **Test the network from the topology** — on-demand checks verify allowed paths
@@ -834,7 +834,7 @@ backup, mail and security fixes accumulated since 0.7.2.
 - **Run an application or worker across your servers** — select a prepared
   cluster, publish the application's image to a shared registry, and deploy
   through the normal project flow. Set 1–100 replicas; subsequent replica changes
-  reuse the active immutable image without rebuilding. Openship Edge routes
+  reuse the active immutable image without rebuilding. Kovalio Edge routes
   public requests to the application, and the topology shows observed instances,
   placement and readiness.
 - **Update, roll back and recover running applications** — cluster deployments
@@ -883,9 +883,9 @@ backup, mail and security fixes accumulated since 0.7.2.
 
 ### SDK, CLI and MCP
 
-- **A Node.js SDK alongside the CLI** — the `openship` package now provides
-  `OpenshipClient` through `openship/client` for remote installations and
-  `createShip` through `openship/native` for an embedded engine without a separate
+- **A Node.js SDK alongside the CLI** — the `kovalio` package now provides
+  `KovalioClient` through `kovalio/client` for remote installations and
+  `createShip` through `kovalio/native` for an embedded engine without a separate
   API server. Both use shared platform operations, validation and authorization.
   Native instances have explicit start/close lifecycles and verified workspace
   scopes; ESM and CommonJS are supported on Node.js 22 and newer (#887).
@@ -905,7 +905,7 @@ backup, mail and security fixes accumulated since 0.7.2.
 ### Deployments and builds
 
 - **Run release commands before activation** — configure `releaseCommands` in
-  Build settings, `openship.json` or the project API/SDK. Commands run in order
+  Build settings, `kovalio.json` or the project API/SDK. Commands run in order
   after building, using the candidate release's environment, with streamed logs
   and a ten-minute budget per command. Failure, timeout or cancellation stops
   activation. Single-app Docker and Bare deployments are supported; unsupported
@@ -935,7 +935,7 @@ backup, mail and security fixes accumulated since 0.7.2.
 ### Environment and Compose
 
 - **Saved service variables stay visible** — the Environment tab reads effective
-  values from Openship, including Compose values, shared project variables and
+  values from Kovalio, including Compose values, shared project variables and
   explicit service overrides, with their sources. It remains usable when the
   server is offline. Saves update only edited rows, preserve untouched secrets,
   reject conflicting edits and remove an override by restoring inheritance
@@ -975,7 +975,7 @@ backup, mail and security fixes accumulated since 0.7.2.
   settings download a portable plaintext file without a passphrase. The export
   identifies its server and Cloud dependencies; import previews the contents and
   requires explicit target mappings. Runtime data stays on its original server,
-  and Cloud projects require the same Openship Cloud account. Imported credentials
+  and Cloud projects require the same Kovalio Cloud account. Imported credentials
   are encrypted with the destination instance's key. Configuration transfer does
   not copy runtime volumes or perform a whole-instance server cutover.
 
@@ -1006,7 +1006,7 @@ backup, mail and security fixes accumulated since 0.7.2.
 - **Imported certificates and container routes recover correctly** — certificate
   lookup follows managed lineages and avoids collisions after import; recovery
   excludes ACME challenge ports from application upstreams. Static sites inside
-  containers route through their owning service, and Edge serves an Openship
+  containers route through their owning service, and Edge serves an Kovalio
   error page for unavailable upstreams (#879, #913).
 
 ### Backups and restore
@@ -1020,7 +1020,7 @@ backup, mail and security fixes accumulated since 0.7.2.
   blocks, with a complete block index for each restore point. Retention preserves
   blocks still referenced by another snapshot, and storage totals count shared
   objects once. Full backups remain the default. Captures still scan the whole
-  source and transfer through the Openship backup worker.
+  source and transfer through the Kovalio backup worker.
 - **Retention and destinations remain consistent** — pruning runs after
   successful capture and through the scheduled sweep, preserving protected copies
   and backups used by active restores. Existing runs retain their original
@@ -1106,7 +1106,7 @@ backup, mail and security fixes accumulated since 0.7.2.
   the return URL. Billing portals remain scoped to the organization (#910).
 - **Standalone APIs limit unauthenticated floods** — a separate per-IP guard runs
   before authentication without consuming the route's own limit. Cloud mode or
-  explicit `OPENSHIP_TRUST_EDGE=true` delegates that outer ceiling to the upstream
+  explicit `KOVALIO_TRUST_EDGE=true` delegates that outer ceiling to the upstream
   proxy while preserving per-route limits (#123).
 
 ### Mail
@@ -1116,7 +1116,7 @@ backup, mail and security fixes accumulated since 0.7.2.
   and renew them. Successful renewal reloads Postfix and Dovecot and verifies the
   served certificates. Automatic renewal uses the shared scheduler; expiry,
   renewal failures and stale served certificates appear in Health and Monitoring.
-  Scheduled renewal requires the Openship controller to remain running.
+  Scheduled renewal requires the Kovalio controller to remain running.
 - **Webmail refreshes without duplicate subscriptions** — inbox updates use a
   single owned SSE/IMAP IDLE connection with cleanup on disconnect. Replies fill
   recipients and subject correctly, Trash uses IMAP deletion, and mobile composer,
@@ -1162,7 +1162,7 @@ backup, mail and security fixes accumulated since 0.7.2.
   Transfer with secrets included when moving configuration between instances with
   different keys.
 
-[Full comparison: v0.7.2…v0.8.0](https://github.com/oblien/openship/compare/v0.7.2...v0.8.0)
+[Full comparison: v0.7.2…v0.8.0](https://github.com/Nextrium/kovalio/compare/v0.7.2...v0.8.0)
 
 ## 0.7.2
 
@@ -1190,7 +1190,7 @@ update-experience work accumulated since 0.6.9.
 
 - **Self-hosted workspaces can own and manage multiple GitHub Apps** — Settings → Git now supports
   one-click GitHub.com manifest creation and manual GitHub/GitHub Enterprise Server registration,
-  without an Openship Cloud or OAuth dependency. Private keys, client secrets, and webhook secrets
+  without an Kovalio Cloud or OAuth dependency. Private keys, client secrets, and webhook secrets
   are encrypted at rest; source-specific JWTs mint short-lived repository-scoped tokens against the
   correct API origin; GitHub sends verified lifecycle, push, and check webhooks directly to the
   instance. Owners can install an App on multiple accounts, rotate and verify credentials, select a
@@ -1236,7 +1236,7 @@ update-experience work accumulated since 0.6.9.
 
 ### Builds
 
-- **`openship.json` environment now reaches Dockerfile builds end to end** — top-level project
+- **`kovalio.json` environment now reaches Dockerfile builds end to end** — top-level project
   variables are recovered from the trusted source, encrypted into each deployment snapshot, and passed
   through the existing shared Docker build-argument resolver for first deploys, redeploys, webhooks,
   folder uploads, and explicit single-app mode. Native `services[].buildArgs` adds per-image overrides
@@ -1254,7 +1254,7 @@ update-experience work accumulated since 0.6.9.
   surfaces now read the matching version from the tagged `CHANGELOG.md` instead
   of repeating the GitHub Release body. The native update panel keeps advisory
   copy separate from a resizable, scrollable changelog, and all changelog actions
-  open the version page on `openship.io` rather than GitHub (#752).
+  open the version page on `nextrium.org` rather than GitHub (#752).
 - **Successful deploys no longer re-advertise stale updates** — resolving the
   tracked branch head refreshes its upstream cache while a deployment is in
   progress, and successful deployments invalidate cached upstream state before
@@ -1291,12 +1291,12 @@ update-experience work accumulated since 0.6.9.
   the shared public-port diagnosis; provider relay credentials are never copied
   into the webmail container.
 - **The platform sender now self-heals instead of getting stuck on SMTP 535** —
-  cached `openship@<domain>` credentials are reused only while the live mailbox
+  cached `kovalio@<domain>` credentials are reused only while the live mailbox
   and forwarding rows remain active. A deleted row is recreated automatically,
   and an already-cached transporter rotates once and retries safely on an auth
   rejection (#754).
 - **The platform mailbox is protected and repairable** — ordinary mailbox edit
-  and delete operations reject the Openship-owned sender, while the Mailboxes
+  and delete operations reject the Kovalio-owned sender, while the Mailboxes
   tab exposes a dedicated password rotation/repair action that also works when
   the row is missing.
 - **Mail configuration works with non-root SSH users** — relay maps and
@@ -1359,7 +1359,7 @@ update-experience work accumulated since 0.6.9.
 
 This critical deployment-safety hotfix makes legacy Docker Compose ownership and
 routing fail closed. Existing unmanaged stacks can no longer be mistaken for an
-Openship deployment or silently duplicated, and an ordinary same-server
+Kovalio deployment or silently duplicated, and an ordinary same-server
 redeploy cannot move a routed service onto a different host port.
 
 ### Deployments and routing
@@ -1369,7 +1369,7 @@ redeploy cannot move a routed service onto a different host port.
   Docker Compose stack with the same project slug and service names. A collision
   now stops with `FOREIGN_COMPOSE_STACK` and tells the operator to import/adopt,
   remove, or rename it. Explicitly adopted containers and containers already
-  tracked by Openship continue normally.
+  tracked by Kovalio continue normally.
 - **Same-server host ports stay locked across redeploys** — a routed service
   keeps its active host port on its current physical server. If that port cannot
   be reclaimed safely, deployment stops before routing changes instead of
@@ -1377,7 +1377,7 @@ redeploy cannot move a routed service onto a different host port.
   workload. A real server migration may still allocate a new host port.
 - **Duplicate-container warnings require ownership evidence** — normal projects
   no longer claim same-slug containers through Docker Compose labels alone.
-  Native Openship labels, the canonical managed name, or the tracked container
+  Native Kovalio labels, the canonical managed name, or the tracked container
   id establish ownership; Compose-label recovery remains available only for an
   explicit adoption.
 
@@ -1408,7 +1408,7 @@ redeploy cannot move a routed service onto a different host port.
   so multiple tabs cannot multiply Git, DNS, Docker, or version scans.
 
 > **Upgrade priority: critical for legacy or externally created Compose
-> workloads.** Fully tracked Openship deployments are not expected to hit the
+> workloads.** Fully tracked Kovalio deployments are not expected to hit the
 > collision path, but installations that previously deployed a same-slug stack
 > outside the current control-plane records should upgrade before redeploying it.
 

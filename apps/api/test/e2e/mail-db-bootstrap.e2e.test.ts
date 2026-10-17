@@ -250,7 +250,7 @@ describeDockerE2E("mail engine DB bootstrap (real postgres)", () => {
         "--env", `POSTGRES_PASSWORD=${PG_PASSWORD}`, "--env", "POSTGRES_DB=vmail",
         DB_IMAGE, "postgres", "-p", "5544",
       ]);
-      const result = await runBootstrap({ OPENSHIP_MAIL_DB_HOST: custom, OPENSHIP_MAIL_DB_PORT: "5544" });
+      const result = await runBootstrap({ KOVALIO_MAIL_DB_HOST: custom, KOVALIO_MAIL_DB_PORT: "5544" });
       expect(result.code, result.log).toBe(0);
       const state = await docker([
         "exec", "--env", `PGPASSWORD=${PG_PASSWORD}`, RUNNER,

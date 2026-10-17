@@ -22,17 +22,17 @@ import { synchronizeGitHubRun } from "./github-sync";
 const owner = `github-runners-${randomUUID()}`;
 const idleMs = 10 * 60_000;
 
-export function requestsOpenshipRunner(labels: string[]) {
+export function requestsKovalioRunner(labels: string[]) {
   const normalized = labels.map((label) => label.toLowerCase());
   // Plain ubuntu-latest/macOS labels belong to GitHub-hosted runners. Only an
   // explicit routing choice may allocate customer infrastructure or spend funds.
-  return normalized.includes("self-hosted") && normalized.includes("openship");
+  return normalized.includes("self-hosted") && normalized.includes("kovalio");
 }
 
 async function reserveDemand(signal?: AbortSignal) {
   for (const { job, run, workflow } of await repos.actions.queuedGitHubJobs()) {
     if (signal?.aborted) return;
-    if (!job.spec || !requestsOpenshipRunner(job.spec.labels)) continue;
+    if (!job.spec || !requestsKovalioRunner(job.spec.labels)) continue;
     try {
       const ctx = await resolveExecutionAuthority(
         workflow.authority,
@@ -64,7 +64,7 @@ async function reserveDemand(signal?: AbortSignal) {
             demandJobId: job.id,
             repoOwner: workflow.owner!,
             repoName: workflow.repo!,
-            runnerName: `openship-${id}`,
+            runnerName: `kovalio-${id}`,
             spec: { ...job.spec, timeoutSeconds: ACTIONS_MAX_JOB_SECONDS },
           })
         )
@@ -104,7 +104,7 @@ function requestFor(
   const labels = [
     ...new Set([
       "self-hosted",
-      "openship",
+      "kovalio",
       os,
       architecture,
       ...runner.config.labels

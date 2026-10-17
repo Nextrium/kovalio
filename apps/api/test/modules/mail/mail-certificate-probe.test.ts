@@ -25,7 +25,7 @@ vi.mock("@repo/platform/engine/modules/mail/mail-engine", async (original) => ({
 }));
 
 const section = (name: string, body: string) =>
-  `OPENSHIP_CERT_${name}_BEGIN\n${body}\nOPENSHIP_CERT_${name}_END\n`;
+  `KOVALIO_CERT_${name}_BEGIN\n${body}\nKOVALIO_CERT_${name}_END\n`;
 function output(disk = good.certPem, smtp = disk, imap = disk, trusted = true) {
   const tls = (pem: string) =>
     `${pem}\nVerify return code: ${trusted ? "0 (ok)" : "18 (self-signed certificate)"}\n`;
@@ -87,7 +87,7 @@ describe("mail certificate observations", () => {
     expect(
       parseMailCertificateProbe(HOST, output(good.certPem, "connect: Connection refused")),
     ).toMatchObject({ status: "unknown", reason: "unavailable" });
-    expect(parseMailCertificateProbe(HOST, section("disk", "OPENSHIP_CERT_MISSING"))).toMatchObject(
+    expect(parseMailCertificateProbe(HOST, section("disk", "KOVALIO_CERT_MISSING"))).toMatchObject(
       { status: "fail", reason: "missing" },
     );
   });

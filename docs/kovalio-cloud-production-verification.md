@@ -3,7 +3,7 @@
 ## Current status: hosted checkout opens; paid-cycle verification remains
 
 The latest check against Oblien successfully created a Hobby/monthly hosted
-checkout with Openship's production return URLs. Repeating the identical request
+checkout with Kovalio's production return URLs. Repeating the identical request
 with the same saved idempotency key returned the same checkout session. A fresh
 subscription read still returned `null`: opening checkout did not grant access.
 The test used a new disposable namespace identity and did not touch an existing
@@ -14,9 +14,9 @@ checkout ID is in **live mode** (`cs_live_…`). No payment was attempted. A com
 payment, its signed public webhook, renewal, refund and cancellation behavior
 on the intended account remain unverified.
 
-The deployed Openship API returned HTTP 200 with `cloudMode: true` for
+The deployed Kovalio API returned HTTP 200 with `cloudMode: true` for
 `GET /api/health`. An unsigned
-`POST https://api.openship.io/api/billing/oblien-webhook` returned HTTP 401
+`POST https://api.nextrium.org/api/billing/oblien-webhook` returned HTTP 401
 `invalid signature`, confirming that the public handler is present and has its
 signature gate enabled. An earlier probe hit an origin timeout; subsequent
 probes succeeded. This does not verify the configured secret against a real
@@ -25,9 +25,9 @@ provider delivery.
 Current [billing](https://oblien.com/docs/api/billing) and
 [reseller](https://oblien.com/docs/saas-reselling) documentation still support
 our catalog-based Mode-B integration. Custom reseller `offer` checkout and
-checkout-status lookup are optional, separate contracts that Openship does not
+checkout-status lookup are optional, separate contracts that Kovalio does not
 currently use. SDK 2.4.0 is now published and installed; the manifest and lockfile
-resolve it. Its live catalog passes Openship's validator, including Enterprise's
+resolve it. Its live catalog passes Kovalio's validator, including Enterprise's
 null allowances. A regression test also ensures that invalid negative allowances
 still fail validation.
 
@@ -35,7 +35,7 @@ This review fixed top-up retries to retain the original payment key, exposed
 only validated diagnostic references and retryability alongside known billing
 error codes, and bound current webhook body IDs to their headers. Legacy
 notifications without a body ID remain supported. Oblien does not automatically
-retry outgoing application webhooks; Openship re-reads provider truth on billing
+retry outgoing application webhooks; Kovalio re-reads provider truth on billing
 and deployment actions and runs a paginated entitlement sweep every five minutes.
 
 Read-only provider checks also confirmed zero-credit defaults with no overdraft,
@@ -56,7 +56,7 @@ but `POST https://api.oblien.com/billing/checkout` returned HTTP 400:
 }
 ```
 
-The failure reproduced for the full Openship Hobby/monthly request and a minimal
+The failure reproduced for the full Kovalio Hobby/monthly request and a minimal
 documented Pro request containing only `namespace`, `kind: "subscription"`, and
 `planTierId: "pro"`. The latter used direct HTTP without the SDK, return URLs, or
 an idempotency key. No checkout URL was returned and no payment was attempted.
@@ -66,7 +66,7 @@ namespace under the documented contract; no existing customer was used for this
 probe. These results do not verify the deployed production account.
 
 This failure no longer reproduced in the current checkout check above.
-Openship records the upstream
+Kovalio records the upstream
 operation, HTTP status, and bounded error code without logging credentials,
 customer namespaces, SQL, or provider messages. Provider SQL failures are mapped
 to HTTP 503; checkout returns `OBLIEN_CHECKOUT_UNAVAILABLE`. This behavior was
@@ -161,13 +161,13 @@ docker compose up -d --build api dashboard
 docker compose exec api bun run --cwd apps/api cloud:check
 ```
 
-See [Cloud launch configuration](openship-cloud-launch.md#enable-purchases-in-the-deployed-saas).
+See [Cloud launch configuration](kovalio-cloud-launch.md#enable-purchases-in-the-deployed-saas).
 
 ## Earlier follow-up: unlimited reseller accounts
 
 Removed the reseller `/workspace/quota` dependency from namespace onboarding,
 resource-policy synchronization, and deployment preflight. Customer ceilings come
-from their Openship plan; Oblien owns platform capacity. Billing, checkout, and
+from their Kovalio plan; Oblien owns platform capacity. Billing, checkout, and
 plan reads no longer write workspace resource policies. Token issuance, spending,
 and webhook synchronization still enforce customer ceilings and credit policy.
 Billing and subscription checkout reuse the verified subscription instead of

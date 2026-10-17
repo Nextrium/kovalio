@@ -31,7 +31,7 @@ const request = (
   });
 
 it("binds a provisioned receiver to its instance, version, authenticated chunks and source retirement proof", async () => {
-  const root = await mkdtemp(join(tmpdir(), "openship-instance-protocol-"));
+  const root = await mkdtemp(join(tmpdir(), "kovalio-instance-protocol-"));
   roots.push(root);
   const source = await startApi({
     dbDir: join(root, "source"),
@@ -58,8 +58,8 @@ it("binds a provisioned receiver to its instance, version, authenticated chunks 
     port: await freePort(),
     secret: "target-protocol-fixture-key-2222222222222222",
     environment: {
-      OPENSHIP_INSTANCE_RECEIVE_TOKEN: bootstrapToken,
-      OPENSHIP_INSTANCE_RECEIVE_ID: sender.id,
+      KOVALIO_INSTANCE_RECEIVE_TOKEN: bootstrapToken,
+      KOVALIO_INSTANCE_RECEIVE_ID: sender.id,
     },
   });
   apis.push(target);

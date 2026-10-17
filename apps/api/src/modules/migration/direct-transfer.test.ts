@@ -120,8 +120,8 @@ function fakeExec(handlers: Handler[]): CommandExecutor & { calls: string[] } {
   const exec = async (command: string) => {
     calls.push(command);
     if (command.startsWith("command -v ")) return "ok";
-    const pubkey = command.match(/cat '.*openship-migration-([a-z0-9]+)-(push|pull)\/id\.pub'/);
-    if (pubkey) return `ssh-ed25519 AAAAKEY openship-migration-${pubkey[1]}-${pubkey[2]}`;
+    const pubkey = command.match(/cat '.*kovalio-migration-([a-z0-9]+)-(push|pull)\/id\.pub'/);
+    if (pubkey) return `ssh-ed25519 AAAAKEY kovalio-migration-${pubkey[1]}-${pubkey[2]}`;
     const h = handlers.find((x) => x.match.test(command));
     return h ? h.reply : "";
   };
@@ -161,8 +161,8 @@ describe("establishDirectLink", () => {
     expect(link?.direction).toBe("push");
     // Cleanup strips the run marker on the peer (target) and removes the temp key.
     await link!.cleanup();
-    expect(targetExec.calls.some((c) => /awk -v marker=.*openship-migration-run1-push/.test(c))).toBe(true);
-    expect(sourceExec.calls.some((c) => /rm -rf .*openship-migration-run1-push/.test(c))).toBe(true);
+    expect(targetExec.calls.some((c) => /awk -v marker=.*kovalio-migration-run1-push/.test(c))).toBe(true);
+    expect(sourceExec.calls.some((c) => /rm -rf .*kovalio-migration-run1-push/.test(c))).toBe(true);
   });
 
   test("push blocked, pull works → direction 'pull'", async () => {
@@ -188,7 +188,7 @@ describe("establishDirectLink", () => {
 
   test("managed target without SSH pulls from the authenticated external source", async () => {
     const sourceExec = fakeExec([]);
-    const targetExec = fakeExec([...bootstrapOk, { match: /OPENSHIP_LINK_OK/, reply: "OPENSHIP_LINK_OK" }]);
+    const targetExec = fakeExec([...bootstrapOk, { match: /KOVALIO_LINK_OK/, reply: "KOVALIO_LINK_OK" }]);
     const link = await establishDirectLink({ sourceExec, targetExec, sourceConn: conn("8.8.4.4"), targetConn: null,
       runId: "run3", log: () => {} });
     expect(link?.direction).toBe("pull");

@@ -67,7 +67,7 @@ export function presentCloudSubscription(subscription: OblienSubscription): Bill
   return {
     tier: subscriptionPlan(subscription).tier,
     billingMode: subscription.offer?.billingMode === "monthly" ? "monthly" : "metered",
-    configuration: isCustomOfferVersion(subscription.metadata?.openship_offer_version) ? "custom" : "preset",
+    configuration: isCustomOfferVersion(subscription.metadata?.kovalio_offer_version) ? "custom" : "preset",
     offerReference: subscription.offer?.reference,
     status: subscription.status,
     interval: subscription.billingInterval === "yearly" ? "annual" : "monthly",

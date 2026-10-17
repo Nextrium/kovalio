@@ -57,7 +57,7 @@ export interface MailboxRow {
   isGlobalAdmin: boolean;
   createdAt: string;
   passwordLastChange: string;
-  /** The primary install's Openship-owned SMTP identity. */
+  /** The primary install's Kovalio-owned SMTP identity. */
   isPlatform: boolean;
 }
 
@@ -180,7 +180,7 @@ function annotatePlatformMailbox(
     ? `${PLATFORM_LOCAL_PART}@${installDomain.toLowerCase()}`
     : null;
   const normalized = row.username.toLowerCase();
-  // Fail closed when state is temporarily unreadable: `openship@…` is the
+  // Fail closed when state is temporarily unreadable: `kovalio@…` is the
   // reserved infrastructure identity, while ordinary user mailboxes remain
   // manageable. Once state is available, only the primary install sender is
   // protected so additional-domain cascade deletion keeps working.
@@ -193,7 +193,7 @@ function annotatePlatformMailbox(
 export class PlatformMailboxProtectedError extends Error {
   constructor(public username: string) {
     super(
-      `The platform mailbox ${username} is managed by Openship. Use "Rotate platform mailbox password" to repair or rotate it.`,
+      `The platform mailbox ${username} is managed by Kovalio. Use "Rotate platform mailbox password" to repair or rotate it.`,
     );
   }
 }

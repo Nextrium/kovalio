@@ -7,7 +7,7 @@ const h = vi.hoisted(() => ({
   service: vi.fn(),
   server: vi.fn(),
   identity: {
-    apiUrl: "https://api.openship.test",
+    apiUrl: "https://api.kovalio.test",
     userId: "cloud-user",
     organizationId: "cloud-org",
   },

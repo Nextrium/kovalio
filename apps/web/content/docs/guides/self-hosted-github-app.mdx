@@ -1,20 +1,20 @@
 ---
 title: Self-hosted GitHub Apps
-description: Create and manage workspace-owned GitHub Apps for private repositories, direct webhooks, and short-lived clone tokens without Openship Cloud.
+description: Create and manage workspace-owned GitHub Apps for private repositories, direct webhooks, and short-lived clone tokens without Kovalio Cloud.
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-A self-hosted Openship workspace can own one or more GitHub Apps end to end. App private keys and webhook
+A self-hosted Kovalio workspace can own one or more GitHub Apps end to end. App private keys and webhook
 secrets are encrypted in the local database, GitHub sends webhooks directly to your instance, and builds use
 short-lived installation tokens instead of a long-lived personal access token.
 
 Use the dashboard's **Settings → Git → Self-hosted GitHub Apps** section. You can create a GitHub.com App
 with the one-click manifest flow or register an existing GitHub.com/GitHub Enterprise Server App manually.
-Neither flow requires an Openship Cloud connection or a separate GitHub OAuth login.
+Neither flow requires an Kovalio Cloud connection or a separate GitHub OAuth login.
 
 <Callout type="info" title="Workspace-owned and multi-source">
-Each source belongs to the active Openship workspace. A workspace may register several Apps and install each
+Each source belongs to the active Kovalio workspace. A workspace may register several Apps and install each
 one on several GitHub users or organizations. The same GitHub owner can be covered by more than one source;
 the source marked **Default** wins for new and existing project bindings when it has an active installation.
 </Callout>
@@ -22,13 +22,13 @@ the source marked **Default** wins for new and existing project bindings when it
 ## Before you start
 
 You must be a workspace owner and the instance must have a public HTTPS URL. Configure
-`OPENSHIP_PUBLIC_URL=https://openship.example.com` (or the equivalent public URL setting) and restart the
+`KOVALIO_PUBLIC_URL=https://kovalio.example.com` (or the equivalent public URL setting) and restart the
 instance. GitHub must be able to reach both URLs shown in the source form:
 
-- Setup callback: `https://openship.example.com/auth/callback/github-app`
-- Webhook endpoint: `https://openship.example.com/api/proxy/api/webhooks/github`
+- Setup callback: `https://kovalio.example.com/auth/callback/github-app`
+- Webhook endpoint: `https://kovalio.example.com/api/proxy/api/webhooks/github`
 
-The dashboard disables App registration until Openship can resolve a configured public URL.
+The dashboard disables App registration until Kovalio can resolve a configured public URL.
 
 ## One-click manifest setup (GitHub.com)
 
@@ -47,7 +47,7 @@ select **Continue on GitHub**.
 
 ### Review and create the App
 
-Openship submits a private GitHub App manifest with these repository permissions:
+Kovalio submits a private GitHub App manifest with these repository permissions:
 
 - **Contents:** read
 - **Metadata:** read
@@ -65,9 +65,9 @@ the callback immediately encrypts them and never returns them to the dashboard.
 
 ### Choose repository access
 
-After conversion, Openship opens the new App's installation page. Choose the GitHub user or organization and
+After conversion, Kovalio opens the new App's installation page. Choose the GitHub user or organization and
 either all repositories or selected repositories. The setup callback verifies the installation with that
-specific App's private key before binding it to the originating Openship user and workspace.
+specific App's private key before binding it to the originating Kovalio user and workspace.
 
 </Step>
 
@@ -86,7 +86,7 @@ GitHub web URL: https://github.acme.example
 GitHub API URL: https://github.acme.example/api/v3
 ```
 
-Configure the App itself with the Setup URL and Webhook URL displayed by Openship. Give it the same permissions
+Configure the App itself with the Setup URL and Webhook URL displayed by Kovalio. Give it the same permissions
 and event subscriptions listed above, create a private key, and set a high-entropy webhook secret of at least
 16 characters. Then provide:
 
@@ -95,7 +95,7 @@ and event subscriptions listed above, create a private key, and set a high-entro
 - the matching webhook secret;
 - the Client ID and client secret, if your App also uses them (installation-token auth does not require them).
 
-Openship calls the selected GitHub API's `/app` endpoint with a signed App JWT before storing anything. A bad
+Kovalio calls the selected GitHub API's `/app` endpoint with a signed App JWT before storing anything. A bad
 App ID, key, or Enterprise API URL is rejected, and upstream error details are redacted from the response.
 
 ## Manage sources and installations
@@ -109,13 +109,13 @@ From the card, a workspace owner can:
 - make the source the default; or
 - delete the local source.
 
-Deleting a source removes its encrypted credentials and installation bindings from Openship, but cannot
+Deleting a source removes its encrypted credentials and installation bindings from Kovalio, but cannot
 uninstall the App on GitHub. Use **Manage on GitHub** to uninstall it there. Projects are atomically rebound to
 another active installation for the same owner when one exists; otherwise their App binding is cleared and
 auto-deploy is disabled. GitHub access grants are retained only when another installation still covers that
 owner.
 
-GitHub suspension is reversible: Openship retains the binding but excludes it from token resolution until an
+GitHub suspension is reversible: Kovalio retains the binding but excludes it from token resolution until an
 `installation.unsuspend` delivery restores it. Uninstall permanently removes the affected binding.
 
 ## Runtime behavior
@@ -127,7 +127,7 @@ GitHub suspension is reversible: Openship retains the binding but excludes it fr
 - GitHub Enterprise REST requests and HTTPS clone URLs use that source's configured API and web origins.
 - App-level push and check webhooks are verified against that source's secret. Push fan-out is additionally
   restricted by the delivering installation id, preventing cross-workspace deployment.
-- App-backed projects use the shared App webhook; Openship does not create duplicate repository webhooks.
+- App-backed projects use the shared App webhook; Kovalio does not create duplicate repository webhooks.
 - Commit statuses and check runs are written with the custom App's GitHub identity and branding.
 
 ## Legacy environment-based App
@@ -135,7 +135,7 @@ GitHub suspension is reversible: Openship retains the binding but excludes it fr
 The process-wide `GITHUB_APP_ID`, `GITHUB_APP_SLUG`, `GITHUB_PRIVATE_KEY_BASE64`, and
 `GITHUB_WEBHOOK_SECRET` configuration remains supported for existing installations. Dashboard-managed sources
 take precedence for the workspace and are the recommended setup for new self-hosted Apps because they support
-multiple Apps, rotation and health checks without restarting Openship.
+multiple Apps, rotation and health checks without restarting Kovalio.
 
 Personal access tokens, per-server SSH keys, and `gh` remain optional fallbacks for repositories not covered by
 an App. They are not required for a workspace-owned App installation.

@@ -45,9 +45,9 @@ export interface PortProbeResult {
 
 const PROC_NET_TCP_FILES = ["/proc/net/tcp", "/proc/net/tcp6"] as const;
 
-const PROBE_LISTENING = "__OPENSHIP_PORT_LISTENING__";
-const PROBE_FREE = "__OPENSHIP_PORT_FREE__";
-const PROBE_UNAVAILABLE = "__OPENSHIP_PORT_UNAVAILABLE__";
+const PROBE_LISTENING = "__KOVALIO_PORT_LISTENING__";
+const PROBE_FREE = "__KOVALIO_PORT_FREE__";
+const PROBE_UNAVAILABLE = "__KOVALIO_PORT_UNAVAILABLE__";
 
 /**
  * Build the portable fallback used only when neither procfs socket table can be

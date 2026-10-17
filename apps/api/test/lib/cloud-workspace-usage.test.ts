@@ -26,7 +26,7 @@ vi.mock("@repo/platform/engine/lib/cloud-capacity", () => ({
 vi.mock("@repo/platform/engine/lib/cloud/server-link", () => ({
   requireLinkedCloudServer: h.verifyLink,
 }));
-vi.mock("@repo/platform/engine/lib/openship-cloud", () => ({
+vi.mock("@repo/platform/engine/lib/kovalio-cloud", () => ({
   getNamespaceClient: async () => ({ client: {}, namespace: "ns-test" }),
 }));
 vi.mock("@repo/adapters", async (original) => ({
@@ -81,7 +81,7 @@ beforeEach(() => {
   h.inventory.mockResolvedValue({
     Containers: [
       {
-        Labels: { "openship.project": "project-a" },
+        Labels: { "kovalio.project": "project-a" },
         SizeRw: 1048576,
         Mounts: [{ Type: "volume", Name: "a-data" }],
       },
@@ -89,12 +89,12 @@ beforeEach(() => {
     Volumes: [
       {
         Name: "a-data",
-        Labels: { "openship.project": "project-a" },
+        Labels: { "kovalio.project": "project-a" },
         UsageData: { Size: 2 * 1048576 },
       },
       {
         Name: "b-data",
-        Labels: { "openship.project": "project-b" },
+        Labels: { "kovalio.project": "project-b" },
         UsageData: { Size: 3 * 1048576 },
       },
     ],

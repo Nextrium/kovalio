@@ -4,12 +4,12 @@ import type { OperatorNoticeOperations } from "@repo/contracts";
 export interface NativePlatformOptions {
   /** Stable identifier shared only by processes intentionally using the same installation. */
   instanceId: string;
-  /** Private source, release and provider state. Never defaults to ~/.openship. */
+  /** Private source, release and provider state. Never defaults to ~/.kovalio. */
   stateDirectory: string;
   storage:
     | { driver: "pglite"; dataDir: string; migrations?: "apply" | "verify" }
     | { driver: "postgres"; url: string; migrations?: "apply" | "verify" };
-  /** Persistent UTF-8 secret, 32–4096 bytes. Uses Openship's existing SHA-256/AES-GCM format. */
+  /** Persistent UTF-8 secret, 32–4096 bytes. Uses Kovalio's existing SHA-256/AES-GCM format. */
   encryptionKey: string;
   runtime: "docker" | "bare" | "cloud";
   /** Bare runtimes may explicitly omit managed routing/TLS. */

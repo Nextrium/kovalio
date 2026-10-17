@@ -4,7 +4,7 @@ import { ClusterVolumeAdapter } from "@repo/adapters";
 import type { ClusterVolume } from "@repo/core";
 import { CLUSTER_STORAGE_STEPS } from "@repo/core";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { repos, seedOwner, type SeededOwner } from "../jobs/_harness";
 import { seedClusterProject } from "../../helpers/cluster-project";
 import { projectRoutes } from "../../../src/modules/projects/project.routes";
@@ -32,8 +32,8 @@ async function clients(owner: SeededOwner) {
     },
   });
   const native = await ship.scope({ identity: "verified", organizationId: owner.orgId });
-  const remote = new OpenshipClient({
-    baseUrl: "http://openship.test",
+  const remote = new KovalioClient({
+    baseUrl: "http://kovalio.test",
     organizationId: owner.orgId,
     token: owner.token,
     fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
@@ -69,7 +69,7 @@ describe("shared storage through HTTP, native operations and SSE", () => {
         replicas: 2,
         disks: project.plan.hosts.map((h) => ({
           serverId: h.serverId,
-          path: "/var/lib/openship/storage",
+          path: "/var/lib/kovalio/storage",
           reservedGiB: 5,
         })),
       },
@@ -123,7 +123,7 @@ describe("shared storage through HTTP, native operations and SSE", () => {
         replicas: 2,
         disks: project.plan.hosts.map((h) => ({
           serverId: h.serverId,
-          path: "/var/lib/openship/storage",
+          path: "/var/lib/kovalio/storage",
           reservedGiB: 5,
         })),
       },

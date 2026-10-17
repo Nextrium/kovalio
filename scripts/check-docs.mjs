@@ -85,10 +85,10 @@ for (const [route, page] of pages) {
     if (
       !link.startsWith("/docs") &&
       !link.startsWith("#") &&
-      !link.startsWith("https://openship.io/docs")
+      !link.startsWith("https://nextrium.org/docs")
     )
       continue;
-    const url = new URL(link, "https://openship.io" + route);
+    const url = new URL(link, "https://nextrium.org" + route);
     const targetRoute = url.pathname.replace(/\.md$/, "").replace(/\/$/, "");
     const target = pages.get(targetRoute);
     if (!target) failures.push(`${relative(root, page.file)}: missing page ${link}`);

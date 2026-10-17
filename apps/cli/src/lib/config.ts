@@ -130,10 +130,10 @@ export function withCommandContext<T>(action: () => T): T {
   return commandContext.run({
     config: Object.freeze(config),
     environment: Object.freeze({
-      context: process.env.OPENSHIP_CONTEXT,
-      apiUrl: process.env.OPENSHIP_API_URL,
-      token: process.env.OPENSHIP_TOKEN,
-      organizationId: process.env.OPENSHIP_ORGANIZATION_ID,
+      context: process.env.KOVALIO_CONTEXT,
+      apiUrl: process.env.KOVALIO_API_URL,
+      token: process.env.KOVALIO_TOKEN,
+      organizationId: process.env.KOVALIO_ORGANIZATION_ID,
     }),
   }, action);
 }
@@ -157,7 +157,7 @@ export function selectCommandConnection(options: { context?: string; apiUrl?: st
   const environment = options.context === undefined ? invocation.environment : {};
   const name = options.context ?? environment.context ?? invocation.config.current;
   if (!Object.hasOwn(invocation.config.contexts, name))
-    throw new Error(`Unknown context "${name}". Run openship login --context ${name} first.`);
+    throw new Error(`Unknown context "${name}". Run kovalio login --context ${name} first.`);
   const saved = invocation.config.contexts[name];
   // Only an unconfigured connection may discover the installation implicitly.
   // An explicit endpoint/context or any saved/ambient credential never gains
@@ -245,7 +245,7 @@ export function usesEnvironmentToken(name = getActiveContext()): boolean {
 export function setActiveContext(name: string): void {
   const config = readConfig();
   if (!Object.hasOwn(config.contexts, name)) {
-    throw new Error(`Unknown context "${name}". Run \`openship login --context ${name}\` first.`);
+    throw new Error(`Unknown context "${name}". Run \`kovalio login --context ${name}\` first.`);
   }
   config.current = name;
   writeConfig(config);

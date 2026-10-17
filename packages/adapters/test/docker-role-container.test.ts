@@ -5,14 +5,14 @@ import { DockerRuntime } from "../src/runtime/docker";
 import { CloudDockerRuntime, type CloudDockerOptions } from "../src/runtime/cloud/docker";
 import { BareRuntime } from "../src/runtime/bare";
 import { droppedRuntimeEnvMessage } from "../src/runtime/runtime-env";
-import { OPENSHIP_LABEL } from "../src/system/port-owner";
+import { KOVALIO_LABEL } from "../src/system/port-owner";
 import type { DeployConfig, LogEntry } from "../src/types";
 
 /**
  * A runtime ROLE (#935) is a worker or scheduler process started from the same
  * image as the web app. `deployRole` must give it the app's env, mounts, restart
  * policy, caps and project network, and must NEVER give it a port, a network
- * alias or the web container's `openship.service` label. Pinned at the create
+ * alias or the web container's `kovalio.service` label. Pinned at the create
  * payload, as docker-portless-worker.test.ts does: the only way to know what
  * Docker was told is to look at what was passed.
  */
@@ -24,7 +24,7 @@ function baseConfig(overrides: Partial<DeployConfig> = {}): DeployConfig {
     deploymentId: "dep_1",
     projectId: "proj_1",
     buildSessionId: "sess_1",
-    imageRef: "openship/app:sess_1",
+    imageRef: "kovalio/app:sess_1",
     environment: "production",
     port: 8000,
     envVars: { APP_NAME: "demo" },
@@ -38,7 +38,7 @@ function baseConfig(overrides: Partial<DeployConfig> = {}): DeployConfig {
 /** A daemon that records every create payload and hands back a controllable container. */
 async function fakeDaemon(opts: { startError?: Error; removeError?: Error } = {}) {
   const runtime = await DockerRuntime.create({
-    dockerSocketPath: "/tmp/openship-test-absent.sock",
+    dockerSocketPath: "/tmp/kovalio-test-absent.sock",
   });
   const creates: Array<Record<string, any>> = [];
   const start = vi.fn(async () => {
@@ -67,8 +67,8 @@ describe("DockerRuntime.deployRole: container shape", () => {
     expect(result).toEqual({ containerId: "c".repeat(64) });
     expect(creates).toHaveLength(1);
     const created = creates[0]!;
-    expect(created.name).toBe("openship-my-app-dep_1-worker-2");
-    expect(created.Image).toBe("openship/app:sess_1");
+    expect(created.name).toBe("kovalio-my-app-dep_1-worker-2");
+    expect(created.Image).toBe("kovalio/app:sess_1");
     expect(created.Cmd).toEqual(["sh", "-c", "bundle exec sidekiq"]);
     expect("Entrypoint" in created).toBe(false);
   });
@@ -76,7 +76,7 @@ describe("DockerRuntime.deployRole: container shape", () => {
   it("falls back to the project id in the name when there is no runtime name", async () => {
     const { runtime, creates } = await fakeDaemon();
     await runtime.deployRole(baseConfig({ runtimeName: undefined }), ROLE, 1);
-    expect(creates[0]!.name).toBe("openship-proj_1-dep_1-worker-1");
+    expect(creates[0]!.name).toBe("kovalio-proj_1-dep_1-worker-1");
   });
 
   it("disables the web image's inherited healthcheck for portless roles", async () => {
@@ -119,11 +119,11 @@ describe("DockerRuntime.deployRole: container shape", () => {
     await runtime.deployRole(baseConfig({ networkAlias: "web" }), ROLE, 1);
 
     const labels: Record<string, string> = creates[0]!.Labels;
-    expect(labels[OPENSHIP_LABEL.project]).toBe("proj_1");
-    expect(labels[OPENSHIP_LABEL.deployment]).toBe("dep_1");
-    expect(labels[OPENSHIP_LABEL.role]).toBe("worker");
-    expect(labels).not.toHaveProperty(OPENSHIP_LABEL.service);
-    expect(labels).not.toHaveProperty(OPENSHIP_LABEL.build);
+    expect(labels[KOVALIO_LABEL.project]).toBe("proj_1");
+    expect(labels[KOVALIO_LABEL.deployment]).toBe("dep_1");
+    expect(labels[KOVALIO_LABEL.role]).toBe("worker");
+    expect(labels).not.toHaveProperty(KOVALIO_LABEL.service);
+    expect(labels).not.toHaveProperty(KOVALIO_LABEL.build);
   });
 });
 
@@ -329,7 +329,7 @@ describe("DockerRuntime.deployRole: storage log", () => {
 describe("roles capability", () => {
   it("is declared by DockerRuntime", async () => {
     const runtime = await DockerRuntime.create({
-      dockerSocketPath: "/tmp/openship-test-absent.sock",
+      dockerSocketPath: "/tmp/kovalio-test-absent.sock",
     });
     expect(runtime.supports("roles")).toBe(true);
   });

@@ -214,7 +214,7 @@ export interface StackRole {
   /** Wait after the stop signal before SIGKILL, compose duration (e.g. "90s", "10m"). */
   stopGracePeriod?: string;
   health?: RoleHealth;
-  /** Preset gating only: every signal must match. Ignored for openship.json roles. */
+  /** Preset gating only: every signal must match. Ignored for kovalio.json roles. */
   when?: {
     deps?: readonly string[];
     files?: readonly string[];
@@ -247,7 +247,7 @@ export interface StackDefinition {
   /** Default start command */
   defaultStartCommand: string;
   /**
-   * Optional web startup optimization, enabled by openship.json `optimize`.
+   * Optional web startup optimization, enabled by kovalio.json `optimize`.
    * Runs with the runtime environment before the resolved start command.
    */
   optimizeCommand?: string;
@@ -790,7 +790,7 @@ export const STACKS = {
     // is kept as explicit intent. Sidekiq gets 45s because exceeding the grace
     // period loses the in-flight job rather than requeueing it, so the 4.5s a
     // 30s budget left over one measured run was too thin. An explicit
-    // openship.json `roles` array replaces all presets, so declare grace
+    // kovalio.json `roles` array replaces all presets, so declare grace
     // periods there to keep these values.
     defaultRoles: [
       {
@@ -881,7 +881,7 @@ export const STACKS = {
     // tasks may not complete. A foreground scheduled command with more than 10
     // seconds left can be killed on either version. Applications that need
     // completion should use a verified draining version and size the grace for
-    // the whole remaining run. An explicit openship.json `roles` array replaces
+    // the whole remaining run. An explicit kovalio.json `roles` array replaces
     // all presets, so declare grace periods there to keep these values.
     defaultRoles: [
       {

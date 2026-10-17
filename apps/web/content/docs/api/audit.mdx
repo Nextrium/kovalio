@@ -35,8 +35,8 @@ console.log(result);
 
 ```bash
 # Cursor mode — newest 50 deployment-failure events
-curl -G "$OPENSHIP_URL/api/audit" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -G "$KOVALIO_URL/api/audit" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   --data-urlencode "cursor=" \
   --data-urlencode "limit=50" \
   --data-urlencode "eventType=deployment.failed"

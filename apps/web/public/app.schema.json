@@ -282,7 +282,7 @@
           "items": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
         },
         "entrypointArgv": {
-          "description": "Exact image entrypoint override. Requires Openship 0.9.2 or newer. An empty array clears the image default.",
+          "description": "Exact image entrypoint override. Requires Kovalio 0.9.2 or newer. An empty array clears the image default.",
           "type": "array",
           "items": { "type": "string" }
         },

@@ -1,4 +1,4 @@
-// Run with Node.js 22+ after installing openship 0.8.0 or later.
+// Run with Node.js 22+ after installing kovalio 0.8.0 or later.
 // This demo owns a temporary installation and removes it on completion.
 // @ts-check
 import assert from "node:assert/strict";
@@ -6,14 +6,14 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createShip } from "openship";
+import { createShip } from "kovalio";
 
-const stateDirectory = await mkdtemp(join(tmpdir(), "openship-sdk-example-"));
+const stateDirectory = await mkdtemp(join(tmpdir(), "kovalio-sdk-example-"));
 // Keep this key with your persistent installation in a real application.
 const encryptionKey = randomBytes(32).toString("hex");
-/** @type {Map<string, import("openship/native").VerifiedIdentity>} */
+/** @type {Map<string, import("kovalio/native").VerifiedIdentity>} */
 const sessions = new Map();
-/** @type {import("openship").NativeShipOptions<string>} */
+/** @type {import("kovalio").NativeShipOptions<string>} */
 const options = {
   instanceId: "sdk-example",
   stateDirectory,
@@ -28,10 +28,10 @@ const options = {
   // application, verify the caller's session with your authentication service.
   identity: { resolve: async (assertion) => sessions.get(assertion) ?? null },
 };
-/** @type {import("openship").OwnedShip<string> | undefined} */
+/** @type {import("kovalio").OwnedShip<string> | undefined} */
 let ship;
 
-/** @param {import("openship").DeploymentHandle} deployment */
+/** @param {import("kovalio").DeploymentHandle} deployment */
 async function waitUntilReady(deployment) {
   const outcome = await deployment.wait({ timeoutMs: 60_000, pollIntervalMs: 100 });
   assert.equal(outcome.success, true, JSON.stringify(outcome));

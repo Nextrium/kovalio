@@ -39,8 +39,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/notifications/categories" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/notifications/categories" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -69,8 +69,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/notifications/channels" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/notifications/channels" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"kind":"email","label":"On-call inbox","config":{"address":"ops@example.com"}}'
 ```
@@ -206,8 +206,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X PUT "$OPENSHIP_URL/api/notifications/subscriptions" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X PUT "$KOVALIO_URL/api/notifications/subscriptions" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"category":"deploy.failed","channelId":"chan_123","enabled":true}'
 ```
@@ -285,8 +285,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/notifications/deliveries?unseen=true&limit=20" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/notifications/deliveries?unseen=true&limit=20" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>

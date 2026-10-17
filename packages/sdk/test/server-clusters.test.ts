@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { OpenshipClient } from "../src/client";
+import { KovalioClient } from "../src/client";
 import { clusterRuntimeFixture } from "../../contracts/test/cluster-runtime-fixtures";
 import {
   clusterCapabilitiesFixture,
@@ -20,7 +20,7 @@ describe("cluster HTTP facade", () => {
       calls.push({ url: String(url), method: init?.method ?? "GET", body: init?.body ? JSON.parse(String(init.body)) : undefined });
       return Response.json(clusterRuntimeFixture());
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     const clusterId = "pool/a";
     const requestId = "request-1234567890";
     await client.servers.getClusterRuntime({ clusterId });
@@ -38,7 +38,7 @@ describe("cluster HTTP facade", () => {
   });
   it("revises connections through the network preparation endpoint with an immutable request ID", async () => {
     const fetcher = vi.fn(async () => Response.json(managedPreparationFixture()));
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     const request = {
       preparationId: "setup/a",
       sequence: 3,
@@ -83,7 +83,7 @@ describe("cluster HTTP facade", () => {
         expiresAt: new Date(Date.now() + 240_000).toISOString(),
       }),
     );
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     await client.servers.verifyCluster({ clusterId: "cluster/a", revision: 2, speedTest });
     expect(fetcher).toHaveBeenCalledWith(
       "https://ship.test/api/system/clusters/cluster%2Fa/verify",
@@ -103,7 +103,7 @@ describe("cluster HTTP facade", () => {
         operation: managedOperationFixture(),
       });
     });
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     const requestId = "bbbbbbbb-2222-4222-8222-222222222222";
     await client.servers.removeManagedNetworkPreparationMember({
       preparationId: "setup/a",
@@ -152,7 +152,7 @@ describe("cluster HTTP facade", () => {
   });
   it("discards preparations and plans with preconditions and no path IDs in the request body", async () => {
     const calls: Array<{ url: string; method: string; body: unknown }> = [];
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "https://ship.test",
       fetch: vi.fn(async (url, init) => {
         calls.push({
@@ -197,7 +197,7 @@ describe("cluster HTTP facade", () => {
           { headers: { "Content-Type": "text/event-stream" } },
         ),
     );
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     const abort = new AbortController();
     for (const source of [
       client.servers.managedNetworkPreparationEvents("setup/a", { signal: abort.signal }),
@@ -225,7 +225,7 @@ describe("cluster HTTP facade", () => {
   });
   it("starts preparation and reads its saved progress without sending path IDs as query parameters", async () => {
     const calls: Array<{ url: string; method: string; body: unknown }> = [];
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "https://ship.test",
       fetch: vi.fn(async (url, init) => {
         calls.push({
@@ -264,7 +264,7 @@ describe("cluster HTTP facade", () => {
   it("uses review, operation lookup and apply routes without sending path IDs in bodies", async () => {
     const calls: Array<{ url: string; method: string; body: unknown }> = [];
     const operation = managedOperationFixture();
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "https://ship.test",
       fetch: vi.fn(async (url, init) => {
         calls.push({
@@ -301,7 +301,7 @@ describe("cluster HTTP facade", () => {
     const fetcher = vi.fn(async () =>
       Response.json({ ...managedOperationFixture(), privateKey: "must-not-be-public" }),
     );
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     await expect(
       client.servers.applyManagedNetwork({
         operationId: "operation",
@@ -319,7 +319,7 @@ describe("cluster HTTP facade", () => {
   it("uses the cluster routes and strips the path identifier from mutations", async () => {
     const calls: Array<{ url: string; method: string; body: unknown }> = [];
     const cluster = serverClusterFixture();
-    const client = new OpenshipClient({
+    const client = new KovalioClient({
       baseUrl: "https://ship.test",
       fetch: vi.fn(async (url, init) => {
         calls.push({
@@ -360,7 +360,7 @@ describe("cluster HTTP facade", () => {
     const fetcher = vi.fn(async () =>
       Response.json({ id: "cluster-a", network: { mode: "wireguard" } }),
     );
-    const client = new OpenshipClient({ baseUrl: "https://ship.test", fetch: fetcher });
+    const client = new KovalioClient({ baseUrl: "https://ship.test", fetch: fetcher });
     await expect(client.servers.getCluster({ clusterId: "cluster-a" })).rejects.toThrow(
       "Invalid getCluster response",
     );

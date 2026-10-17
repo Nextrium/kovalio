@@ -7,7 +7,7 @@ Actions subscription, fixed job-minute charge or separate transfer allowance.
 
 ## Usage and estimates
 
-Oblien is the only usage meter and spending authority. Openship reads its live
+Oblien is the only usage meter and spending authority. Kovalio reads its live
 `/pricing/calculator` rates for the credit-metered VM product, not preview rate
 cards or monthly capacity prices. The API validates the 100-credits-per-dollar
 conversion before offering checkout. Missing or invalid prices remain unavailable;
@@ -94,7 +94,7 @@ the server's execution adapter. Their jobs do not debit the Actions balance.
 
 ## Operator pools
 
-`OPENSHIP_ACTIONS_CLOUD_POOLS` remains available for separately funded internal
+`KOVALIO_ACTIONS_CLOUD_POOLS` remains available for separately funded internal
 test pools. Each namespace belongs to one configured organization. Operator
 configuration cannot overwrite a customer-funded Actions namespace or a managed
 server namespace, and removing an operator pool does not disable customer

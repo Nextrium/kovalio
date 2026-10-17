@@ -9,13 +9,13 @@ import {
   runtimeProjectUpdate,
   resolveRuntimeImages,
 } from "./runtime-version";
-import { parseOpenshipConfig } from "./openship-config/parse";
+import { parseKovalioConfig } from "./kovalio-config/parse";
 
 describe("runtime version selection", () => {
   it("keeps the public schema generic and in sync with parser syntax", () => {
     const schema = JSON.parse(
       readFileSync(
-        new URL("../../../apps/web/public/openship.schema.json", import.meta.url),
+        new URL("../../../apps/web/public/kovalio.schema.json", import.meta.url),
         "utf8",
       ),
     );
@@ -27,7 +27,7 @@ describe("runtime version selection", () => {
     });
     expect(schema.properties.runtimeVersion).not.toHaveProperty("enum");
     for (const runtimeVersion of ["22", "8.3", "3.13.1"]) {
-      expect(parseOpenshipConfig({ runtimeVersion }).errors).toEqual([]);
+      expect(parseKovalioConfig({ runtimeVersion }).errors).toEqual([]);
     }
     for (const runtimeVersion of [
       "",
@@ -38,18 +38,18 @@ describe("runtime version selection", () => {
       "1.2.3.4",
       "1".repeat(33),
     ]) {
-      expect(parseOpenshipConfig({ runtimeVersion }).errors).not.toEqual([]);
+      expect(parseKovalioConfig({ runtimeVersion }).errors).not.toEqual([]);
     }
   });
   it("validates a declared runtime immediately and waits for detection when omitted", () => {
-    expect(parseOpenshipConfig({ framework: "laravel", runtimeVersion: "8.3" }).errors).toEqual([]);
-    expect(parseOpenshipConfig({ framework: "laravel", runtimeVersion: "8.5" }).errors).toEqual([
+    expect(parseKovalioConfig({ framework: "laravel", runtimeVersion: "8.3" }).errors).toEqual([]);
+    expect(parseKovalioConfig({ framework: "laravel", runtimeVersion: "8.5" }).errors).toEqual([
       expect.stringMatching(/runtimeVersion: Unsupported.*For PHP/),
     ]);
-    expect(parseOpenshipConfig({ framework: "node", runtimeVersion: "22" }).errors).toEqual([
+    expect(parseKovalioConfig({ framework: "node", runtimeVersion: "22" }).errors).toEqual([
       expect.stringMatching(/runtimeVersion: is not supported for node/),
     ]);
-    expect(parseOpenshipConfig({ runtimeVersion: "22" }).errors).toEqual([]);
+    expect(parseKovalioConfig({ runtimeVersion: "22" }).errors).toEqual([]);
   });
   it("derives the catalog from the runtime language, including framework labels", () => {
     expect(getRuntimeVersionPolicy("laravel")).toBe(getRuntimeVersionPolicy("symfony"));
@@ -77,7 +77,7 @@ describe("runtime version selection", () => {
   it.each(["8.1", "8.5", "8", "8.3.1"])(
     "validates %s against the runtime catalog, separately from public syntax",
     (runtimeVersion) => {
-      expect(parseOpenshipConfig({ runtimeVersion }).errors).toEqual([]);
+      expect(parseKovalioConfig({ runtimeVersion }).errors).toEqual([]);
       expect(() => resolveRuntimeImages("laravel", runtimeVersion)).toThrow(
         /Unsupported runtimeVersion.*For PHP/,
       );
@@ -209,7 +209,7 @@ it("preserves custom images, validates version changes, and resets the override 
       { runtimeImage: "dunglas/frankenphp:1-php8.3-bookworm" },
     ),
   ).toThrow(/uses PHP 8.3/);
-  expect(parseOpenshipConfig({ runtimeImage: "foo\nFROM bad" }).errors).toEqual([
+  expect(parseKovalioConfig({ runtimeImage: "foo\nFROM bad" }).errors).toEqual([
     expect.stringMatching(/^runtimeImage:/),
   ]);
   expect(() =>

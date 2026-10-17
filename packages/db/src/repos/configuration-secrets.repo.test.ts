@@ -56,7 +56,7 @@ describe("service configuration at rest (GH-844)", () => {
     expect(created).toMatchObject(config);
     const stored = await storedService(created.id);
     for (const field of SERVICE_SECRET_FIELDS)
-      expect(stored![field]).toEqual(expect.stringMatching(/^openship:config:v1:/));
+      expect(stored![field]).toEqual(expect.stringMatching(/^kovalio:config:v1:/));
     for (const secret of ["inline-secret-844", "build-secret-844", "mounted-secret-844"])
       expect(JSON.stringify(stored)).not.toContain(secret);
     const reads = [
@@ -111,7 +111,7 @@ describe("service configuration at rest (GH-844)", () => {
     });
     expect(stored!.meta).toMatchObject({
       serverId: "server-844",
-      composeServices: expect.stringMatching(/^openship:config:v1:/),
+      composeServices: expect.stringMatching(/^kovalio:config:v1:/),
     });
     expect(JSON.stringify(stored!.meta)).not.toContain("inline-secret-844");
     const historical = { meta: { composeServices: [expect.objectContaining(config)] } };
@@ -247,6 +247,6 @@ describe("service configuration at rest (GH-844)", () => {
     expect(codec.openJson(sealed)).toEqual(config.environment);
     for (const value of [undefined, null, {}, []])
       expect(codec.openJson(codec.sealJson(value))).toEqual(value);
-    expect(() => codec.openJson("openship:config:v99:unknown")).toThrow("Unable to decrypt");
+    expect(() => codec.openJson("kovalio:config:v99:unknown")).toThrow("Unable to decrypt");
   });
 });

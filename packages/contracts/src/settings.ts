@@ -12,12 +12,12 @@ const clone = { cloneToken: Type.Object({ hasToken: Type.Boolean(), setAt: nulla
 const transfer = Type.Required(UpdateTransferPrefsBody);
 export const UserSettingsSchema = Type.Object({ buildMode, ...deployDefaults, ...clone, ...transfer.properties, routeStrategy, forwardGitToServer: Type.Boolean() });
 TypeRegistry.Set(
-  "OpenshipAppearance",
+  "KovalioAppearance",
   (_schema, value) => AppearancePreferencesSchema.safeParse(value).success,
 );
 export const AppearanceSettingsSchema = Type.Object({
   appearance: Type.Union([
-    Type.Unsafe<AppearancePreferences>({ ...APPEARANCE_JSON_SCHEMA, [Kind]: "OpenshipAppearance" }),
+    Type.Unsafe<AppearancePreferences>({ ...APPEARANCE_JSON_SCHEMA, [Kind]: "KovalioAppearance" }),
     Type.Null(),
   ]),
 });

@@ -9,8 +9,8 @@ import {
   trackCloudEvent,
 } from "./cloud-analytics";
 
-vi.mock("./api/urls", () => ({ getRestApiBaseUrl: () => "https://api.openship.io/api" }));
-const config = { dashboardOrigin: "https://app.openship.io" };
+vi.mock("./api/urls", () => ({ getRestApiBaseUrl: () => "https://api.nextrium.org/api" }));
+const config = { dashboardOrigin: "https://kovalio.nextrium.org" };
 const capture = () =>
   trackCloudEvent({ event: "cloud_page_viewed", properties: { screen: "home" } });
 let fetcher: ReturnType<typeof vi.fn>;
@@ -21,7 +21,7 @@ beforeEach(() => {
   vi.stubGlobal("location", new URL(config.dashboardOrigin));
   window.localStorage.clear();
   delete (window as any).desktop;
-  delete (window as any).__OPENSHIP_API_ORIGIN__;
+  delete (window as any).__KOVALIO_API_ORIGIN__;
   fetcher = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
   vi.stubGlobal("fetch", fetcher);
 });
@@ -42,10 +42,10 @@ describe("isolated Cloud browser analytics", () => {
     configureCloudAnalytics(config, "user", false);
     capture();
     delete (window as any).desktop;
-    (window as any).__OPENSHIP_API_ORIGIN__ = "http://localhost:1234";
+    (window as any).__KOVALIO_API_ORIGIN__ = "http://localhost:1234";
     configureCloudAnalytics(config, "user", false);
     capture();
-    delete (window as any).__OPENSHIP_API_ORIGIN__;
+    delete (window as any).__KOVALIO_API_ORIGIN__;
     vi.stubEnv("NODE_ENV", "development");
     configureCloudAnalytics(config, "user", false);
     capture();
@@ -58,7 +58,7 @@ describe("isolated Cloud browser analytics", () => {
     configureCloudAnalytics(config, null, false);
     capture();
     const anonymousId = body().anonymousId;
-    expect(fetcher.mock.calls[0]?.[0]).toBe("https://api.openship.io/api/cloud/telemetry");
+    expect(fetcher.mock.calls[0]?.[0]).toBe("https://api.nextrium.org/api/cloud/telemetry");
     expect(body().expectedUserId).toBeNull();
     configureCloudAnalytics(config, "user-a", false);
     capture();
@@ -82,7 +82,7 @@ describe("isolated Cloud browser analytics", () => {
     expect(analyticsScreen("/accept-invite/secret-token")).toBe("other");
     expect(
       analyticsAttribution(
-        "https://app.openship.io/?token=secret&utm_source=launch&utm_medium=email&utm_campaign=v0.8.0",
+        "https://kovalio.nextrium.org/?token=secret&utm_source=launch&utm_medium=email&utm_campaign=v0.8.0",
         "https://example.com/private?token=secret",
       ),
     ).toEqual({
@@ -93,12 +93,12 @@ describe("isolated Cloud browser analytics", () => {
     });
     expect(
       analyticsAttribution(
-        "https://app.openship.io/?utm_source=sk_secret&utm_campaign=user%40example.com",
+        "https://kovalio.nextrium.org/?utm_source=sk_secret&utm_campaign=user%40example.com",
         "http://192.168.1.5/private",
       ),
     ).toEqual({});
     expect(
-      analyticsAttribution("https://app.openship.io/", "https://user:secret@example.com/"),
+      analyticsAttribution("https://kovalio.nextrium.org/", "https://user:secret@example.com/"),
     ).toEqual({});
   });
 

@@ -125,8 +125,8 @@ A quick map so you don't have to guess:
 
 ## When monitoring cannot connect
 
-**Connection unavailable** means Openship could not observe the affected servers. Their current
-workload health is **unknown**. For example, `ENETUNREACH` means the machine running Openship has
+**Connection unavailable** means Kovalio could not observe the affected servers. Their current
+workload health is **unknown**. For example, `ENETUNREACH` means the machine running Kovalio has
 no usable network route to the target; it does not establish that the target's apps stopped.
 Monitoring combines these explicit network failures into one notice with the affected server names.
 Open **Technical details** for the original diagnostic.
@@ -136,8 +136,8 @@ Previously confirmed workload failures remain visible through either kind of con
 After restoring connectivity, press **Recheck**, or let the next enabled monitoring check run.
 A successful observation clears the connection notice. Checking status does not restart services.
 
-If your browser loses its connection to Openship, a shared connection notice warns that displayed
-status may be out of date. This is separate from the connection between Openship and your servers.
+If your browser loses its connection to Kovalio, a shared connection notice warns that displayed
+status may be out of date. This is separate from the connection between Kovalio and your servers.
 
 ## CLI
 

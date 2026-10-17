@@ -97,11 +97,11 @@
       "serviceCountOne": "{count} serviço",
       "serviceCountOther": "{count} serviços",
       "searchPlaceholder": "Buscar por nome, imagem ou tag…",
-      "cloudConnectHint": "Conecte o Openship Cloud para navegar pelo catálogo de serviços na nuvem. Você ainda pode adicionar qualquer imagem manualmente.",
+      "cloudConnectHint": "Conecte o Kovalio Cloud para navegar pelo catálogo de serviços na nuvem. Você ainda pode adicionar qualquer imagem manualmente.",
       "noMatchesTitle": "Nenhuma correspondência",
       "noMatchesBody": "Tente uma categoria ou termo de busca diferente - ou escolha Imagem personalizada na barra lateral.",
       "localImages": "Imagens locais",
-      "openshipCloud": "Openship Cloud",
+      "kovalioCloud": "Kovalio Cloud",
       "localDocker": "Docker local",
       "customEntryName": "Imagem personalizada",
       "customEntryDescription": "Baixe qualquer imagem Docker pública ou privada por tag.",
@@ -134,7 +134,7 @@
         "other": "Outros"
       },
       "cloudConnectTitle": "Precisa de bancos de dados gerenciados ou armazenamento de objetos?",
-      "cloudConnectBody": "Conecte a Openship Cloud para provisionar Postgres sem servidor, Redis e buckets compatíveis com S3 junto a este projeto.",
+      "cloudConnectBody": "Conecte a Kovalio Cloud para provisionar Postgres sem servidor, Redis e buckets compatíveis com S3 junto a este projeto.",
       "cloudConnectButton": "Explorar complementos da Cloud"
     },
     "detail": {
@@ -174,7 +174,7 @@
       "saveEnvironment": "Salvar ambiente",
       "environmentState": {
         "helpTitle": "Como funcionam as variáveis de ambiente",
-        "description": "Guardadas no Openship. As substituições do serviço têm prioridade sobre o Compose e os valores partilhados do projeto. Editar um valor herdado cria uma substituição para este serviço.",
+        "description": "Guardadas no Kovalio. As substituições do serviço têm prioridade sobre o Compose e os valores partilhados do projeto. Editar um valor herdado cria uma substituição para este serviço.",
         "sources": {
           "service": "Substituição do serviço",
           "compose": "Compose",
@@ -197,11 +197,11 @@
           "not-deployed": "Estas variáveis serão usadas quando este serviço for implementado.",
           "unsupported": "Volte a implementar este serviço para aplicar o ambiente guardado."
         },
-        "recoveryHint": "O contentor em execução tem variáveis que não estão guardadas no Openship. Recupere-as antes de aplicar se quiser mantê-las:",
+        "recoveryHint": "O contentor em execução tem variáveis que não estão guardadas no Kovalio. Recupere-as antes de aplicar se quiser mantê-las:",
         "recover": "Recuperar do serviço em execução",
         "removeRuntime": "Aplicar sem recuperar estas variáveis; removê-las do serviço em execução.",
         "recovered": "Recuperadas do serviço em execução — ainda não guardadas",
-        "recoveredHint": "Os valores recuperados estão prontos para revisão. Guarde para os manter no Openship.",
+        "recoveredHint": "Os valores recuperados estão prontos para revisão. Guarde para os manter no Kovalio.",
         "recoveryFailed": "Não foi possível recuperar as variáveis do serviço em execução. As variáveis guardadas não foram alteradas."
       },
       "environmentApply": {
@@ -383,7 +383,7 @@
     "connection": {
       "terminal": "Terminal",
       "statusTitle": "Estado do serviço indisponível",
-      "statusHint": "O Openship não conseguiu confirmar o estado atual. O seu serviço pode continuar em execução.",
+      "statusHint": "O Kovalio não conseguiu confirmar o estado atual. O seu serviço pode continuar em execução.",
       "checkingTitle": "A verificar o serviço",
       "checkingHint": "A aguardar uma resposta do servidor. Já pode tentar abrir o terminal.",
       "startingTitle": "A aguardar o serviço",
@@ -408,7 +408,7 @@
       "errorTitle": "Terminal indisponível",
       "errors": {
         "auth": "Não foi possível verificar o seu acesso. Inicie sessão novamente ou verifique as permissões.",
-        "connect": "O Openship não conseguiu aceder à consola do serviço. Tente novamente quando o servidor estiver acessível.",
+        "connect": "O Kovalio não conseguiu aceder à consola do serviço. Tente novamente quando o servidor estiver acessível.",
         "notFound": "Este serviço está indisponível ou não tem acesso.",
         "notDeployed": "Não existe um contentor em execução ao qual se possa ligar. Verifique o estado do serviço e tente novamente.",
         "notSupported": "O ambiente de execução deste serviço não suporta um terminal interativo.",

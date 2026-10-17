@@ -190,7 +190,7 @@ async function pushInstanceSettings(
     });
   } catch (err) {
     // Log but don't block - settings can be pushed again later
-    errorDiagnostics.error("desktop/main/index", "[openship] Failed to push instance settings:", err);
+    errorDiagnostics.error("desktop/main/index", "[kovalio] Failed to push instance settings:", err);
   }
 }
 
@@ -486,7 +486,7 @@ function loadDashboard() {
       store.set("onboardingComplete", false);
       loadOnboarding();
     } else {
-      errorDiagnostics.error("desktop/main/index", "[openship] Dashboard failed to load:", err);
+      errorDiagnostics.error("desktop/main/index", "[kovalio] Dashboard failed to load:", err);
     }
   });
 }

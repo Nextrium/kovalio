@@ -5,7 +5,7 @@ import { DockerRuntime } from "./docker";
 
 async function runtimeWith(stream: PassThrough): Promise<DockerRuntime> {
   const runtime = await DockerRuntime.create({
-    dockerSocketPath: "/tmp/openship-runtime-logs-test.sock",
+    dockerSocketPath: "/tmp/kovalio-runtime-logs-test.sock",
   });
   (runtime as unknown as { _docker: unknown })._docker = {
     getContainer: () => ({ logs: vi.fn(async () => stream) }),

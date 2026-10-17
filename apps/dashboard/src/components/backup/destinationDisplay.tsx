@@ -11,7 +11,7 @@ import { useI18n, interpolate } from "@/components/i18n-provider";
 export const KIND_ICONS: Record<BackupDestinationSummary["kind"], IconName> = {
   s3_compatible: "cloud",
   sftp: "server",
-  openship_server: "server",
+  kovalio_server: "server",
   local: "hard-drive",
   http_upload: "cloud",
 };

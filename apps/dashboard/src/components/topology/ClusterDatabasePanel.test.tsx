@@ -45,7 +45,7 @@ const row = (patch: Partial<ClusterDatabase> = {}): ClusterDatabase => ({
     engine: "postgres",
     mode: "standalone",
     instances: 1,
-    storageClass: "openship-local",
+    storageClass: "kovalio-local",
     storageGiB: 20,
     cpuMillis: 500,
     memoryMiB: 512,

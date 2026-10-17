@@ -79,7 +79,7 @@ describe("the trusted-proxy list", () => {
       "10.0.0.0/1/2",
       "fe80::1%eth0",
     ];
-    process.env.OPENSHIP_EDGE_TRUSTED_PROXIES = [...valid, ...invalid].join(",");
+    process.env.KOVALIO_EDGE_TRUSTED_PROXIES = [...valid, ...invalid].join(",");
     expect(edgeTrustedProxies()).toEqual(valid);
     for (const conf of [edgeRealIpConf(), edgeContainerRealIpConf()]) {
       for (const address of invalid) expect(conf).not.toContain(`set_real_ip_from ${address};`);
@@ -222,7 +222,7 @@ describe("the containerized edge's operator include", () => {
   });
 
   it("adds the operator's proxies to the baked trust list", () => {
-    process.env.OPENSHIP_EDGE_TRUSTED_PROXIES = "172.17.0.0/16, fd00::/8";
+    process.env.KOVALIO_EDGE_TRUSTED_PROXIES = "172.17.0.0/16, fd00::/8";
     expect(directives(edgeContainerRealIpConf())).toEqual([
       "set_real_ip_from 172.17.0.0/16;",
       "set_real_ip_from fd00::/8;",
@@ -232,11 +232,11 @@ describe("the containerized edge's operator include", () => {
   it("never repeats a directive the baked block already set", () => {
     // A second real_ip_header or real_ip_recursive in the same scope is
     // `[emerg] ... is duplicate`: every reload on the box would be refused.
-    process.env.OPENSHIP_EDGE_TRUSTED_PROXIES = "10.0.0.0/8";
-    process.env.OPENSHIP_EDGE_REAL_IP_HEADER = "X-Forwarded-For";
+    process.env.KOVALIO_EDGE_TRUSTED_PROXIES = "10.0.0.0/8";
+    process.env.KOVALIO_EDGE_REAL_IP_HEADER = "X-Forwarded-For";
     const conf = edgeContainerRealIpConf();
     expect(directives(conf).every((l) => l.startsWith("set_real_ip_from "))).toBe(true);
-    expect(conf).toContain("OPENSHIP_EDGE_REAL_IP_HEADER=X-Forwarded-For is NOT applied");
+    expect(conf).toContain("KOVALIO_EDGE_REAL_IP_HEADER=X-Forwarded-For is NOT applied");
   });
 
   it("trusts nothing extra when the operator declares nothing", () => {

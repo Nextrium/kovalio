@@ -250,7 +250,7 @@ function executorWith(opts: {
 
 describe("waitForReadyFromExecutor", () => {
   it("probes a managed server through its executor when TCP forwarding is unavailable", async () => {
-    const exec = vi.fn(async () => "OPENSHIP_PROBE 204 1");
+    const exec = vi.fn(async () => "KOVALIO_PROBE 204 1");
     const result = await waitForReadyFromExecutor(
       executorWith({ exec }), "127.0.0.1", 20_000,
       { path: "/ready", timeoutMs: 50 },
@@ -268,7 +268,7 @@ describe("waitForReadyFromExecutor", () => {
     await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
     try {
       const port = (server.address() as { port: number }).port;
-      const exec = vi.fn(async () => "OPENSHIP_PROBE 503 1");
+      const exec = vi.fn(async () => "KOVALIO_PROBE 503 1");
       const result = await waitForReadyFromExecutor(
         executorWith({ exec }), "127.0.0.1", port,
         { path: "/ready", timeoutMs: 20, intervalMs: 1 },
@@ -287,7 +287,7 @@ describe("waitForReadyFromExecutor", () => {
   });
 
   it.each([
-    ["missing HTTP client", async () => "OPENSHIP_PROBE_NO_CLIENT", "no `curl`"],
+    ["missing HTTP client", async () => "KOVALIO_PROBE_NO_CLIENT", "no `curl`"],
     ["lost provider connection", async () => { throw new Error("provider unavailable"); }, "provider unavailable"],
   ] as const)("reports a managed server's %s as unverified", async (_label, exec, detail) => {
     const result = await waitForReadyFromExecutor(

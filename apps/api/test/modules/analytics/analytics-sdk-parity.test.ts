@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { seedOwner, seedServer, installFakeRunner, db, schema, repos, type SeededOwner } from "../jobs/_harness";
 import { eq } from "@repo/db";
 import { createShip } from "@repo/sdk/native";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { getPlatformKernel } from "@repo/platform/engine/lib/platform";
 import { flushAudit } from "@repo/platform/engine/lib/audit-emitter";
 import { authorization } from "@repo/platform/engine/lib/authorization";
@@ -40,7 +40,7 @@ async function clients(owner: SeededOwner) {
   const identity = { user: { id: user.id, email: user.email, name: user.name }, sessionId: "analytics-test" };
   const ship = createShip({ platform: getPlatformKernel(), identity: { resolve: async () => identity } });
   const native = await ship.scope({ identity: "verified", organizationId: owner.orgId });
-  const remote = new OpenshipClient({ baseUrl: "http://openship.test", token: owner.token, organizationId: owner.orgId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
+  const remote = new KovalioClient({ baseUrl: "http://kovalio.test", token: owner.token, organizationId: owner.orgId, fetch: ((url, init) => app.request(url as string, init)) as typeof fetch });
   return { native, remote, context: await authorization.resolveScope(identity, owner.orgId) };
 }
 async function project(owner: SeededOwner, name: string) {

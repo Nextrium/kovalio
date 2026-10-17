@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
 import { ENV_MASK } from "@repo/core";
 import { DockerRuntime } from "@repo/adapters";
-import { OpenshipClient } from "@repo/sdk/client";
+import { KovalioClient } from "@repo/sdk/client";
 import { decrypt, encrypt } from "@repo/platform/engine/lib/encryption";
 import * as deploymentRuntime from "@repo/platform/engine/lib/deployment-runtime";
 import * as edgeTarget from "@repo/platform/engine/lib/edge-target";
@@ -27,7 +27,7 @@ const app = new Hono()
 
 describe("effective service environment through HTTP, SDK and real storage", () => {
   let owner: Awaited<ReturnType<typeof seedOwner>>;
-  let client: OpenshipClient;
+  let client: KovalioClient;
   let project: Awaited<ReturnType<typeof seedProject>>;
   let service: Awaited<ReturnType<typeof seedService>>;
   beforeEach(async () => {
@@ -57,8 +57,8 @@ describe("effective service environment through HTTP, SDK and real storage", () 
       ],
       null,
     );
-    client = new OpenshipClient({
-      baseUrl: "http://openship.test",
+    client = new KovalioClient({
+      baseUrl: "http://kovalio.test",
       token: owner.token,
       organizationId: owner.orgId,
       fetch: ((url, init) => app.request(url as string, init)) as typeof fetch,
@@ -128,7 +128,7 @@ describe("effective service environment through HTTP, SDK and real storage", () 
       await setActive(stack.id, deployment.id);
       await seedServiceDeployment(deployment.id, api, { containerId: "current-api" });
       const runtime = await DockerRuntime.create({
-        dockerSocketPath: "/tmp/openship-test-absent.sock",
+        dockerSocketPath: "/tmp/kovalio-test-absent.sock",
       });
       vi.spyOn(runtime, "supports").mockReturnValue(false);
       vi.spyOn(runtime, "dispose").mockResolvedValue(undefined);
@@ -139,7 +139,7 @@ describe("effective service environment through HTTP, SDK and real storage", () 
         imageId: "sha256:test-image",
         state: "running",
         env: ["BACKEND_ORIGIN=http://203.0.113.5:8080"],
-        labels: { "openship.project": stack.id, "openship.service": "api" },
+        labels: { "kovalio.project": stack.id, "kovalio.service": "api" },
         networks: [],
         mounts: [],
         ports: [],

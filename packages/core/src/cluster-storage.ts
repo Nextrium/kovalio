@@ -1,7 +1,7 @@
 import { AppError } from "./errors";
 import type { SetupLog, SetupStepProgress } from "./cluster-runtime";
 
-export const MANAGED_STORAGE_CLASS = "openship-replicated";
+export const MANAGED_STORAGE_CLASS = "kovalio-replicated";
 export const CLUSTER_STORAGE_LEASE_MS = 90_000;
 export const CLUSTER_STORAGE_STEPS = ["prerequisites", "install", "disks", "verify"] as const;
 export type ClusterStorageStep = (typeof CLUSTER_STORAGE_STEPS)[number] | "remove";
@@ -63,7 +63,7 @@ export function validateClusterStorage(config: ClusterStorageConfig) {
       /^\/(?:proc|sys|dev|etc|boot|run|root|home)(?:\/|$)/.test(disk.path)
     )
       invalid(
-        "Choose a dedicated absolute data directory, such as /var/lib/openship/storage. System directories and symlinks cannot be used.",
+        "Choose a dedicated absolute data directory, such as /var/lib/kovalio/storage. System directories and symlinks cannot be used.",
       );
     if (!Number.isInteger(disk.reservedGiB) || disk.reservedGiB < 1 || disk.reservedGiB > 65536)
       invalid("Reserve at least 1 GiB on each storage disk for the host.");

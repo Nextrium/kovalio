@@ -1,50 +1,50 @@
 ---
-title: Openship CLI
-description: Deploy applications and manage Openship from your terminal.
+title: Kovalio CLI
+description: Deploy applications and manage Kovalio from your terminal.
 ---
 
-Use the CLI to deploy code, inspect releases, and manage Openship Cloud or a remote self-hosted installation
-from any machine with Node.js and access to that API. A local Openship server or Docker installation is
+Use the CLI to deploy code, inspect releases, and manage Kovalio Cloud or a remote self-hosted installation
+from any machine with Node.js and access to that API. A local Kovalio server or Docker installation is
 not required for remote commands.
 
 ## Install
 
 ```bash
-npm install -g openship
-openship --help
+npm install -g kovalio
+kovalio --help
 ```
 
-Node.js 22 or later is required. A local `npm install openship` also provides the command through `npx`.
+Node.js 22 or later is required. A local `npm install kovalio` also provides the command through `npx`.
 The reference follows this repository; use `--help` to check your installed version. SDK imports and
-native mode are available in `openship` 0.8.0 and later. Newly added commands require a release containing them.
+native mode are available in `kovalio` 0.8.0 and later. Newly added commands require a release containing them.
 
 ## Connect and deploy
 
-Run `openship` for a guided choice of Cloud, a remote self-hosted installation, or
+Run `kovalio` for a guided choice of Cloud, a remote self-hosted installation, or
 [installing on this machine](/docs/cli/run). To connect directly:
 
 ```bash
-openship login \
+kovalio login \
   --api-url https://ship.example.com \
   --context production
 
-openship project list
-openship init --project proj_123
-openship deploy --watch
+kovalio project list
+kovalio init --project proj_123
+kovalio deploy --watch
 ```
 
 `login` opens the token settings page and asks for a personal access token. `init` links the current
 directory to a project. `deploy --watch` submits a deployment and follows its progress.
-Use `openship login --cloud` for Openship Cloud. On the server that runs Openship, the installation
-owner can use `openship --local project list` with automatic local authentication.
+Use `kovalio login --cloud` for Kovalio Cloud. On the server that runs Kovalio, the installation
+owner can use `kovalio --local project list` with automatic local authentication.
 
 ## Choose a workflow
 
-Use `openship job` (alias `jobs`) to manage [scheduled jobs](/docs/guides/jobs), manual runs, and logs.
+Use `kovalio job` (alias `jobs`) to manage [scheduled jobs](/docs/guides/jobs), manual runs, and logs.
 
 <Cards>
   <Card title="Connect and authenticate" href="/docs/cli/access" description="Manage contexts, tokens, and direct HTTP requests." />
-  <Card title="Manage Openship Cloud" href="/docs/cli/cloud" description="Deploy from any machine, choose managed servers, and manage subscriptions." />
+  <Card title="Manage Kovalio Cloud" href="/docs/cli/cloud" description="Deploy from any machine, choose managed servers, and manage subscriptions." />
   <Card title="Deploy and inspect releases" href="/docs/cli/deploy" description="Deploy folders or Git projects, read logs, and roll back." />
   <Card title="Manage applications" href="/docs/cli/projects" description="Work with projects, services, domains, and catalog apps." />
   <Card title="Monitor and automate" href="/docs/cli/operations" description="Inspect health and issues, configure notifications, and manage webhooks and audit events." />
@@ -55,6 +55,6 @@ Use `openship job` (alias `jobs`) to manage [scheduled jobs](/docs/guides/jobs),
 
 ## Scripts and application code
 
-Use `openship --json project list` for machine-readable command output. See [automation](/docs/cli/automation)
+Use `kovalio --json project list` for machine-readable command output. See [automation](/docs/cli/automation)
 for CI setup and exit handling. To call the same operations directly from JavaScript or TypeScript,
 use the [Node.js SDK](/docs/api/sdk).

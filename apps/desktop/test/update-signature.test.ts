@@ -12,16 +12,16 @@ vi.mock("../src/main/update-download", () => ({ fetchUpdateAsset: h.fetch }));
 import { downloadUpdate } from "../src/main/updater";
 import { verifyUpdateSignature } from "../src/main/update-signature";
 
-const name = "Openship.AppImage";
+const name = "Kovalio.AppImage";
 const version = "9.8.7";
-const url = `https://github.com/oblien/openship/releases/download/v${version}/${name}`;
+const url = `https://github.com/Nextrium/kovalio/releases/download/v${version}/${name}`;
 const asset = { name, url, size: 10 };
 const bytes = Buffer.from("signed-installer-fixture");
 const sha256 = createHash("sha256").update(bytes).digest("hex");
 let proof: Record<string, unknown>;
 
 beforeEach(async () => {
-  h.directory = await mkdtemp(join(tmpdir(), "openship-update-test-"));
+  h.directory = await mkdtemp(join(tmpdir(), "kovalio-update-test-"));
   const keys = generateKeyPairSync("ed25519", { privateKeyEncoding: { type: "pkcs8", format: "pem" }, publicKeyEncoding: { type: "spki", format: "pem" } });
   h.publicKey = keys.publicKey;
   await writeFile(join(h.directory, name), bytes);
@@ -46,7 +46,7 @@ describe("publisher-authenticated desktop updates", () => {
       ? new Response(mode === "oversize" ? "x".repeat(4097) : "invalid", { status: mode === "missing" ? 404 : 200 })
       : new Response(target.endsWith(".sha256") ? sha256 : bytes));
     await expect(downloadUpdate(asset, version, () => {})).rejects.toThrow("signature");
-    expect((await readdir(h.directory)).filter(entry => entry.startsWith("openship-update-"))).toEqual([]);
+    expect((await readdir(h.directory)).filter(entry => entry.startsWith("kovalio-update-"))).toEqual([]);
   });
   it("does not accept replacing both the installer and checksum", async () => {
     const replacement = Buffer.from("attacker-replacement");

@@ -25,7 +25,7 @@
     "installing": "正在安装…",
     "advanced": "高级部署选项",
     "nameLabel": "名称",
-    "nameHint": "此应用在 Openship 中的显示名称。",
+    "nameHint": "此应用在 Kovalio 中的显示名称。",
     "domainTitle": "部署位置",
     "domainFree": "免费子域名",
     "domainFreeHint": "{domain} 上的免费子域名",
@@ -73,8 +73,8 @@
     "routePortLabel": "仅端口（无域名）",
     "routePortDesc": "通过主机地址和端口访问 — 无需域名或 Cloud。",
     "routeFreeLabel": "免费子域名",
-    "routeFreeDesc": "{domain} 上的免费子域名，由 Openship Cloud 路由。",
-    "routeFreeNeedsCloud": "连接 Openship Cloud 以使用免费子域名。",
+    "routeFreeDesc": "{domain} 上的免费子域名，由 Kovalio Cloud 路由。",
+    "routeFreeNeedsCloud": "连接 Kovalio Cloud 以使用免费子域名。",
     "routeCustomLabel": "您自己的域名",
     "routeCustomDesc": "将您拥有的域名指向此应用。",
     "routeDomainLabel": "域名",
@@ -848,10 +848,10 @@
     "linkedTitleOther": "{count} 个项目连接到此应用",
     "linkedNote": "它们会继续运行，数据不受影响 — 只会失去此连接。重新部署即可生效。",
     "linkedNoteRecordOnly": "它们会继续运行，但关联会随记录一起删除 — 之后重新导入此应用也不会恢复。",
-    "recordOnlyLabel": "仅从 Openship 中移除",
-    "recordOnlyDesc": "在服务器上保持应用及其数据运行 — 仅删除 Openship 中的记录。稍后您可以重新导入。",
+    "recordOnlyLabel": "仅从 Kovalio 中移除",
+    "recordOnlyDesc": "在服务器上保持应用及其数据运行 — 仅删除 Kovalio 中的记录。稍后您可以重新导入。",
     "recordOnlyReversible": "可逆 — 应用保留在您的服务器上。",
-    "recordOnlyNote": "服务器上的内容均未受到影响 — 应用继续携带数据运行。仅移除了 Openship 的记录，稍后可重新导入。",
+    "recordOnlyNote": "服务器上的内容均未受到影响 — 应用继续携带数据运行。仅移除了 Kovalio 的记录，稍后可重新导入。",
     "confirmRecordOnly": "移除记录"
   },
   "routing": {
@@ -939,7 +939,7 @@
       "servesPathHint": "发送到此域名的请求将从构建产物中的该路径提供服务。",
       "servesPathRedeploy": "新路径将在下次部署时生效。",
       "externalIngress": "外部 ingress 与 TLS",
-      "externalIngressDesc": "TLS 在您的反向代理（Cloudflare Tunnel、Nginx Proxy Manager 或负载均衡器）处终止。域名无需指向此服务器，Openship 也不会颁发证书。",
+      "externalIngressDesc": "TLS 在您的反向代理（Cloudflare Tunnel、Nginx Proxy Manager 或负载均衡器）处终止。域名无需指向此服务器，Kovalio 也不会颁发证书。",
       "noWww": "该域名已存在于此项目中。"
     },
     "dns": {
@@ -1067,8 +1067,8 @@
         "deployment": "此路由正在等待部署。请部署项目以应用路由。",
         "disabled": "此项目或服务已禁用。请先启用，再检查路由。",
         "removing": "正在删除此域名，未安排验证。",
-        "manual_certificate": "此域名使用手动上传的证书。请上传有效的替代证书后重新检查。Openship 不会自动续期此证书。",
-        "managed_certificate": "TLS 由外部代理或 Openship Cloud 管理。请检查相应提供方的配置。",
+        "manual_certificate": "此域名使用手动上传的证书。请上传有效的替代证书后重新检查。Kovalio 不会自动续期此证书。",
+        "managed_certificate": "TLS 由外部代理或 Kovalio Cloud 管理。请检查相应提供方的配置。",
         "route_missing": "已配置的路由尚未应用。请重试路由操作以应用配置。目前没有安排路由自动重试。",
         "manual_dns": "此证书使用手动 TXT 验证。请打开 HTTPS 设置以确认新的 TXT 记录，或选择已连接的 DNS 提供商以自动续期。",
         "managed_owner": "此主机名及其证书由所属服务管理。请检查该服务的域名设置。"
@@ -1094,7 +1094,7 @@
       "automatic": "提供商自动验证",
       "manual": "手动 TXT",
       "automaticHint": "在设置 → DNS 中连接 Cloudflare，即可创建证书验证记录并自动续期 HTTPS。",
-      "manualHint": "请在 DNS 提供商处添加临时 TXT 记录。每次续期都需要新的 TXT 记录；Openship 会显示何时需要续期。",
+      "manualHint": "请在 DNS 提供商处添加临时 TXT 记录。每次续期都需要新的 TXT 记录；Kovalio 会显示何时需要续期。",
       "routing": "1. 将域名指向此服务器",
       "certificate": "2. 启用 HTTPS",
       "startAutomatic": "自动启用 HTTPS",
@@ -1202,7 +1202,7 @@
     "updating": "正在更新…",
     "updateFailed": "更新失败",
     "toastTitle": "来源",
-    "cliManaged": "这是 Openship 控制平面 — 它会自动更新。在主机上运行 \"openship update\" 即可升级；此处无需任何更改。"
+    "cliManaged": "这是 Kovalio 控制平面 — 它会自动更新。在主机上运行 \"kovalio update\" 即可升级；此处无需任何更改。"
   },
   "routeRules": {
     "title": "路由规则",

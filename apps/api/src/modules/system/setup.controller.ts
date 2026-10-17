@@ -555,9 +555,9 @@ export async function upgradeToAuth(c: Context) {
       const mailServers = await repos.mailServer.list();
       const installed = mailServers.find((m) => m.installedAt != null);
       if (installed) {
-        const { ensureOpenshipPlatformMailbox } =
+        const { ensureKovalioPlatformMailbox } =
           await import("@repo/platform/engine/modules/mail/admin/platform-mailbox.service");
-        await ensureOpenshipPlatformMailbox(installed.serverId);
+        await ensureKovalioPlatformMailbox(installed.serverId);
         invalidatePlatformTransport();
       }
     } catch (err) {

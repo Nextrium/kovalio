@@ -80,7 +80,7 @@ GET /api/apps/catalog/:id/host-fit?deployTarget=server&serverId=<id>
 ```
 
 On self-hosted destinations, this compares the machine with the app's
-[`minResources`](/docs/reference/app-catalog) recommendation. On Openship Cloud, it previews
+[`minResources`](/docs/reference/app-catalog) recommendation. On Kovalio Cloud, it previews
 the workspace allocation against the current plan. Pass `projectId` to include a draft's
 saved resource settings; access to that project is required.
 
@@ -146,8 +146,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/apps" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/apps" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{
     "templateId": "ghost",

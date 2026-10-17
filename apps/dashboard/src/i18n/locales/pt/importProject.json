@@ -77,7 +77,7 @@
     },
     "runtimeVersionLabel": "Versão do runtime",
     "runtimeVersionDefault": "Padrão",
-    "runtimeVersionDesc": "Usa imagens de compilação e execução compatíveis com a versão selecionada. Requer uma compilação Docker gerada pelo Openship.",
+    "runtimeVersionDesc": "Usa imagens de compilação e execução compatíveis com a versão selecionada. Requer uma compilação Docker gerada pelo Kovalio.",
     "buildImageLabel": "Imagem de Build",
     "buildImageDesc": "Imagem de container do compilador para builds em cloud ou servidor. Substitua-a quando a imagem base detectada estiver incorreta.",
     "productionPathsLabel": "Caminhos de Produção",
@@ -222,7 +222,7 @@
       "statefulWarnBold": "não são mantidos entre rebuilds",
       "statefulWarnPart2": ". Faça o backup e a restauração dos dados explicitamente antes de substituir o workspace.",
       "volumeHint": "Volume nomeado ou caminho do host → caminho do container.",
-      "volumeCloudNote": "O Openship Cloud não oferece suporte a montagens de volumes persistentes. Escolha um servidor para cargas que precisam de volumes.",
+      "volumeCloudNote": "O Kovalio Cloud não oferece suporte a montagens de volumes persistentes. Escolha um servidor para cargas que precisam de volumes.",
       "sourcePlaceholder": "Origem",
       "containerPathPlaceholder": "Caminho do container",
       "readOnlyMount": "Montagem somente leitura",
@@ -464,8 +464,8 @@
   "configDiagnostics": {
     "title": "Algumas configurações de implantação do repositório não foram aplicadas",
     "description": "Revise as configurações ignoradas abaixo antes de implantar.",
-    "titleWholeFile": "O openship.json deste repositório foi ignorado",
-    "descriptionWholeFile": "Nada do arquivo foi aplicado. O deploy vai continuar com as configurações que o Openship detectou.",
+    "titleWholeFile": "O kovalio.json deste repositório foi ignorado",
+    "descriptionWholeFile": "Nada do arquivo foi aplicado. O deploy vai continuar com as configurações que o Kovalio detectou.",
     "refused": "Recusado",
     "unrecognized": "Não reconhecido",
     "hint": "Verifique os arquivos de configuração indicados e atualize as configurações não suportadas antes da próxima implantação."

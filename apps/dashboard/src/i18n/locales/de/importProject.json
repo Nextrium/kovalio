@@ -77,7 +77,7 @@
     },
     "runtimeVersionLabel": "Runtime-Version",
     "runtimeVersionDefault": "Standard",
-    "runtimeVersionDesc": "Verwendet passende Build- und Runtime-Images für die gewählte Version. Erfordert einen von Openship generierten Docker-Build.",
+    "runtimeVersionDesc": "Verwendet passende Build- und Runtime-Images für die gewählte Version. Erfordert einen von Kovalio generierten Docker-Build.",
     "buildImageLabel": "Build-Image",
     "buildImageDesc": "Builder-Container-Image für Cloud- oder Server-Builds. Überschreibe es, wenn das erkannte Basis-Image falsch ist.",
     "productionPathsLabel": "Produktionspfade",
@@ -222,7 +222,7 @@
       "statefulWarnBold": "nicht über Rebuilds hinweg übernommen",
       "statefulWarnPart2": ". Sichere und stelle die Daten ausdrücklich wieder her, bevor du den Workspace ersetzt.",
       "volumeHint": "Benanntes Volume oder Host-Pfad → Container-Pfad.",
-      "volumeCloudNote": "Persistente Volume-Mounts werden in Openship Cloud nicht unterstützt. Wähle einen Server für Workloads, die Volumes benötigen.",
+      "volumeCloudNote": "Persistente Volume-Mounts werden in Kovalio Cloud nicht unterstützt. Wähle einen Server für Workloads, die Volumes benötigen.",
       "sourcePlaceholder": "Quelle",
       "containerPathPlaceholder": "Container-Pfad",
       "readOnlyMount": "Schreibgeschützter Mount",
@@ -464,8 +464,8 @@
   "configDiagnostics": {
     "title": "Einige Deployment-Einstellungen wurden nicht angewendet",
     "description": "Prüfe die unten aufgeführten übersprungenen Einstellungen vor dem Deployment.",
-    "titleWholeFile": "Die openship.json dieses Repos wurde ignoriert",
-    "descriptionWholeFile": "Nichts davon wurde angewendet. Das Deployment läuft weiter, mit den von Openship erkannten Einstellungen.",
+    "titleWholeFile": "Die kovalio.json dieses Repos wurde ignoriert",
+    "descriptionWholeFile": "Nichts davon wurde angewendet. Das Deployment läuft weiter, mit den von Kovalio erkannten Einstellungen.",
     "refused": "Abgelehnt",
     "unrecognized": "Nicht erkannt",
     "hint": "Prüfe die genannten Konfigurationsdateien und aktualisiere nicht unterstützte Einstellungen vor dem nächsten Deployment."

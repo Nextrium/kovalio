@@ -81,12 +81,12 @@ export async function readManifest(exec: CommandExecutor): Promise<KovalioManife
   try {
     const parsed = JSON.parse(trimmed) as KovalioManifest;
     if (parsed.version !== MANIFEST_VERSION || !Array.isArray(parsed.projects)) {
-      errorDiagnostics.warn("platform/engine/lib/openship-manifest", `[openship-manifest] ${MANIFEST_PATH} unrecognized shape/version — ignoring`);
+      errorDiagnostics.warn("platform/engine/lib/kovalio-manifest", `[kovalio-manifest] ${MANIFEST_PATH} unrecognized shape/version — ignoring`);
       return null;
     }
     return parsed;
   } catch (err) {
-    errorDiagnostics.warn("platform/engine/lib/openship-manifest", `[openship-manifest] failed to parse ${MANIFEST_PATH}: ${safeErrorMessage(err)}`, err);
+    errorDiagnostics.warn("platform/engine/lib/kovalio-manifest", `[kovalio-manifest] failed to parse ${MANIFEST_PATH}: ${safeErrorMessage(err)}`, err);
     return null;
   }
 }
@@ -178,7 +178,7 @@ export async function readProjectSnapshot(
     if (parsed?.scope?.kind !== "project" || !parsed.tables) return null;
     return parsed;
   } catch (err) {
-    errorDiagnostics.warn("platform/engine/lib/openship-manifest", `[openship-snapshot] failed to parse snapshot for ${projectId}: ${safeErrorMessage(err)}`, err);
+    errorDiagnostics.warn("platform/engine/lib/kovalio-manifest", `[kovalio-snapshot] failed to parse snapshot for ${projectId}: ${safeErrorMessage(err)}`, err);
     return null;
   }
 }

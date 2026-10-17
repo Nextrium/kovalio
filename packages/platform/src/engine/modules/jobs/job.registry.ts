@@ -89,7 +89,7 @@ export const SYSTEM_JOB_DEFS: SystemJobDef[] = [
     label: "SSL certificate renewal",
     defaultCron: "17 3 * * *",
     // Desktop resolves each certificate's remote serving host, just like self-hosted.
-    // Both run while Openship is running; cloud owns TLS at its managed edge.
+    // Both run while Kovalio is running; cloud owns TLS at its managed edge.
     available: () => platform().target !== "cloud",
     run: async () => {
       const r = await renewExpiringCerts();
@@ -427,7 +427,7 @@ export const SYSTEM_JOB_DEFS: SystemJobDef[] = [
     // writes at all on a tick where nothing is wrong.
     defaultCron: "* * * * *",
     // Enabled by default on supported installations. Desktop checks run while
-    // Openship is running; saved disable/schedule choices survive reconciliation.
+    // Kovalio is running; saved disable/schedule choices survive reconciliation.
     onDisabled: async () => {
       const { stopAllContainerEventWatchers } = await import("../monitoring/container-events");
       await stopAllContainerEventWatchers();

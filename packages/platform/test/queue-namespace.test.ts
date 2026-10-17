@@ -55,7 +55,7 @@ afterEach(async () => {
 });
 
 async function start(namespace?: string) {
-  vi.stubEnv("OPENSHIP_INSTANCE_NAMESPACE", namespace);
+  vi.stubEnv("KOVALIO_INSTANCE_NAMESPACE", namespace);
   const runner = new BullMQJobRunner();
   runners.push(runner);
   await runner.start({ processRun: async () => {} });

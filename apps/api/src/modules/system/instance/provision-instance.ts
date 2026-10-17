@@ -99,26 +99,26 @@ export async function installControllerServices(
   const specs: TCreateServiceBody[] = [
     {
       name: "api",
-      image: `ghcr.io/oblien/openship-api:${plan.version}`,
+      image: `ghcr.io/oblien/kovalio-api:${plan.version}`,
       volumes: ["instance-data:/data"],
       ...(plan.access === "desktop" ? route(4000) : { exposed: false }),
       environment: {
         NODE_ENV: "production",
         DEPLOY_MODE: "docker",
-        OPENSHIP_TARGET: "local",
+        KOVALIO_TARGET: "local",
         CLOUD_MODE: "false",
         PORT: "4000",
-        OPENSHIP_AUTH_MODE: "local",
-        OPENSHIP_REQUIRE_AUTH: "true",
-        OPENSHIP_ALLOW_ZERO_AUTH: "false",
+        KOVALIO_AUTH_MODE: "local",
+        KOVALIO_REQUIRE_AUTH: "true",
+        KOVALIO_ALLOW_ZERO_AUTH: "false",
         PGLITE_DATA_DIR: "/data",
-        OPENSHIP_JOB_RUNNER: "in-process",
-        OPENSHIP_CACHE_STORE: "memory",
-        OPENSHIP_RATE_LIMIT_STORE: "memory",
-        OPENSHIP_HOST_CONTROL: "false",
-        OPENSHIP_PUBLIC_URL: publicUrl,
-        OPENSHIP_INSTANCE_PROJECT_ID: projectId,
-        OPENSHIP_API_ONLY: String(plan.access === "desktop"),
+        KOVALIO_JOB_RUNNER: "in-process",
+        KOVALIO_CACHE_STORE: "memory",
+        KOVALIO_RATE_LIMIT_STORE: "memory",
+        KOVALIO_HOST_CONTROL: "false",
+        KOVALIO_PUBLIC_URL: publicUrl,
+        KOVALIO_INSTANCE_PROJECT_ID: projectId,
+        KOVALIO_API_ONLY: String(plan.access === "desktop"),
         TRUST_PROXY: "true",
       },
     },
@@ -126,7 +126,7 @@ export async function installControllerServices(
       ? [
           {
             name: "dashboard",
-            image: `ghcr.io/oblien/openship-dashboard:${plan.version}`,
+            image: `ghcr.io/oblien/kovalio-dashboard:${plan.version}`,
             dependsOn: ["api"],
             ...route(3001),
             environment: {
@@ -152,8 +152,8 @@ export async function installControllerServices(
         vars: [
           { key: "BETTER_AUTH_SECRET", value: secret("encryption"), isSecret: true },
           { key: "INTERNAL_TOKEN", value: secret("internal"), isSecret: true },
-          { key: "OPENSHIP_INSTANCE_RECEIVE_TOKEN", value: secret("bootstrap"), isSecret: true },
-          { key: "OPENSHIP_INSTANCE_RECEIVE_ID", value: secret("id"), isSecret: false },
+          { key: "KOVALIO_INSTANCE_RECEIVE_TOKEN", value: secret("bootstrap"), isSecret: true },
+          { key: "KOVALIO_INSTANCE_RECEIVE_ID", value: secret("id"), isSecret: false },
         ],
       });
     }
@@ -206,7 +206,7 @@ export function provisionInstance(
         .where(eq(schema.instanceHandoff.id, id));
     };
     if (!plan.projectId) {
-      const slug = `openship-instance-${id}`;
+      const slug = `kovalio-instance-${id}`;
       const found = await repos.project.findBySlugInOrg(ctx.organizationId, slug);
       const project =
         found ??
@@ -278,7 +278,7 @@ export function provisionInstance(
     });
     if (!response.ok)
       throw new AppError(
-        `The new instance is not ready for a secure handoff (HTTP ${response.status}). Check its domain and that both instances use Openship ${plan.version}, then resume.`,
+        `The new instance is not ready for a secure handoff (HTTP ${response.status}). Check its domain and that both instances use Kovalio ${plan.version}, then resume.`,
         409,
       );
     const result = z
@@ -286,7 +286,7 @@ export function provisionInstance(
       .safeParse(await response.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/system/instance/provision-instance"); return null; }));
     if (!result.success)
       throw new AppError(
-        `The receiving API must run Openship ${plan.version}. Check its image and public address, then resume this move.`,
+        `The receiving API must run Kovalio ${plan.version}. Check its image and public address, then resume this move.`,
         409,
       );
     if (result.data.code.origin !== remoteOrigin)

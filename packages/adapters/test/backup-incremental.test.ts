@@ -21,7 +21,7 @@ afterEach(async () => {
 });
 
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), "openship-incremental-"));
+  const root = await mkdtemp(join(tmpdir(), "kovalio-incremental-"));
   roots.push(root);
   const destination = resolveDestination({
     id: "test",

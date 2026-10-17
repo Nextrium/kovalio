@@ -68,7 +68,7 @@ const sleep = (ms: number, signal: AbortSignal) =>
   });
 
 /** Per-release Deployments keep rollback/history honest. Kubernetes Services
- * distribute traffic to ready pods; no OpenShip per-node process scheduler. */
+ * distribute traffic to ready pods; no Kovalio per-node process scheduler. */
 export class KubernetesRuntime implements RuntimeAdapter {
   readonly name = "kubernetes";
   readonly capabilities: ReadonlySet<RuntimeCapability> = new Set([
@@ -133,10 +133,10 @@ export class KubernetesRuntime implements RuntimeAdapter {
   }
   private labels(deploymentId?: string) {
     return {
-      "app.kubernetes.io/managed-by": "openship",
-      "openship.io/project": kubernetesIdLabel(this.options.projectId),
-      "openship.io/runtime": this.options.runtimeId,
-      ...(deploymentId ? { "openship.io/deployment": kubernetesIdLabel(deploymentId) } : {}),
+      "app.kubernetes.io/managed-by": "kovalio",
+      "nextrium.org/project": kubernetesIdLabel(this.options.projectId),
+      "nextrium.org/runtime": this.options.runtimeId,
+      ...(deploymentId ? { "nextrium.org/deployment": kubernetesIdLabel(deploymentId) } : {}),
     };
   }
   private assertOwned(object: KubernetesObject) {
@@ -173,8 +173,8 @@ export class KubernetesRuntime implements RuntimeAdapter {
     } catch (error) {
       if (!(error instanceof KubernetesApiError && error.statusCode === 409)) throw error;
       const existing = await this.owned(`${path}/${object.metadata.name}`);
-      const hash = object.metadata.annotations?.["openship.io/config"];
-      if (hash && existing.metadata.annotations?.["openship.io/config"] !== hash)
+      const hash = object.metadata.annotations?.["nextrium.org/config"];
+      if (hash && existing.metadata.annotations?.["nextrium.org/config"] !== hash)
         throw new AppError(
           "This release already has different configuration. Start a new deployment.",
           409,
@@ -188,7 +188,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
       "/api/v1/namespaces",
       projectNamespaceManifest(this.options.projectId, this.options.runtimeId),
     );
-    // Ingress is restricted to this project's pods and its OpenShip Edge host.
+    // Ingress is restricted to this project's pods and its Kovalio Edge host.
     // Existing Docker network links are rejected at preflight until translated.
     await this.create(`/apis/networking.k8s.io/v1/namespaces/${this.namespace}/networkpolicies`, {
       apiVersion: "networking.k8s.io/v1",
@@ -278,7 +278,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
       unsupported("Persistent mounts and process adoption");
     if (clusterWorkloadNeedsOperator(undefined, config.imageRef))
       throw new AppError(
-        "Add this database from the project's topology so OpenShip can prepare its data storage and replicas.",
+        "Add this database from the project's topology so Kovalio can prepare its data storage and replicas.",
         422,
         "CLUSTER_WORKLOAD_UNSUPPORTED",
       );
@@ -297,12 +297,12 @@ export class KubernetesRuntime implements RuntimeAdapter {
         `${this.core}/persistentvolumeclaims/${clusterVolumeClaim(mount.name)}`,
       );
       if (
-        claim.metadata.labels?.["openship.io/volume"] !== mount.name ||
+        claim.metadata.labels?.["nextrium.org/volume"] !== mount.name ||
         claim.metadata.deletionTimestamp ||
         claim.status?.phase !== "Bound" ||
         !claim.spec.accessModes?.includes("ReadWriteMany") ||
-        (claim.spec.storageClassName !== "openship-replicated" &&
-          !claim.spec.storageClassName?.startsWith("openship-restore-"))
+        (claim.spec.storageClassName !== "kovalio-replicated" &&
+          !claim.spec.storageClassName?.startsWith("kovalio-restore-"))
       )
         throw new AppError(
           `Shared volume ${mount.name} is unavailable. Restore it or remove its mount before deploying.`,
@@ -375,7 +375,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
       progressDeadlineSeconds: 300,
       minReadySeconds: 5,
       selector: {
-        matchLabels: { "openship.io/deployment": kubernetesIdLabel(config.deploymentId) },
+        matchLabels: { "nextrium.org/deployment": kubernetesIdLabel(config.deploymentId) },
       },
       template: {
         metadata: { labels },
@@ -395,7 +395,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
               }
             : {}),
           nodeSelector: {
-            "openship.io/runtime": this.options.runtimeId,
+            "nextrium.org/runtime": this.options.runtimeId,
             "kubernetes.io/arch": this.artifacts.get(config.imageRef),
           },
           topologySpreadConstraints: [
@@ -404,7 +404,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
               topologyKey: "kubernetes.io/hostname",
               whenUnsatisfiable: "ScheduleAnyway",
               labelSelector: {
-                matchLabels: { "openship.io/project": kubernetesIdLabel(this.options.projectId) },
+                matchLabels: { "nextrium.org/project": kubernetesIdLabel(this.options.projectId) },
               },
             },
           ],
@@ -454,12 +454,12 @@ export class KubernetesRuntime implements RuntimeAdapter {
       metadata: {
         ...metadata,
         annotations: {
-          "openship.io/config": hash,
-          "openship.io/replicas": String(this.options.config.replicas),
-          "openship.io/database-identities": JSON.stringify(databaseIdentities),
-          ...(mounts.length ? { "openship.io/volume-claims": JSON.stringify(volumeClaims) } : {}),
+          "nextrium.org/config": hash,
+          "nextrium.org/replicas": String(this.options.config.replicas),
+          "nextrium.org/database-identities": JSON.stringify(databaseIdentities),
+          ...(mounts.length ? { "nextrium.org/volume-claims": JSON.stringify(volumeClaims) } : {}),
           ...(config.previousDeploymentId
-            ? { "openship.io/previous": releaseName(config.previousDeploymentId) }
+            ? { "nextrium.org/previous": releaseName(config.previousDeploymentId) }
             : {}),
         },
       },
@@ -476,7 +476,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
           ...metadata,
           name: `${name}-env`,
           ownerReferences,
-          annotations: { "openship.io/config": hash },
+          annotations: { "nextrium.org/config": hash },
         },
         type: "Opaque",
         data: secretData,
@@ -489,7 +489,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
             ...metadata,
             name: `${name}-registry`,
             ownerReferences,
-            annotations: { "openship.io/config": hash },
+            annotations: { "nextrium.org/config": hash },
           },
           type: "kubernetes.io/dockerconfigjson",
           data: { ".dockerconfigjson": pullData },
@@ -501,7 +501,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
           metadata: { ...metadata, ownerReferences },
           spec: {
             type: "ClusterIP",
-            selector: { "openship.io/deployment": kubernetesIdLabel(config.deploymentId) },
+            selector: { "nextrium.org/deployment": kubernetesIdLabel(config.deploymentId) },
             ports: ports.map((port) => ({
               name: `tcp-${port}`,
               port,
@@ -652,7 +652,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
   async status(ref: string): Promise<ClusterWorkloadStatus> {
     const deployment = await this.owned(`${this.base}/${this.refName(ref)}`);
     const selector = encodeURIComponent(
-      `openship.io/deployment=${deployment.metadata.labels!["openship.io/deployment"]}`,
+      `nextrium.org/deployment=${deployment.metadata.labels!["nextrium.org/deployment"]}`,
     );
     const pods = await this.options.api.request<{ items: KubernetesObject[] }>(
       "GET",
@@ -704,7 +704,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
       path,
       async (value) => {
         this.assertOwned(value);
-        const replicas = count ?? Number(value.metadata.annotations?.["openship.io/replicas"] ?? 1);
+        const replicas = count ?? Number(value.metadata.annotations?.["nextrium.org/replicas"] ?? 1);
         if (replicas > 0) {
           await this.validateSavedVolumes(value);
           await this.validateSavedDatabases(value);
@@ -734,7 +734,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
         await this.validateSavedDatabases(value);
         return {
           spec: {
-            template: { metadata: { annotations: { "openship.io/restarted-at": restartedAt } } },
+            template: { metadata: { annotations: { "nextrium.org/restarted-at": restartedAt } } },
           },
         };
       },
@@ -744,7 +744,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
   }
   private async validateSavedVolumes(release: KubernetesObject) {
     const claims = JSON.parse(
-      release.metadata.annotations?.["openship.io/volume-claims"] ?? "{}",
+      release.metadata.annotations?.["nextrium.org/volume-claims"] ?? "{}",
     ) as Record<string, string>;
     for (const volume of release.spec.template.spec.volumes ?? []) {
       if (!volume.persistentVolumeClaim) continue;
@@ -791,9 +791,9 @@ export class KubernetesRuntime implements RuntimeAdapter {
       };
       const namespace = await read(base);
       if (!namespace) throw unavailable();
-      const databaseId = namespace.metadata.labels?.["openship.io/database"];
+      const databaseId = namespace.metadata.labels?.["nextrium.org/database"];
       const projectId =
-        namespace.metadata.labels?.["openship.io/project"] ===
+        namespace.metadata.labels?.["nextrium.org/project"] ===
         kubernetesIdLabel(this.options.projectId)
           ? this.options.projectId
           : shared.find((item) => item.databaseId === databaseId)?.projectId;
@@ -803,9 +803,9 @@ export class KubernetesRuntime implements RuntimeAdapter {
       const owned = (object: KubernetesObject) =>
         !!object.metadata.uid &&
         !object.metadata.deletionTimestamp &&
-        object.metadata.labels?.["openship.io/project"] === kubernetesIdLabel(projectId) &&
-        object.metadata.labels?.["openship.io/runtime"] === this.options.runtimeId &&
-        object.metadata.labels?.["openship.io/database"] === databaseId;
+        object.metadata.labels?.["nextrium.org/project"] === kubernetesIdLabel(projectId) &&
+        object.metadata.labels?.["nextrium.org/runtime"] === this.options.runtimeId &&
+        object.metadata.labels?.["nextrium.org/database"] === databaseId;
       if (!owned(namespace)) throw unavailable();
       const secret = await read(`${base}/secrets/credentials`);
       if (!secret || !owned(secret) || !secret.data?.password) throw unavailable();
@@ -831,7 +831,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
     return result;
   }
   private async validateSavedDatabases(release: KubernetesObject) {
-    const saved = release.metadata.annotations?.["openship.io/database-identities"];
+    const saved = release.metadata.annotations?.["nextrium.org/database-identities"];
     const usesEnvironment = release.spec.template.spec.containers?.some((container: any) =>
       container.envFrom?.some(
         (source: any) => source.secretRef?.name === `${release.metadata.name}-env`,
@@ -893,10 +893,10 @@ export class KubernetesRuntime implements RuntimeAdapter {
     try {
       const active = await this.owned(`${this.core}/services/app`);
       if (
-        active.spec.selector?.["openship.io/deployment"] ===
-        value.metadata.labels?.["openship.io/deployment"]
+        active.spec.selector?.["nextrium.org/deployment"] ===
+        value.metadata.labels?.["nextrium.org/deployment"]
       ) {
-        const previous = value.metadata.annotations?.["openship.io/previous"];
+        const previous = value.metadata.annotations?.["nextrium.org/previous"];
         let restored = false;
         if (previous && /^release-[a-f0-9]{24}$/.test(previous)) {
           try {
@@ -965,7 +965,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
     try {
       const list = await this.options.api.request<{ items: KubernetesObject[] }>(
         "GET",
-        `${this.base}?labelSelector=${encodeURIComponent(`openship.io/project=${kubernetesIdLabel(projectId)}`)}`,
+        `${this.base}?labelSelector=${encodeURIComponent(`nextrium.org/project=${kubernetesIdLabel(projectId)}`)}`,
         undefined,
         this.lifetime.signal,
       );
@@ -1028,7 +1028,7 @@ export class KubernetesRuntime implements RuntimeAdapter {
     const signal = AbortSignal.any([controller.signal, this.lifetime.signal]);
     const deployment = await this.owned(`${this.base}/${this.refName(ref)}`);
     const selector = encodeURIComponent(
-      `openship.io/deployment=${deployment.metadata.labels!["openship.io/deployment"]}`,
+      `nextrium.org/deployment=${deployment.metadata.labels!["nextrium.org/deployment"]}`,
     );
     const path = `${this.core}/pods?labelSelector=${selector}`;
     const streams = new Map<string, AbortController>();

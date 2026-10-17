@@ -145,7 +145,7 @@ beforeEach(() => {
   h.version.mockResolvedValue(row.plan.version);
   h.nodes.mockResolvedValue({
     items: row.plan.hosts.map((host) => ({
-      metadata: { name: host.nodeName, labels: { "openship.io/runtime": row.id } },
+      metadata: { name: host.nodeName, labels: { "nextrium.org/runtime": row.id } },
       status: {
         nodeInfo: { kubeletVersion: row.plan.version },
         addresses: [{ type: "InternalIP", address: host.privateIp }],

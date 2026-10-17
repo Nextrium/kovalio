@@ -58,7 +58,7 @@ const connection: GitHubConnectionStatus = {
     primary: "gh-cli",
     sources: {
       ghCli: { available: true, login: "octocat", method: "host-cli" },
-      openshipApp: { connected: false },
+      kovalioApp: { connected: false },
     },
   },
   accounts: [],
@@ -121,8 +121,8 @@ describe("repository Checks uses the execution credential resolver", () => {
         status.state.primary = "personal-token";
         status.state.sources.personalToken = { connected: true, login: "octocat" };
       } else {
-        status.state.primary = "openship-app";
-        status.state.sources.openshipApp = { connected: true, login: "octocat" };
+        status.state.primary = "kovalio-app";
+        status.state.sources.kovalioApp = { connected: true, login: "octocat" };
         if (source === "oauth") h.oauth.mockResolvedValue(token);
         else h.mint.mockResolvedValue(token);
         if (source === "custom-app") {

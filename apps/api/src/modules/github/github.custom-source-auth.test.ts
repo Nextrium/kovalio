@@ -18,7 +18,7 @@ vi.mock("@repo/platform/engine/config/env", () => ({
     CLOUD_MODE: false,
     GITHUB_AUTH_MODE: "auto",
     GITHUB_APP_ID: undefined,
-    GITHUB_APP_SLUG: "openship-io",
+    GITHUB_APP_SLUG: "kovalio-io",
     GITHUB_PRIVATE_KEY: undefined,
     GITHUB_PRIVATE_KEY_BASE64: undefined,
   },
@@ -153,7 +153,7 @@ describe("mixed custom and legacy GitHub source resolution", () => {
     );
   });
 
-  it("keeps Openship Cloud authoritative for an owner not covered by the custom App", async () => {
+  it("keeps Kovalio Cloud authoritative for an owner not covered by the custom App", async () => {
     h.cloudConnected.mockResolvedValue(true);
     h.cloudInstallations.mockResolvedValue([
       { id: 99, login: "legacy-owner", avatarUrl: "", type: "Organization" },

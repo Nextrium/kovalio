@@ -16,12 +16,12 @@ const values = [
   ["both quotes", `both 'single' and "double" quotes`],
   ["all quotes", "  'single' and \"double\" and `backticks` # text  "],
   ["leading quotes", `'single' then "double"`],
-  ["dollar", "${OPENSHIP_TEST_REFERENCE}"],
-  ["dollar with apostrophe", "user's${OPENSHIP_TEST_REFERENCE}token"],
-  ["bare variable", "user's$OPENSHIP_TEST_REFERENCE"],
-  ["double dollar", "user's$$OPENSHIP_TEST_REFERENCE"],
+  ["dollar", "${KOVALIO_TEST_REFERENCE}"],
+  ["dollar with apostrophe", "user's${KOVALIO_TEST_REFERENCE}token"],
+  ["bare variable", "user's$KOVALIO_TEST_REFERENCE"],
+  ["double dollar", "user's$$KOVALIO_TEST_REFERENCE"],
   ["literal dollar", "user's$"],
-  ["dollar operators", "'${OPENSHIP_TEST_REFERENCE:-fallback}' ${MISSING?required}"],
+  ["dollar operators", "'${KOVALIO_TEST_REFERENCE:-fallback}' ${MISSING?required}"],
   ["multiline", "first\nNEXT=part of this value\nlast"],
   ["multiline with quotes", "first 'line'\nNEXT=\"still this value\"\nlast\n"],
   ["CRLF", "first\r\nlast\r\n"],
@@ -31,7 +31,7 @@ const values = [
   ["quoted trailing backslash", " spaces # and a slash\\"],
   ["even trailing backslashes", " spaces # and two slashes\\\\"],
   ["literal escape", "user's literal \\n and a real\nnewline"],
-  ["escaped dollar", "user's\\${OPENSHIP_TEST_REFERENCE}"],
+  ["escaped dollar", "user's\\${KOVALIO_TEST_REFERENCE}"],
   ["escaped quote", "  backslash \\\" and \\' text #  "],
   ["Unicode", "مرحبا 🌍 café 中文"],
   ["Unicode whitespace", "\u00a0keep\u2028this\u00a0"],
@@ -131,7 +131,7 @@ AFTER=ok`),
   it("keeps ordinary quoted passwords, dollars and trailing paths readable by Node", () => {
     const rows = [
       { key: "QUOTES", value: `both 'single' and "double" quotes` },
-      { key: "DOLLAR", value: "${OPENSHIP_TEST_REFERENCE}" },
+      { key: "DOLLAR", value: "${KOVALIO_TEST_REFERENCE}" },
       { key: "PATH_VALUE", value: "C:\\new\\folder\\" },
       { key: "MULTILINE", value: "first\nNEXT=not an assignment\nlast" },
     ];
@@ -148,7 +148,7 @@ const hasCompose =
 describe.skipIf(!hasCompose)("environment export through Docker Compose", () => {
   let directory: string;
   beforeAll(() => {
-    directory = mkdtempSync(join(tmpdir(), "openship-env-file-"));
+    directory = mkdtempSync(join(tmpdir(), "kovalio-env-file-"));
     writeFileSync(join(directory, "compose.yml"), "services:\n  probe:\n    image: busybox\n");
   });
   afterAll(() => {
@@ -156,7 +156,7 @@ describe.skipIf(!hasCompose)("environment export through Docker Compose", () => 
   });
 
   it.each(values)("loads %s as the original literal value", (_name, value) => {
-    const key = "ZZ_OPENSHIP_DOTENV";
+    const key = "ZZ_KOVALIO_DOTENV";
     writeFileSync(join(directory, "download.env"), serializeEnvFile([{ key, value }]), {
       mode: 0o600,
     });
@@ -165,7 +165,7 @@ describe.skipIf(!hasCompose)("environment export through Docker Compose", () => 
       [
         "compose",
         "--project-name",
-        "openship-env-test",
+        "kovalio-env-test",
         "--env-file",
         "download.env",
         "-f",
@@ -175,7 +175,7 @@ describe.skipIf(!hasCompose)("environment export through Docker Compose", () => 
       ],
       {
         cwd: directory,
-        env: { PATH: process.env.PATH, OPENSHIP_TEST_REFERENCE: "must-not-replace-the-secret" },
+        env: { PATH: process.env.PATH, KOVALIO_TEST_REFERENCE: "must-not-replace-the-secret" },
         encoding: "utf8",
         timeout: 10_000,
       },
@@ -191,7 +191,7 @@ describe.skipIf(!hasCompose)("environment export through Docker Compose", () => 
 
   it("preserves all 3,375 quoting combinations in a real loader, without extra assignments", () => {
     const rows = combinations.map((value, i) => ({
-      key: `ZZ_OPENSHIP_${String(i).padStart(4, "0")}`,
+      key: `ZZ_KOVALIO_${String(i).padStart(4, "0")}`,
       value,
     }));
     writeFileSync(join(directory, "download.env"), serializeEnvFile(rows), { mode: 0o600 });
@@ -200,7 +200,7 @@ describe.skipIf(!hasCompose)("environment export through Docker Compose", () => 
       [
         "compose",
         "--project-name",
-        "openship-env-test",
+        "kovalio-env-test",
         "--env-file",
         "download.env",
         "-f",
@@ -216,7 +216,7 @@ describe.skipIf(!hasCompose)("environment export through Docker Compose", () => 
       },
     );
     expect(result.status, result.stderr).toBe(0);
-    const line = result.stdout.indexOf("\nZZ_OPENSHIP_0000=");
+    const line = result.stdout.indexOf("\nZZ_KOVALIO_0000=");
     expect(line).toBeGreaterThanOrEqual(0);
     expect(result.stdout.slice(line + 1)).toBe(
       rows.map(({ key, value }) => `${key}=${value}\n`).join(""),

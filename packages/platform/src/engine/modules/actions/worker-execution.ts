@@ -33,7 +33,7 @@ export type UpdateActionAllocation = (
 export function actionWorkerAssets(): string {
   const here = dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    process.env.OPENSHIP_ACTIONS_RUNNER_DIR,
+    process.env.KOVALIO_ACTIONS_RUNNER_DIR,
     join(here, "assets/actions-runner"),
     join(here, "../assets/actions-runner"),
     join(here, "../server/assets/actions-runner"),

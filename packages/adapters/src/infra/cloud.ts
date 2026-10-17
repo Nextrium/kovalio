@@ -720,6 +720,6 @@ export class CloudInfraProvider implements RoutingProvider, SslProvider {
   }
 
   async installCert(_domain: string, _cert: ManualCert): Promise<SslResult> {
-    throw new Error("Manual certificates are not supported on Openship Cloud");
+    throw new Error("Manual certificates are not supported on Kovalio Cloud");
   }
 }

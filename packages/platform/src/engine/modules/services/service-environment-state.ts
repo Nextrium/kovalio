@@ -195,10 +195,10 @@ async function inspectServiceEnvironment(saved: SavedEnvironment) {
         "SERVICE_NOT_DEPLOYED",
       );
     if (
-      (detail.labels["openship.project"] &&
-        detail.labels["openship.project"] !== saved.project.id) ||
-      (detail.labels["openship.service"] &&
-        detail.labels["openship.service"] !== saved.service.name)
+      (detail.labels["kovalio.project"] &&
+        detail.labels["kovalio.project"] !== saved.project.id) ||
+      (detail.labels["kovalio.service"] &&
+        detail.labels["kovalio.service"] !== saved.service.name)
     )
       throw new AppError(
         "The running container does not belong to this service.",

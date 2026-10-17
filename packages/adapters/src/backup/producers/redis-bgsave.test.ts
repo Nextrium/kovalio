@@ -65,7 +65,7 @@ async function runScript(
   env: Record<string, string>,
   cliName = "redis-cli",
 ): Promise<{ code: number; stdout: string; stderr: string }> {
-  const dir = await mkdtemp(join(tmpdir(), "openship-redis-stub-"));
+  const dir = await mkdtemp(join(tmpdir(), "kovalio-redis-stub-"));
   const cli = join(dir, cliName);
   await writeFile(
     cli,

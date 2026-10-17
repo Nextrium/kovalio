@@ -232,7 +232,7 @@ const RoutingRuleSchema = Type.Object({
   destination: Type.String({ maxLength: 2000 }),
 });
 
-/** Shape only; the rules (DNS-label names, singleton vs replicas, ...) come from core's `parseOpenshipConfig`. */
+/** Shape only; the rules (DNS-label names, singleton vs replicas, ...) come from core's `parseKovalioConfig`. */
 const RoleHealthSchema = Type.Object(
   {
     kind: Type.Union([Type.Literal("http"), Type.Literal("exec"), Type.Literal("process")]),
@@ -429,7 +429,7 @@ export const CreateProjectBody = Type.Object({
   /**
    * Commands run once per forward deploy, between the build and the cutover.
    * A non-zero exit fails the deploy. Omit to keep the current value;
-   * send `[]` (or null) to turn the release phase off. Mirrors `openship.json`'s
+   * send `[]` (or null) to turn the release phase off. Mirrors `kovalio.json`'s
    * `releaseCommands`.
    */
   releaseCommands: Type.Optional(
@@ -438,7 +438,7 @@ export const CreateProjectBody = Type.Object({
   /**
    * Extra processes (queue workers, a scheduler) run from the same built image
    * as the web app. Omit to keep the current value; `null` or `[]` = no roles.
-   * Mirrors `openship.json`'s `roles`.
+   * Mirrors `kovalio.json`'s `roles`.
    */
   roles: Type.Optional(Type.Union([Type.Null(), Type.Array(RoleSchema, { maxItems: 20 })])),
   buildImage: Type.Optional(Type.String({ maxLength: 200 })),

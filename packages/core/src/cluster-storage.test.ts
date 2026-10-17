@@ -4,7 +4,7 @@ import { validateClusterStorage, validateClusterVolumeMounts } from "./cluster-s
 describe("shared storage admission", () => {
   const disks = ["a", "b", "c"].map((serverId) => ({
     serverId,
-    path: "/var/lib/openship/storage",
+    path: "/var/lib/kovalio/storage",
     reservedGiB: 5,
   }));
   it("requires independent hosts for every requested data copy", () => {

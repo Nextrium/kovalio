@@ -60,7 +60,7 @@ function CheckoutWelcome({
   userId: string;
 }) {
   const [open, setOpen] = useState(false);
-  const storageKey = `openship:subscription-welcome:${userId}`;
+  const storageKey = `kovalio:subscription-welcome:${userId}`;
   const purchaseKey = state.workspace ? `${state.workspace.id}:${checkoutId}` : checkoutId;
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const h = vi.hoisted(() => ({ exec: vi.fn() }));
 vi.mock("@repo/adapters", () => ({
-  HOST_STATE_DIR: "/root/.openship",
+  HOST_STATE_DIR: "/root/.kovalio",
   privilegedExecutor: async () => ({
     supported: true,
     value: { executor: { exec: h.exec }, elevation: "root", profile: { loginUser: "root" } },
@@ -17,17 +17,17 @@ describe("mail status reads cannot infer absence from an unavailable state file"
   it.each([
     "connect ENETUNREACH 192.0.2.1:22",
     "SSH connection lost",
-    "cat: /root/.openship/mail-state.json: Permission denied",
+    "cat: /root/.kovalio/mail-state.json: Permission denied",
   ])("preserves the failed observation: %s", async (message) => {
     h.exec.mockRejectedValueOnce(new Error(message));
     await expect(readState({} as never, { strict: true })).rejects.toThrow(message);
     expect(h.exec).toHaveBeenCalledOnce();
-    expect(h.exec.mock.calls[0][0]).toBe("cat '/root/.openship/mail-state.json'");
+    expect(h.exec.mock.calls[0][0]).toBe("cat '/root/.kovalio/mail-state.json'");
   });
 
   it("returns no state only when the target confirms that the file is absent", async () => {
     h.exec.mockRejectedValueOnce(
-      new Error("cat: /root/.openship/mail-state.json: No such file or directory"),
+      new Error("cat: /root/.kovalio/mail-state.json: No such file or directory"),
     );
     expect(await readState({} as never, { strict: true })).toBeNull();
   });

@@ -59,11 +59,11 @@ describeDockerE2E("Compose migration through a remote SSH server", () => {
   let temp: string;
   let targetId: string;
   let input: StartMigrationInput;
-  const image = `openship-migration-test-target:${process.pid}`;
+  const image = `kovalio-migration-test-target:${process.pid}`;
 
   beforeAll(async () => {
     await requireDocker();
-    temp = await mkdtemp(join(tmpdir(), "openship-migration-test-"));
+    temp = await mkdtemp(join(tmpdir(), "kovalio-migration-test-"));
     await initPlatform({ target: "desktop", bare: { workDir: join(temp, "workloads") } });
     const identity = join(temp, "identity");
     await run("ssh-keygen", ["-q", "-t", "ed25519", "-N", "", "-f", identity]);

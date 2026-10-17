@@ -2,7 +2,7 @@ import { Oblien, CloudInfraProvider, cloudDockerProjectPaths } from "@repo/adapt
 import { repos } from "@repo/db";
 import { env } from "../config/env";
 import { createRemoteCloudAdmin } from "./cloud/admin-proxy";
-import { issueNamespaceToken } from "./openship-cloud";
+import { issueNamespaceToken } from "./kovalio-cloud";
 import { createTenantCloudAdmin } from "./cloud-tenant-admin";
 import { createProvisionLock } from "./provision-lock";
 

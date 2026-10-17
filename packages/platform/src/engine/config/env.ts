@@ -173,7 +173,7 @@ const envSchema = z.object({
   POSTHOG_EXCLUDED_ORGANIZATION_IDS: z.string().optional(),
   POSTHOG_EXCLUDED_USER_IDS: z.string().optional(),
   /**
-   * MASTER switch for the whole Openship Cloud billing feature (subscriptions,
+   * MASTER switch for the whole Kovalio Cloud billing feature (subscriptions,
    * top-ups). OFF by default → the billing state reports
    * `billing.status = "coming_soon"` and every purchase endpoint fails
    * closed with a `BILLING_NOT_ENABLED` 403. Flip to `true` on the SaaS to make
@@ -279,7 +279,7 @@ const envSchema = z.object({
   /**
    * Controls how the API authenticates with GitHub:
    *   - "auto"  (default) → local GitHub App when fully configured, then
-   *                          Openship Cloud App, then the local identity
+   *                          Kovalio Cloud App, then the local identity
    *   - "app"             → GitHub App installation tokens (SaaS or a
    *                          self-hosted operator-owned App)
    *   - "oauth"           → Better Auth OAuth flow only (self-hosted with OAuth)
@@ -330,12 +330,12 @@ const envSchema = z.object({
    * Trust an upstream edge/proxy to enforce rate limiting, and skip the
    * app-level pre-auth flood guard (middleware/rate-limiter.ts `floodGuard`)
    * as redundant. Set true when this API sits behind something that already
-   * rate-limits — the Openship Edge, or your own reverse proxy with limits.
+   * rate-limits — the Kovalio Edge, or your own reverse proxy with limits.
    * Auto-implied under CLOUD_MODE (the cloud Edge has default limits). Leave
    * false on a standalone self-hosted API so the flood guard still protects
    * the pre-auth session lookup.
    */
-  OPENSHIP_TRUST_EDGE: envBool("false"),
+  KOVALIO_TRUST_EDGE: envBool("false"),
   /**
    * Allow outbound notification webhooks to target internal/loopback/LAN hosts.
    * Default false → the SSRF guard (assertPublicUrl) runs on self-hosted too, so
@@ -672,7 +672,7 @@ if (
   env.NODE_ENV !== "test"
 ) {
   errorDiagnostics.warn("platform/engine/config/env",
-    `[env] DEPLOY_MODE="desktop" but OPENSHIP_LOCAL_DASHBOARD_URL is unset — ` +
+    `[env] DEPLOY_MODE="desktop" but KOVALIO_LOCAL_DASHBOARD_URL is unset — ` +
       `"desktop" is for the Electron app only. A server install should declare ` +
       `DEPLOY_MODE="bare" (host processes) or "docker" (compose); claiming desktop ` +
       `relaxes the zero-auth + internal-token gates and hides this box as a deploy target.`,
@@ -681,7 +681,7 @@ if (
 
 // ─── non-App auth modes are forbidden on the SaaS host ────────────────────
 //
-// Multi-tenant Cloud has one GitHub integration: the Openship App. CLI, static
+// Multi-tenant Cloud has one GitHub integration: the Kovalio App. CLI, static
 // PAT, and OAuth-only modes either use shared host credentials or bypass the
 // installation/workspace boundary. Runtime resolvers also hard-floor Cloud to
 // `app`; refusing invalid configuration at boot makes the mistake visible.

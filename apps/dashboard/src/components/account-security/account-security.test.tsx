@@ -91,7 +91,7 @@ beforeEach(() => {
   h.refetch.mockResolvedValue(undefined);
   h.enable.mockResolvedValue({
     data: {
-      totpURI: "otpauth://totp/Openship:owner?secret=JBSWY3HPEHPK3VXP&issuer=Openship",
+      totpURI: "otpauth://totp/Kovalio:owner?secret=JBSWY3HPEHPK3VXP&issuer=Kovalio",
       backupCodes: codes,
     },
     error: null,
@@ -237,7 +237,7 @@ describe("account security settings", () => {
     await act(async () => {
       resolveSetup({
         data: {
-          totpURI: "otpauth://totp/Openship:owner?secret=JBSWY3HPEHPK3VXP&issuer=Openship",
+          totpURI: "otpauth://totp/Kovalio:owner?secret=JBSWY3HPEHPK3VXP&issuer=Kovalio",
           backupCodes: codes,
         },
         error: null,

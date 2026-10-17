@@ -217,7 +217,7 @@ export async function getGitHubSourceConfiguration(): Promise<GitHubSourceConfig
 async function assertPublicGitHubCallback(): Promise<void> {
   if ((await getGitHubSourceConfiguration()).publicReady) return;
   throw new ValidationError(
-    "Configure a public HTTPS URL for this Openship instance before creating a GitHub App. GitHub must be able to reach its setup callback and webhook.",
+    "Configure a public HTTPS URL for this Kovalio instance before creating a GitHub App. GitHub must be able to reach its setup callback and webhook.",
   );
 }
 
@@ -277,7 +277,7 @@ export async function hasActiveGitHubSource(organizationId: string): Promise<boo
 
 /** Whether this workspace owns any GitHub App source, including one that needs
  * attention. The Settings connection card uses this management fact to avoid
- * presenting the legacy Openship App controls for a custom App. Runtime token
+ * presenting the legacy Kovalio App controls for a custom App. Runtime token
  * resolution must continue to use `hasActiveGitHubSource` instead. */
 export async function hasConfiguredGitHubSource(organizationId: string): Promise<boolean> {
   return (await repos.gitSource.listByOrganization(organizationId)).length > 0;
@@ -370,7 +370,7 @@ function manifestAppName(sourceName: string): string {
     // Keep the stable fallback; URL validation happens elsewhere at startup.
   }
   const suffix = randomBytes(3).toString("hex");
-  const stem = `OpenShip ${sourceName} ${host}`.replace(/\s+/g, " ").trim();
+  const stem = `Kovalio ${sourceName} ${host}`.replace(/\s+/g, " ").trim();
   return `${stem.slice(0, Math.max(1, 33 - suffix.length)).trim()}-${suffix}`;
 }
 

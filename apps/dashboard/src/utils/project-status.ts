@@ -95,7 +95,7 @@ export type ProjectStatusSource = {
    *  makes this awaiting retry; successful teardown hard-deletes the row. */
   deletionInProgress?: boolean | null;
   lifecycleOperation?: ProjectLifecycleOperation | null;
-  /** Marks the Openship control-plane self-app. It IS the running host service and
+  /** Marks the Kovalio control-plane self-app. It IS the running host service and
    *  has no deployment behind it, so it must never fall through to "draft". */
   appTemplateId?: string | null;
   isApp?: boolean | null;
@@ -188,7 +188,7 @@ function latestDeployIsLive(project: ProjectStatusSource): boolean {
 export function getProjectAttentionReason(
   project: ProjectStatusSource,
 ): ProjectAttentionReason | null {
-  if (project.appTemplateId === "openship") return null;
+  if (project.appTemplateId === "kovalio") return null;
   if (project.deletionInProgress && project.lifecycleOperation?.status === "failed") return "deletion";
   if (project.deletedAt || project.deletionInProgress) return null;
   // Before every deploy-derived reason: a parked migration is about the WORKLOAD's location,

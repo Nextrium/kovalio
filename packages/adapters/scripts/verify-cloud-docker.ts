@@ -51,7 +51,7 @@ const admin = new Oblien({
   baseUrl,
 });
 const tag = `os-docker-smoke-${randomUUID().replaceAll("-", "").slice(0, 14)}`;
-const directory = await mkdtemp(join(tmpdir(), "openship-cloud-smoke-"));
+const directory = await mkdtemp(join(tmpdir(), "kovalio-cloud-smoke-"));
 const manifest = join(directory, "resources.json");
 let namespaceId: string | undefined;
 let workspaceId: string | undefined;
@@ -450,7 +450,7 @@ try {
   const beforeEnvironment = await runtime.docker.getContainer(second.containerId).inspect();
   const applied = await runtime.applyEnvironment(
     second.containerId,
-    { OPENSHIP_SMOKE_ENV: "applied" },
+    { KOVALIO_SMOKE_ENV: "applied" },
     {
       projectId: tag,
       serviceName: "web",
@@ -462,7 +462,7 @@ try {
   check(
     "environment apply retains the exact image",
     afterEnvironment.Image === beforeEnvironment.Image &&
-      afterEnvironment.Config.Env.includes("OPENSHIP_SMOKE_ENV=applied"),
+      afterEnvironment.Config.Env.includes("KOVALIO_SMOKE_ENV=applied"),
   );
   check(
     "environment apply preserves volumes and siblings",
@@ -533,10 +533,10 @@ try {
     startCommand: "exec sh -c 'while :; do sleep 60; done'",
     port: 3000,
     ports: [],
-    env: { OPENSHIP_SMOKE_PROCESS: "saved" },
+    env: { KOVALIO_SMOKE_PROCESS: "saved" },
   };
   await processSupervisor.deploy(processOptions);
-  const workload = () => client.workspace(workspaceId!).workloads.get(`openship-${processId}`);
+  const workload = () => client.workspace(workspaceId!).workloads.get(`kovalio-${processId}`);
   const savedProcess = await workload();
   check(
     "provider returns saved process configuration",
@@ -544,7 +544,7 @@ try {
       savedProcess.working_dir === processDirectory &&
       Array.isArray(savedProcess.command ?? savedProcess.cmd) &&
       Array.isArray(savedProcess.env) &&
-      savedProcess.env.includes("OPENSHIP_SMOKE_PROCESS=saved"),
+      savedProcess.env.includes("KOVALIO_SMOKE_PROCESS=saved"),
   );
   await processSupervisor.deploy(processOptions);
   check(
@@ -599,7 +599,7 @@ try {
   );
   check(
     "bridge recovery reuses its workload",
-    (await client.workspace(workspaceId).workloads.list({ name: "openship-docker-api-v1" }))
+    (await client.workspace(workspaceId).workloads.list({ name: "kovalio-docker-api-v1" }))
       .length === 1,
   );
   const hostnames = await infra.listProjectRouteHostnames();

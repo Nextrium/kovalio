@@ -21,16 +21,16 @@ function sourceEnvRows(env?: Record<string, string>): EnvironmentVariable[] {
 
 /**
  * Partition a prepare response's source env by ownership. Values explicitly
- * declared in openship.json are active deploy defaults; unrelated `.env` rows
+ * declared in kovalio.json are active deploy defaults; unrelated `.env` rows
  * stay behind the Import action. Existing operator rows always win by key.
  */
 export function mergePreparedSourceEnv(
   current: EnvironmentVariable[],
   rootEnv?: Record<string, string>,
-  openshipEnvKeys: string[] = [],
+  kovalioEnvKeys: string[] = [],
 ): { envVars: EnvironmentVariable[]; rootEnvVars: EnvironmentVariable[] } {
   const rows = sourceEnvRows(rootEnv);
-  const declaredKeys = new Set(openshipEnvKeys);
+  const declaredKeys = new Set(kovalioEnvKeys);
   const declared = rows.filter((row) => declaredKeys.has(row.key));
   const owned = new Set(current.map((row) => row.key).filter(Boolean));
 
@@ -103,7 +103,7 @@ export function planDeploymentEnvPersistence({
   }
 
   const result = computeProjectEnvDiff(envVars, baseline, {
-    // openship.json values are owned and resolved by the server-side source
+    // kovalio.json values are owned and resolved by the server-side source
     // scan. They intentionally have no originalKey/project-env baseline row.
     ignoreUntrackedPreserved: true,
   });

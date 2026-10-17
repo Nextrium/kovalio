@@ -5,7 +5,7 @@ import type { ManagedServerActivityInput } from "@repo/contracts";
 import { cloudWorkspaceStatus } from "@repo/adapters";
 import { workspaceForServer } from "@repo/platform/engine/lib/cloud-workspace-scope";
 import { readCloudWorkspaceHost } from "@repo/platform/engine/lib/cloud-workspace-host";
-import { issueNamespaceToken } from "@repo/platform/engine/lib/openship-cloud";
+import { issueNamespaceToken } from "@repo/platform/engine/lib/kovalio-cloud";
 import { assertManagedServerCanWork } from "@repo/platform/engine/lib/cloud-workspace-access";
 import { getRequestContext } from "../../lib/request-context";
 

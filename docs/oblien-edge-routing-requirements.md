@@ -182,7 +182,7 @@ would open that port and register the name in one call.
 ## Canonical hostname redirects: verified provider gap (2026-10-15)
 
 The wizard offers bare-domain or www primary selection on Cloud and self-hosted
-edges. Per the release decision, Openship assumes the provider fix described below
+edges. Per the release decision, Kovalio assumes the provider fix described below
 and uses the existing redirect API contract; it does not expose this provider issue
 in the customer UI. These are the pre-fix live observations, not confirmation that
 Oblien has deployed the fix. This differs from query-string preservation: live tests confirmed that queries survive today,
@@ -214,7 +214,7 @@ normalizing, re-encoding captures, or accepting a user-supplied destination host
 Keep path matching and rule precedence consistent with the documented API.
 If a new action or option is required instead of fixing the existing rule, its
 contract must be provided so `CloudInfraProvider.registerRoute` can be updated;
-Openship currently sends the existing wildcard redirect rule. Keep each hostname's
+Kovalio currently sends the existing wildcard redirect rule. Keep each hostname's
 existing project-owned Page anchor, DNS ownership verification, TLS lifecycle, and same-project redirect
 validation.
 

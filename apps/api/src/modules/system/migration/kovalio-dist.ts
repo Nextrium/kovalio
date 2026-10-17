@@ -1,7 +1,6 @@
 /**
- * Locate the prebuilt Kovalio release dist that the migration wizard streams
- * to the operator's remote server. Thin wrapper over the shared release-dist
- * resolver (apps/api/src/lib/release-dist.ts) — this file only pins the
+ * Locate the prebuilt Kovalio source release used by installation preflight.
+ * Thin wrapper over the shared platform release resolver — this file only pins the
  * kovalio-specific spec (repo, asset name, repo-local dev path) and preserves
  * the typed KovalioReleaseDistMissingError the wizard controller catches.
  */
@@ -14,7 +13,7 @@ import {
   resolveReleaseDist,
   resolveReleaseDistOrNull,
   type ReleaseDistSpec,
-} from "../../../lib/release-resolver";
+} from "@repo/platform/engine/lib/release-resolver";
 
 /**
  * The asset name is a literal, and `linux-amd64` in it is NOT a host assumption.
@@ -23,7 +22,7 @@ import {
  * `kovalio-${TAG}-linux-amd64.tar.gz` — and its payload is architecture-agnostic:
  * TypeScript the target runs under Bun, plus a prebuilt Next standalone. The only
  * native resolution happens in `bun install --production` on the target itself
- * (see KOVALIO_CONFIG in kovalio-project.service.ts). So the suffix is the
+ * (see the README emitted by apps/api/scripts/build-release.ts). So the suffix is the
  * publisher's naming, and templating `{os}-{arch}` here would ask GitHub for
  * `kovalio-v0.6.1-linux-arm64.tar.gz` — a file no release contains — turning a
  * working arm64 install into `ReleaseDistMissingError`.

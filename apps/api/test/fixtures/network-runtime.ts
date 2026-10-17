@@ -32,7 +32,7 @@ if (mode === "tls") {
     await import("../../src/lib/terminal-session-manager");
   const app = new Hono();
   setupWebSocket(app);
-  const prefix = "openship.terminal.v1+";
+  const prefix = "kovalio.terminal.v1+";
   const { token } = issueTerminalTicket(
     {
       userId: "runtime-user",

@@ -189,7 +189,7 @@ export function ServiceDetailPanel({
   useEffect(() => {
     try {
       if (typeof window === "undefined" || !window.localStorage) return;
-      const key = `openship.serviceterm.resume.${service.id}`;
+      const key = `kovalio.serviceterm.resume.${service.id}`;
       setTerminalResumeToken(window.localStorage.getItem(key));
     } catch {
       // diagnostics-ignore: localStorage access may fail in restricted/private browsing mode.
@@ -199,7 +199,7 @@ export function ServiceDetailPanel({
     setTerminalResumeToken(token);
     try {
       if (typeof window === "undefined" || !window.localStorage) return;
-      const key = `openship.serviceterm.resume.${service.id}`;
+      const key = `kovalio.serviceterm.resume.${service.id}`;
       if (token) window.localStorage.setItem(key, token);
       else window.localStorage.removeItem(key);
     } catch {

@@ -1,5 +1,5 @@
 ---
-title: Embed Openship
+title: Embed Kovalio
 description: Create a native installation and deploy through shared platform operations.
 ---
 
@@ -8,16 +8,16 @@ storage, and providers. Native operations call the shared engine without an API 
 
 ## Create an installation and deploy
 
-[Install the SDK](/docs/api/sdk/installation), then set `OPENSHIP_ENCRYPTION_KEY` to a persistent
+[Install the SDK](/docs/api/sdk/installation), then set `KOVALIO_ENCRYPTION_KEY` to a persistent
 secret of at least 32 bytes. Keep that key when reopening the database.
 
 ```ts title="native.mts"
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
-import { createShip, type VerifiedIdentity } from "openship/native";
+import { createShip, type VerifiedIdentity } from "kovalio/native";
 
-const encryptionKey = process.env.OPENSHIP_ENCRYPTION_KEY;
-if (!encryptionKey) throw new Error("Set OPENSHIP_ENCRYPTION_KEY");
+const encryptionKey = process.env.KOVALIO_ENCRYPTION_KEY;
+if (!encryptionKey) throw new Error("Set KOVALIO_ENCRYPTION_KEY");
 const sessions = new Map<string, VerifiedIdentity>();
 const stateDirectory = resolve("./ship-state");
 const ship = await createShip({

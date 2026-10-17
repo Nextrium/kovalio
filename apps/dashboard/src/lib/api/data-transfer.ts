@@ -160,7 +160,7 @@ async function uploadWithRetry(uploadId: string, index: number, chunk: Blob): Pr
         timeout: CHUNK_TIMEOUT,
         headers: {
           "content-type": "application/octet-stream",
-          "x-openship-chunk-sha256": digest,
+          "x-kovalio-chunk-sha256": digest,
         },
       });
       return;

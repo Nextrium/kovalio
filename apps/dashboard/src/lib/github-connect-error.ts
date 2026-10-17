@@ -8,7 +8,7 @@
  * would just silently report "not connected".
  */
 import { reportCaughtError as observeCaughtError } from "@repo/core/diagnostics";
-export const GITHUB_CONNECT_ERROR_KEY = "openship.github.connectError";
+export const GITHUB_CONNECT_ERROR_KEY = "kovalio.github.connectError";
 
 type ConnectErrorStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 

@@ -175,9 +175,9 @@ export function NavMain({ items }: NavMainProps) {
         {isBottomNav ? (
           <SidebarMenuItem key={'feedback'}>
             <NavItem
-              isActive={isUrlActive('https://github.com/oblien/openship/issues')}
-              href={'https://github.com/oblien/openship/issues'}
-              url={'https://github.com/oblien/openship/issues'}
+              isActive={isUrlActive('https://github.com/Nextrium/kovalio/issues')}
+              href={'https://github.com/Nextrium/kovalio/issues'}
+              url={'https://github.com/Nextrium/kovalio/issues'}
               icon={MessageSquare}
               target={'_blank'}
               title={m['navigation.sidebar.feedback']()}

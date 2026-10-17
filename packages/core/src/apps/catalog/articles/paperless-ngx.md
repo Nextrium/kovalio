@@ -4,7 +4,7 @@ Paperless-ngx archives original documents, extracts searchable text, and organiz
 
 ## First login
 
-Choose the initial administrator's username and email. Openship generates and encrypts the password and signing secret. Paperless creates the administrator through its native startup support before serving its website. Open **Connection** after deployment to retrieve the initial credentials. Changing a password in Paperless is preserved across redeployments.
+Choose the initial administrator's username and email. Kovalio generates and encrypts the password and signing secret. Paperless creates the administrator through its native startup support before serving its website. Open **Connection** after deployment to retrieve the initial credentials. Changing a password in Paperless is preserved across redeployments.
 
 ## Storage and sizing
 

@@ -103,7 +103,7 @@ based on whether they also exist in Git.
 ### Transfer location
 
 Capture commands run at the source, but the backup payload currently streams through
-the Openship backup worker to the destination. The worker also computes checksums and
+the Kovalio backup worker to the destination. The worker also computes checksums and
 handles incremental blocks. This is **not direct source-to-destination transfer** and
 requires the worker and its network connections to remain available until completion.
 Closing a progress view only disconnects that read-only view; it does not cancel a
@@ -137,7 +137,7 @@ Each snapshot records its complete ordered block list, reconstructed size and di
 Restoring a snapshot does not replay a chain of changes. Retention removes old indexes
 and only blocks no remaining snapshot references; storage accounting counts shared
 physical objects once. Keep the `.chunks.json` indexes, referenced blocks and manifest
-together when managing storage outside Openship.
+together when managing storage outside Kovalio.
 
 This implementation scans the entire source on every run. Reuse saves new uploads and
 retained storage, but verifying reused blocks reads them back, so it does not promise
@@ -173,7 +173,7 @@ cancellation does not release the target before its writer acknowledges the stop
 
 Cancellation is a request, and its actual outcome is shown in the progress view.
 Filesystem and nontransactional database writes can leave partial data if they fail
-or are cancelled. Openship records that outcome and does not automatically restart a
+or are cancelled. Kovalio records that outcome and does not automatically restart a
 service on a partially restored volume. A PostgreSQL restore uses a transaction, so a
 failed single-artifact restore can leave that database unchanged. A multi-artifact
 restore is not one transaction across every target.
@@ -200,7 +200,7 @@ E2E matrix before release publishing. Backup E2Es are in its `fast` scope. Setti
 Run the complete backup E2E group against an isolated Docker daemon:
 
 ```sh
-RUN_DOCKER_E2E=1 OPENSHIP_JOB_RUNNER=in-process \
+RUN_DOCKER_E2E=1 KOVALIO_JOB_RUNNER=in-process \
   bun --no-env-file run --cwd apps/api test:e2e \
   backup-volume-roundtrip backup-db-roundtrip backup-payload-matrix backup-lifecycle
 ```

@@ -5,8 +5,8 @@ description: Connect DNS providers and check zones.
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-Adding a custom domain normally ends with Openship telling you which records to create and waiting for you
-to create them. Connect a DNS provider and Openship can preview and apply those records for you without
+Adding a custom domain normally ends with Kovalio telling you which records to create and waiting for you
+to create them. Connect a DNS provider and Kovalio can preview and apply those records for you without
 leaving the page. Applying DNS is always an explicit action: creating a project domain or saving a service
 route never changes the provider's zone silently. In the dashboard, credentials live under
 **Settings → DNS** and each pending domain's records panel contains the apply action.
@@ -32,8 +32,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/dns/credentials" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/dns/credentials" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"provider":"cloudflare","name":"Cloudflare production","apiToken":"cf-..."}'
 ```
@@ -78,8 +78,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/dns/verify-zone" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN" \
+curl -X POST "$KOVALIO_URL/api/dns/verify-zone" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"hostname":"app.example.com"}'
 ```
@@ -97,7 +97,7 @@ The response separates four outcomes, because they call for different actions:
 
 | `status` | `matched` | Meaning |
 |---|---|---|
-| `matched` | `true` | A connected provider hosts this zone; the domain's records can be previewed and applied from Openship. |
+| `matched` | `true` | A connected provider hosts this zone; the domain's records can be previewed and applied from Kovalio. |
 | `none` | `false` | We asked, and no connected provider hosts it. You add the records yourself. |
 | `unauthorized` | `false` | A stored token was rejected. Re-connect it — `credentialId` says which. |
 | `unavailable` | `false` | The provider could not be reached (rate limit, outage). Unknown, **not** a sign of misconfiguration. |
@@ -122,8 +122,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl "$OPENSHIP_URL/api/domains/dom_123/dns/plan" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl "$KOVALIO_URL/api/domains/dom_123/dns/plan" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>
@@ -160,8 +160,8 @@ console.log(result);
 <Tab value="REST API">
 
 ```bash
-curl -X POST "$OPENSHIP_URL/api/domains/dom_123/dns/apply" \
-  -H "Authorization: Bearer $OPENSHIP_TOKEN"
+curl -X POST "$KOVALIO_URL/api/domains/dom_123/dns/apply" \
+  -H "Authorization: Bearer $KOVALIO_TOKEN"
 ```
 
 </Tab>

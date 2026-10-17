@@ -166,7 +166,7 @@
     "addMailbox": "Añadir un buzón",
     "addDomain": "Añadir un dominio",
     "reviewDns": "Revisar registros DNS",
-    "legacyWebmail": "Desplegado por una versión anterior de Openship — se puede reemplazar con la app de webmail, que se actualiza con tus versiones.",
+    "legacyWebmail": "Desplegado por una versión anterior de Kovalio — se puede reemplazar con la app de webmail, que se actualiza con tus versiones.",
     "upgradeWebmail": "Reemplazar webmail"
   },
   "webmail": {
@@ -360,7 +360,7 @@
     "dnsEmpty": "Aún no hay registros DNS registrados. Finaliza el asistente de instalación para poblar el escaneo.",
     "reachability": {
       "title": "Puertos de correo públicos",
-      "desc": "Comprueba los puertos locales y luego conecta desde el plano de control de Openship a la dirección pública de correo.",
+      "desc": "Comprueba los puertos locales y luego conecta desde el plano de control de Kovalio a la dirección pública de correo.",
       "descFor": "Comprueba los puertos locales y el acceso externo a {hostname} en {address}.",
       "remediation": "El servidor está escuchando, pero uno o más puertos públicos no están disponibles. Permite TCP 25, 465, 587 y 993 tanto en el firewall del host como en el firewall/grupo de seguridad/NSG del proveedor.",
       "reachableHint": "Escucha en el host y es accesible desde el plano de control.",
@@ -738,7 +738,7 @@
     "renewing": "Renovando…",
     "autoRenew": "Renovación automática",
     "autoRenewHint": "Renovar antes de que caduque y recargar los servicios de correo.",
-    "desktopHint": "Mantén Openship abierto para renovar automáticamente.",
+    "desktopHint": "Mantén Kovalio abierto para renovar automáticamente.",
     "jobDisabled": "La tarea compartida de renovación SSL está desactivada.",
     "manageJob": "Abrir tarea de renovación",
     "failed": "No se pudo actualizar el certificado de correo.",

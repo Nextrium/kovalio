@@ -1,7 +1,7 @@
 {
   "cloudClient": {
     "title": "E-postalar",
-    "subtitle": "Mevcut posta kutularınızı Openship Webmail ile kullanın.",
+    "subtitle": "Mevcut posta kutularınızı Kovalio Webmail ile kullanın.",
     "connectTitle": "Posta sunucunuzu bağlayın",
     "description": "Herhangi bir IMAP/SMTP sunucusunu bağlayın. Posta kutularınız ve e-posta teslimatı sağlayıcınızda kalır.",
     "connectAction": "Mevcut posta sunucusunu bağla",
@@ -11,8 +11,8 @@
   "cloudComingSoon": {
     "title": "Yönetilen e-posta",
     "badge": "Yakında",
-    "description": "Openship Cloud üzerinde yönetilen e-posta yakında kullanıma sunulacak. Cloud sunucu planları uygulama barındırmak içindir ve e-posta sunucusu oluşturmaz.",
-    "selfHosted": "Kendi sunucunuzda barındırdığınız Openship kurulumu ile e-posta hizmeti kullanabilirsiniz."
+    "description": "Kovalio Cloud üzerinde yönetilen e-posta yakında kullanıma sunulacak. Cloud sunucu planları uygulama barındırmak içindir ve e-posta sunucusu oluşturmaz.",
+    "selfHosted": "Kendi sunucunuzda barındırdığınız Kovalio kurulumu ile e-posta hizmeti kullanabilirsiniz."
   },
   "page": {
     "title": "E-posta Sunucusu",

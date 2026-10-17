@@ -13,7 +13,7 @@ import {
   type RuntimeMode,
   type StackId,
   type RoutingConfig,
-  type OpenshipReadiness,
+  type KovalioReadiness,
   type PortCheckResult,
   type ResourceTier as CoreResourceTier,
 } from "@repo/core";
@@ -344,7 +344,7 @@ export interface DeploymentModeSnapshots {
 }
 
 /**
- * Resource tier IDs for Openship Cloud deploys — DERIVED from the one tier union
+ * Resource tier IDs for Kovalio Cloud deploys — DERIVED from the one tier union
  * in @repo/core. A managed server already has its purchased allocation, so
  * `unlimited` lets a container use the host's available capacity, as on self-hosted.
  */
@@ -437,7 +437,7 @@ export interface DeploymentConfig {
    */
   projectEnvBaseline: PersistedProjectEnv[] | null;
   /** Root .env values detected during prepare; user must import before they apply.
-   *  Explicit openship.json env is placed directly in envVars instead. */
+   *  Explicit kovalio.json env is placed directly in envVars instead. */
   rootEnvVars: EnvironmentVariable[];
   branch: string;
   branches: string[];
@@ -471,11 +471,11 @@ export interface DeploymentConfig {
    * default: the deploy reports ready as soon as the workload is up and routed,
    * and nothing post-start can delay or veto it.
    */
-  readiness?: OpenshipReadiness | null;
+  readiness?: KovalioReadiness | null;
   githubChecks?: import("@repo/core").GitHubDeploymentChecks | null;
   /** Ordered commands required before activating a single-app release. */
   releaseCommands?: string[] | null;
-  /** Runtime roles (workers, a scheduler) seeded from openship.json. Data only, no editor yet. */
+  /** Runtime roles (workers, a scheduler) seeded from kovalio.json. Data only, no editor yet. */
   roles?: import("@repo/core").StackRole[] | null;
   /**
    * What the scan's kovalio.json parse refused (#641). NOT a user setting — it's

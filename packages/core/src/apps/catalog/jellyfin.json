@@ -1,5 +1,5 @@
 {
-  "$schema": "https://openship.io/app.schema.json",
+  "$schema": "https://nextrium.org/app.schema.json",
   "available": true,
   "verified": true,
   "minEngine": "0.9.2",
@@ -17,14 +17,14 @@
       "image": "jellyfin/jellyfin:12.2",
       "restart": "unless-stopped",
       "volumes": ["jellyfin_config:/config", "jellyfin_cache:/cache", "jellyfin_media:/media"],
-      "secretEnv": ["OPENSHIP_ADMIN_PASSWORD"],
-      "entrypointArgv": ["sh", "/etc/openship/jellyfin-start.sh"],
+      "secretEnv": ["KOVALIO_ADMIN_PASSWORD"],
+      "entrypointArgv": ["sh", "/etc/kovalio/jellyfin-start.sh"],
       "commandArgv": [],
       "stopGracePeriod": "60s",
       "healthcheck": {
         "test": [
           "CMD-SHELL",
-          "test -f /tmp/openship-ready && curl -fsS http://127.0.0.1:8096/health | grep -qx Healthy"
+          "test -f /tmp/kovalio-ready && curl -fsS http://127.0.0.1:8096/health | grep -qx Healthy"
         ],
         "interval": "15s",
         "timeout": "5s",
@@ -79,14 +79,14 @@
   "configFields": [
     {
       "service": "jellyfin",
-      "key": "OPENSHIP_ADMIN_PASSWORD",
+      "key": "KOVALIO_ADMIN_PASSWORD",
       "label": "Initial administrator password",
       "generate": "secret",
       "secret": true
     },
     {
       "service": "jellyfin",
-      "key": "OPENSHIP_ADMIN_USER",
+      "key": "KOVALIO_ADMIN_USER",
       "label": "Admin username",
       "default": "admin",
       "required": true
@@ -100,7 +100,7 @@
       "fields": [
         {
           "service": "jellyfin",
-          "key": "OPENSHIP_ADMIN_USER",
+          "key": "KOVALIO_ADMIN_USER",
           "label": "Admin username",
           "type": "text",
           "default": "admin",
@@ -129,13 +129,13 @@
       {
         "id": "username",
         "label": "Username",
-        "source": "env:jellyfin:OPENSHIP_ADMIN_USER",
+        "source": "env:jellyfin:KOVALIO_ADMIN_USER",
         "width": "half"
       },
       {
         "id": "password",
         "label": "Initial password",
-        "source": "env:jellyfin:OPENSHIP_ADMIN_PASSWORD",
+        "source": "env:jellyfin:KOVALIO_ADMIN_PASSWORD",
         "secret": true,
         "width": "half"
       }
@@ -150,8 +150,8 @@
   "files": [
     {
       "service": "jellyfin",
-      "path": "/etc/openship/jellyfin-start.sh",
-      "content": "#!/bin/sh\nset -eu\nif grep -q '<IsStartupWizardCompleted>true</IsStartupWizardCompleted>' /config/config/system.xml 2>/dev/null; then\n  touch /tmp/openship-ready\n  exec /jellyfin/jellyfin \"$@\"\nfi\n# Keep setup bound to loopback. The real data directory stays on its persistent volume.\nmkdir -p /config/config /tmp/openship-jellyfin\nif [ -f /config/config/system.xml ]; then cp /config/config/system.xml /tmp/openship-jellyfin/system.xml; fi\ncat > /tmp/openship-jellyfin/network.xml <<'XML'\n<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<NetworkConfiguration>\n  <LocalNetworkAddresses><string>127.0.0.1</string></LocalNetworkAddresses>\n  <EnableIPv6>false</EnableIPv6>\n</NetworkConfiguration>\nXML\n/jellyfin/jellyfin --configdir /tmp/openship-jellyfin &\nchild=$!\ntrap 'kill -TERM \"$child\" 2>/dev/null || true; wait \"$child\" || true' EXIT\ntrap 'exit 143' TERM INT\nattempt=0\nuntil curl -fsS http://127.0.0.1:8096/health 2>/dev/null | grep -qx Healthy; do\n  kill -0 \"$child\"\n  attempt=$((attempt + 1))\n  [ \"$attempt\" -lt 180 ] || { echo 'Jellyfin private setup timed out.' >&2; exit 1; }\n  sleep 2\ndone\njson_string() {\n  printf '%s' \"$1\" | od -An -v -tu1 | awk 'BEGIN { printf \"\\\"\" } { for (i = 1; i <= NF; i++) { if ($i == 34 || $i == 92) printf \"\\\\%c\", $i; else if ($i < 32) printf \"\\\\u%04x\", $i; else printf \"%c\", $i } } END { printf \"\\\"\" }'\n}\n[ -n \"$OPENSHIP_ADMIN_USER\" ] && [ -n \"$OPENSHIP_ADMIN_PASSWORD\" ]\ncurl -fsS http://127.0.0.1:8096/Startup/User >/dev/null\npayload=$(printf '{\"Name\":%s,\"Password\":%s}' \"$(json_string \"$OPENSHIP_ADMIN_USER\")\" \"$(json_string \"$OPENSHIP_ADMIN_PASSWORD\")\")\n# On an interrupted previous bootstrap, the password may already exist. Verify it before continuing.\nif ! printf '%s' \"$payload\" | curl -fsS -X POST -H 'Content-Type: application/json' --data-binary @- http://127.0.0.1:8096/Startup/User >/dev/null; then\n  payload=$(printf '{\"Username\":%s,\"Pw\":%s}' \"$(json_string \"$OPENSHIP_ADMIN_USER\")\" \"$(json_string \"$OPENSHIP_ADMIN_PASSWORD\")\")\n  printf '%s' \"$payload\" | curl -fsS -X POST -H 'Content-Type: application/json' -H 'Authorization: MediaBrowser Client=\"Openship\", Device=\"Setup\", DeviceId=\"openship-setup\", Version=\"1\"' --data-binary @- http://127.0.0.1:8096/Users/AuthenticateByName >/dev/null\nfi\ncurl -fsS -X POST http://127.0.0.1:8096/Startup/Complete >/dev/null\ngrep -q '<IsStartupWizardCompleted>true</IsStartupWizardCompleted>' /tmp/openship-jellyfin/system.xml\nkill -TERM \"$child\"\nwait \"$child\" || true\ntrap - EXIT TERM INT\ncp /tmp/openship-jellyfin/system.xml /config/config/system.xml.new\nmv /config/config/system.xml.new /config/config/system.xml\ntouch /tmp/openship-ready\nexec /jellyfin/jellyfin \"$@\"\n"
+      "path": "/etc/kovalio/jellyfin-start.sh",
+      "content": "#!/bin/sh\nset -eu\nif grep -q '<IsStartupWizardCompleted>true</IsStartupWizardCompleted>' /config/config/system.xml 2>/dev/null; then\n  touch /tmp/kovalio-ready\n  exec /jellyfin/jellyfin \"$@\"\nfi\n# Keep setup bound to loopback. The real data directory stays on its persistent volume.\nmkdir -p /config/config /tmp/kovalio-jellyfin\nif [ -f /config/config/system.xml ]; then cp /config/config/system.xml /tmp/kovalio-jellyfin/system.xml; fi\ncat > /tmp/kovalio-jellyfin/network.xml <<'XML'\n<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<NetworkConfiguration>\n  <LocalNetworkAddresses><string>127.0.0.1</string></LocalNetworkAddresses>\n  <EnableIPv6>false</EnableIPv6>\n</NetworkConfiguration>\nXML\n/jellyfin/jellyfin --configdir /tmp/kovalio-jellyfin &\nchild=$!\ntrap 'kill -TERM \"$child\" 2>/dev/null || true; wait \"$child\" || true' EXIT\ntrap 'exit 143' TERM INT\nattempt=0\nuntil curl -fsS http://127.0.0.1:8096/health 2>/dev/null | grep -qx Healthy; do\n  kill -0 \"$child\"\n  attempt=$((attempt + 1))\n  [ \"$attempt\" -lt 180 ] || { echo 'Jellyfin private setup timed out.' >&2; exit 1; }\n  sleep 2\ndone\njson_string() {\n  printf '%s' \"$1\" | od -An -v -tu1 | awk 'BEGIN { printf \"\\\"\" } { for (i = 1; i <= NF; i++) { if ($i == 34 || $i == 92) printf \"\\\\%c\", $i; else if ($i < 32) printf \"\\\\u%04x\", $i; else printf \"%c\", $i } } END { printf \"\\\"\" }'\n}\n[ -n \"$KOVALIO_ADMIN_USER\" ] && [ -n \"$KOVALIO_ADMIN_PASSWORD\" ]\ncurl -fsS http://127.0.0.1:8096/Startup/User >/dev/null\npayload=$(printf '{\"Name\":%s,\"Password\":%s}' \"$(json_string \"$KOVALIO_ADMIN_USER\")\" \"$(json_string \"$KOVALIO_ADMIN_PASSWORD\")\")\n# On an interrupted previous bootstrap, the password may already exist. Verify it before continuing.\nif ! printf '%s' \"$payload\" | curl -fsS -X POST -H 'Content-Type: application/json' --data-binary @- http://127.0.0.1:8096/Startup/User >/dev/null; then\n  payload=$(printf '{\"Username\":%s,\"Pw\":%s}' \"$(json_string \"$KOVALIO_ADMIN_USER\")\" \"$(json_string \"$KOVALIO_ADMIN_PASSWORD\")\")\n  printf '%s' \"$payload\" | curl -fsS -X POST -H 'Content-Type: application/json' -H 'Authorization: MediaBrowser Client=\"Kovalio\", Device=\"Setup\", DeviceId=\"kovalio-setup\", Version=\"1\"' --data-binary @- http://127.0.0.1:8096/Users/AuthenticateByName >/dev/null\nfi\ncurl -fsS -X POST http://127.0.0.1:8096/Startup/Complete >/dev/null\ngrep -q '<IsStartupWizardCompleted>true</IsStartupWizardCompleted>' /tmp/kovalio-jellyfin/system.xml\nkill -TERM \"$child\"\nwait \"$child\" || true\ntrap - EXIT TERM INT\ncp /tmp/kovalio-jellyfin/system.xml /config/config/system.xml.new\nmv /config/config/system.xml.new /config/config/system.xml\ntouch /tmp/kovalio-ready\nexec /jellyfin/jellyfin \"$@\"\n"
     }
   ]
 }

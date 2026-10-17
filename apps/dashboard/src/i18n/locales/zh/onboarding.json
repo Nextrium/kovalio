@@ -41,7 +41,7 @@
     "local": {
       "title": "本机",
       "badge": "Beta",
-      "desc": "直接在此安装 Openship —— 无需 SSH，无需远程配置",
+      "desc": "直接在此安装 Kovalio —— 无需 SSH，无需远程配置",
       "comingSoon": "本地安装即将推出。",
       "comingSoonDesc": "目前支持在任何安装了 Docker 的 Linux 服务器上自行托管。"
     },

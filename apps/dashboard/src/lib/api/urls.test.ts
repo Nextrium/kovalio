@@ -22,7 +22,7 @@ describe("external MCP endpoint", () => {
     vi.stubEnv("NEXT_PUBLIC_API_PROXY", "false");
     vi.stubGlobal("window", {
       location: { origin: "http://localhost:41001" },
-      __OPENSHIP_API_ORIGIN__: "http://127.0.0.1:42002",
+      __KOVALIO_API_ORIGIN__: "http://127.0.0.1:42002",
     });
     vi.resetModules();
     const urls = await import("./urls");
@@ -70,18 +70,18 @@ describe("resolveApiNavigationUrl", () => {
     expect(
       resolveApiNavigationUrl(
         "/api/github/connect/redirect?install_state=nonce",
-        "https://app.openship.io/api/proxy/api",
+        "https://kovalio.nextrium.org/api/proxy/api",
       ),
-    ).toBe("https://app.openship.io/api/proxy/api/github/connect/redirect?install_state=nonce");
+    ).toBe("https://kovalio.nextrium.org/api/proxy/api/github/connect/redirect?install_state=nonce");
   });
 
   it("maps the same redirect to a split API origin", () => {
     expect(
       resolveApiNavigationUrl(
         "/api/github/connect/redirect?install_state=nonce",
-        "https://api.openship.io/api",
+        "https://api.nextrium.org/api",
       ),
-    ).toBe("https://api.openship.io/api/github/connect/redirect?install_state=nonce");
+    ).toBe("https://api.nextrium.org/api/github/connect/redirect?install_state=nonce");
   });
 
   it("accepts an endpoint-registry path without duplicating the API prefix", () => {
@@ -93,16 +93,16 @@ describe("resolveApiNavigationUrl", () => {
   it("preserves an absolute GitHub destination", () => {
     expect(
       resolveApiNavigationUrl(
-        "https://github.com/apps/openship/installations/new?state=nonce",
-        "https://app.openship.io/api/proxy/api",
+        "https://github.com/apps/kovalio/installations/new?state=nonce",
+        "https://kovalio.nextrium.org/api/proxy/api",
       ),
-    ).toBe("https://github.com/apps/openship/installations/new?state=nonce");
+    ).toBe("https://github.com/apps/kovalio/installations/new?state=nonce");
   });
 
   it("rejects unsafe schemes and relative paths that escape the API mount", () => {
     expect(() =>
-      resolveApiNavigationUrl("javascript:alert(1)", "https://api.openship.io/api"),
+      resolveApiNavigationUrl("javascript:alert(1)", "https://api.nextrium.org/api"),
     ).toThrow();
-    expect(() => resolveApiNavigationUrl("../auth", "https://api.openship.io/api")).toThrow();
+    expect(() => resolveApiNavigationUrl("../auth", "https://api.nextrium.org/api")).toThrow();
   });
 });

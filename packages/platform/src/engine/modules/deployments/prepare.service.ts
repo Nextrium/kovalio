@@ -37,17 +37,17 @@ import {
 import {
   parseDeploymentMetadata,
   vercelCompatibilityWarnings,
-  parseOpenshipConfig,
+  parseKovalioConfig,
   METADATA_FILES,
   type ProjectType,
   type RoutingConfig,
-  type OpenshipConfig,
-  type OpenshipDomain,
-  type OpenshipEnv,
-  type OpenshipService,
-  type OpenshipResources,
-  type OpenshipReadiness,
-  type OpenshipMonorepoApp,
+  type KovalioConfig,
+  type KovalioDomain,
+  type KovalioEnv,
+  type KovalioService,
+  type KovalioResources,
+  type KovalioReadiness,
+  type KovalioMonorepoApp,
   type StackRole,
   type ComposeAdvanced,
   type WorkloadType,
@@ -120,7 +120,7 @@ export interface ResolveOptions {
   composePath?: string;
   /**
    * The project's own directory, for a project already deployed from a subpath.
-   * Pins the scan there instead of re-detecting a root. Its `openship.json`
+   * Pins the scan there instead of re-detecting a root. Its `kovalio.json`
    * takes precedence; when absent, the repository-root manifest still applies.
    */
   rootDirectory?: string;
@@ -137,7 +137,7 @@ export interface ResolveOptions {
    * with imported Compose rows). The Compose file found at the root is parsed
    * even when stack detection picks another stack, so a root that also holds a
    * Vite config and a Dockerfile cannot drop those services (#1020). Native
-   * openship.json services retain priority over inferred Compose. Root selection
+   * kovalio.json services retain priority over inferred Compose. Root selection
    * is unchanged, and an app scan still leaves local-dev Compose alone (#959).
    */
   expectCompose?: boolean;
@@ -258,17 +258,17 @@ export interface ProjectInfo {
   monorepoWorkspace?: MonorepoWorkspace;
   rootEnv?: Record<string, string>;
   /**
-   * Server-only copy of the environment explicitly declared in openship.json.
+   * Server-only copy of the environment explicitly declared in kovalio.json.
    * `rootEnv` also contains compose-adjacent `.env` values, so keeping this
    * provenance is what lets deploy auto-apply only the intentional config layer.
    * API response mappers expose names, never these values.
    */
-  openshipEnv?: OpenshipEnv;
-  /** Routing config parsed from the selected `vercel.json`/`openship.json`
+  kovalioEnv?: KovalioEnv;
+  /** Routing config parsed from the selected `vercel.json`/`kovalio.json`
    *  (rewrites/redirects/headers/cleanUrls/trailingSlash). Persisted on the
    *  project + compiled to OpenResty at deploy. */
   routing?: RoutingConfig;
-  // ── Declared overlay (`openship.json`) ──────────────────────────────────
+  // ── Declared overlay (`kovalio.json`) ──────────────────────────────────
   // Fields the heuristic detector doesn't produce, declared by the user and
   // authoritative when present. Build-shaping fields (framework/commands/
   // output/routing) fold in through the metadata parser and appear above.
@@ -302,7 +302,7 @@ export interface ProjectInfo {
    */
   roles?: StackRole[];
   /**
-   * What the selected `openship.json` parse REFUSED, when it refused anything (#641).
+   * What the selected `kovalio.json` parse REFUSED, when it refused anything (#641).
    * Advisory only: an invalid config has never failed a scan or a deploy, it just
    * silently didn't apply — which IS the bug. Absent when the repo has no file or
    * it parsed clean, so an unaffected repo's payload is unchanged.
@@ -312,7 +312,7 @@ export interface ProjectInfo {
 
 /** Trusted source values used by the deployment lifecycle. This shape is
  * deliberately server-only: response mappers expose masked values and keys. */
-export type ProjectSourceEnv = Pick<ProjectInfo, "rootEnv" | "openshipEnv">;
+export type ProjectSourceEnv = Pick<ProjectInfo, "rootEnv" | "kovalioEnv">;
 
 /**
  * `errors` are fields the parse refused — or, for a syntax error / non-object
@@ -403,7 +403,7 @@ interface ExtractedKovalioConfig {
 }
 
 /**
- * Parse the selected `openship.json` (case-insensitive). The overlay stays
+ * Parse the selected `kovalio.json` (case-insensitive). The overlay stays
  * LENIENT — a refused field is skipped, an unparseable file applies nothing, and
  * neither ever fails the scan — but what was refused now comes BACK instead of
  * being dropped (#641), so "my config did nothing" is answerable. The
@@ -413,9 +413,9 @@ interface ExtractedKovalioConfig {
  * reasons: the syntax-error message stays ours (see above), and a whole-file
  * failure becomes distinguishable from a field failure without matching a string.
  */
-function extractOpenshipConfig(fileContents: Record<string, string>): ExtractedOpenshipConfig {
+function extractKovalioConfig(fileContents: Record<string, string>): ExtractedKovalioConfig {
   const entry = Object.entries(fileContents).find(
-    ([name]) => name.toLowerCase() === "openship.json",
+    ([name]) => name.toLowerCase() === "kovalio.json",
   );
   if (!entry?.[1]) return {};
 
@@ -426,7 +426,7 @@ function extractOpenshipConfig(fileContents: Record<string, string>): ExtractedO
     return { diagnostics: { errors: [KOVALIO_JSON_UNPARSEABLE], warnings: [], wholeFile: true } };
   }
 
-  const { config, errors, warnings } = parseOpenshipConfig(raw);
+  const { config, errors, warnings } = parseKovalioConfig(raw);
   const runtimeErrors = errors.filter((error) => error.startsWith("runtimeVersion:") || error.startsWith("runtimeImage:"));
   if (runtimeErrors.length) throw new ValidationError(runtimeErrors.join(" · "));
   // Only a non-object root nulls the config — every field-level failure still
@@ -465,7 +465,7 @@ function domainsToPublicEndpoints(domains: KovalioDomain[]): DeclaredPublicEndpo
 /**
  * Flatten declared env to the plain `Record<string,string>` used by Compose
  * interpolation and the masked `rootEnv` preview. Secret provenance remains in
- * the server-only `openshipEnv` copy and is restored before values are encrypted
+ * the server-only `kovalioEnv` copy and is restored before values are encrypted
  * into project rows and deployment snapshots.
  */
 function envMapToRecord(envMap: KovalioEnv): Record<string, string> {
@@ -551,7 +551,7 @@ function kovalioServicesToCompose(services: KovalioService[]): ComposeService[] 
  */
 function mergeMonorepoApps(
   detected: MonorepoApp[],
-  declared: OpenshipMonorepoApp[],
+  declared: KovalioMonorepoApp[],
 ): MonorepoApp[] {
   const byRoot = new Map(declared.map((d) => [normalizeProjectRootDirectory(d.rootDirectory), d]));
   return detected.map((app) => {
@@ -572,7 +572,7 @@ function mergeMonorepoApps(
 }
 
 /**
- * Overlay the selected `openship.json` onto detected ProjectInfo. Only the fields
+ * Overlay the selected `kovalio.json` onto detected ProjectInfo. Only the fields
  * the metadata parser can't carry (runtime/port/productionMode/sleepMode/domains/
  * env) are applied here; each present field wins over detection, absent fields
  * keep the detected value. Mutates + returns `info` for call-site brevity.
@@ -608,7 +608,7 @@ function applyKovalioOverlay(info: ProjectInfo, config: KovalioConfig | undefine
     // Merge onto detected `.env` seed (declared wins per key) so declared env
     // flows through the existing rootEnv → wizard env-row seam.
     info.rootEnv = { ...(info.rootEnv ?? {}), ...envMapToRecord(config.env) };
-    info.openshipEnv = config.env;
+    info.kovalioEnv = config.env;
   }
   if (config.resources) info.resources = config.resources;
   if (config.readiness) info.readiness = config.readiness;
@@ -669,13 +669,13 @@ function applyKovalioOverlay(info: ProjectInfo, config: KovalioConfig | undefine
 export function projectInfoToPublicResponse(
   result: ProjectInfo,
   { includeEnv = false }: SourceScanOptions = {},
-): Omit<ProjectInfo, "openshipEnv"> & { openshipEnvKeys?: string[] } {
-  const { openshipEnv, ...publicInfo } = result;
+): Omit<ProjectInfo, "kovalioEnv"> & { kovalioEnvKeys?: string[] } {
+  const { kovalioEnv, ...publicInfo } = result;
   return {
     ...publicInfo,
     ...(result.services && { services: result.services.map(service => publicScanService(service, includeEnv)) }),
     ...(result.rootEnv && { rootEnv: includeEnv ? { ...result.rootEnv } : maskEnv(result.rootEnv) }),
-    ...(openshipEnv && { openshipEnvKeys: Object.keys(openshipEnv) }),
+    ...(kovalioEnv && { kovalioEnvKeys: Object.keys(kovalioEnv) }),
   };
 }
 
@@ -707,7 +707,7 @@ export function projectInfoToScanResponse(result: ProjectInfo, options: SourceSc
     services: publicInfo.services ?? [],
     ...(publicInfo.missingRequiredEnv && { missingRequiredEnv: publicInfo.missingRequiredEnv }),
     ...(publicInfo.unsupportedCompose && { unsupportedCompose: publicInfo.unsupportedCompose }),
-    // Declared-overlay fields (openship.json) — omitted from the response when
+    // Declared-overlay fields (kovalio.json) — omitted from the response when
     // absent so a repo without the file yields the exact same payload as before.
     ...(publicInfo.productionMode && { productionMode: publicInfo.productionMode }),
     ...(publicInfo.workloadType && { workloadType: publicInfo.workloadType }),
@@ -726,7 +726,7 @@ export function projectInfoToScanResponse(result: ProjectInfo, options: SourceSc
       Object.keys(publicInfo.rootEnv).length > 0 && {
         rootEnv: publicInfo.rootEnv,
       }),
-    ...(publicInfo.openshipEnvKeys && { openshipEnvKeys: publicInfo.openshipEnvKeys }),
+    ...(publicInfo.kovalioEnvKeys && { kovalioEnvKeys: publicInfo.kovalioEnvKeys }),
     ...(publicInfo.routing && { routing: publicInfo.routing }),
     ...(publicInfo.monorepoWorkspace && { monorepoWorkspace: publicInfo.monorepoWorkspace }),
     ...(publicInfo.monorepoApps && { monorepoApps: publicInfo.monorepoApps }),
@@ -847,7 +847,7 @@ async function readProjectText(
  * Read only the environment-bearing source files needed by a deployment.
  * This intentionally does not run stack detection or parse Compose: an
  * explicit single-app deployment may coexist with a Compose file that the
- * operator chose not to deploy, while `openship.json.env` must still work.
+ * operator chose not to deploy, while `kovalio.json.env` must still work.
  */
 export async function resolveSourceEnvFromReader(
   reader: ProjectReader,
@@ -855,24 +855,24 @@ export async function resolveSourceEnvFromReader(
 ): Promise<ProjectSourceEnv> {
   const normalizedRoot = normalizeProjectRootDirectory(rootDirectory);
   const rootFiles = await reader.listDirectory("");
-  const openshipName = rootFiles.find(
-    (file) => file.type !== "dir" && file.name.toLowerCase() === "openship.json",
+  const kovalioName = rootFiles.find(
+    (file) => file.type !== "dir" && file.name.toLowerCase() === "kovalio.json",
   )?.name;
-  const [openshipContent, envContent] = await Promise.all([
-    openshipName ? reader.readText(openshipName) : undefined,
+  const [kovalioContent, envContent] = await Promise.all([
+    kovalioName ? reader.readText(kovalioName) : undefined,
     readProjectText(reader, normalizedRoot, ".env"),
   ]);
-  const openship = extractOpenshipConfig(
-    openshipContent ? { [openshipName ?? "openship.json"]: openshipContent } : {},
+  const kovalio = extractKovalioConfig(
+    kovalioContent ? { [kovalioName ?? "kovalio.json"]: kovalioContent } : {},
   ).config?.env;
   const rootEnv = {
     ...(envContent ? parseComposeEnvFile(envContent) : {}),
-    ...(openship ? envMapToRecord(openship) : {}),
+    ...(kovalio ? envMapToRecord(kovalio) : {}),
   };
 
   return {
     ...(Object.keys(rootEnv).length > 0 && { rootEnv }),
-    ...(openship && Object.keys(openship).length > 0 && { openshipEnv: openship }),
+    ...(kovalio && Object.keys(kovalio).length > 0 && { kovalioEnv: kovalio }),
   };
 }
 
@@ -933,7 +933,7 @@ export async function resolveProjectInfo(input: Source): Promise<ProjectInfo> {
 /**
  * Lightweight source-env resolver for lifecycle paths that intentionally do
  * not inspect Compose (notably explicit single-app deploys). The repository
- * root owns `openship.json`; `rootDirectory` selects the adjacent opt-in `.env`.
+ * root owns `kovalio.json`; `rootDirectory` selects the adjacent opt-in `.env`.
  */
 export async function resolveProjectSourceEnv(
   input: Source,
@@ -1025,12 +1025,12 @@ export async function resolveFromReader(
   const configSnapshot =
     rootSnapshot.rootDirectory &&
     !rootSnapshot.files.some(
-      (file) => file.type !== "dir" && file.name.toLowerCase() === "openship.json",
+      (file) => file.type !== "dir" && file.name.toLowerCase() === "kovalio.json",
     )
       ? await readProjectSnapshot(reader)
       : rootSnapshot;
   const routing = extractRootRouting(configSnapshot.fileContents ?? {});
-  const openship = extractOpenshipConfig(configSnapshot.fileContents ?? {});
+  const kovalio = extractKovalioConfig(configSnapshot.fileContents ?? {});
 
   // Configs SEED defaults; an explicit caller value — the user's own edit,
   // persisted on the project — wins over the repo-declared one. Resolved before
@@ -1050,7 +1050,7 @@ export async function resolveFromReader(
   // Native service definitions replace detection. Decide before parsing so an
   // unused development Compose file cannot block them or add its required env
   // into the native scan. An explicitly selected Compose path still validates.
-  const useNativeServices = !root.declaredComposePath && !!openship.config?.services?.length;
+  const useNativeServices = !root.declaredComposePath && !!kovalio.config?.services?.length;
 
   // `.env` sits next to the compose file, which is what compose itself resolves
   // against — for a declared root that is the pinned directory, not the repo root.
@@ -1078,17 +1078,17 @@ export async function resolveFromReader(
       declaredCompose:
         !!root.declaredComposePath ||
         (opts.expectCompose === true && !useNativeServices && root.composeFiles.length > 0),
-      // `openship.json.env` is the repository's explicit shared environment
+      // `kovalio.json.env` is the repository's explicit shared environment
       // layer. Let it resolve Compose fields during the same source read; an
       // environment supplied by the deploy request remains the higher-priority
       // operator override. The adjacent `.env` stays the parser's lowest layer.
       env: {
-        ...(openship.config?.env ? envMapToRecord(openship.config.env) : {}),
+        ...(kovalio.config?.env ? envMapToRecord(kovalio.config.env) : {}),
         ...(opts.env ?? {}),
       },
     },
   );
-  if (openship.diagnostics) info.configDiagnostics = openship.diagnostics;
+  if (kovalio.diagnostics) info.configDiagnostics = kovalio.diagnostics;
   const vercelRaw = Object.entries(configSnapshot.fileContents ?? {}).find(
     ([name]) => name.toLowerCase() === "vercel.json",
   )?.[1];
@@ -1099,7 +1099,7 @@ export async function resolveFromReader(
       info.configDiagnostics.warnings.push(...warnings);
     }
   }
-  const overlaid = applyOpenshipOverlay(info, openship.config);
+  const overlaid = applyKovalioOverlay(info, kovalio.config);
   // Log both syntax diagnostics and overrides rejected by workspace discovery.
   // Scans expose the same diagnostics to SDK, CLI and dashboard callers.
   if (overlaid.configDiagnostics) {
@@ -1112,7 +1112,7 @@ export async function resolveFromReader(
   if (root.declaredComposePath || rootSnapshot.rootDirectory) {
     // The compose directory IS this project's root — it anchors every relative
     // `build:` context. A saved project directory is authoritative too; neither
-    // can be relocated by an openship.json default after the source was read.
+    // can be relocated by an kovalio.json default after the source was read.
     overlaid.rootDirectory = root.selected.rootDirectory || "./";
   }
   if (root.declaredComposePath) {

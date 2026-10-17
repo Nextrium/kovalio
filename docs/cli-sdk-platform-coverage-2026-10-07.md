@@ -1,7 +1,7 @@
 # CLI and SDK platform coverage — 2026-10-07
 
-The CLI can operate an existing Openship Cloud or remote self-hosted controller from a machine with
-Node.js 22 and API access. Remote commands do not require a local Openship installation, database,
+The CLI can operate an existing Kovalio Cloud or remote self-hosted controller from a machine with
+Node.js 22 and API access. Remote commands do not require a local Kovalio installation, database,
 Docker daemon, or SSH connection to the controller. They authenticate with that controller's PAT and
 use its current membership, resource grants, product capabilities and provider configuration.
 
@@ -40,7 +40,7 @@ This audit started from `origin/main` at `93cdaebd`. Work is isolated on
 
 ## Inventory and how to reproduce it
 
-`scripts/docs-surface.mjs` now inspects both `ScopedShip` and `OpenshipClient`. The API reference
+`scripts/docs-surface.mjs` now inspects both `ScopedShip` and `KovalioClient`. The API reference
 contains **563 named resource methods** and **704 distinct HTTP method/path pairs**. Root SDK
 workflows such as `deploy`, `deployment().wait` and `scope` are documented separately.
 
@@ -49,7 +49,7 @@ not a test coverage percentage or a claim that every provider has been exercised
 references contain each HTTP route once and label remote-only methods explicitly.
 
 ```sh
-bun run --cwd packages/openship build
+bun run --cwd packages/kovalio build
 node scripts/generate-api-reference.mjs --write
 node scripts/generate-cli-reference.mjs --write
 node scripts/check-docs.mjs
@@ -64,7 +64,7 @@ disappearing when native and remote surfaces differ.
 
 | Platform area                       | Canonical CLI surface                                                       | SDK surface and constraints                                                                                                     |
 | ----------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Connections and CI                  | `login`, `logout`, `context`, global connection/organization options        | `OpenshipClient`, fixed organization protocol and rotating token callback                                                       |
+| Connections and CI                  | `login`, `logout`, `context`, global connection/organization options        | `KovalioClient`, fixed organization protocol and rotating token callback                                                       |
 | Source, projects and deployment     | `init`, `deploy`, `deployment`, `project`, `logs`                           | `projects`, `sources`, `deployments`, `deploy`, deployment handles; local-folder uploads use shared staging                     |
 | Service configuration and execution | `service`, `server exec`                                                    | `services`, `servers.exec`; quoted commands and remote exit status                                                              |
 | Catalog applications                | `app`, project connections/storage                                          | `apps`, `projects`; catalog-driven inputs and shared installation/configuration                                                 |
@@ -90,7 +90,7 @@ workflows. The CLI should not ask operators to manually reproduce those protocol
 
 ## Cloud and native distinctions
 
-For Cloud-stored records, connect directly to `https://api.openship.io` with a Cloud credential and
+For Cloud-stored records, connect directly to `https://api.nextrium.org` with a Cloud credential and
 its Cloud organization. A local owner's account link is not authorization for a scoped local token
 to access Cloud records. That guard remains intact.
 
@@ -148,12 +148,12 @@ remain governed by native policy and the existing provider support.
   exercises packaged SDK mail/migration/instance requests, fixed tenant headers, both terminal kinds
   over real loopback HTTP/WebSockets, and packaged CLI context selection with conflicting environment
   credentials.
-- Public `/api/health` probes on live Openship Cloud and the local dev API both returned HTTP 200
+- Public `/api/health` probes on live Kovalio Cloud and the local dev API both returned HTTP 200
   with `{ protocol: 1, fixedOrganizationScope: true }`.
 
 Remote workflow fixtures verify transport, authorization headers, request choices and outcomes. They
 do not prove live provider deployment, real paid checkout, SSH host provisioning, live DNS/ACME renewal,
 mail delivery or moving production workloads. No such live mutation was performed for this audit.
 
-The executable verification entry points are the workspace tests, `packages/openship/verify-package.ts`,
+The executable verification entry points are the workspace tests, `packages/kovalio/verify-package.ts`,
 and `scripts/check-docs.mjs`. Keep provider release checks separate from these automated results.

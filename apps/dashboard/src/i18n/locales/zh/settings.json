@@ -179,7 +179,7 @@
       "forwardOnNote": "转发已开启 — gh CLI 还会验证远程服务器的克隆。您的身份将通过 SSH 在每次克隆时建立隧道；服务器上不存储任何内容。",
       "forwardOffHint": "目前仅限本地构建。开启“将我的 git 身份转发到构建服务器”，也可将 gh CLI 用于远程服务器部署。",
       "manageForward": "管理转发",
-      "disconnectBody": "Openship 将从此实例中移除此凭据，并停止将其用于克隆。在您于 GitHub 撤销之前，该凭据在 GitHub 上仍有效。您可以随时重新连接。",
+      "disconnectBody": "Kovalio 将从此实例中移除此凭据，并停止将其用于克隆。在您于 GitHub 撤销之前，该凭据在 GitHub 上仍有效。您可以随时重新连接。",
       "recheck": "重新检查"
     },
     "replaceToken": "替换 GitHub 令牌",
@@ -187,7 +187,7 @@
     "tokenEditorDescription": "使用 GitHub 个人访问令牌浏览仓库并在此实例上构建。",
     "methodTokenDesc": "使用 GitHub 令牌浏览仓库并进行本地构建。",
     "activeVia": "已通过 {method} 连接",
-    "pickMethod": "选择 Openship 访问您仓库的方式。",
+    "pickMethod": "选择 Kovalio 访问您仓库的方式。",
     "methodDevice": "GitHub 登录",
     "methodApp": "GitHub App",
     "methodAppDesc": "用于本地和远程部署的具有特定作用域的短期安装令牌。",
@@ -207,11 +207,11 @@
     "methodHostCli": "此主机上的 gh CLI",
     "manageTokensOnGithub": "在 GitHub 上管理令牌",
     "manageAccessOnGithub": "在 GitHub 上管理访问权限",
-    "disconnectScopeNote": "断开连接会从 Openship 中移除此凭据，并停止将其用于克隆。在您于 GitHub 撤销之前，它在 GitHub 上保持有效。",
+    "disconnectScopeNote": "断开连接会从 Kovalio 中移除此凭据，并停止将其用于克隆。在您于 GitHub 撤销之前，它在 GitHub 上保持有效。",
     "credentialRejected": "GitHub 拒绝了存储的 {method}。",
     "credentialRejectedImpact": "它已被撤销、已过期或丢失了所需的作用域。使用它进行克隆的部署将持续失败，直到您在下方重新连接。",
     "credentialUnreachable": "无法连接到 GitHub 以检查存储的 {method}。",
-    "credentialUnreachableImpact": "这通常是网络问题而非凭据错误 — Openship 将继续使用它。如果 GitHub 无法访问，重新连接也无济于事。",
+    "credentialUnreachableImpact": "这通常是网络问题而非凭据错误 — Kovalio 将继续使用它。如果 GitHub 无法访问，重新连接也无济于事。",
     "credentialCheckedAt": "上次检查时间 {time}"
   },
   "deployDefaults": {
@@ -270,10 +270,10 @@
   "githubSources": {
     "title": "自托管 GitHub 应用",
     "description": "使用加密的应用凭据、直连 Webhook 和短期安装令牌管理此实例的 GitHub 连接。",
-    "publicUrlRequired": "请先为此 Openship 实例配置公开 HTTPS 地址。GitHub 必须能够访问设置回调和 Webhook。",
+    "publicUrlRequired": "请先为此 Kovalio 实例配置公开 HTTPS 地址。GitHub 必须能够访问设置回调和 Webhook。",
     "createWithGithub": "通过 GitHub 创建",
     "registerExisting": "注册现有应用",
-    "manifestHelp": "Openship 会向 GitHub 提交最小权限的应用清单。GitHub 创建应用并仅返回一次生成的凭据，然后打开仓库安装页面。",
+    "manifestHelp": "Kovalio 会向 GitHub 提交最小权限的应用清单。GitHub 创建应用并仅返回一次生成的凭据，然后打开仓库安装页面。",
     "nameLabel": "来源名称",
     "namePlaceholder": "Acme 的 GitHub",
     "continueOnGithub": "前往 GitHub 继续",
@@ -291,9 +291,9 @@
     "makeDefault": "设为默认",
     "manage": "在 GitHub 管理",
     "delete": "删除",
-    "confirmDelete": "要从 Openship 删除 {name} 吗？本地凭据和安装绑定将被删除，但在 GitHub 中卸载之前，该应用仍会保留在那里。",
+    "confirmDelete": "要从 Kovalio 删除 {name} 吗？本地凭据和安装绑定将被删除，但在 GitHub 中卸载之前，该应用仍会保留在那里。",
     "editHelp": "将机密字段留空即可保留已加密存储的值。",
-    "manualHelp": "输入现有 GitHub 应用的凭据。Openship 会先验证私钥，再保存任何内容。",
+    "manualHelp": "输入现有 GitHub 应用的凭据。Kovalio 会先验证私钥，再保存任何内容。",
     "appIdLabel": "应用 ID",
     "clientIdLabel": "客户端 ID",
     "clientSecretLabel": "客户端密钥",
@@ -552,13 +552,13 @@
     },
     "reachability": {
       "description": "团队成员需要一个公开 URL 才能访问此工作区。",
-      "notInstalledTitle": "为 Openship 提供公开地址",
-      "notInstalledBody": "Openship 尚未配置公开 URL。请使用公开地址部署（例如 `openship up --public-url …`），然后在此添加域名以便团队成员访问。",
-      "noDomainTitle": "为 Openship 添加域名",
-      "noDomainBody": "为 Openship 应用添加域名，以便团队成员可以访问此工作区 — 一旦上线，邀请功能将自动开启。",
+      "notInstalledTitle": "为 Kovalio 提供公开地址",
+      "notInstalledBody": "Kovalio 尚未配置公开 URL。请使用公开地址部署（例如 `kovalio up --public-url …`），然后在此添加域名以便团队成员访问。",
+      "noDomainTitle": "为 Kovalio 添加域名",
+      "noDomainBody": "为 Kovalio 应用添加域名，以便团队成员可以访问此工作区 — 一旦上线，邀请功能将自动开启。",
       "addDomain": "添加域名",
       "pendingTitle": "完成域名设置",
-      "pendingBody": "您的 Openship 域名正在等待验证 (DNS / SSL)。上线后即可开启邀请。",
+      "pendingBody": "您的 Kovalio 域名正在等待验证 (DNS / SSL)。上线后即可开启邀请。",
       "viewDomain": "查看域名"
     }
   },
@@ -609,8 +609,8 @@
     "cloudNotReady": "未连接",
     "noMailSystem": "未设置邮件系统，因此邀请将无法送达。",
     "setUpEmail": "配置邮件 →",
-    "cloudNotConnected": "Openship Cloud 未连接，因此无法发送邀请。",
-    "connectCloud": "连接 Openship Cloud →"
+    "cloudNotConnected": "Kovalio Cloud 未连接，因此无法发送邀请。",
+    "connectCloud": "连接 Kovalio Cloud →"
   },
   "teamWorkspace": {
     "title": "团队工作区",
@@ -640,7 +640,7 @@
       "disconnectFailed": "断开连接失败"
     },
     "pitch": {
-      "title": "添加 Openship Cloud",
+      "title": "添加 Kovalio Cloud",
       "body": "每个项目均可获得免费的 .{domain} 域名及自动 SSL — 无需配置 DNS 和证书。您自己的服务器将完全保持现有工作方式。",
       "perkDomain": "每个项目均享有免费 .{domain} 域名 + 自动 SSL",
       "perkDeploy": "部署到托管云，或保留在您自己的服务器上",
@@ -650,15 +650,15 @@
       "viewPricing": "查看价格"
     },
     "connectModal": {
-      "title": "连接 Openship Cloud",
-      "requiresConnection": "{feature} 需要连接 Openship Cloud。连接您的账号以解锁：",
+      "title": "连接 Kovalio Cloud",
+      "requiresConnection": "{feature} 需要连接 Kovalio Cloud。连接您的账号以解锁：",
       "features": {
         "deployments": "云端部署",
         "infra": "托管基础设施",
         "ssl": "自动 SSL 与域名",
         "cdn": "全球 CDN"
       },
-      "connect": "连接到 Openship Cloud",
+      "connect": "连接到 Kovalio Cloud",
       "waitingSignIn": "等待登录…",
       "maybeLater": "稍后再说"
     }
@@ -668,7 +668,7 @@
       "title": "实例位置",
       "thisDesktop": "这台电脑",
       "thisServer": "此服务器",
-      "desktopHint": "连接以使用现有实例的数据，或将 Openship 迁移到服务器以保持在线。",
+      "desktopHint": "连接以使用现有实例的数据，或将 Kovalio 迁移到服务器以保持在线。",
       "serverHint": "任务、Webhook 和团队访问在此管理。",
       "remoteHint": "你正在使用远程实例的实时数据。",
       "retiredHint": "此服务器不再管理项目。将实例移至此处即可重新使用。",
@@ -683,7 +683,7 @@
       "receiveInstance": "将实例移至此处",
       "disconnect": "返回本地实例",
       "moreOptions": "更多实例选项",
-      "memberTitle": "通过 Desktop 使用 Openship",
+      "memberTitle": "通过 Desktop 使用 Kovalio",
       "memberHint": "使用你在此拥有的权限连接 Desktop。",
       "loading": "正在加载实例…",
       "sendHint": "创建迁移码，然后在 Desktop 的实例设置中，从更多选项里选择“{action}”。Desktop 完成交接之前，控制权仍在此处。",
@@ -696,9 +696,9 @@
       "pairHint": "在你的另一台 Desktop 上，以当前权限使用此实例的实时数据。不会迁移数据。",
       "pairOwnDevice": "此代码会以你的账户登录。邀请其他人请使用“团队”。",
       "teamAccessTitle": "启用团队邀请",
-      "teamAccessHint": "团队邀请需要可访问的实例。为 Openship 设置公共地址，或将它迁移到持续运行的服务器。",
+      "teamAccessHint": "团队邀请需要可访问的实例。为 Kovalio 设置公共地址，或将它迁移到持续运行的服务器。",
       "adminRequired": "请联系实例管理员进行设置。",
-      "webhookAccessHint": "GitHub 需要可访问的 Openship API 来发送部署事件。将此实例迁移到持续运行的服务器，或为其 API 设置公共地址。"
+      "webhookAccessHint": "GitHub 需要可访问的 Kovalio API 来发送部署事件。将此实例迁移到持续运行的服务器，或为其 API 设置公共地址。"
     },
     "transfer": {
       "installOnServer": "全新安装",
@@ -754,7 +754,7 @@
       "invitationHint": "连接期间，本地实例将暂停。不会移动任何数据。"
     },
     "recovery": {
-      "title": "您的 Openship 实例",
+      "title": "您的 Kovalio 实例",
       "subtitle": "完成迁移或重新连接以继续管理您的项目。",
       "checkConnection": "检查连接",
       "signInRemote": "登录到远程实例"
@@ -762,7 +762,7 @@
   },
   "upgradeAuth": {
     "title": "添加密码",
-    "description": "设置邮箱和密码以保护 Openship 的访问权限。你的项目和历史记录会保留。",
+    "description": "设置邮箱和密码以保护 Kovalio 的访问权限。你的项目和历史记录会保留。",
     "close": "关闭",
     "name": "姓名",
     "namePlaceholder": "Jane Doe",
@@ -1383,13 +1383,13 @@
     },
     "backupTitle": "备份与恢复",
     "backupDesc": "导出备份文件或还原现有备份。",
-    "backupWarning": "归档文件包含 Openship 数据库和凭据。Docker 卷内容保留在其服务器上；服务数据请使用项目备份。",
+    "backupWarning": "归档文件包含 Kovalio 数据库和凭据。Docker 卷内容保留在其服务器上；服务数据请使用项目备份。",
     "exportInstanceTitle": "导出实例或项目",
     "exportInstanceDesc": "选择完整实例或特定项目及其环境和依赖项。",
     "exportProjectTitle": "导出项目",
     "exportProjectDesc": "以纯 JSON 格式下载所有项目设置、环境变量和凭据。",
     "exportProjectIntro": "包含所有环境、服务、部署历史记录、分析、连接、域名、备份设置、环境变量和密钥。JSON 文件未加密，无需密码即可导入。",
-    "exportProjectReconnection": "目标端需要相同的服务器或 OpenShip Cloud 帐户才能重新连接到现有工作负载。",
+    "exportProjectReconnection": "目标端需要相同的服务器或 Kovalio Cloud 帐户才能重新连接到现有工作负载。",
     "exportInstanceIntro": "导出控制面板数据，包括存储的环境变量、服务器密钥、凭据、配置和历史记录。JSON 文件未加密且不需要密码。",
     "scopeLabel": "导出范围",
     "scopeInstance": "整个实例",
@@ -1416,7 +1416,7 @@
     "recordsSelected": "已选择 {count} 条记录。",
     "recordsAcrossEnvsSelected": "已选择跨 {envs} 个环境的 {count} 条记录。",
     "selectAtLeastOne": "请选择至少一个项目或环境。",
-    "cloudNotice": "在目标工作区连接到同一个 Openship Cloud 帐户之前，Cloud 项目将无法运行。"
+    "cloudNotice": "在目标工作区连接到同一个 Kovalio Cloud 帐户之前，Cloud 项目将无法运行。"
   },
   "migrate": {
     "chooseTitle": "切换到多用户模式",
@@ -1610,11 +1610,11 @@
       },
       "cloudflare": {
         "label": "Cloudflare",
-        "summary": "让 Openship 自动写入自定义域名所需的 DNS 记录，无需手动粘贴。",
+        "summary": "让 Kovalio 自动写入自定义域名所需的 DNS 记录，无需手动粘贴。",
         "fields": {
           "apiToken": {
             "label": "API 令牌",
-            "help": "对您希望 Openship 管理的区域拥有 Zone:Read 和 DNS:Edit 权限的令牌。"
+            "help": "对您希望 Kovalio 管理的区域拥有 Zone:Read 和 DNS:Edit 权限的令牌。"
           }
         }
       }
@@ -1702,16 +1702,16 @@
     "description": "此实例呈现自身的形式。这是所有用户的默认设置 — 每位用户仍可在“设置 → 常规”中选择自己的视图。",
     "platformLabel": "完整平台",
     "platformDesc": "项目、应用、部署、服务器 — 此安装支持的所有功能。",
-    "mailLabel": "Openship Mail",
-    "mailDesc": "将实例品牌化为 Openship Mail，并将侧边栏作为邮件控制面板。",
+    "mailLabel": "Kovalio Mail",
+    "mailDesc": "将实例品牌化为 Kovalio Mail，并将侧边栏作为邮件控制面板。",
     "savedOverridden": "已保存。您的个人视图保持不变 — 您已在“设置 → 常规”中进行了选择。",
     "errorToast": "无法更改产品模式。",
-    "envNote": "此实例遵循环境变量 OPENSHIP_PRODUCT=mail。在此选择模式将覆盖该变量。"
+    "envNote": "此实例遵循环境变量 KOVALIO_PRODUCT=mail。在此选择模式将覆盖该变量。"
   },
   "email": {
     "title": "邮件 (SMTP)",
     "description": "此实例发送邮件所使用的 SMTP 服务",
-    "intro": "用于密码重置、邮箱验证、团队邀请和通知。只需粘贴来自任何服务商（Amazon SES、Gmail、Mailgun、企业中继）的 SMTP 凭据 — 主机、端口、用户名、密码。无需设置服务器；Openship 直接与其连接。密码经过加密且不会再次显示。",
+    "intro": "用于密码重置、邮箱验证、团队邀请和通知。只需粘贴来自任何服务商（Amazon SES、Gmail、Mailgun、企业中继）的 SMTP 凭据 — 主机、端口、用户名、密码。无需设置服务器；Kovalio 直接与其连接。密码经过加密且不会再次显示。",
     "loading": "加载中…",
     "configuredBadge": "已配置",
     "notConfigured": "尚未配置 — 在您于下方输入 SMTP 凭据之前，密码重置、邀请和邮件通知将保持关闭状态。",
@@ -1725,7 +1725,7 @@
     "passwordPlaceholder": "SMTP 密码或应用密钥",
     "passwordKeepPlaceholder": "•••••••• (留空以保留当前密码)",
     "fromLabel": "发件人地址",
-    "fromPlaceholder": "Openship <no-reply@example.com>",
+    "fromPlaceholder": "Kovalio <no-reply@example.com>",
     "fromHint": "可选。默认为用户名。",
     "fromHintRequired": "必填 — 您的用户名不是邮箱地址，因此收件人需要一个真实的发件人地址。",
     "fromRequired": "请输入发件人地址 — 该服务商的用户名不是邮箱，因此不能作为发件人。",
@@ -1749,13 +1749,13 @@
   },
   "edgeOrphans": {
     "title": "未跟踪的边缘路由",
-    "description": "此机器仍在提供服务但 Openship 无记录的主机名",
+    "description": "此机器仍在提供服务但 Kovalio 无记录的主机名",
     "scan": "扫描",
     "scanning": "正在扫描…",
     "allClear": "边缘服务的所有主机名均已记录。",
     "comparedTo": "已与 {count} 个受跟踪的主机名进行比对。",
     "unavailable": "无法检查边缘",
-    "explain": "使用“仅从 Openship 中移除”删除项目时，会有意保留其路由运行。遗留的应用路由在容器消失后将返回 502，但遗留的静态 (STATIC) 路由会继续以 200 返回旧文件 — 即使该主机名后来分配给了另一个项目也是如此。",
+    "explain": "使用“仅从 Kovalio 中移除”删除项目时，会有意保留其路由运行。遗留的应用路由在容器消失后将返回 502，但遗留的静态 (STATIC) 路由会继续以 200 返回旧文件 — 即使该主机名后来分配给了另一个项目也是如此。",
     "kindStatic": "静态文件",
     "kindProxy": "应用路由",
     "staticWarning": "仍在提供文件服务。今天仍在响应请求。",

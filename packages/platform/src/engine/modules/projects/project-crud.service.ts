@@ -40,7 +40,7 @@ import {
   resolveWorkload,
   resolveGitHubDeploymentChecks,
   toWorkloadType,
-  parseOpenshipConfig,
+  parseKovalioConfig,
   type ReleaseSource,
   type UpdatableIdentity,
   type WorkloadType,
@@ -591,7 +591,7 @@ function normalizeComposePath(value: string | null | undefined): string | null {
 }
 
 /**
- * Roles enter through the same rules as `openship.json`'s `roles`: run the value
+ * Roles enter through the same rules as `kovalio.json`'s `roles`: run the value
  * through the config parser so a hand-built request cannot persist what a repo
  * file could not declare. undefined = not sent (leave unchanged / create NULL),
  * null and [] pass through as given. The parsed result is what gets stored, so
@@ -599,7 +599,7 @@ function normalizeComposePath(value: string | null | undefined): string | null {
  */
 function validateRoles(roles: unknown): TCreateProjectBody["roles"] {
   if (roles === undefined || roles === null) return roles;
-  const { config, errors } = parseOpenshipConfig({ roles });
+  const { config, errors } = parseKovalioConfig({ roles });
   if (errors.length > 0) {
     throw new ValidationError(`Invalid roles: ${errors.join("; ")}`);
   }
@@ -924,7 +924,7 @@ async function createProductionProject(
   // Reject incompatible runtime settings before any group/project insert.
   assertRuntimeVersionTarget(data);
   data = { ...data, ...runtimeProjectUpdate(null, data) };
-  // Same rules as openship.json; before any group/project insert.
+  // Same rules as kovalio.json; before any group/project insert.
   const roles = validateRoles(data.roles);
   if (roles !== undefined) data = { ...data, roles };
   // The project type is derived from persisted service rows. Accepting an
@@ -1987,7 +1987,7 @@ async function updateProjectUnlocked(
       const routeWarnings = await reapplyCompleteProjectRouting(refreshed, previousHostnames, {
         managedEdgeSyncedByCaller: true,
       });
-      // A free (*.opsh.io) domain resolves only through Openship Cloud's edge.
+      // A free (*.opsh.io) domain resolves only through Kovalio Cloud's edge.
       // reapplyProjectLiveRoutes handles the self-hosted OpenResty side; the
       // managed edge must be re-registered too or an edited/added free URL
       // 404s with no signal. Only meaningful once deployed (no live target

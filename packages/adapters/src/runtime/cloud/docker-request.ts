@@ -7,7 +7,7 @@ import { currentManagedCommandTracking } from "./command-tracking";
 import { dockerWebSocketStream } from "./docker-transport";
 
 function requestId(marker: string) {
-  const match = /^openship-exec-([a-f0-9-]{36}):$/.exec(marker);
+  const match = /^kovalio-exec-([a-f0-9-]{36}):$/.exec(marker);
   if (!match) throw new Error("Invalid Docker request recovery identity");
   return match[1]!;
 }
@@ -57,7 +57,7 @@ export async function openCloudDockerStream(runtime: Runtime, workspaceId: strin
     return dockerWebSocketStream(runtime.proxy(CLOUD_DOCKER_BRIDGE_PORT).ws("/docker"));
 
   const id = randomUUID();
-  const command: ManagedCommandRef = { workspaceId, marker: `openship-exec-${id}:`, kind: "docker" };
+  const command: ManagedCommandRef = { workspaceId, marker: `kovalio-exec-${id}:`, kind: "docker" };
   await tracking.record(command);
   let resolve!: () => void;
   let reject!: (error: unknown) => void;

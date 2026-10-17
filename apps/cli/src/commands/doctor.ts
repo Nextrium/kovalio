@@ -219,7 +219,7 @@ async function autoFix(): Promise<void> {
   if (verified) {
     out(chalk.green("Database is healthy again. Your data is intact."));
   } else {
-    out(chalk.red(`Still not healthy. Backup preserved at ${backup}. Run \`openship doctor\` for guided recovery.`));
+    out(chalk.red(`Still not healthy. Backup preserved at ${backup}. Run \`kovalio doctor\` for guided recovery.`));
     exitCommand(1);
   }
 }
@@ -314,7 +314,7 @@ export const doctorCommand = new Command("doctor")
       const health = await session.client.system.health();
       if (isJsonMode()) printJson({ mode: "native", instanceId: session.ship.instanceId, organizationId: session.client.organizationId, ...health });
       else {
-        console.log(chalk.bold("\n  Openship doctor\n"));
+        console.log(chalk.bold("\n  Kovalio doctor\n"));
         console.log(`  Instance   ${session.ship.instanceId}`);
         console.log(`  Database   ${health.db.driver}: ${health.db.ok ? "healthy" : health.db.error ?? "unavailable"}`);
         if (health.hostChannel) console.log(`  Host       ${health.hostChannel.state}`);

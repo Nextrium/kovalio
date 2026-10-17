@@ -15,13 +15,13 @@ function customOfferReference(tier: PlanTierId, limits: PlanLimits, offer: Oblie
     value && typeof value === "object" && !Array.isArray(value)
       ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0))
       : value);
-  return `openship:custom:${offer.billingMode === "monthly" ? "v2" : "v1"}:${createHash("sha256").update(snapshot).digest("hex")}`;
+  return `kovalio:custom:${offer.billingMode === "monthly" ? "v2" : "v1"}:${createHash("sha256").update(snapshot).digest("hex")}`;
 }
 
 export function customSubscriptionOffer(resources: CustomServerResources) {
   const terms = quoteCustomResources(resources);
   const offer: OblienOffer = {
-    name: "Openship Custom",
+    name: "Kovalio Custom",
     description: `${resources.cpuCores} vCPU · ${resources.memoryMb / 1024} GB RAM · ${resources.diskGb} GB disk. CPU, RAM and storage are covered for the paid month.`,
     unitAmount: terms.priceCents,
     currency: "usd",

@@ -9,7 +9,7 @@ import * as schema from "../schema";
 
 // Point only at a disposable test database. The default runs the same repository
 // contract on PGlite; PostgreSQL additionally verifies separate-connection waits.
-const postgresUrl = process.env.OPENSHIP_ADMISSION_TEST_DATABASE_URL;
+const postgresUrl = process.env.KOVALIO_ADMISSION_TEST_DATABASE_URL;
 const encryption = createEncryption("project-promotion-admission-test");
 let connection: DatabaseConnection;
 let repos: Repositories;
@@ -54,7 +54,7 @@ async function seed() {
     cloudPromotion: {
       id: randomUUID(),
       target: {
-        apiUrl: "https://api.openship.io",
+        apiUrl: "https://api.nextrium.org",
         userId: "cloud-user",
         organizationId: "cloud-org",
       },
