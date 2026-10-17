@@ -35,6 +35,10 @@ concurrency:
 env:
   SYNC_BRANCH: sync/upstream
   BASE_BRANCH: ${{ inputs.base || 'main' }}
+  # This repo is a GitHub fork, and the checkout gains an `upstream` remote; without
+  # an explicit repo, gh resolves to oblien/openship and every PR/issue call (and the
+  # open-PR skip check) silently targets upstream.
+  GH_REPO: ${{ github.repository }}
 
 jobs:
   sync-and-rebrand:
