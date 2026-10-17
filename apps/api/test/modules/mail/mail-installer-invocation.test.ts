@@ -12,7 +12,7 @@ const { ensureContainerMail } = vi.hoisted(() => ({
   ensureContainerMail: vi.fn(async () => ({
     container: "kovalio-mail",
     dbContainer: "kovalio-mail-db",
-    image: "ghcr.io/oblien/kovalio-mail:test",
+    image: "ghcr.io/oblien/openship-mail:test",
   })),
 }));
 

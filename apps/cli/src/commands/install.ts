@@ -3,7 +3,7 @@
  * the current OS/arch.
  *
  * This talks to GitHub, NOT the Kovalio API: assets are published to
- * github.com/oblien/kovalio/releases (asset names match the desktop updater,
+ * github.com/Nextrium/kovalio/releases (asset names match the desktop updater,
  * apps/desktop/src/main/updater.ts — Kovalio-arm64.dmg / Kovalio-x64.dmg /
  * Kovalio.AppImage, plus Kovalio-win32-x64.zip for the CLI install path).
  *

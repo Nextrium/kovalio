@@ -64,7 +64,7 @@ const TAR_TIMEOUT_MS = 5 * 60_000;
  *  sha-verify). Generous for real dists; bounds a hostile/oversized response. */
 const MAX_RELEASE_ARTIFACT_BYTES = 512_000_000;
 
-const DEFAULT_REPO = "oblien/kovalio";
+const DEFAULT_REPO = "Nextrium/kovalio";
 
 export interface FetchAndExtractReleaseInput {
   /** Release tag / cache key, e.g. "v0.1.0". The extracted dist lives at `<cacheDir>/<tag>/`. */
@@ -73,7 +73,7 @@ export interface FetchAndExtractReleaseInput {
   cacheDir: string;
 
   // ── GitHub-Releases mode (asset name → github.com/<repo>/releases/download/…) ──
-  /** GitHub `owner/repo`, e.g. "oblien/kovalio". Defaults to "oblien/kovalio". */
+  /** GitHub `owner/repo`, e.g. "Nextrium/kovalio". Defaults to "Nextrium/kovalio". */
   repo?: string;
   /** Release asset filename, e.g. "kovalio-v0.1.0-linux-amd64.tar.gz". */
   asset?: string;

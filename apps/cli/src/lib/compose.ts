@@ -3047,7 +3047,7 @@ function renderEnvAndCarried(
  * ("dev") install — `kovalio-dev`, whose marker records the checkout dir.
  *
  * A dev install tracks a branch, so its `__CLI_VERSION__` names a release tag
- * that isn't published: pulling `ghcr.io/oblien/kovalio-*:<that version>` fails
+ * that isn't published: pulling `ghcr.io/oblien/openship-*:<that version>` fails
  * with `denied`. The checkout has the Dockerfiles, so build the three images we
  * own from it instead of pulling — same stack, same compose file, one override.
  * Returns null (→ pull path) when there's no checkout or no Dockerfiles in it.

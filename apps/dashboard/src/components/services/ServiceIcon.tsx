@@ -95,7 +95,7 @@ const NAME_ROLE: Array<{ re: RegExp; icon: IconName }> = [
   { re: /(^|[-_])(web|www|site|frontend|dashboard|app|ui)([-_]|$)/i, icon: "globe" },
 ];
 
-/** The image's bare repo name: `ghcr.io/oblien/kovalio-api:0.3.0` → `kovalio-api`. */
+/** The image's bare repo name: `ghcr.io/oblien/openship-api:0.3.0` → `kovalio-api`. */
 function imageName(image: string | null | undefined): string {
   if (!image) return "";
   const noTag = image.split("@")[0]!.replace(/:[^/:]+$/, "");

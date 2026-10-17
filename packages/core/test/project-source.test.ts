@@ -158,7 +158,7 @@ describe("validateReleaseVersionUrl", () => {
 });
 
 describe("validateReleaseRepository", () => {
-  it.each(["oblien/kovalio", "Acme-Inc/api.v2", "a/x"])(
+  it.each(["Nextrium/kovalio", "Acme-Inc/api.v2", "a/x"])(
     "accepts a GitHub owner/repository identity: %s",
     (value) => {
       expect(validateReleaseRepository(value)).toBeNull();

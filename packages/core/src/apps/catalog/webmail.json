@@ -20,7 +20,7 @@
   "services": [
     {
       "name": "webmail",
-      "image": "ghcr.io/oblien/kovalio-webmail:latest",
+      "image": "ghcr.io/oblien/openship-webmail:latest",
       "exposedPort": 4080,
       "exposed": true,
       "volumes": [

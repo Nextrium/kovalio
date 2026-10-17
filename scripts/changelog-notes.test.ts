@@ -81,7 +81,7 @@ describe("buildReleaseNotes", () => {
   });
 
   test("falls back to a CHANGELOG pointer when the version has no entry", () => {
-    const notes = buildReleaseNotes(SAMPLE, "v9.9.9", { repo: "oblien/kovalio" });
+    const notes = buildReleaseNotes(SAMPLE, "v9.9.9", { repo: "Nextrium/kovalio" });
     expect(notes).toContain("No changelog entry for 9.9.9");
     expect(notes).toContain("https://github.com/Nextrium/kovalio/blob/v9.9.9/CHANGELOG.md");
   });

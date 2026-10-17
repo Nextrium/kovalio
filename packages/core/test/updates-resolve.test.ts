@@ -42,7 +42,7 @@ describe("changelog release details", () => {
     expect(extractChangelogSection(changelog, "v0.6.9")).toBe("- **Dashboard** — useful details");
     expect(extractChangelogSection(changelog, "0.6.7")).toBe("");
     expect(changelogMarkdownUrl("v0.6.9")).toBe(
-      "https://raw.githubusercontent.com/oblien/kovalio/v0.6.9/CHANGELOG.md",
+      "https://raw.githubusercontent.com/Nextrium/kovalio/v0.6.9/CHANGELOG.md",
     );
   });
 

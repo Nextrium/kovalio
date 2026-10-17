@@ -2555,7 +2555,7 @@ per-service deployment table. Nothing read or wrote it.
   instead of reverse-engineering it from a flat list. Its write tools now carry
   typed request bodies end to end (projects, deployments, domains, webhooks,
   notifications, connections, apps), and every prompt points at
-  `github.com/oblien/kovalio/issues` when a client hits a platform bug.
+  `github.com/Nextrium/kovalio/issues` when a client hits a platform bug.
 - **Scoped tokens list the right tools** — a token granted a single GitHub repo
   (or the "create your own projects" scope) now correctly advertises the tools
   it can actually call. Previously the per-repo GitHub tools and the project

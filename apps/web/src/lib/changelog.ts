@@ -13,7 +13,7 @@ import { marked } from "marked";
  * reliable signal.
  */
 
-const REPO = "oblien/kovalio";
+const REPO = "Nextrium/kovalio";
 const RAW_URL = `https://raw.githubusercontent.com/${REPO}/main/CHANGELOG.md`;
 const TAGS_URL = `https://api.github.com/repos/${REPO}/tags?per_page=100`;
 const commitUrl = (ref: string) => `https://api.github.com/repos/${REPO}/commits/${ref}`;

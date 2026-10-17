@@ -23,7 +23,7 @@
 # catalog names and redeploy:
 #
 #     docker build -f apps/email/Dockerfile.webmail \
-#       -t ghcr.io/oblien/kovalio-webmail:latest .
+#       -t ghcr.io/oblien/openship-webmail:latest .
 #
 # Context is the repo root only because .github/workflows/docker-images.yml
 # builds every image with `context: .`; the COPYs below take four paths.

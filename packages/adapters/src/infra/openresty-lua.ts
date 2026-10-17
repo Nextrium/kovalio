@@ -577,7 +577,7 @@ export const GEOIP_DB_PATH = `${GEOIP_DIR}/GeoLite2-Country.mmdb`;
  */
 const GEOIP_DB_URL =
   process.env.KOVALIO_GEOIP_URL?.trim() ||
-  "https://raw.githubusercontent.com/oblien/kovalio/main/apps/api/assets/geoip/GeoLite2-Country.mmdb";
+  "https://raw.githubusercontent.com/Nextrium/kovalio/main/apps/api/assets/geoip/GeoLite2-Country.mmdb";
 
 // ── Local Lua source directory ───────────────────────────────────────────────
 

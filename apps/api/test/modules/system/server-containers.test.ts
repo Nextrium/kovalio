@@ -53,11 +53,11 @@ vi.mock("@repo/adapters", () => ({
 }));
 
 vi.mock("@repo/platform/engine/lib/edge-image", () => ({
-  pinnedEdgeImage: vi.fn(() => "ghcr.io/oblien/kovalio-edge:0.5.0"),
+  pinnedEdgeImage: vi.fn(() => "ghcr.io/oblien/openship-edge:0.5.0"),
 }));
 
 vi.mock("@repo/platform/engine/lib/mail-image", () => ({
-  pinnedMailImage: vi.fn(() => "ghcr.io/oblien/kovalio-mail:0.5.0"),
+  pinnedMailImage: vi.fn(() => "ghcr.io/oblien/openship-mail:0.5.0"),
 }));
 
 vi.mock("@repo/platform/engine/lib/edge-reconcile", () => ({
@@ -149,7 +149,7 @@ beforeEach(() => {
 
 describe("imageTag", () => {
   it("reads the tag from a normal ref", () => {
-    expect(imageTag("ghcr.io/oblien/kovalio-edge:0.5.0")).toBe("0.5.0");
+    expect(imageTag("ghcr.io/oblien/openship-edge:0.5.0")).toBe("0.5.0");
   });
   it("does not mistake a registry port for the tag", () => {
     expect(imageTag("registry.local:5000/img")).toBeNull();
@@ -180,7 +180,7 @@ describe("detectServerContainers", () => {
   });
 
   it("marks the edge behind when its running image differs from the pin, and caches it", async () => {
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.4.0") as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.4.0") as never);
 
     const views = await detectServerContainers(server);
 
@@ -201,7 +201,7 @@ describe("detectServerContainers", () => {
   });
 
   it("is not behind when the running image already matches the pin", async () => {
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.5.0") as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.5.0") as never);
 
     const views = await detectServerContainers(server);
     expect(views.find((v) => v.component === "edge")).toMatchObject({ behind: false, down: false });
@@ -209,7 +209,7 @@ describe("detectServerContainers", () => {
 
   it("tracks an installed-but-stopped edge as down, never behind or removed", async () => {
     // exists:true, running:false — the box has an edge, it just isn't up.
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.4.0", false) as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.4.0", false) as never);
 
     const views = await detectServerContainers(server);
     const edge = views.find((v) => v.component === "edge");
@@ -350,7 +350,7 @@ describe("detectServerContainers", () => {
 
   it("leaves the edge row untouched when Docker is unreachable", async () => {
     mocked.docker.mockResolvedValue(false);
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.4.0") as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.4.0") as never);
 
     const views = await detectServerContainers(server);
     expect(views).toEqual([]);
@@ -359,7 +359,7 @@ describe("detectServerContainers", () => {
   });
 
   it("never writes the in-progress flag — a scan must not clear a running apply", async () => {
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.4.0") as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.4.0") as never);
 
     await detectServerContainers(server);
 
@@ -449,7 +449,7 @@ describe("applyAllContainers", () => {
 
 describe("applyServerContainer", () => {
   it("maps a successful edge swap to updated:true, down:false", async () => {
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.5.0") as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.5.0") as never);
 
     const result = await applyServerContainer(server, "edge");
     expect(result).toMatchObject({ component: "edge", updated: true, down: false });
@@ -461,7 +461,7 @@ describe("applyServerContainer", () => {
 
   it("surfaces a failed-and-unrolled-back edge swap as down, with an error detail", async () => {
     mocked.reconcileEdge.mockResolvedValue({ converted: false, updated: false, edgeDown: true } as never);
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.4.0") as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.4.0") as never);
 
     const result = await applyServerContainer(server, "edge");
     expect(result).toMatchObject({ down: true });
@@ -479,7 +479,7 @@ describe("applyServerContainer", () => {
   it("swaps mail with the persisted domain when the box is provisioned", async () => {
     mocked.mailServer.get.mockResolvedValue({ domain: "mail.example.com" } as never);
     mocked.mailEngine.mockResolvedValue(
-      mailContainerEngine("ghcr.io/oblien/kovalio-mail:0.5.0") as never,
+      mailContainerEngine("ghcr.io/oblien/openship-mail:0.5.0") as never,
     );
 
     const result = await applyServerContainer(server, "mail");
@@ -507,7 +507,7 @@ describe("applyServerContainer", () => {
     mocked.repairMail.mockResolvedValue({ started: false, mailDown: true } as never);
     mocked.mailServer.get.mockResolvedValue({ domain: "mail.example.com" } as never);
     mocked.mailEngine.mockResolvedValue(
-      mailContainerEngine("ghcr.io/oblien/kovalio-mail:0.5.0", false) as never,
+      mailContainerEngine("ghcr.io/oblien/openship-mail:0.5.0", false) as never,
     );
 
     const result = await applyServerContainer(server, "mail", undefined, "repair");
@@ -521,7 +521,7 @@ describe("applyServerContainer", () => {
   });
 
   it("routes intent=repair for edge to the same reconcile (it recreates a stopped edge)", async () => {
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.5.0") as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.5.0") as never);
 
     const result = await applyServerContainer(server, "edge", undefined, "repair");
     expect(result).toMatchObject({ component: "edge", updated: true, down: false });
@@ -543,7 +543,7 @@ describe("applyServerContainer", () => {
       edgeDown: false,
       error: "Ports 80, 443 are in use by another service (openresty). Accept a migrate or takeover to continue.",
     } as never);
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.5.0", false) as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.5.0", false) as never);
 
     const result = await applyServerContainer(server, "edge");
     expect(result).toMatchObject({ updated: false, down: false });
@@ -565,7 +565,7 @@ describe("applyServerContainer", () => {
       edgeDown: true,
       error: 'bind() to 0.0.0.0:80 failed (98: Address already in use)',
     } as never);
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.5.0", false) as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.5.0", false) as never);
 
     const result = await applyServerContainer(server, "edge");
     expect(result).toMatchObject({ down: true });
@@ -590,7 +590,7 @@ describe("applyServerContainer", () => {
     } as never);
     mocked.mailServer.get.mockResolvedValue({ domain: "mail.example.com" } as never);
     mocked.mailEngine.mockResolvedValue(
-      mailContainerEngine("ghcr.io/oblien/kovalio-mail:0.4.0") as never,
+      mailContainerEngine("ghcr.io/oblien/openship-mail:0.4.0") as never,
     );
 
     const result = await applyServerContainer(server, "mail");
@@ -612,7 +612,7 @@ describe("applyServerContainer", () => {
     } as never);
     mocked.mailServer.get.mockResolvedValue({ domain: "mail.example.com" } as never);
     mocked.mailEngine.mockResolvedValue(
-      mailContainerEngine("ghcr.io/oblien/kovalio-mail:0.5.0", false) as never,
+      mailContainerEngine("ghcr.io/oblien/openship-mail:0.5.0", false) as never,
     );
 
     const result = await applyServerContainer(server, "mail", undefined, "repair");
@@ -645,7 +645,7 @@ describe("refreshServerContainer", () => {
   });
 
   it("clears a stale down row after a successful install", async () => {
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.5.0") as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.5.0") as never);
 
     await refreshServerContainer("srv_1", "edge");
     expect(mocked.status.upsert).toHaveBeenCalledWith(
@@ -654,7 +654,7 @@ describe("refreshServerContainer", () => {
   });
 
   it("records the failure reason when the install could not finish", async () => {
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.5.0", false) as never);
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.5.0", false) as never);
 
     await refreshServerContainer("srv_1", "edge", "the edge ports are still bound");
     expect(mocked.status.upsert).toHaveBeenCalledWith(
@@ -679,7 +679,7 @@ describe("scanInstanceContainers", () => {
   });
   beforeEach(() => {
     mocked.server.list.mockResolvedValue([server] as never);
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.4.0") as never); // behind
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.4.0") as never); // behind
   });
 
   it("detects drift but never applies when autoUpdateInfra is off", async () => {
@@ -833,7 +833,7 @@ describe("classifyContainerIssues", () => {
 describe("scanOrgContainers", () => {
   beforeEach(() => {
     mocked.server.listByOrganization.mockResolvedValue([server] as never);
-    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/kovalio-edge:0.4.0") as never); // behind
+    mocked.edge.mockResolvedValue(edgeContainer("ghcr.io/oblien/openship-edge:0.4.0") as never); // behind
   });
 
   it("is org-scoped and detect-only — refreshes the cache but never applies", async () => {

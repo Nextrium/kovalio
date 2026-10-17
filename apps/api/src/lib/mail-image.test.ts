@@ -49,6 +49,6 @@ describe("pinnedMailImage — virtual dev version", () => {
     // Explicit context is taken verbatim (no existence check), but it holds no
     // apps/email tree, so the dev-tag signature is empty and the tag stays APP_VERSION.
     process.env.KOVALIO_MAIL_BUILD_CONTEXT = "/definitely/not/an/kovalio/checkout";
-    expect(pinnedMailImage()).toBe(`ghcr.io/oblien/kovalio-mail:${APP_VERSION}`);
+    expect(pinnedMailImage()).toBe(`ghcr.io/oblien/openship-mail:${APP_VERSION}`);
   });
 });

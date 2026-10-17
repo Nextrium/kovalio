@@ -49,7 +49,7 @@ afterEach(() => {
 
 const github: ReleaseSource = {
   mode: "github",
-  repo: "oblien/kovalio",
+  repo: "Nextrium/kovalio",
   assetTemplate: "kovalio-{tag}-{os}-{arch}.tar.gz",
 };
 
@@ -139,7 +139,7 @@ describe("resolveReleaseDist — slot order", () => {
     expect(res.asset).toBe("kovalio-v5.0.0-linux-amd64.tar.gz");
     expect(fetchMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        repo: "oblien/kovalio",
+        repo: "Nextrium/kovalio",
         asset: "kovalio-v5.0.0-linux-amd64.tar.gz",
         tag: "v5.0.0",
       }),

@@ -979,7 +979,7 @@ describe("missingPinnedImages (#486)", () => {
         ? { status: 1, stdout: "", stderr: "manifest unknown: manifest unknown" }
         : { status: 0, stdout: "{}", stderr: "" };
     expect(missingPinnedImages("ghcr.io/oblien", "1.2.3")).toEqual([
-      "ghcr.io/oblien/kovalio-dashboard:1.2.3",
+      "ghcr.io/oblien/openship-dashboard:1.2.3",
     ]);
   });
 
@@ -990,9 +990,9 @@ describe("missingPinnedImages (#486)", () => {
       stderr: `no such manifest: ${ref}`,
     });
     expect(missingPinnedImages("ghcr.io/oblien", "1.2.3")).toEqual([
-      "ghcr.io/oblien/kovalio-api:1.2.3",
-      "ghcr.io/oblien/kovalio-dashboard:1.2.3",
-      "ghcr.io/oblien/kovalio-edge:1.2.3",
+      "ghcr.io/oblien/openship-api:1.2.3",
+      "ghcr.io/oblien/openship-dashboard:1.2.3",
+      "ghcr.io/oblien/openship-edge:1.2.3",
     ]);
   });
 
@@ -1015,9 +1015,9 @@ describe("missingPinnedImages (#486)", () => {
     };
     missingPinnedImages("registry.internal/oblien", "0.4.5");
     expect(seen).toEqual([
-      "registry.internal/oblien/kovalio-api:0.4.5",
-      "registry.internal/oblien/kovalio-dashboard:0.4.5",
-      "registry.internal/oblien/kovalio-edge:0.4.5",
+      "registry.internal/oblien/openship-api:0.4.5",
+      "registry.internal/oblien/openship-dashboard:0.4.5",
+      "registry.internal/oblien/openship-edge:0.4.5",
     ]);
   });
 });
@@ -1037,7 +1037,7 @@ describe("pinnedImagesReady (#486)", () => {
   });
 
   it("skips the check for a from-source install — it builds, it never pulls", () => {
-    h.sourceInstall = { repo: "oblien/kovalio", ref: "main", dir: "/src" };
+    h.sourceInstall = { repo: "Nextrium/kovalio", ref: "main", dir: "/src" };
     for (const df of ["apps/api/Dockerfile", "apps/dashboard/Dockerfile", "apps/edge/Dockerfile"]) {
       h.existing.add(`/src/${df}`);
     }
@@ -1056,7 +1056,7 @@ describe("pinnedImagesReady (#486)", () => {
     expect(pinnedImagesReady({ version: "9.9.9" })).toBe(false);
 
     const msg = err.mock.calls.map((c) => c.join(" ")).join("\n");
-    expect(msg).toContain("ghcr.io/oblien/kovalio-api:9.9.9");
+    expect(msg).toContain("ghcr.io/oblien/openship-api:9.9.9");
     expect(msg).toContain("--image-version");
     expect(msg).toContain("KOVALIO_VERSION=");
     err.mockRestore();

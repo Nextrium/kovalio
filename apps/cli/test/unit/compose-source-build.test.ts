@@ -111,7 +111,7 @@ beforeEach(() => {
 
 describe("composeUp — from-source install", () => {
   it("builds api/dashboard/edge from the checkout and never pulls them", async () => {
-    h.sourceInstall = { repo: "oblien/kovalio", ref: "main", dir: REPO };
+    h.sourceInstall = { repo: "Nextrium/kovalio", ref: "main", dir: REPO };
     for (const f of DOCKERFILES) h.existing.add(f);
 
     const res = await composeUp({ version: "0.3.0" });
@@ -144,14 +144,14 @@ describe("composeUp — from-source install", () => {
   });
 
   it("falls back to pulling when the checkout has no Dockerfiles (stale marker)", async () => {
-    h.sourceInstall = { repo: "oblien/kovalio", ref: "main", dir: "/gone" };
+    h.sourceInstall = { repo: "Nextrium/kovalio", ref: "main", dir: "/gone" };
     const res = await composeUp({ version: "0.3.0" });
     expect(res.ok).toBe(true);
     expect(verbs()).toEqual([["pull"], ["up", "-d"]]);
   });
 
   it("build:false forces the pull path even on a source install", async () => {
-    h.sourceInstall = { repo: "oblien/kovalio", ref: "main", dir: REPO };
+    h.sourceInstall = { repo: "Nextrium/kovalio", ref: "main", dir: REPO };
     for (const f of DOCKERFILES) h.existing.add(f);
 
     await composeUp({ version: "0.3.0", build: false });

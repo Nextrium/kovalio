@@ -600,7 +600,7 @@ describe("ensurePortAvailable — docker-published port (#628)", () => {
       [`/proc/${PROXY_PID}/cgroup`, CGROUP_DOCKER_SERVICE],
       [
         "--filter publish=80",
-        psLine({ name: "kovalio-edge", image: "ghcr.io/oblien/kovalio-edge:latest" }),
+        psLine({ name: "kovalio-edge", image: "ghcr.io/oblien/openship-edge:latest" }),
       ],
     ]);
     const { logger } = fakeLogger();
@@ -969,7 +969,7 @@ describe("ensurePortAvailable — the fixes the adversarial review found", () =>
       [`/proc/${PROXY_PID}/cgroup`, CGROUP_DOCKER_SERVICE],
       [
         "--filter publish=4000",
-        psLine({ name: "kovalio-api-1", image: "ghcr.io/oblien/kovalio-api:latest" }),
+        psLine({ name: "kovalio-api-1", image: "ghcr.io/oblien/openship-api:latest" }),
       ],
     ]);
     const { logger } = fakeLogger();
@@ -1003,7 +1003,7 @@ describe("ensurePortAvailable — the fixes the adversarial review found", () =>
       ],
       [
         "label=com.docker.compose.project='kovalio'",
-        `${psLine({ name: "kovalio-api-1", image: "ghcr.io/oblien/kovalio-api:latest", composeProject: "kovalio" })}\n` +
+        `${psLine({ name: "kovalio-api-1", image: "ghcr.io/oblien/openship-api:latest", composeProject: "kovalio" })}\n` +
           psLine({
             name: "kovalio-postgres-1",
             image: "postgres:16-alpine",

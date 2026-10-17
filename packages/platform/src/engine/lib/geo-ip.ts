@@ -26,7 +26,7 @@ const DB_FILE = "GeoLite2-Country.mmdb";
 /** Fallback download source — OUR repo copy, not a third party. */
 const DB_URL =
   process.env.KOVALIO_GEOIP_URL?.trim() ||
-  `https://raw.githubusercontent.com/oblien/kovalio/main/apps/api/assets/geoip/${DB_FILE}`;
+  `https://raw.githubusercontent.com/Nextrium/kovalio/main/apps/api/assets/geoip/${DB_FILE}`;
 
 const native = process.env.KOVALIO_NATIVE === "true";
 const CACHE_PATH = native ? null : join(homedir(), ".kovalio", "cache", DB_FILE);

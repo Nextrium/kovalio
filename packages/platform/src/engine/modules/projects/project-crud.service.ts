@@ -2385,7 +2385,7 @@ export async function resolveUpstreamDrift(
   const mode = driftMode(p);
 
   if (mode === "release") {
-    // Self-app + webmail ship from the oblien/kovalio release stream but carry
+    // Self-app + webmail ship from the Nextrium/kovalio release stream but carry
     // no releaseSource (they deploy via localPath/migration), so they'd otherwise
     // fall through to unsupported.
     if (!isReleaseProvider(p.gitProvider)) {

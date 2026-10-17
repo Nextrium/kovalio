@@ -23,7 +23,7 @@ $ProgressPreference = "SilentlyContinue"  # PS5.1's progress bar cripples downlo
 function Info($m) { Write-Host "==> $m" -ForegroundColor Cyan }
 function Fail($m) { Write-Error $m; exit 1 }
 
-$Repo      = "oblien/kovalio"
+$Repo      = "Nextrium/kovalio"
 $NodeMajor = 22
 $NodeDist  = "https://nodejs.org/dist"
 

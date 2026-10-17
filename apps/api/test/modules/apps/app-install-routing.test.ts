@@ -127,7 +127,7 @@ it("installs generic Cloud webmail with encrypted client secrets and no managed-
   });
   expect(createServiceMock).toHaveBeenCalledOnce();
   expect(createServiceMock.mock.calls[0]?.[2]).toMatchObject({
-    name: "webmail", image: "ghcr.io/oblien/kovalio-webmail:latest",
+    name: "webmail", image: "ghcr.io/oblien/openship-webmail:latest",
   });
   const vars = setEnvMock.mock.calls.find(call => call[2] === "svc-webmail")?.[3].vars;
   for (const key of ["SESSION_ENCRYPTION_KEY", "BRANDING_ADMIN_TOKEN"]) {

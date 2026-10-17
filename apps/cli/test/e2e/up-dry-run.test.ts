@@ -57,7 +57,7 @@ vi.mock("../../src/lib/compose", () => ({
     composeFile: `${HOME}/compose/docker-compose.yml`,
     envFile: `${HOME}/compose/.env`,
     installMethodFile: `${HOME}/install-method`,
-    yaml: "services:\n  api:\n    image: ghcr.io/oblien/kovalio-api:latest\n",
+    yaml: "services:\n  api:\n    image: ghcr.io/oblien/openship-api:latest\n",
     settings: [{ key: "API_PORT", value: "4000" }],
     newSecrets: ["POSTGRES_PASSWORD", "BETTER_AUTH_SECRET", "INTERNAL_TOKEN"],
     existing: false,
@@ -217,7 +217,7 @@ describe("kovalio up --dry-run", () => {
     expect(out).toContain("docker compose pull");
     expect(out).toContain("docker compose up -d");
     // The compose file itself, as it would be written.
-    expect(out).toContain("ghcr.io/oblien/kovalio-api:latest");
+    expect(out).toContain("ghcr.io/oblien/openship-api:latest");
   });
 
   it("resolves ports WITHOUT persisting them", async () => {

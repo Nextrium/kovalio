@@ -32,7 +32,7 @@ import {
  */
 const KOVALIO_SOURCE: ReleaseSource = {
   mode: "github",
-  repo: "oblien/kovalio",
+  repo: "Nextrium/kovalio",
   assetTemplate: "kovalio-{tag}-linux-amd64.tar.gz",
 };
 

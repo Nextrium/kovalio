@@ -38,7 +38,7 @@ const CONTAINER = {
   flavor: "container" as const,
   running: true,
   exists: true,
-  image: "ghcr.io/oblien/kovalio-mail:0.6.1",
+  image: "ghcr.io/oblien/openship-mail:0.6.1",
 };
 const NONE = { flavor: "none" as const, running: false, exists: false, image: null };
 

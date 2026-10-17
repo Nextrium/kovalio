@@ -108,7 +108,7 @@ export interface UpdateState {
   latestChangelogUrl: string;
 }
 
-export const GITHUB_REPO = "oblien/kovalio";
+export const GITHUB_REPO = "Nextrium/kovalio";
 
 /** GitHub API: the latest published (non-prerelease) release. */
 export const RELEASES_LATEST_API = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;

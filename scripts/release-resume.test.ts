@@ -43,7 +43,7 @@ const resumedWorkflow = workflow.replace(
         if: ${RESUME_GUARD}
 `,
 );
-const repository = "oblien/kovalio";
+const repository = "Nextrium/kovalio";
 const run: ResumeRun = {
   id: 123,
   head_sha: "a".repeat(40),

@@ -140,7 +140,7 @@ export function renderOgImage({
             nextrium.org
           </div>
           <div style={{ display: "flex", gap: 28 }}>
-            <span>github.com/oblien/kovalio</span>
+            <span>github.com/Nextrium/kovalio</span>
           </div>
         </div>
       </div>

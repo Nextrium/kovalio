@@ -109,7 +109,7 @@ export default function DownloadPage() {
 
   useEffect(() => {
     let alive = true;
-    fetch("https://api.github.com/repos/oblien/kovalio/releases/latest", {
+    fetch("https://api.github.com/repos/Nextrium/kovalio/releases/latest", {
       headers: { Accept: "application/vnd.github+json" },
     })
       .then((r) => (r.ok ? r.json() : null))

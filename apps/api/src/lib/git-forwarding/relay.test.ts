@@ -42,7 +42,7 @@ describe("git credential relay helper", () => {
         "auth-header",
         "https",
         "github.com",
-        "oblien/kovalio.git",
+        "Nextrium/kovalio.git",
       ]);
 
       expect(stderr).toBe("");
@@ -50,7 +50,7 @@ describe("git credential relay helper", () => {
         `Authorization: Basic ${Buffer.from("x-access-token:gho_test-only").toString("base64")}`,
       );
       await expect(requestReceived).resolves.toBe(
-        "test-nonce\nprotocol=https\nhost=github.com\npath=oblien/kovalio.git\n\n",
+        "test-nonce\nprotocol=https\nhost=github.com\npath=Nextrium/kovalio.git\n\n",
       );
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));

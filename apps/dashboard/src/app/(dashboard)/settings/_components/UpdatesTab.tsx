@@ -142,7 +142,7 @@ export function UpdatesTab() {
         <p className="text-[13.5px] leading-relaxed text-muted-foreground">
           {t.settings.updates.security1} <span className="font-medium text-foreground">{t.settings.updates.securityOnlyGithub}</span> {t.settings.updates.security2}
           <a href="https://github.com/Nextrium/kovalio" target="_blank" rel="noopener noreferrer" className="text-foreground underline underline-offset-4">
-            github.com/oblien/kovalio
+            github.com/Nextrium/kovalio
           </a>
           {t.settings.updates.security3} <span className="font-medium text-foreground">{t.settings.updates.securityPulls}</span> {t.settings.updates.security4}
         </p>

@@ -7,6 +7,8 @@
 // Run after every upstream merge (the Upstream Sync workflow does this) so new or
 // moved upstream files are branded too. CI runs --check so branding can't regress.
 //
+// Base64 literals that decode to branded text are rebranded too (see BASE64_LITERAL).
+//
 // Only git-visible files are touched (tracked + untracked-not-ignored), so build
 // output and node_modules are never rewritten. A line containing `brand-guard:keep`
 // is left verbatim, for places that must name the upstream project.
@@ -27,11 +29,25 @@ const BINARY_EXTENSIONS = new Set([
   ".tgz", ".exe", ".dll", ".so", ".dylib", ".db", ".sqlite", ".lockb", ".mp4", ".webm",
 ]);
 
+// Container images upstream publishes (ghcr.io/oblien/openship-edge, -api, -mail, ...)
+// keep their real names: the fork can't publish under the `oblien` namespace, so a
+// rebranded `oblien/kovalio-*` ref would never pull. Refs an earlier overlay already
+// rewrote are restored. To ship the fork's own images, map these to the registry
+// docker-images.yml pushes to (ghcr.io/nextrium/kovalio-*) once those images exist.
+const UPSTREAM_IMAGE = /([a-z0-9-]+\.[a-z0-9.-]+)\/oblien\/openship-([a-z0-9-]*)/g;
+const MISBRANDED_IMAGE = /([a-z0-9-]+\.[a-z0-9.-]+)\/oblien\/kovalio-([a-z0-9-]*)/g;
+// The upstream repo slug rebranded in place (`oblien/kovalio`) names no real repo.
+const MISBRANDED_REPO = /\boblien\/kovalio\b(?!-)/g;
+
 // Most specific first: URLs and domains before the bare brand word.
 const REPLACEMENTS = [
   [/https:\/\/github\.com\/oblien\/openship\.git/g, "https://github.com/Nextrium/kovalio.git"],
   [/https:\/\/github\.com\/oblien\/openship/g, "https://github.com/Nextrium/kovalio"],
   [/github\.com\/oblien\/openship/g, "github.com/Nextrium/kovalio"],
+  [/raw\.githubusercontent\.com\/oblien\/openship/g, "raw.githubusercontent.com/Nextrium/kovalio"],
+  [/api\.github\.com\/repos\/oblien\/openship/g, "api.github.com/repos/Nextrium/kovalio"],
+  [/\boblien\/openship\b(?!-)/g, "Nextrium/kovalio"],
+  [MISBRANDED_REPO, "Nextrium/kovalio"],
   [/noreply@openship\.io/g, "noreply@nextrium.org"],
   [/https:\/\/app\.openship\.io/g, "https://kovalio.nextrium.org"],
   [/https:\/\/api\.openship\.io/g, "https://api.nextrium.org"],
@@ -49,8 +65,38 @@ const REPLACEMENTS = [
   [/openship/gi, "kovalio"],
 ];
 
+// Generated modules embed sources as base64 (e.g. packages/adapters/src/infra/
+// lua-embedded.ts), where the brand is invisible to plain text replacement. A literal
+// is re-encoded only if it round-trips exactly and decodes to UTF-8 text carrying the
+// brand, so the result matches what the generator would emit from branded sources.
+const BASE64_LITERAL = /[A-Za-z0-9+/]{40,}={0,2}/g;
+
+function decodeBrandedBase64(token) {
+  const buf = Buffer.from(token, "base64");
+  if (buf.toString("base64") !== token) return null;
+  const decoded = buf.toString("utf8");
+  if (!Buffer.from(decoded, "utf8").equals(buf) || !/openship/i.test(decoded)) return null;
+  return decoded;
+}
+
 function rebrandText(text) {
-  const apply = (s) => REPLACEMENTS.reduce((acc, [pattern, to]) => acc.replace(pattern, to), s);
+  const plain = (s) => {
+    const images = [];
+    const masked = s
+      .replace(MISBRANDED_IMAGE, "$1/oblien/openship-$2")
+      .replace(UPSTREAM_IMAGE, (ref) => `\u0000${images.push(ref) - 1}\u0000`);
+    return REPLACEMENTS.reduce((acc, [pattern, to]) => acc.replace(pattern, to), masked).replace(
+      /\u0000(\d+)\u0000/g,
+      (_, i) => images[Number(i)],
+    );
+  };
+  const apply = (s) =>
+    plain(
+      s.replace(BASE64_LITERAL, (token) => {
+        const decoded = decodeBrandedBase64(token);
+        return decoded === null ? token : Buffer.from(rebrandText(decoded), "utf8").toString("base64");
+      }),
+    );
   if (!text.includes(KEEP_MARKER)) return apply(text);
   return text
     .split("\n")
@@ -115,7 +161,12 @@ for (const rel of listFiles()) {
   if (CHECK) {
     const lines = text.split("\n");
     lines.forEach((line, i) => {
-      if (/openship/i.test(line) && !line.includes(KEEP_MARKER)) findings.push(`${rel}:${i + 1}: ${line.trim().slice(0, 120)}`);
+      if (line.includes(KEEP_MARKER)) return;
+      if (/openship/i.test(line.replace(UPSTREAM_IMAGE, ""))) findings.push(`${rel}:${i + 1}: ${line.trim().slice(0, 120)}`);
+      else if (line.search(MISBRANDED_REPO) !== -1) findings.push(`${rel}:${i + 1}: nonexistent repo ${line.trim().slice(0, 100)}`);
+      else if (line.search(MISBRANDED_IMAGE) !== -1) findings.push(`${rel}:${i + 1}: unpublished image ${line.trim().slice(0, 100)}`);
+      else if ([...line.matchAll(BASE64_LITERAL)].some(([t]) => decodeBrandedBase64(t) !== null))
+        findings.push(`${rel}:${i + 1}: base64-encoded branding`);
     });
     continue;
   }

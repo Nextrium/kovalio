@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { assetUrl, RELEASES, REPO } from "../../src/lib/github-releases";
 
 describe("github-releases constants", () => {
-  it("points at the oblien/kovalio releases page", () => {
-    expect(REPO).toBe("oblien/kovalio");
+  it("points at the Nextrium/kovalio releases page", () => {
+    expect(REPO).toBe("Nextrium/kovalio");
     expect(RELEASES).toBe("https://github.com/Nextrium/kovalio/releases");
   });
 });

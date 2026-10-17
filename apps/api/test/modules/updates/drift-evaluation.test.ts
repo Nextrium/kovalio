@@ -280,7 +280,7 @@ describe("cache keys — a repointed source is a miss, not stale drift", () => {
   it("ignores a version polled from a different release source", async () => {
     const polledOn = gitProject({
       gitProvider: "release",
-      releaseSource: { mode: "github", repo: "oblien/kovalio" } as never,
+      releaseSource: { mode: "github", repo: "Nextrium/kovalio" } as never,
     });
     const upstream: UpstreamDrift = {
       supported: true,
@@ -304,7 +304,7 @@ describe("cache keys — a repointed source is a miss, not stale drift", () => {
   it("still reports real release drift when the source matches", async () => {
     const p = gitProject({
       gitProvider: "release",
-      releaseSource: { mode: "github", repo: "oblien/kovalio" } as never,
+      releaseSource: { mode: "github", repo: "Nextrium/kovalio" } as never,
     });
     deploymentRepo.findById.mockResolvedValue({ id: "dep_live", projectId: "proj_1", organizationId: "org_1", releaseVersion: "0.5.0" });
 
@@ -324,7 +324,7 @@ describe("cache keys — a repointed source is a miss, not stale drift", () => {
   });
 
   it("tracks a matching release while it deploys and an update through cleanup", async () => {
-    const p = gitProject({ gitProvider: "release", releaseSource: { mode: "github", repo: "oblien/kovalio" } as never });
+    const p = gitProject({ gitProvider: "release", releaseSource: { mode: "github", repo: "Nextrium/kovalio" } as never });
     const upstream: UpstreamDrift = { supported: true, mode: "release", key: releaseSourceKey(p), latestVersion: "0.6.0", pinned: false };
     deploymentRepo.findById.mockResolvedValue({ id: "dep_live", projectId: p.id, organizationId: p.organizationId, releaseVersion: "0.5.0" });
     deploymentRepo.listInFlightByProject.mockResolvedValue([{ id: "dep_release", releaseVersion: "0.6.0", trigger: "webhook" }]);

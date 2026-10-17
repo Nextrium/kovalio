@@ -32,14 +32,14 @@ describe("pinnedEdgeImage", () => {
   it("pins the tag to this API's own version (no checkout → published tag)", () => {
     clearRefEnv();
     process.env.KOVALIO_EDGE_BUILD_CONTEXT = NO_CHECKOUT;
-    expect(pinnedEdgeImage()).toBe(`ghcr.io/oblien/kovalio-edge:${APP_VERSION}`);
+    expect(pinnedEdgeImage()).toBe(`ghcr.io/oblien/openship-edge:${APP_VERSION}`);
   });
 
   it("honours a configured registry", () => {
     clearRefEnv();
     process.env.KOVALIO_IMAGE_REGISTRY = "docker.io/oblien";
     process.env.KOVALIO_EDGE_BUILD_CONTEXT = NO_CHECKOUT;
-    expect(pinnedEdgeImage()).toBe(`docker.io/oblien/kovalio-edge:${APP_VERSION}`);
+    expect(pinnedEdgeImage()).toBe(`docker.io/oblien/openship-edge:${APP_VERSION}`);
   });
 
   it("suffixes the tag with a content hash when a source checkout is present", () => {

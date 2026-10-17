@@ -23,7 +23,7 @@ set -eu
 info() { printf '\033[36m==>\033[0m %s\n' "$1"; }
 err()  { printf '\033[31merror:\033[0m %s\n' "$1" >&2; }
 
-REPO="oblien/kovalio"
+REPO="Nextrium/kovalio"
 NODE_MAJOR=22
 NODE_DIST="https://nodejs.org/dist"
 

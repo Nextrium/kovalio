@@ -79,7 +79,7 @@ interface UpOpts {
   ref?: string;
   /** Build from an existing local checkout instead of cloning. */
   source?: string;
-  /** Git remote to clone for --from-source (default: oblien/kovalio). */
+  /** Git remote to clone for --from-source (default: Nextrium/kovalio). */
   repo?: string;
   /** Install via Docker Compose (published images). Default when Docker is present on Linux. */
   compose?: boolean;
@@ -230,7 +230,7 @@ export const upCommand = new Command("up")
   .option("--from-source", "Preview: build + run Kovalio from source (a branch) instead of a published release — runs attached")
   .option("--ref <branch>", "Git branch/tag/sha to build with --from-source (default: main)")
   .option("--source <path>", "Build from an existing local Kovalio checkout instead of cloning")
-  .option("--repo <url>", "Git remote to clone for --from-source (default: oblien/kovalio)")
+  .option("--repo <url>", "Git remote to clone for --from-source (default: Nextrium/kovalio)")
   .option("--compose", "Install via Docker Compose using the published images (postgres + redis + api + dashboard + edge on :80/:443). Default when Docker is available on Linux.")
   .option("--bare", "Install as the bare process service (embedded DB, no Docker) instead of Compose")
   .option(

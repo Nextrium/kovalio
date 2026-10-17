@@ -6,7 +6,7 @@
  */
 import { parseSha256 } from "./cache";
 
-export const REPO = "oblien/kovalio";
+export const REPO = "Nextrium/kovalio";
 export const RELEASES = `https://github.com/${REPO}/releases`;
 const LATEST_API = `https://api.github.com/repos/${REPO}/releases/latest`;
 
