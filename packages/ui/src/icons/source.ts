@@ -21,7 +21,7 @@ export function isIconName(value: string): value is IconName {
 
 /** Local and CDN installations share filenames; only this prefix changes. */
 export function iconAssetUrl(asset: IconAsset, baseUrl = LOCAL_ICON_BASE_URL): string {
-  const base = baseUrl.trim().replace(/\/+$/, "");
+  const base = baseUrl.trim().replace(/(?<!\/)\/+$/, "");
   return `${base || LOCAL_ICON_BASE_URL}/${encodeURIComponent(asset.file)}`;
 }
 

@@ -89,7 +89,7 @@ export async function dispatchTool(
   }
   // The registry stores root routes as `${basePath}/` (trailing slash), which
   // Hono's router 404s. Normalize to the no-trailing-slash form the routes match.
-  path = path.replace(/\/+$/, "") || "/";
+  path = path.replace(/(?<!\/)\/+$/, "") || "/";
 
   // Query string (optional `query` object arg).
   const url = new URL(path, INTERNAL_BASE);

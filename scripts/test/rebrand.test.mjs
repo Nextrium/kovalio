@@ -45,3 +45,38 @@ test("is idempotent", () => {
   const once = rebrandText("Openship at ghcr.io/oblien/openship-edge, https://openship.io");
   assert.equal(rebrandText(once), once);
 });
+
+test("hardens standalone trailing-run regexes and leaves other forms alone", async () => {
+  const { hardenText } = await import("../rebrand-kovalio.mjs");
+  assert.equal(hardenText(String.raw`p.replace(/\/+$/, "")`, "a.ts"), String.raw`p.replace(/(?<!\/)\/+$/, "")`);
+  assert.equal(hardenText(String.raw`p.replace(/^\/+|\/+$/g, "")`, "a.ts"), String.raw`p.replace(/^\/+|(?<!\/)\/+$/g, "")`);
+  assert.equal(hardenText(String.raw`h.replace(/\.+$/, "")`, "a.mjs"), String.raw`h.replace(/(?<!\.)\.+$/, "")`);
+  const captured = String.raw`m.match(/(.*)\/+$/)`;
+  assert.equal(hardenText(captured, "a.ts"), captured);
+  assert.equal(hardenText(String.raw`x.replace(/\/+$/, "")`, "README.md"), String.raw`x.replace(/\/+$/, "")`);
+});
+
+test("hardened regexes match exactly what the originals match", () => {
+  const pairs = [
+    [/\/+$/, /(?<!\/)\/+$/],
+    [/^\/+|\/+$/g, /^\/+|(?<!\/)\/+$/g],
+    [/\.+$/, /(?<!\.)\.+$/],
+    [/^\.+|\.+$/g, /^\.+|(?<!\.)\.+$/g],
+    [/[ \t]+#+$/, /(?<![ \t])[ \t]+#+$/],
+  ];
+  const alphabet = ["/", ".", " ", "\t", "#", "a"];
+  const strings = [""];
+  for (let len = 1, frontier = [""]; len <= 6; len++) {
+    frontier = frontier.flatMap((s) => alphabet.map((c) => s + c));
+    strings.push(...frontier);
+  }
+  for (const [original, hardened] of pairs)
+    for (const s of strings) assert.equal(s.replace(hardened, "<>"), s.replace(original, "<>"), `${original} on ${JSON.stringify(s)}`);
+});
+
+test("hardened regexes are linear on long runs", () => {
+  const run = `a${"/".repeat(200_000)}x`;
+  const start = performance.now();
+  run.replace(/^\/+|(?<!\/)\/+$/g, "");
+  assert.ok(performance.now() - start < 250);
+});

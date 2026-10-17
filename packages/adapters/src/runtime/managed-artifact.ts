@@ -51,7 +51,7 @@ const PROTECTED_ROOTS = new Set([
  *  are the same protected root and a boundary test can't be fooled by one. */
 function canonical(ref: string): string {
   const trimmed = ref.trim();
-  return trimmed.length > 1 ? trimmed.replace(/\/+$/, "") : trimmed;
+  return trimmed.length > 1 ? trimmed.replace(/(?<!\/)\/+$/, "") : trimmed;
 }
 
 /**

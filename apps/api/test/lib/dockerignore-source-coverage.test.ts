@@ -58,7 +58,7 @@ function parsePatterns(lines: string[]): Pattern[] {
       const exception = raw.startsWith("!");
       const cleaned = (exception ? raw.slice(1).trim() : raw)
         .replace(/^\/+/, "")
-        .replace(/\/+$/, "");
+        .replace(/(?<!\/)\/+$/, "");
       return { raw, exception, re: toRegex(cleaned) };
     });
 }

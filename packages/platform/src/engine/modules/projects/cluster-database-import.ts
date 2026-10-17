@@ -60,7 +60,7 @@ export async function databaseImportSource(
     );
   const destination = await repos.backupDestination.findById(run.destinationId);
   assertResourceInOrg(destination, "Backup destination", ctx.organizationId, run.destinationId);
-  const prefix = (destination.pathPrefix ?? "").replace(/^\/+|\/+$/g, "");
+  const prefix = (destination.pathPrefix ?? "").replace(/^\/+|(?<!\/)\/+$/g, "");
   const source: ClusterDatabaseRestoreSource = {
     format: "backup-artifact",
     backupRunId: run.id,

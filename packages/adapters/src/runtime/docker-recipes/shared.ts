@@ -30,7 +30,7 @@ export function normalizeRelativePath(value?: string): string {
   const normalized = value
     ?.trim()
     .replace(/^\.\//, "")
-    .replace(/^\/+|\/+$/g, "");
+    .replace(/^\/+|(?<!\/)\/+$/g, "");
   if (!normalized || normalized === ".") {
     return "";
   }

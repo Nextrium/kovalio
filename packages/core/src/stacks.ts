@@ -1316,7 +1316,7 @@ export function nodeBinDirs(packageManager: string | undefined, roots: string[])
   if (!packageManager || !NODE_BIN_PACKAGE_MANAGERS.has(packageManager)) return [];
   const dirs: string[] = [];
   for (const root of roots) {
-    const dir = `${root.replace(/\/+$/, "")}/node_modules/.bin`;
+    const dir = `${root.replace(/(?<!\/)\/+$/, "")}/node_modules/.bin`;
     if (!dirs.includes(dir)) dirs.push(dir);
   }
   return dirs;

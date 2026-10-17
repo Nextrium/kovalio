@@ -1163,7 +1163,7 @@ export async function linkProjectRepo(
         (diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/projects/project-crud.service"); return null; },
       );
       const gitUrl = sourceWebBaseUrl
-        ? `${sourceWebBaseUrl.replace(/\/+$/, "")}/${owner}/${repo}.git`
+        ? `${sourceWebBaseUrl.replace(/(?<!\/)\/+$/, "")}/${owner}/${repo}.git`
         : projectGitUrl(owner, repo);
       const defaultBranch = await resolveDefaultBranch(ctx, owner, repo, input.branch);
       // A project_app is one source identity even if an old/partial write left its
@@ -1877,7 +1877,7 @@ async function updateProjectUnlocked(
   // deployable service would force-rebuild every service on every push
   // to web (defeating the point of smart per-service deploys).
   if (data.monorepoSharedPaths !== undefined && data.monorepoSharedPaths !== null) {
-    const normalize = (s: string) => s.trim().replace(/^\/+/, "").replace(/\/+$/, "").toLowerCase();
+    const normalize = (s: string) => s.trim().replace(/^\/+/, "").replace(/(?<!\/)\/+$/, "").toLowerCase();
     const prefixes = data.monorepoSharedPaths.map(normalize).filter((s) => s.length > 0);
     if (prefixes.length > 0) {
       const services = await repos.service.listByProject(projectId).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/projects/project-crud.service"); return []; });

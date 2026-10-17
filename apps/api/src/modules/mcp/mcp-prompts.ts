@@ -32,7 +32,7 @@ interface PromptDef {
 
 /** Resolve a route (method + full path) to its generated MCP tool name. */
 function toolRef(method: string, path: string): string {
-  const t = getMcpTools().find((x) => x.method === method && x.path.replace(/\/+$/, "") === path.replace(/\/+$/, ""));
+  const t = getMcpTools().find((x) => x.method === method && x.path.replace(/(?<!\/)\/+$/, "") === path.replace(/(?<!\/)\/+$/, ""));
   return t ? t.name : `${method} ${path}`;
 }
 

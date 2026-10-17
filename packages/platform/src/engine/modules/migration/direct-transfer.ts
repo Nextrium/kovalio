@@ -344,7 +344,7 @@ export function rsyncCommand(
 
 /** Parent directory of an absolute path (for `mkdir -p` before an rsync). */
 function parentDir(p: string): string {
-  const trimmed = p.replace(/\/+$/, "");
+  const trimmed = p.replace(/(?<!\/)\/+$/, "");
   const idx = trimmed.lastIndexOf("/");
   return idx <= 0 ? "/" : trimmed.slice(0, idx);
 }

@@ -36,7 +36,7 @@ export class TaskArchiveStore {
     )
       throw new Error("Invalid saved backup location.");
     this.bucket = destination.hostname;
-    this.prefix = destination.pathname.replace(/^\/+|\/+$/g, "");
+    this.prefix = destination.pathname.replace(/^\/+|(?<!\/)\/+$/g, "");
     this.client = new S3Client({
       endpoint: credentials.endpoint || undefined,
       region: credentials.region,

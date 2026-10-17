@@ -77,7 +77,7 @@ async function cfFetch<T>(token:string,path:string,options?:RequestInit):Promise
 
 /** Trailing dots and case are not part of a name's identity. */
 function normalizeName(name: string): string {
-  return name.trim().toLowerCase().replace(/\.+$/, "");
+  return name.trim().toLowerCase().replace(/(?<!\.)\.+$/, "");
 }
 
 function toRecord(r: CfDnsRecordItem): DnsRecord {

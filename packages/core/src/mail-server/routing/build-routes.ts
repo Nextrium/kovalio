@@ -245,7 +245,7 @@ function buildDnsRecords(input: MailServerRouteInput): MailDnsRecord[] {
 
 function normalizeInput(input: MailServerRouteInput): MailServerRouteInput {
   return {
-    userDomain: input.userDomain.trim().toLowerCase().replace(/^\.+|\.+$/g, ""),
+    userDomain: input.userDomain.trim().toLowerCase().replace(/^\.+|(?<!\.)\.+$/g, ""),
     mailServerIp: input.mailServerIp.trim(),
     zeroServerOrigin: input.zeroServerOrigin.trim(),
     zeroClientOrigin: input.zeroClientOrigin.trim(),

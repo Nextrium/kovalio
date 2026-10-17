@@ -450,7 +450,7 @@ export async function runBuildPipeline(
 }
 
 function resolveBuildDirectory(projectDir: string, rootDirectory?: string): string {
-  const normalized = rootDirectory?.trim().replace(/^\/+|\/+$/g, "");
+  const normalized = rootDirectory?.trim().replace(/^\/+|(?<!\/)\/+$/g, "");
   if (!normalized || normalized === ".") {
     return projectDir;
   }

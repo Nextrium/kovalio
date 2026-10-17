@@ -55,7 +55,7 @@ export class HttpClient {
     const url = new URL(options.baseUrl);
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash)
       throw new TypeError("baseUrl must be an HTTP(S) instance URL without credentials, query, or fragment");
-    const base = url.href.replace(/\/+$/, "");
+    const base = url.href.replace(/(?<!\/)\/+$/, "");
     this.apiUrl = base.endsWith("/api") ? base : base + "/api";
     const org = options.organizationId;
     if (options.internalToken !== undefined && (options.token !== undefined || org !== undefined))

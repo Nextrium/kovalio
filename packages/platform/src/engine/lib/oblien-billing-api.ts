@@ -290,7 +290,7 @@ export class OblienBillingApi {
       (url.protocol !== "https:" && !(url.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)))) {
       throw new Error("Oblien API URL must use HTTPS (HTTP is allowed for localhost tests)");
     }
-    this.baseUrl = url.toString().replace(/\/+$/, "");
+    this.baseUrl = url.toString().replace(/(?<!\/)\/+$/, "");
     this.fetcher = options.fetch ?? fetch;
     // The SDK has no client-wide fetch/timeout option. Replace this transport
     // so the official billing module owns endpoints and request formatting while

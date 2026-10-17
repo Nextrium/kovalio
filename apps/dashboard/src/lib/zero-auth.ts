@@ -49,7 +49,7 @@ export function resolveZeroAuthLogin(input: {
   if (attemptedAt !== undefined && now - attemptedAt >= 0 && now - attemptedAt < BOUNCE_WINDOW_MS) {
     return { action: "explain", reason: "refused" };
   }
-  return { action: "redirect", url: `${apiBaseUrl.replace(/\/+$/, "")}/auth/desktop-login` };
+  return { action: "redirect", url: `${apiBaseUrl.replace(/(?<!\/)\/+$/, "")}/auth/desktop-login` };
 }
 
 /* sessionStorage is per-tab and unavailable in some privacy modes — a throw here

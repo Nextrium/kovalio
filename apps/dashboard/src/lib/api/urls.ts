@@ -87,10 +87,10 @@ function localApiOverride(): string | null {
   if (typeof window !== "undefined") {
     const injected = (window as { __KOVALIO_API_ORIGIN__?: string }).__KOVALIO_API_ORIGIN__;
     if (!injected) return null;
-    return alignLoopbackOrigin(injected.replace(/\/+$/, ""), window.location.origin);
+    return alignLoopbackOrigin(injected.replace(/(?<!\/)\/+$/, ""), window.location.origin);
   }
   const env = process.env.KOVALIO_LOCAL_API_URL;
-  return env ? env.replace(/\/+$/, "") : null;
+  return env ? env.replace(/(?<!\/)\/+$/, "") : null;
 }
 
 // ─── Public exports ─────────────────────────────────────────────────────────

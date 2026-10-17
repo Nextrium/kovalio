@@ -60,7 +60,7 @@ class LocalDestinationImpl implements BackupDestination {
     // that keys are destination-relative, a local destination with a prefix would
     // otherwise stop nesting under it — silently, and only for new runs.
     const base = resolve(row.endpoint);
-    const prefix = (row.pathPrefix ?? "").replace(/^\/+|\/+$/g, "");
+    const prefix = (row.pathPrefix ?? "").replace(/^\/+|(?<!\/)\/+$/g, "");
     this.root = prefix ? resolve(base, prefix) : base;
     this.legacyRoot = prefix ? base : null;
   }

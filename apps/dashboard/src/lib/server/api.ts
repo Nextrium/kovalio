@@ -128,8 +128,8 @@ function getServerApiBaseUrl(requestHeaders: Headers): string {
   let origin: string;
   // Desktop: the API runs on a dynamic port Electron injects here. Wins over
   // the header→table fallback (which can't know a dynamic port).
-  const localOverride = process.env.KOVALIO_LOCAL_API_URL?.replace(/\/+$/, "");
-  const internal = process.env.INTERNAL_API_URL?.replace(/\/+$/, "");
+  const localOverride = process.env.KOVALIO_LOCAL_API_URL?.replace(/(?<!\/)\/+$/, "");
+  const internal = process.env.INTERNAL_API_URL?.replace(/(?<!\/)\/+$/, "");
   if (localOverride) {
     origin = localOverride;
   } else if (internal) {

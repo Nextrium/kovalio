@@ -64,7 +64,7 @@ function internalApiBase(): string {
   // KOVALIO_LOCAL_API_URL — targets its real API instead of the :4000 default.
   const url =
     process.env.INTERNAL_API_URL ?? process.env.KOVALIO_LOCAL_API_URL ?? "http://127.0.0.1:4000";
-  return url.replace(/\/+$/, "");
+  return url.replace(/(?<!\/)\/+$/, "");
 }
 
 function buildUpstreamUrl(req: NextRequest, pathSegments: string[]): URL {

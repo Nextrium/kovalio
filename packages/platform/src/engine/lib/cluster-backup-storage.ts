@@ -41,7 +41,7 @@ export async function resolveClusterBackupStorage(
         "CLUSTER_DATABASE_BACKUP_DESTINATION",
       );
   }
-  const prefix = (destination.pathPrefix ?? "").replace(/^\/+|\/+$/g, "");
+  const prefix = (destination.pathPrefix ?? "").replace(/^\/+|(?<!\/)\/+$/g, "");
   if (/[\x00-\x1f\x7f]/.test(prefix) || prefix.split("/").includes(".."))
     throw new AppError(
       "The backup destination prefix contains an unsupported path.",

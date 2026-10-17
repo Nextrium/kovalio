@@ -51,7 +51,7 @@ export async function probeTarget(
   opts: { fetchImpl?: typeof fetch; timeoutMs?: number } = {},
 ): Promise<TargetProbe> {
   const f = opts.fetchImpl ?? fetch;
-  const url = baseUrl.replace(/\/+$/, "");
+  const url = baseUrl.replace(/(?<!\/)\/+$/, "");
   try {
     const res = await f(`${url}/api/health`, { signal: AbortSignal.timeout(opts.timeoutMs ?? 10000) });
     const data = (await res.json().catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "api/modules/system/migration/target-probe"); return ({}); })) as { status?: string; cloudMode?: boolean };

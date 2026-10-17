@@ -437,7 +437,7 @@ function resolveStaticRoot(root: string, prefix?: string): { root: string } | { 
         `which this host didn't report`,
     };
   }
-  return { root: `${prefix.replace(/\/+$/, "")}/${root}` };
+  return { root: `${prefix.replace(/(?<!\/)\/+$/, "")}/${root}` };
 }
 
 function parseServer(

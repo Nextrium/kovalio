@@ -150,7 +150,7 @@ class SftpDestinationImpl implements BackupDestination {
       ...(password ? { password } : {}),
       ...(privateKey ? { privateKey, ...(passphrase ? { passphrase } : {}) } : {}),
     };
-    this.rootPath = (row.pathPrefix ?? "/").replace(/\/+$/, "") || "/";
+    this.rootPath = (row.pathPrefix ?? "/").replace(/(?<!\/)\/+$/, "") || "/";
   }
 
   private fullPath(key: string): string {

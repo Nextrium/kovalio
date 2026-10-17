@@ -39,7 +39,7 @@ export function volumeAutoName(path: string): string {
   const cleaned = path
     .trim()
     .replace(/^\.\//, "")
-    .replace(/^\/+|\/+$/g, "")
+    .replace(/^\/+|(?<!\/)\/+$/g, "")
     .replace(/[^A-Za-z0-9._-]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return cleaned || "data";
@@ -66,7 +66,7 @@ export function normalizeAppVolume(spec: string, appDir: string = APP_DIR): stri
   // Already `source:target` (2 segments, or 3 on Windows-style `C:\x:/y`).
   if (body.split(":").length >= 2) return raw;
 
-  const path = body.replace(/^\.\//, "").replace(/\/+$/g, "");
+  const path = body.replace(/^\.\//, "").replace(/(?<!\/)\/+$/g, "");
   if (!path) return null;
   // A `..` segment resolves the mount outside the app dir (`../secret`,
   // `/app/../secret` → `/secret`) — which the app-relative auto-name and the
@@ -75,7 +75,7 @@ export function normalizeAppVolume(spec: string, appDir: string = APP_DIR): stri
   // source-access.ts. Explicit `source:target` binds are handled above and keep
   // full control.
   if (path.split("/").includes("..")) return null;
-  const target = path.startsWith("/") ? path : `${appDir.replace(/\/+$/, "")}/${path}`;
+  const target = path.startsWith("/") ? path : `${appDir.replace(/(?<!\/)\/+$/, "")}/${path}`;
   // The auto-name is derived from the path RELATIVE to the app dir, so
   // `storage` and `/app/storage` produce the same volume — declaring it either
   // way must not create a second, empty volume.

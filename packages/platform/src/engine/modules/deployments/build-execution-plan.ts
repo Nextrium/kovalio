@@ -127,7 +127,7 @@ export function resolveDeployRouting(input: {
     // Validate both offsets using the same confinement as publication, then save
     // the document root relative to the release so routing and rollback agree.
     const buildRoot = "/build";
-    const rootDirectory = input.rootDirectory?.trim().replace(/^\/+|\/+$/g, "") ?? "";
+    const rootDirectory = input.rootDirectory?.trim().replace(/^\/+|(?<!\/)\/+$/g, "") ?? "";
     const projectRoot = resolveStaticOutputPath(buildRoot, rootDirectory);
     staticServeOutputDir = posix.relative(
       buildRoot,

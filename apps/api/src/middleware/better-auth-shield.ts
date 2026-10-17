@@ -147,7 +147,7 @@ async function extractTargetOrgId(
   c: Context,
   fallbackSessionOrg: string | null,
 ): Promise<string | null> {
-  const path = c.req.path.replace(/\/+$/, "");
+  const path = c.req.path.replace(/(?<!\/)\/+$/, "");
   if (c.req.method === "GET") {
     const slug = c.req.query("organizationSlug");
     if (slug && SLUG_READ_PATHS.has(path)) {
@@ -188,7 +188,7 @@ const SLUG_READ_PATHS = new Set([
 export async function betterAuthShield(c: Context, next: Next) {
   // Hono's c.req.path strips query string already; normalise just in
   // case a trailing slash slips in.
-  const path = c.req.path.replace(/\/+$/, "");
+  const path = c.req.path.replace(/(?<!\/)\/+$/, "");
   if (!ALL_PROTECTED.has(path)) return next();
 
   // Methods other than GET/POST never hit the org plugin's mutating

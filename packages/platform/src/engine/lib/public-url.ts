@@ -46,7 +46,7 @@ let cacheGeneration = 0;
  *  verified primary domain, else null (callers fall back to the runtime target). */
 function publicUrl(): string | null {
   const raw = env.KOVALIO_PUBLIC_URL?.trim();
-  if (raw) return raw.replace(/\/+$/, "");
+  if (raw) return raw.replace(/(?<!\/)\/+$/, "");
   return cachedSelfAppUrl;
 }
 
@@ -57,7 +57,7 @@ function publicUrl(): string | null {
  */
 function advertisedOrigin(): string | null {
   const raw = env.KOVALIO_ADVERTISED_ORIGIN?.trim();
-  return raw ? raw.replace(/\/+$/, "") : null;
+  return raw ? raw.replace(/(?<!\/)\/+$/, "") : null;
 }
 
 /** Locate the self-app project id (cloud-linked or founding-admin org). */
@@ -144,7 +144,7 @@ export async function getInstanceReachability(): Promise<InstanceReachability> {
   if (envUrl) {
     return {
       configured: true,
-      url: envUrl.replace(/\/+$/, ""),
+      url: envUrl.replace(/(?<!\/)\/+$/, ""),
       source: "env",
       selfAppInstalled: false,
       selfAppProjectId: null,

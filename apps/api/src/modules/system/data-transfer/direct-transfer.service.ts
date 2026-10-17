@@ -147,7 +147,7 @@ function normalizeApiBase(raw: string): string {
       "The destination URL cannot contain credentials, query parameters, or a fragment.",
     );
   }
-  url.pathname = `${url.pathname.replace(/\/+$/, "")}/`;
+  url.pathname = `${url.pathname.replace(/(?<!\/)\/+$/, "")}/`;
   return url.toString();
 }
 

@@ -143,7 +143,7 @@ function anchorDockerignorePattern(line: string): string {
   const negated = trimmed.startsWith("!");
   const pattern = negated ? trimmed.slice(1) : trimmed;
   if (!pattern || pattern.startsWith("/") || pattern.startsWith("**/")) return line;
-  if (pattern.replace(/\/+$/, "").includes("/")) return line;
+  if (pattern.replace(/(?<!\/)\/+$/, "").includes("/")) return line;
 
   return `${negated ? "!" : ""}/${pattern}`;
 }
@@ -327,7 +327,7 @@ async function materializeLocalSource(
   // where there is nothing gitignored to re-add — and passing "." would re-add the
   // whole directory, discarding git-truth and shipping `node_modules` for every
   // stack whose outputDirectory is "." (most backend ones).
-  const outDir = outputDirectory?.trim().replace(/^\.\//, "").replace(/^\/+|\/+$/g, "");
+  const outDir = outputDirectory?.trim().replace(/^\.\//, "").replace(/^\/+|(?<!\/)\/+$/g, "");
   const alsoInclude = outDir && outDir !== "." ? [outDir] : undefined;
   const { args, cleanup } = await prepareSourceTarArgs(sourcePath, { alsoInclude });
   try {

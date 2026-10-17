@@ -691,7 +691,7 @@ export async function listWebhooks(
 }
 
 function normalizeWebhookUrl(url?: string | null): string {
-  return (url ?? "").replace(/\/+$/, "");
+  return (url ?? "").replace(/(?<!\/)\/+$/, "");
 }
 
 /**

@@ -245,7 +245,7 @@ export function serviceMatchesChanges(
 ): boolean {
   const root = (rootDirectory ?? "").trim();
   if (!root || root === ".") return true;
-  const normalized = root.replace(/^\/+/, "").replace(/\/+$/, "");
+  const normalized = root.replace(/^\/+/, "").replace(/(?<!\/)\/+$/, "");
   const prefix = `${normalized}/`;
   for (const f of changedFiles) {
     if (f === normalized || f.startsWith(prefix)) return true;
