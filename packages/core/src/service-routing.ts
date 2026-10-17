@@ -158,7 +158,7 @@ export function normalizeServiceLabel(value: string): string {
   return value
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "service";
+    .replace(/^-+|(?<!-)-+$/g, "") || "service";
 }
 
 /**
@@ -175,7 +175,7 @@ export function normalizeAliasStrict(value: string | null | undefined): string |
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/^-+|(?<!-)-+$/g, "");
   if (!alias) return null;
   return alias.slice(0, MAX_SERVICE_LABEL_LENGTH);
 }
@@ -211,7 +211,7 @@ function labelHash(value: string): string {
 function clampServiceLabel(label: string): string {
   if (label.length <= MAX_SERVICE_LABEL_LENGTH) return label;
   const suffix = `-${labelHash(label)}`;
-  const head = label.slice(0, MAX_SERVICE_LABEL_LENGTH - suffix.length).replace(/-+$/, "");
+  const head = label.slice(0, MAX_SERVICE_LABEL_LENGTH - suffix.length).replace(/(?<!-)-+$/, "");
   return `${head}${suffix}`;
 }
 

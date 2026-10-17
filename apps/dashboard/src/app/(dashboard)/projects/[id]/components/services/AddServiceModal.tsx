@@ -339,7 +339,7 @@ export function AddServiceModal({ open, projectId, projectName, isCloudProject, 
         .toString()
         .toLowerCase()
         .replace(/[^a-z0-9-]+/g, "-")
-        .replace(/^-+|-+$/g, "");
+        .replace(/^-+|(?<!-)-+$/g, "");
       setName(seedName || "");
       setImage(entry.image ?? "");
       // Ports now lives on a single line - commas are the user-friendly separator.

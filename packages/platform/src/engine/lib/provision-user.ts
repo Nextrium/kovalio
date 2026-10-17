@@ -64,7 +64,7 @@ export async function provisionUserInTransaction(
     .split("@")[0]
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/^-+|(?<!-)-+$/g, "");
   const slug = `ws-${slugSeed}-${input.id.slice(0, 8)}`;
 
   await tx

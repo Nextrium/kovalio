@@ -320,7 +320,7 @@ export async function createTeamOrg(ctx: ExecutionContext, body: { name: string;
   const slugFromName = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+    .replace(/^-+|(?<!-)-+$/g, "")
     .slice(0, 50) || `team-${generateId("org").slice(4, 12)}`;
   const slug = body.slug?.trim() || slugFromName;
 

@@ -202,7 +202,7 @@ export async function copyStaticRootIntoEdge(
   const slug =
     opts.host
       .replace(/[^a-zA-Z0-9._-]/g, "-")
-      .replace(/^-+|-+$/g, "")
+      .replace(/^-+|(?<!-)-+$/g, "")
       .toLowerCase() || "site";
   const src = opts.root.replace(/(?<!\/)\/+$/, "");
   const dest = `${EDGE_STATIC_MOUNT}/_adopted/${slug}`;

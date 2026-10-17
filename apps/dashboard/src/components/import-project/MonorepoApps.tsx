@@ -145,7 +145,7 @@ const AppCard: React.FC<{ app: MonorepoAppConfig; index: number }> = ({ app, ind
       // on already-enabled apps while dropping endpoints for disabled
       // apps and re-seeding defaults for newly re-enabled ones.
       const slugify = (v: string) =>
-        v.toLowerCase().replace(/^@/, "").replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+        v.toLowerCase().replace(/^@/, "").replace(/[^a-z0-9-]+/g, "-").replace(/^-+|(?<!-)-+$/g, "");
       const currentEndpoints: PublicEndpoint[] = config.publicEndpoints ?? [];
       const projectSlug = slugify(config.projectName || "app");
       const nextEndpoints: PublicEndpoint[] = next

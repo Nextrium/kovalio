@@ -4,7 +4,7 @@ export function normalizeSubdomain(value: string, fallback = "project") {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/^-+|(?<!-)-+$/g, "");
 
   return normalized || fallback;
 }

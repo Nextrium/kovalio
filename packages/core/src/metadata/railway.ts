@@ -1,6 +1,7 @@
 import type { DeploymentMetadata, MetadataParser } from "./types";
 import { extractCdTargets } from "./vercel";
 import { splitLines, trimmed } from "./text";
+import { matchTrailingField } from "../linear-match";
 
 /**
  * Normalized view of a `railway.toml` / `railway.json` — the fields that shape
@@ -90,7 +91,7 @@ function parseRailwayToml(raw: string): RailwayConfig {
     }
 
     // key = value — the key may be dotted (`build.buildCommand`).
-    const kv = line.match(/^\s*([A-Za-z_][A-Za-z0-9_.-]*)\s*=\s*(.+)$/);
+    const kv = matchTrailingField(line, /^\s*([A-Za-z_][A-Za-z0-9_.-]*)\s*=/);
     if (!kv) continue;
     const [, rawKey, rest] = kv;
 
