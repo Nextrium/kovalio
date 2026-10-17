@@ -1,5 +1,6 @@
 import type { DeploymentMetadata, MetadataParser } from "./types";
 import { splitLines } from "./text";
+import { matchTrailingField } from "../linear-match";
 
 /** Unquote a scalar YAML value ("npm start" / 'npm start' / npm start). */
 function unquote(value: string): string {
@@ -33,19 +34,19 @@ export const renderMetadataParser: MetadataParser = {
 
     let pendingKey: string | undefined;
     for (const line of lines) {
-      const startMatch = line.match(/^\s*startCommand:\s*(.+)$/);
+      const startMatch = matchTrailingField(line, /^\s*startCommand:/);
       if (startMatch && !startCommand) startCommand = unquote(startMatch[1]);
 
-      const buildMatch = line.match(/^\s*buildCommand:\s*(.+)$/);
+      const buildMatch = matchTrailingField(line, /^\s*buildCommand:/);
       if (buildMatch && !buildCommand) buildCommand = unquote(buildMatch[1]);
 
       // envVars entries: `- key: FOO` on one line, `value: bar` on a later one.
-      const keyMatch = line.match(/^\s*(?:-\s*)?key:\s*(.+)$/);
+      const keyMatch = matchTrailingField(line, /^\s*(?:-\s*)?key:/);
       if (keyMatch) {
         pendingKey = unquote(keyMatch[1]);
         continue;
       }
-      const valueMatch = line.match(/^\s*value:\s*(.+)$/);
+      const valueMatch = matchTrailingField(line, /^\s*value:/);
       if (valueMatch && pendingKey) {
         env[pendingKey] = unquote(valueMatch[1]);
         pendingKey = undefined;

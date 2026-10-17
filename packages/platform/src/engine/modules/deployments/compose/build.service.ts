@@ -50,7 +50,7 @@ function sanitizeComposeImageName(value: string): string {
     value
       .toLowerCase()
       .replace(/[^a-z0-9._-]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "service"
+      .replace(/^-+|(?<!-)-+$/g, "") || "service"
   );
 }
 

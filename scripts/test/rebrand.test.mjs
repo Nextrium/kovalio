@@ -63,8 +63,10 @@ test("hardened regexes match exactly what the originals match", () => {
     [/\.+$/, /(?<!\.)\.+$/],
     [/^\.+|\.+$/g, /^\.+|(?<!\.)\.+$/g],
     [/[ \t]+#+$/, /(?<![ \t])[ \t]+#+$/],
+    [/-+$/, /(?<!-)-+$/],
+    [/^-+|-+$/g, /^-+|(?<!-)-+$/g],
   ];
-  const alphabet = ["/", ".", " ", "\t", "#", "a"];
+  const alphabet = ["/", ".", " ", "\t", "#", "-", "a"];
   const strings = [""];
   for (let len = 1, frontier = [""]; len <= 6; len++) {
     frontier = frontier.flatMap((s) => alphabet.map((c) => s + c));

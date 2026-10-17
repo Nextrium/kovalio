@@ -41,7 +41,7 @@ export function volumeAutoName(path: string): string {
     .replace(/^\.\//, "")
     .replace(/^\/+|(?<!\/)\/+$/g, "")
     .replace(/[^A-Za-z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/^-+|(?<!-)-+$/g, "");
   return cleaned || "data";
 }
 

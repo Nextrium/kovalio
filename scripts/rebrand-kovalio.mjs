@@ -98,6 +98,8 @@ const HARDENING = [
   [String.raw`(/\.+$/`, String.raw`(/(?<!\.)\.+$/`],
   [String.raw`|\.+$/`, String.raw`|(?<!\.)\.+$/`],
   [String.raw`(/[ \t]+#+$/`, String.raw`(/(?<![ \t])[ \t]+#+$/`],
+  [String.raw`(/-+$/`, String.raw`(/(?<!-)-+$/`],
+  [String.raw`|-+$/`, String.raw`|(?<!-)-+$/`],
 ];
 const HARDENED_EXTENSIONS = /\.(?:[cm]?[jt]sx?)$/;
 

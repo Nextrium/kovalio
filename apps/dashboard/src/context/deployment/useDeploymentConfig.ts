@@ -528,7 +528,7 @@ function resolvePreparedRoutingState(
         .toLowerCase()
         .replace(/^@/, "")
         .replace(/[^a-z0-9-]+/g, "-")
-        .replace(/^-+|-+$/g, "");
+        .replace(/^-+|(?<!-)-+$/g, "");
     const stored: PublicEndpoint[] = mapStoredPublicEndpoints(project) ?? [];
     const seeded = context.monorepoApps.map((app) => {
       const label = `${slugify(app.name)}-${slugify(primaryDomain)}`;
