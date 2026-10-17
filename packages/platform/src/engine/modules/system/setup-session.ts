@@ -6,6 +6,7 @@
  * and supports log replay for late joiners / page reloads.
  */
 
+import { randomUUID } from "node:crypto";
 import type { PromptPayload } from "@repo/adapters";
 import { PromptRegistry } from "../../lib/prompt-gateway";
 import { TtlCache } from "../../lib/cache";
@@ -78,7 +79,7 @@ export function createSetupSession(
   componentNames: { name: string; label: string }[],
   serverId: string,
 ): SetupSessionState {
-  const id = `setup_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const id = `setup_${Date.now()}_${randomUUID()}`;
   const state: SetupSessionState = {
     id,
     serverId,

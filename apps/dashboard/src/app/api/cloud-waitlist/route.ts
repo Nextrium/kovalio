@@ -24,7 +24,9 @@ export async function POST(req: Request) {
     /* malformed body → falls through to the validation error below */
   }
 
-  if (!EMAIL_RE.test(email)) {
+  // Length first: 254 is the longest valid address, and EMAIL_RE backtracks
+  // quadratically on long dotted input this public endpoint would otherwise accept.
+  if (email.length > 254 || !EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 

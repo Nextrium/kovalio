@@ -15,6 +15,7 @@
  * and a late-arriving watcher sees the same progress.
  */
 
+import { randomUUID } from "node:crypto";
 import { TtlCache } from "./cache";
 
 export type SseWriter = (event: string, data: string) => boolean;
@@ -172,7 +173,7 @@ export function createContainerApplySession(
   serverId: string,
   component: ContainerComponent,
 ): ContainerApplySession {
-  const id = `capp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const id = `capp_${Date.now()}_${randomUUID()}`;
   const session: ContainerApplySession = {
     id,
     serverId,
