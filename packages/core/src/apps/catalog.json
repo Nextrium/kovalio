@@ -6073,7 +6073,8 @@
             "/etc/kovalio/odoo-start.py"
           ],
           "replacesBuilds": [
-            "23a86dd7a57a0061fc72b9b72ae8157d10c10e3c914fe1933cd2464e834f0ac1"
+            "23a86dd7a57a0061fc72b9b72ae8157d10c10e3c914fe1933cd2464e834f0ac1",
+            "0ca8d004c31ee51bb964b5df3756b218d8e52e12cdb3adb6740a69db45251692"
           ]
         }
       ],
@@ -6786,7 +6787,8 @@
             "apache2-foreground"
           ],
           "replacesBuilds": [
-            "cadb840dc69bcc6f495e540d62584d44d3cd5c5467b1722b9c62cf44d47cba88"
+            "cadb840dc69bcc6f495e540d62584d44d3cd5c5467b1722b9c62cf44d47cba88",
+            "a52e1d680d985a2b522d9ba320edfc0bf262c1fba0a50cf9267b74960d38eac5"
           ]
         }
       ],

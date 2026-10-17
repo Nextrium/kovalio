@@ -68,7 +68,10 @@
       },
       "image": "wordpress:7.1.3-php8.3-apache",
       "commandArgv": ["sh", "/etc/kovalio/wordpress-start.sh", "apache2-foreground"],
-      "replacesBuilds": ["cadb840dc69bcc6f495e540d62584d44d3cd5c5467b1722b9c62cf44d47cba88"]
+      "replacesBuilds": [
+        "cadb840dc69bcc6f495e540d62584d44d3cd5c5467b1722b9c62cf44d47cba88",
+        "a52e1d680d985a2b522d9ba320edfc0bf262c1fba0a50cf9267b74960d38eac5"
+      ]
     }
   ],
   "configFields": [

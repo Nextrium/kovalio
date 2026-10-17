@@ -32,4 +32,5 @@ test that proves it still holds after an upstream sync.
 |---|---|---|
 | Brand overlay: Kovalio names, domains, `ghcr.io/nextrium` images, encoded sources | all files | `scripts/test/rebrand.test.mjs`, Fork guard branding check |
 | `wrapText` keeps backtick-quoted commands whole | `packages/core/src/utils.ts` | `packages/core/src/utils.fork.test.ts` |
+| Retired WordPress and Odoo recipes: accept the Kovalio-branded recipe hash in `replacesBuilds` | `packages/core/src/apps/catalog/{wordpress,odoo}.json`, `catalog.json` | `scripts/catalog-image-repair.fork.test.ts` |
 | Dashboard `settings` untranslated baseline +1 (Arabic "Kovalio Cloud" label) | `apps/dashboard/src/i18n/i18n-parity.test.ts` | the parity test itself |

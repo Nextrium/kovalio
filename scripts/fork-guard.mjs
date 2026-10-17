@@ -12,9 +12,10 @@
 // silently undoes one, this fails on the sync PR. FORK_PATCHES.md lists them.
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 
-const ROOT = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
+// resolve(): git prints C:/... on Windows while path.join builds C:..., so normalize once.
+const ROOT = resolve(execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim());
 const failures = [];
 
 function run(label, cmd, args, cwd = ROOT) {
@@ -47,9 +48,13 @@ for (const file of forkTests) {
   byPackage.set(dir, list);
 }
 
+// Workspace packages test with vitest; root-level scripts use bun's runner (as
+// `bun run test:scripts` does).
 const vitest = join(ROOT, "node_modules", "vitest", "vitest.mjs");
 for (const [pkg, files] of byPackage) {
-  run(`Fork patches: ${relative(ROOT, pkg) || "."}`, "node", [vitest, "run", ...files], pkg);
+  const label = `Fork patches: ${relative(ROOT, pkg) || "."}`;
+  if (pkg === ROOT) run(label, "bun", ["test", ...files.map((f) => `./${f}`)], pkg);
+  else run(label, "node", [vitest, "run", ...files], pkg);
 }
 
 console.log(`\nFork guard: ${forkTests.length} fork test file(s) in ${byPackage.size} package(s).`);

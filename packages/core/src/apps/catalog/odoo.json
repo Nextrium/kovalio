@@ -65,7 +65,10 @@
       },
       "image": "odoo:19.0-20260926",
       "commandArgv": ["python3", "/etc/kovalio/odoo-start.py"],
-      "replacesBuilds": ["23a86dd7a57a0061fc72b9b72ae8157d10c10e3c914fe1933cd2464e834f0ac1"]
+      "replacesBuilds": [
+        "23a86dd7a57a0061fc72b9b72ae8157d10c10e3c914fe1933cd2464e834f0ac1",
+        "0ca8d004c31ee51bb964b5df3756b218d8e52e12cdb3adb6740a69db45251692"
+      ]
     }
   ],
   "configFields": [
