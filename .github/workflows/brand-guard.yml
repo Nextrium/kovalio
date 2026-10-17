@@ -1,0 +1,33 @@
+name: Brand guard
+
+# Fails if upstream (pre-fork) branding is present. Fix locally with
+# `node scripts/rebrand-kovalio.mjs`.
+#
+# Kept in its own fork-only file rather than in ci.yml: upstream owns ci.yml, and
+# the sync merge takes upstream's side on conflicts, which would drop this job.
+
+on:
+  pull_request: {}
+  push:
+    branches: [main, develop]
+  workflow_dispatch: {}
+
+concurrency:
+  group: brand-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  brand-guard:
+    name: Brand guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check Kovalio branding
+        run: node scripts/rebrand-kovalio.mjs --check
