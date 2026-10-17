@@ -7,7 +7,7 @@ test that proves it still holds after an upstream sync.
 ## How syncs work
 
 - **Every Sunday**, [upstream-sync.yml](.github/workflows/upstream-sync.yml) merges
-  upstream into `sync/upstream` and opens a PR. It skips the run while a sync PR is
+  upstream into `sync/upstream` and opens a PR into `develop`. It skips the run while a sync PR is
   still open.
 - **Branding is factored out of the merge.** The [merge driver](scripts/brand-merge-driver.mjs)
   applies the overlay to upstream's side first, so only real changes are compared.

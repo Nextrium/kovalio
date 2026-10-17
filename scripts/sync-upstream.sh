@@ -3,7 +3,7 @@
 # factored out. Used by .github/workflows/upstream-sync.yml and by people resolving
 # a sync by hand: the same command gives the same merge in both places.
 #
-#   bash scripts/sync-upstream.sh [base-branch]     # base defaults to main
+#   bash scripts/sync-upstream.sh [base-branch]     # base defaults to develop
 #
 # Exit status:
 #   0  merged cleanly; overlay applied and verified; committed on sync/upstream
@@ -13,7 +13,7 @@
 #   3  already up to date with upstream
 set -euo pipefail
 
-base="${1:-main}"
+base="${1:-develop}"
 upstream_url="https://github.com/oblien/openship.git"
 branch="sync/upstream"
 
