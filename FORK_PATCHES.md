@@ -33,8 +33,9 @@ test that proves it still holds after an upstream sync.
 | Brand overlay: Kovalio names, domains, `ghcr.io/nextrium` images, encoded sources | all files | `scripts/test/rebrand.test.mjs`, Fork guard branding check |
 | `wrapText` keeps backtick-quoted commands whole | `packages/core/src/utils.ts` | `packages/core/src/utils.fork.test.ts` |
 | Retired WordPress and Odoo recipes: accept the Kovalio-branded recipe hash in `replacesBuilds` | `packages/core/src/apps/catalog/{wordpress,odoo}.json`, `catalog.json` | `scripts/catalog-image-repair.fork.test.ts` |
-| ReDoS: trailing-run regexes (`/\/+$/`, `\|\/+$/`, `/\.+$/`, `/[ \t]+#+$/`) rewritten with a lookbehind, by the overlay (`hardenText`) | ~70 files | overlay `--check` in Fork guard, `packages/core/src/security.fork.test.ts` |
-| ReDoS: `render.yaml` `key:` parser | `packages/core/src/metadata/render.ts` | `packages/core/src/security.fork.test.ts` |
+| ReDoS: trailing-run regexes (`/\/+$/`, `\|\/+$/`, `/\.+$/`, `/-+$/`, `\|-+$/`, `/[ \t]+#+$/`) rewritten with a lookbehind, by the overlay (`hardenText`) | ~80 files | overlay `--check` in Fork guard, `packages/core/src/security.fork.test.ts` |
+| ReDoS: `render.yaml` and `railway.toml` field parsers (`prefix\s*(.+)$`) use `matchTrailingField` | `packages/core/src/metadata/render.ts`, `railway.ts` | `packages/core/src/linear-match.fork.test.ts`, `security.fork.test.ts` |
+| ReDoS: Gemfile `ruby(...)` call parser uses `matchParenthesizedCall` | `packages/core/src/languages/ruby.ts` | `packages/core/src/linear-match.fork.test.ts` |
 | ReDoS: email checks bounded to 254 characters (public waitlist, ACME email) | `apps/dashboard/src/app/api/cloud-waitlist/route.ts`, `packages/adapters/src/infra/nginx.ts` | `apps/dashboard/src/security.fork.test.ts` |
 | Session ids use `randomUUID()` instead of 6 `Math.random` characters | `edge-consent-session.ts`, `setup-session.ts`, `server-container-session.ts` | `apps/api/src/security.fork.test.ts` |
 | DMARC XML entities decode once (no `&amp;lt;` → `<`) | `apps/api/src/modules/mail/dmarc/xml-parser.ts` | `apps/api/src/security.fork.test.ts` |

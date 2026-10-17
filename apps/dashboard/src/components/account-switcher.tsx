@@ -119,7 +119,7 @@ export function AccountSwitcher() {
     if (!newName.trim()) return;
     setCreating(true);
     try {
-      const slug = newName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      const slug = newName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|(?<!-)-+$/g, "");
       const res = await orgClient.create({ name: newName.trim(), slug });
       if (res.error || !res.data) {
         showToast(
