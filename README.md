@@ -148,7 +148,7 @@ echo 'source <(kovalio completion zsh)' >> ~/.zshrc
 <details>
 <summary>Self-host with raw Docker Compose (no CLI)</summary>
 
-The self-hosted stack lives in **`docker/docker-compose.yml`** and **pulls** published images from GitHub Container Registry (`ghcr.io/oblien/*`) — no build tooling, no monorepo compile. Run it from the repo root:
+The self-hosted stack lives in **`docker/docker-compose.yml`** and **pulls** published images from GitHub Container Registry (`ghcr.io/nextrium/*`) — no build tooling, no monorepo compile. Run it from the repo root:
 
 ```bash
 git clone https://github.com/Nextrium/kovalio.git && cd kovalio

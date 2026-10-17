@@ -71,7 +71,9 @@ describe("i18n locale parity vs the English source", () => {
 	 */
 	const UNTRANSLATED_BASELINE: Record<string, number> = {
 		deploy: 133,
-		settings: 97,
+		// +1 vs upstream: ar `deployDefaults.targets.cloud.label` differed from English
+		// only in brand casing; rebranded, both read "Kovalio Cloud" (a product name).
+		settings: 98,
 		projectSettings: 46,
 		importProject: 43,
 		billing: 24,

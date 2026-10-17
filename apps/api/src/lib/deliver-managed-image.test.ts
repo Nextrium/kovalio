@@ -60,7 +60,7 @@ describe("deliverManagedImage", () => {
 
     const res = await deliverManagedImage({
       kind: "edge",
-      image: "ghcr.io/oblien/openship-edge:0.5.0",
+      image: "ghcr.io/nextrium/kovalio-edge:0.5.0",
       targetExecutor: executor,
       onLog,
     });
@@ -79,7 +79,7 @@ describe("deliverManagedImage", () => {
 
     const res = await deliverManagedImage({
       kind: "edge",
-      image: "ghcr.io/oblien/openship-edge:0.5.0-dev.abc123",
+      image: "ghcr.io/nextrium/kovalio-edge:0.5.0-dev.abc123",
       targetExecutor: executor,
       onLog,
     });
@@ -119,7 +119,7 @@ describe("deliverManagedImage", () => {
 
     const res = await deliverManagedImage({
       kind: "mail",
-      image: "ghcr.io/oblien/openship-mail:0.5.0-dev.def456",
+      image: "ghcr.io/nextrium/kovalio-mail:0.5.0-dev.def456",
       targetExecutor: executor,
       onLog,
     });

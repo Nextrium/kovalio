@@ -167,7 +167,7 @@ describe("probeEdge classification", () => {
     // image, so a custom-named edge is still ours (never a self-takeover target).
     const status = await probeEdge(
       makeExecutor([
-        ["docker ps --format '{{.Names}}\t{{.Image}}'", "my-edge\tghcr.io/oblien/openship-edge:latest"],
+        ["docker ps --format '{{.Names}}\t{{.Image}}'", "my-edge\tghcr.io/nextrium/kovalio-edge:latest"],
         ["sport = :80", 'LISTEN 0 511 *:80 *:* users:(("nginx",pid=777,fd=6))'],
         ["sport = :443", 'LISTEN 0 511 *:443 *:* users:(("nginx",pid=777,fd=8))'],
         ["-p 777 -o args=", "nginx: master process nginx -g daemon off;"],
@@ -198,8 +198,8 @@ describe("probeEdge classification", () => {
     // publish` matches it. Recognized as ours by the kovalio-edge image name.
     const status = await probeEdge(
       makeExecutor([
-        ["--filter publish=80", psLine("kovalio-edge", "ghcr.io/oblien/openship-edge:latest")],
-        ["--filter publish=443", psLine("kovalio-edge", "ghcr.io/oblien/openship-edge:latest")],
+        ["--filter publish=80", psLine("kovalio-edge", "ghcr.io/nextrium/kovalio-edge:latest")],
+        ["--filter publish=443", psLine("kovalio-edge", "ghcr.io/nextrium/kovalio-edge:latest")],
       ]),
     );
     expect(status.classification).toBe("ours");
@@ -478,10 +478,10 @@ describe("detectEdgeContainer", () => {
 
   test("finds a RUNNING edge by name and reports its image", async () => {
     expect(
-      await detectEdgeContainer(psa("kovalio-edge\tghcr.io/oblien/openship-edge:0.5.0\trunning")),
+      await detectEdgeContainer(psa("kovalio-edge\tghcr.io/nextrium/kovalio-edge:0.5.0\trunning")),
     ).toEqual({
       name: "kovalio-edge",
-      image: "ghcr.io/oblien/openship-edge:0.5.0",
+      image: "ghcr.io/nextrium/kovalio-edge:0.5.0",
       running: true,
       exists: true,
     });
@@ -489,13 +489,13 @@ describe("detectEdgeContainer", () => {
 
   test("finds a STOPPED edge — exists but not running (the track-if-installed case)", async () => {
     expect(
-      await detectEdgeContainer(psa("kovalio-edge\tghcr.io/oblien/openship-edge:0.4.0\texited")),
+      await detectEdgeContainer(psa("kovalio-edge\tghcr.io/nextrium/kovalio-edge:0.4.0\texited")),
     ).toMatchObject({ name: "kovalio-edge", running: false, exists: true });
   });
 
   test("matches a container renamed off the default name but running our image", async () => {
     expect(
-      await detectEdgeContainer(psa("my-proxy\tghcr.io/oblien/openship-edge:0.5.0\trunning")),
+      await detectEdgeContainer(psa("my-proxy\tghcr.io/nextrium/kovalio-edge:0.5.0\trunning")),
     ).toMatchObject({ name: "my-proxy", running: true, exists: true });
   });
 

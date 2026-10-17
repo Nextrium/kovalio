@@ -970,7 +970,7 @@ describe("resolveImageVersion (#486)", () => {
 
 describe("missingPinnedImages (#486)", () => {
   it("returns [] when the registry has all three images", () => {
-    expect(missingPinnedImages("ghcr.io/oblien", "1.2.3")).toEqual([]);
+    expect(missingPinnedImages("ghcr.io/nextrium", "1.2.3")).toEqual([]);
   });
 
   it("names only the image the registry positively lacks", () => {
@@ -978,8 +978,8 @@ describe("missingPinnedImages (#486)", () => {
       ref.includes("kovalio-dashboard")
         ? { status: 1, stdout: "", stderr: "manifest unknown: manifest unknown" }
         : { status: 0, stdout: "{}", stderr: "" };
-    expect(missingPinnedImages("ghcr.io/oblien", "1.2.3")).toEqual([
-      "ghcr.io/oblien/openship-dashboard:1.2.3",
+    expect(missingPinnedImages("ghcr.io/nextrium", "1.2.3")).toEqual([
+      "ghcr.io/nextrium/kovalio-dashboard:1.2.3",
     ]);
   });
 
@@ -989,10 +989,10 @@ describe("missingPinnedImages (#486)", () => {
       stdout: "",
       stderr: `no such manifest: ${ref}`,
     });
-    expect(missingPinnedImages("ghcr.io/oblien", "1.2.3")).toEqual([
-      "ghcr.io/oblien/openship-api:1.2.3",
-      "ghcr.io/oblien/openship-dashboard:1.2.3",
-      "ghcr.io/oblien/openship-edge:1.2.3",
+    expect(missingPinnedImages("ghcr.io/nextrium", "1.2.3")).toEqual([
+      "ghcr.io/nextrium/kovalio-api:1.2.3",
+      "ghcr.io/nextrium/kovalio-dashboard:1.2.3",
+      "ghcr.io/nextrium/kovalio-edge:1.2.3",
     ]);
   });
 
@@ -1004,7 +1004,7 @@ describe("missingPinnedImages (#486)", () => {
       stdout: "",
       stderr: "unauthorized: authentication required",
     });
-    expect(missingPinnedImages("ghcr.io/oblien", "1.2.3")).toBeNull();
+    expect(missingPinnedImages("ghcr.io/nextrium", "1.2.3")).toBeNull();
   });
 
   it("probes the tag under whatever registry it is handed", () => {
@@ -1015,9 +1015,9 @@ describe("missingPinnedImages (#486)", () => {
     };
     missingPinnedImages("registry.internal/oblien", "0.4.5");
     expect(seen).toEqual([
-      "registry.internal/oblien/openship-api:0.4.5",
-      "registry.internal/oblien/openship-dashboard:0.4.5",
-      "registry.internal/oblien/openship-edge:0.4.5",
+      "registry.internal/oblien/kovalio-api:0.4.5",
+      "registry.internal/oblien/kovalio-dashboard:0.4.5",
+      "registry.internal/oblien/kovalio-edge:0.4.5",
     ]);
   });
 });
@@ -1056,7 +1056,7 @@ describe("pinnedImagesReady (#486)", () => {
     expect(pinnedImagesReady({ version: "9.9.9" })).toBe(false);
 
     const msg = err.mock.calls.map((c) => c.join(" ")).join("\n");
-    expect(msg).toContain("ghcr.io/oblien/openship-api:9.9.9");
+    expect(msg).toContain("ghcr.io/nextrium/kovalio-api:9.9.9");
     expect(msg).toContain("--image-version");
     expect(msg).toContain("KOVALIO_VERSION=");
     err.mockRestore();

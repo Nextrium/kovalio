@@ -252,7 +252,7 @@ PR #885 reviewed at `f1114077cabf6dcafd81c8c88a0b35a5d249ea4b`.
 Verification:
 
 - Two Docker E2E tests passed with real Debian 12 Amavis: demonstrate failure with an unrelated live PID, recover SMTP listeners on 10024/10026, survive an actual container restart, preserve persistent data and repair/create runtime directory ownership.
-- Independently reproduced failure and recovery in ghcr.io/oblien/openship-mail:0.7.2. SMTP tests use loopback EHLO/QUIT, not delivery to external recipients.
+- Independently reproduced failure and recovery in ghcr.io/nextrium/kovalio-mail:0.7.2. SMTP tests use loopback EHLO/QUIT, not delivery to external recipients.
 - Bash syntax checks, API TypeScript and complete PR CI passed: https://github.com/Nextrium/kovalio/actions/runs/35021422249
 
 ### #875

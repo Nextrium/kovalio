@@ -119,7 +119,7 @@ kovalio deploy
 <details>
 <summary>원시 Docker Compose로 자체 호스팅하기(CLI 없이)</summary>
 
-자체 호스팅 스택은 **`docker/docker-compose.yml`**에 있으며 GitHub Container Registry(`ghcr.io/oblien/*`)의 공개 이미지를 **pull**합니다. 모노레포를 컴파일하거나 빌드 도구를 설치할 필요가 없습니다. 저장소 루트에서 실행하세요.
+자체 호스팅 스택은 **`docker/docker-compose.yml`**에 있으며 GitHub Container Registry(`ghcr.io/nextrium/*`)의 공개 이미지를 **pull**합니다. 모노레포를 컴파일하거나 빌드 도구를 설치할 필요가 없습니다. 저장소 루트에서 실행하세요.
 
 ```bash
 git clone https://github.com/Nextrium/kovalio.git && cd kovalio

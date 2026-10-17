@@ -550,7 +550,7 @@ services:
       retries: 12
 
   api:
-    image: \${KOVALIO_IMAGE_REGISTRY:-ghcr.io/oblien}/kovalio-api:\${KOVALIO_VERSION:-latest}
+    image: \${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-api:\${KOVALIO_VERSION:-latest}
     restart: unless-stopped
     logging: *default-logging
     # Loopback by default — the host-net edge reaches it over loopback, so nothing
@@ -610,7 +610,7 @@ ${edgeVolumeYaml("      ")}
       start_period: 40s
 
   dashboard:
-    image: \${KOVALIO_IMAGE_REGISTRY:-ghcr.io/oblien}/kovalio-dashboard:\${KOVALIO_VERSION:-latest}
+    image: \${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-dashboard:\${KOVALIO_VERSION:-latest}
     restart: unless-stopped
     logging: *default-logging
     # Loopback by default (see api note); KOVALIO_BIND_ADDR opts into a public interface.
@@ -624,7 +624,7 @@ ${edgeVolumeYaml("      ")}
       api: { condition: service_healthy }
 
   edge:
-    image: \${KOVALIO_IMAGE_REGISTRY:-ghcr.io/oblien}/kovalio-edge:\${KOVALIO_VERSION:-latest}
+    image: \${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-edge:\${KOVALIO_VERSION:-latest}
     # PINNED, and it must stay pinned: the api reaches the edge by NAME through
     # DockerEdgeExecutor (KOVALIO_EDGE_CONTAINER above), and "ours" edge
     # detection greps \`docker ps --filter name=kovalio-edge\`. Without this,
@@ -3047,7 +3047,7 @@ function renderEnvAndCarried(
  * ("dev") install — `kovalio-dev`, whose marker records the checkout dir.
  *
  * A dev install tracks a branch, so its `__CLI_VERSION__` names a release tag
- * that isn't published: pulling `ghcr.io/oblien/openship-*:<that version>` fails
+ * that isn't published: pulling `ghcr.io/nextrium/kovalio-*:<that version>` fails
  * with `denied`. The checkout has the Dockerfiles, so build the three images we
  * own from it instead of pulling — same stack, same compose file, one override.
  * Returns null (→ pull path) when there's no checkout or no Dockerfiles in it.

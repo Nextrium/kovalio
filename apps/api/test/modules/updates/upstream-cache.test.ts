@@ -194,7 +194,7 @@ describe("a project with no cached row", () => {
         projectId: "proj_1",
         kind: "commit",
         // Full sha: the read path compares it, and a display prefix can't be.
-        detail: expect.objectContaining({ latestSha: NEWER, key: "Nextrium/kovalio#main" }),
+        detail: expect.objectContaining({ latestSha: NEWER, key: "oblien/kovalio#main" }),
       }),
     );
   });
@@ -392,7 +392,7 @@ describe("when the cached row is allowed to answer", () => {
     // Row was polled for main; the project now tracks a release branch. Nothing
     // told the cache — it just stops matching the question.
     const p = project({ gitBranch: "release/0.6" });
-    setup([p], [cachedRow({ key: "Nextrium/kovalio#main", latestSha: NEWER, ageMs: MINUTE })]);
+    setup([p], [cachedRow({ key: "oblien/kovalio#main", latestSha: NEWER, ageMs: MINUTE })]);
     resolveUpstreamDrift.mockResolvedValue(upstream(p, NEWER));
 
     const items = await listOrganizationUpdates(ctx);

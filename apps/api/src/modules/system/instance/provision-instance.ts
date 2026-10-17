@@ -99,7 +99,7 @@ export async function installControllerServices(
   const specs: TCreateServiceBody[] = [
     {
       name: "api",
-      image: `ghcr.io/oblien/openship-api:${plan.version}`,
+      image: `ghcr.io/nextrium/kovalio-api:${plan.version}`,
       volumes: ["instance-data:/data"],
       ...(plan.access === "desktop" ? route(4000) : { exposed: false }),
       environment: {
@@ -126,7 +126,7 @@ export async function installControllerServices(
       ? [
           {
             name: "dashboard",
-            image: `ghcr.io/oblien/openship-dashboard:${plan.version}`,
+            image: `ghcr.io/nextrium/kovalio-dashboard:${plan.version}`,
             dependsOn: ["api"],
             ...route(3001),
             environment: {

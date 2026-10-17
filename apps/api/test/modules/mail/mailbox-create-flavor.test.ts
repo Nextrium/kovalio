@@ -49,7 +49,7 @@ const CONTAINER = {
   flavor: "container" as const,
   running: true,
   exists: true,
-  image: "ghcr.io/oblien/openship-mail:0.6.5",
+  image: "ghcr.io/nextrium/kovalio-mail:0.6.5",
 };
 const HOST = { flavor: "host" as const, running: true, exists: true, image: null };
 

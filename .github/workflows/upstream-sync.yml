@@ -87,7 +87,7 @@ jobs:
           if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
             git commit --no-edit
           fi
-          if grep -rIl --exclude-dir=.git -E '^(<<<<<<<|>>>>>>>) ' . ; then
+          if git grep -lE '^(<<<<<<<|>>>>>>>) ' -- . ; then
             echo "::error::Conflict markers left in the tree"; exit 1
           fi
           echo "changed=true" >> "$GITHUB_OUTPUT"

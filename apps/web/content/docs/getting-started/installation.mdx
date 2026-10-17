@@ -184,7 +184,7 @@ The API mounts the host Docker socket so it can build and run your deployed apps
 When it's up, open the dashboard at `http://localhost:3001`.
 
 <Callout title="Pull-based — pin a version" type="info">
-The stack pulls published images (`ghcr.io/oblien/*`), so it comes up without a build. Pin `KOVALIO_VERSION`
+The stack pulls published images (`ghcr.io/nextrium/*`), so it comes up without a build. Pin `KOVALIO_VERSION`
 in `.env` (e.g. `0.2.3`) for reproducible upgrades, then
 `docker compose --env-file .env -f docker/docker-compose.yml pull` and `… up -d`. To build from source
 instead, add `-f docker/docker-compose.build.yml … up -d --build`.

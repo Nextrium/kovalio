@@ -91,7 +91,7 @@ beforeEach(() => {
     flavor: "container",
     running: true,
     exists: true,
-    image: "ghcr.io/oblien/openship-mail:0.5.0",
+    image: "ghcr.io/nextrium/kovalio-mail:0.5.0",
   });
 });
 

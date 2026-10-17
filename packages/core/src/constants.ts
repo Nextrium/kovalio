@@ -54,7 +54,7 @@ export function isInvitationClaimPath(path: string): boolean {
  * because compose interpolation can't read TypeScript. That copy is asserted
  * against this one by test.
  */
-export const DEFAULT_IMAGE_REGISTRY = "ghcr.io/oblien";
+export const DEFAULT_IMAGE_REGISTRY = "ghcr.io/nextrium";
 
 export const BRAND_LINKS = {
   site: "https://nextrium.org",

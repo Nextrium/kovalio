@@ -22,7 +22,7 @@
 # advanced git-clone self-hosters. Keep the two in sync (apps/cli/src/lib/compose.ts).
 #
 # PULL-BASED by default: `api` + `dashboard` + `edge` come from published images
-#   on GHCR (ghcr.io/oblien/*; KOVALIO_IMAGE_REGISTRY overrides for a mirror).
+#   on GHCR (ghcr.io/nextrium/*; KOVALIO_IMAGE_REGISTRY overrides for a mirror).
 #   Pin KOVALIO_VERSION in .env for reproducible upgrades. To BUILD from source
 #   instead, layer the override:
 #     docker compose -f docker/docker-compose.yml -f docker/docker-compose.build.yml \
@@ -113,7 +113,7 @@ services:
 
   # ─── API (control plane) ──────────────────────────────
   api:
-    image: ${KOVALIO_IMAGE_REGISTRY:-ghcr.io/oblien}/kovalio-api:${KOVALIO_VERSION:-latest}
+    image: ${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-api:${KOVALIO_VERSION:-latest}
     restart: unless-stopped
     logging: *default-logging
     ports:
@@ -198,7 +198,7 @@ services:
 
   # ─── Dashboard (app UI) ───────────────────────────────
   dashboard:
-    image: ${KOVALIO_IMAGE_REGISTRY:-ghcr.io/oblien}/kovalio-dashboard:${KOVALIO_VERSION:-latest}
+    image: ${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-dashboard:${KOVALIO_VERSION:-latest}
     restart: unless-stopped
     logging: *default-logging
     ports:
@@ -220,7 +220,7 @@ services:
   # vhost config is unchanged. The API drives it via `docker exec` + the shared
   # volumes above. LINUX ONLY (host networking); on mac/win use the bare CLI.
   edge:
-    image: ${KOVALIO_IMAGE_REGISTRY:-ghcr.io/oblien}/kovalio-edge:${KOVALIO_VERSION:-latest}
+    image: ${KOVALIO_IMAGE_REGISTRY:-ghcr.io/nextrium}/kovalio-edge:${KOVALIO_VERSION:-latest}
     # PINNED, and it must stay pinned: the api reaches the edge by NAME through
     # DockerEdgeExecutor (KOVALIO_EDGE_CONTAINER above), and "ours" edge
     # detection greps `docker ps --filter name=kovalio-edge`. Without this,

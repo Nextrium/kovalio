@@ -31,7 +31,7 @@ describe("control-plane installation through the shared engine", () => {
         [],
       );
       const api = specifications.find((service) => service.name === "api")!;
-      expect(api.image).toBe("ghcr.io/oblien/openship-api:1.2.3");
+      expect(api.image).toBe("ghcr.io/nextrium/kovalio-api:1.2.3");
       expect(api.volumes).toEqual(["instance-data:/data"]);
       expect(api.environment).toMatchObject({
         PGLITE_DATA_DIR: "/data",

@@ -24,7 +24,7 @@ describe("registryForImage", () => {
   });
 
   it("reads a real registry host, including a port", () => {
-    expect(registryForImage("ghcr.io/oblien/openship-api:0.6.5")).toBe("ghcr.io");
+    expect(registryForImage("ghcr.io/nextrium/kovalio-api:0.6.5")).toBe("ghcr.io");
     expect(registryForImage("registry.example.com:5000/org/img")).toBe("registry.example.com:5000");
     expect(registryForImage("localhost:5000/img")).toBe("localhost:5000");
   });
@@ -48,7 +48,7 @@ describe("normalizeRegistryHost", () => {
       "https://ghcr.io/",
       "  ghcr.io/  ",
       "http://ghcr.io",
-      "ghcr.io/oblien",
+      "ghcr.io/nextrium",
     ]) {
       expect(normalizeRegistryHost(typed), typed).toBe("ghcr.io");
     }

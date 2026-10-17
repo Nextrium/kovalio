@@ -12,7 +12,7 @@ import { JOURNAL_PATH } from "./takeover-journal";
 import type { CommandExecutor } from "../../types";
 import type { InstallerConfig } from "../types";
 
-const IMAGE = "ghcr.io/oblien/openship-edge:1.2.3";
+const IMAGE = "ghcr.io/nextrium/kovalio-edge:1.2.3";
 
 /**
  * A pre-accepted takeover — the non-interactive equivalent of the operator
@@ -235,7 +235,7 @@ describe("resolveEdgeImage", () => {
     process.env.KOVALIO_IMAGE_REGISTRY = "docker.io/oblien";
     process.env.KOVALIO_VERSION = "9.9.9";
     delete process.env.KOVALIO_EDGE_IMAGE;
-    expect(resolveEdgeImage()).toBe("docker.io/oblien/openship-edge:9.9.9");
+    expect(resolveEdgeImage()).toBe("docker.io/oblien/kovalio-edge:9.9.9");
     process.env = prev;
   });
 });
@@ -424,7 +424,7 @@ describe("ensureContainerEdge", () => {
     // rules a newer API believes it rewrote. Upgrading the API upgrades the edge.
     const { executor, commands, onLog } = box({
       edgeContainer: "kovalio-edge",
-      edgeContainerImage: "ghcr.io/oblien/openship-edge:1.0.0",
+      edgeContainerImage: "ghcr.io/nextrium/kovalio-edge:1.0.0",
     });
     const result = await ensureContainerEdge(executor, { onLog, image: IMAGE, verifyTimeoutMs: 50 });
 
@@ -470,7 +470,7 @@ describe("ensureContainerEdge", () => {
   it("leaves the running edge alone when the new image can't be pulled", async () => {
     const { executor, commands, onLog } = box({
       edgeContainer: "kovalio-edge",
-      edgeContainerImage: "ghcr.io/oblien/openship-edge:1.0.0",
+      edgeContainerImage: "ghcr.io/nextrium/kovalio-edge:1.0.0",
       pullFails: true,
     });
     const result = await ensureContainerEdge(executor, { onLog, image: IMAGE });
@@ -482,7 +482,7 @@ describe("ensureContainerEdge", () => {
   it("puts the OLD image back when the new one won't come up", async () => {
     const { executor, commands, onLog } = box({
       edgeContainer: "kovalio-edge",
-      edgeContainerImage: "ghcr.io/oblien/openship-edge:1.0.0",
+      edgeContainerImage: "ghcr.io/nextrium/kovalio-edge:1.0.0",
       runFails: true,
     });
     const result = await ensureContainerEdge(executor, { onLog, image: IMAGE, verifyTimeoutMs: 50 });
@@ -696,7 +696,7 @@ describe("ensureContainerEdge — image acquisition gate", () => {
     // moved), so it's stale — but it's already on the box, so the swap runs no pull.
     const { executor, commands, onLog } = box({
       edgeContainer: "kovalio-edge",
-      edgeContainerImage: "ghcr.io/oblien/openship-edge:1.0.0",
+      edgeContainerImage: "ghcr.io/nextrium/kovalio-edge:1.0.0",
       imagePresent: true,
     });
     const result = await ensureContainerEdge(executor, { onLog, image: IMAGE, verifyTimeoutMs: 50 });

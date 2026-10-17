@@ -46,7 +46,7 @@ import { join } from "node:path";
 import { createServer } from "node:net";
 import { describeDockerE2E, requireDocker } from "../helpers/docker-e2e";
 
-const REGISTRY = process.env.KOVALIO_E2E_IMAGE_REGISTRY ?? "ghcr.io/oblien";
+const REGISTRY = process.env.KOVALIO_E2E_IMAGE_REGISTRY ?? "ghcr.io/nextrium";
 const PROJECT = `kovalio-e2e-update-${process.pid}`;
 const SEED_ID = "e2e-upgrade-seed";
 const SEED_SERVER_HOST = "192.0.2.1";

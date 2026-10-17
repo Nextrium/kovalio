@@ -2199,7 +2199,7 @@ describe("redeployBuildSession environment snapshot", () => {
         kind: "commit",
         checkedAt: expect.any(Date),
         detail: expect.objectContaining({
-          key: "Nextrium/kovalio#main",
+          key: "oblien/kovalio#main",
           latestSha: "new-sha-123456789012345678901234567890",
           latestMessage: "feat: new commit",
         }),

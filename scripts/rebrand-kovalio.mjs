@@ -29,15 +29,13 @@ const BINARY_EXTENSIONS = new Set([
   ".tgz", ".exe", ".dll", ".so", ".dylib", ".db", ".sqlite", ".lockb", ".mp4", ".webm",
 ]);
 
-// Container images upstream publishes (ghcr.io/oblien/openship-edge, -api, -mail, ...)
-// keep their real names: the fork can't publish under the `oblien` namespace, so a
-// rebranded `oblien/kovalio-*` ref would never pull. Refs an earlier overlay already
-// rewrote are restored. To ship the fork's own images, map these to the registry
-// docker-images.yml pushes to (ghcr.io/nextrium/kovalio-*) once those images exist.
-const UPSTREAM_IMAGE = /([a-z0-9-]+\.[a-z0-9.-]+)\/oblien\/openship-([a-z0-9-]*)/g;
-const MISBRANDED_IMAGE = /([a-z0-9-]+\.[a-z0-9.-]+)\/oblien\/kovalio-([a-z0-9-]*)/g;
-// The upstream repo slug rebranded in place (`oblien/kovalio`) names no real repo.
-const MISBRANDED_REPO = /\boblien\/kovalio\b(?!-)/g;
+// Product images live where docker-images.yml publishes them: ghcr.io/nextrium/kovalio-*.
+// The code assembles refs from a registry default (DEFAULT_IMAGE_REGISTRY,
+// ${KOVALIO_IMAGE_REGISTRY:-ghcr.io/oblien}) plus a bare name, so both halves move
+// together. Other images upstream hosts under ghcr.io/oblien (e.g. mindwire-*) are
+// untouched, and so is the `oblien` namespace on any other registry.
+const UPSTREAM_IMAGE = /ghcr\.io\/oblien\/(?:openship|kovalio)-/g;
+const UPSTREAM_REGISTRY = /ghcr\.io\/oblien(?=\/\*|[^\w/.-]|$)/gm;
 
 // Most specific first: URLs and domains before the bare brand word.
 const REPLACEMENTS = [
@@ -46,8 +44,8 @@ const REPLACEMENTS = [
   [/github\.com\/oblien\/openship/g, "github.com/Nextrium/kovalio"],
   [/raw\.githubusercontent\.com\/oblien\/openship/g, "raw.githubusercontent.com/Nextrium/kovalio"],
   [/api\.github\.com\/repos\/oblien\/openship/g, "api.github.com/repos/Nextrium/kovalio"],
-  [/\boblien\/openship\b(?!-)/g, "Nextrium/kovalio"],
-  [MISBRANDED_REPO, "Nextrium/kovalio"],
+  [UPSTREAM_IMAGE, "ghcr.io/nextrium/kovalio-"],
+  [UPSTREAM_REGISTRY, "ghcr.io/nextrium"],
   [/noreply@openship\.io/g, "noreply@nextrium.org"],
   [/https:\/\/app\.openship\.io/g, "https://kovalio.nextrium.org"],
   [/https:\/\/api\.openship\.io/g, "https://api.nextrium.org"],
@@ -80,16 +78,7 @@ function decodeBrandedBase64(token) {
 }
 
 function rebrandText(text) {
-  const plain = (s) => {
-    const images = [];
-    const masked = s
-      .replace(MISBRANDED_IMAGE, "$1/oblien/openship-$2")
-      .replace(UPSTREAM_IMAGE, (ref) => `\u0000${images.push(ref) - 1}\u0000`);
-    return REPLACEMENTS.reduce((acc, [pattern, to]) => acc.replace(pattern, to), masked).replace(
-      /\u0000(\d+)\u0000/g,
-      (_, i) => images[Number(i)],
-    );
-  };
+  const plain = (s) => REPLACEMENTS.reduce((acc, [pattern, to]) => acc.replace(pattern, to), s);
   const apply = (s) =>
     plain(
       s.replace(BASE64_LITERAL, (token) => {
@@ -162,9 +151,9 @@ for (const rel of listFiles()) {
     const lines = text.split("\n");
     lines.forEach((line, i) => {
       if (line.includes(KEEP_MARKER)) return;
-      if (/openship/i.test(line.replace(UPSTREAM_IMAGE, ""))) findings.push(`${rel}:${i + 1}: ${line.trim().slice(0, 120)}`);
-      else if (line.search(MISBRANDED_REPO) !== -1) findings.push(`${rel}:${i + 1}: nonexistent repo ${line.trim().slice(0, 100)}`);
-      else if (line.search(MISBRANDED_IMAGE) !== -1) findings.push(`${rel}:${i + 1}: unpublished image ${line.trim().slice(0, 100)}`);
+      if (/openship/i.test(line)) findings.push(`${rel}:${i + 1}: ${line.trim().slice(0, 120)}`);
+      else if (line.search(UPSTREAM_IMAGE) !== -1 || line.search(UPSTREAM_REGISTRY) !== -1)
+        findings.push(`${rel}:${i + 1}: upstream image registry ${line.trim().slice(0, 100)}`);
       else if ([...line.matchAll(BASE64_LITERAL)].some(([t]) => decodeBrandedBase64(t) !== null))
         findings.push(`${rel}:${i + 1}: base64-encoded branding`);
     });
