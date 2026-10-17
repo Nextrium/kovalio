@@ -1049,7 +1049,7 @@ async function executeBuildAndDeploy(
         project.installationId ?? undefined,
       ).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/deployments/build-pipeline"); return null; });
       if (webBaseUrl) {
-        snapshot.repoUrl = `${webBaseUrl.replace(/\/+$/, "")}/${project.gitOwner}/${project.gitRepo}.git`;
+        snapshot.repoUrl = `${webBaseUrl.replace(/(?<!\/)\/+$/, "")}/${project.gitOwner}/${project.gitRepo}.git`;
       }
     }
 

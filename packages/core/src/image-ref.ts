@@ -83,7 +83,7 @@ export function normalizeRegistryHost(input: string): string {
     .trim()
     .toLowerCase()
     .replace(/^[a-z][a-z0-9+.-]*:\/\//, "") // scheme
-    .replace(/\/+$/, ""); // trailing slash
+    .replace(/(?<!\/)\/+$/, ""); // trailing slash
   const host = bare.split("/")[0] ?? "";
   return (DOCKER_HUB_ALIASES as readonly string[]).includes(bare) ||
     (DOCKER_HUB_ALIASES as readonly string[]).includes(host)

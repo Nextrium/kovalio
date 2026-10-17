@@ -22,7 +22,7 @@ function parseMixExs(content: string): string[] {
   // this one key is conventional enough to match by regex.
   const match = content.match(/apps_path\s*:\s*["']([^"']+)["']/);
   if (!match) return [];
-  const appsPath = match[1].trim().replace(/^\/+|\/+$/g, "");
+  const appsPath = match[1].trim().replace(/^\/+|(?<!\/)\/+$/g, "");
   if (!appsPath) return [];
   return [`${appsPath}/*`];
 }

@@ -56,7 +56,7 @@ export function isLoopbackHost(host: string | null | undefined): boolean {
   if (!host) return false;
   let value = host.trim().toLowerCase();
   if (value.startsWith("[") && value.endsWith("]")) value = value.slice(1, -1);
-  value = value.replace(/\.+$/, "");
+  value = value.replace(/(?<!\.)\.+$/, "");
   if (!value) return false;
 
   if (

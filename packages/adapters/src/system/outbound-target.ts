@@ -63,7 +63,7 @@ export function isBlockedHostname(host: string): boolean {
 }
 
 function normalizeHost(host: string): string {
-  return host.trim().toLowerCase().replace(/^\[|\]$/g, "").replace(/\.+$/, "");
+  return host.trim().toLowerCase().replace(/^\[|\]$/g, "").replace(/(?<!\.)\.+$/, "");
 }
 
 /** Sync literal-only host guard (no DNS). Throws SsrfError if blocked. */

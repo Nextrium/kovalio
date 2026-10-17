@@ -40,7 +40,7 @@ export const renderMetadataParser: MetadataParser = {
       if (buildMatch && !buildCommand) buildCommand = unquote(buildMatch[1]);
 
       // envVars entries: `- key: FOO` on one line, `value: bar` on a later one.
-      const keyMatch = line.match(/^\s*-?\s*key:\s*(.+)$/);
+      const keyMatch = line.match(/^\s*(?:-\s*)?key:\s*(.+)$/);
       if (keyMatch) {
         pendingKey = unquote(keyMatch[1]);
         continue;

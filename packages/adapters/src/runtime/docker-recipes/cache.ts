@@ -75,7 +75,7 @@ export function cachedRunPrefix(
     config.buildCommand,
     Object.entries(config.envVars ?? {}).sort(([a], [b]) => a.localeCompare(b)),
   ];
-  const output = config.outputDirectory?.replace(/^\.\//, "").replace(/\/+$/, "");
+  const output = config.outputDirectory?.replace(/^\.\//, "").replace(/(?<!\/)\/+$/, "");
   const mounts = [...new Set([...packagePaths, ...outputPaths])]
     .filter((path) => {
       if (!/^\/[A-Za-z0-9._/-]+$/.test(path)) return false;

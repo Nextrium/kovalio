@@ -73,7 +73,7 @@ function joinKey(parts: Array<string | null | undefined>): string {
   const cleaned = parts
     .map((p) => (p ?? "").trim())
     .filter((p) => p.length > 0)
-    .map((p) => p.replace(/^\/+|\/+$/g, ""));
+    .map((p) => p.replace(/^\/+|(?<!\/)\/+$/g, ""));
 
   for (const segment of cleaned) {
     assertSafeSegment(segment, parts);

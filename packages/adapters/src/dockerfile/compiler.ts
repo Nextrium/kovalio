@@ -122,7 +122,7 @@ function normalizeWorkdir(current: string, next: string): string {
     return current;
   }
 
-  const raw = value.startsWith("/") ? value : `${current.replace(/\/+$/g, "")}/${value}`;
+  const raw = value.startsWith("/") ? value : `${current.replace(/(?<!\/)\/+$/g, "")}/${value}`;
   const parts: string[] = [];
   for (const part of raw.split("/")) {
     if (!part || part === ".") {

@@ -791,7 +791,7 @@ export async function getCloneToken(ctx: ExecutionContext, input: NonNullable<Pa
   const webBaseUrl =
     (await resolveGitHubWebBaseUrl(ctx.organizationId, owner).catch((diagnosticFailure) => { observeCaughtError(diagnosticFailure, "platform/engine/modules/github/github-application.service"); return null; })) ??
     "https://github.com";
-  const cloneOrigin = webBaseUrl.replace(/^https:\/\//, "").replace(/\/+$/, "");
+  const cloneOrigin = webBaseUrl.replace(/^https:\/\//, "").replace(/(?<!\/)\/+$/, "");
   const cloneUrl = `https://x-access-token:${token}@${cloneOrigin}/${owner}/${repo}.git`;
   return { token, cloneUrl, command: `git clone ${cloneUrl}` };
 }

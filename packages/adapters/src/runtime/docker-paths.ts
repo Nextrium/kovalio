@@ -38,7 +38,7 @@ export function normalizeDockerRelativePath(value?: string | null): string {
   const normalized = value
     ?.trim()
     .replace(/^\.\//, "")
-    .replace(/^\/+|\/+$/g, "");
+    .replace(/^\/+|(?<!\/)\/+$/g, "");
   if (!normalized || normalized === ".") {
     return "";
   }
@@ -88,7 +88,7 @@ export function normalizeDockerRootDirectory(rootDirectory?: string, localPath?:
 
   normalized = normalized
     .replace(/^\.\//, "")
-    .replace(/^\/+|\/+$/g, "");
+    .replace(/^\/+|(?<!\/)\/+$/g, "");
 
   if (!normalized || normalized === ".") {
     return "";

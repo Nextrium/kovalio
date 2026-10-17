@@ -630,7 +630,7 @@ const SYSTEM_ROOTS: readonly string[] = [
 export function normalizeBackupPath(input: string): string {
   const collapsed = input.trim().replace(/\/{2,}/g, "/");
   if (collapsed === "/") return "/";
-  return collapsed.replace(/\/+$/, "");
+  return collapsed.replace(/(?<!\/)\/+$/, "");
 }
 
 /**

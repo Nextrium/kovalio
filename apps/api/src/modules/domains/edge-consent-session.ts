@@ -10,6 +10,7 @@
  * edge takeover never shows up as an "active server setup" and vice-versa.
  */
 
+import { randomUUID } from "node:crypto";
 import type { PromptPayload } from "@repo/adapters";
 import { PromptRegistry } from "@repo/platform/engine/lib/prompt-gateway";
 import { TtlCache } from "@repo/platform/engine/lib/cache";
@@ -66,7 +67,7 @@ export function getActiveEdgeSessionForProject(projectId: string): EdgeConsentSe
 }
 
 export function createEdgeConsentSession(projectId: string): EdgeConsentSession {
-  const id = `edge_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const id = `edge_${Date.now()}_${randomUUID()}`;
   const session: EdgeConsentSession = {
     id,
     projectId,

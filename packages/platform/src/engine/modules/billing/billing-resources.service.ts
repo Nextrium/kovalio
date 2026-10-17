@@ -28,7 +28,7 @@ function timedClient(options: ConstructorParameters<typeof Oblien>[0], signal: A
   const client = new Oblien(options);
   // The SDK owns endpoint formatting; its default transport has no redirect
   // control. Never forward owner credentials or a scoped token to another host.
-  const base = (options.baseUrl ?? "https://api.oblien.com").replace(/\/+$/, "");
+  const base = (options.baseUrl ?? "https://api.oblien.com").replace(/(?<!\/)\/+$/, "");
   const headers = { "Content-Type": "application/json", ...("token" in options
     ? { Authorization: `Bearer ${options.token}` }
     : { "X-Client-ID": options.clientId, "X-Client-Secret": options.clientSecret }) };

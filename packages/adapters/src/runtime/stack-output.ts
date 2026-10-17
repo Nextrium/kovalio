@@ -45,7 +45,7 @@ export async function prepareStackOutput(
  * in build-pipeline.ts. Generic build-dir helper — not stack-specific.
  */
 export function resolveProjectDir(buildDir: string, rootDirectory?: string): string {
-  const normalized = rootDirectory?.trim().replace(/^\/+|\/+$/g, "");
+  const normalized = rootDirectory?.trim().replace(/^\/+|(?<!\/)\/+$/g, "");
   return normalized ? join(buildDir, normalized) : buildDir;
 }
 
@@ -63,7 +63,7 @@ export function resolveProjectDir(buildDir: string, rootDirectory?: string): str
  * domain. Reject absolute, confine relative. "." and "" mean "serve `base`".
  */
 export function resolveStaticOutputPath(base: string, outputDirectory: string): string {
-  const normalizedBase = base.replace(/\/+$/, "");
+  const normalizedBase = base.replace(/(?<!\/)\/+$/, "");
   if (!outputDirectory || outputDirectory === ".") {
     return normalizedBase;
   }
@@ -97,7 +97,7 @@ export function resolveStaticOutputPath(base: string, outputDirectory: string): 
  * traversal too — this is the earlier of the two gates, not a replacement.
  */
 export function resolveServedStaticPath(staticRoot: string, routedPath: string): string {
-  const root = staticRoot.replace(/\/+$/, "");
+  const root = staticRoot.replace(/(?<!\/)\/+$/, "");
   const relative = routedPath.replace(/^\/+/, "");
   if (!relative) return root;
   const resolved = pathPosix.normalize(pathPosix.join(root, relative));

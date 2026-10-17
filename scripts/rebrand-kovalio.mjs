@@ -84,6 +84,34 @@ function decodeBrandedBase64(token) {
   return decoded;
 }
 
+// ReDoS hardening, part of the overlay for the same reason branding is: the rewrite
+// is deterministic and meaning-preserving, so the merge driver factors it out of
+// syncs and --check flags any copy upstream adds. V8 retries an unanchored
+// trailing-run regex such as /\/+$/ from every position of a long run, which is
+// quadratic (seconds of CPU per 20 KB of "/"). A lookbehind lets a match start only
+// where the run starts. That is exactly equivalent only when the run begins its
+// regex or its alternative, so only those forms are rewritten; a run after (.*)
+// would capture differently and is left alone.
+const HARDENING = [
+  [String.raw`(/\/+$/`, String.raw`(/(?<!\/)\/+$/`],
+  [String.raw`|\/+$/`, String.raw`|(?<!\/)\/+$/`],
+  [String.raw`(/\.+$/`, String.raw`(/(?<!\.)\.+$/`],
+  [String.raw`|\.+$/`, String.raw`|(?<!\.)\.+$/`],
+  [String.raw`(/[ \t]+#+$/`, String.raw`(/(?<![ \t])[ \t]+#+$/`],
+];
+const HARDENED_EXTENSIONS = /\.(?:[cm]?[jt]sx?)$/;
+
+/** Rewrite quadratic trailing-run regexes in JS/TS source to their linear form. */
+export function hardenText(text, path = "") {
+  if (path && !HARDENED_EXTENSIONS.test(path)) return text;
+  return HARDENING.reduce((acc, [from, to]) => acc.split(from).join(to), text);
+}
+
+/** The whole overlay: branding, then hardening. */
+export function overlayText(text, path = "") {
+  return hardenText(rebrandText(text), path);
+}
+
 export function rebrandText(text) {
   const plain = (s) => REPLACEMENTS.reduce((acc, [pattern, to]) => acc.replace(pattern, to), s);
   const apply = (s) =>
@@ -147,7 +175,7 @@ for (const from of listFiles(ROOT)) {
   if (existsSync(join(ROOT, to))) {
     const incoming = readFileSync(join(ROOT, from));
     const incomingText = asText(incoming);
-    const branded = incomingText === null ? incoming : Buffer.from(rebrandText(incomingText), "utf8");
+    const branded = incomingText === null ? incoming : Buffer.from(overlayText(incomingText, to), "utf8");
     if (!branded.equals(readFileSync(join(ROOT, to)))) {
       collisions.push(`${from} and ${to}`);
       continue;
@@ -170,13 +198,14 @@ for (const rel of listFiles(ROOT)) {
   const abs = join(ROOT, rel);
   const text = asText(readFileSync(abs));
   if (text === null) continue; // binary or not UTF-8; don't risk corrupting it
-  const branded = rebrandText(text);
+  const branded = overlayText(text, rel);
   if (branded === text) continue;
   if (CHECK) {
     const lines = text.split("\n");
     lines.forEach((line, i) => {
       if (line.includes(KEEP_MARKER)) return;
-      if (/openship/i.test(line)) findings.push(`${rel}:${i + 1}: ${line.trim().slice(0, 120)}`);
+      if (hardenText(line, rel) !== line) findings.push(`${rel}:${i + 1}: quadratic trailing-run regex ${line.trim().slice(0, 100)}`);
+      else if (/openship/i.test(line)) findings.push(`${rel}:${i + 1}: ${line.trim().slice(0, 120)}`);
       else if (line.search(UPSTREAM_IMAGE) !== -1 || line.search(UPSTREAM_REGISTRY) !== -1)
         findings.push(`${rel}:${i + 1}: upstream image registry ${line.trim().slice(0, 100)}`);
       else if ([...line.matchAll(BASE64_LITERAL)].some(([t]) => decodeBrandedBase64(t) !== null))
@@ -194,7 +223,10 @@ if (CHECK) {
     console.log("Brand guard: no Openship branding found.");
     process.exit(0);
   }
-  console.error(`Brand guard: ${findings.length} Openship reference(s) found. Run \`node scripts/rebrand-kovalio.mjs\` to fix.`);
+  console.error(
+    `Brand guard: ${findings.length} overlay finding(s): upstream branding or unhardened regexes. ` +
+      "Run `node scripts/rebrand-kovalio.mjs` to fix.",
+  );
   for (const f of findings.slice(0, 200)) console.error(`  ${f}`);
   if (findings.length > 200) console.error(`  ... and ${findings.length - 200} more`);
   process.exit(1);

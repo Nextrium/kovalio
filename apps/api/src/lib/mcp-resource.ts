@@ -52,7 +52,7 @@ export function canonicalizeResource(raw: string | null | undefined): string | n
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") return null;
   // `URL` already lowercases scheme + host and drops the default port.
-  const path = url.pathname.replace(/\/+$/, "");
+  const path = url.pathname.replace(/(?<!\/)\/+$/, "");
   return `${url.origin}${path}`;
 }
 
@@ -62,7 +62,7 @@ export function publicOriginFor(req: Request): string {
   try {
     return new URL(raw).origin;
   } catch {
-    return raw.replace(/\/+$/, "");
+    return raw.replace(/(?<!\/)\/+$/, "");
   }
 }
 
@@ -73,7 +73,7 @@ export function publicOriginFor(req: Request): string {
  */
 export function requestMcpResourcePath(req: Request): string {
   const path = req.headers.get("x-forwarded-uri")?.split("?")[0] ?? new URL(req.url).pathname;
-  const normalized = path.replace(/\/+$/, "");
+  const normalized = path.replace(/(?<!\/)\/+$/, "");
   return MCP_RESOURCE_PATHS.includes(normalized) ? normalized : MCP_RESOURCE_PATH;
 }
 
@@ -93,7 +93,7 @@ export function publicRequestUrl(req: Request): URL {
 
 /** The canonical MCP resource identifier for an origin: `<origin>/api/mcp`. */
 export function canonicalMcpResource(origin: string): string {
-  return `${origin.replace(/\/+$/, "")}${MCP_RESOURCE_PATH}`;
+  return `${origin.replace(/(?<!\/)\/+$/, "")}${MCP_RESOURCE_PATH}`;
 }
 
 /** Swap an absolute http(s) URL's origin for `origin`, keeping path/query/hash.
@@ -151,7 +151,7 @@ export function rewriteMetadataOrigin<T extends Record<string, unknown>>(
   metadata: T,
   origin: string,
 ): T {
-  return rewriteNode(metadata, origin.replace(/\/+$/, "")) as T;
+  return rewriteNode(metadata, origin.replace(/(?<!\/)\/+$/, "")) as T;
 }
 
 /**
@@ -161,7 +161,7 @@ export function rewriteMetadataOrigin<T extends Record<string, unknown>>(
  * issued to clients that echoed it back must keep working.
  */
 export function allowedMcpResources(origin: string): readonly string[] {
-  const base = origin.replace(/\/+$/, "");
+  const base = origin.replace(/(?<!\/)\/+$/, "");
   return [...MCP_RESOURCE_PATHS.map((p) => `${base}${p}`), base];
 }
 
@@ -188,7 +188,7 @@ export function resolveTokenAudience(raw: string | null | undefined, origin: str
 
 /** Where a client discovers the metadata for a given MCP resource path. */
 export function protectedResourceMetadataUrl(origin: string, path: string): string {
-  return `${origin.replace(/\/+$/, "")}/.well-known/oauth-protected-resource${path}`;
+  return `${origin.replace(/(?<!\/)\/+$/, "")}/.well-known/oauth-protected-resource${path}`;
 }
 
 export interface ProtectedResourceMetadata {
@@ -209,7 +209,7 @@ export function protectedResourceMetadata(
   origin: string,
   resource: string,
 ): ProtectedResourceMetadata {
-  const base = origin.replace(/\/+$/, "");
+  const base = origin.replace(/(?<!\/)\/+$/, "");
   return {
     resource,
     authorization_servers: [base],

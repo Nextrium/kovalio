@@ -49,7 +49,7 @@ export function generateGitHubAppJwt(credentials: GitHubAppClientCredentials): s
 
 function apiUrl(base: string | undefined, path: string): string {
   if (/^https?:\/\//i.test(path)) return path;
-  return `${(base ?? "https://api.github.com").replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
+  return `${(base ?? "https://api.github.com").replace(/(?<!\/)\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 }
 
 export async function githubAppFetch<T = unknown>(

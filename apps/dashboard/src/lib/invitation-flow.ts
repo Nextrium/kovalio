@@ -9,7 +9,7 @@ export function invitationShareUrl(instanceUrl: string | null, invitationId: str
   const base = new URL(instanceUrl);
   if (!["https:", "http:"].includes(base.protocol) || base.username || base.password || base.search || base.hash)
     throw new Error("The instance address is invalid.");
-  return `${base.href.replace(/\/+$/, "")}${invitationClaimPath(invitationId)}`;
+  return `${base.href.replace(/(?<!\/)\/+$/, "")}${invitationClaimPath(invitationId)}`;
 }
 
 export interface InvitationPreviewResponse {

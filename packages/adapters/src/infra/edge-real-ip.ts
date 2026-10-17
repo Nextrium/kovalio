@@ -255,7 +255,7 @@ export const CLOUD_EDGE_REAL_IP_HEADER = "X-Real-IP";
  * visitor a free choice of source address.
  */
 export function isCloudFrontedHost(hostname: string): boolean {
-  const host = hostname.trim().toLowerCase().replace(/\.+$/, "");
+  const host = hostname.trim().toLowerCase().replace(/(?<!\.)\.+$/, "");
   const suffix = `.${SYSTEM.DOMAINS.CLOUD_DOMAIN.toLowerCase()}`;
   return host.length > suffix.length && host.endsWith(suffix);
 }

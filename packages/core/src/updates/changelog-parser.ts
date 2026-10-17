@@ -35,7 +35,7 @@ export function parseChangelog(markdown: string): { version: string; body: strin
       current = undefined;
       // Support both `## v1.2.3` and `## [v1.2.3] - date`, with a full
       // version token so `1.2.3foo` cannot masquerade as release 1.2.3.
-      const title = (heading[1] ?? "").trim().replace(/[ \t]+#+$/, "");
+      const title = (heading[1] ?? "").trim().replace(/(?<![ \t])[ \t]+#+$/, "");
       const token = title.match(/^(?:\[([^\]]+)\]|([^\s]+))(?:[ \t]+.*)?$/);
       const version = normalizeChangelogVersion(token?.[1] ?? token?.[2] ?? "");
       if (

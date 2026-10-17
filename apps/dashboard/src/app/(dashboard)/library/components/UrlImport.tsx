@@ -22,7 +22,7 @@ export function UrlImport({ header }: { header?: React.ReactNode }) {
 
     try {
       const parsed = new URL(url.trim());
-      const parts = parsed.pathname.replace(/\/+$/, "").slice(1).split("/");
+      const parts = parsed.pathname.replace(/(?<!\/)\/+$/, "").slice(1).split("/");
       const [owner, rawRepo] = parts;
       const repo = rawRepo?.replace(/\.git$/, "");
       if (

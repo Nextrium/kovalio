@@ -90,15 +90,20 @@ function installZip(zip: string): string {
   const localAppData = process.env.LOCALAPPDATA || join(homedir(), "AppData", "Local");
   const target = join(localAppData, "Programs", "Kovalio");
   mkdirSync(target, { recursive: true });
+  // Paths travel as environment variables, never inside the command text, so a
+  // quote or wildcard in a path can't change what PowerShell runs.
   const expand = spawnSync(
     "powershell",
     [
       "-NoProfile",
       "-NonInteractive",
       "-Command",
-      `Expand-Archive -Path '${zip}' -DestinationPath '${target}' -Force`,
+      "Expand-Archive -LiteralPath $env:KOVALIO_INSTALL_ZIP -DestinationPath $env:KOVALIO_INSTALL_DEST -Force",
     ],
-    { encoding: "utf8" },
+    {
+      encoding: "utf8",
+      env: { ...process.env, KOVALIO_INSTALL_ZIP: zip, KOVALIO_INSTALL_DEST: target },
+    },
   );
   if (expand.status !== 0) throw new Error(`Expand-Archive failed: ${expand.stderr?.trim()}`);
   return target;
@@ -119,10 +124,16 @@ function launch(kind: AssetKind, target: string): void {
     child.unref();
     return;
   }
-  // zip: find and start the exe under the install dir.
+  // zip: start the exe under the install dir directly (not via `cmd /c start`, which
+  // re-parses the path, so an `&` in the user's profile path would split it).
   const exe = join(target, "Kovalio.exe");
-  const path = existsSync(exe) ? exe : target;
-  spawnSync("cmd", ["/c", "start", "", path]);
+  if (existsSync(exe)) {
+    const child = spawn(exe, [], { detached: true, stdio: "ignore" });
+    child.on("error", (diagnosticFailure) => observeCaughtError(diagnosticFailure, "cli/commands/install"));
+    child.unref();
+    return;
+  }
+  spawnSync("explorer.exe", [target]);
 }
 
 export const installCommand = new Command("install")

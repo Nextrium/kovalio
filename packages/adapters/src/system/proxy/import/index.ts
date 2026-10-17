@@ -154,11 +154,11 @@ export function unreachableStaticRoots(
   opts: { containerEdge: boolean },
 ): UnreachableStaticRoot[] {
   if (!opts.containerEdge) return [];
-  const visible = EDGE_CONTAINER_MOUNTS.map((m) => m.host.replace(/\/+$/, ""));
+  const visible = EDGE_CONTAINER_MOUNTS.map((m) => m.host.replace(/(?<!\/)\/+$/, ""));
   const out: UnreachableStaticRoot[] = [];
   for (const site of sites) {
     if (site.target.kind !== "static") continue;
-    const root = site.target.root.replace(/\/+$/, "");
+    const root = site.target.root.replace(/(?<!\/)\/+$/, "");
     // Prefix match on a path BOUNDARY — `/opt/kovalio/staticstuff` is not
     // inside `/opt/kovalio/static`.
     const reachable = visible.some((v) => root === v || root.startsWith(`${v}/`));
@@ -204,7 +204,7 @@ export async function copyStaticRootIntoEdge(
       .replace(/[^a-zA-Z0-9._-]/g, "-")
       .replace(/^-+|-+$/g, "")
       .toLowerCase() || "site";
-  const src = opts.root.replace(/\/+$/, "");
+  const src = opts.root.replace(/(?<!\/)\/+$/, "");
   const dest = `${EDGE_STATIC_MOUNT}/_adopted/${slug}`;
   await executor.exec(`mkdir -p ${sq(dest)}`);
   // `<src>/.` copies CONTENTS (incl. dotfiles) so files land directly under <dest>,

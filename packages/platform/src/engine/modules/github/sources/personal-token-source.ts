@@ -52,7 +52,7 @@ export class PersonalTokenGitHubSource implements GitHubSource {
       // A same-named Enterprise owner is a different namespace. Its repository
       // reads/clones use the configured App; never mix github.com results in.
       allowed = resolveGitHubApiBaseUrl(this.ctx.organizationId, owner).then(
-        (base) => !base || base.replace(/\/+$/, "") === "https://api.github.com",
+        (base) => !base || base.replace(/(?<!\/)\/+$/, "") === "https://api.github.com",
       );
       this.owners.set(key, allowed);
     }

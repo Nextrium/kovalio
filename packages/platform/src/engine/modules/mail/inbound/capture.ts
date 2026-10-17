@@ -352,7 +352,7 @@ export async function reconcileDomains(
  * `mail_location = maildir:%Lh/Maildir/` puts the whole tree one level under the home.
  */
 export function collectorFolderPath(maildirPath: string, token: string): string {
-  const home = maildirPath.replace(/\/+$/, "");
+  const home = maildirPath.replace(/(?<!\/)\/+$/, "");
   return `${home}/Maildir/.${token}`;
 }
 

@@ -35,7 +35,7 @@ const checks = await Promise.allSettled([
   (async () => {
     const callback = oblienWebhookUrl(process.env.OBLIEN_WEBHOOK_URL, runtimeTarget.api);
     if (!clientId || !clientSecret) throw new Error("Oblien credentials are missing");
-    const response = await fetch(`${apiBase.replace(/\/+$/, "")}/webhooks`, {
+    const response = await fetch(`${apiBase.replace(/(?<!\/)\/+$/, "")}/webhooks`, {
       headers: { "X-Client-ID": clientId, "X-Client-Secret": clientSecret },
       redirect: "error", signal: AbortSignal.timeout(15_000),
     });
@@ -56,7 +56,7 @@ const checks = await Promise.allSettled([
   })(),
   (async () => {
     if (!clientId || !clientSecret) throw new Error("Oblien credentials are missing");
-    const response = await fetch(`${apiBase.replace(/\/+$/, "")}/namespaces?limit=1`, {
+    const response = await fetch(`${apiBase.replace(/(?<!\/)\/+$/, "")}/namespaces?limit=1`, {
       headers: { "X-Client-ID": clientId, "X-Client-Secret": clientSecret },
       redirect: "error", signal: AbortSignal.timeout(15_000),
     });

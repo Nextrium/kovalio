@@ -274,7 +274,7 @@ export const EDGE_CONTAINER_MOUNTS: ReadonlyArray<{ host: string; container: str
  */
 export const EDGE_SAME_PATH_MOUNTS: readonly string[] = EDGE_CONTAINER_MOUNTS.filter(
   (m) => m.host === m.container,
-).map((m) => m.host.replace(/\/+$/, ""));
+).map((m) => m.host.replace(/(?<!\/)\/+$/, ""));
 
 /**
  * Paths for driving a containerized edge from OUTSIDE the container — i.e. over

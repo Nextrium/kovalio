@@ -222,7 +222,7 @@ export function getMcpTools(): McpToolDef[] {
       // Mode-specific billing routers share a method/path and handler contract.
       // Importing public plans registers the Cloud router even on self-hosted
       // instances. Advertise the endpoint once, never an order-dependent _2 tool.
-      const key = `${route.method} ${route.path.replace(/\/+$/, "")}`;
+      const key = `${route.method} ${route.path.replace(/(?<!\/)\/+$/, "")}`;
       if (endpoints.has(key)) return false;
       endpoints.add(key);
       return true;

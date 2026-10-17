@@ -29,7 +29,7 @@ export function resolveCloudAnalyticsConfig(
   )
     return null;
   const key = input.POSTHOG_PROJECT_KEY?.trim();
-  const host = input.POSTHOG_HOST?.replace(/\/+$/, "") ?? "https://us.i.posthog.com";
+  const host = input.POSTHOG_HOST?.replace(/(?<!\/)\/+$/, "") ?? "https://us.i.posthog.com";
   // No arbitrary outbound destination or accidental personal API key.
   if (
     !key ||

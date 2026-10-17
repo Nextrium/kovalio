@@ -36,7 +36,7 @@ export function normalizeProjectRootDirectory(value?: string): string {
   const normalized = value
     ?.trim()
     .replace(/^\.\//, "")
-    .replace(/^\/+|\/+$/g, "");
+    .replace(/^\/+|(?<!\/)\/+$/g, "");
 
   if (!normalized || normalized === ".") {
     return "";
@@ -88,7 +88,7 @@ export function normalizeCustomHostname(raw: string): string {
     .trim()
     .toLowerCase()
     .replace(/^https?:\/\//, "")
-    .replace(/\/+$/, "");
+    .replace(/(?<!\/)\/+$/, "");
 }
 
 /**

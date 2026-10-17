@@ -220,7 +220,7 @@ export function extractCdTargets(command?: string): string[] {
   if (!command) return [];
   const targets: string[] = [];
   for (const match of command.matchAll(/(?:^|&&|;|\|)\s*cd\s+['"]?([^'"&;|\s]+)/g)) {
-    const target = match[1].replace(/\/+$/, "");
+    const target = match[1].replace(/(?<!\/)\/+$/, "");
     if (target && target !== ".") targets.push(target);
   }
   return targets;

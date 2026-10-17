@@ -69,7 +69,7 @@ import { HostBuildForbiddenError } from "./host-build-policy";
 /** Parent of a POSIX path on the TARGET machine — node:path would resolve
  *  against the local platform's separator, which is wrong over SSH from Windows. */
 function parentPath(path: string): string {
-  const idx = path.replace(/\/+$/, "").lastIndexOf("/");
+  const idx = path.replace(/(?<!\/)\/+$/, "").lastIndexOf("/");
   return idx > 0 ? path.slice(0, idx) : "/";
 }
 

@@ -125,7 +125,7 @@ export function normalizeGitHubBaseUrl(
   if (parsed.username || parsed.password || parsed.search || parsed.hash) {
     throw new ValidationError(`${label} cannot contain credentials, a query, or a fragment.`);
   }
-  return parsed.toString().replace(/\/+$/, "");
+  return parsed.toString().replace(/(?<!\/)\/+$/, "");
 }
 
 function normalizeName(name: string): string {
@@ -200,7 +200,7 @@ export function sourceClientCredentials(
 }
 
 export function githubSourceSetupUrl(): string {
-  return `${resolveDashboardPublicUrl().replace(/\/+$/, "")}/auth/callback/github-app`;
+  return `${resolveDashboardPublicUrl().replace(/(?<!\/)\/+$/, "")}/auth/callback/github-app`;
 }
 
 export async function getGitHubSourceConfiguration(): Promise<GitHubSourceConfiguration> {
@@ -225,11 +225,11 @@ function avatarForInstallation(installation: GitInstallation, webBaseUrl: string
   const id = Number(installation.providerOwnerId);
   return webBaseUrl === DEFAULT_WEB_BASE_URL && Number.isSafeInteger(id) && id > 0
     ? `https://avatars.githubusercontent.com/u/${id}?v=4`
-    : `${webBaseUrl.replace(/\/+$/, "")}/${encodeURIComponent(installation.owner)}.png`;
+    : `${webBaseUrl.replace(/(?<!\/)\/+$/, "")}/${encodeURIComponent(installation.owner)}.png`;
 }
 
 function sanitizeSource(source: GitSource, installations: GitInstallation[]): PublicGitHubSource {
-  const web = source.webBaseUrl.replace(/\/+$/, "");
+  const web = source.webBaseUrl.replace(/(?<!\/)\/+$/, "");
   return {
     id: source.id,
     name: source.name,
@@ -430,7 +430,7 @@ export async function beginGitHubManifestFlow(
 
 async function exchangeManifestCode(apiBaseUrl: string, code: string): Promise<ManifestConversion> {
   const response = await fetch(
-    `${apiBaseUrl.replace(/\/+$/, "")}/app-manifests/${encodeURIComponent(code)}/conversions`,
+    `${apiBaseUrl.replace(/(?<!\/)\/+$/, "")}/app-manifests/${encodeURIComponent(code)}/conversions`,
     {
       method: "POST",
       headers: {
@@ -692,7 +692,7 @@ export async function createSourceInstallUrl(
     expiresAt: new Date(Date.now() + SETUP_STATE_TTL_MS),
   });
   return {
-    url: `${source.webBaseUrl.replace(/\/+$/, "")}/apps/${encodeURIComponent(source.slug)}/installations/new?state=${encodeURIComponent(state)}`,
+    url: `${source.webBaseUrl.replace(/(?<!\/)\/+$/, "")}/apps/${encodeURIComponent(source.slug)}/installations/new?state=${encodeURIComponent(state)}`,
     state,
   };
 }

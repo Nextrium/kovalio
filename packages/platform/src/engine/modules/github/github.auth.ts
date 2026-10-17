@@ -1194,7 +1194,7 @@ function storedAccountAvatarUrl(
   if (webBaseUrl === "https://github.com" && id > 0) {
     return `https://avatars.githubusercontent.com/u/${id}?v=4`;
   }
-  return `${webBaseUrl.replace(/\/+$/, "")}/${encodeURIComponent(owner)}.png`;
+  return `${webBaseUrl.replace(/(?<!\/)\/+$/, "")}/${encodeURIComponent(owner)}.png`;
 }
 
 // Pure mapper lives in ./sources/mappers; re-exported for back-compat.

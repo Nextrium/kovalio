@@ -827,7 +827,7 @@ export const trustedOrigins = [
     // Public serving (kovalio up --public-url): the browser's origin is the
     // operator's public URL, so it must be trusted for CORS, the origin guard,
     // and Better Auth's login CSRF check — otherwise remote login is rejected.
-    ...(env.KOVALIO_PUBLIC_URL ? [env.KOVALIO_PUBLIC_URL.replace(/\/+$/, "")] : []),
+    ...(env.KOVALIO_PUBLIC_URL ? [env.KOVALIO_PUBLIC_URL.replace(/(?<!\/)\/+$/, "")] : []),
     ...extraTrustedOrigins,
     ...(env.NODE_ENV === "production"
       ? []

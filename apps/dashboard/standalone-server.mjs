@@ -33,7 +33,7 @@ const API_BASE = (
   process.env.INTERNAL_API_URL ||
   process.env.KOVALIO_LOCAL_API_URL ||
   "http://127.0.0.1:4000"
-).replace(/\/+$/, "");
+).replace(/(?<!\/)\/+$/, "");
 
 const PROXY_PREFIX = "/api/proxy";
 

@@ -2617,7 +2617,12 @@ ${serveLocation}
     // Defense-in-depth: only pass acmeEmail when it's a plausible address.
     // (_exec now shell-quotes every arg, but a garbage/injection-shaped value
     // has no business reaching certbot — drop it rather than register with it.)
-    const validEmail = !!this.acmeEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.acmeEmail);
+    // Length first: 254 is the longest valid address, and the pattern backtracks
+    // quadratically on long dotted input.
+    const validEmail =
+      !!this.acmeEmail &&
+      this.acmeEmail.length <= 254 &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.acmeEmail);
     const emailArgs = validEmail
       ? ["--email", this.acmeEmail as string]
       : ["--register-unsafely-without-email"];

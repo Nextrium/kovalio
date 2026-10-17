@@ -144,7 +144,7 @@ class S3DestinationImpl implements BackupDestination {
       forcePathStyle: !isAws,
     });
     this.bucket = row.bucket;
-    this.prefix = (row.pathPrefix ?? "").replace(/^\/+|\/+$/g, "");
+    this.prefix = (row.pathPrefix ?? "").replace(/^\/+|(?<!\/)\/+$/g, "");
   }
 
   private fullKey(key: string): string {
