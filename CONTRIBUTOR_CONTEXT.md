@@ -82,24 +82,28 @@ meaning-preserving like branding, so it lives in the same pipeline.
 ## 5. Upstream syncs
 
 - **Schedule:** [upstream-sync.yml](.github/workflows/upstream-sync.yml) runs every Sunday
-  at 00:00 UTC, or on demand: `gh workflow run upstream-sync.yml --repo Nextrium/kovalio -f base=main`.
+  at 00:00 UTC, or on demand: `gh workflow run upstream-sync.yml --repo Nextrium/kovalio -f base=develop`.
 - **What it does:** runs [scripts/sync-upstream.sh](scripts/sync-upstream.sh), which merges
   upstream into `sync/upstream` using a brand-aware merge driver
   ([scripts/brand-merge-driver.mjs](scripts/brand-merge-driver.mjs)). The driver applies the
   overlay to upstream's side before the three-way merge, so branding never shows up as a
   conflict. Only real overlaps between a fork change and an upstream change do.
 - **Clean merge:** it applies and verifies the overlay, pushes `sync/upstream`, and opens a
-  PR into `main`. CI and the Fork guard then run on that PR. Review the upstream changes
-  and the checks, then merge with a merge commit.
+  PR into `develop`, like any other change. CI and the Fork guard then run on that PR.
+  Review the upstream changes and the checks, merge with a merge commit, then bring it to
+  `main` with the usual `develop` → `main` PR.
+- **Workflow changes reach the schedule only from `main`.** GitHub runs scheduled
+  workflows from the default branch, so a fix to `upstream-sync.yml` takes effect only
+  after the `develop` → `main` PR.
 - **Conflict:** the run fails and opens (or updates) an issue titled "Upstream sync needs
   a decision", listing the files. To resolve:
 
   ```bash
-  bash scripts/sync-upstream.sh main     # reproduces the same merge, leaves conflicts in place
+  bash scripts/sync-upstream.sh develop  # reproduces the same merge, leaves conflicts in place
   # decide each conflict, then:
   git add -A && node scripts/rebrand-kovalio.mjs && node scripts/rebrand-kovalio.mjs --check
   git add -A && git commit --no-edit
-  git push --force origin sync/upstream  # then open a PR into main
+  git push --force origin sync/upstream  # then open a PR into develop
   ```
 
   Each conflict is a fork change overlapping an upstream change. Before choosing, check
@@ -162,7 +166,7 @@ meaning-preserving like branding, so it lives in the same pipeline.
 
 | Item | Notes |
 |---|---|
-| Sync PR #10 (v0.9.3) | Ready to review and merge. Merge it before the next Sunday run: the `GH_REPO` fix to the sync workflow only takes effect once it's on `main`. |
+| Sync PR #10 (v0.9.3) | Ready to review, now into `develop`. Bring it on to `main` before the next Sunday run: the `GH_REPO` fix and the `develop` default only take effect for the schedule once they're on `main`. |
 | First release | Publishing a `v*.*.*` tag runs `docker-images.yml` and creates the images, desktop builds and CLI package the README already links to. |
 | README | Still upstream's content (section 9). |
 | Remaining CodeQL alerts | 59 unreviewed, mostly missing regex anchors and file/HTTP data flow. |

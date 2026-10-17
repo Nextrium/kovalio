@@ -1,9 +1,13 @@
+import { buildEnvironmentPreflight } from "./build-env-preflight";
 import type { BuildConfig } from "../types";
 import { getDockerBuildRecipe, resolveRuntimeImages, assertRuntimeVersionTarget } from "@repo/core";
 import { generatePhpDockerfile } from "./docker-recipes/php";
 import { generateRubyDockerfile } from "./docker-recipes/ruby";
 import { generateStaticDockerfile } from "./docker-recipes/static";
 import { generateGenericDockerfile } from "./docker-recipes/generic";
+import { normalizeDockerRootDirectory } from "./docker-paths";
+import { cacheMountTargets } from "./cache-mount-targets";
+import { shellQuote } from "@repo/core";
 
 export {
   builderContextRoot,
@@ -34,8 +38,13 @@ export function generateDockerfile(config: BuildConfig): string {
       config.runtimeImage,
     );
   }
-  const recipe = recipes[getDockerBuildRecipe(config.stack, config.isStatic)](config);
+  const root = normalizeDockerRootDirectory(config.rootDirectory, config.localPath);
+  const workdir = root ? `/workspace/${root}` : "/workspace";
+  const preflight = `test -d ${shellQuote(workdir)} || { echo 'Configured root directory does not exist in this revision.' >&2; exit 1; }; cd ${shellQuote(workdir)} && ${buildEnvironmentPreflight(config.envVars)}`;
+  const recipe = recipes[getDockerBuildRecipe(config.stack, config.isStatic)](config)
+    .replace("COPY . /workspace", `COPY . /workspace\nRUN ${preflight}`);
   if (!config.buildCache) return recipe;
+  const cacheTargets = [...new Set(cacheMountTargets(recipe))];
   // Automatic platform args need declaring in each stage for mount ID expansion.
-  return recipe.replace(/^(FROM .+)$/gm, "$1\nARG TARGETPLATFORM");
+  return recipe.replace(/^(FROM .+)$/gm, "$1\nARG TARGETPLATFORM") + (cacheTargets.length ? `\nLABEL io.kovalio.build-cache-targets=${JSON.stringify(JSON.stringify(cacheTargets))}` : "");
 }

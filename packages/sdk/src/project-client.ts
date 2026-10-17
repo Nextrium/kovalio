@@ -136,6 +136,18 @@ export function createRemoteProjectOperations(
       listDeployments: { method: "GET", path: (id) => path(id) + "/deployments" },
       deploymentSession: { method: "POST", path: (id) => path(id) + "/deployment-session" },
       clearBuildCache: { method: "POST", path: (id) => path(id) + "/clear-build" },
+      buildCacheMigration: {
+        method: "POST",
+        path: (id) => path(id) + "/build-cache/migration",
+        envelope: "data",
+      },
+      configurePreviews: { method: "POST", path: (id) => path(id) + "/previews", envelope: "data" },
+      listPreviews: { method: "GET", path: (id) => path(id) + "/previews", envelope: "data" },
+      migrateCommandEnvironment: {
+        method: "POST",
+        path: (id) => path(id) + "/env/migrate-commands",
+        envelope: "data",
+      },
       getRollbackCapacity: {
         method: "GET",
         path: (id) => path(id) + "/rollback-capacity",
@@ -267,6 +279,8 @@ export function createRemoteProjectOperations(
       retryRouting: { method: "POST", path: (id) => path(id) + "/routing/retry" },
       runtimeLogs: { method: "GET", path: (id) => path(id) + "/logs", envelope: "data" },
       getRuntimeRoles: { method: "GET", path: (id) => path(id) + "/roles", envelope: "data" },
+      getRuntimeRoleConfiguration: { method: "GET", path: (id) => path(id) + "/roles/configuration", envelope: "data" },
+      configureRuntimeRoles: { method: "POST", path: (id) => path(id) + "/roles/configuration", envelope: "data" },
       getCloneToken: { method: "GET", path: (id) => path(id) + "/clone-token" },
       updateCloneToken: { method: "PATCH", path: (id) => path(id) + "/clone-token" },
       deletionPreview: {

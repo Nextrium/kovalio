@@ -407,6 +407,14 @@ keeps the roles it has saved, so change those through the project API/SDK (`role
 
 ### Where roles run
 
+Source scans expose matching framework roles as `rolePresets`. These are suggestions,
+separate from enabled `roles`; scanning a repository never starts a queue or scheduler.
+An explicit `roles` array, including `[]`, suppresses suggestions. Presets use file and
+dependency evidence, which can include development dependencies: review a suggested
+command before enabling it. Explicit roles remain the saved project configuration.
+Alternative queue backends share a preset slot; if both match, neither is suggested.
+Independent workers do not exclude each other merely because both are workers.
+
 Roles run on **single-app projects deployed to a Docker server**. A deploy that declares
 roles is refused **before the build starts**, with no build, release command or container
 run, on:
@@ -474,8 +482,12 @@ Every role container must stay up through the stabilization window, **15 seconds
 default. This check always runs for roles, whatever the project's readiness settings,
 because a role has no port to probe. If the role declares an `exec` health command, it
 runs once, after the window. A failed startup check fails the deploy and triggers the
-rollback attempt described above. The startup check runs only during a deploy. It does not
-continuously monitor role containers afterward.
+rollback attempt described above. The startup check runs only during a deploy.
+Afterward, container monitoring watches each recorded role replica through the same
+health checks, incident history and notifications as the web container. It checks
+process state and restarts; it does not repeatedly execute a role's `health.command`.
+Deployments, intentionally stopped projects and loss of the observer's network use
+the same alert suppression rules as other workloads.
 
 <Callout title="Use exec so the stop signal reaches your process" type="warn">
 The command runs under `sh -c`. Without `exec`, the shell stays as the main process and
@@ -495,9 +507,25 @@ scheduler replacement there.
 - Deleting a deployment removes its role containers.
 - Clearing a project's roles retires the running ones on the next deploy.
 - Failed retirement produces a deployment warning naming the affected roles and
-  containers. Once the old release falls outside its rollback window, retention
-  cleanup retries removal before reclaiming the image. Failed cleanup stays
-  eligible for retry; roles referenced by protected releases are preserved.
+  containers. Deployment reconciliation retries incomplete handover cleanup.
+  Retention does not reclaim its records or artifacts while recovery is pending.
+
+### Interrupted deployments
+
+New deployments record role identities before Docker creation and record a
+singleton stop intent before sending its stop request. After a controller restart,
+an unpublished handover removes its replacements before restoring the still-active
+predecessor. Once the new web release passed readiness and routing and commit was
+recorded, recovery finishes forward instead of restarting an older scheduler.
+
+An unreachable server or uncertain cleanup keeps the handover pending. Another
+rollout, project edit or runtime write is refused until recovery finishes, so a
+timeout cannot authorize a second scheduler. Explicitly kept containers remain
+untouched; deleting that cancelled deployment discards its replacements safely.
+
+Older releases have no handover journal. If an earlier untracked role process is
+still present, a new role rollout stops with the container IDs requiring review.
+Kovalio does not delete them solely because their labels name another release.
 
 ### Status and logs
 
@@ -814,3 +842,29 @@ the required roots and start commands.
 
 - [Guide: deploy with kovalio.json](/docs/guides/kovalio-json)
 - [Deploy from GitHub](/docs/guides/deploy-from-github) · [Auto-deploy on push](/docs/guides/auto-deploy)
+
+## Edit running role configuration
+
+For a single-app Docker deployment, open **Apps & Services → Configure roles** to
+add workers or schedulers and adjust worker replicas. Apply creates a configuration
+deployment using the active container's immutable image and frozen environment.
+It does not rebuild, run release commands, restart web, or rewrite domains. Unchanged
+replicas keep their container identities; changed roles use the normal readiness,
+singleton handover, cancellation, monitoring and recovery flow. A scheduler remains
+one instance. Inspect the configuration deployment's logs if cleanup needs attention.
+
+The editor starts from the **active release's** definitions. Saving also updates the
+project's desired roles for later deployments. An explicit `roles` array in
+`kovalio.json` overrides those project settings on the next source deployment;
+update the repository when that file is your source of truth. Failed configuration
+attempts leave the active release unchanged; its frozen roles remain authoritative.
+A normal rollback restores the target release's frozen role definitions and replica
+counts through the existing retained-image deployment path.
+
+The SDK exposes `ship.projects.getRuntimeRoleConfiguration(id)` and
+`ship.projects.configureRuntimeRoles(id, { expectedDeploymentId, expectedUpdatedAt, roles })`.
+The expected release and project timestamp come from the configuration read and
+prevent stale edits. CLI equivalents are `kovalio project role-config <id>` and
+`kovalio project configure-roles <id> <file>`. The JSON file contains the same
+three fields. These controls do not enable runtime roles on Cloud, bare, cluster,
+static or multi-service deployments.
