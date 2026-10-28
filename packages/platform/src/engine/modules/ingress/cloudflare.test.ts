@@ -15,6 +15,7 @@ let config: TunnelConfig,
   apps: any[],
   calls: Array<{ path: string; method: string; body: any }>;
 let failAfterWrite: string | null, failBeforeWrite: string | null;
+let clients: unknown;
 function ok(result: unknown) {
   return new Response(JSON.stringify({ success: true, result }), {
     headers: { "content-type": "application/json" },
@@ -37,6 +38,7 @@ beforeEach(() => {
   calls = [];
   failAfterWrite = null;
   failBeforeWrite = null;
+  clients = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string, init: RequestInit = {}) => {
@@ -93,7 +95,8 @@ beforeEach(() => {
           apps[index] = { ...apps[index], ...body };
           result = apps[index];
         }
-      } else throw new Error(`Unexpected request ${method} ${path}`);
+      } else if (path.endsWith("/connections")) result = clients;
+      else throw new Error(`Unexpected request ${method} ${path}`);
       if (failAfterWrite === path && method !== "GET") {
         failAfterWrite = null;
         throw new Error("response lost");
@@ -114,6 +117,64 @@ function ledger(seed: IngressOwnership = {}) {
     }),
   };
 }
+describe("connector status and origins for upgrades", () => {
+  it("reports each running connector's version and whether it holds connections", async () => {
+    clients = [
+      { id: "a", version: "2026.10.0", conns: [{ id: "x", colo_name: "lhr01" }] },
+      { id: "b", version: "2026.10.3", conns: [] },
+      { id: "c" },
+    ];
+    expect(await new CloudflareIngress("secret", "account").connectors("tunnel")).toEqual([
+      { id: "a", version: "2026.10.0", connected: true },
+      { id: "b", version: "2026.10.3", connected: false },
+      { id: "c", version: "", connected: false },
+    ]);
+    expect(calls.at(-1)?.path).toBe("/accounts/account/cfd_tunnel/tunnel/connections");
+  });
+  it("fails closed on a connector list it cannot parse", async () => {
+    clients = { unexpected: true };
+    await expect(new CloudflareIngress("secret", "account").connectors("tunnel")).rejects.toThrow(
+      /connector list could not be read/,
+    );
+  });
+  it("lists every HTTPS origin, including rules Kovalio does not own, with inherited options", async () => {
+    config = {
+      originRequest: { noTLSVerify: true, originServerName: "default.internal" },
+      ingress: [
+        { hostname: "plain.example.test", service: "http://localhost:3000" },
+        { hostname: "tls.example.test", service: "https://10.0.0.5:8443" },
+        {
+          hostname: "strict.example.test",
+          service: "HTTPS://origin.internal",
+          originRequest: { noTLSVerify: false, originServerName: "strict.internal" },
+        },
+        terminal,
+      ],
+    };
+    expect(await new CloudflareIngress("secret", "account").httpsOrigins("tunnel")).toEqual([
+      {
+        hostname: "tls.example.test",
+        service: "https://10.0.0.5:8443",
+        originServerName: "default.internal",
+        noTLSVerify: true,
+      },
+      {
+        hostname: "strict.example.test",
+        service: "HTTPS://origin.internal",
+        originServerName: "strict.internal",
+        noTLSVerify: false,
+      },
+    ]);
+  });
+  it("never writes a rule that turns off origin TLS verification", async () => {
+    const api = new CloudflareIngress("secret", "account");
+    await api.rule(h, c, ledger().value, ledger().save);
+    const protectedHost = { ...h, id: "protected", hostname: "secure.example.test", accessPolicyId: "policy" };
+    await api.rule(protectedHost, c, { teamName: "team", appAud: "aud" }, vi.fn());
+    for (const call of calls.filter((x) => x.method === "PUT"))
+      expect(JSON.stringify(call.body)).not.toMatch(/noTLSVerify|no-tls-verify/i);
+  });
+});
 describe("Cloudflare owned ingress merge", () => {
   it("preserves unrelated rules, global origin options and catch-all in order", () => {
     const rule = { hostname: h.hostname, service: "http://127.0.0.1:80" };

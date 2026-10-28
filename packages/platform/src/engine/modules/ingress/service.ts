@@ -26,7 +26,7 @@ import { withServerInventoryLock } from "../../lib/server-inventory-lock";
 import { assertSelfHosted, assertServerExecution } from "../system/server-access";
 import { authorization } from "../../lib/authorization";
 import { CloudflareIngress } from "./cloudflare";
-import { manageConnector } from "./connector";
+import { manageConnector, type ConnectorUpgradeHooks } from "./connector";
 export const publicConnection = (c: IngressConnection): PublicConnection => ({
   id: c.id,
   serverId: c.serverId,
@@ -67,6 +67,31 @@ async function token(organizationId: string, credentialId: string) {
 }
 async function provider(c: IngressConnection) {
   return new CloudflareIngress(await token(c.organizationId, c.credentialId), c.accountId);
+}
+function connectorHooks(api: CloudflareIngress, c: IngressConnection): ConnectorUpgradeHooks {
+  return {
+    connectors: () => api.connectors(c.tunnelId!),
+    httpsOrigins: () => api.httpsOrigins(c.tunnelId!),
+    warn: (message) => diagnostics.warn("ingress/connector", message, { connectionId: c.id }),
+  };
+}
+/** Installs or upgrades the managed connector, one connector per tunnel at a time. */
+async function applyConnector(api: CloudflareIngress, c: IngressConnection) {
+  await createProvisionLock(lockKey(c)).run(() =>
+    withServerExecution(
+      c.organizationId,
+      c.serverId,
+      async (exec) =>
+        manageConnector(
+          exec,
+          c,
+          await api.tokenForTunnel(c.tunnelId!),
+          false,
+          connectorHooks(api, c),
+        ),
+      { mutation: true, scope: "ingress" },
+    ),
+  );
 }
 async function authorizeServer(ctx: ExecutionContext, id: string) {
   await authorization.authorize(
@@ -409,13 +434,7 @@ export async function reconcileConnection(snapshot: IngressConnection): Promise<
               400,
               "INGRESS_ACCESS_POLICY",
             );
-          if (c.connector === "managed")
-            await withServerExecution(
-              c.organizationId,
-              c.serverId,
-              async (exec) => manageConnector(exec, c!, await api.tokenForTunnel(c!.tunnelId!)),
-              { mutation: true, scope: "ingress" },
-            );
+          if (c.connector === "managed") await applyConnector(api, c);
           const observed = await api.tunnel(tunnel.id);
           if (!["healthy", "degraded"].includes(observed.status ?? ""))
             throw new AppError(
@@ -441,6 +460,41 @@ export async function reconcileConnection(snapshot: IngressConnection): Promise<
         }
       }),
   );
+}
+/** Ready connectors are never reconciled again, and they run --no-autoupdate, so a new
+ * connector pin reaches them only through this pass. It runs once when the controller starts,
+ * one connection at a time; an already-current connector is left untouched. A failure moves
+ * the connection to error, so the regular sweep retries it and the dashboard shows why. */
+export async function upgradeManagedConnectors(
+  stopped: () => boolean = () => false,
+): Promise<void> {
+  for (const snapshot of await repos.ingress.readyManagedConnections()) {
+    if (stopped()) return;
+    await withErrorContext(
+      {
+        organizationId: snapshot.organizationId,
+        serverId: snapshot.serverId,
+        resourceType: "ingress_connection",
+        resourceId: snapshot.id,
+      },
+      () =>
+        tryWithProvisionLock(`ingress-connection:${snapshot.id}`, async () => {
+          const c = await repos.ingress.get(snapshot.organizationId, snapshot.id);
+          if (!c || c.status !== "ready" || c.connector !== "managed" || !c.tunnelId) return;
+          try {
+            await applyConnector(await provider(c), c);
+          } catch (error) {
+            diagnostics.warn("ingress/connector", "Connector upgrade did not complete", error);
+            await repos.ingress.update(c.id, {
+              status: "error",
+              error: safeErrorMessage(error).slice(0, 1000),
+              attempts: c.attempts + 1,
+              nextAttemptAt: new Date(Date.now() + 30_000),
+            });
+          }
+        }),
+    );
+  }
 }
 export async function reconcileHostname(snapshot: IngressHostname): Promise<void> {
   const row = await repos.ingress.host(snapshot.id);

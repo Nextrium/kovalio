@@ -2,11 +2,17 @@ import { diagnostics } from "@repo/core/diagnostics";
 import { repos } from "@repo/db";
 import { nativeJobsEnabled } from "../../native/execution-policy";
 import { trackBackgroundWork } from "../../lib/background-work";
-import { reconcileConnection, reconcileHostname } from "./service";
+import { reconcileConnection, reconcileHostname, upgradeManagedConnectors } from "./service";
 let stopped = true;
 let timer: ReturnType<typeof setTimeout> | undefined;
 let current: Promise<void> | undefined;
+let upgraded = false;
 export async function sweepIngress(): Promise<void> {
+  // Retried on the next tick if the pass itself fails or the controller stops mid-way.
+  if (!upgraded) {
+    await upgradeManagedConnectors(() => stopped);
+    upgraded = !stopped;
+  }
   for (const connection of await repos.ingress.pendingConnections()) {
     if (stopped) return;
     await reconcileConnection(connection);

@@ -5,6 +5,7 @@ import type { IngressOwnership } from "@repo/db/schema";
 import { cloudflareDnsProvider } from "../dns/providers/cloudflare.provider";
 import type { DnsRecord } from "../dns/types";
 import { cloudflareFetch, cloudflareList, CloudflareApiError } from "../../lib/cloudflare-api";
+import type { TunnelConnector, TunnelOrigin } from "./connector";
 
 export interface Tunnel {
   id: string;
@@ -40,6 +41,13 @@ const accessAppSchema = z.object({
   self_hosted_domains: z.array(z.string()).optional(),
 });
 type AccessApp = z.infer<typeof accessAppSchema>;
+const tunnelClientsSchema = z.array(
+  z.object({
+    id: z.string().min(1),
+    version: z.string().optional(),
+    conns: z.array(z.unknown()).optional(),
+  }),
+);
 function parseAccessApp(value: unknown): AccessApp {
   const parsed = accessAppSchema.safeParse(value);
   if (!parsed.success) {
@@ -194,6 +202,36 @@ export class CloudflareIngress {
   }
   tokenForTunnel(id: string): Promise<string> {
     return this.get<string>(`/cfd_tunnel/${encodeURIComponent(id)}/token`);
+  }
+  /** One entry per running cloudflared process; its id changes on every restart. */
+  async connectors(id: string): Promise<TunnelConnector[]> {
+    const parsed = tunnelClientsSchema.safeParse(
+      await this.get<unknown>(`/cfd_tunnel/${encodeURIComponent(id)}/connections`),
+    );
+    if (!parsed.success)
+      throw new CloudflareApiError(502, "The tunnel's connector list could not be read.");
+    return parsed.data.map((client) => ({
+      id: client.id,
+      version: client.version ?? "",
+      connected: (client.conns?.length ?? 0) > 0,
+    }));
+  }
+  /** HTTPS origins the tunnel's connectors dial, including rules Kovalio does not own. */
+  async httpsOrigins(id: string): Promise<TunnelOrigin[]> {
+    const config = await this.configuration(id);
+    const defaults = (config?.originRequest ?? {}) as Record<string, unknown>;
+    return (config?.ingress ?? [])
+      .filter((rule) => /^https:\/\//i.test(rule.service))
+      .map((rule) => {
+        const request = { ...defaults, ...rule.originRequest };
+        return {
+          hostname: rule.hostname,
+          service: rule.service,
+          originServerName:
+            typeof request.originServerName === "string" ? request.originServerName : undefined,
+          noTLSVerify: request.noTLSVerify === true,
+        };
+      });
   }
   private async configuration(id: string): Promise<TunnelConfig | null> {
     const response = await this.get<{ config: TunnelConfig | null }>(

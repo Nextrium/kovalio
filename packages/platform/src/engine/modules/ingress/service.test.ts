@@ -194,6 +194,8 @@ beforeEach(async () => {
         records = [];
         return response({});
       }
+      if (path.endsWith("/cfd_tunnel/tunnel/token")) return response("connector-token");
+      if (path.endsWith("/cfd_tunnel/tunnel/connections")) return response([]);
       throw new Error(`Unexpected fixture route ${method} ${path}`);
     }),
   );
@@ -394,5 +396,69 @@ describe("cancelled and stale reconciliation recovery", () => {
       status: "error",
       error: "Newer failure",
     });
+  });
+});
+describe("upgrading connectors that are already ready", () => {
+  it("takes each ready managed connector through the connector pin and records a failure for retry", async () => {
+    await h.repos.ingress.create({
+      id: "igc_managed",
+      organizationId: "org",
+      serverId: "server",
+      credentialId: "credential",
+      accountId: "account",
+      tunnelId: "tunnel",
+      name: "Managed",
+      connector: "managed",
+      status: "ready",
+    });
+    await h.repos.ingress.create({
+      id: "igc_existing",
+      organizationId: "other",
+      serverId: "foreign",
+      credentialId: "credential",
+      accountId: "account",
+      tunnelId: "other-tunnel",
+      name: "Existing",
+      connector: "existing",
+      status: "ready",
+    });
+    h.execute.mockImplementation(async (_org: string, _server: string, work: any) =>
+      work({
+        exec: async () => {
+          throw new Error("Server unreachable over SSH");
+        },
+        writeFile: vi.fn(),
+        rm: vi.fn(),
+      }),
+    );
+    await ingress.upgradeManagedConnectors();
+    expect(h.execute).toHaveBeenCalledOnce();
+    expect(h.execute.mock.calls[0].slice(0, 2)).toEqual(["org", "server"]);
+    expect(calls.some((call) => call.path.endsWith("/cfd_tunnel/tunnel/token"))).toBe(true);
+    expect(await h.repos.ingress.get("org", "igc_managed")).toMatchObject({
+      status: "error",
+      error: "Server unreachable over SSH",
+      attempts: 1,
+    });
+    expect((await h.repos.ingress.get("other", "igc_existing")).status).toBe("ready");
+    // The regular sweep picks the failed row up again.
+    expect((await h.repos.ingress.pendingConnections()).map((row: any) => row.id)).not.toContain(
+      "igc_existing",
+    );
+  });
+  it("stops between connections when the controller shuts down", async () => {
+    await h.repos.ingress.create({
+      id: "igc_managed",
+      organizationId: "org",
+      serverId: "server",
+      credentialId: "credential",
+      accountId: "account",
+      tunnelId: "tunnel",
+      name: "Managed",
+      connector: "managed",
+      status: "ready",
+    });
+    await ingress.upgradeManagedConnectors(() => true);
+    expect(h.execute).not.toHaveBeenCalled();
   });
 });

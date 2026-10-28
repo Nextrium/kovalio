@@ -102,6 +102,35 @@ Whole-instance exports retain the ownership ledger and encrypted credentials.
 Individual project transfer is blocked while its domains are bound; disconnect them
 first so another instance cannot inherit incomplete cleanup ownership.
 
+## Keep the connector up to date
+
+Connectors run with `--no-autoupdate`, so they change version only when Kovalio or
+you replace them. cloudflared releases below `2026.10.2` trust compromised eMudhra
+(emSign) intermediate certificates; use `2026.10.3` or later.
+
+**Installed by Kovalio.** After a Kovalio update, the API checks each connector it
+installed and upgrades one that still matches an earlier Kovalio version. It refuses
+a unit or container edited by hand. A tunnel's only connector gets a temporary
+replica while it restarts. Long-lived connections (WebSockets, SSH, TCP) on that
+connector drop once and reconnect. If an upgrade can't finish, the connection shows
+the reason and **Retry setup**.
+
+**Your own connector** (**Use an existing connector**). Upgrade it yourself:
+
+1. Check the version on the server with `cloudflared --version`, or in Cloudflare
+   under **Networking → Tunnels**, which lists each connector's version.
+2. Check HTTPS origins first. An origin certificate that chains to an eMudhra
+   intermediate is rejected by the fixed connector, so replace it before upgrading.
+3. Run a second replica of the same tunnel, wait until the tunnel reports **Healthy**,
+   then upgrade the original:
+   - A package install: upgrade the `cloudflared` package, then restart its service.
+   - Docker: recreate the container from `cloudflare/cloudflared:2026.10.3`, pinned
+     by digest, not `:latest`.
+4. Remove the temporary replica once the upgraded connector is connected.
+
+Never fix certificate errors with `noTLSVerify` or by turning off verification. That
+removes the protection the update restores.
+
 ## SDK, API and CLI
 
 Use the existing `dns` namespace in both remote and native SDK clients. Ingress

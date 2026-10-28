@@ -5,6 +5,7 @@ const h = vi.hoisted(() => ({
   hosts: vi.fn(),
   connection: vi.fn(),
   host: vi.fn(),
+  upgrade: vi.fn(),
 }));
 vi.mock("@repo/db", () => ({
   repos: { ingress: { pendingConnections: h.connections, due: h.hosts } },
@@ -13,13 +14,18 @@ vi.mock("../../native/execution-policy", () => ({ nativeJobsEnabled: () => h.ena
 vi.mock("../../lib/background-work", () => ({
   trackBackgroundWork: (work: Promise<void>) => work,
 }));
-vi.mock("./service", () => ({ reconcileConnection: h.connection, reconcileHostname: h.host }));
+vi.mock("./service", () => ({
+  reconcileConnection: h.connection,
+  reconcileHostname: h.host,
+  upgradeManagedConnectors: h.upgrade,
+}));
 beforeEach(async () => {
   vi.resetModules();
   vi.resetAllMocks();
   h.enabled = true;
   h.connections.mockResolvedValue([]);
   h.hosts.mockResolvedValue([]);
+  h.upgrade.mockResolvedValue(undefined);
   await import("./lifecycle");
   vi.useFakeTimers();
 });
@@ -41,6 +47,19 @@ describe("managed ingress controller lifecycle", () => {
     expect(h.connections).toHaveBeenCalledOnce();
     await vi.advanceTimersByTimeAsync(1);
     expect(h.connections).toHaveBeenCalledTimes(2);
+  });
+  it("offers installed connectors the pinned release once per start, retrying a failed pass", async () => {
+    h.upgrade.mockRejectedValueOnce(new Error("database unavailable"));
+    const l = await import("./lifecycle");
+    l.startIngressController();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(h.upgrade).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(h.upgrade).toHaveBeenCalledTimes(2);
+    expect(h.connections).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(h.upgrade).toHaveBeenCalledTimes(2);
+    expect(h.connections).toHaveBeenCalledTimes(3);
   });
   it("does not start when native jobs are disabled", async () => {
     h.enabled = false;

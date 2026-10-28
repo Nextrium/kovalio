@@ -249,5 +249,13 @@ export function createIngressRepo(db: Database) {
         )
         .orderBy(ingressConnection.nextAttemptAt)
         .limit(10),
+    readyManagedConnections: () =>
+      db
+        .select()
+        .from(ingressConnection)
+        .where(
+          and(eq(ingressConnection.status, "ready"), eq(ingressConnection.connector, "managed")),
+        )
+        .orderBy(ingressConnection.id),
   };
 }

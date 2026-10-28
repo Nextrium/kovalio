@@ -3,6 +3,28 @@
 All notable changes to Kovalio. Versions follow [semver](https://semver.org);
 the in-app updater surfaces critical advisories from `release-advisories.json`.
 
+## Unreleased
+
+### Security
+
+- **Cloudflare connectors move to cloudflared 2026.10.3** — releases below
+  2026.10.2 trust eight eMudhra (emSign) intermediate certificates whose private
+  keys were found to be weak, so anyone holding them could impersonate an origin
+  or Cloudflare to the connector. Connectors Kovalio installs, and the client
+  bundled with the Windows desktop app, now pin 2026.10.3 by release checksum, and
+  the Docker connector by the image's multi-arch index digest.
+- **Installed connectors are upgraded in place** — connectors run with
+  `--no-autoupdate`, so on start Kovalio checks each managed connector once. A
+  systemd unit or container that exactly matches an earlier Kovalio pin is
+  upgraded; anything edited by hand is still refused. The new binary is installed
+  next to the old one, and the old binary is removed only after the tunnel reports
+  the new connector connected. A tunnel's only connector gets a temporary replica
+  during the restart; long-lived connections (WebSockets, SSH, TCP) on the
+  restarted connector reconnect once.
+- **Origins are checked before upgrading** — if an HTTPS origin behind the tunnel
+  serves a certificate issued through eMudhra, the upgrade stops and asks for that
+  certificate to be replaced. Kovalio never turns off origin TLS verification.
+
 ## 0.9.3
 
 This release improves Cloud monitoring and build-cache reliability, adds deployment
